@@ -163,7 +163,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       <div className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12">
         <div className="w-full max-w-[440px] space-y-6">
           {/* Brand Logo Header */}
-          <div className="flex flex-col items-center text-center space-y-1 mb-2">
+          <div className="flex flex-col items-center text-center -mt-4 mb-3">
             <AltviraLogo size={38} variant="dark" subtitle="FINANCIAL ERP" />
           </div>
 
