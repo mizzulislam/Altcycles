@@ -149,7 +149,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     e.preventDefault();
     setError(null);
 
-    // Filter 1 Keamanan: Validasi Seluruh Aturan Kata Sandi
+    // Validasi Seluruh Kriteria Kata Sandi
     if (
       !pwdCriteria.minLength ||
       !pwdCriteria.hasUpper ||
@@ -158,7 +158,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       !pwdCriteria.hasSymbol
     ) {
       setError(
-        "Kata sandi belum memenuhi filter keamanan akun: Wajib minimal 8 karakter, serta memiliki kombinasi huruf kapital (A-Z), huruf kecil (a-z), angka (0-9), dan simbol khusus (!@#$%^&* dll).",
+        "Kata sandi belum memenuhi kriteria keamanan: Wajib minimal 8 karakter, serta memiliki kombinasi huruf kapital (A-Z), huruf kecil (a-z), angka (0-9), dan simbol khusus (!@#$%^&* dll).",
       );
       return;
     }
@@ -472,14 +472,14 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       </button>
                     </div>
 
-                    {/* Filter 1 Keamanan: Indikator & Petunjuk Kekuatan Kata Sandi */}
+                    {/* Indikator & Ketentuan Kata Sandi */}
                     {(mode === "signup" || password.length > 0) && (
                       <div className="space-y-2 pt-1 transition-all">
                         {/* Progress Bar Kekuatan Sandi */}
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[11px]">
                             <span className="text-[#616C82] dark:text-[#9AA5B8] font-medium">
-                              Keamanan Kata Sandi:
+                              Kekuatan Kata Sandi:
                             </span>
                             <span
                               className={`font-bold transition-colors ${
@@ -491,10 +491,10 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                               }`}
                             >
                               {pwdScore === 5
-                                ? "Kuat & Aman (Lengkap)"
+                                ? "Kuat"
                                 : pwdScore >= 3
-                                  ? "Sedang (Kurang Lengkap)"
-                                  : "Lemah (Belum Memenuhi Syarat)"}
+                                  ? "Sedang"
+                                  : "Lemah"}
                             </span>
                           </div>
                           <div className="grid grid-cols-5 gap-1.5 h-1.5 w-full bg-[#E5E7EB] dark:bg-white/10 rounded-full overflow-hidden">
@@ -515,11 +515,11 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           </div>
                         </div>
 
-                        {/* Checklist Petunjuk Syarat Keamanan */}
+                        {/* Checklist Ketentuan Kata Sandi */}
                         <div className="p-2.5 rounded-xl bg-[#F0F1F3]/80 dark:bg-[#1A253C]/70 border border-[#C9C9C9]/60 dark:border-white/10 space-y-1.5">
                           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2A2A2A] dark:text-white">
                             <ShieldCheckIcon className="size-3.5 text-[#0B43C8] dark:text-[#1FB1F2]" />
-                            <span>Filter 1 Keamanan — Syarat Kata Sandi:</span>
+                            <span>Ketentuan Kata Sandi:</span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
                             <div
