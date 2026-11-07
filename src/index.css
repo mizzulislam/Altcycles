@@ -140,3 +140,47 @@
   }
 }
 
+/* =========================================================================
+   MODERN CUSTOM SCROLLBAR (SLIDEBAR)
+   Tipis, elegan, melengkung penuh, adaptif tema terang & gelap
+   ========================================================================= */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 108, 130, 0.35) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+/* WebKit (Chrome, Edge, Safari, Opera) */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(97, 108, 130, 0.28);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 67, 200, 0.65);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 177, 242, 0.7);
+}
+

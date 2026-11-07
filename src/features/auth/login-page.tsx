@@ -31,12 +31,53 @@ import { useTheme } from "@/lib/theme-context";
 
 type AuthMode = "signin" | "signup";
 
+interface PasswordCriteria {
+  minLength: boolean;
+  hasUpper: boolean;
+  hasLower: boolean;
+  hasNumber: boolean;
+  hasSymbol: boolean;
+}
+
+function evaluatePassword(pwd: string): PasswordCriteria {
+  return {
+    minLength: pwd.length >= 8,
+    hasUpper: /[A-Z]/.test(pwd),
+    hasLower: /[a-z]/.test(pwd),
+    hasNumber: /[0-9]/.test(pwd),
+    hasSymbol: /[^A-Za-z0-9]/.test(pwd),
+  };
+}
+
+function GoogleIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
+
 interface LoginPageProps {
   bannerSrc?: string;
 }
 
 export function LoginPage({ bannerSrc }: LoginPageProps) {
-  const { signIn, signUp, profile, isDemoMode } = useAuth();
+  const { signIn, signInWithGoogle, signUp, profile, isDemoMode } = useAuth();
   const { resolvedTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -52,13 +93,40 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Filter Keamanan Kata Sandi
+  const pwdCriteria = React.useMemo(() => evaluatePassword(password), [password]);
+  const pwdScore = React.useMemo(() => {
+    let score = 0;
+    if (pwdCriteria.minLength) score++;
+    if (pwdCriteria.hasUpper) score++;
+    if (pwdCriteria.hasLower) score++;
+    if (pwdCriteria.hasNumber) score++;
+    if (pwdCriteria.hasSymbol) score++;
+    return score;
+  }, [pwdCriteria]);
 
   React.useEffect(() => {
     if (profile) {
       navigate(portalHomeForRole(profile.role), { replace: true });
     }
   }, [profile, navigate]);
+
+  async function handleGoogleSignIn() {
+    setGoogleSubmitting(true);
+    setError(null);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Gagal masuk menggunakan Google.",
+      );
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -80,6 +148,20 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // Filter 1 Keamanan: Validasi Seluruh Aturan Kata Sandi
+    if (
+      !pwdCriteria.minLength ||
+      !pwdCriteria.hasUpper ||
+      !pwdCriteria.hasLower ||
+      !pwdCriteria.hasNumber ||
+      !pwdCriteria.hasSymbol
+    ) {
+      setError(
+        "Kata sandi belum memenuhi filter keamanan akun: Wajib minimal 8 karakter, serta memiliki kombinasi huruf kapital (A-Z), huruf kecil (a-z), angka (0-9), dan simbol khusus (!@#$%^&* dll).",
+      );
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Konfirmasi kata sandi tidak cocok.");
@@ -389,6 +471,135 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         )}
                       </button>
                     </div>
+
+                    {/* Filter 1 Keamanan: Indikator & Petunjuk Kekuatan Kata Sandi */}
+                    {(mode === "signup" || password.length > 0) && (
+                      <div className="space-y-2 pt-1 transition-all">
+                        {/* Progress Bar Kekuatan Sandi */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-[#616C82] dark:text-[#9AA5B8] font-medium">
+                              Keamanan Kata Sandi:
+                            </span>
+                            <span
+                              className={`font-bold transition-colors ${
+                                pwdScore === 5
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : pwdScore >= 3
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-red-500 dark:text-red-400"
+                              }`}
+                            >
+                              {pwdScore === 5
+                                ? "Kuat & Aman (Lengkap)"
+                                : pwdScore >= 3
+                                  ? "Sedang (Kurang Lengkap)"
+                                  : "Lemah (Belum Memenuhi Syarat)"}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-5 gap-1.5 h-1.5 w-full bg-[#E5E7EB] dark:bg-white/10 rounded-full overflow-hidden">
+                            {[1, 2, 3, 4, 5].map((lvl) => (
+                              <div
+                                key={lvl}
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  pwdScore >= lvl
+                                    ? pwdScore === 5
+                                      ? "bg-emerald-500"
+                                      : pwdScore >= 3
+                                        ? "bg-amber-400"
+                                        : "bg-red-500"
+                                    : "bg-transparent"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Checklist Petunjuk Syarat Keamanan */}
+                        <div className="p-2.5 rounded-xl bg-[#F0F1F3]/80 dark:bg-[#1A253C]/70 border border-[#C9C9C9]/60 dark:border-white/10 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2A2A2A] dark:text-white">
+                            <ShieldCheckIcon className="size-3.5 text-[#0B43C8] dark:text-[#1FB1F2]" />
+                            <span>Filter 1 Keamanan — Syarat Kata Sandi:</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                            <div
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                pwdCriteria.minLength
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-[#616C82] dark:text-[#9AA5B8]"
+                              }`}
+                            >
+                              {pwdCriteria.minLength ? (
+                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                              )}
+                              <span>Minimal 8 karakter</span>
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                pwdCriteria.hasUpper
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-[#616C82] dark:text-[#9AA5B8]"
+                              }`}
+                            >
+                              {pwdCriteria.hasUpper ? (
+                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                              )}
+                              <span>Huruf kapital (A-Z)</span>
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                pwdCriteria.hasLower
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-[#616C82] dark:text-[#9AA5B8]"
+                              }`}
+                            >
+                              {pwdCriteria.hasLower ? (
+                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                              )}
+                              <span>Huruf kecil (a-z)</span>
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                pwdCriteria.hasNumber
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-[#616C82] dark:text-[#9AA5B8]"
+                              }`}
+                            >
+                              {pwdCriteria.hasNumber ? (
+                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                              )}
+                              <span>Angka (0-9)</span>
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1.5 sm:col-span-2 transition-colors ${
+                                pwdCriteria.hasSymbol
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-[#616C82] dark:text-[#9AA5B8]"
+                              }`}
+                            >
+                              {pwdCriteria.hasSymbol ? (
+                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                              ) : (
+                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                              )}
+                              <span>Simbol khusus (!@#$%^&* dll)</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </Field>
 
                   {/* Field Konfirmasi Kata Sandi (Khusus Mode Buat Akun) */}
@@ -445,7 +656,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                   {/* Submit Button */}
                   <Button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || googleSubmitting}
                     className="w-full h-11 text-sm font-semibold rounded-xl bg-[#0B43C8] hover:bg-[#083296] text-white shadow-md shadow-[#0B43C8]/20 transition-all active:scale-[0.99]"
                   >
                     {submitting ? (
@@ -458,6 +669,34 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     {mode === "signin"
                       ? "Masuk ke Sistem"
                       : "Buat Akun Sekarang"}
+                  </Button>
+
+                  {/* Pembatas "atau lanjutkan dengan" */}
+                  <div className="relative my-2 pt-1">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator className="bg-[#C9C9C9]/60 dark:bg-white/10" />
+                    </div>
+                    <div className="relative flex justify-center text-[11px] uppercase">
+                      <span className="bg-white dark:bg-[#121A2B] px-3 text-[#616C82] dark:text-[#9AA5B8] font-medium tracking-wider">
+                        atau lanjutkan dengan
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Tombol Masuk dengan Google */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={submitting || googleSubmitting}
+                    onClick={handleGoogleSignIn}
+                    className="w-full h-11 text-sm font-semibold rounded-xl border-[#C9C9C9] dark:border-white/15 bg-white dark:bg-[#1A253C]/60 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E] text-[#2A2A2A] dark:text-white transition-all shadow-sm active:scale-[0.99] flex items-center justify-center gap-2.5"
+                  >
+                    {googleSubmitting ? (
+                      <Spinner className="size-4" />
+                    ) : (
+                      <GoogleIcon className="size-4 shrink-0" />
+                    )}
+                    <span>Masuk dengan Google</span>
                   </Button>
                 </FieldGroup>
               </form>

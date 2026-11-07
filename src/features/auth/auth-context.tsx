@@ -15,6 +15,7 @@ interface AuthContextValue {
   loading: boolean;
   isDemoMode: boolean;
   signIn: (emailOrUsername: string, password: string) => Promise<ProfileRow>;
+  signInWithGoogle: () => Promise<void>;
   signUp: (payload: {
     usernameOrEmail: string;
     password: string;
@@ -199,6 +200,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [loadSupabaseProfile],
   );
 
+  const signInWithGoogle = React.useCallback(async () => {
+    if (isDemoMode || !supabase) {
+      const demo = findDemoProfileByEmail("superadmin@altvira.id");
+      if (demo) {
+        window.sessionStorage.setItem(DEMO_STORAGE_KEY, demo.email);
+        setDemoCurrentUser(demo.id);
+        setProfile(demo);
+        return;
+      }
+      throw new Error("Mode demo lokal tidak dapat menjalankan Google OAuth.");
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/login`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  }, []);
+
   const signUp = React.useCallback(
     async (payload: {
       usernameOrEmail: string;
@@ -315,6 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isDemoMode,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
       requestPasswordReset,
@@ -324,6 +354,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile,
       loading,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
       requestPasswordReset,
