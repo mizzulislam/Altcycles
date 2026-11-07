@@ -1,0 +1,133 @@
+@import "tailwindcss" source("../src");
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.99 0.003 247.86);
+  --foreground: oklch(0.18 0.025 255.5);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.025 255.5);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.025 255.5);
+  --primary: oklch(0.28 0.065 252.4);
+  --primary-foreground: oklch(0.985 0.002 247.8);
+  --secondary: oklch(0.955 0.008 247.9);
+  --secondary-foreground: oklch(0.24 0.035 255.5);
+  --muted: oklch(0.955 0.008 247.9);
+  --muted-foreground: oklch(0.49 0.022 256.8);
+  --accent: oklch(0.945 0.012 248.2);
+  --accent-foreground: oklch(0.24 0.035 255.5);
+  --destructive: oklch(0.55 0.215 27.3);
+  --destructive-foreground: oklch(0.985 0.002 247.8);
+  --border: oklch(0.9 0.01 250);
+  --input: oklch(0.9 0.01 250);
+  --ring: oklch(0.42 0.095 252.4);
+
+  /* Token semantik status keuangan (selalu dipasangkan dengan label teks Bahasa Indonesia) */
+  --status-success-bg: oklch(0.95 0.045 152);
+  --status-success-fg: oklch(0.32 0.095 152);
+  --status-success-border: oklch(0.84 0.085 152);
+
+  --status-warning-bg: oklch(0.96 0.055 84);
+  --status-warning-fg: oklch(0.38 0.11 68);
+  --status-warning-border: oklch(0.86 0.1 80);
+
+  --status-info-bg: oklch(0.95 0.035 245);
+  --status-info-fg: oklch(0.34 0.095 248);
+  --status-info-border: oklch(0.85 0.065 245);
+
+  --status-danger-bg: oklch(0.95 0.045 25);
+  --status-danger-fg: oklch(0.38 0.155 25);
+  --status-danger-border: oklch(0.85 0.09 25);
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.15 0.02 255);
+  --foreground: oklch(0.97 0.005 248);
+  --card: oklch(0.19 0.022 255);
+  --card-foreground: oklch(0.97 0.005 248);
+  --popover: oklch(0.19 0.022 255);
+  --popover-foreground: oklch(0.97 0.005 248);
+  --primary: oklch(0.72 0.11 245);
+  --primary-foreground: oklch(0.16 0.025 255);
+  --secondary: oklch(0.25 0.025 255);
+  --secondary-foreground: oklch(0.96 0.005 248);
+  --muted: oklch(0.25 0.025 255);
+  --muted-foreground: oklch(0.7 0.015 250);
+  --accent: oklch(0.27 0.03 255);
+  --accent-foreground: oklch(0.96 0.005 248);
+  --destructive: oklch(0.62 0.2 27);
+  --destructive-foreground: oklch(0.98 0.002 248);
+  --border: oklch(0.29 0.022 255);
+  --input: oklch(0.29 0.022 255);
+  --ring: oklch(0.65 0.11 245);
+
+  --status-success-bg: oklch(0.26 0.055 152);
+  --status-success-fg: oklch(0.86 0.09 152);
+  --status-success-border: oklch(0.38 0.08 152);
+
+  --status-warning-bg: oklch(0.27 0.06 75);
+  --status-warning-fg: oklch(0.88 0.1 82);
+  --status-warning-border: oklch(0.4 0.085 75);
+
+  --status-info-bg: oklch(0.26 0.055 245);
+  --status-info-fg: oklch(0.86 0.08 245);
+  --status-info-border: oklch(0.38 0.08 245);
+
+  --status-danger-bg: oklch(0.27 0.075 25);
+  --status-danger-fg: oklch(0.87 0.11 25);
+  --status-danger-border: oklch(0.42 0.11 25);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-success-fg: var(--status-success-fg);
+  --color-status-success-border: var(--status-success-border);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-fg: var(--status-warning-fg);
+  --color-status-warning-border: var(--status-warning-border);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-fg: var(--status-info-fg);
+  --color-status-info-border: var(--status-info-border);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-danger-fg: var(--status-danger-fg);
+  --color-status-danger-border: var(--status-danger-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+

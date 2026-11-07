@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment secrets (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Supabase local runtime
+supabase/.branches
+supabase/.temp
+
+# Local AI agent skills cache
+.agents/
+
+# Logs, Backups, & OS files
+backups/
+*.log
+.DS_Store
+Thumbs.db
+coverage/
+

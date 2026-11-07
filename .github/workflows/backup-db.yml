@@ -1,0 +1,73 @@
+name: Scheduled Database Backup and Keep-Alive
+
+on:
+  # Berjalan setiap 3 hari pukul 02:00 WIB (19:00 UTC) untuk mencadangkan DB & mencegah auto-pause 7 hari Supabase Free Tier
+  schedule:
+    - cron: "0 19 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    name: Export Encrypted PostgreSQL Backup (UC-38)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 -w 0)" \
+            fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Ensure PostgreSQL client and GnuPG are available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pg_dump >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client gnupg
+          fi
+
+      - name: Run keep-alive ping and AES-256 encrypted pg_dump
+        shell: bash
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: bash scripts/backup/export-db.sh
+
+      - name: Commit encrypted backup snapshot to isolated backups-archive branch (10-snapshot rotation)
+        if: env.BACKUP_CREATED == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ARCHIVE_DIR="$(mktemp -d)"
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 -w 0)"
+
+          git -C "${ARCHIVE_DIR}" init
+          git -C "${ARCHIVE_DIR}" remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          if git -C "${ARCHIVE_DIR}" -c http.extraheader="${AUTH_HEADER}" fetch --no-tags --depth=1 origin backups-archive 2>/dev/null; then
+            git -C "${ARCHIVE_DIR}" checkout -B backups-archive FETCH_HEAD
+          else
+            git -C "${ARCHIVE_DIR}" checkout --orphan backups-archive
+          fi
+
+          mkdir -p "${ARCHIVE_DIR}/snapshots"
+          cp backups/*.sql.gz.gpg "${ARCHIVE_DIR}/snapshots/"
+
+          # Simpan maksimal 10 arsip terenkripsi terbaru (~30 hari pada jadwal 3 harian)
+          ls -1t "${ARCHIVE_DIR}/snapshots/"*.sql.gz.gpg 2>/dev/null | tail -n +11 | xargs -r rm -f
+
+          git -C "${ARCHIVE_DIR}" config user.name "github-actions[bot]"
+          git -C "${ARCHIVE_DIR}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${ARCHIVE_DIR}" add snapshots
+          git -C "${ARCHIVE_DIR}" commit -m "chore(backup): encrypted db snapshot ${GITHUB_RUN_NUMBER}" || true
+          git -C "${ARCHIVE_DIR}" -c http.extraheader="${AUTH_HEADER}" push origin backups-archive
