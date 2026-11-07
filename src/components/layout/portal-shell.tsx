@@ -3,7 +3,6 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BellIcon,
   BookOpenIcon,
-  Building2Icon,
   CalendarRangeIcon,
   CheckCheckIcon,
   ClipboardListIcon,
@@ -24,6 +23,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -127,7 +127,7 @@ export function PortalShell() {
       {/* Header Seluler */}
       <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
         <div className="flex items-center gap-2">
-          <Building2Icon className="size-5 text-primary" />
+          <AltviraLogoMark size={24} iconVariant="transparent" />
           <span className="font-bold">Altcycles</span>
         </div>
         <div className="flex items-center gap-1">
@@ -162,9 +162,7 @@ export function PortalShell() {
         <div className="flex flex-col gap-1 p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Building2Icon className="size-4" />
-              </div>
+              <AltviraLogoMark size={32} iconVariant="transparent" />
               <div>
                 <p className="text-sm font-bold leading-none">Altcycles</p>
                 <p className="text-xs text-muted-foreground">ERP Keuangan Altvira</p>

@@ -1,97 +1,157 @@
 import * as React from "react";
 
-interface AltviraLogoProps extends React.SVGProps<SVGSVGElement> {
+export type AltviraIconVariant = "transparent" | "square";
+export type AltviraThemeVariant = "dark" | "light"; // "dark" = for light bg; "light" = for dark bg
+export type AltviraLayout = "horizontal" | "vertical";
+
+export interface AltviraLogoMarkProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   size?: number;
-  showText?: boolean;
-  variant?: "dark" | "light"; // "light" = white text (for dark bg), "dark" = dark text (for light bg)
-  subtitle?: string;
+  iconVariant?: AltviraIconVariant;
 }
 
+export interface AltviraWordmarkProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  height?: number;
+  variant?: AltviraThemeVariant;
+}
+
+export interface AltviraLogoProps {
+  size?: number; // Ukuran tinggi/lebar ikon (default: 40)
+  wordmarkHeight?: number; // Tinggi teks wordmark (default: proportional ~18px)
+  showText?: boolean;
+  variant?: AltviraThemeVariant;
+  iconVariant?: AltviraIconVariant;
+  layout?: AltviraLayout;
+  subtitle?: string;
+  className?: string;
+}
+
+/**
+ * Komponen Ikon Logo Altvira Resmi:
+ * - `iconVariant="transparent"` (Gambar 2): Ribbon AV 3D transparan tanpa background
+ * - `iconVariant="square"` (Gambar 1): App icon AV squircle dengan latar belakang gelap
+ */
 export function AltviraLogoMark({
-  size = 48,
+  size = 40,
+  iconVariant = "transparent",
   className = "",
+  alt = "Altvira Mark",
+  style,
   ...props
-}: React.SVGProps<SVGSVGElement> & { size?: number }) {
-  const gradientId = React.useId();
+}: AltviraLogoMarkProps) {
+  const src =
+    iconVariant === "square"
+      ? "/brand/altvira-icon-square.png"
+      : "/brand/altvira-icon.png";
 
   return (
-    <svg
+    <img
+      src={src}
+      alt={alt}
       width={size}
       height={size}
-      viewBox="0 0 120 120"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
+      className={`object-contain shrink-0 select-none ${className}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        ...style,
+      }}
+      draggable={false}
       {...props}
-    >
-      <defs>
-        <linearGradient
-          id={`${gradientId}-altvira-grad`}
-          x1="10"
-          y1="10"
-          x2="110"
-          y2="110"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#1FB1F2" />
-          <stop offset="50%" stopColor="#0B43C8" />
-          <stop offset="100%" stopColor="#083296" />
-        </linearGradient>
-        <linearGradient
-          id={`${gradientId}-cyan-accent`}
-          x1="0"
-          y1="0"
-          x2="60"
-          y2="60"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#67D5FF" />
-          <stop offset="100%" stopColor="#1FB1F2" />
-        </linearGradient>
-      </defs>
-
-      {/* Geometric AV Ribbon Mark */}
-      {/* Left Chevron (A Peak) */}
-      <path
-        d="M20 78L52 26C54 22.8 58.5 22.8 60.5 26L74 48L61 56L56 46L36 78H20Z"
-        fill={`url(#${gradientId}-cyan-accent)`}
-      />
-      {/* Right Chevron (V Valley) and Interlocking Diagonal */}
-      <path
-        d="M100 42L68 94C66 97.2 61.5 97.2 59.5 94L46 72L59 64L64 74L84 42H100Z"
-        fill={`url(#${gradientId}-altvira-grad)`}
-      />
-      {/* Core Center Joint Glow */}
-      <circle cx="60" cy="60" r="3" fill="#67D5FF" opacity="0.8" />
-    </svg>
+    />
   );
 }
 
+/**
+ * Komponen Wordmark Teks Resmi Altvira (Gambar 3):
+ * - `variant="dark"`: Huruf gelap (#090E19) dengan huruf V biru cyan (untuk latar belakang terang/kartu putih)
+ * - `variant="light"`: Huruf putih dengan huruf V biru cyan (untuk latar belakang gelap/midnight)
+ */
+export function AltviraWordmark({
+  height = 18,
+  variant = "dark",
+  className = "",
+  alt = "ALTVIRA",
+  style,
+  ...props
+}: AltviraWordmarkProps) {
+  const src =
+    variant === "light"
+      ? "/brand/altvira-wordmark.png"
+      : "/brand/altvira-wordmark-dark.png";
+
+  // Aspect ratio gambar asli 1024 / 91 ~= 11.25
+  const width = Math.round(height * 11.25);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={`object-contain select-none ${className}`}
+      style={{
+        height: `${height}px`,
+        width: "auto",
+        maxWidth: "100%",
+        ...style,
+      }}
+      draggable={false}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Komponen Logo Lengkap Altvira (Kombinasi Ikon Gambar 1/2 + Teks Gambar 3)
+ */
 export function AltviraLogo({
   size = 40,
+  wordmarkHeight,
   showText = true,
   variant = "dark",
-  subtitle = "ALTCYCLES",
+  iconVariant = "transparent",
+  layout = "horizontal",
+  subtitle = "FINANCIAL ERP",
   className = "",
 }: AltviraLogoProps) {
   const isLight = variant === "light";
+  const actualWordmarkHeight = wordmarkHeight ?? Math.max(15, Math.round(size * 0.45));
+
+  if (layout === "vertical") {
+    return (
+      <div className={`flex flex-col items-center text-center gap-3 select-none ${className}`}>
+        <div className="relative flex items-center justify-center">
+          <AltviraLogoMark size={size} iconVariant={iconVariant} />
+        </div>
+        {showText && (
+          <div className="flex flex-col items-center">
+            <AltviraWordmark height={actualWordmarkHeight} variant={variant} />
+            {subtitle && (
+              <span
+                className={`text-[9.5px] tracking-[0.38em] font-semibold mt-1.5 uppercase ${
+                  isLight ? "text-[#C9C9C9]/80" : "text-[#616C82]"
+                }`}
+              >
+                {subtitle}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
-      <div className="relative flex items-center justify-center">
-        <AltviraLogoMark size={size} />
+      <div className="relative flex items-center justify-center shrink-0">
+        <AltviraLogoMark size={size} iconVariant={iconVariant} />
       </div>
       {showText && (
-        <div className="flex flex-col">
-          <div className="flex items-center tracking-[0.28em] font-black text-lg leading-none">
-            <span className={isLight ? "text-white" : "text-[#090E19]"}>
-              ALT
-            </span>
-            <span className="text-[#1FB1F2]">VIRA</span>
-          </div>
+        <div className="flex flex-col justify-center">
+          <AltviraWordmark height={actualWordmarkHeight} variant={variant} />
           {subtitle && (
             <span
-              className={`text-[10px] tracking-[0.35em] font-semibold mt-1 uppercase ${
+              className={`text-[9px] tracking-[0.35em] font-semibold mt-1 uppercase ${
                 isLight ? "text-[#C9C9C9]/80" : "text-[#616C82]"
               }`}
             >
@@ -103,4 +163,3 @@ export function AltviraLogo({
     </div>
   );
 }
-
