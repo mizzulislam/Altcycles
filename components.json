@@ -17,6 +17,10 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
+  "registries": {
+    "@tailark-oss": "https://oss-tailark.com/r/radix/{name}",
+    "@react-bits": "https://reactbits.dev/r/{name}.json"
+  },
   "iconLibrary": "lucide"
 }
 
