@@ -29,7 +29,11 @@ import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 
 type AuthMode = "signin" | "signup";
 
-export function LoginPage() {
+interface LoginPageProps {
+  bannerSrc?: string;
+}
+
+export function LoginPage({ bannerSrc }: LoginPageProps) {
   const { signIn, signUp, profile, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
@@ -117,25 +121,40 @@ export function LoginPage() {
   return (
     <div className="min-h-screen w-full grid lg:grid-cols-2 bg-[#F0F1F3]">
       {/* =====================================================================
-          KOLOM KIRI: Area Banner Informasi (CMS Ready)
-          Kosong tanpa teks hardcoded, siap menampung banner grafis informasi.
-          Gradasi warna biru Altvira dengan transparansi 20% menjadi highlight
-          dan menghasilkan efek fade yang elegan.
+          KOLOM KIRI: Area Banner Informasi (Full-Bleed, CMS-Ready)
+          Struktur Layering Sesuai Arahan:
+          1. Layer Belakang (z-0): Banner visual (gambar/grafis dari CMS)
+          2. Layer Depan (z-10): Elemen kotak biru gradasi Altvira yang MENUTUPI
+             PENUH seluruh area kotak hitam (full-bleed, edge-to-edge tanpa
+             padding/margin sisa) dengan transparansi 20%.
+             Fungsi: Menjadi highlight kebiruan Altvira dan menimbulkan efek
+             fade yang menyatu dengan banner di belakangnya.
           ===================================================================== */}
-      <div className="relative hidden lg:flex items-center justify-center p-8 lg:p-10 bg-[#090E19] overflow-hidden select-none">
-        {/* Banner Container Slot */}
-        <div className="relative w-full h-full min-h-[620px] rounded-3xl overflow-hidden border border-white/10 bg-[#090E19] flex items-center justify-center shadow-2xl shadow-black/50">
-          {/* Subtle architectural grid pattern untuk penempatan banner CMS */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:36px_36px]" />
-
-          {/* Gradasi Biru Altvira dengan Transparansi 20% (Efek Fade Highlight Banner) */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1FB1F2]/20 via-[#0B43C8]/20 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#090E19]/80 via-transparent to-transparent pointer-events-none" />
-
-          {/* Ambient Glow Orbs */}
-          <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-[#1FB1F2]/10 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-[#0B43C8]/15 blur-3xl pointer-events-none" />
+      <div className="relative hidden lg:block w-full h-full min-h-screen bg-[#090E19] overflow-hidden select-none">
+        {/* LAYER 1 (BELAKANG): Banner Gambar / Slot CMS */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center">
+          {bannerSrc ? (
+            <img
+              src={bannerSrc}
+              alt="Banner Informasi Altvira"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            /* Visual Canvas Bersih untuk Slot Banner CMS */
+            <div className="w-full h-full relative overflow-hidden bg-[#090E19]">
+              {/* Struktur Grid Halus untuk penempatan banner informasi */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0f_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0f_1px,transparent_1px)] bg-[size:44px_44px]" />
+            </div>
+          )}
         </div>
+
+        {/* LAYER 2 (DEPAN / MENUTUPI BANNER & BIDANG HITAM):
+            Elemen kotak biru gradasi Altvira yang menutupi penuh dengan transparansi 20%
+            Highlight dari banner yang muncul sehingga menimbulkan efek fade */}
+        <div
+          className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-[#0B43C8] via-[#1FB1F2] to-[#0B43C8] opacity-20"
+          aria-hidden="true"
+        />
       </div>
 
       {/* =====================================================================
