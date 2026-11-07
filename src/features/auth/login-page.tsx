@@ -8,12 +8,11 @@ import {
   LockIcon,
   LogInIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   UserIcon,
   UserPlusIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AltviraLogo, AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { AltviraLogo } from "@/components/shared/altvira-logo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,7 +88,9 @@ export function LoginPage() {
       });
 
       if (res.user) {
-        toast.success(`Akun berhasil dibuat! Selamat datang, ${res.user.full_name}`);
+        toast.success(
+          `Akun berhasil dibuat! Selamat datang, ${res.user.full_name}`,
+        );
         navigate(portalHomeForRole(res.user.role), { replace: true });
       } else {
         toast.success(
@@ -116,93 +117,35 @@ export function LoginPage() {
   return (
     <div className="min-h-screen w-full grid lg:grid-cols-2 bg-[#F0F1F3]">
       {/* =====================================================================
-          KOLOM KIRI: Brand Identity Altvira Studio (Desain Mewah #090E19)
+          KOLOM KIRI: Area Banner Informasi (CMS Ready)
+          Kosong tanpa teks hardcoded, siap menampung banner grafis informasi.
+          Gradasi warna biru Altvira dengan transparansi 20% menjadi highlight
+          dan menghasilkan efek fade yang elegan.
           ===================================================================== */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 bg-[#090E19] text-white overflow-hidden select-none">
-        {/* Subtle radial ambient glows matching Altvira brand cyan & blue */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#1FB1F2]/15 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#0B43C8]/25 blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#1FB1F2]/10 blur-3xl pointer-events-none" />
+      <div className="relative hidden lg:flex items-center justify-center p-8 lg:p-10 bg-[#090E19] overflow-hidden select-none">
+        {/* Banner Container Slot */}
+        <div className="relative w-full h-full min-h-[620px] rounded-3xl overflow-hidden border border-white/10 bg-[#090E19] flex items-center justify-center shadow-2xl shadow-black/50">
+          {/* Subtle architectural grid pattern untuk penempatan banner CMS */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:36px_36px]" />
 
-        {/* Header Logo */}
-        <div className="relative z-10">
-          <AltviraLogo size={44} variant="light" subtitle="FINANCIAL ERP" />
-        </div>
+          {/* Gradasi Biru Altvira dengan Transparansi 20% (Efek Fade Highlight Banner) */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1FB1F2]/20 via-[#0B43C8]/20 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#090E19]/80 via-transparent to-transparent pointer-events-none" />
 
-        {/* Centerpiece Hero */}
-        <div className="relative z-10 max-w-lg my-auto space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1FB1F2]/30 bg-[#1FB1F2]/10 text-[#1FB1F2] text-xs font-semibold tracking-wider">
-            <SparklesIcon className="size-3.5" />
-            <span>SISTEM ADMINISTRASI &amp; AKUNTANSI ALTVIRA</span>
-          </div>
-
-          <div className="space-y-4">
-            <h1 className="text-4xl xl:text-5xl font-black tracking-tight text-white leading-tight">
-              Tata Kelola Keuangan Proyek yang{" "}
-              <span className="bg-gradient-to-r from-[#1FB1F2] to-[#0B43C8] bg-clip-text text-transparent">
-                Tertib, Transparan,
-              </span>{" "}
-              &amp; Akuntabel.
-            </h1>
-            <p className="text-[#C9C9C9] text-base leading-relaxed">
-              Platform internal Altvira Technology untuk pencatatan transaksi,
-              progress billing termin, otomatisasi jurnal SAK, kontrol anggaran,
-              serta penerbitan dokumen resmi Lampiran A.
-            </p>
-          </div>
-
-          {/* Value Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm space-y-1">
-              <div className="text-[#1FB1F2] text-xs font-bold tracking-wide">
-                Progress Billing
-              </div>
-              <div className="text-[11px] text-[#C9C9C9]/80 leading-snug">
-                Termin 1, 2, hingga ≥3 termin dengan eliminasi 100%
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm space-y-1">
-              <div className="text-[#1FB1F2] text-xs font-bold tracking-wide">
-                SAK &amp; Anggaran
-              </div>
-              <div className="text-[11px] text-[#C9C9C9]/80 leading-snug">
-                Jurnal akrual otomatis &amp; peringatan ambang batas
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm space-y-1">
-              <div className="text-[#1FB1F2] text-xs font-bold tracking-wide">
-                Lampiran A Resmi
-              </div>
-              <div className="text-[11px] text-[#C9C9C9]/80 leading-snug">
-                Quotation, BAKP, UAT, BAST, Invoice, &amp; Kuitansi
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Credit */}
-        <div className="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-[#616C82]">
-          <span>© {new Date().getFullYear()} Altvira Technology</span>
-          <span>PT Representasi Mitra Mandiri</span>
+          {/* Ambient Glow Orbs */}
+          <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-[#1FB1F2]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-[#0B43C8]/15 blur-3xl pointer-events-none" />
         </div>
       </div>
 
       {/* =====================================================================
           KOLOM KANAN: Form Masuk / Buat Akun (Gaya Splitz Bersih & Minimalis)
           ===================================================================== */}
-      <div className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-16">
+      <div className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12">
         <div className="w-full max-w-[440px] space-y-6">
-          {/* Mobile Logo Brand */}
-          <div className="flex lg:hidden flex-col items-center text-center space-y-2 mb-2">
-            <AltviraLogoMark size={48} />
-            <div className="tracking-[0.25em] font-black text-xl text-[#090E19]">
-              ALT<span className="text-[#1FB1F2]">VIRA</span>
-            </div>
-            <p className="text-xs text-[#616C82]">
-              Sistem Administrasi Keuangan &amp; Akuntansi
-            </p>
+          {/* Brand Logo Header */}
+          <div className="flex flex-col items-center text-center space-y-1 mb-2">
+            <AltviraLogo size={42} variant="dark" subtitle="FINANCIAL ERP" />
           </div>
 
           {/* Mode Pratinjau Alert (Bila belum terkoneksi cloud) */}
@@ -331,7 +274,7 @@ export function LoginPage() {
                     </Field>
                   )}
 
-                  {/* Field Username (Replaces Email Kerja) */}
+                  {/* Field Username */}
                   <Field data-invalid={Boolean(error)}>
                     <FieldLabel
                       htmlFor="auth-username"
@@ -481,7 +424,9 @@ export function LoginPage() {
                     ) : (
                       <CheckCircle2Icon className="mr-2 size-4" />
                     )}
-                    {mode === "signin" ? "Masuk ke Sistem" : "Buat Akun Sekarang"}
+                    {mode === "signin"
+                      ? "Masuk ke Sistem"
+                      : "Buat Akun Sekarang"}
                   </Button>
                 </FieldGroup>
               </form>
