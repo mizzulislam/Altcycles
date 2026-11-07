@@ -119,6 +119,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Altvira Brand Colors */
+  --color-altvira-blue: #0B43C8;
+  --color-altvira-cyan: #1FB1F2;
+  --color-altvira-gray: #C9C9C9;
+  --color-altvira-soft: #F0F1F3;
+  --color-altvira-muted: #616C82;
+  --color-altvira-dark: #2A2A2A;
+  --color-altvira-midnight: #090E19;
 }
 
 @layer base {

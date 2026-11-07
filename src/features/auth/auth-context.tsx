@@ -4,11 +4,22 @@ import { findDemoProfileByEmail, setDemoCurrentUser } from "@/lib/data-service";
 import { IDLE_TIMEOUT_MINUTES, isDemoMode, supabase } from "@/lib/supabase";
 import type { ProfileRow, UserRole } from "@/types/database.types";
 
+export interface SignUpResult {
+  needsConfirmation: boolean;
+  user: ProfileRow | null;
+  message?: string;
+}
+
 interface AuthContextValue {
   profile: ProfileRow | null;
   loading: boolean;
   isDemoMode: boolean;
-  signIn: (email: string, password: string) => Promise<ProfileRow>;
+  signIn: (emailOrUsername: string, password: string) => Promise<ProfileRow>;
+  signUp: (payload: {
+    usernameOrEmail: string;
+    password: string;
+    fullName: string;
+  }) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
@@ -141,12 +152,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [profile, signOut]);
 
   const signIn = React.useCallback(
-    async (email: string, password: string): Promise<ProfileRow> => {
+    async (emailOrUsername: string, password: string): Promise<ProfileRow> => {
+      const trimmed = emailOrUsername.trim();
+      const email = trimmed.includes("@")
+        ? trimmed
+        : `${trimmed.toLowerCase()}@altvira.id`;
+
       if (isDemoMode || !supabase) {
         if (!password || password.length < 4) {
           throw new Error("Kata sandi wajib diisi.");
         }
-        const found = findDemoProfileByEmail(email);
+        const found =
+          findDemoProfileByEmail(email) ||
+          findDemoProfileByEmail(trimmed);
         if (!found) {
           throw new Error(
             "Akun tidak ditemukan atau telah dinonaktifkan oleh Super Admin.",
@@ -159,11 +177,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email,
         password,
       });
       if (error || !data.user) {
-        throw new Error("Email atau kata sandi tidak valid.");
+        throw new Error(error?.message ?? "Username atau kata sandi tidak valid.");
       }
 
       const loaded = await loadSupabaseProfile(data.user.id);
@@ -177,6 +195,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(loaded);
       return loaded;
+    },
+    [loadSupabaseProfile],
+  );
+
+  const signUp = React.useCallback(
+    async (payload: {
+      usernameOrEmail: string;
+      password: string;
+      fullName: string;
+    }): Promise<SignUpResult> => {
+      const rawInput = payload.usernameOrEmail.trim();
+      const fullName = payload.fullName.trim();
+      const password = payload.password;
+
+      if (!fullName) {
+        throw new Error("Nama lengkap wajib diisi.");
+      }
+      if (!rawInput) {
+        throw new Error("Username wajib diisi.");
+      }
+      if (password.length < 6) {
+        throw new Error("Kata sandi minimal 6 karakter.");
+      }
+
+      const email = rawInput.includes("@")
+        ? rawInput
+        : `${rawInput.toLowerCase()}@altvira.id`;
+      const isSuperAdminEmail =
+        email.toLowerCase() === "mizzulislam.id@gmail.com";
+
+      if (isDemoMode || !supabase) {
+        const newDemoProfile: ProfileRow = {
+          id: crypto.randomUUID(),
+          email,
+          full_name: fullName,
+          role: isSuperAdminEmail ? "super_admin" : "user",
+          is_active: true,
+          created_by: null,
+          last_login_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        window.sessionStorage.setItem(DEMO_STORAGE_KEY, email);
+        setDemoCurrentUser(newDemoProfile.id);
+        setProfile(newDemoProfile);
+        return {
+          needsConfirmation: false,
+          user: newDemoProfile,
+          message: "Akun demo berhasil dibuat dan langsung masuk.",
+        };
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: isSuperAdminEmail ? "super_admin" : "user",
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.session?.user) {
+        const loaded = await loadSupabaseProfile(data.session.user.id);
+        if (loaded) {
+          setProfile(loaded);
+          return {
+            needsConfirmation: false,
+            user: loaded,
+            message: "Akun berhasil dibuat dan Anda telah masuk ke sistem.",
+          };
+        }
+      }
+
+      return {
+        needsConfirmation: true,
+        user: null,
+        message:
+          "Akun berhasil didaftarkan di Supabase! Silakan masuk dengan akun tersebut.",
+      };
     },
     [loadSupabaseProfile],
   );
@@ -212,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isDemoMode,
       signIn,
+      signUp,
       signOut,
       requestPasswordReset,
       updatePassword,
@@ -220,6 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile,
       loading,
       signIn,
+      signUp,
       signOut,
       requestPasswordReset,
       updatePassword,
