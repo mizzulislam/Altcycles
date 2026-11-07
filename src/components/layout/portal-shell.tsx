@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -131,6 +132,7 @@ export function PortalShell() {
           <span className="font-bold">Altcycles</span>
         </div>
         <div className="flex items-center gap-1">
+          <ThemeToggle size="sm" />
           <Button
             type="button"
             variant="ghost"
@@ -244,6 +246,9 @@ export function PortalShell() {
 
       {/* Konten Utama */}
       <main className="flex-1 bg-background p-4 md:p-8">
+        {/* Tombol Mode Gelap & Terang di Ujung Kanan Atas Halaman Desktop */}
+        <ThemeToggle variant="floating" className="hidden md:inline-flex" />
+
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
           <Outlet />
         </div>

@@ -27,14 +27,16 @@ import { PurchaseOrdersPage } from "@/features/purchase-orders/po-page";
 import { AuditTrailPage } from "@/features/system-config/audit-trail-page";
 import { MasterReadonlyPage } from "@/features/system-config/master-readonly-page";
 import { SuperAdminDashboardPage } from "@/features/system-config/super-admin-dashboard";
+import { ThemeProvider } from "@/lib/theme-context";
 import { SystemConfigPage } from "@/features/system-config/system-config-page";
 import { UsersManagementPage } from "@/features/system-config/users-management-page";
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/lupa-kata-sandi" element={<ForgotPasswordPage />} />
           <Route path="/reset-kata-sandi" element={<ResetPasswordPage />} />
@@ -132,5 +134,6 @@ export function App() {
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }

@@ -19,6 +19,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/features/auth/auth-context";
 
 export function ForgotPasswordPage() {
@@ -44,7 +45,8 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <ThemeToggle variant="floating" />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Pemulihan Kata Sandi</CardTitle>
@@ -126,7 +128,8 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <ThemeToggle variant="floating" />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Tetapkan Kata Sandi Baru</CardTitle>

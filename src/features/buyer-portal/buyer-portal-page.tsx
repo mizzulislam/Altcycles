@@ -2,7 +2,6 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  Building2Icon,
   CheckCircle2Icon,
   CopyIcon,
   DownloadIcon,
@@ -13,6 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -224,9 +225,7 @@ export function BuyerPortalPage() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Building2Icon className="size-5" />
-            </div>
+            <AltviraLogoMark size={36} iconVariant="transparent" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">
                 Portal Pembeli Klien — Altvira Technology
@@ -237,12 +236,15 @@ export function BuyerPortalPage() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/login">
-              <ArrowLeftIcon data-icon="inline-start" />
-              Login Tim Internal
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle size="sm" />
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/login">
+                <ArrowLeftIcon data-icon="inline-start" />
+                Login Tim Internal
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="lookup">
