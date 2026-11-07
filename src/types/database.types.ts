@@ -1043,6 +1043,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: UserRole | null;
       };
+      touch_last_login: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
       submit_payment_request: {
         Args: { p_request_id: string };
         Returns: PaymentRequestRow;

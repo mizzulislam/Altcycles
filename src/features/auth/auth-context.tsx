@@ -173,10 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      await supabase
-        .from("profiles")
-        .update({ last_login_at: new Date().toISOString() })
-        .eq("id", loaded.id);
+      await supabase.rpc("touch_last_login");
 
       setProfile(loaded);
       return loaded;

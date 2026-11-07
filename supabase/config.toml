@@ -1,4 +1,4 @@
-project_id = "altcycles"
+project_id = "kwdjbaccaavtmqritnye"
 
 [api]
 enabled = true
@@ -14,5 +14,17 @@ major_version = 15
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/reset-kata-sandi"]
 enable_signup = false
 
+# Verifikasi JWT di gateway dimatikan karena:
+# - buyer-submit-po & buyer-portal-lookup adalah endpoint Portal Pembeli tanpa login
+# - admin-manage-users memverifikasi Bearer JWT & peran super_admin secara kriptografis di dalam kode via auth.getUser()
+[functions.admin-manage-users]
+verify_jwt = false
+
+[functions.buyer-submit-po]
+verify_jwt = false
+
+[functions.buyer-portal-lookup]
+verify_jwt = false

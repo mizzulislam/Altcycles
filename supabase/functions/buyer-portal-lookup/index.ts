@@ -30,6 +30,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const ipHashSalt = Deno.env.get("IP_HASH_SALT") ?? "altcycles-lookup-salt";
 
     const body = (await req.json()) as LookupRequest;
     const poNumber = (body.poNumber ?? "").trim().toUpperCase();
@@ -45,7 +46,7 @@ Deno.serve(async (req: Request) => {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
 
-    const ipHash = await sha256Hex(`altcycles-lookup:${clientIp}`);
+    const ipHash = await sha256Hex(`${ipHashSalt}:${clientIp}`);
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data, error } = await adminClient.rpc("rpc_buyer_lookup_po", {

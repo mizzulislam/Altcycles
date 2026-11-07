@@ -39,6 +39,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY") ?? "";
+    const ipHashSalt = Deno.env.get("IP_HASH_SALT") ?? "altcycles-po-salt";
 
     const body = (await req.json()) as SubmitPoRequest;
 
@@ -88,7 +89,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const ipHash = await sha256Hex(`altcycles-po:${clientIp}`);
+    const ipHash = await sha256Hex(`${ipHashSalt}:${clientIp}`);
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data, error } = await adminClient.rpc("rpc_buyer_submit_po", {

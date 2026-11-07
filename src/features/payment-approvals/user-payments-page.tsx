@@ -47,6 +47,7 @@ import { listAccounts, listProjects } from "@/lib/data-service";
 import { formatDateID, formatRupiah } from "@/lib/formatters";
 import {
   createAndSubmitPaymentRequest,
+  getAttachmentSignedUrl,
   getProjectBudgetComparison,
   listPaymentRequests,
   listPurchaseOrders,
@@ -176,6 +177,7 @@ export function UserPaymentsPage() {
           name: proofFile.name,
           mimeType: proofFile.type || "application/pdf",
           sizeBytes: proofFile.size,
+          blob: proofFile,
         },
         budgetWarningAcknowledged: ackWarning,
       });
@@ -302,10 +304,33 @@ export function UserPaymentsPage() {
                       </TableCell>
                       <TableCell className="text-xs">
                         {files.map((f) => (
-                          <div key={f.id} className="flex items-center gap-1">
-                            <PaperclipIcon className="size-3" />
-                            <span className="truncate max-w-36">{f.file_name}</span>
-                          </div>
+                          <button
+                            key={f.id}
+                            type="button"
+                            className="flex items-center gap-1 text-left text-primary hover:underline"
+                            onClick={() => {
+                              void getAttachmentSignedUrl(f.storage_path)
+                                .then((url) => {
+                                  if (url) {
+                                    window.open(url, "_blank", "noopener,noreferrer");
+                                  } else {
+                                    toast.info(
+                                      `Lampiran contoh lokal: ${f.file_name} (unduhan nyata aktif setelah terhubung ke Supabase Storage).`,
+                                    );
+                                  }
+                                })
+                                .catch((err: unknown) =>
+                                  toast.error(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Gagal membuka lampiran.",
+                                  ),
+                                );
+                            }}
+                          >
+                            <PaperclipIcon className="size-3 shrink-0" />
+                            <span className="max-w-36 truncate">{f.file_name}</span>
+                          </button>
                         ))}
                       </TableCell>
                       <TableCell>

@@ -57,6 +57,7 @@ import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatDateTimeID, formatRupiah } from "@/lib/formatters";
 import {
   decidePaymentRequest,
+  getAttachmentSignedUrl,
   listPaymentRequests,
   recordExportLog,
   recordPaymentDisbursement,
@@ -422,9 +423,33 @@ export function AdminApprovalsPage() {
                         ) : (
                           <div className="flex flex-col gap-1">
                             {reqAttachments.map((att) => (
-                              <span
+                              <button
                                 key={att.id}
-                                className="inline-flex items-center gap-1 text-primary"
+                                type="button"
+                                className="inline-flex items-center gap-1 text-left text-primary hover:underline"
+                                onClick={() => {
+                                  void getAttachmentSignedUrl(att.storage_path)
+                                    .then((url) => {
+                                      if (url) {
+                                        window.open(
+                                          url,
+                                          "_blank",
+                                          "noopener,noreferrer",
+                                        );
+                                      } else {
+                                        toast.info(
+                                          `Lampiran contoh lokal: ${att.file_name} (unduhan nyata aktif setelah terhubung ke Supabase Storage).`,
+                                        );
+                                      }
+                                    })
+                                    .catch((err: unknown) =>
+                                      toast.error(
+                                        err instanceof Error
+                                          ? err.message
+                                          : "Gagal membuka lampiran.",
+                                      ),
+                                    );
+                                }}
                               >
                                 <PaperclipIcon className="size-3.5 shrink-0" />
                                 <span className="max-w-36 truncate">
@@ -433,7 +458,7 @@ export function AdminApprovalsPage() {
                                 <span className="text-muted-foreground">
                                   ({Math.ceil(att.file_size_bytes / 1024)} KB)
                                 </span>
-                              </span>
+                              </button>
                             ))}
                           </div>
                         )}

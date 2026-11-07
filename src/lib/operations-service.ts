@@ -508,7 +508,12 @@ export async function createAndSubmitPaymentRequest(input: {
   projectId: string;
   expenseAccountId: string;
   poId?: string | null;
-  proofFile: { name: string; mimeType: string; sizeBytes: number };
+  proofFile: {
+    name: string;
+    mimeType: string;
+    sizeBytes: number;
+    blob?: Blob;
+  };
   budgetWarningAcknowledged?: boolean;
 }): Promise<PaymentRequestRow> {
   if (input.proofFile.sizeBytes <= 0 || input.proofFile.sizeBytes > 5_242_880) {
@@ -601,13 +606,26 @@ export async function createAndSubmitPaymentRequest(input: {
     .single();
   if (insErr) throw new Error(insErr.message);
 
+  const safeFileName = input.proofFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const storagePath = `proofs/${created.id}/${Date.now()}_${safeFileName}`;
+
+  if (input.proofFile.blob) {
+    const { error: upErr } = await supabase.storage
+      .from("altcycles-files")
+      .upload(storagePath, input.proofFile.blob, {
+        contentType: input.proofFile.mimeType || "application/octet-stream",
+        upsert: false,
+      });
+    if (upErr) throw new Error(`Gagal mengunggah lampiran bukti: ${upErr.message}`);
+  }
+
   const { error: attErr } = await supabase.from("attachments").insert({
     entity_type: "payment_request_proof",
     entity_id: created.id,
     file_name: input.proofFile.name,
     mime_type: input.proofFile.mimeType,
     file_size_bytes: input.proofFile.sizeBytes,
-    storage_path: `proofs/${created.id}/${input.proofFile.name}`,
+    storage_path: storagePath,
     uploaded_by: user.id,
   });
   if (attErr) throw new Error(attErr.message);
@@ -618,6 +636,19 @@ export async function createAndSubmitPaymentRequest(input: {
   );
   if (subErr) throw new Error(subErr.message);
   return submitted;
+}
+
+export async function getAttachmentSignedUrl(
+  storagePath: string,
+): Promise<string | null> {
+  if (isDemoMode || !supabase || storagePath.startsWith("demo/")) {
+    return null;
+  }
+  const { data, error } = await supabase.storage
+    .from("altcycles-files")
+    .createSignedUrl(storagePath, 300);
+  if (error) throw new Error(`Gagal membuka tautan berkas: ${error.message}`);
+  return data.signedUrl;
 }
 
 export async function resubmitRejectedPaymentRequest(input: {
