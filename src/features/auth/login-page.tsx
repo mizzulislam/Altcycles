@@ -164,7 +164,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
         <div className="w-full max-w-[440px] space-y-6">
           {/* Brand Logo Header */}
           <div className="flex flex-col items-center text-center space-y-1 mb-2">
-            <AltviraLogo size={42} variant="dark" subtitle="FINANCIAL ERP" />
+            <AltviraLogo size={38} variant="dark" subtitle="FINANCIAL ERP" />
           </div>
 
           {/* Mode Pratinjau Alert (Bila belum terkoneksi cloud) */}

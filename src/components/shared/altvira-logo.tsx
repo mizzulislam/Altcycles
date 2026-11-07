@@ -15,8 +15,8 @@ export interface AltviraWordmarkProps extends React.ImgHTMLAttributes<HTMLImageE
 }
 
 export interface AltviraLogoProps {
-  size?: number; // Ukuran tinggi/lebar ikon (default: 40)
-  wordmarkHeight?: number; // Tinggi teks wordmark (default: proportional ~18px)
+  size?: number; // Ukuran tinggi/lebar ikon (default: 38)
+  wordmarkHeight?: number; // Tinggi teks wordmark (default: 12)
   showText?: boolean;
   variant?: AltviraThemeVariant;
   iconVariant?: AltviraIconVariant;
@@ -31,7 +31,7 @@ export interface AltviraLogoProps {
  * - `iconVariant="square"` (Gambar 1): App icon AV squircle dengan latar belakang gelap
  */
 export function AltviraLogoMark({
-  size = 40,
+  size = 38,
   iconVariant = "transparent",
   className = "",
   alt = "Altvira Mark",
@@ -67,7 +67,7 @@ export function AltviraLogoMark({
  * - `variant="light"`: Huruf putih dengan huruf V biru cyan (untuk latar belakang gelap/midnight)
  */
 export function AltviraWordmark({
-  height = 18,
+  height = 12,
   variant = "dark",
   className = "",
   alt = "ALTVIRA",
@@ -91,7 +91,7 @@ export function AltviraWordmark({
       className={`object-contain select-none ${className}`}
       style={{
         height: `${height}px`,
-        width: "auto",
+        width: `${width}px`,
         maxWidth: "100%",
         ...style,
       }}
@@ -102,11 +102,13 @@ export function AltviraWordmark({
 }
 
 /**
- * Komponen Logo Lengkap Altvira (Kombinasi Ikon Gambar 1/2 + Teks Gambar 3)
+ * Komponen Logo Lengkap Altvira (Kombinasi Ikon Gambar 1/2 + Teks Gambar 3 + Subtitle)
+ * Ukuran logo teks dibuat seimbang dan seukuran dengan teks FINANCIAL ERP.
+ * Tipografi FINANCIAL ERP menggunakan font Montserrat dengan line spacing 4% (line-height: 1.04, tracking: 0.04em).
  */
 export function AltviraLogo({
-  size = 40,
-  wordmarkHeight,
+  size = 38,
+  wordmarkHeight = 12,
   showText = true,
   variant = "dark",
   iconVariant = "transparent",
@@ -115,21 +117,26 @@ export function AltviraLogo({
   className = "",
 }: AltviraLogoProps) {
   const isLight = variant === "light";
-  const actualWordmarkHeight = wordmarkHeight ?? Math.max(15, Math.round(size * 0.45));
+  const actualWordmarkHeight = wordmarkHeight;
 
   if (layout === "vertical") {
     return (
-      <div className={`flex flex-col items-center text-center gap-3 select-none ${className}`}>
+      <div className={`flex flex-col items-center text-center gap-2.5 select-none ${className}`}>
         <div className="relative flex items-center justify-center">
           <AltviraLogoMark size={size} iconVariant={iconVariant} />
         </div>
         {showText && (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center gap-1">
             <AltviraWordmark height={actualWordmarkHeight} variant={variant} />
             {subtitle && (
               <span
-                className={`text-[9.5px] tracking-[0.38em] font-semibold mt-1.5 uppercase ${
-                  isLight ? "text-[#C9C9C9]/80" : "text-[#616C82]"
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  lineHeight: "1.04",
+                  letterSpacing: "0.04em",
+                }}
+                className={`text-[11px] font-semibold uppercase ${
+                  isLight ? "text-[#C9C9C9]" : "text-[#616C82]"
                 }`}
               >
                 {subtitle}
@@ -147,12 +154,17 @@ export function AltviraLogo({
         <AltviraLogoMark size={size} iconVariant={iconVariant} />
       </div>
       {showText && (
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center gap-1">
           <AltviraWordmark height={actualWordmarkHeight} variant={variant} />
           {subtitle && (
             <span
-              className={`text-[9px] tracking-[0.35em] font-semibold mt-1 uppercase ${
-                isLight ? "text-[#C9C9C9]/80" : "text-[#616C82]"
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                lineHeight: "1.04",
+                letterSpacing: "0.04em",
+              }}
+              className={`text-[11px] font-semibold uppercase ${
+                isLight ? "text-[#C9C9C9]" : "text-[#616C82]"
               }`}
             >
               {subtitle}
