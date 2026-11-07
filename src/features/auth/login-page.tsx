@@ -122,12 +122,14 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }
 
   return (
-    <div className="relative min-h-screen w-full grid lg:grid-cols-2 bg-[#F0F1F3] dark:bg-[#090E19] transition-colors duration-300">
+    <div className="relative min-h-screen w-full bg-[#F0F1F3] dark:bg-[#090E19] transition-colors duration-300">
       {/* Tombol Pengalih Mode Gelap & Terang di Ujung Kanan Atas Halaman */}
       <ThemeToggle variant="floating" />
 
-      {/* =====================================================================
-          KOLOM KIRI: Area Banner Informasi (Full-Bleed, CMS-Ready)
+      {/* Grid 2 Kolom Murni: Kolom Kiri (Banner) & Kolom Kanan (Form) */}
+      <div className="min-h-screen w-full grid lg:grid-cols-2">
+        {/* =====================================================================
+            KOLOM KIRI: Area Banner Informasi (Full-Bleed, CMS-Ready)
           Struktur Layering Sesuai Arahan:
           1. Layer Belakang (z-0): Banner visual (gambar/grafis dari CMS)
           2. Layer Depan (z-10): Elemen kotak biru gradasi Altvira yang MENUTUPI
@@ -515,6 +517,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             </div>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );
