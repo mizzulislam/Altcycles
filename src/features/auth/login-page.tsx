@@ -95,6 +95,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [submitting, setSubmitting] = React.useState(false);
   const [googleSubmitting, setGoogleSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [oauthChecking, setOauthChecking] = React.useState(false);
 
   // Filter Keamanan Kata Sandi
   const pwdCriteria = React.useMemo(() => evaluatePassword(password), [password]);
@@ -108,11 +109,64 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     return score;
   }, [pwdCriteria]);
 
-  // Deteksi jika browser baru kembali dari redirect Google OAuth
-  const isOAuthCallback =
-    typeof window !== "undefined" &&
-    (window.location.hash.includes("access_token") ||
-      window.location.search.includes("code="));
+  // Deteksi dan tangani kembalinya redirect Google OAuth (sukses maupun error)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashString = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(hashString);
+
+    const errCode =
+      searchParams.get("error_code") || hashParams.get("error_code");
+    const errDesc =
+      searchParams.get("error_description") ||
+      hashParams.get("error_description") ||
+      searchParams.get("error") ||
+      hashParams.get("error");
+
+    if (errCode || errDesc) {
+      if (
+        errCode === "signup_disabled" ||
+        errDesc?.toLowerCase().includes("signup")
+      ) {
+        setError(
+          "Pendaftaran akun baru dinonaktifkan di Supabase (Signups not allowed). Jika ingin mengizinkan pendaftaran akun baru via Google, aktifkan opsi 'Allow new users to sign up' di dashboard Supabase (Authentication -> Sign In / Up), atau silakan gunakan akun Google yang telah terdaftar.",
+        );
+      } else {
+        setError(
+          errDesc
+            ? decodeURIComponent(errDesc.replace(/\+/g, " "))
+            : "Otorisasi Google dibatalkan atau ditolak.",
+        );
+      }
+      setOauthChecking(false);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    const hasCode = searchParams.has("code");
+    const hasToken = hashParams.has("access_token");
+
+    if (hasCode || hasToken) {
+      setOauthChecking(true);
+      // Timeout pengaman 7 detik jika sesi tidak berhasil diverifikasi
+      const timer = window.setTimeout(() => {
+        setOauthChecking(false);
+        setError(
+          "Waktu verifikasi akun Google habis. Silakan coba masuk kembali.",
+        );
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      }, 7000);
+      return () => window.clearTimeout(timer);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (profile) {
@@ -211,7 +265,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }
 
   // Tampilan transisi saat kembali dari otorisasi Google OAuth
-  if (isOAuthCallback && !profile) {
+  if (oauthChecking && !profile) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] p-4 text-center transition-colors">
         <ThemeToggle variant="floating" />
@@ -234,6 +288,21 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                   Sedang memverifikasi data akun dan menyiapkan portal kerja Anda.
                 </p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setOauthChecking(false);
+                  window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.pathname,
+                  );
+                }}
+                className="mt-2 text-xs border-[#C9C9C9] dark:border-white/20 text-[#616C82] dark:text-[#9AA5B8] hover:text-[#2A2A2A] dark:hover:text-white"
+              >
+                Batalkan / Kembali ke Masuk
+              </Button>
             </div>
           </Card>
         </div>
