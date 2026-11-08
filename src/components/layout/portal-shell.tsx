@@ -11,6 +11,7 @@ import {
   FileSpreadsheetIcon,
   FolderKanbanIcon,
   HandCoinsIcon,
+  KeyRoundIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { ChangePasswordDialog } from "@/components/shared/change-password-dialog";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,6 +86,7 @@ export function PortalShell() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [changePwdOpen, setChangePwdOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<NotificationRow[]>([]);
 
   const loadNotifications = React.useCallback(async () => {
@@ -222,25 +225,43 @@ export function PortalShell() {
 
         <Separator />
 
-        <div className="flex flex-col gap-3 p-4">
-          <div className="flex flex-col">
-            <span className="truncate text-xs font-semibold">
-              {profile.full_name}
-            </span>
-            <span className="truncate text-xs text-muted-foreground">
-              {profile.email}
-            </span>
+        <div className="flex flex-col gap-2.5 p-4 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="truncate text-xs font-semibold">
+                {profile.full_name}
+              </span>
+              <span className="truncate text-[11px] text-muted-foreground">
+                {profile.email}
+              </span>
+            </div>
+            <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full justify-start"
-          >
-            <LogOutIcon data-icon="inline-start" />
-            Keluar Sesi
-          </Button>
+
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setChangePwdOpen(true)}
+              className="text-xs h-8 px-2 justify-center gap-1.5"
+              title="Ganti Kata Sandi Akun"
+            >
+              <KeyRoundIcon className="size-3.5" />
+              <span>Ganti Sandi</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="text-xs h-8 px-2 justify-center gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              title="Keluar Sesi"
+            >
+              <LogOutIcon className="size-3.5" />
+              <span>Keluar</span>
+            </Button>
+          </div>
         </div>
       </aside>
 
@@ -311,6 +332,12 @@ export function PortalShell() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Ganti Kata Sandi Akun Pengguna */}
+      <ChangePasswordDialog
+        open={changePwdOpen}
+        onOpenChange={setChangePwdOpen}
+      />
     </div>
   );
 }

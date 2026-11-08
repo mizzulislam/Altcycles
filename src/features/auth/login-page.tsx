@@ -108,8 +108,15 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     return score;
   }, [pwdCriteria]);
 
+  // Deteksi jika browser baru kembali dari redirect Google OAuth
+  const isOAuthCallback =
+    typeof window !== "undefined" &&
+    (window.location.hash.includes("access_token") ||
+      window.location.search.includes("code="));
+
   React.useEffect(() => {
     if (profile) {
+      toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
       navigate(portalHomeForRole(profile.role), { replace: true });
     }
   }, [profile, navigate]);
@@ -201,6 +208,37 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     setUsername(demoUsername);
     setPassword("demo1234");
     setError(null);
+  }
+
+  // Tampilan transisi saat kembali dari otorisasi Google OAuth
+  if (isOAuthCallback && !profile) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] p-4 text-center transition-colors">
+        <ThemeToggle variant="floating" />
+        <div className="w-full max-w-sm space-y-6">
+          <div className="flex justify-center">
+            <AltviraLogo
+              size={42}
+              variant={resolvedTheme === "dark" ? "light" : "dark"}
+              subtitle="FINANCIAL ERP"
+            />
+          </div>
+          <Card className="p-8 border border-[#C9C9C9]/60 dark:border-white/10 shadow-xl bg-white dark:bg-[#121A2B] rounded-2xl">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Spinner className="size-8 text-[#0B43C8] dark:text-[#1FB1F2]" />
+              <div className="space-y-1">
+                <h3 className="font-bold text-base text-[#2A2A2A] dark:text-white">
+                  Menghubungkan Akun Google...
+                </h3>
+                <p className="text-xs text-[#616C82] dark:text-[#9AA5B8]">
+                  Sedang memverifikasi data akun dan menyiapkan portal kerja Anda.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (

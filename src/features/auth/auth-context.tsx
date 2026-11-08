@@ -46,18 +46,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   const loadSupabaseProfile = React.useCallback(
-    async (userId: string): Promise<ProfileRow | null> => {
+    async (userId: string, retries = 3): Promise<ProfileRow | null> => {
       if (!supabase) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      if (error || !data || !data.is_active) {
-        await supabase.auth.signOut();
-        return null;
+
+      // 1. Coba baca profil dengan retry backoff (mengantisipasi jeda commit trigger PostgreSQL pada OAuth Google)
+      for (let attempt = 0; attempt < retries; attempt++) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (data) {
+          if (!data.is_active) {
+            await supabase.auth.signOut();
+            return null;
+          }
+          return data;
+        }
+
+        if (attempt < retries - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+        }
       }
-      return data;
+
+      // 2. Failsafe: Jika profil belum terbentuk dari trigger, sinkronkan langsung dari sesi auth Google
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user && authData.user.id === userId) {
+          const authUser = authData.user;
+          const isSuperAdminEmail =
+            authUser.email?.toLowerCase() === "mizzulislam.id@gmail.com";
+          const rawRole =
+            (authUser.user_metadata?.role as UserRole | undefined) ||
+            (isSuperAdminEmail ? "super_admin" : "user");
+          const fullName =
+            authUser.user_metadata?.full_name ||
+            authUser.user_metadata?.name ||
+            authUser.email?.split("@")[0] ||
+            "Pengguna Altvira";
+
+          const { data: inserted, error: insertErr } = await supabase
+            .from("profiles")
+            .upsert({
+              id: userId,
+              email: authUser.email || `${userId}@altvira.id`,
+              full_name: fullName,
+              role: rawRole,
+              is_active: true,
+            })
+            .select()
+            .maybeSingle();
+
+          if (!insertErr && inserted) {
+            return inserted;
+          }
+        }
+      } catch (err) {
+        console.error("Failsafe profile creation error:", err);
+      }
+
+      await supabase.auth.signOut();
+      return null;
     },
     [],
   );
