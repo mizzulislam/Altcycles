@@ -191,9 +191,7 @@ export function ProjectsPage() {
             Master Proyek &amp; Penugasan Tim
           </h1>
           <p className="text-sm text-muted-foreground">
-            Metode pengakuan pendapatan dipilih otomatis berdasarkan jumlah
-            termin (BR-13), dan pengguna peran User hanya dapat melihat proyek
-            tempat ia ditugaskan.
+            Metode pengakuan pendapatan disesuaikan dengan struktur termin proyek, dengan akses anggota tim yang aman dan terisolasi.
           </p>
         </div>
         <Button type="button" onClick={openNew}>
@@ -306,8 +304,7 @@ export function ProjectsPage() {
               {editingId ? "Kelola Proyek & Anggota Tim" : "Tambah Proyek Baru"}
             </DialogTitle>
             <DialogDescription>
-              Nilai kontrak disimpan dalam Rupiah bulat tanpa desimal sen
-              (BR-11).
+              Nilai kontrak disimpan dalam nominal Rupiah bulat penuh.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>

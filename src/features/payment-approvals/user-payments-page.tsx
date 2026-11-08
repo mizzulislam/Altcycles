@@ -156,11 +156,11 @@ export function UserPaymentsPage() {
       return;
     }
     if (proofFile.size > 5 * 1024 * 1024) {
-      toast.error("Ukuran berkas bukti maksimal 5 MB (FR-LA4).");
+      toast.error("Ukuran berkas bukti maksimal 5 MB.");
       return;
     }
     if (exceedsBudget && !ackWarning) {
-      toast.error("Centang konfirmasi peringatan anggaran terlebih dahulu (FR-PA7).");
+      toast.error("Centang konfirmasi peringatan anggaran terlebih dahulu.");
       return;
     }
     setSubmitting(true);
@@ -244,8 +244,7 @@ export function UserPaymentsPage() {
         <CardHeader>
           <CardTitle>Riwayat &amp; Status Pengajuan</CardTitle>
           <CardDescription>
-            Apabila pengajuan ditolak, alasan penolakan ditampilkan jelas dan
-            dapat direvisi untuk diajukan ulang (BR-5).
+            Apabila pengajuan ditolak, alasan penolakan ditampilkan secara transparan dan dapat direvisi untuk diajukan kembali.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -378,8 +377,7 @@ export function UserPaymentsPage() {
           <DialogHeader>
             <DialogTitle>Ajukan Persetujuan Pembayaran</DialogTitle>
             <DialogDescription>
-              Pengajuan langsung memberi notifikasi ke Admin untuk diputuskan
-              (FR-PA6).
+              Pengajuan akan langsung diteruskan ke Admin Keuangan untuk ditinjau.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -428,7 +426,7 @@ export function UserPaymentsPage() {
                       <SelectGroup>
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
-                            {p.code} — {p.name}
+                            {p.code}: {p.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -448,7 +446,7 @@ export function UserPaymentsPage() {
                       <SelectGroup>
                         {expenseAccounts.map((a) => (
                           <SelectItem key={a.id} value={a.id}>
-                            {a.code} — {a.name}
+                            {a.code}: {a.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -477,7 +475,7 @@ export function UserPaymentsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">— Tanpa PO —</SelectItem>
+                        <SelectItem value="none">Tanpa Dokumen PO</SelectItem>
                         {myPos.map((po) => (
                           <SelectItem key={po.id} value={po.id}>
                             {po.po_number} ({formatRupiah(po.total_amount)})
@@ -491,7 +489,7 @@ export function UserPaymentsPage() {
 
               {exceedsBudget ? (
                 <Alert variant="destructive">
-                  <AlertTitle>Peringatan Anggaran Akun Terlampaui (FR-PA7)</AlertTitle>
+                  <AlertTitle>Peringatan Anggaran Akun Terlampaui</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
                       Nominal pengajuan ({formatRupiah(amount)}) melampaui sisa
@@ -521,7 +519,7 @@ export function UserPaymentsPage() {
                   onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                 />
                 <FieldDescription>
-                  Format diizinkan: PDF, PNG, atau JPG (FR-LA4).
+                  Format berkas yang didukung: PDF, PNG, atau JPG.
                 </FieldDescription>
               </Field>
 

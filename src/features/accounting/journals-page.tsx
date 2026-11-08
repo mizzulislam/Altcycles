@@ -207,7 +207,7 @@ export function JournalsPage() {
     e.preventDefault();
     if (!isDraftBalanced) {
       toast.error(
-        "Jurnal belum seimbang: Total Debit wajib sama dengan Total Kredit dan di atas Rp0 (BR-1).",
+        "Jurnal belum seimbang: Total Debit wajib sama dengan Total Kredit dan bernilai di atas Rp0.",
       );
       return;
     }
@@ -288,7 +288,7 @@ export function JournalsPage() {
           formatDateID(j.journal_date),
           JOURNAL_TYPE_LABELS[j.journal_type].label,
           prj ? prj.code : "-",
-          acc ? `${acc.code} — ${acc.name}` : "-",
+          acc ? `${acc.code}: ${acc.name}` : "-",
           l.description || j.description,
           l.debit,
           l.credit,
@@ -323,8 +323,7 @@ export function JournalsPage() {
             Jurnal Umum, Penyesuaian, &amp; Koreksi
           </h1>
           <p className="text-sm text-muted-foreground">
-            Jurnal terposting bersifat kekal (BR-2). Perbaikan dilakukan melalui
-            Jurnal Koreksi resmi dengan referensi ke jurnal asal.
+            Jurnal terposting bersifat permanen. Perbaikan dilakukan melalui Jurnal Koreksi resmi dengan tautan audit ke jurnal asal.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -380,7 +379,7 @@ export function JournalsPage() {
                   <SelectItem value="ALL">Semua Proyek</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.code} — {p.name}
+                      {p.code}: {p.name}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -497,7 +496,7 @@ export function JournalsPage() {
                               <span className="font-mono">
                                 {acc?.code ?? "-"}
                               </span>{" "}
-                              — {acc?.name ?? "Akun"}
+                              : {acc?.name ?? "Akun"}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                               {l.description || "-"}
@@ -513,7 +512,7 @@ export function JournalsPage() {
                       })}
                       <TableRow className="bg-muted/40 font-semibold">
                         <TableCell colSpan={2} className="text-xs">
-                          Total Seimbang (BR-1)
+                          Total Seimbang
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           {formatRupiah(sumD)}
@@ -537,8 +536,7 @@ export function JournalsPage() {
           <DialogHeader>
             <DialogTitle>Buat &amp; Posting Jurnal Baru</DialogTitle>
             <DialogDescription>
-              Setiap jurnal wajib seimbang antara Debit dan Kredit dalam Rupiah
-              bulat tanpa sen (BR-1 &amp; BR-11).
+              Setiap jurnal wajib seimbang antara Debit dan Kredit dalam Rupiah bulat penuh.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePostJournal}>
@@ -584,11 +582,11 @@ export function JournalsPage() {
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="none">
-                          — Biaya Bersama / Umum —
+                          Biaya Bersama / Umum
                         </SelectItem>
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
-                            {p.code} — {p.name}
+                            {p.code}: {p.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -612,8 +610,7 @@ export function JournalsPage() {
                 <Field orientation="horizontal">
                   <div className="flex flex-col gap-0.5">
                     <FieldLabel htmlFor="j-rev">
-                      Tandai untuk Jurnal Pembalik Awal Periode Berikutnya
-                      (Opsional FR-AK12)
+                      Tandai untuk Jurnal Pembalik Awal Periode Berikutnya (Opsional)
                     </FieldLabel>
                     <FieldDescription>
                       Hanya diizinkan pada akrual lintas tahun / proyek 2 termin;
@@ -676,7 +673,7 @@ export function JournalsPage() {
                             <SelectGroup>
                               {postableAccounts.map((a) => (
                                 <SelectItem key={a.id} value={a.id}>
-                                  {a.code} — {a.name}
+                                  {a.code}: {a.name}
                                 </SelectItem>
                               ))}
                             </SelectGroup>
@@ -752,8 +749,8 @@ export function JournalsPage() {
                     tone={isDraftBalanced ? "success" : "destructive"}
                     label={
                       isDraftBalanced
-                        ? "Seimbang — Siap Posting"
-                        : "Belum Seimbang (BR-1)"
+                        ? "Seimbang: Siap Posting"
+                        : "Belum Seimbang (Debit \u2260 Kredit)"
                     }
                   />
                 </div>
@@ -790,9 +787,7 @@ export function JournalsPage() {
               Buat Jurnal Koreksi atas {correctTarget?.journal_number}
             </DialogTitle>
             <DialogDescription>
-              Sesuai aturan BR-2, jurnal terposting tidak pernah dihapus atau
-              ditimpa. Sistem akan menerbitkan jurnal pembalik koreksi resmi
-              dengan tautan audit ke jurnal asal.
+              Jurnal terposting tidak dapat diubah atau dihapus secara manual. Sistem akan menerbitkan jurnal koreksi resmi dengan tautan audit ke jurnal asal.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateCorrection}>

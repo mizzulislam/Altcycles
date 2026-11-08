@@ -164,7 +164,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     e.preventDefault();
     if (exceedsBudget && !ackBudgetWarning) {
       toast.error(
-        "Nilai PO melampaui sisa anggaran proyek. Centang konfirmasi peringatan anggaran untuk melanjutkan (FR-PO6).",
+        "Nilai PO melampaui sisa anggaran proyek. Centang konfirmasi peringatan anggaran untuk melanjutkan.",
       );
       return;
     }
@@ -232,7 +232,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       terbilangAmount: po.total_amount,
       notes: [
         "Harap cantumkan Nomor PO ini pada setiap surat jalan dan tagihan/invoice vendor.",
-        "Dokumen PO yang telah diterbitkan bersifat terkunci (BR-7).",
+        "Dokumen PO yang telah diterbitkan bersifat terkunci secara permanen.",
       ],
       rightSignatureLabel: `Pemesan, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
@@ -283,8 +283,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               : "Purchase Order Pembelian Saya"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            PO yang sudah diterbitkan terkunci dari pengubahan nilai (BR-7) dan
-            siap diunduh dalam format PDF A4 (FR-PO3).
+            PO yang sudah diterbitkan terkunci secara permanen dan siap diunduh dalam format dokumen PDF resmi.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -367,7 +366,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         {vnd?.name ?? "-"}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {prj ? `${prj.code} — ${prj.name}` : "-"}
+                        {prj ? `${prj.code}: ${prj.name}` : "-"}
                       </TableCell>
                       <TableCell className="font-semibold">
                         {formatRupiah(po.total_amount)}
@@ -441,8 +440,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           <DialogHeader>
             <DialogTitle>Buat Purchase Order Pembelian Vendor</DialogTitle>
             <DialogDescription>
-              Nomor dokumen `POP/ALT/YYYY/MM/NNN` diterbitkan otomatis tanpa
-              duplikasi (BR-6).
+              Nomor dokumen diterbitkan otomatis berurutan secara sistematis.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreatePo}>
@@ -468,7 +466,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       <SelectGroup>
                         {vendors.map((v) => (
                           <SelectItem key={v.id} value={v.id}>
-                            {v.code} — {v.name}
+                            {v.code}: {v.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -485,7 +483,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       <SelectGroup>
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
-                            {p.code} — {p.name}
+                            {p.code}: {p.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -597,7 +595,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
               {exceedsBudget ? (
                 <Alert variant="destructive">
-                  <AlertTitle>Peringatan Melampaui Sisa Anggaran Proyek (FR-PO6)</AlertTitle>
+                  <AlertTitle>Peringatan Melampaui Sisa Anggaran Proyek</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
                       Total PO ({formatRupiah(draftTotal)}) melebihi sisa
@@ -660,7 +658,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           if (!open) setCancelTarget(null);
         }}
         title={`Batalkan dokumen ${cancelTarget?.po_number ?? ""}?`}
-        description="Pembatalan bersifat permanen dan tercatat di riwayat status dokumen (BR-7)."
+        description="Pembatalan bersifat permanen dan tercatat di riwayat status dokumen."
         destructive
         requireReason
         reasonLabel="Alasan Pembatalan PO"

@@ -344,13 +344,13 @@ export function UsersManagementPage() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="user">
-                        User — Tim Proyek (PO &amp; Pengajuan Pembayaran)
+                        User: Tim Proyek (PO &amp; Pengajuan Pembayaran)
                       </SelectItem>
                       <SelectItem value="admin">
-                        Admin — Bendahara / Akuntan
+                        Admin: Bendahara / Akuntan
                       </SelectItem>
                       <SelectItem value="super_admin">
-                        Super Admin — Pengelola Sistem
+                        Super Admin: Pengelola Sistem
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>

@@ -149,7 +149,7 @@ export function PeriodsPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             Menutup periode akan menerbitkan Jurnal Penutup otomatis ke Laba
-            Ditahan dan mengunci bulan tersebut (BR-3). Pembukaan kembali wajib
+            Ditahan dan mengunci bulan tersebut dari transaksi baru. Pembukaan kembali wajib
             disertai alasan pada Audit Trail.
           </p>
         </div>
@@ -390,7 +390,7 @@ export function PeriodsPage() {
           if (!open) setCloseTarget(null);
         }}
         title={`Tutup Buku & Kunci Periode ${closeTarget?.name ?? ""}?`}
-        description="Sistem akan menerbitkan Jurnal Penutup otomatis atas akun Pendapatan dan Beban ke Laba Ditahan, lalu mengunci bulan ini dari transaksi baru (BR-3)."
+        description="Sistem akan menerbitkan Jurnal Penutup otomatis atas akun Pendapatan dan Beban ke Laba Ditahan, lalu mengunci bulan ini dari transaksi baru."
         destructive
         confirmLabel="Ya, Posting Jurnal Penutup & Kunci"
         onConfirm={async () => {

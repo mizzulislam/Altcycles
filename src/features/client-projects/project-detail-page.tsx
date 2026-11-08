@@ -196,7 +196,7 @@ export function ProjectDetailPage() {
   ]);
   const [savingUat, setSavingUat] = React.useState(false);
 
-  // 8. Dialog BAST (Lampiran A.8 — wajib UAT diterima FR-PK8)
+  // 8. Dialog BAST (wajib UAT diterima)
   const [bastDialogOpen, setBastDialogOpen] = React.useState(false);
   const [bastDate, setBastDate] = React.useState("2027-01-30");
   const [bastUatId, setBastUatId] = React.useState("");
@@ -384,7 +384,7 @@ export function ProjectDetailPage() {
       await createProjectDocument({
         projectId: project.id,
         docType,
-        title: docTitle || `${docType} — ${project.name}`,
+        title: docTitle || `${docType}: ${project.name}`,
         summary: docSummary,
         isSigned: docSigned,
       });
@@ -689,7 +689,7 @@ export function ProjectDetailPage() {
           </Button>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">
-              {project.code} — {project.name}
+              {project.code}: {project.name}
             </h1>
             <StatusBadge
               tone={project.status === "completed" ? "success" : "info"}
@@ -736,8 +736,8 @@ export function ProjectDetailPage() {
               <div>
                 <CardTitle>Jadwal Termin Penagihan (Total 100%)</CardTitle>
                 <CardDescription>
-                  Total persentase termin wajib 100% (BR-17). Mengubah jumlah
-                  termin menyesuaikan metode pengakuan pendapatan otomatis.
+                  Total persentase termin wajib tepat 100%. Mengubah struktur
+                  termin akan menyesuaikan metode pengakuan pendapatan otomatis.
                 </CardDescription>
               </div>
               <Button
@@ -804,8 +804,7 @@ export function ProjectDetailPage() {
                   Periode
                 </CardTitle>
                 <CardDescription>
-                  Mencatat capaian progres (0%–100%, tidak boleh mundur sesuai
-                  BR-21) dan memposting jurnal otomatis (mis.{" "}
+                  Mencatat capaian progres kumulatif (0%–100%) dan memposting jurnal otomatis (mis.{" "}
                   <code>D Jasa dalam Proses / K Pendapatan Jasa</code> pada
                   Progress Billing). Saat progres 100% &amp; seluruh termin
                   tertagih, sistem otomatis mengeliminasi akun kontrak.
@@ -931,8 +930,7 @@ export function ProjectDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Verifikasi Purchase Order (PO) Masuk dari Klien (UC-14 &amp;
-                BR-23)
+                Verifikasi Purchase Order (PO) Masuk dari Klien
               </CardTitle>
               <CardDescription>
                 PO klien yang masuk dari Portal Pembeli berstatus Menunggu
@@ -1119,7 +1117,7 @@ export function ProjectDetailPage() {
                   Berita Acara Kemajuan Pekerjaan / BAKP (Lampiran A.4)
                 </CardTitle>
                 <CardDescription>
-                  Syarat wajib sebelum menerbitkan Invoice Termin (BR-14).
+                  Syarat wajib sebelum menerbitkan Invoice Termin Progres.
                 </CardDescription>
               </div>
               <Button type="button" onClick={() => setBakpDialogOpen(true)}>
@@ -1207,8 +1205,7 @@ export function ProjectDetailPage() {
               <div>
                 <CardTitle>Checklist Pengujian UAT (Lampiran A.7)</CardTitle>
                 <CardDescription>
-                  UAT wajib dinyatakan Diterima sebelum BAST dapat diterbitkan
-                  (FR-PK8).
+                  UAT wajib dinyatakan Diterima sebelum BAST dapat diterbitkan.
                 </CardDescription>
               </div>
               <Button type="button" onClick={() => setUatDialogOpen(true)}>
@@ -1283,7 +1280,7 @@ export function ProjectDetailPage() {
                   Berita Acara Serah Terima / BAST (Lampiran A.8)
                 </CardTitle>
                 <CardDescription>
-                  Syarat wajib penerbitan Invoice Pelunasan Akhir (BR-15).
+                  Syarat wajib penerbitan Invoice Pelunasan Akhir.
                 </CardDescription>
               </div>
               <Button
@@ -1483,7 +1480,7 @@ export function ProjectDetailPage() {
                   tone={sumDraftMsPct === 100 ? "success" : "destructive"}
                   label={
                     sumDraftMsPct === 100
-                      ? "Tepat 100% (BR-17)"
+                      ? "Tepat 100%"
                       : "Wajib 100%"
                   }
                 />
@@ -1769,10 +1766,10 @@ export function ProjectDetailPage() {
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="SOW">
-                        SoW — Statement of Work (Lampiran A.2)
+                        SoW: Statement of Work (Lampiran A.2)
                       </SelectItem>
                       <SelectItem value="SPK">
-                        SPK — Surat Perintah Kerja (Lampiran A.3)
+                        SPK: Surat Perintah Kerja (Lampiran A.3)
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -1832,7 +1829,7 @@ export function ProjectDetailPage() {
           <DialogHeader>
             <DialogTitle>Buat Berita Acara Kemajuan Pekerjaan (BAKP)</DialogTitle>
             <DialogDescription>
-              Digunakan sebagai dasar penerbitan Invoice Termin (BR-14).
+              Digunakan sebagai dasar penerbitan Invoice Termin Progres.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateBakp}>
@@ -2085,8 +2082,7 @@ export function ProjectDetailPage() {
           <DialogHeader>
             <DialogTitle>Terbitkan Berita Acara Serah Terima (BAST)</DialogTitle>
             <DialogDescription>
-              Hanya UAT berstatus Diterima yang mengizinkan penerbitan BAST
-              (FR-PK8).
+              Dokumen Berita Acara Serah Terima diterbitkan setelah pengujian UAT dinyatakan Diterima.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateBast}>

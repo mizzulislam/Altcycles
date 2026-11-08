@@ -76,93 +76,116 @@ export function UserDashboardPage() {
   }
 
   const pendingPa = requests.filter((r) => r.status === "submitted").length;
-  const rejectedPa = requests.filter((r) => r.status === "rejected").length;
   const totalMyShare = sharingLines.reduce((s, l) => s + l.share_amount, 0);
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Portal Anggota Tim — {profile?.full_name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Kelola PO pembelian vendor, ajukan persetujuan pembayaran beserta
-          lampiran bukti, pantau anggaran proyek Anda, dan lihat hak bagi hasil
-          pribadi Anda.
-        </p>
+      <div className="flex flex-col gap-1 border-b border-border/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Dasbor Anggota Tim
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Selamat datang, <span className="font-semibold text-foreground">{profile?.full_name ?? "Rekan"}</span>. Ringkasan penugasan proyek, pengajuan pembayaran, dan hak bagi hasil Anda.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Proyek Ditugaskan */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Proyek Ditugaskan</CardDescription>
-            <CardTitle className="text-2xl">{projects.length} Proyek</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Proyek Ditugaskan
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {projects.length}{" "}
+              <span className="text-sm font-normal text-muted-foreground">Proyek</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Button variant="link" size="sm" className="h-auto p-0" asChild>
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold text-primary" asChild>
               <Link to="/user/anggaran">
-                Lihat Anggaran vs Realisasi
-                <ArrowRightIcon data-icon="inline-end" />
+                Lihat Anggaran &amp; Realisasi
+                <ArrowRightIcon className="size-3.5 ml-1" />
               </Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* PO Pembelian Saya */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>PO Pembelian Saya</CardDescription>
-            <CardTitle className="text-2xl">{pos.length} Dokumen</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              PO Pembelian Vendor
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {pos.length}{" "}
+              <span className="text-sm font-normal text-muted-foreground">Dokumen</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Button variant="link" size="sm" className="h-auto p-0" asChild>
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs font-semibold text-primary" asChild>
               <Link to="/user/po">
-                Buat / Unduh PDF PO
-                <ArrowRightIcon data-icon="inline-end" />
+                Kelola Dokumen PO
+                <ArrowRightIcon className="size-3.5 ml-1" />
               </Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Pengajuan Pembayaran */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Pengajuan Pembayaran</CardDescription>
-            <CardTitle className="text-2xl">{requests.length} Pengajuan</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pengajuan Pembayaran
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {requests.length}{" "}
+              <span className="text-sm font-normal text-muted-foreground">Pengajuan</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
-            <StatusBadge tone="info" label={`${pendingPa} Menunggu`} />
-            {rejectedPa > 0 ? (
-              <StatusBadge tone="destructive" label={`${rejectedPa} Perlu Revisi`} />
-            ) : null}
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              {pendingPa > 0
+                ? `${pendingPa} pembayaran menunggu persetujuan`
+                : "Semua pengajuan telah diproses"}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Hak Bagi Hasil */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Hak Bagi Hasil Saya (FR-BH5)</CardDescription>
-            <CardTitle className="text-xl">{formatRupiah(totalMyShare)}</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Hak Bagi Hasil
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums text-foreground">
+              {formatRupiah(totalMyShare)}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge
-              tone={totalMyShare > 0 ? "success" : "secondary"}
-              label={`${sharingLines.length} Proyek`}
-            />
+            <p className="text-xs text-muted-foreground">
+              {sharingLines.length > 0
+                ? `Dari ${sharingLines.length} proyek yang diselesaikan`
+                : "Belum ada alokasi bagi hasil"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border border-border/60 shadow-2xs">
         <CardHeader>
-          <CardTitle>Proyek yang Ditugaskan kepada Saya</CardTitle>
-          <CardDescription>
-            Isolasi Row Level Security memastikan Anda hanya melihat proyek
-            tempat Anda menjadi anggota tim.
+          <CardTitle className="text-lg font-bold">Proyek Aktif Saya</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Daftar proyek di mana Anda terdaftar aktif sebagai pelaksana tugas.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {projects.length === 0 ? (
             <EmptyState
-              title="Belum ada proyek yang ditugaskan"
-              description="Hubungi Admin apabila Anda perlu ditugaskan ke proyek untuk mengajukan PO atau pembayaran."
+              title="Belum ada penugasan proyek"
+              description="Anda belum terdaftar dalam proyek aktif manapun. Hubungi Admin atau manajer proyek untuk penugasan tim."
             />
           ) : (
             <Table>
@@ -197,12 +220,11 @@ export function UserDashboardPage() {
       </Card>
 
       {sharingLines.length > 0 ? (
-        <Card>
+        <Card className="rounded-2xl border border-border/60 shadow-2xs">
           <CardHeader>
-            <CardTitle>Rincian Bagian Bagi Hasil Saya</CardTitle>
-            <CardDescription>
-              Hanya menampilkan porsi milik Anda sendiri sesuai aturan keamanan
-              FR-BH5.
+            <CardTitle className="text-lg font-bold">Rincian Hak Bagi Hasil Saya</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,10 +243,10 @@ export function UserDashboardPage() {
                   const prj = projects.find((p) => p.id === res?.project_id);
                   return (
                     <TableRow key={line.id}>
-                      <TableCell className="font-medium">
-                        {prj ? `${prj.code} — ${prj.name}` : "Proyek"}
+                      <TableCell className="font-medium text-xs">
+                        {prj ? `${prj.code}: ${prj.name}` : "Proyek"}
                       </TableCell>
-                      <TableCell>{line.percentage}%</TableCell>
+                      <TableCell className="text-xs tabular-nums">{line.percentage}%</TableCell>
                       <TableCell className="font-semibold">
                         {formatRupiah(line.share_amount)}
                       </TableCell>

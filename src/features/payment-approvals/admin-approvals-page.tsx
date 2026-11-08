@@ -158,11 +158,11 @@ export function AdminApprovalsPage() {
     [profiles],
   );
   const projectMap = React.useMemo(
-    () => new Map(projects.map((p) => [p.id, `${p.code} — ${p.name}`])),
+    () => new Map(projects.map((p) => [p.id, `${p.code}: ${p.name}`])),
     [projects],
   );
   const accountMap = React.useMemo(
-    () => new Map(accounts.map((a) => [a.id, `${a.code} — ${a.name}`])),
+    () => new Map(accounts.map((a) => [a.id, `${a.code}: ${a.name}`])),
     [accounts],
   );
 
@@ -273,9 +273,7 @@ export function AdminApprovalsPage() {
             Persetujuan Pembayaran 1-Level &amp; Pencairan Dana
           </h1>
           <p className="text-sm text-muted-foreground">
-            Menegakkan pemisahan tugas (BR-4), alasan penolakan wajib (BR-5),
-            posting akrual beban otomatis saat disetujui, serta jurnal kas/bank
-            saat pencairan dicatat.
+            Pemisahan wewenang persetujuan, kewajiban alasan penolakan, posting akrual beban otomatis saat disetujui, serta pencatatan jurnal kas/bank saat pencairan.
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => void handleExportExcel()}>
@@ -299,7 +297,7 @@ export function AdminApprovalsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Disetujui — Siap Dicairkan</CardDescription>
+            <CardDescription>Disetujui & Siap Dicairkan</CardDescription>
             <CardTitle className="text-2xl">
               {approvedUnpaidCount} Pengajuan
             </CardTitle>
@@ -481,7 +479,7 @@ export function AdminApprovalsPage() {
                           isSelfRequest ? (
                             <StatusBadge
                               tone="warning"
-                              label="Pengajuan Sendiri (BR-4)"
+                              label="Pengajuan Sendiri"
                             />
                           ) : (
                             <div className="flex justify-end gap-1.5">
@@ -568,7 +566,7 @@ export function AdminApprovalsPage() {
                   <AlertTitle>Pengajuan Melebihi Ambang Anggaran</AlertTitle>
                   <AlertDescription>
                     Pengaju telah mengonfirmasi peringatan serapan anggaran saat
-                    mengirim pengajuan ini (FR-PO6).
+                    mengirim pengajuan ini.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -584,8 +582,7 @@ export function AdminApprovalsPage() {
                   onChange={(e) => setAccountingDate(e.target.value)}
                 />
                 <FieldDescription>
-                  Harus berada pada periode akuntansi yang berstatus Terbuka
-                  (BR-3).
+                  Harus berada pada periode akuntansi yang berstatus Terbuka.
                 </FieldDescription>
               </Field>
               <DialogFooter>
@@ -616,7 +613,7 @@ export function AdminApprovalsPage() {
         description="Pengaju akan menerima notifikasi beserta alasan penolakan Anda agar dapat memperbaiki dan mengajukan ulang."
         destructive
         requireReason
-        reasonLabel="Alasan Penolakan (Wajib sesuai BR-5)"
+        reasonLabel="Alasan Penolakan (Wajib Diisi)"
         reasonPlaceholder="Contoh: Nominal pada faktur vendor belum sesuai dengan rincian PO..."
         confirmLabel="Tolak Pengajuan"
         onConfirm={async (reason) => {
@@ -679,7 +676,7 @@ export function AdminApprovalsPage() {
                     <SelectGroup>
                       {cashAccounts.map((acc) => (
                         <SelectItem key={acc.id} value={acc.id}>
-                          {acc.code} — {acc.name}
+                          {acc.code}: {acc.name}
                         </SelectItem>
                       ))}
                     </SelectGroup>

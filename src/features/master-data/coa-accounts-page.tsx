@@ -184,8 +184,7 @@ export function CoaAccountsPage() {
             Bagan Akun (Chart of Accounts SAK)
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola akun buku besar berbasis SAK. Sesuai BR-19, akun yang sudah
-            digunakan di jurnal tidak dapat dihapus, hanya dinonaktifkan.
+            Kelola akun buku besar berbasis SAK. Akun yang telah memiliki transaksi jurnal terkunci dari penghapusan demi integritas audit pembukuan.
           </p>
         </div>
         <Button type="button" onClick={openNewDialog}>
@@ -312,7 +311,7 @@ export function CoaAccountsPage() {
                           disabled={acc.used_in_journal_count > 0}
                           title={
                             acc.used_in_journal_count > 0
-                              ? "Tidak dapat dihapus karena sudah dipakai di jurnal (BR-19)"
+                              ? "Tidak dapat dihapus karena sudah memiliki riwayat mutasi jurnal"
                               : "Hapus akun yang belum pernah dipakai"
                           }
                           onClick={() => setDeleteTarget(acc)}

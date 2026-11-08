@@ -631,7 +631,7 @@ export function AccountingReportsPage() {
                   <SelectItem value="ALL">Seluruh Entitas Altvira</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.code} — {p.name}
+                      {p.code}: {p.name}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -664,8 +664,7 @@ export function AccountingReportsPage() {
                 {formatDateID(endDate)})
               </CardTitle>
               <CardDescription>
-                Memisahkan beban langsung proyek dan beban operasional bersama
-                (FR-AK6).
+                Penyajian terstruktur beban langsung proyek dan beban operasional bersama.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -693,7 +692,7 @@ export function AccountingReportsPage() {
                     incomeStatement.revenues.map((r) => (
                       <TableRow key={r.code}>
                         <TableCell className="text-xs">
-                          <span className="font-mono">{r.code}</span> — {r.name}
+                          <span className="font-mono">{r.code}</span>: {r.name}
                         </TableCell>
                         <TableCell className="text-right text-xs font-medium">
                           {formatRupiah(r.amount)}
@@ -714,7 +713,7 @@ export function AccountingReportsPage() {
                   {incomeStatement.directExpenses.map((e) => (
                     <TableRow key={e.code}>
                       <TableCell className="text-xs">
-                        <span className="font-mono">{e.code}</span> — {e.name}
+                        <span className="font-mono">{e.code}</span>: {e.name}
                       </TableCell>
                       <TableCell className="text-right text-xs">
                         ({formatRupiah(e.amount)})
@@ -734,7 +733,7 @@ export function AccountingReportsPage() {
                   {incomeStatement.sharedExpenses.map((s) => (
                     <TableRow key={s.code}>
                       <TableCell className="text-xs">
-                        <span className="font-mono">{s.code}</span> — {s.name}
+                        <span className="font-mono">{s.code}</span>: {s.name}
                       </TableCell>
                       <TableCell className="text-right text-xs">
                         ({formatRupiah(s.amount)})
@@ -784,7 +783,7 @@ export function AccountingReportsPage() {
                     {balanceSheet.assets.map((a) => (
                       <TableRow key={a.code}>
                         <TableCell className="text-xs">
-                          <span className="font-mono">{a.code}</span> — {a.name}
+                          <span className="font-mono">{a.code}</span>: {a.name}
                         </TableCell>
                         <TableCell className="text-right text-xs font-medium">
                           {formatRupiah(a.amount)}
@@ -795,7 +794,7 @@ export function AccountingReportsPage() {
                       <TableRow key={ca.projectId} className="bg-muted/30">
                         <TableCell className="text-xs">
                           <div className="font-semibold">
-                            Aset Kontrak — {ca.projectCode} ({ca.projectName})
+                            Aset Kontrak: {ca.projectCode} ({ca.projectName})
                           </div>
                           <div className="text-[11px] text-muted-foreground">
                             Jasa dlm Proses {formatRupiah(ca.wipBalance)} &minus;
@@ -824,7 +823,7 @@ export function AccountingReportsPage() {
                     {balanceSheet.liabilities.map((l) => (
                       <TableRow key={l.code}>
                         <TableCell className="text-xs">
-                          <span className="font-mono">{l.code}</span> — {l.name}
+                          <span className="font-mono">{l.code}</span>: {l.name}
                         </TableCell>
                         <TableCell className="text-right text-xs font-medium">
                           {formatRupiah(l.amount)}
@@ -835,7 +834,7 @@ export function AccountingReportsPage() {
                       <TableRow key={cl.projectId} className="bg-muted/30">
                         <TableCell className="text-xs">
                           <div className="font-semibold">
-                            Liabilitas Kontrak — {cl.projectCode} (
+                            Liabilitas Kontrak: {cl.projectCode} (
                             {cl.projectName})
                           </div>
                           <div className="text-[11px] text-muted-foreground">
@@ -851,8 +850,7 @@ export function AccountingReportsPage() {
                     {balanceSheet.equities.map((eq) => (
                       <TableRow key={eq.code}>
                         <TableCell className="text-xs">
-                          <span className="font-mono">{eq.code}</span> —{" "}
-                          {eq.name}
+                          <span className="font-mono">{eq.code}</span>: {eq.name}
                         </TableCell>
                         <TableCell className="text-right text-xs font-medium">
                           {formatRupiah(eq.amount)}
@@ -892,7 +890,7 @@ export function AccountingReportsPage() {
               </CardTitle>
               <CardDescription>
                 Klasifikasi aktivitas Operasi, Investasi, dan Pendanaan secara
-                langsung dari mutasi akun Kas &amp; Bank (FR-AK8).
+                langsung dari mutasi akun Kas &amp; Bank.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1065,7 +1063,7 @@ export function AccountingReportsPage() {
                     <SelectGroup>
                       {postableAccounts.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
-                          {a.code} — {a.name}
+                          {a.code}: {a.name}
                         </SelectItem>
                       ))}
                     </SelectGroup>

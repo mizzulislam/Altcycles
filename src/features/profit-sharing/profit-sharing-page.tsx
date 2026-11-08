@@ -240,7 +240,7 @@ export function ProfitSharingPage() {
       rows: [
         ["Pendapatan Proyek Diakui", 0, result.recognized_revenue],
         ["Biaya Langsung Proyek", 0, -result.direct_cost],
-        ["Alokasi Biaya Bersama (BR-20)", 0, -result.allocated_shared_cost],
+        ["Alokasi Biaya Bersama", 0, -result.allocated_shared_cost],
         ["LABA KOTOR DASAR BAGI HASIL", 100, result.gross_profit],
         ...lines.map((l) => [l.recipient_name, l.percentage, l.share_amount]),
       ],
@@ -257,10 +257,7 @@ export function ProfitSharingPage() {
             Perhitungan &amp; Finalisasi Bagi Hasil Proyek
           </h1>
           <p className="text-sm text-muted-foreground">
-            Menghitung Laba Kotor Proyek (Pendapatan Diakui &minus; Biaya
-            Langsung &minus; Alokasi Proporsional Biaya Bersama BR-20), dengan
-            total porsi wajib 100% (BR-10) dan penguncian permanen saat
-            difinalisasi (BR-9).
+            Menghitung Laba Kotor Proyek (Pendapatan Diakui dikurangi Biaya Langsung dan Alokasi Proporsional Biaya Bersama), dengan total porsi tepat 100% serta penguncian permanen saat difinalisasi.
           </p>
         </div>
         {result ? (
@@ -291,7 +288,7 @@ export function ProfitSharingPage() {
                   <SelectGroup>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.code} — {p.name}
+                        {p.code}: {p.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -369,8 +366,8 @@ export function ProfitSharingPage() {
               onChange={(e) => setManualSharedCost(Number(e.target.value))}
             />
             <FieldDescription>
-              Jika nonaktif, dialokasikan proporsional otomatis berdasarkan
-              pendapatan proyek (BR-20).
+              Jika nonaktif, dialokasikan secara proporsional otomatis berdasarkan
+              pendapatan proyek.
             </FieldDescription>
           </Field>
         </CardContent>
@@ -387,8 +384,7 @@ export function ProfitSharingPage() {
             <CardHeader>
               <CardTitle>Skema Porsi Penerima (Wajib 100%)</CardTitle>
               <CardDescription>
-                Anggota tim dengan akun User hanya dapat melihat porsi miliknya
-                sendiri di Portal User (FR-BH5).
+                Anggota tim pelaksana proyek dapat memantau porsi hak bagi hasil masing-masing secara transparan.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -436,7 +432,7 @@ export function ProfitSharingPage() {
                 <StatusBadge
                   tone={isFinalized ? "success" : "warning"}
                   label={
-                    isFinalized ? "Difinalisasi & Terkunci (BR-9)" : "Simulasi Draf"
+                    isFinalized ? "Difinalisasi & Terkunci" : "Simulasi Draf"
                   }
                 />
               ) : null}
@@ -469,7 +465,7 @@ export function ProfitSharingPage() {
                       </TableRow>
                       <TableRow>
                         <TableCell className="text-xs">
-                          Alokasi Biaya Bersama (BR-20)
+                          Alokasi Biaya Bersama
                         </TableCell>
                         <TableCell className="text-right text-xs">
                           ({formatRupiah(result.allocated_shared_cost)})
@@ -598,7 +594,7 @@ export function ProfitSharingPage() {
                         <SelectContent>
                           <SelectGroup>
                             <SelectItem value="none">
-                              — Porsi Perusahaan / Non-User —
+                              Porsi Perusahaan / Internal
                             </SelectItem>
                             {profiles
                               .filter((p) => p.role === "user")
@@ -651,7 +647,7 @@ export function ProfitSharingPage() {
                 <span>Total Porsi: {sumPct}%</span>
                 <StatusBadge
                   tone={sumPct === 100 ? "success" : "destructive"}
-                  label={sumPct === 100 ? "Tepat 100% (BR-10)" : "Wajib 100%"}
+                  label={sumPct === 100 ? "Tepat 100%" : "Wajib 100%"}
                 />
               </div>
               <DialogFooter>
@@ -680,7 +676,7 @@ export function ProfitSharingPage() {
         open={finalizeConfirmOpen}
         onOpenChange={setFinalizeConfirmOpen}
         title="Finalisasi & Kunci Bagi Hasil Proyek Ini?"
-        description="Setelah difinalisasi, skema dan nominal terkunci permanen (BR-9) serta sistem otomatis menerbitkan jurnal Beban Bagi Hasil pada Utang Bagi Hasil."
+        description="Setelah difinalisasi, skema dan nominal terkunci permanen serta sistem otomatis menerbitkan jurnal Beban Bagi Hasil pada Utang Bagi Hasil."
         destructive
         confirmLabel="Ya, Finalisasi & Posting Jurnal"
         onConfirm={async () => {

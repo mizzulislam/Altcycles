@@ -145,9 +145,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               : "Anggaran vs Realisasi Proyek Saya"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sesuai aturan BR-8, kolom realisasi dihitung ketat hanya dari jurnal
-            akuntansi yang telah terposting (pengajuan draf tidak mengurangi
-            realisasi).
+            Kolom realisasi dihitung secara akurat hanya dari mutasi jurnal akuntansi yang telah terposting (pengajuan draf belum mengurangi saldo).
           </p>
         </div>
         {mode === "admin" && selectedProjectId ? (
@@ -173,7 +171,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 <SelectGroup>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.code} — {p.name}
+                      {p.code}: {p.name}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -184,9 +182,9 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ) : null}
 
       {overThresholdRows.length > 0 ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="rounded-2xl">
           <AlertTriangleIcon className="size-4" />
-          <AlertTitle>Peringatan Ambang Serapan Anggaran (FR-BU4)</AlertTitle>
+          <AlertTitle>Peringatan Ambang Serapan Anggaran</AlertTitle>
           <AlertDescription>
             Terdapat {overThresholdRows.length} pos beban yang telah melampaui
             ambang peringatan serapan anggaran.
@@ -195,29 +193,35 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="rounded-2xl border border-border/60 shadow-2xs">
           <CardHeader className="pb-2">
-            <CardDescription>Total Pagu Anggaran</CardDescription>
-            <CardTitle className="text-xl">{formatRupiah(totalBudget)}</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Total Pagu Anggaran
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums">{formatRupiah(totalBudget)}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="rounded-2xl border border-border/60 shadow-2xs">
           <CardHeader className="pb-2">
-            <CardDescription>Realisasi Jurnal Terposting (BR-8)</CardDescription>
-            <CardTitle className="text-xl">{formatRupiah(totalActual)}</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Realisasi Beban Terposting
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums">{formatRupiah(totalActual)}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="rounded-2xl border border-border/60 shadow-2xs">
           <CardHeader className="pb-2">
-            <CardDescription>Sisa Anggaran Tersedia</CardDescription>
-            <CardTitle className="text-xl">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Sisa Anggaran Tersedia
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums">
               {formatRupiah(totalRemaining)}
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border border-border/60 shadow-2xs">
         <CardHeader>
           <CardTitle>Perbandingan Anggaran vs Realisasi per Akun Beban</CardTitle>
           <CardDescription>
@@ -313,7 +317,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 {expenseAccounts.map((acc) => (
                   <Field key={acc.id}>
                     <FieldLabel htmlFor={`alloc-${acc.id}`}>
-                      {acc.code} — {acc.name}
+                      {acc.code}: {acc.name}
                     </FieldLabel>
                     <Input
                       id={`alloc-${acc.id}`}

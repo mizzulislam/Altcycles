@@ -228,11 +228,10 @@ export function BuyerPortalPage() {
             <AltviraLogoMark size={36} iconVariant="transparent" />
             <div>
               <h1 className="text-xl font-bold tracking-tight">
-                Portal Pembeli Klien — Altvira Technology
+                Portal Pelanggan: Altvira Technology
               </h1>
               <p className="text-xs text-muted-foreground">
-                PT Representasi Mitra Mandiri · Akses Mandiri Tanpa Login dengan
-                Kode PO Acak (FR-PB1..9)
+                PT Representasi Mitra Mandiri · Akses Mandiri Pelanggan dengan Kode PO Unik
               </p>
             </div>
           </div>
@@ -486,10 +485,8 @@ export function BuyerPortalPage() {
                   Formulir Pengajuan Purchase Order (PO) Klien
                 </CardTitle>
                 <CardDescription>
-                  Setelah dikirim, sistem menerbitkan Nomor PO dengan akhiran
-                  acak <code>PO-YYYYMM-XXXXXX</code> yang tidak dapat ditebak
-                  pihak luar (FR-PB3). Simpan kode tersebut untuk memantau
-                  progres proyek Anda.
+                  Setelah dikirim, sistem menerbitkan Nomor PO dengan kode unik{" "}
+                  <code>PO-YYYYMM-XXXXXX</code>. Simpan kode tersebut untuk memantau progres proyek Anda.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
@@ -685,7 +682,7 @@ export function BuyerPortalPage() {
                         <FieldLabel>Verifikasi Keamanan Anti-Bot</FieldLabel>
                         <div ref={turnstileContainerRef} />
                         <FieldDescription>
-                          Dilindungi oleh Cloudflare Turnstile (FR-PB2).
+                          Dilindungi oleh verifikasi Cloudflare Turnstile.
                         </FieldDescription>
                       </Field>
                     ) : (

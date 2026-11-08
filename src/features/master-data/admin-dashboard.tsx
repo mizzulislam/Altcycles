@@ -2,7 +2,6 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRightIcon, DatabaseBackupIcon } from "lucide-react";
 import { toast } from "sonner";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -129,88 +128,107 @@ export function AdminDashboardPage() {
       rows,
     });
     await recordExportLog("FULL_BACKUP_LEDGER", "EXCEL");
-    toast.success("Cadangan data jurnal berhasil diunduh ke Excel (UC-39).");
+    toast.success("Cadangan data jurnal berhasil diunduh ke Excel.");
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Dashboard Keuangan &amp; Akuntansi (Admin)
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Dasbor Keuangan &amp; Akuntansi
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Ringkasan saldo kas, antrean persetujuan pembayaran, piutang klien,
-            dan siklus proyek Altvira Technology.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Ringkasan likuiditas kas, verifikasi pengajuan pembayaran, piutang invoice, dan komitmen kontrak kerja.
           </p>
         </div>
         <Button
           type="button"
           variant="outline"
+          size="sm"
+          className="rounded-xl border-border/80 text-xs shadow-2xs"
           onClick={() => void handleBackupExport()}
         >
-          <DatabaseBackupIcon data-icon="inline-start" />
-          Ekspor Cadangan Data (.xlsx)
+          <DatabaseBackupIcon className="size-3.5 mr-1.5" />
+          Ekspor Cadangan (.xlsx)
         </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Saldo Kas & Bank */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Saldo Kas &amp; Bank Terkini</CardDescription>
-            <CardTitle className="text-xl">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Kas &amp; Bank Terkini
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums text-foreground">
               {formatRupiah(cashPosition.endingCash)}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge
-              tone="success"
-              label={`${openPeriods} Periode Terbuka`}
-            />
+            <p className="text-xs text-muted-foreground">
+              {openPeriods > 0
+                ? `${openPeriods} periode buku aktif terbuka`
+                : "Seluruh periode pembukuan ditutup"}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Antrean Persetujuan Pembayaran */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Antrean Payment Approval</CardDescription>
-            <CardTitle className="text-2xl">
-              {pendingApprovals} Pengajuan
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Antrean Pembayaran
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {pendingApprovals}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                Pengajuan
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge
-              tone={pendingApprovals > 0 ? "warning" : "secondary"}
-              label={
-                pendingApprovals > 0 ? "Perlu Keputusan 1-Level" : "Semua Selesai"
-              }
-            />
+            <p className="text-xs text-muted-foreground">
+              {pendingApprovals > 0
+                ? `${pendingApprovals} permohonan menunggu persetujuan`
+                : "Semua pengajuan telah diproses"}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Piutang Klien Belum Tertagih */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Piutang Klien Belum Tertagih</CardDescription>
-            <CardTitle className="text-xl">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Piutang Belum Tertagih
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums text-foreground">
               {formatRupiah(outstandingReceivable)}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge
-              tone={pendingClientPos > 0 ? "info" : "secondary"}
-              label={`${pendingClientPos} PO Klien Menunggu Verifikasi`}
-            />
+            <p className="text-xs text-muted-foreground">
+              {pendingClientPos > 0
+                ? `${pendingClientPos} PO klien menunggu konfirmasi`
+                : "Semua tagihan terkelola"}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Total Nilai Kontrak Proyek */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Total Nilai Kontrak Proyek</CardDescription>
-            <CardTitle className="text-xl">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Komitmen Kontrak
+            </CardDescription>
+            <CardTitle className="text-xl font-bold tabular-nums text-foreground">
               {formatRupiah(totalContract)}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge tone="info" label={`${projects.length} Proyek`} />
+            <p className="text-xs text-muted-foreground">
+              Akumulasi dari {projects.length} proyek aktif
+            </p>
           </CardContent>
         </Card>
       </div>

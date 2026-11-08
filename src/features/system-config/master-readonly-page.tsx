@@ -79,8 +79,7 @@ export function MasterReadonlyPage() {
           Pemantauan Master Data &amp; Bagan Akun (Hanya-Baca)
         </h1>
         <p className="text-sm text-muted-foreground">
-          Sesuai UC-33 &amp; FR-M1: Super Admin memantau Bagan Akun SAK dan
-          master data yang dikelola oleh Admin di portal Akuntansi.
+          Super Admin dapat memantau Bagan Akun SAK dan master data operasional yang dikelola di portal Akuntansi.
         </p>
       </div>
 

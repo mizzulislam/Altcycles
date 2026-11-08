@@ -73,70 +73,95 @@ export function SuperAdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Dashboard Super Admin
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Kendali pengguna, konfigurasi dokumen Altvira, status perpajakan, dan
-          jejak audit sistem.
-        </p>
+      <div className="flex flex-col gap-1 border-b border-border/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Dasbor Pengelola Sistem
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Kendali akun pengguna, konfigurasi perusahaan, perpajakan, dan jejak audit sistem.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Pengguna Internal */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Pengguna Internal Aktif</CardDescription>
-            <CardTitle className="text-2xl">
-              {activeUsers} / {profiles.length}
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pengguna Internal
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {activeUsers}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                / {profiles.length} Aktif
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge tone="success" label="RBAC Aktif" />
+            <p className="text-xs text-muted-foreground">
+              Akses peran pengguna aktif dan terverifikasi
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Status Pajak Perusahaan */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Status Pajak Perusahaan</CardDescription>
-            <CardTitle className="text-lg">
-              {company?.pkp_enabled ? "PKP Aktif" : "Belum PKP"}
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Status Perpajakan
+            </CardDescription>
+            <CardTitle className="text-xl font-bold text-foreground">
+              {company?.pkp_enabled ? "PKP Aktif" : "Non-PKP"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge
-              tone={company?.pkp_enabled ? "warning" : "secondary"}
-              label={
-                company?.pkp_enabled
-                  ? `PPN ${company.ppn_rate}% Aktif`
-                  : "Invoice Tanpa PPN (Default)"
-              }
-            />
+            <p className="text-xs text-muted-foreground">
+              {company?.pkp_enabled
+                ? `Tarif PPN ${company.ppn_rate}% berlaku pada invoice`
+                : "Faktur diterbitkan tanpa PPN"}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Bagan Akun SAK */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Bagan Akun SAK Terdaftar</CardDescription>
-            <CardTitle className="text-2xl">{accountCount} Akun</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Bagan Akun Keuangan
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {accountCount}{" "}
+              <span className="text-sm font-normal text-muted-foreground">Akun</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge tone="info" label="Termasuk Progress Billing" />
+            <p className="text-xs text-muted-foreground">
+              Standar Akuntansi Keuangan SAK
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Aktivitas Audit */}
+        <Card className="rounded-2xl border border-border/60 shadow-2xs hover:shadow-xs transition-all">
           <CardHeader className="pb-2">
-            <CardDescription>Aktivitas Audit Terbaru</CardDescription>
-            <CardTitle className="text-2xl">{recentLogs.length} Entri</CardTitle>
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Jejak Audit
+            </CardDescription>
+            <CardTitle className="text-2xl font-bold tabular-nums">
+              {recentLogs.length}{" "}
+              <span className="text-sm font-normal text-muted-foreground">Log Baru</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusBadge tone="outline" label="Immutable Log" />
+            <p className="text-xs text-muted-foreground">
+              Rekaman audit aktivitas tersimpan
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border border-border/60 shadow-2xs">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex flex-col gap-1">
             <CardTitle>Jejak Audit Terbaru</CardTitle>

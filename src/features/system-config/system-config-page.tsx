@@ -365,9 +365,7 @@ export function SystemConfigPage() {
             <CardHeader>
               <CardTitle>Status Pengusaha Kena Pajak (PKP) &amp; Modul Pajak</CardTitle>
               <CardDescription>
-                Sesuai aturan bisnis BR-22: selama Altvira belum PKP, seluruh
-                invoice diterbitkan tanpa PPN dan modul pajak dinonaktifkan
-                secara default.
+                Selama entitas belum berstatus PKP, seluruh invoice diterbitkan tanpa PPN dan modul faktur pajak dinonaktifkan secara default.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">

@@ -4,6 +4,7 @@ import { RoleGuard } from "@/app/role-guard";
 import { PortalShell } from "@/components/layout/portal-shell";
 import { JournalsPage } from "@/features/accounting/journals-page";
 import { AccountingReportsPage } from "@/features/accounting/reports-page";
+import { AccountingHubPage } from "@/features/accounting/accounting-hub-page";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { LoginPage } from "@/features/auth/login-page";
 import {
@@ -91,6 +92,10 @@ export function App() {
               <Route
                 path="/admin/anggaran"
                 element={<BudgetPage mode="admin" />}
+              />
+              <Route
+                path="/admin/akuntansi"
+                element={<AccountingHubPage />}
               />
               <Route
                 path="/admin/akuntansi/jurnal"

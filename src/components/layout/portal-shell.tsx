@@ -240,7 +240,7 @@ const NAV_STRUCTURE_BY_ROLE: Record<UserRole, NavEntry[]> = {
 const SIDEBAR_STORAGE_KEY = "altcycles_sidebar_collapsed";
 
 export function PortalShell() {
-  const { profile, signOut, isDemoMode } = useAuth();
+  const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -413,17 +413,17 @@ export function PortalShell() {
               type="button"
               onClick={toggleCollapsed}
               title="Perluas Sidebar"
-              className="group relative flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200 cursor-pointer"
+              className="group relative flex size-10 items-center justify-center rounded-xl bg-card border border-border/80 hover:bg-accent text-primary transition-all duration-200 cursor-pointer shadow-2xs"
             >
               <AltviraLogoMark
                 size={22}
                 iconVariant="transparent"
                 className="transition-transform duration-200 group-hover:scale-75 group-hover:opacity-0"
               />
-              <PanelLeftOpenIcon className="size-5 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 text-primary" />
+              <PanelLeftOpenIcon className="size-4.5 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 text-primary" />
             </button>
           ) : (
-            /* Mode Expanded: Logo Brand Lengkap + Tombol Lipat */
+            /* Mode Expanded: Logo Brand Lengkap + Notifikasi + Tombol Lipat */
             <>
               <div className="flex items-center gap-3 overflow-hidden">
                 <AltviraLogoMark size={28} iconVariant="transparent" className="shrink-0" />
@@ -437,6 +437,21 @@ export function PortalShell() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="relative size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                  onClick={() => void handleOpenNotifications()}
+                  title="Notifikasi Masuk"
+                >
+                  <BellIcon className="size-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -461,33 +476,6 @@ export function PortalShell() {
           )}
         </div>
 
-        {/* Notifikasi & Badge Peran (Hanya Muncul saat Expanded) */}
-        {!isCollapsed && (
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/15">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
-              {isDemoMode && (
-                <StatusBadge tone="warning" label="Mode Lokal" />
-              )}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="relative size-8 p-0 rounded-lg"
-              onClick={() => void handleOpenNotifications()}
-              title="Notifikasi Masuk"
-            >
-              <BellIcon className="size-3.5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                  {unreadCount}
-                </span>
-              )}
-            </Button>
-          </div>
-        )}
-
         {/* =====================================================================
             DAFTAR NAVIGASI (Dengan Submenu & Indikator Aktif Terstruktur)
             ===================================================================== */}
@@ -503,29 +491,32 @@ export function PortalShell() {
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
                     cn(
-                      "group relative flex h-10 items-center rounded-xl px-3 text-xs font-medium transition-all duration-200",
-                      isCollapsed ? "justify-center" : "justify-start gap-3",
+                      "group relative flex h-10 items-center rounded-xl text-xs font-medium transition-all duration-200",
+                      isCollapsed
+                        ? "justify-center size-10 mx-auto p-0"
+                        : "justify-start gap-3 px-3",
                       isActive
-                        ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-xs"
+                        ? isCollapsed
+                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-2xs"
                         : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     )
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      {/* Active indicator bar di sisi kiri */}
-                      {isActive && (
-                        <span
-                          className={cn(
-                            "absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-primary transition-all duration-200",
-                            isCollapsed ? "h-5" : "h-6",
-                          )}
-                        />
+                      {/* Active indicator bar di sisi kiri (hanya saat expanded) */}
+                      {isActive && !isCollapsed && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-primary transition-all duration-200" />
                       )}
                       <Icon
                         className={cn(
                           "size-4 shrink-0 transition-transform duration-200",
-                          isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                          isActive
+                            ? isCollapsed
+                              ? "text-primary-foreground"
+                              : "text-primary"
+                            : "text-muted-foreground group-hover:text-foreground",
                         )}
                       />
                       {!isCollapsed && (
@@ -653,13 +644,13 @@ export function PortalShell() {
             ========================================================================= */}
         <div className="shrink-0 border-t bg-muted/20 p-3">
           {isCollapsed ? (
-            /* Mode Collapsed: Tombol Avatar Ringkas */
+            /* Mode Collapsed: Avatar Ringkas & Tombol Keluar */
             <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={() => setChangePwdOpen(true)}
-                title={`${profile.full_name} (${ROLE_LABELS[profile.role]})\nKlik untuk Ganti Kata Sandi`}
-                className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:opacity-90 transition-opacity cursor-pointer"
+                title={`${profile.full_name} (${ROLE_LABELS[profile.role]})\nProfil Pengguna`}
+                className="flex size-9 items-center justify-center rounded-xl bg-card border border-border/80 text-foreground font-bold text-xs shadow-2xs hover:bg-accent transition-all cursor-pointer"
               >
                 {profile.full_name
                   ? profile.full_name
@@ -669,6 +660,14 @@ export function PortalShell() {
                       .join("")
                       .toUpperCase()
                   : "U"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setChangePwdOpen(true)}
+                title="Ganti Kata Sandi Akun"
+                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer"
+              >
+                <KeyRoundIcon className="size-4" />
               </button>
               <button
                 type="button"

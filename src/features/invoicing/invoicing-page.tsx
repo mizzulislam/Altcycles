@@ -83,8 +83,8 @@ import type {
 
 const INVOICE_KIND_LABELS: Record<InvoiceKind, string> = {
   down_payment: "Uang Muka (DP)",
-  milestone: "Termin Progres (Wajib BAKP — BR-14)",
-  final_settlement: "Pelunasan Akhir (Wajib BAST — BR-15)",
+  milestone: "Termin Progres (Wajib BAKP)",
+  final_settlement: "Pelunasan Akhir (Wajib BAST)",
 };
 
 export function InvoicingPage() {
@@ -238,7 +238,7 @@ export function InvoicingPage() {
     }
     if (!clientPoId) {
       toast.error(
-        "Pilih PO Klien yang telah diverifikasi Admin terlebih dahulu (BR-23).",
+        "Pilih PO Klien yang telah diverifikasi Admin terlebih dahulu.",
       );
       return;
     }
@@ -400,9 +400,7 @@ export function InvoicingPage() {
             Invoice Penagihan, Umur Piutang, &amp; Kuitansi
           </h1>
           <p className="text-sm text-muted-foreground">
-            Validasi prasyarat PO terverifikasi (BR-23), BAKP (BR-14), dan BAST
-            (BR-15), disertai penerbitan PDF Invoice (Lampiran A.5) &amp;
-            Kuitansi (Lampiran A.6) lengkap kalimat Terbilang.
+            Validasi prasyarat dokumen PO, Berita Acara Progres (BAKP), dan BAST Serah Terima, disertai penerbitan PDF Invoice &amp; Kuitansi resmi lengkap dengan terbilang.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -803,7 +801,7 @@ export function InvoicingPage() {
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel>Referensi PO Klien Terverifikasi (BR-23)</FieldLabel>
+                  <FieldLabel>Referensi PO Klien Terverifikasi</FieldLabel>
                   <Select value={clientPoId} onValueChange={setClientPoId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih PO Klien" />
@@ -836,10 +834,10 @@ export function InvoicingPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="none">— Tanpa Termin Spesifik —</SelectItem>
+                      <SelectItem value="none">Tanpa Termin Spesifik</SelectItem>
                       {projectMilestones.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
-                          {m.name} — {formatRupiah(m.amount)}
+                          {m.name}: {formatRupiah(m.amount)}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -849,14 +847,14 @@ export function InvoicingPage() {
 
               {invoiceKind === "milestone" ? (
                 <Field>
-                  <FieldLabel>Dokumen BAKP Disetujui Klien (BR-14)</FieldLabel>
+                  <FieldLabel>Dokumen BAKP Disetujui Klien</FieldLabel>
                   <Select value={bakpId} onValueChange={setBakpId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih BAKP" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">— Pilih BAKP —</SelectItem>
+                        <SelectItem value="none">Pilih Dokumen BAKP</SelectItem>
                         {projectApprovedBakps.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
                             {b.bakp_number} ({b.cumulative_percentage}%)
@@ -870,14 +868,14 @@ export function InvoicingPage() {
 
               {invoiceKind === "final_settlement" ? (
                 <Field>
-                  <FieldLabel>Dokumen BAST Ditandatangani (BR-15)</FieldLabel>
+                  <FieldLabel>Dokumen BAST Ditandatangani</FieldLabel>
                   <Select value={bastId} onValueChange={setBastId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih BAST" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">— Pilih BAST —</SelectItem>
+                        <SelectItem value="none">Pilih Dokumen BAST</SelectItem>
                         {projectSignedBasts.map((h) => (
                           <SelectItem key={h.id} value={h.id}>
                             {h.bast_number} ({formatDateID(h.bast_date)})
