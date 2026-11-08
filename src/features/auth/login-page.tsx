@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AltviraLogo } from "@/components/shared/altvira-logo";
+import { OAuthLoadingCard } from "@/components/shared/oauth-loading-card";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -267,46 +268,17 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   // Tampilan transisi saat kembali dari otorisasi Google OAuth
   if (oauthChecking && !profile) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] p-4 text-center transition-colors">
-        <ThemeToggle variant="floating" />
-        <div className="w-full max-w-sm space-y-6">
-          <div className="flex justify-center">
-            <AltviraLogo
-              size={42}
-              variant={resolvedTheme === "dark" ? "light" : "dark"}
-              subtitle="FINANCIAL ERP"
-            />
-          </div>
-          <Card className="p-8 border border-[#C9C9C9]/60 dark:border-white/10 shadow-xl bg-white dark:bg-[#121A2B] rounded-2xl">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Spinner className="size-8 text-[#0B43C8] dark:text-[#1FB1F2]" />
-              <div className="space-y-1">
-                <h3 className="font-bold text-base text-[#2A2A2A] dark:text-white">
-                  Menghubungkan Akun Google...
-                </h3>
-                <p className="text-xs text-[#616C82] dark:text-[#9AA5B8]">
-                  Sedang memverifikasi data akun dan menyiapkan portal kerja Anda.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOauthChecking(false);
-                  window.history.replaceState(
-                    {},
-                    document.title,
-                    window.location.pathname,
-                  );
-                }}
-                className="mt-2 text-xs border-[#C9C9C9] dark:border-white/20 text-[#616C82] dark:text-[#9AA5B8] hover:text-[#2A2A2A] dark:hover:text-white"
-              >
-                Batalkan / Kembali ke Masuk
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
+      <OAuthLoadingCard
+        resolvedTheme={resolvedTheme}
+        onCancel={() => {
+          setOauthChecking(false);
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
+        }}
+      />
     );
   }
 
