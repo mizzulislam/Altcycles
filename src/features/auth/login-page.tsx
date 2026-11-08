@@ -170,11 +170,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }, []);
 
   React.useEffect(() => {
-    if (profile) {
+    // Jika tidak sedang dalam transisi visual OAuth, arahkan langsung
+    if (profile && !oauthChecking) {
       toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
       navigate(portalHomeForRole(profile.role), { replace: true });
     }
-  }, [profile, navigate]);
+  }, [profile, navigate, oauthChecking]);
 
   async function handleGoogleSignIn() {
     setGoogleSubmitting(true);
@@ -266,10 +267,18 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }
 
   // Tampilan transisi saat kembali dari otorisasi Google OAuth
-  if (oauthChecking && !profile) {
+  if (oauthChecking) {
     return (
       <OAuthLoadingCard
         resolvedTheme={resolvedTheme}
+        userName={profile?.full_name}
+        isProfileReady={Boolean(profile)}
+        onComplete={() => {
+          if (profile) {
+            toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
+            navigate(portalHomeForRole(profile.role), { replace: true });
+          }
+        }}
         onCancel={() => {
           setOauthChecking(false);
           window.history.replaceState(

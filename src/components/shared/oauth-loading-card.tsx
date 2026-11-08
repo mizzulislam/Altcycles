@@ -1,5 +1,6 @@
-import { motion } from "motion/react";
-import { CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import * as React from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { CheckCircle2Icon, Loader2Icon, SparklesIcon } from "lucide-react";
 import { AltviraLogo } from "@/components/shared/altvira-logo";
 import { LatticeLoader } from "@/components/shared/lattice-loader";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -7,6 +8,9 @@ import { Button } from "@/components/ui/button";
 
 export interface OAuthLoadingCardProps {
   resolvedTheme?: "dark" | "light";
+  userName?: string;
+  isProfileReady?: boolean;
+  onComplete?: () => void;
   onCancel?: () => void;
 }
 
@@ -45,9 +49,66 @@ function AltviraBadge() {
 
 export function OAuthLoadingCard({
   resolvedTheme = "light",
+  userName,
+  isProfileReady = false,
+  onComplete,
   onCancel,
 }: OAuthLoadingCardProps) {
   const isDark = resolvedTheme === "dark";
+
+  // Langkah berurutan: 1 -> 2 -> 3 -> 4 (Selesai Penuh)
+  const [currentStep, setCurrentStep] = React.useState<1 | 2 | 3 | 4>(1);
+
+  // Progresif timer bertahap agar animasi terlihat jelas dan memuaskan
+  React.useEffect(() => {
+    // Step 1 -> Step 2 setelah 700ms
+    const t1 = window.setTimeout(() => {
+      setCurrentStep(2);
+    }, 700);
+
+    // Step 2 -> Step 3 setelah 1500ms
+    const t2 = window.setTimeout(() => {
+      setCurrentStep(3);
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, []);
+
+  // Saat profile ready dan sudah mencapai step 3, transisikan ke Step 4
+  React.useEffect(() => {
+    if (currentStep >= 3 && isProfileReady) {
+      const t3 = window.setTimeout(() => {
+        setCurrentStep(4);
+      }, 700);
+
+      // Selesai penuh dan arahkan setelah melihat state sukses
+      const t4 = window.setTimeout(() => {
+        onComplete?.();
+      }, 1500);
+
+      return () => {
+        window.clearTimeout(t3);
+        window.clearTimeout(t4);
+      };
+    }
+  }, [currentStep, isProfileReady, onComplete]);
+
+  // Fallback jika proses agak lambat namun step 3 sudah lewat 2.4s, tunggu profile siap
+  React.useEffect(() => {
+    if (currentStep === 3 && !isProfileReady) {
+      // Biarkan tetap di step 3 sampai profile siap
+    }
+  }, [currentStep, isProfileReady]);
+
+  const progressPercentage = {
+    1: 25,
+    2: 60,
+    3: 88,
+    4: 100,
+  }[currentStep];
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] p-4 text-center overflow-hidden transition-colors duration-500">
@@ -55,7 +116,10 @@ export function OAuthLoadingCard({
       <ThemeToggle variant="floating" />
 
       {/* Background Animated Gradient Mesh */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      >
         <motion.div
           animate={{
             scale: [1, 1.15, 1],
@@ -69,7 +133,12 @@ export function OAuthLoadingCard({
             scale: [1.1, 1, 1.1],
             opacity: isDark ? [0.1, 0.18, 0.1] : [0.06, 0.12, 0.06],
           }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
           className="absolute -bottom-[20%] left-1/2 -translate-x-1/2 w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-[#1FB1F2] to-[#0B43C8] blur-[100px]"
         />
         {/* Subtle grid pattern */}
@@ -103,17 +172,26 @@ export function OAuthLoadingCard({
 
             <div className="flex-1 max-w-[120px] relative flex items-center justify-center">
               {/* Connector line */}
-              <div className="w-full h-0.5 bg-gradient-to-r from-[#4285F4]/40 via-[#1FB1F2] to-[#0B43C8]/40 dark:from-[#4285F4]/30 dark:via-[#1FB1F2]/60 dark:to-[#0B43C8]/30 rounded-full" />
+              <div className="w-full h-1 bg-gradient-to-r from-[#4285F4]/30 via-[#1FB1F2] to-[#0B43C8]/30 dark:from-[#4285F4]/30 dark:via-[#1FB1F2]/60 dark:to-[#0B43C8]/30 rounded-full overflow-hidden">
+                {/* Smooth Progress Fill */}
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#4285F4] via-[#1FB1F2] to-[#0B43C8]"
+                  initial={{ width: "25%" }}
+                  animate={{ width: `${progressPercentage}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
+              </div>
+
               {/* Animated travelling light pulse */}
               <motion.div
                 animate={{ x: [-45, 45] }}
                 transition={{
-                  duration: 1.4,
+                  duration: 1.2,
                   repeat: Infinity,
                   ease: "easeInOut",
                   repeatType: "mirror",
                 }}
-                className="absolute size-2.5 rounded-full bg-[#1FB1F2] shadow-[0_0_10px_#1FB1F2]"
+                className="absolute size-2.5 rounded-full bg-[#1FB1F2] shadow-[0_0_12px_#1FB1F2]"
               />
             </div>
 
@@ -122,81 +200,223 @@ export function OAuthLoadingCard({
 
           {/* Center Lattice Matrix Loader */}
           <div className="flex flex-col items-center justify-center py-3">
-            <div className="p-3.5 rounded-2xl bg-[#F0F1F3]/80 dark:bg-[#090E19]/60 border border-[#C9C9C9]/30 dark:border-white/5 backdrop-blur-sm">
+            <div className="p-3.5 rounded-2xl bg-[#F0F1F3]/80 dark:bg-[#090E19]/60 border border-[#C9C9C9]/30 dark:border-white/5 backdrop-blur-sm transition-all duration-300">
               <LatticeLoader
                 pattern="orbit"
                 grid={3}
                 shape="round"
                 cellSize={8}
                 gap={4}
+                status={currentStep === 4 ? "done" : "working"}
                 color={isDark ? "#1FB1F2" : "#0B43C8"}
-                glowColor={isDark ? "#1FB1F2" : "#0B43C8"}
+                doneColor="#22c55e"
+                glowColor={
+                  currentStep === 4
+                    ? "#22c55e"
+                    : isDark
+                      ? "#1FB1F2"
+                      : "#0B43C8"
+                }
                 glow={true}
                 idleOpacity={isDark ? 0.25 : 0.18}
-                step={85}
+                step={currentStep === 4 ? 120 : 85}
               />
             </div>
           </div>
 
-          {/* Titles & Message */}
+          {/* Dynamic Titles & Message */}
           <div className="text-center mt-3 mb-5 space-y-1.5">
-            <h3 className="font-bold text-lg text-[#2A2A2A] dark:text-white tracking-tight">
-              Menghubungkan Akun Google
-            </h3>
-            <p className="text-xs sm:text-sm text-[#616C82] dark:text-[#9AA5B8] leading-relaxed">
-              Sedang memverifikasi data akun dan menyiapkan portal kerja Anda...
-            </p>
+            <AnimatePresence mode="wait">
+              {currentStep === 4 ? (
+                <motion.div
+                  key="done"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-1"
+                >
+                  <h3 className="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 tracking-tight">
+                    <SparklesIcon className="size-5" />
+                    <span>Akun Berhasil Terhubung!</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#616C82] dark:text-[#9AA5B8] leading-relaxed">
+                    Selamat datang{userName ? `, ${userName}` : ""}! Mengalihkan ke ruang kerja...
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="working"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-1"
+                >
+                  <h3 className="font-bold text-lg text-[#2A2A2A] dark:text-white tracking-tight">
+                    Menghubungkan Akun Google
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#616C82] dark:text-[#9AA5B8] leading-relaxed">
+                    Sedang memverifikasi data akun dan menyiapkan portal kerja Anda...
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Step Progress Checklist */}
+          {/* Step Progress Checklist Berurutan */}
           <div className="space-y-2.5 py-3 border-y border-[#C9C9C9]/30 dark:border-white/10 text-xs">
-            {/* Step 1 */}
-            <div className="flex items-center justify-between text-[#2A2A2A] dark:text-white">
+            {/* Step 1: Otentikasi Akun Google */}
+            <div className="flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
-                <CheckCircle2Icon className="size-4 text-emerald-500 shrink-0" />
-                <span>Otentikasi Akun Google</span>
+                {currentStep >= 2 ? (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                  >
+                    <CheckCircle2Icon className="size-4 text-emerald-500 shrink-0" />
+                  </motion.div>
+                ) : (
+                  <Loader2Icon className="size-4 text-[#0B43C8] dark:text-[#1FB1F2] animate-spin shrink-0" />
+                )}
+                <span
+                  className={
+                    currentStep >= 2
+                      ? "text-[#2A2A2A] dark:text-white font-medium"
+                      : "text-[#0B43C8] dark:text-[#1FB1F2] font-semibold"
+                  }
+                >
+                  Otentikasi Akun Google
+                </span>
               </span>
-              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                Selesai
+              <span
+                className={`text-[11px] font-medium ${
+                  currentStep >= 2
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-[#0B43C8] dark:text-[#1FB1F2] animate-pulse"
+                }`}
+              >
+                {currentStep >= 2 ? "Selesai" : "Memverifikasi..."}
               </span>
             </div>
 
-            {/* Step 2 */}
-            <div className="flex items-center justify-between text-[#2A2A2A] dark:text-white">
+            {/* Step 2: Sinkronisasi Profil & Izin */}
+            <div className="flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
-                <Loader2Icon className="size-4 text-[#0B43C8] dark:text-[#1FB1F2] animate-spin shrink-0" />
-                <span className="font-semibold text-[#0B43C8] dark:text-[#1FB1F2]">
+                {currentStep >= 3 ? (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                  >
+                    <CheckCircle2Icon className="size-4 text-emerald-500 shrink-0" />
+                  </motion.div>
+                ) : currentStep === 2 ? (
+                  <Loader2Icon className="size-4 text-[#0B43C8] dark:text-[#1FB1F2] animate-spin shrink-0" />
+                ) : (
+                  <div className="size-4 rounded-full border border-dashed border-[#C9C9C9] dark:border-white/20 shrink-0" />
+                )}
+                <span
+                  className={
+                    currentStep >= 3
+                      ? "text-[#2A2A2A] dark:text-white font-medium"
+                      : currentStep === 2
+                        ? "text-[#0B43C8] dark:text-[#1FB1F2] font-semibold"
+                        : "text-[#9AA5B8] dark:text-[#616C82]"
+                  }
+                >
                   Sinkronisasi Profil & Izin
                 </span>
               </span>
-              <span className="text-[11px] font-semibold text-[#0B43C8] dark:text-[#1FB1F2] animate-pulse">
-                Memproses...
+              <span
+                className={`text-[11px] font-medium ${
+                  currentStep >= 3
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : currentStep === 2
+                      ? "text-[#0B43C8] dark:text-[#1FB1F2] animate-pulse"
+                      : "text-[#9AA5B8] dark:text-[#616C82]"
+                }`}
+              >
+                {currentStep >= 3
+                  ? "Selesai"
+                  : currentStep === 2
+                    ? "Memproses..."
+                    : "Menunggu"}
               </span>
             </div>
 
-            {/* Step 3 */}
-            <div className="flex items-center justify-between text-[#9AA5B8] dark:text-[#616C82]">
+            {/* Step 3: Menyiapkan Dasbor Portal */}
+            <div className="flex items-center justify-between transition-colors">
               <span className="flex items-center gap-2">
-                <div className="size-4 rounded-full border border-dashed border-[#C9C9C9] dark:border-white/20 shrink-0" />
-                <span>Menyiapkan Dasbor Portal</span>
+                {currentStep === 4 ? (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                  >
+                    <CheckCircle2Icon className="size-4 text-emerald-500 shrink-0" />
+                  </motion.div>
+                ) : currentStep === 3 ? (
+                  <Loader2Icon className="size-4 text-[#0B43C8] dark:text-[#1FB1F2] animate-spin shrink-0" />
+                ) : (
+                  <div className="size-4 rounded-full border border-dashed border-[#C9C9C9] dark:border-white/20 shrink-0" />
+                )}
+                <span
+                  className={
+                    currentStep === 4
+                      ? "text-[#2A2A2A] dark:text-white font-medium"
+                      : currentStep === 3
+                        ? "text-[#0B43C8] dark:text-[#1FB1F2] font-semibold"
+                        : "text-[#9AA5B8] dark:text-[#616C82]"
+                  }
+                >
+                  Menyiapkan Dasbor Portal
+                </span>
               </span>
-              <span className="text-[11px]">Menunggu</span>
+              <span
+                className={`text-[11px] font-medium ${
+                  currentStep === 4
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : currentStep === 3
+                      ? "text-[#0B43C8] dark:text-[#1FB1F2] animate-pulse"
+                      : "text-[#9AA5B8] dark:text-[#616C82]"
+                }`}
+              >
+                {currentStep === 4
+                  ? "Selesai"
+                  : currentStep === 3
+                    ? "Memuat Ruang Kerja..."
+                    : "Menunggu"}
+              </span>
             </div>
           </div>
 
-          {/* Cancel Action */}
-          {onCancel && (
-            <div className="mt-5 flex justify-center">
+          {/* Action Footer */}
+          <div className="mt-5 flex items-center justify-between">
+            {onCancel ? (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onCancel}
                 className="text-xs text-[#616C82] dark:text-[#9AA5B8] hover:text-[#2A2A2A] dark:hover:text-white hover:bg-[#F0F1F3] dark:hover:bg-white/10 rounded-xl"
               >
-                Batalkan & Kembali ke Masuk
+                Batalkan
               </Button>
-            </div>
-          )}
+            ) : <div />}
+
+            {/* Tombol lewati jika pengguna ingin langsung masuk tanpa menunggu animasi */}
+            {isProfileReady && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onComplete?.()}
+                className="text-xs text-[#0B43C8] dark:text-[#1FB1F2] hover:bg-[#0B43C8]/10 dark:hover:bg-[#1FB1F2]/10 font-semibold rounded-xl"
+              >
+                Langsung Masuk &rarr;
+              </Button>
+            )}
+          </div>
         </div>
       </motion.div>
     </div>
