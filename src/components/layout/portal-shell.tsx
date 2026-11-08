@@ -1,10 +1,11 @@
 import * as React from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BellIcon,
   BookOpenIcon,
   CalendarRangeIcon,
   CheckCheckIcon,
+  ChevronDownIcon,
   ClipboardListIcon,
   CoinsIcon,
   FileBarChart2Icon,
@@ -15,7 +16,10 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   ReceiptTextIcon,
+  ScaleIcon,
   SettingsIcon,
   ShieldAlertIcon,
   ShoppingCartIcon,
@@ -35,7 +39,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/features/auth/auth-context";
 import { formatDateTimeID, ROLE_LABELS } from "@/lib/formatters";
 import {
@@ -45,56 +48,254 @@ import {
 import { cn } from "@/lib/utils";
 import type { NotificationRow, UserRole } from "@/types/database.types";
 
-interface NavItem {
+export type NavItem = {
+  type: "item";
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-}
+  badge?: string | number;
+};
 
-const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
+export type NavGroup = {
+  type: "group";
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  hubPath?: string;
+  items: {
+    to: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string | number;
+  }[];
+};
+
+export type NavEntry = NavItem | NavGroup;
+
+const NAV_STRUCTURE_BY_ROLE: Record<UserRole, NavEntry[]> = {
   super_admin: [
-    { to: "/super-admin/dashboard", label: "Dashboard Sistem", icon: LayoutDashboardIcon },
-    { to: "/super-admin/pengguna", label: "Pengguna & Peran", icon: UsersIcon },
-    { to: "/super-admin/konfigurasi", label: "Konfigurasi & Dokumen", icon: SettingsIcon },
-    { to: "/super-admin/master-tinjau", label: "Tinjau Master & COA", icon: BookOpenIcon },
-    { to: "/super-admin/audit-trail", label: "Audit Trail", icon: ShieldAlertIcon },
+    {
+      type: "item",
+      to: "/super-admin/dashboard",
+      label: "Dashboard Sistem",
+      icon: LayoutDashboardIcon,
+    },
+    {
+      type: "group",
+      id: "admin-sistem",
+      label: "Administrasi Sistem",
+      icon: SettingsIcon,
+      items: [
+        {
+          to: "/super-admin/pengguna",
+          label: "Pengguna & Peran",
+          icon: UsersIcon,
+        },
+        {
+          to: "/super-admin/konfigurasi",
+          label: "Konfigurasi & Dokumen",
+          icon: SettingsIcon,
+        },
+        {
+          to: "/super-admin/master-tinjau",
+          label: "Tinjau Master & COA",
+          icon: BookOpenIcon,
+        },
+      ],
+    },
+    {
+      type: "item",
+      to: "/super-admin/audit-trail",
+      label: "Audit Trail",
+      icon: ShieldAlertIcon,
+    },
   ],
   admin: [
-    { to: "/admin/dashboard", label: "Dashboard Keuangan", icon: LayoutDashboardIcon },
-    { to: "/admin/persetujuan", label: "Persetujuan Pembayaran", icon: HandCoinsIcon },
-    { to: "/admin/po-internal", label: "PO Pembelian Vendor", icon: ShoppingCartIcon },
-    { to: "/admin/proyek", label: "Proyek Klien & Termin", icon: FolderKanbanIcon },
-    { to: "/admin/penagihan", label: "Invoice, Piutang, & Kuitansi", icon: ReceiptTextIcon },
-    { to: "/admin/anggaran", label: "Budgeting Proyek", icon: WalletIcon },
-    { to: "/admin/akuntansi/jurnal", label: "Jurnal Umum & Koreksi", icon: FileSpreadsheetIcon },
-    { to: "/admin/akuntansi/laporan", label: "Laporan Keuangan SAK", icon: FileBarChart2Icon },
-    { to: "/admin/bagi-hasil", label: "Bagi Hasil Proyek", icon: CoinsIcon },
-    { to: "/admin/akuntansi/periode", label: "Periode & Tutup Buku", icon: CalendarRangeIcon },
-    { to: "/admin/akuntansi/akun", label: "Bagan Akun (COA SAK)", icon: BookOpenIcon },
-    { to: "/admin/master", label: "Master Vendor & Klien", icon: ClipboardListIcon },
+    {
+      type: "item",
+      to: "/admin/dashboard",
+      label: "Dashboard Keuangan",
+      icon: LayoutDashboardIcon,
+    },
+    {
+      type: "group",
+      id: "operasional-pengeluaran",
+      label: "Operasional & PO",
+      icon: ShoppingCartIcon,
+      items: [
+        {
+          to: "/admin/persetujuan",
+          label: "Persetujuan Pembayaran",
+          icon: HandCoinsIcon,
+        },
+        {
+          to: "/admin/po-internal",
+          label: "PO Pembelian Vendor",
+          icon: ShoppingCartIcon,
+        },
+        {
+          to: "/admin/anggaran",
+          label: "Budgeting Proyek",
+          icon: WalletIcon,
+        },
+      ],
+    },
+    {
+      type: "group",
+      id: "proyek-penagihan",
+      label: "Proyek & Pendapatan",
+      icon: FolderKanbanIcon,
+      items: [
+        {
+          to: "/admin/proyek",
+          label: "Proyek Klien & Termin",
+          icon: FolderKanbanIcon,
+        },
+        {
+          to: "/admin/penagihan",
+          label: "Invoice & Penagihan",
+          icon: ReceiptTextIcon,
+        },
+        {
+          to: "/admin/bagi-hasil",
+          label: "Bagi Hasil Proyek",
+          icon: CoinsIcon,
+        },
+      ],
+    },
+    {
+      type: "group",
+      id: "akuntansi-sak",
+      label: "Akuntansi SAK & Laporan",
+      icon: FileSpreadsheetIcon,
+      hubPath: "/admin/akuntansi",
+      items: [
+        {
+          to: "/admin/akuntansi",
+          label: "Pusat Pembukuan (Hub)",
+          icon: ScaleIcon,
+        },
+        {
+          to: "/admin/akuntansi/jurnal",
+          label: "Jurnal Umum & Koreksi",
+          icon: FileSpreadsheetIcon,
+        },
+        {
+          to: "/admin/akuntansi/laporan",
+          label: "Laporan Keuangan SAK",
+          icon: FileBarChart2Icon,
+        },
+        {
+          to: "/admin/akuntansi/periode",
+          label: "Periode & Tutup Buku",
+          icon: CalendarRangeIcon,
+        },
+        {
+          to: "/admin/akuntansi/akun",
+          label: "Bagan Akun (COA SAK)",
+          icon: BookOpenIcon,
+        },
+      ],
+    },
+    {
+      type: "item",
+      to: "/admin/master",
+      label: "Master Vendor & Klien",
+      icon: ClipboardListIcon,
+    },
   ],
   user: [
-    { to: "/user/dashboard", label: "Dashboard & Bagi Hasil", icon: LayoutDashboardIcon },
-    { to: "/user/po", label: "PO Pembelian Saya", icon: ShoppingCartIcon },
-    { to: "/user/pembayaran", label: "Pengajuan Pembayaran", icon: HandCoinsIcon },
-    { to: "/user/anggaran", label: "Anggaran Proyek Saya", icon: WalletIcon },
+    {
+      type: "item",
+      to: "/user/dashboard",
+      label: "Dashboard & Bagi Hasil",
+      icon: LayoutDashboardIcon,
+    },
+    {
+      type: "group",
+      id: "aktivitas-proyek",
+      label: "Aktivitas Proyek",
+      icon: FolderKanbanIcon,
+      items: [
+        {
+          to: "/user/po",
+          label: "PO Pembelian Saya",
+          icon: ShoppingCartIcon,
+        },
+        {
+          to: "/user/pembayaran",
+          label: "Pengajuan Pembayaran",
+          icon: HandCoinsIcon,
+        },
+        {
+          to: "/user/anggaran",
+          label: "Anggaran Proyek Saya",
+          icon: WalletIcon,
+        },
+      ],
+    },
   ],
 };
+
+const SIDEBAR_STORAGE_KEY = "altcycles_sidebar_collapsed";
 
 export function PortalShell() {
   const { profile, signOut, isDemoMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // State Sidebar Buka / Tutup (Lipat / Expand)
+  const [isCollapsed, setIsCollapsed] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [changePwdOpen, setChangePwdOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<NotificationRow[]>([]);
+
+  // State Accordion Sub-Menu Terbuka/Tertutup
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => {
+    // Buka otomatis grup yang memuat rute saat ini
+    const initial: Record<string, boolean> = {
+      "akuntansi-sak": true,
+      "operasional-pengeluaran": true,
+      "proyek-penagihan": true,
+      "admin-sistem": true,
+      "aktivitas-proyek": true,
+    };
+    return initial;
+  });
+
+  const toggleCollapsed = React.useCallback(() => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      } catch {
+        // Abaikan
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleGroup = React.useCallback((groupId: string) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  }, []);
 
   const loadNotifications = React.useCallback(async () => {
     try {
       const rows = await listMyNotifications();
       setNotifications(rows);
     } catch {
-      // Abaikan jika sesi sedang beralih
+      // Abaikan jika sesi beralih
     }
   }, []);
 
@@ -104,11 +305,27 @@ export function PortalShell() {
     }
   }, [profile, loadNotifications]);
 
+  // Otomatis buka grup jika rute aktif berada di dalamnya
+  React.useEffect(() => {
+    if (!profile) return;
+    const structure = NAV_STRUCTURE_BY_ROLE[profile.role] || [];
+    for (const entry of structure) {
+      if (entry.type === "group") {
+        const hasActiveChild = entry.items.some(
+          (child) => location.pathname === child.to,
+        );
+        if (hasActiveChild) {
+          setOpenGroups((prev) => (prev[entry.id] ? prev : { ...prev, [entry.id]: true }));
+        }
+      }
+    }
+  }, [location.pathname, profile]);
+
   if (!profile) {
     return null;
   }
 
-  const navItems = NAV_BY_ROLE[profile.role];
+  const navStructure = NAV_STRUCTURE_BY_ROLE[profile.role] || [];
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   async function handleLogout() {
@@ -127,19 +344,22 @@ export function PortalShell() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      {/* Header Seluler */}
-      <header className="flex items-center justify-between border-b bg-card px-4 py-3 md:hidden">
-        <div className="flex items-center gap-2">
-          <AltviraLogoMark size={24} iconVariant="transparent" />
-          <span className="font-bold">Altcycles</span>
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
+      {/* =========================================================================
+          HEADER SELULER (Mobile Only)
+          ========================================================================= */}
+      <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden sticky top-0 z-40">
+        <div className="flex items-center gap-2.5">
+          <AltviraLogoMark size={26} iconVariant="transparent" />
+          <span className="font-bold text-sm tracking-tight">Altcycles</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <ThemeToggle size="sm" />
           <Button
             type="button"
             variant="ghost"
             size="icon"
+            className="size-9 rounded-xl"
             aria-label="Notifikasi"
             onClick={() => void handleOpenNotifications()}
           >
@@ -149,140 +369,388 @@ export function PortalShell() {
             type="button"
             variant="ghost"
             size="icon"
+            className="size-9 rounded-xl"
             aria-label="Buka menu navigasi"
             onClick={() => setMobileOpen((prev) => !prev)}
           >
-            {mobileOpen ? <XIcon /> : <MenuIcon />}
+            {mobileOpen ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}
           </Button>
         </div>
       </header>
 
-      {/* Sidebar Navigasi */}
+      {/* =========================================================================
+          OVERLAY BACKDROP SELULER
+          ========================================================================= */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* =========================================================================
+          SIDEBAR DUA MODE: EXPANDED (w-64) & COLLAPSED (w-20)
+          ========================================================================= */}
       <aside
         className={cn(
-          "w-full shrink-0 border-b bg-card md:flex md:w-64 md:flex-col md:border-b-0 md:border-r",
-          mobileOpen ? "block" : "hidden",
+          "fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r bg-card shadow-xs transition-[width,transform] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isCollapsed ? "md:w-20" : "md:w-64",
+          "w-72 md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex flex-col gap-1 p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <AltviraLogoMark size={32} iconVariant="transparent" />
-              <div>
-                <p className="text-sm font-bold leading-none">Altcycles</p>
-                <p className="text-xs text-muted-foreground">ERP Keuangan Altvira</p>
+        {/* Top Header: Brand Logo & Tombol Buka/Tutup Sidebar */}
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center border-b px-4 transition-all duration-300",
+            isCollapsed ? "justify-center" : "justify-between",
+          )}
+        >
+          {isCollapsed ? (
+            /* Mode Collapsed: Tombol Logo yang beranimasi expand saat diklik/hover */
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              title="Perluas Sidebar"
+              className="group relative flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200 cursor-pointer"
+            >
+              <AltviraLogoMark
+                size={22}
+                iconVariant="transparent"
+                className="transition-transform duration-200 group-hover:scale-75 group-hover:opacity-0"
+              />
+              <PanelLeftOpenIcon className="size-5 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 text-primary" />
+            </button>
+          ) : (
+            /* Mode Expanded: Logo Brand Lengkap + Tombol Lipat */
+            <>
+              <div className="flex items-center gap-3 overflow-hidden">
+                <AltviraLogoMark size={28} iconVariant="transparent" className="shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="truncate text-sm font-bold tracking-tight text-foreground">
+                    Altcycles
+                  </span>
+                  <span className="truncate text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    ERP Keuangan
+                  </span>
+                </div>
               </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleCollapsed}
+                  title="Lipat Sidebar"
+                  className="hidden md:inline-flex size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                >
+                  <PanelLeftCloseIcon className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex md:hidden size-8 rounded-lg"
+                >
+                  <XIcon className="size-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Notifikasi & Badge Peran (Hanya Muncul saat Expanded) */}
+        {!isCollapsed && (
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/15">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
+              {isDemoMode && (
+                <StatusBadge tone="warning" label="Mode Lokal" />
+              )}
             </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="relative px-2"
+              className="relative size-8 p-0 rounded-lg"
               onClick={() => void handleOpenNotifications()}
-              title="Notifikasi dalam Aplikasi"
+              title="Notifikasi Masuk"
             >
-              <BellIcon className="size-4" />
-              {unreadCount > 0 ? (
-                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+              <BellIcon className="size-3.5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
                   {unreadCount}
                 </span>
-              ) : null}
+              )}
             </Button>
           </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
-            {isDemoMode ? (
-              <StatusBadge tone="warning" label="Mode Lokal" />
-            ) : null}
-          </div>
-        </div>
+        )}
 
-        <Separator />
+        {/* =====================================================================
+            DAFTAR NAVIGASI (Dengan Submenu & Indikator Aktif Terstruktur)
+            ===================================================================== */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {navStructure.map((entry) => {
+            if (entry.type === "item") {
+              const Icon = entry.icon;
+              return (
+                <NavLink
+                  key={entry.to}
+                  to={entry.to}
+                  title={isCollapsed ? entry.label : undefined}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "group relative flex h-10 items-center rounded-xl px-3 text-xs font-medium transition-all duration-200",
+                      isCollapsed ? "justify-center" : "justify-start gap-3",
+                      isActive
+                        ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-xs"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {/* Active indicator bar di sisi kiri */}
+                      {isActive && (
+                        <span
+                          className={cn(
+                            "absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-primary transition-all duration-200",
+                            isCollapsed ? "h-5" : "h-6",
+                          )}
+                        />
+                      )}
+                      <Icon
+                        className={cn(
+                          "size-4 shrink-0 transition-transform duration-200",
+                          isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                        )}
+                      />
+                      {!isCollapsed && (
+                        <span className="truncate">{entry.label}</span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              );
+            }
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-          {navItems.map((item) => {
-            const Icon = item.icon;
+            // Grup Navigasi dengan Submenu Accordion
+            const GroupIcon = entry.icon;
+            const isGroupOpen = Boolean(openGroups[entry.id]);
+            const isChildActive = entry.items.some(
+              (item) => location.pathname === item.to,
+            );
+
+            if (isCollapsed) {
+              /* Mode Collapsed: Tampilkan ikon grup dengan indikator dot jika anak menu aktif */
+              return (
+                <div key={entry.id} className="relative flex justify-center py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (entry.hubPath) {
+                        navigate(entry.hubPath);
+                      } else {
+                        toggleCollapsed();
+                      }
+                    }}
+                    title={`${entry.label} (${entry.items.length} sub-menu)`}
+                    className={cn(
+                      "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer",
+                      isChildActive
+                        ? "bg-primary/15 text-primary font-bold shadow-xs"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    )}
+                  >
+                    {isChildActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-primary" />
+                    )}
+                    <GroupIcon className="size-4 shrink-0" />
+                    {isChildActive && (
+                      <span className="absolute top-2 right-2 size-1.5 rounded-full bg-primary" />
+                    )}
+                  </button>
+                </div>
+              );
+            }
+
+            /* Mode Expanded: Grup Lengkap dengan Accordion Header & Sub-item */
             return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  )
-                }
-              >
-                <Icon className="size-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </NavLink>
+              <div key={entry.id} className="pt-2 pb-1">
+                {/* Header Sub-Menu */}
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(entry.id)}
+                  className={cn(
+                    "w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
+                    isChildActive
+                      ? "text-primary"
+                      : "text-foreground/80 hover:bg-muted/40",
+                  )}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <GroupIcon className="size-4 shrink-0 opacity-80" />
+                    <span className="truncate">{entry.label}</span>
+                  </div>
+                  <ChevronDownIcon
+                    className={cn(
+                      "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+                      isGroupOpen ? "rotate-0" : "-rotate-90",
+                    )}
+                  />
+                </button>
+
+                {/* Daftar Anak Menu (Submenu List dengan garis pandu vertikal) */}
+                {isGroupOpen && (
+                  <div className="mt-1 ml-4 pl-2.5 border-l border-border/60 space-y-1">
+                    {entry.items.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      return (
+                        <NavLink
+                          key={subItem.to}
+                          to={subItem.to}
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              "group relative flex h-8.5 items-center rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
+                              isActive
+                                ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-2xs"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                            )
+                          }
+                        >
+                          {({ isActive }) => (
+                            <>
+                              {isActive && (
+                                <span className="absolute -left-[11px] top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-primary ring-2 ring-card" />
+                              )}
+                              <SubIcon
+                                className={cn(
+                                  "size-3.5 mr-2 shrink-0 transition-colors",
+                                  isActive
+                                    ? "text-primary"
+                                    : "text-muted-foreground group-hover:text-foreground",
+                                )}
+                              />
+                              <span className="truncate">{subItem.label}</span>
+                            </>
+                          )}
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
 
-        <Separator />
-
-        <div className="flex flex-col gap-2.5 p-4 bg-muted/20">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col min-w-0 pr-2">
-              <span className="truncate text-xs font-semibold">
-                {profile.full_name}
-              </span>
-              <span className="truncate text-[11px] text-muted-foreground">
-                {profile.email}
-              </span>
+        {/* =========================================================================
+            PROFIL PENGGUNA DI BAGIAN BAWAH
+            ========================================================================= */}
+        <div className="shrink-0 border-t bg-muted/20 p-3">
+          {isCollapsed ? (
+            /* Mode Collapsed: Tombol Avatar Ringkas */
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setChangePwdOpen(true)}
+                title={`${profile.full_name} (${ROLE_LABELS[profile.role]})\nKlik untuk Ganti Kata Sandi`}
+                className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-xs hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                {profile.full_name
+                  ? profile.full_name
+                      .split(" ")
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()
+                  : "U"}
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Keluar Sesi"
+                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
+              >
+                <LogOutIcon className="size-4" />
+              </button>
             </div>
-            <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
-          </div>
+          ) : (
+            /* Mode Expanded: Profil Lengkap & Tombol Aksi */
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col min-w-0 pr-2">
+                  <span className="truncate text-xs font-semibold text-foreground">
+                    {profile.full_name}
+                  </span>
+                  <span className="truncate text-[11px] text-muted-foreground">
+                    {profile.email}
+                  </span>
+                </div>
+                <StatusBadge tone="info" label={ROLE_LABELS[profile.role]} />
+              </div>
 
-          <div className="grid grid-cols-2 gap-1.5 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setChangePwdOpen(true)}
-              className="text-xs h-8 px-2 justify-center gap-1.5"
-              title="Ganti Kata Sandi Akun"
-            >
-              <KeyRoundIcon className="size-3.5" />
-              <span>Ganti Sandi</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-xs h-8 px-2 justify-center gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              title="Keluar Sesi"
-            >
-              <LogOutIcon className="size-3.5" />
-              <span>Keluar</span>
-            </Button>
-          </div>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setChangePwdOpen(true)}
+                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80"
+                  title="Ganti Kata Sandi Akun"
+                >
+                  <KeyRoundIcon className="size-3.5" />
+                  <span>Ganti Sandi</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  title="Keluar Sesi"
+                >
+                  <LogOutIcon className="size-3.5" />
+                  <span>Keluar</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
-      {/* Konten Utama */}
-      <main className="flex-1 bg-background p-4 md:p-8">
-        {/* Tombol Mode Gelap & Terang di Ujung Kanan Atas Halaman Desktop */}
-        <ThemeToggle variant="floating" className="hidden md:inline-flex" />
+      {/* =========================================================================
+          AREA KONTEN UTAMA (Margin menyesuaikan lebar sidebar dengan transisi mulus)
+          ========================================================================= */}
+      <div
+        className={cn(
+          "flex-1 flex flex-col min-h-screen transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-x-hidden",
+          isCollapsed ? "md:ml-20" : "md:ml-64",
+        )}
+      >
+        <main className="flex-1 bg-background p-4 sm:p-6 lg:p-8">
+          {/* Tombol Pengalih Mode Terang/Gelap di Ujung Kanan Atas Desktop */}
+          <ThemeToggle variant="floating" className="hidden md:inline-flex" />
 
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <Outlet />
-        </div>
-      </main>
+          <div className="mx-auto flex max-w-6xl flex-col gap-6">
+            <Outlet />
+          </div>
+        </main>
+      </div>
 
-      {/* Dialog Notifikasi dalam Aplikasi (UC-03) */}
+      {/* =========================================================================
+          DIALOG NOTIFIKASI DALAM APLIKASI
+          ========================================================================= */}
       <Dialog open={notifOpen} onOpenChange={setNotifOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg rounded-2xl">
           <DialogHeader>
             <DialogTitle>Notifikasi dalam Aplikasi</DialogTitle>
             <DialogDescription>
-              Pemberitahuan pengajuan pembayaran, keputusan persetujuan, dan PO
-              klien baru.
+              Pemberitahuan pengajuan pembayaran, persetujuan termin, dan perubahan data.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end">
@@ -292,15 +760,16 @@ export function PortalShell() {
               size="sm"
               disabled={unreadCount === 0}
               onClick={() => void handleMarkRead()}
+              className="text-xs rounded-xl"
             >
-              <CheckCheckIcon data-icon="inline-start" />
+              <CheckCheckIcon data-icon="inline-start" className="size-3.5 mr-1" />
               Tandai Semua Sudah Dibaca
             </Button>
           </div>
           <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Belum ada notifikasi.
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                Belum ada notifikasi baru.
               </p>
             ) : (
               notifications.map((n) => (
@@ -312,18 +781,18 @@ export function PortalShell() {
                     if (n.link_path) navigate(n.link_path);
                   }}
                   className={cn(
-                    "flex flex-col gap-1 rounded-lg border p-3 text-left transition-colors hover:bg-accent",
-                    !n.is_read && "border-primary/40 bg-muted/40",
+                    "flex flex-col gap-1 rounded-xl border p-3 text-left transition-colors hover:bg-accent/60",
+                    !n.is_read && "border-primary/40 bg-primary/5",
                   )}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold">{n.title}</span>
+                    <span className="text-xs font-semibold">{n.title}</span>
                     {!n.is_read ? (
                       <StatusBadge tone="info" label="Baru" />
                     ) : null}
                   </div>
                   <p className="text-xs text-muted-foreground">{n.message}</p>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground">
                     {formatDateTimeID(n.created_at)}
                   </span>
                 </button>
@@ -333,7 +802,7 @@ export function PortalShell() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Ganti Kata Sandi Akun Pengguna */}
+      {/* Dialog Ganti Kata Sandi */}
       <ChangePasswordDialog
         open={changePwdOpen}
         onOpenChange={setChangePwdOpen}
