@@ -92,3 +92,7 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
+export function useOptionalTheme(): ThemeContextValue | null {
+  return React.useContext(ThemeContext) ?? null;
+}
+
