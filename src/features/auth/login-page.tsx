@@ -603,89 +603,91 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           </div>
                         </div>
 
-                        {/* Checklist Ketentuan Kata Sandi */}
-                        <div className="p-2.5 rounded-xl bg-[#F0F1F3]/80 dark:bg-[#1A253C]/70 border border-[#C9C9C9]/60 dark:border-white/10 space-y-1.5">
-                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2A2A2A] dark:text-white">
-                            <ShieldCheckIcon className="size-3.5 text-[#0B43C8] dark:text-[#1FB1F2]" />
-                            <span>Ketentuan Kata Sandi:</span>
+                        {/* Checklist Ketentuan Kata Sandi (Hanya tampil pada tab Buat Akun) */}
+                        {mode === "signup" && (
+                          <div className="p-2.5 rounded-xl bg-[#F0F1F3]/80 dark:bg-[#1A253C]/70 border border-[#C9C9C9]/60 dark:border-white/10 space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2A2A2A] dark:text-white">
+                              <ShieldCheckIcon className="size-3.5 text-[#0B43C8] dark:text-[#1FB1F2]" />
+                              <span>Ketentuan Kata Sandi:</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                              <div
+                                className={`flex items-center gap-1.5 transition-colors ${
+                                  pwdCriteria.minLength
+                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                }`}
+                              >
+                                {pwdCriteria.minLength ? (
+                                  <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                                )}
+                                <span>Minimal 8 karakter</span>
+                              </div>
+
+                              <div
+                                className={`flex items-center gap-1.5 transition-colors ${
+                                  pwdCriteria.hasUpper
+                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                }`}
+                              >
+                                {pwdCriteria.hasUpper ? (
+                                  <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                                )}
+                                <span>Huruf kapital (A-Z)</span>
+                              </div>
+
+                              <div
+                                className={`flex items-center gap-1.5 transition-colors ${
+                                  pwdCriteria.hasLower
+                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                }`}
+                              >
+                                {pwdCriteria.hasLower ? (
+                                  <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                                )}
+                                <span>Huruf kecil (a-z)</span>
+                              </div>
+
+                              <div
+                                className={`flex items-center gap-1.5 transition-colors ${
+                                  pwdCriteria.hasNumber
+                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                }`}
+                              >
+                                {pwdCriteria.hasNumber ? (
+                                  <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                                )}
+                                <span>Angka (0-9)</span>
+                              </div>
+
+                              <div
+                                className={`flex items-center gap-1.5 sm:col-span-2 transition-colors ${
+                                  pwdCriteria.hasSymbol
+                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                }`}
+                              >
+                                {pwdCriteria.hasSymbol ? (
+                                  <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
+                                )}
+                                <span>Simbol khusus (!@#$%^&* dll)</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-                            <div
-                              className={`flex items-center gap-1.5 transition-colors ${
-                                pwdCriteria.minLength
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-[#616C82] dark:text-[#9AA5B8]"
-                              }`}
-                            >
-                              {pwdCriteria.minLength ? (
-                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                              ) : (
-                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
-                              )}
-                              <span>Minimal 8 karakter</span>
-                            </div>
-
-                            <div
-                              className={`flex items-center gap-1.5 transition-colors ${
-                                pwdCriteria.hasUpper
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-[#616C82] dark:text-[#9AA5B8]"
-                              }`}
-                            >
-                              {pwdCriteria.hasUpper ? (
-                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                              ) : (
-                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
-                              )}
-                              <span>Huruf kapital (A-Z)</span>
-                            </div>
-
-                            <div
-                              className={`flex items-center gap-1.5 transition-colors ${
-                                pwdCriteria.hasLower
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-[#616C82] dark:text-[#9AA5B8]"
-                              }`}
-                            >
-                              {pwdCriteria.hasLower ? (
-                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                              ) : (
-                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
-                              )}
-                              <span>Huruf kecil (a-z)</span>
-                            </div>
-
-                            <div
-                              className={`flex items-center gap-1.5 transition-colors ${
-                                pwdCriteria.hasNumber
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-[#616C82] dark:text-[#9AA5B8]"
-                              }`}
-                            >
-                              {pwdCriteria.hasNumber ? (
-                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                              ) : (
-                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
-                              )}
-                              <span>Angka (0-9)</span>
-                            </div>
-
-                            <div
-                              className={`flex items-center gap-1.5 sm:col-span-2 transition-colors ${
-                                pwdCriteria.hasSymbol
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-[#616C82] dark:text-[#9AA5B8]"
-                              }`}
-                            >
-                              {pwdCriteria.hasSymbol ? (
-                                <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                              ) : (
-                                <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
-                              )}
-                              <span>Simbol khusus (!@#$%^&* dll)</span>
-                            </div>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     )}
                   </Field>
