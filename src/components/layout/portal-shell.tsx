@@ -413,14 +413,14 @@ export function PortalShell() {
               type="button"
               onClick={toggleCollapsed}
               title="Perluas Sidebar"
-              className="group relative flex size-10 items-center justify-center rounded-xl bg-card border border-border/80 hover:bg-accent text-primary transition-all duration-200 cursor-pointer shadow-2xs"
+              className="group relative flex size-10 items-center justify-center rounded-xl bg-card border border-border/80 hover:bg-accent text-primary dark:text-white dark:hover:bg-white/10 transition-all duration-200 cursor-pointer shadow-2xs"
             >
               <AltviraLogoMark
                 size={22}
                 iconVariant="transparent"
                 className="transition-transform duration-200 group-hover:scale-75 group-hover:opacity-0"
               />
-              <PanelLeftOpenIcon className="size-4.5 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 text-primary" />
+              <PanelLeftOpenIcon className="size-4.5 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 text-primary dark:text-white" />
             </button>
           ) : (
             /* Mode Expanded: Logo Brand Lengkap + Notifikasi + Tombol Lipat */
@@ -441,13 +441,13 @@ export function PortalShell() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="relative size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                  className="relative size-8 rounded-lg text-muted-foreground hover:text-foreground dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/10"
                   onClick={() => void handleOpenNotifications()}
                   title="Notifikasi Masuk"
                 >
                   <BellIcon className="size-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                    <span className="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white">
                       {unreadCount}
                     </span>
                   )}
@@ -458,7 +458,7 @@ export function PortalShell() {
                   size="icon"
                   onClick={toggleCollapsed}
                   title="Lipat Sidebar"
-                  className="hidden md:inline-flex size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                  className="hidden md:inline-flex size-8 rounded-lg text-muted-foreground hover:text-foreground dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/10"
                 >
                   <PanelLeftCloseIcon className="size-4" />
                 </Button>
@@ -497,9 +497,9 @@ export function PortalShell() {
                         : "justify-start gap-3 px-3",
                       isActive
                         ? isCollapsed
-                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                          : "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-2xs"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                          ? "bg-primary text-white font-semibold shadow-xs"
+                          : "bg-primary/10 text-primary font-semibold dark:bg-primary/25 dark:text-white shadow-2xs"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
                     )
                   }
                 >
@@ -514,9 +514,9 @@ export function PortalShell() {
                           "size-4 shrink-0 transition-transform duration-200",
                           isActive
                             ? isCollapsed
-                              ? "text-primary-foreground"
-                              : "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground",
+                              ? "text-white"
+                              : "text-primary dark:text-white"
+                            : "text-muted-foreground group-hover:text-foreground dark:text-slate-400 dark:group-hover:text-white",
                         )}
                       />
                       {!isCollapsed && (
@@ -552,8 +552,8 @@ export function PortalShell() {
                     className={cn(
                       "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer",
                       isChildActive
-                        ? "bg-primary/15 text-primary font-bold shadow-xs"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                        ? "bg-primary/15 text-primary dark:bg-primary/25 dark:text-white font-bold shadow-xs"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
                     )}
                   >
                     {isChildActive && (
@@ -578,8 +578,8 @@ export function PortalShell() {
                   className={cn(
                     "w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
                     isChildActive
-                      ? "text-primary"
-                      : "text-foreground/80 hover:bg-muted/40",
+                      ? "text-primary dark:text-white"
+                      : "text-foreground/80 hover:bg-muted/40 dark:text-slate-200 dark:hover:text-white dark:hover:bg-white/10",
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -588,7 +588,7 @@ export function PortalShell() {
                   </div>
                   <ChevronDownIcon
                     className={cn(
-                      "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+                      "size-3.5 shrink-0 text-muted-foreground dark:text-slate-400 group-hover:text-foreground dark:group-hover:text-white transition-transform duration-200",
                       isGroupOpen ? "rotate-0" : "-rotate-90",
                     )}
                   />
@@ -608,8 +608,8 @@ export function PortalShell() {
                             cn(
                               "group relative flex h-8.5 items-center rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
                               isActive
-                                ? "bg-primary/10 text-primary font-semibold dark:bg-primary/20 dark:text-primary-foreground shadow-2xs"
-                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                                ? "bg-primary/10 text-primary font-semibold dark:bg-primary/25 dark:text-white shadow-2xs"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
                             )
                           }
                         >
@@ -622,8 +622,8 @@ export function PortalShell() {
                                 className={cn(
                                   "size-3.5 mr-2 shrink-0 transition-colors",
                                   isActive
-                                    ? "text-primary"
-                                    : "text-muted-foreground group-hover:text-foreground",
+                                    ? "text-primary dark:text-white"
+                                    : "text-muted-foreground group-hover:text-foreground dark:text-slate-400 dark:group-hover:text-white",
                                 )}
                               />
                               <span className="truncate">{subItem.label}</span>
@@ -665,7 +665,7 @@ export function PortalShell() {
                 type="button"
                 onClick={() => setChangePwdOpen(true)}
                 title="Ganti Kata Sandi Akun"
-                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer"
+                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <KeyRoundIcon className="size-4" />
               </button>
@@ -673,7 +673,7 @@ export function PortalShell() {
                 type="button"
                 onClick={handleLogout}
                 title="Keluar Sesi"
-                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
+                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive dark:text-slate-300 dark:hover:text-destructive transition-colors cursor-pointer"
               >
                 <LogOutIcon className="size-4" />
               </button>
@@ -683,10 +683,10 @@ export function PortalShell() {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col min-w-0 pr-2">
-                  <span className="truncate text-xs font-semibold text-foreground">
+                  <span className="truncate text-xs font-semibold text-foreground dark:text-white">
                     {profile.full_name}
                   </span>
-                  <span className="truncate text-[11px] text-muted-foreground">
+                  <span className="truncate text-[11px] text-muted-foreground dark:text-slate-400">
                     {profile.email}
                   </span>
                 </div>
@@ -699,7 +699,7 @@ export function PortalShell() {
                   variant="outline"
                   size="sm"
                   onClick={() => setChangePwdOpen(true)}
-                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80"
+                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80 text-foreground dark:text-white dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white"
                   title="Ganti Kata Sandi Akun"
                 >
                   <KeyRoundIcon className="size-3.5" />
@@ -710,7 +710,7 @@ export function PortalShell() {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  className="text-xs h-8 px-2 justify-center gap-1.5 rounded-lg border-border/80 text-destructive hover:bg-destructive/10 hover:text-destructive dark:border-white/10"
                   title="Keluar Sesi"
                 >
                   <LogOutIcon className="size-3.5" />
