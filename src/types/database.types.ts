@@ -183,6 +183,22 @@ export type CompanyProfileRow = {
   updated_at: string;
 };
 
+export type LoginMediaCategory = "banner" | "flyer" | "medsos";
+
+export type LoginMediaItemRow = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  category: LoginMediaCategory;
+  image_url: string;
+  link_url: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DocSequenceRow = {
   doc_type: DocTypeCode;
   label: string;
@@ -1122,6 +1138,13 @@ export type Database = {
         Row: ProfitSharingLineRow;
         Insert: Omit<ProfitSharingLineRow, "id">;
         Update: Partial<ProfitSharingLineRow>;
+        Relationships: [];
+      };
+      login_media_items: {
+        Row: LoginMediaItemRow;
+        Insert: Pick<LoginMediaItemRow, "title" | "image_url"> &
+          Partial<LoginMediaItemRow>;
+        Update: Partial<LoginMediaItemRow>;
         Relationships: [];
       };
     };

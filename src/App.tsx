@@ -26,6 +26,7 @@ import { PurchaseOrdersPage } from "@/features/purchase-orders/po-page";
 import { AuditTrailPage } from "@/features/system-config/audit-trail-page";
 import { AdminSettingsPage } from "@/features/system-config/admin-settings-page";
 import { CompanyProfilePage } from "@/features/system-config/company-profile-page";
+import { LoginMediaPage } from "@/features/system-config/login-media-page";
 import { MasterReadonlyPage } from "@/features/system-config/master-readonly-page";
 import { SuperAdminDashboardPage } from "@/features/system-config/super-admin-dashboard";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -91,6 +92,10 @@ export function App() {
                   <Route
                     path="/super-admin/audit-trail"
                     element={<AuditTrailPage />}
+                  />
+                  <Route
+                    path="/super-admin/media-login"
+                    element={<LoginMediaPage />}
                   />
                 </Route>
 

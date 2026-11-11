@@ -14,6 +14,7 @@ import {
   CoinsIcon,
   FolderKanbanIcon,
   HandCoinsIcon,
+  ImageIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   MenuIcon,
@@ -119,6 +120,7 @@ function getHeaderBreadcrumbs(pathname: string): HeaderBreadcrumbItem[] {
     "/super-admin/konfigurasi": "Konfigurasi Sistem",
     "/super-admin/master-tinjau": "Tinjauan Data Master",
     "/super-admin/audit-trail": "Jejak Audit",
+    "/super-admin/media-login": "Media & Banner Login",
   };
 
   const title = staticTitles[pathname];
@@ -165,6 +167,12 @@ const NAV_STRUCTURE_BY_ROLE: Record<UserRole, NavEntry[]> = {
       to: "/super-admin/audit-trail",
       label: "Audit Trail",
       icon: ShieldAlertIcon,
+    },
+    {
+      type: "item",
+      to: "/super-admin/media-login",
+      label: "Media & Banner Login",
+      icon: ImageIcon,
     },
   ],
   admin: [

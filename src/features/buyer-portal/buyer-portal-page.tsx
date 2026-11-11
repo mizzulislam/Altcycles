@@ -5,15 +5,17 @@ import {
   CheckCircle2Icon,
   CopyIcon,
   DownloadIcon,
+  FolderKanbanIcon,
   PlusIcon,
   SearchIcon,
   ShieldCheckIcon,
   Trash2Icon,
+  WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -73,7 +75,7 @@ export function BuyerPortalPage() {
     (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim() ??
     "";
 
-  // Tab 1: Pelacakan 1 PO Tanpa Login (UC-35, UC-36)
+  // Tab 1: Pelacakan 1 PO Tanpa Login
   const [poQuery, setPoQuery] = React.useState(
     isDemoMode ? "PO-202611-SN8K4P" : "",
   );
@@ -81,7 +83,7 @@ export function BuyerPortalPage() {
   const [lookupResult, setLookupResult] =
     React.useState<BuyerPortalLookupDto | null>(null);
 
-  // Tab 2: Pengajuan PO Klien Baru (UC-34)
+  // Tab 2: Pengajuan PO Klien Baru
   const [clientName, setClientName] = React.useState("");
   const [clientCompany, setClientCompany] = React.useState("");
   const [clientEmail, setClientEmail] = React.useState("");
@@ -96,7 +98,6 @@ export function BuyerPortalPage() {
 
   const turnstileContainerRef = React.useRef<HTMLDivElement | null>(null);
 
-  // Memuat widget resmi Cloudflare Turnstile bagi pengunjung manusia apabila site key tersedia
   React.useEffect(() => {
     if (!turnstileSiteKey || isDemoMode) return;
     let widgetId: string | null = null;
@@ -223,32 +224,36 @@ export function BuyerPortalPage() {
   );
 
   return (
-    <div className="min-h-screen bg-muted/30 px-4 py-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <AltviraLogoMark size={36} iconVariant="transparent" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">
-                Portal Pelanggan: Altvira Technology
+    <div className="min-h-screen bg-background text-foreground px-4 py-8 sm:py-10">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6">
+        {/* Header Portal Pelanggan */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-card shadow-2xs">
+              <AltviraLogoMark size={28} iconVariant="transparent" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Portal Pelanggan Altvira Technology
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Akses informasi progres pengerjaan proyek dan dokumen invoice penagihan resmi klien secara mandiri.
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+                Lacak progres proyek, unduh dokumen tagihan resmi, dan ajukan purchase order secara mandiri.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle size="sm" />
             <Button variant="outline" size="sm" asChild>
               <Link to="/login">
-                <ArrowLeftIcon data-icon="inline-start" />
-                Login Tim Internal
+                <ArrowLeftIcon className="size-3.5" />
+                <span>Login Tim Internal</span>
               </Link>
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="lookup">
+        <Tabs defaultValue="lookup" className="w-full">
           <TabsList>
             <TabsTrigger value="lookup">
               <SearchIcon className="size-4 shrink-0" />
@@ -261,49 +266,52 @@ export function BuyerPortalPage() {
           </TabsList>
 
           {/* TAB 1: Pelacakan Progres & Dokumen 1 PO */}
-          <TabsContent value="lookup" className="flex flex-col gap-4">
-            <Card>
-              <CardHeader>
+          <TabsContent value="lookup" className="flex flex-col gap-6 mt-5">
+            <Card className="overflow-hidden">
+              <CardHeader className="px-6 py-4 border-b border-border/70">
                 <CardTitle>Masukkan Nomor Akses PO Anda</CardTitle>
                 <CardDescription>
-                  Demi kerahasiaan antar klien, pencocokan dilakukan di sisi
-                  server dan hanya menampilkan satu proyek yang cocok beserta
-                  perlindungan pembatasan percobaan per IP.
+                  Demi kerahasiaan antar klien, pencocokan dilakukan di sisi server dan hanya menampilkan satu proyek yang cocok beserta pembatasan percobaan per IP.
                   {isDemoMode
                     ? " (Contoh pratinjau Mode Lokal: PO-202611-SN8K4P)"
                     : ""}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <form
                   onSubmit={handleLookup}
-                  className="flex flex-col gap-3 sm:flex-row"
+                  className="flex flex-col gap-3 sm:flex-row sm:items-center"
                 >
                   <Input
                     required
                     value={poQuery}
                     onChange={(e) => setPoQuery(e.target.value.toUpperCase())}
                     placeholder="Contoh: PO-202611-SN8K4P"
-                    className="font-mono"
+                    className="font-mono h-10 flex-1"
                   />
-                  <Button type="submit" disabled={searching}>
+                  <Button
+                    type="submit"
+                    disabled={searching}
+                    className="h-10 px-5 shrink-0"
+                  >
                     {searching ? (
                       <Spinner data-icon="inline-start" />
                     ) : (
-                      <SearchIcon data-icon="inline-start" />
+                      <SearchIcon className="size-4" />
                     )}
-                    Cek Status Proyek
+                    <span>Cek Status Proyek</span>
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
             {lookupResult ? (
-              <div className="flex flex-col gap-4">
-                <Card>
-                  <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <CardTitle className="font-mono text-lg">
+              <div className="flex flex-col gap-6">
+                {/* Identitas & 3 KPI PO Terlacak */}
+                <Card className="overflow-hidden">
+                  <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1 min-w-0">
+                      <CardTitle className="font-mono text-base sm:text-lg">
                         {lookupResult.po_number}
                       </CardTitle>
                       <CardDescription>
@@ -311,7 +319,7 @@ export function BuyerPortalPage() {
                         {lookupResult.client_company
                           ? ` — ${lookupResult.client_company}`
                           : ""}{" "}
-                        · Diajukan {formatDateTimeID(lookupResult.submitted_at)}
+                        &bull; Diajukan {formatDateTimeID(lookupResult.submitted_at)}
                       </CardDescription>
                     </div>
                     <StatusBadge
@@ -331,51 +339,80 @@ export function BuyerPortalPage() {
                       }
                     />
                   </CardHeader>
-                  <CardContent className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Nilai PO</p>
-                      <p className="text-base font-bold">
-                        {formatRupiah(lookupResult.po_value)}
-                      </p>
+                  <CardContent className="p-6 grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Nilai Purchase Order
+                        </p>
+                        <p className="text-lg sm:text-xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
+                          {formatRupiah(lookupResult.po_value)}
+                        </p>
+                      </div>
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
+                        <WalletIcon className="size-5" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Proyek Terkait
-                      </p>
-                      <p className="text-sm font-semibold">
-                        {lookupResult.project
-                          ? `${lookupResult.project.code} — ${lookupResult.project.name}`
-                          : "Sedang disiapkan Admin"}
-                      </p>
+
+                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Proyek Terkait
+                        </p>
+                        <p className="text-xs sm:text-sm font-bold text-foreground mt-1.5 line-clamp-2">
+                          {lookupResult.project
+                            ? `${lookupResult.project.code} — ${lookupResult.project.name}`
+                            : "Sedang Disiapkan Admin"}
+                        </p>
+                      </div>
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                        <FolderKanbanIcon className="size-5" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Capaian Penyelesaian Proyek
-                      </p>
-                      <p className="text-base font-bold text-primary">
-                        {lookupResult.project?.cumulative_progress_pct ?? 0}%
-                      </p>
+
+                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Capaian Penyelesaian
+                        </p>
+                        <p className="text-lg sm:text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
+                          {lookupResult.project?.cumulative_progress_pct ?? 0}%
+                        </p>
+                      </div>
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <CheckCircle2Icon className="size-5" />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
+                {/* Tabel Termin Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
                     <CardTitle>Jadwal &amp; Status Termin Proyek</CardTitle>
                     <CardDescription>
-                      Informasi baca-saja tahapan penyelesaian dan penagihan
-                      kontrak Anda.
+                      Informasi baca-saja tahapan penyelesaian dan penagihan kontrak Anda.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/20 hover:bg-muted/20">
-                          <TableHead className="pl-6 pr-3 text-center w-16">#</TableHead>
-                          <TableHead className="px-3 text-center">Termin</TableHead>
-                          <TableHead className="px-3 text-center w-24">Porsi</TableHead>
-                          <TableHead className="px-3 text-center w-44">Nominal</TableHead>
-                          <TableHead className="pl-2 pr-6 text-center w-36">Status</TableHead>
+                          <TableHead className="pl-6 pr-3 text-center text-xs sm:text-sm font-semibold w-16 whitespace-nowrap">
+                            No
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
+                            Nama Termin
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-24 whitespace-nowrap">
+                            Porsi
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-44 whitespace-nowrap">
+                            Nominal
+                          </TableHead>
+                          <TableHead className="pl-2 pr-6 text-center text-xs sm:text-sm font-semibold w-36 whitespace-nowrap">
+                            Status
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -393,18 +430,24 @@ export function BuyerPortalPage() {
                         ) : (
                           lookupResult.milestones.map((m) => (
                             <TableRow key={m.sequence_no}>
-                              <TableCell className="pl-6 pr-3 text-center tabular-nums">{m.sequence_no}</TableCell>
-                              <TableCell className="font-medium">
-                                <div>{m.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {m.achievement_criteria ?? ""}
-                                </div>
+                              <TableCell className="align-top pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 tabular-nums whitespace-nowrap">
+                                {m.sequence_no}
                               </TableCell>
-                              <TableCell className="text-center tabular-nums">{m.percentage}%</TableCell>
-                              <TableCell className="font-semibold">
+                              <TableCell className="align-top px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium">
+                                <div className="text-foreground">{m.name}</div>
+                                {m.achievement_criteria ? (
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {m.achievement_criteria}
+                                  </div>
+                                ) : null}
+                              </TableCell>
+                              <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 tabular-nums whitespace-nowrap">
+                                {m.percentage}%
+                              </TableCell>
+                              <TableCell className="align-top px-3 py-3.5 text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
                                 <MonetaryCell amount={m.amount} />
                               </TableCell>
-                              <TableCell className="pl-2 pr-6 text-center">
+                              <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                                 <div className="-my-px inline-flex justify-center">
                                   <StatusBadge
                                     tone={
@@ -422,23 +465,33 @@ export function BuyerPortalPage() {
                   </CardContent>
                 </Card>
 
+                {/* Tabel Dokumen Resmi Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
-                    <CardTitle>Unduh Dokumen Resmi Proyek (UC-36)</CardTitle>
+                    <CardTitle>Dokumen Resmi Proyek</CardTitle>
                     <CardDescription>
-                      Quotation, SoW, SPK, BAKP, UAT, BAST, Invoice, dan
-                      Kuitansi yang terkait dengan Nomor PO ini.
+                      Quotation, SoW, SPK, BAKP, UAT, BAST, Invoice, dan Kuitansi yang terkait dengan Nomor PO ini.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/20 hover:bg-muted/20">
-                          <TableHead className="pl-6 pr-3 text-center">Kategori</TableHead>
-                          <TableHead className="px-3 text-center">Nomor Dokumen</TableHead>
-                          <TableHead className="px-3 text-center">Tanggal</TableHead>
-                          <TableHead className="px-3 text-center">Status</TableHead>
-                          <TableHead className="pl-2 pr-6 text-center w-36">Aksi</TableHead>
+                          <TableHead className="pl-6 pr-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
+                            Kategori
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
+                            Nomor Dokumen
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
+                            Tanggal
+                          </TableHead>
+                          <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
+                            Status
+                          </TableHead>
+                          <TableHead className="pl-2 pr-6 text-center text-xs sm:text-sm font-semibold w-28 whitespace-nowrap">
+                            Aksi
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -456,7 +509,7 @@ export function BuyerPortalPage() {
                         ) : (
                           lookupResult.documents.map((doc, idx) => (
                             <TableRow key={`${doc.doc_number}-${idx}`}>
-                              <TableCell className="pl-6 pr-3 text-center">
+                              <TableCell className="align-top pl-6 pr-3 py-3.5 text-center whitespace-nowrap">
                                 <div className="-my-px inline-flex justify-center">
                                   <StatusBadge
                                     tone="secondary"
@@ -464,16 +517,16 @@ export function BuyerPortalPage() {
                                   />
                                 </div>
                               </TableCell>
-                              <TableCell className="font-mono font-semibold text-center">
+                              <TableCell className="align-top px-3 py-3.5 font-mono text-xs sm:text-sm leading-5 font-semibold text-center whitespace-nowrap">
                                 {doc.doc_number}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 tabular-nums whitespace-nowrap">
                                 {formatDateID(doc.doc_date)}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
                                 {doc.status}
                               </TableCell>
-                              <TableCell className="pl-2 pr-6 text-center">
+                              <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                                 <div className="-my-1.5 inline-flex justify-center">
                                   <Button
                                     type="button"
@@ -502,18 +555,19 @@ export function BuyerPortalPage() {
           </TabsContent>
 
           {/* TAB 2: Pengajuan PO Klien Baru */}
-          <TabsContent value="submit">
-            <Card>
-              <CardHeader>
+          <TabsContent value="submit" className="mt-5">
+            <Card className="overflow-hidden">
+              <CardHeader className="px-6 py-4 border-b border-border/70">
                 <CardTitle>
                   Formulir Pengajuan Purchase Order (PO) Klien
                 </CardTitle>
                 <CardDescription>
                   Setelah dikirim, sistem menerbitkan Nomor PO dengan kode unik{" "}
-                  <code>PO-YYYYMM-XXXXXX</code>. Simpan kode tersebut untuk memantau progres proyek Anda.
+                  <code className="font-mono text-foreground">PO-YYYYMM-XXXXXX</code>.
+                  Simpan kode tersebut untuk memantau progres proyek Anda.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col gap-5">
+              <CardContent className="p-6 flex flex-col gap-5">
                 {createdPoCode ? (
                   <Alert>
                     <CheckCircle2Icon className="size-4" />
@@ -534,16 +588,16 @@ export function BuyerPortalPage() {
                           toast.success("Kode PO disalin ke papan klip.");
                         }}
                       >
-                        <CopyIcon data-icon="inline-start" />
-                        Salin Kode PO
+                        <CopyIcon className="size-3.5" />
+                        <span>Salin Kode PO</span>
                       </Button>
                     </AlertDescription>
                   </Alert>
                 ) : null}
 
                 <form onSubmit={handleSubmitPo}>
-                  <FieldGroup>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                  <FieldGroup className="gap-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <Field>
                         <FieldLabel htmlFor="bp-name" required>
                           Nama Lengkap Penanggung Jawab
@@ -570,15 +624,18 @@ export function BuyerPortalPage() {
                       </Field>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-3">
                       <Field>
-                        <FieldLabel htmlFor="bp-mail" required>Email Resmi</FieldLabel>
+                        <FieldLabel htmlFor="bp-mail" required>
+                          Email Resmi
+                        </FieldLabel>
                         <Input
                           id="bp-mail"
                           type="email"
                           required
                           value={clientEmail}
                           onChange={(e) => setClientEmail(e.target.value)}
+                          placeholder="Contoh: finance@perusahaan.co.id"
                         />
                       </Field>
                       <Field>
@@ -587,6 +644,7 @@ export function BuyerPortalPage() {
                           id="bp-phone"
                           value={clientPhone}
                           onChange={(e) => setClientPhone(e.target.value)}
+                          placeholder="Contoh: 0812-3456-7890"
                         />
                       </Field>
                       <Field>
@@ -600,15 +658,22 @@ export function BuyerPortalPage() {
                             setQuotationReference(e.target.value)
                           }
                           placeholder="Contoh: QT/ALT/2026/11/001"
+                          className="font-mono"
                         />
                       </Field>
                     </div>
 
-                    <div className="flex flex-col gap-2 rounded-lg border p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">
-                          Rincian Pekerjaan / Layanan yang Dipesan
-                        </span>
+                    {/* Rincian Item Pekerjaan / Layanan */}
+                    <div className="rounded-2xl border border-border/80 bg-muted/15 p-4 sm:p-5 space-y-3.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <FieldLabel required className="text-xs sm:text-sm font-semibold text-foreground">
+                            Rincian Pekerjaan / Layanan yang Dipesan
+                          </FieldLabel>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Tambahkan daftar paket pekerjaan beserta kuantitas dan estimasi harga satuan.
+                          </p>
+                        </div>
                         <Button
                           type="button"
                           size="sm"
@@ -620,108 +685,162 @@ export function BuyerPortalPage() {
                             ])
                           }
                         >
-                          <PlusIcon data-icon="inline-start" />
-                          Tambah Item
+                          <PlusIcon className="size-3.5" />
+                          <span>Tambah Item</span>
                         </Button>
                       </div>
-                      {items.map((it, idx) => (
-                        <div
-                          key={idx}
-                          className="grid items-center gap-2 sm:grid-cols-12"
-                        >
-                          <div className="sm:col-span-6">
-                            <Input
-                              required
-                              placeholder="Deskripsi paket/pekerjaan"
-                              value={it.item}
-                              onChange={(e) =>
-                                setItems((prev) =>
-                                  prev.map((x, i) =>
-                                    i === idx
-                                      ? { ...x, item: e.target.value }
-                                      : x,
-                                  ),
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="sm:col-span-2">
-                            <NumberInput
-                              allowDecimal={false}
-                              min={1}
-                              required
-                              value={it.qty}
-                              onValueChange={(qty) =>
-                                setItems((prev) =>
-                                  prev.map((x, i) =>
-                                    i === idx ? { ...x, qty } : x,
-                                  ),
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center gap-1 sm:col-span-4">
-                            <NumberInput
-                              allowDecimal={false}
-                              min={1}
-                              required
-                              placeholder="Harga satuan (Rp)"
-                              value={it.price || 0}
-                              onValueChange={(price) =>
-                                setItems((prev) =>
-                                  prev.map((x, i) =>
-                                    i === idx ? { ...x, price } : x,
-                                  ),
-                                )
-                              }
-                            />
-                            {items.length > 1 ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  setItems((prev) =>
-                                    prev.filter((_, i) => i !== idx),
-                                  )
-                                }
-                              >
-                                <Trash2Icon className="size-4 text-destructive" />
-                              </Button>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                      <div className="border-t pt-2 text-right text-sm font-bold">
-                        Total Nilai PO: {formatRupiah(totalDraftPo)}
+
+                      {/* Header Kolom Desktop */}
+                      <div className="hidden sm:grid sm:grid-cols-12 gap-2.5 px-1 text-[11px] font-semibold text-muted-foreground">
+                        <span className="sm:col-span-5">
+                          Deskripsi Paket / Pekerjaan
+                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
+                        </span>
+                        <span className="sm:col-span-2 text-center">
+                          Qty
+                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
+                        </span>
+                        <span className="sm:col-span-3">
+                          Harga Satuan (Rp)
+                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
+                        </span>
+                        <span className="sm:col-span-2 text-right">Subtotal</span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {items.map((it, idx) => {
+                          const rowSubtotal = Math.round(it.qty * it.price);
+                          return (
+                            <div
+                              key={idx}
+                              className="grid items-center gap-2.5 sm:grid-cols-12 rounded-xl border border-border/60 bg-card/70 p-2.5 sm:border-0 sm:bg-transparent sm:p-0"
+                            >
+                              <div className="sm:col-span-5 space-y-1">
+                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
+                                  Deskripsi Pekerjaan <span className="text-destructive">*</span>
+                                </span>
+                                <Input
+                                  required
+                                  placeholder="Deskripsi paket/pekerjaan"
+                                  value={it.item}
+                                  onChange={(e) =>
+                                    setItems((prev) =>
+                                      prev.map((x, i) =>
+                                        i === idx
+                                          ? { ...x, item: e.target.value }
+                                          : x,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2 space-y-1">
+                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
+                                  Qty <span className="text-destructive">*</span>
+                                </span>
+                                <NumberInput
+                                  allowDecimal={false}
+                                  min={1}
+                                  required
+                                  className="sm:text-center"
+                                  value={it.qty}
+                                  onValueChange={(qty) =>
+                                    setItems((prev) =>
+                                      prev.map((x, i) =>
+                                        i === idx ? { ...x, qty } : x,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="sm:col-span-3 space-y-1">
+                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
+                                  Harga Satuan (Rp) <span className="text-destructive">*</span>
+                                </span>
+                                <NumberInput
+                                  allowDecimal={false}
+                                  min={1}
+                                  required
+                                  placeholder="Harga satuan (Rp)"
+                                  value={it.price || 0}
+                                  onValueChange={(price) =>
+                                    setItems((prev) =>
+                                      prev.map((x, i) =>
+                                        i === idx ? { ...x, price } : x,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-between sm:justify-end gap-2 sm:col-span-2 pt-1 sm:pt-0">
+                                <span className="text-xs font-semibold text-foreground tabular-nums truncate">
+                                  {formatRupiah(rowSubtotal)}
+                                </span>
+                                {items.length > 1 ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Hapus Baris Item"
+                                    className="size-8 rounded-lg text-destructive hover:bg-destructive/10 shrink-0"
+                                    onClick={() =>
+                                      setItems((prev) =>
+                                        prev.filter((_, i) => i !== idx),
+                                      )
+                                    }
+                                  >
+                                    <Trash2Icon className="size-4" />
+                                    <span className="sr-only">Hapus Baris</span>
+                                  </Button>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="border-t border-border/70 pt-3 flex items-center justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground font-medium">
+                          Total Estimasi Nilai Purchase Order
+                        </span>
+                        <span className="text-base font-bold text-foreground tabular-nums">
+                          {formatRupiah(totalDraftPo)}
+                        </span>
                       </div>
                     </div>
 
                     {turnstileSiteKey && !isDemoMode ? (
                       <Field>
-                        <FieldLabel>Verifikasi Keamanan Anti-Bot</FieldLabel>
+                        <FieldLabel required>Verifikasi Keamanan Anti-Bot</FieldLabel>
                         <div ref={turnstileContainerRef} />
                         <FieldDescription>
                           Dilindungi oleh verifikasi Cloudflare Turnstile.
                         </FieldDescription>
                       </Field>
-                    ) : (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <ShieldCheckIcon className="size-4 text-primary" />
+                    ) : null}
+
+                    {/* Footer Form Pengajuan PO */}
+                    <div className="pt-4 border-t border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                        <ShieldCheckIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
                         <span>
-                          Endpoint publik dilindungi verifikasi Cloudflare
-                          Turnstile &amp; pembatasan laju pada Edge Function
-                          produksi.
+                          Endpoint publik dilindungi verifikasi Cloudflare Turnstile &amp; pembatasan laju pada server produksi.
                         </span>
                       </div>
-                    )}
-
-                    <div className="flex justify-end">
-                      <Button type="submit" disabled={submittingPo}>
+                      <Button
+                        type="submit"
+                        disabled={submittingPo}
+                        className="h-10 px-5 shrink-0"
+                      >
                         {submittingPo ? (
                           <Spinner data-icon="inline-start" />
-                        ) : null}
-                        Kirim Purchase Order (PO) Klien
+                        ) : (
+                          <CheckCircle2Icon className="size-4" />
+                        )}
+                        <span>Kirim Purchase Order (PO) Klien</span>
                       </Button>
                     </div>
                   </FieldGroup>
@@ -734,4 +853,3 @@ export function BuyerPortalPage() {
     </div>
   );
 }
-

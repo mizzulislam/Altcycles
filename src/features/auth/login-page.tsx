@@ -2,6 +2,8 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CheckCircle2Icon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ExternalLinkIcon,
   EyeIcon,
   EyeOffIcon,
@@ -28,7 +30,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
+import { listActiveLoginMedia } from "@/lib/data-service";
 import { useTheme } from "@/lib/theme-context";
+import type { LoginMediaItemRow } from "@/types/database.types";
 
 type AuthMode = "signin" | "signup";
 
@@ -97,6 +101,42 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [googleSubmitting, setGoogleSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [oauthChecking, setOauthChecking] = React.useState(false);
+
+  // Media Banner / Flyer / Konten Medsos sisi kiri
+  const [mediaSlides, setMediaSlides] = React.useState<LoginMediaItemRow[]>([]);
+  const [activeSlideIndex, setActiveSlideIndex] = React.useState(0);
+  const [isBannerHovered, setIsBannerHovered] = React.useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    void listActiveLoginMedia()
+      .then((rows) => {
+        if (active) setMediaSlides(rows);
+      })
+      .catch(() => {
+        // Gunakan kanvas default jika gagal memuat media
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const effectiveSlideCount = mediaSlides.length;
+
+  React.useEffect(() => {
+    if (effectiveSlideCount <= 1 || isBannerHovered) return;
+    const timer = window.setInterval(() => {
+      setActiveSlideIndex((prev) => (prev + 1) % effectiveSlideCount);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [effectiveSlideCount, isBannerHovered]);
+
+  const currentMedia = mediaSlides[activeSlideIndex] ?? null;
+  const displayCategoryLabels = {
+    banner: "Banner Utama",
+    flyer: "Flyer Promosi",
+    medsos: "Konten Medsos",
+  } as const;
 
   // Filter Keamanan Kata Sandi
   const pwdCriteria = React.useMemo(() => evaluatePassword(password), [password]);
@@ -308,10 +348,36 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
              Fungsi: Menjadi highlight kebiruan Altvira dan menimbulkan efek
              fade yang menyatu dengan banner di belakangnya.
           ===================================================================== */}
-      <div className="relative hidden lg:block w-full h-full min-h-screen bg-[#090E19] overflow-hidden select-none">
-        {/* LAYER 1 (BELAKANG): Banner Gambar / Slot CMS */}
+      <div
+        className="group relative hidden lg:block w-full h-full min-h-screen bg-[#090E19] overflow-hidden select-none"
+        onMouseEnter={() => setIsBannerHovered(true)}
+        onMouseLeave={() => setIsBannerHovered(false)}
+      >
+        {/* LAYER 1 (BELAKANG): Banner / Flyer / Konten Medsos dari Super Admin */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
-          {bannerSrc ? (
+          {currentMedia ? (
+            currentMedia.category === "banner" ? (
+              <img
+                src={currentMedia.image_url}
+                alt={currentMedia.title}
+                className="w-full h-full object-cover transition-opacity duration-500"
+              />
+            ) : (
+              <div className="relative w-full h-full flex items-center justify-center p-10 bg-[#090E19]">
+                <img
+                  src={currentMedia.image_url}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-35"
+                />
+                <img
+                  src={currentMedia.image_url}
+                  alt={currentMedia.title}
+                  className="relative z-10 max-h-[78vh] max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/15"
+                />
+              </div>
+            )
+          ) : bannerSrc ? (
             <img
               src={bannerSrc}
               alt="Banner Informasi Altvira"
@@ -326,13 +392,95 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
           )}
         </div>
 
-        {/* LAYER 2 (DEPAN / MENUTUPI BANNER & BIDANG HITAM):
-            Elemen kotak biru gradasi Altvira yang menutupi penuh dengan transparansi 20%
-            Highlight dari banner yang muncul sehingga menimbulkan efek fade */}
+        {/* LAYER 2 (Highlight Gradien Altvira Lembut) */}
         <div
-          className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-[#0B43C8] via-[#1FB1F2] to-[#0B43C8] opacity-20"
+          className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-[#0B43C8] via-[#1FB1F2] to-[#0B43C8] opacity-15"
           aria-hidden="true"
         />
+
+        {/* Overlay Informasi Judul, Tautan, & Kontrol Carousel jika Media Aktif */}
+        {currentMedia ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-44 z-15 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-x-8 bottom-7 z-20 flex items-end justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md border border-white/20 px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                  {displayCategoryLabels[currentMedia.category]}
+                </span>
+                <h3 className="text-base font-bold text-white leading-snug drop-shadow-xs">
+                  {currentMedia.title}
+                </h3>
+                {currentMedia.subtitle ? (
+                  <p className="text-xs text-white/80 line-clamp-2 max-w-md leading-relaxed">
+                    {currentMedia.subtitle}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {currentMedia.link_url ? (
+                  <a
+                    href={currentMedia.link_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/25 px-3 py-1.5 text-xs font-semibold transition-colors"
+                  >
+                    <span>Selengkapnya</span>
+                    <ExternalLinkIcon className="size-3.5" />
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            {mediaSlides.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSlideIndex(
+                      (prev) =>
+                        (prev - 1 + mediaSlides.length) % mediaSlides.length,
+                    )
+                  }
+                  aria-label="Banner sebelumnya"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 size-9 rounded-xl bg-black/35 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <ChevronLeftIcon className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSlideIndex(
+                      (prev) => (prev + 1) % mediaSlides.length,
+                    )
+                  }
+                  aria-label="Banner berikutnya"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 size-9 rounded-xl bg-black/35 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <ChevronRightIcon className="size-4" />
+                </button>
+                <div className="absolute top-6 left-8 z-20 flex items-center gap-1.5">
+                  {mediaSlides.map((slide, idx) => (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      onClick={() => setActiveSlideIndex(idx)}
+                      aria-label={`Tampilkan slide ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                        idx === activeSlideIndex
+                          ? "w-6 bg-white"
+                          : "w-2 bg-white/40 hover:bg-white/70"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
       </div>
 
       {/* =====================================================================

@@ -17,6 +17,8 @@ export interface ImageAssetUploadBoxProps {
   maxWidth?: number;
   maxHeight?: number;
   containImage?: boolean;
+  required?: boolean;
+  previewHeightClassName?: string;
   className?: string;
 }
 
@@ -30,6 +32,8 @@ export function ImageAssetUploadBox({
   maxWidth = 640,
   maxHeight = 320,
   containImage = true,
+  required = false,
+  previewHeightClassName = "h-[96px]",
   className,
 }: ImageAssetUploadBoxProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -72,7 +76,9 @@ export function ImageAssetUploadBox({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <FieldLabel className="text-xs font-semibold">{label}</FieldLabel>
+        <FieldLabel required={required} className="text-xs font-semibold">
+          {label}
+        </FieldLabel>
         {helperText ? (
           <span className="text-[10px] text-muted-foreground truncate">
             {helperText}
@@ -83,7 +89,8 @@ export function ImageAssetUploadBox({
       {value ? (
         <div
           className={cn(
-            "group relative w-full h-[96px] rounded-2xl overflow-hidden border border-border/80 shadow-xs flex items-center justify-center p-2",
+            "group relative w-full rounded-2xl overflow-hidden border border-border/80 shadow-xs flex items-center justify-center p-2",
+            previewHeightClassName,
             containImage ? "bg-white dark:bg-slate-100" : "bg-muted",
           )}
         >
@@ -133,7 +140,10 @@ export function ImageAssetUploadBox({
           type="button"
           onClick={() => setDialogOpen(true)}
           disabled={processing}
-          className="group relative w-full h-[96px] rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/60 dark:border-border/60 dark:hover:border-primary/50 bg-card/60 hover:bg-muted/40 transition-all cursor-pointer flex flex-col items-center justify-center p-3 text-center overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={cn(
+            "group relative w-full rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/60 dark:border-border/60 dark:hover:border-primary/50 bg-card/60 hover:bg-muted/40 transition-all cursor-pointer flex flex-col items-center justify-center p-3 text-center overflow-hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+            previewHeightClassName,
+          )}
         >
           <div className="size-8 rounded-full bg-primary/10 text-primary dark:bg-primary/20 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
             {processing ? (

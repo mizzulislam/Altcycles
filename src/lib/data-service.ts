@@ -56,6 +56,8 @@ import type {
   JournalLineRow,
   JournalRow,
   Json,
+  LoginMediaCategory,
+  LoginMediaItemRow,
   MilestoneRow,
   NotificationRow,
   PaymentRequestRow,
@@ -656,6 +658,7 @@ export async function toggleInternalUserActive(
 // =============================================================================
 const COMPANY_EXT_STORAGE_KEY = "altcycles_company_ext_v1";
 const CUSTOMER_EXT_STORAGE_KEY = "altcycles_customers_ext_v1";
+const LOGIN_MEDIA_STORAGE_KEY = "altcycles_login_media_v1";
 
 function readLocalJson<T>(key: string, fallback: T): T {
   try {
@@ -839,6 +842,257 @@ export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
     // Abaikan jika kolom di Supabase belum dimigrasi
   }
   return enabled;
+}
+
+function isLoginMediaMissingTableError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("login_media_items") &&
+    (m.includes("does not exist") ||
+      m.includes("schema cache") ||
+      m.includes("could not find the table"))
+  );
+}
+
+function sortLoginMedia(rows: LoginMediaItemRow[]): LoginMediaItemRow[] {
+  return [...rows].sort((a, b) => {
+    if (a.display_order !== b.display_order) {
+      return a.display_order - b.display_order;
+    }
+    return b.created_at.localeCompare(a.created_at);
+  });
+}
+
+export async function listActiveLoginMedia(): Promise<LoginMediaItemRow[]> {
+  const localItems = sortLoginMedia(
+    readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []),
+  ).filter((item) => item.is_active);
+
+  if (isDemoMode || !supabase) {
+    return localItems;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("login_media_items")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (isLoginMediaMissingTableError(error.message)) {
+        return localItems;
+      }
+      throw new Error(error.message);
+    }
+    const items = (data ?? []) as LoginMediaItemRow[];
+    return sortLoginMedia(items);
+  } catch {
+    return localItems;
+  }
+}
+
+export async function listAllLoginMedia(): Promise<{
+  items: LoginMediaItemRow[];
+  usingLocalFallback: boolean;
+}> {
+  const localItems = sortLoginMedia(
+    readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []),
+  );
+
+  if (isDemoMode || !supabase) {
+    return { items: localItems, usingLocalFallback: false };
+  }
+
+  const { data, error } = await supabase
+    .from("login_media_items")
+    .select("*")
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (isLoginMediaMissingTableError(error.message)) {
+      return { items: localItems, usingLocalFallback: true };
+    }
+    throw new Error(error.message);
+  }
+
+  const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
+  writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, items);
+  return { items, usingLocalFallback: false };
+}
+
+export async function createLoginMediaItem(input: {
+  title: string;
+  subtitle?: string | null;
+  category: LoginMediaCategory;
+  image_url: string;
+  link_url?: string | null;
+  display_order?: number;
+  is_active?: boolean;
+}): Promise<{ item: LoginMediaItemRow; savedToCloud: boolean }> {
+  const now = new Date().toISOString();
+  const payload = {
+    title: input.title.trim(),
+    subtitle: input.subtitle?.trim() || null,
+    category: input.category,
+    image_url: input.image_url.trim(),
+    link_url: input.link_url?.trim() || null,
+    display_order: Math.max(1, Math.round(input.display_order ?? 1)),
+    is_active: input.is_active ?? true,
+  };
+
+  const makeLocal = (): LoginMediaItemRow => ({
+    id: crypto.randomUUID(),
+    ...payload,
+    created_by: isDemoMode ? getDemoActor().id : null,
+    created_at: now,
+    updated_at: now,
+  });
+
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang dapat mengelola media login.");
+    }
+    const created = makeLocal();
+    const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia([...prev, created]));
+    appendDemoAudit(actor, "INSERT", "login_media_items", created.id, null, created);
+    return { item: created, savedToCloud: false };
+  }
+
+  const { data: userRes } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from("login_media_items")
+    .insert({
+      ...payload,
+      created_by: userRes.user?.id ?? null,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isLoginMediaMissingTableError(error.message)) {
+      const created = makeLocal();
+      const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
+      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia([...prev, created]));
+      return { item: created, savedToCloud: false };
+    }
+    throw new Error(error.message);
+  }
+
+  const created = data as LoginMediaItemRow;
+  const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
+  writeLocalJson(
+    LOGIN_MEDIA_STORAGE_KEY,
+    sortLoginMedia([...prev.filter((x) => x.id !== created.id), created]),
+  );
+  return { item: created, savedToCloud: true };
+}
+
+export async function updateLoginMediaItem(
+  id: string,
+  patch: Partial<{
+    title: string;
+    subtitle: string | null;
+    category: LoginMediaCategory;
+    image_url: string;
+    link_url: string | null;
+    display_order: number;
+    is_active: boolean;
+  }>,
+): Promise<{ item: LoginMediaItemRow; savedToCloud: boolean }> {
+  const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
+  const now = new Date().toISOString();
+
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang dapat mengelola media login.");
+    }
+    const idx = prev.findIndex((x) => x.id === id);
+    if (idx < 0) throw new Error("Media tidak ditemukan.");
+    const before = structuredClone(prev[idx]!);
+    const updated: LoginMediaItemRow = {
+      ...before,
+      ...patch,
+      updated_at: now,
+    };
+    const next = [...prev];
+    next[idx] = updated;
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia(next));
+    appendDemoAudit(actor, "UPDATE", "login_media_items", id, before, updated);
+    return { item: updated, savedToCloud: false };
+  }
+
+  const { data, error } = await supabase
+    .from("login_media_items")
+    .update(patch)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isLoginMediaMissingTableError(error.message)) {
+      const idx = prev.findIndex((x) => x.id === id);
+      if (idx < 0) throw new Error("Media tidak ditemukan.");
+      const updated: LoginMediaItemRow = {
+        ...prev[idx]!,
+        ...patch,
+        updated_at: now,
+      };
+      const next = [...prev];
+      next[idx] = updated;
+      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia(next));
+      return { item: updated, savedToCloud: false };
+    }
+    throw new Error(error.message);
+  }
+
+  const updated = data as LoginMediaItemRow;
+  writeLocalJson(
+    LOGIN_MEDIA_STORAGE_KEY,
+    sortLoginMedia([...prev.filter((x) => x.id !== id), updated]),
+  );
+  return { item: updated, savedToCloud: true };
+}
+
+export async function deleteLoginMediaItem(id: string): Promise<void> {
+  const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
+
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang dapat menghapus media login.");
+    }
+    const target = prev.find((x) => x.id === id);
+    writeLocalJson(
+      LOGIN_MEDIA_STORAGE_KEY,
+      prev.filter((x) => x.id !== id),
+    );
+    if (target) {
+      appendDemoAudit(actor, "DELETE", "login_media_items", id, target, null);
+    }
+    return;
+  }
+
+  const { error } = await supabase.from("login_media_items").delete().eq("id", id);
+  if (error) {
+    if (isLoginMediaMissingTableError(error.message)) {
+      writeLocalJson(
+        LOGIN_MEDIA_STORAGE_KEY,
+        prev.filter((x) => x.id !== id),
+      );
+      return;
+    }
+    throw new Error(error.message);
+  }
+
+  writeLocalJson(
+    LOGIN_MEDIA_STORAGE_KEY,
+    prev.filter((x) => x.id !== id),
+  );
 }
 
 export async function listDocSequences(): Promise<{
