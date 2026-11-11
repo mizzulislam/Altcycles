@@ -1,14 +1,17 @@
 import * as React from "react";
 import {
+  ArrowUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ExternalLinkIcon,
   EyeIcon,
+  EyeOffIcon,
   ImageIcon,
   InfoIcon,
   LayersIcon,
   PencilIcon,
   PlusIcon,
+  SearchIcon,
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -32,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmptyState, Spinner } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/empty";
 import {
   Field,
   FieldGroup,
@@ -82,9 +85,16 @@ export function LoginMediaPage() {
   const [loading, setLoading] = React.useState(true);
   const [usingLocalFallback, setUsingLocalFallback] = React.useState(false);
 
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState<
     "all" | LoginMediaCategory
   >("all");
+  const [statusFilter, setStatusFilter] = React.useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
   const [previewIdx, setPreviewIdx] = React.useState(0);
 
   // Modal Tambah / Edit Media
@@ -245,6 +255,10 @@ export function LoginMediaPage() {
     }
   }
 
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, statusFilter, sortOrder, pageSize]);
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
@@ -254,9 +268,54 @@ export function LoginMediaPage() {
     );
   }
 
-  const filteredItems = items.filter((it) =>
-    categoryFilter === "all" ? true : it.category === categoryFilter,
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredItems = items
+    .filter((it) => {
+      if (categoryFilter !== "all" && it.category !== categoryFilter) {
+        return false;
+      }
+      if (statusFilter === "active" && !it.is_active) return false;
+      if (statusFilter === "inactive" && it.is_active) return false;
+      if (normalizedQuery) {
+        const haystack = [it.title, it.subtitle ?? "", it.link_url ?? ""]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) =>
+      sortOrder === "asc"
+        ? a.display_order - b.display_order ||
+          b.created_at.localeCompare(a.created_at)
+        : b.display_order - a.display_order ||
+          a.created_at.localeCompare(b.created_at),
+    );
+
+  const totalFiltered = filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIdx = (safePage - 1) * pageSize;
+  const paginatedItems = filteredItems.slice(startIdx, startIdx + pageSize);
+  const startDisplay = totalFiltered === 0 ? 0 : startIdx + 1;
+  const endDisplay = Math.min(startIdx + pageSize, totalFiltered);
+
+  const pageNumbers: Array<number | "ellipsis"> = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+  } else {
+    pageNumbers.push(1);
+    if (safePage > 3) pageNumbers.push("ellipsis");
+    for (
+      let i = Math.max(2, safePage - 1);
+      i <= Math.min(totalPages - 1, safePage + 1);
+      i++
+    ) {
+      pageNumbers.push(i);
+    }
+    if (safePage < totalPages - 2) pageNumbers.push("ellipsis");
+    pageNumbers.push(totalPages);
+  }
   const bannerCount = items.filter((i) => i.category === "banner").length;
   const flyerCount = items.filter((i) => i.category === "flyer").length;
   const medsosCount = items.filter((i) => i.category === "medsos").length;
@@ -456,81 +515,130 @@ export function LoginMediaPage() {
         </CardContent>
       </Card>
 
-      {/* Tabel Daftar Media (Edge-to-Edge Card) */}
+      {/* Tabel Daftar Media (Edge-to-Edge Card Konsisten Portal Super Admin) */}
       <Card className="overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Daftar Media Banner &amp; Konten</CardTitle>
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Daftar Media Banner &amp; Konten
+            </CardTitle>
             <CardDescription>
               Atur urutan tayang, kategori konten, serta visibilitas media pada halaman masuk.
             </CardDescription>
           </div>
-          <Select
-            value={categoryFilter}
-            onValueChange={(v) =>
-              setCategoryFilter(v as "all" | LoginMediaCategory)
-            }
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
-              <SelectItem value="banner">Banner Utama</SelectItem>
-              <SelectItem value="flyer">Flyer Promosi</SelectItem>
-              <SelectItem value="medsos">Konten Medsos</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="relative w-full sm:w-52">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari judul atau tautan..."
+                className="pl-9 h-9 text-xs"
+              />
+            </div>
+            <Select
+              value={categoryFilter}
+              onValueChange={(v) =>
+                setCategoryFilter(v as "all" | LoginMediaCategory)
+              }
+            >
+              <SelectTrigger className="w-40 h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kategori</SelectItem>
+                <SelectItem value="banner">Banner Utama</SelectItem>
+                <SelectItem value="flyer">Flyer Promosi</SelectItem>
+                <SelectItem value="medsos">Konten Medsos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) =>
+                setStatusFilter(v as "all" | "active" | "inactive")
+              }
+            >
+              <SelectTrigger className="w-32 h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="active">Aktif</SelectItem>
+                <SelectItem value="inactive">Nonaktif</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+              className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+            >
+              <ArrowUpDownIcon className="size-3.5" />
+              <span>
+                Urutan: {sortOrder === "asc" ? "Terkecil" : "Terbesar"}
+              </span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center text-xs sm:text-sm font-semibold w-20 whitespace-nowrap">
+                <TableHead className="pl-6 pr-3 text-center font-semibold w-20 whitespace-nowrap">
                   Urutan
                 </TableHead>
-                <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-32 whitespace-nowrap">
+                <TableHead className="px-3 text-center font-semibold w-28 whitespace-nowrap">
                   Pratinjau
                 </TableHead>
-                <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold">
+                <TableHead className="px-3 text-center font-semibold">
                   Judul &amp; Keterangan
                 </TableHead>
-                <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-36 whitespace-nowrap">
+                <TableHead className="px-3 text-center font-semibold w-36 whitespace-nowrap">
                   Kategori
                 </TableHead>
-                <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-36 whitespace-nowrap">
+                <TableHead className="px-3 text-center font-semibold w-32 whitespace-nowrap">
                   Tautan
                 </TableHead>
-                <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-32 whitespace-nowrap">
-                  Tayang
+                <TableHead className="px-3 text-center font-semibold w-28 whitespace-nowrap">
+                  Status
                 </TableHead>
-                <TableHead className="pl-2 pr-6 text-center text-xs sm:text-sm font-semibold w-28 whitespace-nowrap">
+                <TableHead className="pl-2 pr-6 text-center font-semibold w-32 whitespace-nowrap">
                   Aksi
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.length === 0 ? (
+              {paginatedItems.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={7} className="p-0">
-                    <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
-                      <EmptyState
-                        title="Belum Ada Media Login"
-                        description="Tambahkan banner, flyer promosi, atau konten media sosial agar tampil di sisi kiri halaman login."
-                      />
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                      <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
+                        <ImageIcon className="size-6" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-foreground">
+                        Tidak Ada Media Ditemukan
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                        {items.length === 0
+                          ? "Tambahkan banner, flyer promosi, atau konten media sosial agar tampil di sisi kiri halaman login."
+                          : "Ubah kata kunci pencarian atau filter kategori/status di kanan atas."}
+                      </p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredItems.map((row) => {
+                paginatedItems.map((row) => {
                   const meta = CATEGORY_META[row.category];
                   return (
                     <TableRow key={row.id}>
-                      <TableCell className="align-top pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold tabular-nums whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 text-center font-mono font-semibold tabular-nums whitespace-nowrap">
                         #{row.display_order}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center">
-                        <div className="mx-auto h-14 w-24 rounded-lg border border-border/80 bg-muted/30 overflow-hidden flex items-center justify-center">
+                      <TableCell className="px-3 text-center">
+                        <div className="mx-auto h-11 w-20 rounded-xl border border-border/80 bg-muted/30 overflow-hidden flex items-center justify-center">
                           <img
                             src={row.image_url}
                             alt={row.title}
@@ -538,7 +646,7 @@ export function LoginMediaPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-xs sm:text-sm leading-5">
+                      <TableCell className="px-3">
                         <p className="font-semibold text-foreground">
                           {row.title}
                         </p>
@@ -547,45 +655,64 @@ export function LoginMediaPage() {
                             {row.subtitle}
                           </p>
                         ) : null}
-                        <p className="text-[11px] text-muted-foreground/80 mt-1 tabular-nums">
+                        <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
                           Diperbarui {formatDateTimeID(row.updated_at)}
                         </p>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center whitespace-nowrap">
-                        <div className="-my-px inline-flex justify-center">
+                      <TableCell className="px-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge tone={meta.tone} label={meta.label} />
                         </div>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5">
+                      <TableCell className="px-3 text-center whitespace-nowrap">
                         {row.link_url ? (
                           <a
                             href={row.link_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-medium text-primary dark:text-sky-400 hover:underline max-w-32 truncate"
+                            className="inline-flex items-center gap-1 font-medium text-primary dark:text-sky-400 hover:underline max-w-28 truncate"
                             title={row.link_url}
                           >
                             <span className="truncate">Buka Tautan</span>
-                            <ExternalLinkIcon className="size-3 shrink-0" />
+                            <ExternalLinkIcon className="size-3.5 shrink-0" />
                           </a>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center whitespace-nowrap">
-                        <div className="-my-px inline-flex items-center gap-2">
-                          <Switch
-                            checked={row.is_active}
-                            onCheckedChange={(v) => void handleToggleActive(row, v)}
-                            aria-label={`Aktifkan tampilan ${row.title}`}
+                      <TableCell className="px-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
+                          <StatusBadge
+                            tone={row.is_active ? "success" : "destructive"}
+                            label={row.is_active ? "Aktif" : "Nonaktif"}
                           />
-                          <span className="text-xs text-muted-foreground">
-                            {row.is_active ? "Aktif" : "Nonaktif"}
-                          </span>
                         </div>
                       </TableCell>
-                      <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                        <div className="-my-1.5 inline-flex items-center gap-1">
+                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1 -my-1.5">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            title={
+                              row.is_active
+                                ? "Sembunyikan dari Halaman Login"
+                                : "Tampilkan di Halaman Login"
+                            }
+                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                            onClick={() =>
+                              void handleToggleActive(row, !row.is_active)
+                            }
+                          >
+                            {row.is_active ? (
+                              <EyeOffIcon className="size-4" />
+                            ) : (
+                              <EyeIcon className="size-4" />
+                            )}
+                            <span className="sr-only">
+                              {row.is_active ? "Nonaktifkan Media" : "Aktifkan Media"}
+                            </span>
+                          </Button>
                           <Button
                             type="button"
                             size="icon"
@@ -616,6 +743,88 @@ export function LoginMediaPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Footer Paginasi Konsisten Audit Trail */}
+          <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs sm:text-sm text-muted-foreground tabular-nums">
+              {totalFiltered === 0
+                ? "0 dari 0"
+                : `${startDisplay}–${endDisplay} dari ${totalFiltered.toLocaleString("id-ID")}`}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={safePage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  title="Halaman sebelumnya"
+                  aria-label="Halaman sebelumnya"
+                  className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
+                >
+                  <ChevronLeftIcon className="size-4" />
+                </Button>
+
+                {pageNumbers.map((item, idx) =>
+                  item === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="px-1.5 text-xs text-muted-foreground select-none"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={item}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setCurrentPage(item)}
+                      aria-current={item === safePage ? "page" : undefined}
+                      className={
+                        item === safePage
+                          ? "size-8 rounded-lg bg-primary/15 text-primary dark:text-sky-400 font-semibold hover:bg-primary/20 cursor-pointer tabular-nums"
+                          : "size-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer tabular-nums"
+                      }
+                    >
+                      {item}
+                    </Button>
+                  ),
+                )}
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={safePage >= totalPages}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  title="Halaman berikutnya"
+                  aria-label="Halaman berikutnya"
+                  className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
+                >
+                  <ChevronRightIcon className="size-4" />
+                </Button>
+              </div>
+
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => setPageSize(Number(v))}
+              >
+                <SelectTrigger className="h-8 w-16 rounded-xl text-xs tabular-nums">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
