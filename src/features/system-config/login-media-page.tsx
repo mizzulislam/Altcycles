@@ -1,11 +1,11 @@
 import * as React from "react";
 import {
   ArrowUpDownIcon,
+  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ExternalLinkIcon,
   EyeIcon,
-  EyeOffIcon,
   ImageIcon,
   InfoIcon,
   LayersIcon,
@@ -282,8 +282,8 @@ export function LoginMediaPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
+        <Spinner className="size-6 text-primary dark:text-sky-400" />
         <span>Memuat galeri media &amp; banner halaman login...</span>
       </div>
     );
@@ -540,7 +540,7 @@ export function LoginMediaPage() {
       </Card>
 
       {/* Tabel Daftar Media (Edge-to-Edge Card Konsisten Portal Super Admin) */}
-      <Card className="overflow-hidden">
+      <Card>
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
@@ -550,7 +550,7 @@ export function LoginMediaPage() {
               Atur urutan tayang, kategori konten, serta visibilitas media pada halaman masuk.
             </CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <div className="relative w-full sm:w-56">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -572,7 +572,7 @@ export function LoginMediaPage() {
               >
                 <SlidersHorizontalIcon className="size-4" />
                 <span>Filter</span>
-                {(categoryFilter !== "all" || statusFilter !== "all") ? (
+                {categoryFilter !== "all" || statusFilter !== "all" ? (
                   <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold tabular-nums">
                     {(categoryFilter !== "all" ? 1 : 0) +
                       (statusFilter !== "all" ? 1 : 0)}
@@ -581,79 +581,91 @@ export function LoginMediaPage() {
               </Button>
 
               {filterOpen ? (
-                <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-border bg-card p-4 shadow-xl space-y-4">
-                  <div className="space-y-2">
-                    <FieldLabel className="text-xs font-semibold">
-                      Kategori Media
-                    </FieldLabel>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(
-                        [
-                          { value: "all", label: "Semua" },
-                          { value: "banner", label: "Banner Utama" },
-                          { value: "flyer", label: "Flyer Promosi" },
-                          { value: "medsos", label: "Konten Medsos" },
-                        ] as const
-                      ).map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setCategoryFilter(opt.value)}
-                          className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold text-left transition-colors cursor-pointer ${
-                            categoryFilter === opt.value
-                              ? "bg-primary text-primary-foreground shadow-2xs"
-                              : "bg-muted/50 text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <FieldLabel className="text-xs font-semibold">
-                      Status Tayang
-                    </FieldLabel>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {(
-                        [
-                          { value: "all", label: "Semua" },
-                          { value: "active", label: "Aktif" },
-                          { value: "inactive", label: "Nonaktif" },
-                        ] as const
-                      ).map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setStatusFilter(opt.value)}
-                          className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold text-center transition-colors cursor-pointer ${
-                            statusFilter === opt.value
-                              ? "bg-primary text-primary-foreground shadow-2xs"
-                              : "bg-muted/50 text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {categoryFilter !== "all" || statusFilter !== "all" ? (
-                    <div className="pt-2 border-t border-border/60 flex justify-end">
-                      <Button
+                <div className="absolute right-0 top-full mt-2 z-50 w-68 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border/70 flex items-center justify-between gap-2">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground">
+                      Filter Media
+                    </span>
+                    {categoryFilter !== "all" || statusFilter !== "all" ? (
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => {
                           setCategoryFilter("all");
                           setStatusFilter("all");
                         }}
+                        className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
                       >
-                        Reset Filter
-                      </Button>
+                        Reset
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="p-3.5 space-y-4">
+                    <div className="space-y-1.5">
+                      <p className="px-1 text-xs font-semibold text-muted-foreground">
+                        Kategori Media
+                      </p>
+                      <div className="space-y-1">
+                        {(
+                          [
+                            { value: "all", label: "Semua Kategori" },
+                            { value: "banner", label: "Banner Utama" },
+                            { value: "flyer", label: "Flyer Promosi" },
+                            { value: "medsos", label: "Konten Medsos" },
+                          ] as const
+                        ).map((opt) => {
+                          const active = categoryFilter === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setCategoryFilter(opt.value)}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                                active
+                                  ? "bg-primary/12 text-primary dark:text-sky-400 font-semibold"
+                                  : "text-foreground hover:bg-muted/60"
+                              }`}
+                            >
+                              <span>{opt.label}</span>
+                              {active ? (
+                                <CheckIcon className="size-3.5 shrink-0" />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  ) : null}
+
+                    <div className="h-px bg-border/70" />
+
+                    <div className="space-y-2">
+                      <p className="px-1 text-xs font-semibold text-muted-foreground">
+                        Status Tayang
+                      </p>
+                      <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-border/70 bg-muted/35 p-1">
+                        {(
+                          [
+                            { value: "all", label: "Semua" },
+                            { value: "active", label: "Aktif" },
+                            { value: "inactive", label: "Nonaktif" },
+                          ] as const
+                        ).map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setStatusFilter(opt.value)}
+                            className={`py-1.5 px-2 rounded-lg text-xs font-semibold text-center transition-colors cursor-pointer ${
+                              statusFilter === opt.value
+                                ? "bg-primary text-primary-foreground shadow-2xs"
+                                : "text-muted-foreground hover:text-foreground hover:bg-background/60"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -673,7 +685,7 @@ export function LoginMediaPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 rounded-b-2xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
@@ -689,13 +701,13 @@ export function LoginMediaPage() {
                 <TableHead className="px-3 text-center font-semibold w-36 whitespace-nowrap">
                   Kategori
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold w-32 whitespace-nowrap">
+                <TableHead className="px-3 text-center font-semibold w-36 whitespace-nowrap">
                   Tautan
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold w-28 whitespace-nowrap">
+                <TableHead className="px-3 text-center font-semibold w-32 whitespace-nowrap">
                   Status
                 </TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold w-32 whitespace-nowrap">
+                <TableHead className="pl-2 pr-6 text-center font-semibold w-28 whitespace-nowrap">
                   Aksi
                 </TableHead>
               </TableRow>
@@ -751,7 +763,11 @@ export function LoginMediaPage() {
                       </TableCell>
                       <TableCell className="px-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
-                          <StatusBadge tone={meta.tone} label={meta.label} />
+                          <StatusBadge
+                            tone={meta.tone}
+                            label={meta.label}
+                            className="text-xs sm:text-sm leading-5"
+                          />
                         </div>
                       </TableCell>
                       <TableCell className="px-3 text-center whitespace-nowrap">
@@ -760,49 +776,40 @@ export function LoginMediaPage() {
                             href={row.link_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 font-medium text-primary dark:text-sky-400 hover:underline max-w-28 truncate"
+                            className="inline-flex items-center gap-1.5 text-xs sm:text-sm leading-5 font-medium text-foreground hover:text-primary dark:hover:text-sky-400 transition-colors max-w-32 truncate"
                             title={row.link_url}
                           >
                             <span className="truncate">Buka Tautan</span>
                             <ExternalLinkIcon className="size-3.5 shrink-0" />
                           </a>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          <span className="text-xs sm:text-sm leading-5 text-muted-foreground">
+                            -
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="px-3 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center min-h-5 -my-px">
-                          <StatusBadge
-                            tone={row.is_active ? "success" : "destructive"}
-                            label={row.is_active ? "Aktif" : "Nonaktif"}
+                        <div className="-my-px inline-flex items-center gap-2.5">
+                          <Switch
+                            checked={row.is_active}
+                            onCheckedChange={(v) =>
+                              void handleToggleActive(row, v)
+                            }
+                            aria-label={`Aktifkan tampilan ${row.title}`}
                           />
+                          <span
+                            className={`text-xs sm:text-sm leading-5 font-medium ${
+                              row.is_active
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {row.is_active ? "Aktif" : "Nonaktif"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            title={
-                              row.is_active
-                                ? "Sembunyikan dari Halaman Login"
-                                : "Tampilkan di Halaman Login"
-                            }
-                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70"
-                            onClick={() =>
-                              void handleToggleActive(row, !row.is_active)
-                            }
-                          >
-                            {row.is_active ? (
-                              <EyeOffIcon className="size-4" />
-                            ) : (
-                              <EyeIcon className="size-4" />
-                            )}
-                            <span className="sr-only">
-                              {row.is_active ? "Nonaktifkan Media" : "Aktifkan Media"}
-                            </span>
-                          </Button>
                           <Button
                             type="button"
                             size="icon"

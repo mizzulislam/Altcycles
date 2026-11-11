@@ -11,9 +11,11 @@ export type SemanticTone =
 export function StatusBadge({
   tone,
   label,
+  className,
 }: {
   tone: SemanticTone;
   label: string;
+  className?: string;
 }) {
   const variantMap: Record<SemanticTone, BadgeProps["variant"]> = {
     success: "success",
@@ -25,7 +27,7 @@ export function StatusBadge({
   };
 
   return (
-    <Badge variant={variantMap[tone]}>
+    <Badge variant={variantMap[tone]} className={className}>
       <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
       <span>{label}</span>
     </Badge>
