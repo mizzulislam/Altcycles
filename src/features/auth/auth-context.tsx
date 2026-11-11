@@ -6,7 +6,12 @@ import {
   setDemoCurrentUser,
   switchActiveRole,
 } from "@/lib/data-service";
-import { IDLE_TIMEOUT_MINUTES, isDemoMode, supabase } from "@/lib/supabase";
+import {
+  IDLE_TIMEOUT_MINUTES,
+  isDemoMode,
+  supabase,
+  TAB_AUTH_STORAGE_KEY,
+} from "@/lib/supabase";
 import type { ProfileRow, UserRole } from "@/types/database.types";
 
 export interface SignUpResult {
@@ -72,6 +77,20 @@ function writeTabRoleToSession(role: UserRole | null): void {
   }
 }
 
+function readTabStoredUserId(): string | null {
+  try {
+    const raw = window.sessionStorage.getItem(TAB_AUTH_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      user?: { id?: string };
+      currentSession?: { user?: { id?: string } };
+    };
+    return parsed?.user?.id ?? parsed?.currentSession?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function portalHomeForRole(role: UserRole): string {
   switch (role) {
     case "super_admin":
@@ -90,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => roleForPathname(window.location.pathname) ?? readTabRoleFromSession(),
   );
   const [loading, setLoading] = React.useState(true);
+  const signingOutThisTabRef = React.useRef(false);
 
   const loadSupabaseProfile = React.useCallback(
     async (userId: string, retries = 3): Promise<ProfileRow | null> => {
@@ -187,11 +207,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!isDemoMode && supabase) {
       const { data: listener } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
-          if (!session?.user) {
+        (event, session) => {
+          const storedUserId = readTabStoredUserId();
+
+          if (event === "SIGNED_OUT" || !session?.user) {
+            if (!signingOutThisTabRef.current && storedUserId) {
+              return;
+            }
             setProfile(null);
             return;
           }
+
+          if (storedUserId && storedUserId !== session.user.id) {
+            return;
+          }
+
           void loadSupabaseProfile(session.user.id).then((loaded) => {
             if (active) setProfile(loaded);
           });
@@ -209,16 +239,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadSupabaseProfile]);
 
   const signOut = React.useCallback(async () => {
+    signingOutThisTabRef.current = true;
     writeTabRoleToSession(null);
     setTabRole(null);
     if (isDemoMode || !supabase) {
       window.sessionStorage.removeItem(DEMO_STORAGE_KEY);
       setDemoCurrentUser(null);
       setProfile(null);
+      signingOutThisTabRef.current = false;
       return;
     }
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } finally {
+      window.sessionStorage.removeItem(TAB_AUTH_STORAGE_KEY);
+      setProfile(null);
+      signingOutThisTabRef.current = false;
+    }
   }, []);
 
   // FR-A4: Sesi otomatis berakhir setelah tidak aktif (Idle Timeout)

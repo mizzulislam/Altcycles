@@ -127,7 +127,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     if (effectiveSlideCount <= 1 || isBannerHovered) return;
     const timer = window.setInterval(() => {
       setActiveSlideIndex((prev) => (prev + 1) % effectiveSlideCount);
-    }, 6000);
+    }, 3200);
     return () => window.clearInterval(timer);
   }, [effectiveSlideCount, isBannerHovered]);
 
@@ -402,34 +402,35 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
         {currentMedia ? (
           <>
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-44 z-15 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-48 z-15 bg-gradient-to-t from-black/75 via-black/30 to-transparent"
               aria-hidden="true"
             />
-            <div className="absolute inset-x-8 bottom-7 z-20 flex items-end justify-between gap-4">
-              <div className="min-w-0 space-y-1">
-                <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md border border-white/20 px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                  {displayCategoryLabels[currentMedia.category]}
-                </span>
-                <h3 className="text-base font-bold text-white leading-snug drop-shadow-xs">
-                  {currentMedia.title}
-                </h3>
-                {currentMedia.subtitle ? (
-                  <p className="text-xs text-white/80 line-clamp-2 max-w-md leading-relaxed">
-                    {currentMedia.subtitle}
-                  </p>
-                ) : null}
-              </div>
+            <div className="absolute inset-x-6 bottom-6 z-20">
+              <div className="rounded-2xl bg-slate-950/65 backdrop-blur-md border border-white/15 px-5 py-4 flex items-center justify-between gap-4 shadow-2xl">
+                <div className="min-w-0 flex flex-col items-start gap-1">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-sky-300 leading-none">
+                    <span className="size-1.5 rounded-full bg-sky-400 shrink-0" />
+                    <span>{displayCategoryLabels[currentMedia.category]}</span>
+                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-white leading-snug text-left">
+                    {currentMedia.title}
+                  </h3>
+                  {currentMedia.subtitle ? (
+                    <p className="text-xs text-white/80 line-clamp-2 max-w-md leading-relaxed text-left">
+                      {currentMedia.subtitle}
+                    </p>
+                  ) : null}
+                </div>
 
-              <div className="flex items-center gap-2 shrink-0">
                 {currentMedia.link_url ? (
                   <a
                     href={currentMedia.link_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white backdrop-blur-md border border-white/25 px-3 py-1.5 text-xs font-semibold transition-colors"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/25 px-4 text-xs sm:text-sm font-semibold transition-colors shrink-0"
                   >
                     <span>Selengkapnya</span>
-                    <ExternalLinkIcon className="size-3.5" />
+                    <ExternalLinkIcon className="size-3.5 shrink-0" />
                   </a>
                 ) : null}
               </div>

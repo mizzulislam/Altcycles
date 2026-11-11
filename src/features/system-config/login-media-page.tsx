@@ -12,6 +12,7 @@ import {
   PencilIcon,
   PlusIcon,
   SearchIcon,
+  SlidersHorizontalIcon,
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -93,9 +94,29 @@ export function LoginMediaPage() {
     "all" | "active" | "inactive"
   >("all");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const filterRef = React.useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [previewIdx, setPreviewIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!filterOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    }
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [filterOpen]);
 
   // Modal Tambah / Edit Media
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -483,19 +504,22 @@ export function LoginMediaPage() {
                   </>
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent z-10" />
-                <div className="absolute bottom-4 left-5 right-5 z-20 flex items-end justify-between gap-3">
-                  <div className="min-w-0">
-                    <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-semibold text-white mb-1">
-                      {CATEGORY_META[previewSlide.category].label}
-                    </span>
-                    <p className="text-sm font-bold text-white truncate">
-                      {previewSlide.title}
-                    </p>
-                    {previewSlide.subtitle ? (
-                      <p className="text-xs text-white/80 line-clamp-1">
-                        {previewSlide.subtitle}
+                <div className="absolute inset-x-4 bottom-4 z-20">
+                  <div className="rounded-2xl bg-slate-950/65 backdrop-blur-md border border-white/15 px-4 py-3 flex items-center justify-between gap-3 shadow-xl">
+                    <div className="min-w-0 flex flex-col items-start gap-1">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-sky-300 leading-none">
+                        <span className="size-1.5 rounded-full bg-sky-400 shrink-0" />
+                        <span>{CATEGORY_META[previewSlide.category].label}</span>
+                      </span>
+                      <p className="text-sm font-bold text-white leading-snug text-left truncate max-w-full">
+                        {previewSlide.title}
                       </p>
-                    ) : null}
+                      {previewSlide.subtitle ? (
+                        <p className="text-xs text-white/80 line-clamp-1 text-left">
+                          {previewSlide.subtitle}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </>
@@ -527,56 +551,122 @@ export function LoginMediaPage() {
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <div className="relative w-full sm:w-52">
+            <div className="relative w-full sm:w-56">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari judul atau tautan..."
-                className="pl-9 h-9 text-xs"
+                className="pl-9 h-9 rounded-xl text-xs sm:text-sm"
               />
             </div>
-            <Select
-              value={categoryFilter}
-              onValueChange={(v) =>
-                setCategoryFilter(v as "all" | LoginMediaCategory)
-              }
-            >
-              <SelectTrigger className="w-40 h-9 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
-                <SelectItem value="banner">Banner Utama</SelectItem>
-                <SelectItem value="flyer">Flyer Promosi</SelectItem>
-                <SelectItem value="medsos">Konten Medsos</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={statusFilter}
-              onValueChange={(v) =>
-                setStatusFilter(v as "all" | "active" | "inactive")
-              }
-            >
-              <SelectTrigger className="w-32 h-9 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="active">Aktif</SelectItem>
-                <SelectItem value="inactive">Nonaktif</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* Tombol Filter Gabungan (Kategori & Status) */}
+            <div className="relative" ref={filterRef}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFilterOpen((prev) => !prev)}
+                aria-expanded={filterOpen}
+                className="gap-2"
+              >
+                <SlidersHorizontalIcon className="size-4" />
+                <span>Filter</span>
+                {(categoryFilter !== "all" || statusFilter !== "all") ? (
+                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold tabular-nums">
+                    {(categoryFilter !== "all" ? 1 : 0) +
+                      (statusFilter !== "all" ? 1 : 0)}
+                  </span>
+                ) : null}
+              </Button>
+
+              {filterOpen ? (
+                <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl border border-border bg-card p-4 shadow-xl space-y-4">
+                  <div className="space-y-2">
+                    <FieldLabel className="text-xs font-semibold">
+                      Kategori Media
+                    </FieldLabel>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(
+                        [
+                          { value: "all", label: "Semua" },
+                          { value: "banner", label: "Banner Utama" },
+                          { value: "flyer", label: "Flyer Promosi" },
+                          { value: "medsos", label: "Konten Medsos" },
+                        ] as const
+                      ).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setCategoryFilter(opt.value)}
+                          className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold text-left transition-colors cursor-pointer ${
+                            categoryFilter === opt.value
+                              ? "bg-primary text-primary-foreground shadow-2xs"
+                              : "bg-muted/50 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <FieldLabel className="text-xs font-semibold">
+                      Status Tayang
+                    </FieldLabel>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(
+                        [
+                          { value: "all", label: "Semua" },
+                          { value: "active", label: "Aktif" },
+                          { value: "inactive", label: "Nonaktif" },
+                        ] as const
+                      ).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setStatusFilter(opt.value)}
+                          className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold text-center transition-colors cursor-pointer ${
+                            statusFilter === opt.value
+                              ? "bg-primary text-primary-foreground shadow-2xs"
+                              : "bg-muted/50 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {categoryFilter !== "all" || statusFilter !== "all" ? (
+                    <div className="pt-2 border-t border-border/60 flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCategoryFilter("all");
+                          setStatusFilter("all");
+                        }}
+                      >
+                        Reset Filter
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={() =>
                 setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
               }
-              className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+              className="gap-2 shrink-0"
             >
-              <ArrowUpDownIcon className="size-3.5" />
+              <ArrowUpDownIcon className="size-4" />
               <span>
                 Urutan: {sortOrder === "asc" ? "Terkecil" : "Terbesar"}
               </span>
