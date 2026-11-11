@@ -659,6 +659,7 @@ export async function toggleInternalUserActive(
 const COMPANY_EXT_STORAGE_KEY = "altcycles_company_ext_v1";
 const CUSTOMER_EXT_STORAGE_KEY = "altcycles_customers_ext_v1";
 const LOGIN_MEDIA_STORAGE_KEY = "altcycles_login_media_v1";
+const LOGIN_ACTIVE_CACHE_KEY = "altcycles_login_active_media_cache_v1";
 
 function readLocalJson<T>(key: string, fallback: T): T {
   try {
@@ -863,10 +864,23 @@ function sortLoginMedia(rows: LoginMediaItemRow[]): LoginMediaItemRow[] {
   });
 }
 
-export async function listActiveLoginMedia(): Promise<LoginMediaItemRow[]> {
-  const localItems = sortLoginMedia(
+function writeActiveLoginMediaCache(activeRows: LoginMediaItemRow[]): void {
+  writeLocalJson(LOGIN_ACTIVE_CACHE_KEY, sortLoginMedia(activeRows));
+}
+
+/** Membaca cache media aktif halaman login secara sinkron agar refresh /login tampil instan tanpa kedipan grid kosong. */
+export function getCachedActiveLoginMedia(): LoginMediaItemRow[] {
+  const cached = sortLoginMedia(
+    readLocalJson<LoginMediaItemRow[]>(LOGIN_ACTIVE_CACHE_KEY, []),
+  ).filter((item) => item.is_active);
+  if (cached.length > 0) return cached;
+  return sortLoginMedia(
     readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []),
   ).filter((item) => item.is_active);
+}
+
+export async function listActiveLoginMedia(): Promise<LoginMediaItemRow[]> {
+  const localItems = getCachedActiveLoginMedia();
 
   if (isDemoMode || !supabase) {
     return localItems;
@@ -885,8 +899,9 @@ export async function listActiveLoginMedia(): Promise<LoginMediaItemRow[]> {
       }
       throw new Error(error.message);
     }
-    const items = (data ?? []) as LoginMediaItemRow[];
-    return sortLoginMedia(items);
+    const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
+    writeActiveLoginMediaCache(items);
+    return items;
   } catch {
     return localItems;
   }
@@ -919,6 +934,7 @@ export async function listAllLoginMedia(): Promise<{
 
   const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
   writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, items);
+  writeActiveLoginMediaCache(items.filter((x) => x.is_active));
   return { items, usingLocalFallback: false };
 }
 
@@ -984,10 +1000,9 @@ export async function createLoginMediaItem(input: {
 
   const created = data as LoginMediaItemRow;
   const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
-  writeLocalJson(
-    LOGIN_MEDIA_STORAGE_KEY,
-    sortLoginMedia([...prev.filter((x) => x.id !== created.id), created]),
-  );
+  const nextAll = sortLoginMedia([...prev.filter((x) => x.id !== created.id), created]);
+  writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+  writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
   return { item: created, savedToCloud: true };
 }
 
@@ -1051,10 +1066,9 @@ export async function updateLoginMediaItem(
   }
 
   const updated = data as LoginMediaItemRow;
-  writeLocalJson(
-    LOGIN_MEDIA_STORAGE_KEY,
-    sortLoginMedia([...prev.filter((x) => x.id !== id), updated]),
-  );
+  const nextAll = sortLoginMedia([...prev.filter((x) => x.id !== id), updated]);
+  writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+  writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
   return { item: updated, savedToCloud: true };
 }
 
@@ -1089,10 +1103,9 @@ export async function deleteLoginMediaItem(id: string): Promise<void> {
     throw new Error(error.message);
   }
 
-  writeLocalJson(
-    LOGIN_MEDIA_STORAGE_KEY,
-    prev.filter((x) => x.id !== id),
-  );
+  const nextAll = prev.filter((x) => x.id !== id);
+  writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+  writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
 }
 
 export async function listDocSequences(): Promise<{

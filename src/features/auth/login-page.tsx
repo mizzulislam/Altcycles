@@ -30,7 +30,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
-import { listActiveLoginMedia } from "@/lib/data-service";
+import {
+  getCachedActiveLoginMedia,
+  listActiveLoginMedia,
+} from "@/lib/data-service";
 import { useTheme } from "@/lib/theme-context";
 import type { LoginMediaItemRow } from "@/types/database.types";
 
@@ -102,8 +105,13 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [oauthChecking, setOauthChecking] = React.useState(false);
 
-  // Media Banner / Flyer / Konten Medsos sisi kiri
-  const [mediaSlides, setMediaSlides] = React.useState<LoginMediaItemRow[]>([]);
+  // Media Banner / Flyer / Konten Medsos sisi kiri (hidrasi instan dari cache agar bebas kedip saat refresh)
+  const [mediaSlides, setMediaSlides] = React.useState<LoginMediaItemRow[]>(() =>
+    getCachedActiveLoginMedia(),
+  );
+  const [mediaLoading, setMediaLoading] = React.useState(
+    () => getCachedActiveLoginMedia().length === 0,
+  );
   const [activeSlideIndex, setActiveSlideIndex] = React.useState(0);
   const [isBannerHovered, setIsBannerHovered] = React.useState(false);
 
@@ -111,15 +119,38 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     let active = true;
     void listActiveLoginMedia()
       .then((rows) => {
-        if (active) setMediaSlides(rows);
+        if (!active) return;
+        setMediaSlides((prev) => {
+          const same =
+            prev.length === rows.length &&
+            prev.every(
+              (p, idx) =>
+                p.id === rows[idx]?.id &&
+                p.updated_at === rows[idx]?.updated_at &&
+                p.image_url === rows[idx]?.image_url,
+            );
+          return same ? prev : rows;
+        });
       })
       .catch(() => {
         // Gunakan kanvas default jika gagal memuat media
+      })
+      .finally(() => {
+        if (active) setMediaLoading(false);
       });
     return () => {
       active = false;
     };
   }, []);
+
+  // Preload seluruh gambar slide agar perpindahan carousel maupun reload instan
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    for (const slide of mediaSlides) {
+      const preloader = new Image();
+      preloader.src = slide.image_url;
+    }
+  }, [mediaSlides]);
 
   const effectiveSlideCount = mediaSlides.length;
 
@@ -131,7 +162,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     return () => window.clearInterval(timer);
   }, [effectiveSlideCount, isBannerHovered]);
 
-  const currentMedia = mediaSlides[activeSlideIndex] ?? null;
+  const safeSlideIndex =
+    effectiveSlideCount > 0 ? activeSlideIndex % effectiveSlideCount : 0;
+  const currentMedia = mediaSlides[safeSlideIndex] ?? null;
   const displayCategoryLabels = {
     banner: "Banner Utama",
     flyer: "Flyer Promosi",
@@ -355,32 +388,66 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       >
         {/* LAYER 1 (BELAKANG): Banner / Flyer / Konten Medsos dari Super Admin */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
-          {currentMedia ? (
-            currentMedia.category === "banner" ? (
-              <img
-                src={currentMedia.image_url}
-                alt={currentMedia.title}
-                className="w-full h-full object-cover transition-opacity duration-500"
-              />
-            ) : (
-              <div className="relative w-full h-full flex items-center justify-center p-10 bg-[#090E19]">
-                <img
-                  src={currentMedia.image_url}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-35"
-                />
-                <img
-                  src={currentMedia.image_url}
-                  alt={currentMedia.title}
-                  className="relative z-10 max-h-[78vh] max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/15"
-                />
-              </div>
-            )
+          {mediaSlides.length > 0 ? (
+            <div className="relative w-full h-full">
+              {mediaSlides.map((slide, idx) => {
+                const isSlideActive = idx === safeSlideIndex;
+                return (
+                  <div
+                    key={slide.id}
+                    aria-hidden={!isSlideActive}
+                    className={`absolute inset-0 transition-opacity duration-500 ease-out ${
+                      isSlideActive
+                        ? "opacity-100 z-10"
+                        : "opacity-0 z-0 pointer-events-none"
+                    }`}
+                  >
+                    {slide.category === "banner" ? (
+                      <img
+                        src={slide.image_url}
+                        alt={slide.title}
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority={idx === 0 ? "high" : "auto"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="relative w-full h-full flex items-center justify-center p-10 bg-[#090E19]">
+                        <img
+                          src={slide.image_url}
+                          alt=""
+                          aria-hidden="true"
+                          loading="eager"
+                          decoding="async"
+                          className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-35"
+                        />
+                        <img
+                          src={slide.image_url}
+                          alt={slide.title}
+                          loading="eager"
+                          decoding="async"
+                          fetchPriority={idx === 0 ? "high" : "auto"}
+                          className="relative z-10 max-h-[78vh] max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/15"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : mediaLoading ? (
+            /* Shimmer halus saat kunjungan awal (sebelum cache tersedia) */
+            <div className="w-full h-full relative overflow-hidden bg-[#090E19]">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:44px_44px]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0B43C8]/25 via-[#1FB1F2]/10 to-[#090E19] animate-pulse" />
+            </div>
           ) : bannerSrc ? (
             <img
               src={bannerSrc}
               alt="Banner Informasi Altvira"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -471,7 +538,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       onClick={() => setActiveSlideIndex(idx)}
                       aria-label={`Tampilkan slide ${idx + 1}`}
                       className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                        idx === activeSlideIndex
+                        idx === safeSlideIndex
                           ? "w-6 bg-white"
                           : "w-2 bg-white/40 hover:bg-white/70"
                       }`}
