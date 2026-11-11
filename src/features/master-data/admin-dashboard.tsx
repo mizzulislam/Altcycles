@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import {
   buildRupiahHistogramBins,
+  ChartCardFooter,
   ChartTypeSwitcher,
   CompositionChart,
   HistogramChart,
@@ -811,30 +812,17 @@ export function AdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Tren Pendapatan, Beban, & Arus Kas Bulanan */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>
-                  Tren Pendapatan, Beban, &amp; Arus Kas
-                </CardTitle>
-                <CardDescription>
-                  Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.
-                </CardDescription>
-              </div>
-              <ChartTypeSwitcher
-                value={trendChartType}
-                onChange={setTrendChartType}
-                options={[
-                  { value: "column", label: "Column", title: "Column Chart (Batang Vertikal)", icon: BarChart3Icon },
-                  { value: "bar", label: "Bar", title: "Bar Chart (Batang Horizontal)", icon: BarChartHorizontalIcon },
-                  { value: "line", label: "Line", title: "Line Chart (Garis Tren)", icon: TrendingUpIcon },
-                  { value: "area", label: "Area", title: "Area Chart (Kurva Area)", icon: ActivityIcon },
-                  { value: "bubble", label: "Bubble", title: "Bubble Chart (Pendapatan vs Beban)", icon: CircleDotIcon },
-                ]}
-              />
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>
+                Tren Pendapatan, Beban, &amp; Arus Kas
+              </CardTitle>
+              <CardDescription>
+                Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.
+              </CardDescription>
             </div>
             {trendChartType !== "bubble" ? (
-              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-emerald-500" />
                   Pendapatan
@@ -927,57 +915,57 @@ export function AdminDashboardPage() {
               </div>
             </div>
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={trendChartType}
+              onChange={setTrendChartType}
+              options={[
+                { value: "column", label: "Column", title: "Column Chart (Batang Vertikal)", icon: BarChart3Icon },
+                { value: "bar", label: "Bar", title: "Bar Chart (Batang Horizontal)", icon: BarChartHorizontalIcon },
+                { value: "line", label: "Line", title: "Line Chart (Garis Tren)", icon: TrendingUpIcon },
+                { value: "area", label: "Area", title: "Area Chart (Kurva Area)", icon: ActivityIcon },
+                { value: "bubble", label: "Bubble", title: "Bubble Chart (Pendapatan vs Beban)", icon: CircleDotIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
 
         {/* Grafik 2: Komposisi Laba Rugi / Arus Kas (Donut, Pie, Bar) */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>
-                  Komposisi Keuangan
-                </CardTitle>
-                <CardDescription>
-                  Proporsi struktur {donutMode === "profit" ? "laba rugi" : "arus kas"}.
-                </CardDescription>
-              </div>
-              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setDonutMode("profit")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    donutMode === "profit"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Laba Rugi
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDonutMode("cash")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    donutMode === "cash"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Arus Kas
-                </button>
-              </div>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>
+                Komposisi Keuangan
+              </CardTitle>
+              <CardDescription>
+                Proporsi struktur {donutMode === "profit" ? "laba rugi" : "arus kas"}.
+              </CardDescription>
             </div>
-            <div className="flex justify-end">
-              <ChartTypeSwitcher
-                value={compositionChartType}
-                onChange={setCompositionChartType}
-                options={[
-                  { value: "donut", label: "Donut", icon: CircleDotIcon },
-                  { value: "pie", label: "Pie", icon: PieChartIcon },
-                  { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                ]}
-              />
+            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setDonutMode("profit")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  donutMode === "profit"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Laba Rugi
+              </button>
+              <button
+                type="button"
+                onClick={() => setDonutMode("cash")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  donutMode === "cash"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Arus Kas
+              </button>
             </div>
           </CardHeader>
           <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
@@ -995,6 +983,17 @@ export function AdminDashboardPage() {
               emptySubtitle="Grafik proporsi otomatis terisi setelah transaksi pendapatan, beban, atau kas dibukukan."
             />
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={compositionChartType}
+              onChange={setCompositionChartType}
+              options={[
+                { value: "donut", label: "Donut", icon: CircleDotIcon },
+                { value: "pie", label: "Pie", icon: PieChartIcon },
+                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
       </div>
 
@@ -1002,38 +1001,21 @@ export function AdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Grafik 3: Progress Penagihan Proyek & Umur Piutang */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex flex-row items-start justify-between gap-2">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>
-                  Realisasi Penagihan Proyek &amp; Umur Piutang
-                </CardTitle>
-                <CardDescription>
-                  Perbandingan nilai kontrak terhadap invoice terbit serta sebaran jatuh tempo.
-                </CardDescription>
-              </div>
-              <Link
-                to="/admin/penagihan"
-                className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
-              >
-                Kelola Tagihan
-              </Link>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>
+                Realisasi Penagihan Proyek &amp; Umur Piutang
+              </CardTitle>
+              <CardDescription>
+                Perbandingan nilai kontrak terhadap invoice terbit serta sebaran jatuh tempo.
+              </CardDescription>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <ChartTypeSwitcher
-                value={billingChartType}
-                onChange={setBillingChartType}
-                options={[
-                  { value: "bar", label: "Progress", icon: BarChartHorizontalIcon },
-                  { value: "column", label: "Column", title: "Perbandingan Kontrak vs Tertagih", icon: BarChart3Icon },
-                  { value: "pie", label: "Pie Piutang", title: "Pie Chart Sebaran Umur Piutang", icon: PieChartIcon },
-                  { value: "bubble", label: "Bubble", title: "Bubble Chart Nilai Kontrak vs Tertagih", icon: CircleDotIcon },
-                ]}
-              />
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                Piutang: <strong className="text-foreground">{formatCompactRupiah(outstandingReceivable)}</strong>
-              </span>
-            </div>
+            <Link
+              to="/admin/penagihan"
+              className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
+            >
+              Kelola Tagihan
+            </Link>
           </CardHeader>
           <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
             {billingChartType === "pie" ? (
@@ -1182,43 +1164,39 @@ export function AdminDashboardPage() {
               </div>
             </div>
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={billingChartType}
+              onChange={setBillingChartType}
+              options={[
+                { value: "bar", label: "Progress", icon: BarChartHorizontalIcon },
+                { value: "column", label: "Column", title: "Perbandingan Kontrak vs Tertagih", icon: BarChart3Icon },
+                { value: "pie", label: "Pie Piutang", title: "Pie Chart Sebaran Umur Piutang", icon: PieChartIcon },
+                { value: "bubble", label: "Bubble", title: "Bubble Chart Nilai Kontrak vs Tertagih", icon: CircleDotIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
 
         {/* Grafik 4: Pos Beban Terbesar, Histogram Transaksi, & Aktivitas Jurnal Terbaru */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex flex-row items-start justify-between gap-2">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>
-                  Pos Beban Terbesar &amp; Distribusi Transaksi
-                </CardTitle>
-                <CardDescription>
-                  {expenseChartType === "histogram"
-                    ? "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting."
-                    : "Distribusi pengeluaran per akun SAK dan catatan transaksi terkini."}
-                </CardDescription>
-              </div>
-              <Link
-                to="/admin/akuntansi"
-                className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
-              >
-                Buku Jurnal
-              </Link>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>
+                Pos Beban Terbesar &amp; Distribusi Transaksi
+              </CardTitle>
+              <CardDescription>
+                {expenseChartType === "histogram"
+                  ? "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting."
+                  : "Distribusi pengeluaran per akun SAK dan catatan transaksi terkini."}
+              </CardDescription>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <ChartTypeSwitcher
-                value={expenseChartType}
-                onChange={setExpenseChartType}
-                options={[
-                  { value: "bar", label: "Bar Beban", icon: BarChartHorizontalIcon },
-                  { value: "pie", label: "Pie Beban", icon: PieChartIcon },
-                  { value: "histogram", label: "Histogram", title: "Histogram Distribusi Nominal Jurnal", icon: BarChart2Icon },
-                ]}
-              />
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {journals.length} entri buku besar
-              </span>
-            </div>
+            <Link
+              to="/admin/akuntansi"
+              className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
+            >
+              Buku Jurnal
+            </Link>
           </CardHeader>
           <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
             {expenseChartType === "histogram" ? (
@@ -1323,6 +1301,17 @@ export function AdminDashboardPage() {
               )}
             </div>
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={expenseChartType}
+              onChange={setExpenseChartType}
+              options={[
+                { value: "bar", label: "Bar Beban", icon: BarChartHorizontalIcon },
+                { value: "pie", label: "Pie Beban", icon: PieChartIcon },
+                { value: "histogram", label: "Histogram", title: "Histogram Distribusi Nominal Jurnal", icon: BarChart2Icon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
       </div>
     </div>

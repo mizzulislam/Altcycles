@@ -13,6 +13,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import {
+  ChartCardFooter,
   ChartTypeSwitcher,
   CompositionChart,
   MultiSeriesChart,
@@ -331,55 +332,43 @@ export function SuperAdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Aktivitas Audit Sistem (Harian vs Entitas) */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>Aktivitas Audit &amp; Perubahan Data</CardTitle>
-                <CardDescription>
-                  {auditViewMode === "daily"
-                    ? "Frekuensi operasi tambah, ubah, dan hapus data per hari."
-                    : "Distribusi operasi audit berdasarkan entitas sistem teraktif."}
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setAuditViewMode("daily")}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                      auditViewMode === "daily"
-                        ? "bg-primary text-primary-foreground shadow-2xs"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    Harian
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAuditViewMode("entity")}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                      auditViewMode === "entity"
-                        ? "bg-primary text-primary-foreground shadow-2xs"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    Entitas
-                  </button>
-                </div>
-                <ChartTypeSwitcher
-                  value={auditChartType}
-                  onChange={setAuditChartType}
-                  options={[
-                    { value: "column", label: "Column", icon: BarChart3Icon },
-                    { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                    { value: "line", label: "Line", icon: TrendingUpIcon },
-                    { value: "area", label: "Area", icon: ActivityIcon },
-                  ]}
-                />
-              </div>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>Aktivitas Audit &amp; Perubahan Data</CardTitle>
+              <CardDescription>
+                {auditViewMode === "daily"
+                  ? "Frekuensi operasi tambah, ubah, dan hapus data per hari."
+                  : "Distribusi operasi audit berdasarkan entitas sistem teraktif."}
+              </CardDescription>
             </div>
+            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setAuditViewMode("daily")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  auditViewMode === "daily"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Harian
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuditViewMode("entity")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  auditViewMode === "entity"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Entitas
+              </button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
             <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-emerald-500" />
@@ -394,8 +383,7 @@ export function SuperAdminDashboardPage() {
                 Hapus (Delete)
               </span>
             </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
+
             <MultiSeriesChart
               chartType={auditChartType}
               data={auditViewMode === "daily" ? auditDailyData : auditEntityData}
@@ -446,57 +434,56 @@ export function SuperAdminDashboardPage() {
               </div>
             </div>
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={auditChartType}
+              onChange={setAuditChartType}
+              options={[
+                { value: "column", label: "Column", icon: BarChart3Icon },
+                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+                { value: "line", label: "Line", icon: TrendingUpIcon },
+                { value: "area", label: "Area", icon: ActivityIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
 
         {/* Grafik 2: Komposisi Peran Pengguna & Bagan Akun SAK */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>Komposisi Master Sistem</CardTitle>
-                <CardDescription>
-                  {compDataset === "roles"
-                    ? "Sebaran hak akses peran pengguna internal."
-                    : "Struktur klasifikasi bagan akun SAK."}
-                </CardDescription>
-              </div>
-              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setCompDataset("roles")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    compDataset === "roles"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Peran
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCompDataset("coa")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    compDataset === "coa"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Bagan Akun
-                </button>
-              </div>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>Komposisi Master Sistem</CardTitle>
+              <CardDescription>
+                {compDataset === "roles"
+                  ? "Sebaran hak akses peran pengguna internal."
+                  : "Struktur klasifikasi bagan akun SAK."}
+              </CardDescription>
             </div>
-            <div className="flex justify-end">
-              <ChartTypeSwitcher
-                value={compChartType}
-                onChange={setCompChartType}
-                options={[
-                  { value: "donut", label: "Donut", icon: CircleDotIcon },
-                  { value: "pie", label: "Pie", icon: PieChartIcon },
-                  { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                ]}
-              />
+            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setCompDataset("roles")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  compDataset === "roles"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Peran
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompDataset("coa")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  compDataset === "coa"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Bagan Akun
+              </button>
             </div>
           </CardHeader>
           <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
@@ -522,6 +509,17 @@ export function SuperAdminDashboardPage() {
               emptySubtitle="Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia."
             />
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={compChartType}
+              onChange={setCompChartType}
+              options={[
+                { value: "donut", label: "Donut", icon: CircleDotIcon },
+                { value: "pie", label: "Pie", icon: PieChartIcon },
+                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
       </div>
 

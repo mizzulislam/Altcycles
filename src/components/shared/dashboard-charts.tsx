@@ -10,6 +10,33 @@ export interface ChartSwitchOption<T extends string> {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
+export function ChartCardFooter({
+  label = "Jenis Grafik",
+  rightMeta,
+  children,
+  className,
+}: {
+  label?: string;
+  rightMeta?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "px-6 py-3 border-t border-border/70 bg-muted/10 flex flex-wrap items-center justify-between gap-2",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+        <span>{label}</span>
+        {rightMeta}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 /** Pemilih jenis grafik ringkas bergaya pill terstandar Altcycles. */
 export function ChartTypeSwitcher<T extends string>({
   value,

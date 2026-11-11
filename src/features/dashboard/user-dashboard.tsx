@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   buildRupiahHistogramBins,
+  ChartCardFooter,
   ChartTypeSwitcher,
   CompositionChart,
   HistogramChart,
@@ -452,30 +453,17 @@ export function UserDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Tren Bulanan & Histogram Pengajuan Pembayaran / PO */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>Aktivitas PO &amp; Pengajuan Pembayaran</CardTitle>
-                <CardDescription>
-                  {activityChartType === "histogram"
-                    ? "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda."
-                    : "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan."}
-                </CardDescription>
-              </div>
-              <ChartTypeSwitcher
-                value={activityChartType}
-                onChange={setActivityChartType}
-                options={[
-                  { value: "column", label: "Column", icon: BarChart3Icon },
-                  { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                  { value: "line", label: "Line", icon: TrendingUpIcon },
-                  { value: "area", label: "Area", icon: ActivityIcon },
-                  { value: "histogram", label: "Histogram", icon: BarChart2Icon },
-                ]}
-              />
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>Aktivitas PO &amp; Pengajuan Pembayaran</CardTitle>
+              <CardDescription>
+                {activityChartType === "histogram"
+                  ? "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda."
+                  : "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan."}
+              </CardDescription>
             </div>
             {activityChartType !== "histogram" ? (
-              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-violet-500" />
                   PO Pembelian
@@ -555,57 +543,57 @@ export function UserDashboardPage() {
               </div>
             </div>
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={activityChartType}
+              onChange={setActivityChartType}
+              options={[
+                { value: "column", label: "Column", icon: BarChart3Icon },
+                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+                { value: "line", label: "Line", icon: TrendingUpIcon },
+                { value: "area", label: "Area", icon: ActivityIcon },
+                { value: "histogram", label: "Histogram", icon: BarChart2Icon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
 
         {/* Grafik 2: Status Klaim Pembayaran & Porsi Bagi Hasil */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1 min-w-0">
-                <CardTitle>Status Klaim &amp; Bagi Hasil</CardTitle>
-                <CardDescription>
-                  {compDataset === "claims"
-                    ? "Proporsi nominal pengajuan pembayaran per status."
-                    : "Alokasi nominal hak bagi hasil per proyek."}
-                </CardDescription>
-              </div>
-              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setCompDataset("claims")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    compDataset === "claims"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Klaim
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCompDataset("sharing")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                    compDataset === "sharing"
-                      ? "bg-primary text-primary-foreground shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Bagi Hasil
-                </button>
-              </div>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
+            <div className="space-y-1 min-w-0">
+              <CardTitle>Status Klaim &amp; Bagi Hasil</CardTitle>
+              <CardDescription>
+                {compDataset === "claims"
+                  ? "Proporsi nominal pengajuan pembayaran per status."
+                  : "Alokasi nominal hak bagi hasil per proyek."}
+              </CardDescription>
             </div>
-            <div className="flex justify-end">
-              <ChartTypeSwitcher
-                value={compChartType}
-                onChange={setCompChartType}
-                options={[
-                  { value: "donut", label: "Donut", icon: CircleDotIcon },
-                  { value: "pie", label: "Pie", icon: PieChartIcon },
-                  { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                ]}
-              />
+            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setCompDataset("claims")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  compDataset === "claims"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Klaim
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompDataset("sharing")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  compDataset === "sharing"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Bagi Hasil
+              </button>
             </div>
           </CardHeader>
           <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
@@ -631,6 +619,17 @@ export function UserDashboardPage() {
               }
             />
           </CardContent>
+          <ChartCardFooter>
+            <ChartTypeSwitcher
+              value={compChartType}
+              onChange={setCompChartType}
+              options={[
+                { value: "donut", label: "Donut", icon: CircleDotIcon },
+                { value: "pie", label: "Pie", icon: PieChartIcon },
+                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+              ]}
+            />
+          </ChartCardFooter>
         </Card>
       </div>
 
