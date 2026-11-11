@@ -54,7 +54,7 @@ export function ThemeToggle({
       aria-label={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
       title={isDark ? "Mode Terang (Klik untuk beralih)" : "Mode Gelap (Klik untuk beralih)"}
       style={floatingStyle}
-      className={`inline-flex items-center justify-center rounded-xl transition-all duration-300 select-none cursor-pointer border ${
+      className={`inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border ${
         isDark
           ? "bg-[#121A2B]/95 border-white/20 text-amber-300 hover:text-amber-200 hover:bg-[#1A253C] hover:border-white/35 shadow-xl shadow-black/50"
           : "bg-white/95 border-[#C9C9C9] text-[#0B43C8] hover:text-[#083296] hover:bg-[#F0F1F3] hover:border-[#0B43C8]/40 shadow-xl shadow-black/[0.1]"

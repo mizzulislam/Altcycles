@@ -3,8 +3,8 @@ import { Spinner } from "@/components/ui/empty";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import type { UserRole } from "@/types/database.types";
 
-export function RoleGuard({ allowedRole }: { allowedRole: UserRole }) {
-  const { profile, loading } = useAuth();
+export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "any" }) {
+  const { profile, activeRole, availableRoles, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,8 +19,8 @@ export function RoleGuard({ allowedRole }: { allowedRole: UserRole }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (profile.role !== allowedRole) {
-    return <Navigate to={portalHomeForRole(profile.role)} replace />;
+  if (allowedRole !== "any" && !availableRoles.includes(allowedRole)) {
+    return <Navigate to={portalHomeForRole(activeRole || profile.role)} replace />;
   }
 
   return <Outlet />;

@@ -109,12 +109,12 @@ export function AccountingHubPage() {
     <div className="space-y-6">
       {/* Header Halaman Pembungkus */}
       <div className="flex flex-col gap-1 border-b border-border/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="flex-1 min-w-0 max-w-2xl">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Pusat Pembukuan & Akuntansi SAK
+            Pusat Pembukuan &amp; Akuntansi SAK
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Sistem akuntansi berpasangan (*double-entry*) berbasis akrual, pembukuan jurnal, dan laporan keuangan komprehensif.
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+            Pusat ringkasan pembukuan akuntansi, status periode buku, dan pintasan cepat pelaporan keuangan.
           </p>
         </div>
       </div>

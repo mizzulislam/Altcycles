@@ -168,7 +168,7 @@ export function ChangePasswordDialog({
           <FieldGroup className="space-y-3.5">
             {/* Field Kata Sandi Baru */}
             <Field data-invalid={Boolean(error)}>
-              <FieldLabel className="text-xs font-semibold">
+              <FieldLabel required className="text-xs font-semibold">
                 Kata Sandi Baru
               </FieldLabel>
               <div className="relative">
@@ -327,7 +327,7 @@ export function ChangePasswordDialog({
 
             {/* Field Konfirmasi Kata Sandi */}
             <Field data-invalid={Boolean(error)}>
-              <FieldLabel className="text-xs font-semibold">
+              <FieldLabel required className="text-xs font-semibold">
                 Konfirmasi Kata Sandi Baru
               </FieldLabel>
               <div className="relative">

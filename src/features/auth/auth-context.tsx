@@ -1,6 +1,11 @@
 import * as React from "react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { findDemoProfileByEmail, setDemoCurrentUser } from "@/lib/data-service";
+import {
+  findDemoProfileByEmail,
+  setDemoCurrentUser,
+  switchActiveRole,
+} from "@/lib/data-service";
 import { IDLE_TIMEOUT_MINUTES, isDemoMode, supabase } from "@/lib/supabase";
 import type { ProfileRow, UserRole } from "@/types/database.types";
 
@@ -12,6 +17,8 @@ export interface SignUpResult {
 
 interface AuthContextValue {
   profile: ProfileRow | null;
+  activeRole: UserRole | null;
+  availableRoles: UserRole[];
   loading: boolean;
   isDemoMode: boolean;
   signIn: (emailOrUsername: string, password: string) => Promise<ProfileRow>;
@@ -24,11 +31,46 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  switchRole: (targetRole: UserRole) => Promise<void>;
+  refreshProfile: () => Promise<ProfileRow | null>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
 const DEMO_STORAGE_KEY = "altcycles_demo_session_email";
+const TAB_ROLE_STORAGE_KEY = "altcycles_tab_active_role";
+
+function isValidRole(value: string | null): value is UserRole {
+  return value === "super_admin" || value === "admin" || value === "user";
+}
+
+function roleForPathname(pathname: string): UserRole | null {
+  if (pathname.startsWith("/super-admin")) return "super_admin";
+  if (pathname.startsWith("/admin")) return "admin";
+  if (pathname.startsWith("/user")) return "user";
+  return null;
+}
+
+function readTabRoleFromSession(): UserRole | null {
+  try {
+    const raw = window.sessionStorage.getItem(TAB_ROLE_STORAGE_KEY);
+    return isValidRole(raw) ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTabRoleToSession(role: UserRole | null): void {
+  try {
+    if (role) {
+      window.sessionStorage.setItem(TAB_ROLE_STORAGE_KEY, role);
+    } else {
+      window.sessionStorage.removeItem(TAB_ROLE_STORAGE_KEY);
+    }
+  } catch {
+    // Abaikan jika sessionStorage dibatasi
+  }
+}
 
 export function portalHomeForRole(role: UserRole): string {
   switch (role) {
@@ -42,7 +84,11 @@ export function portalHomeForRole(role: UserRole): string {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
   const [profile, setProfile] = React.useState<ProfileRow | null>(null);
+  const [tabRole, setTabRole] = React.useState<UserRole | null>(
+    () => roleForPathname(window.location.pathname) ?? readTabRoleFromSession(),
+  );
   const [loading, setLoading] = React.useState(true);
 
   const loadSupabaseProfile = React.useCallback(
@@ -163,6 +209,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadSupabaseProfile]);
 
   const signOut = React.useCallback(async () => {
+    writeTabRoleToSession(null);
+    setTabRole(null);
     if (isDemoMode || !supabase) {
       window.sessionStorage.removeItem(DEMO_STORAGE_KEY);
       setDemoCurrentUser(null);
@@ -223,6 +271,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         window.sessionStorage.setItem(DEMO_STORAGE_KEY, found.email);
         setDemoCurrentUser(found.id);
+        writeTabRoleToSession(found.role);
+        setTabRole(found.role);
         setProfile(found);
         return found;
       }
@@ -244,6 +294,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await supabase.rpc("touch_last_login");
 
+      writeTabRoleToSession(loaded.role);
+      setTabRole(loaded.role);
       setProfile(loaded);
       return loaded;
     },
@@ -388,9 +440,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw new Error(error.message);
   }, []);
 
+  const availableRoles = React.useMemo<UserRole[]>(() => {
+    if (!profile) return [];
+    if (profile.roles && profile.roles.length > 0) {
+      return profile.roles;
+    }
+    if (profile.role === "super_admin") return ["super_admin", "admin", "user"];
+    if (profile.role === "admin") return ["admin", "user"];
+    return ["user"];
+  }, [profile]);
+
+  const routeRole = roleForPathname(pathname);
+
+  React.useEffect(() => {
+    if (!profile) return;
+    if (routeRole && availableRoles.includes(routeRole)) {
+      if (tabRole !== routeRole) {
+        setTabRole(routeRole);
+      }
+      writeTabRoleToSession(routeRole);
+      return;
+    }
+
+    const stored = readTabRoleFromSession();
+    const resolved =
+      stored && availableRoles.includes(stored) ? stored : profile.role;
+    if (tabRole !== resolved) {
+      setTabRole(resolved);
+    }
+    if (stored !== resolved) {
+      writeTabRoleToSession(resolved);
+    }
+  }, [profile, routeRole, availableRoles, tabRole]);
+
+  const activeRole = React.useMemo<UserRole | null>(() => {
+    if (!profile) return null;
+    if (routeRole && availableRoles.includes(routeRole)) {
+      return routeRole;
+    }
+    if (tabRole && availableRoles.includes(tabRole)) {
+      return tabRole;
+    }
+    return profile.role;
+  }, [profile, routeRole, availableRoles, tabRole]);
+
+  const switchRole = React.useCallback(async (targetRole: UserRole) => {
+    writeTabRoleToSession(targetRole);
+    setTabRole(targetRole);
+    const updated = await switchActiveRole(targetRole);
+    setProfile(updated);
+  }, []);
+
+  const refreshProfile = React.useCallback(async () => {
+    if (isDemoMode || !supabase) {
+      if (profile) {
+        const found = findDemoProfileByEmail(profile.email);
+        if (found) {
+          const cloned = structuredClone(found);
+          setProfile(cloned);
+          return cloned;
+        }
+      }
+      return profile;
+    }
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      const loaded = await loadSupabaseProfile(data.user.id);
+      if (loaded) setProfile(loaded);
+      return loaded;
+    }
+    return null;
+  }, [profile, loadSupabaseProfile]);
+
   const value = React.useMemo<AuthContextValue>(
     () => ({
       profile,
+      activeRole,
+      availableRoles,
       loading,
       isDemoMode,
       signIn,
@@ -399,9 +525,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
+      switchRole,
+      refreshProfile,
     }),
     [
       profile,
+      activeRole,
+      availableRoles,
       loading,
       signIn,
       signInWithGoogle,
@@ -409,6 +539,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
+      switchRole,
+      refreshProfile,
     ],
   );
 

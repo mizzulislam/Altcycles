@@ -1,13 +1,22 @@
 import * as React from "react";
 import {
   BanknoteIcon,
-  DownloadIcon,
-  FileSpreadsheetIcon,
+  ClockAlertIcon,
+  ClockIcon,
+  FileTextIcon,
   PlusIcon,
+  ReceiptIcon,
+  ReceiptTextIcon,
+  WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
@@ -18,19 +27,18 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmptyState, Spinner } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/empty";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -47,7 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { buildArAging } from "@/lib/accounting-engine";
 import {
@@ -56,6 +63,7 @@ import {
   listCustomers,
   listProjects,
 } from "@/lib/data-service";
+import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
 import {
@@ -71,6 +79,7 @@ import {
   downloadPdfBytes,
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
+import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import type {
   AccountRow,
   CompanyProfileRow,
@@ -97,6 +106,7 @@ export function InvoicingPage() {
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [agingRefDate, setAgingRefDate] = React.useState("2026-12-31");
+  const [activeTab, setActiveTab] = React.useState<"invoices" | "aging" | "receipts">("invoices");
 
   // Dialog Terbitkan Invoice Baru
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -213,6 +223,8 @@ export function InvoicingPage() {
     setBastId(projectSignedBasts[0]?.id ?? "none");
     if (projectMilestones[0]) {
       setSubtotalAmount(projectMilestones[0].amount);
+    } else {
+      setSubtotalAmount(0);
     }
   }, [
     selectedProjectId,
@@ -236,10 +248,34 @@ export function InvoicingPage() {
       toast.error("Proyek belum memiliki pelanggan terkait.");
       return;
     }
-    if (!clientPoId) {
+    if (!invDate || !dueDate) {
+      toast.error("Tanggal invoice dan tanggal jatuh tempo wajib diisi.");
+      return;
+    }
+    if (dueDate < invDate) {
+      toast.error("Tanggal jatuh tempo tidak boleh lebih awal dari tanggal invoice.");
+      return;
+    }
+    if (!clientPoId || clientPoId === "__empty") {
       toast.error(
         "Pilih PO Klien yang telah diverifikasi Admin terlebih dahulu.",
       );
+      return;
+    }
+    if (invoiceKind === "milestone" && (!bakpId || bakpId === "none")) {
+      toast.error(
+        "Pilih dokumen BAKP yang telah disetujui klien untuk tagihan termin/progres.",
+      );
+      return;
+    }
+    if (invoiceKind === "final_settlement" && (!bastId || bastId === "none")) {
+      toast.error(
+        "Pilih dokumen BAST yang telah ditandatangani untuk tagihan pelunasan akhir.",
+      );
+      return;
+    }
+    if (roundRupiah(subtotalAmount) <= 0) {
+      toast.error("Nominal subtotal tagihan harus lebih besar dari Rp 0.");
       return;
     }
     setIssuing(true);
@@ -304,39 +340,56 @@ export function InvoicingPage() {
     }
   }
 
-  async function handleDownloadInvoicePdf(inv: SalesInvoiceRow) {
-    if (!company || !bundle) return;
+  function makeInvoiceSpec(inv: SalesInvoiceRow) {
+    if (!company || !bundle) return null;
     const cust = customerMap.get(inv.customer_id);
     const prj = projectMap.get(inv.project_id);
     const cpo = bundle.clientPos.find((c) => c.id === inv.client_po_id);
     const ms = bundle.milestones.find((m) => m.id === inv.milestone_id);
 
-    const spec = buildInvoicePdfSpec({
+    return buildInvoicePdfSpec({
       company,
       invoiceNumber: inv.invoice_number,
       invoiceDate: inv.invoice_date,
       dueDate: inv.due_date,
-      customerName: cust?.name ?? "Klien",
+      customerName: cust?.company_name ?? cust?.name ?? "Klien",
+      customerPic: cust?.contact_person,
+      customerTitle: cust?.contact_title,
       customerAddress: cust?.address ?? "-",
+      customerLogoUrl: cust?.logo_storage_path ?? null,
       projectName: prj ? `${prj.code} - ${prj.name}` : "Proyek",
       clientPoNumber: cpo?.po_number ?? "-",
       description: ms
         ? `${ms.name} — Proyek ${prj?.name ?? ""}`
         : `Penagihan Proyek ${prj?.name ?? ""}`,
+      qty: 1,
       subtotal: inv.subtotal_amount,
       ppnAmount: inv.ppn_amount,
       totalAmount: inv.total_amount,
     });
+  }
+
+  async function handleDownloadInvoicePdf(inv: SalesInvoiceRow) {
+    const spec = makeInvoiceSpec(inv);
+    if (!spec) return;
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, `${inv.invoice_number.replace(/\//g, "_")}.pdf`);
     await recordExportLog("SALES_INVOICE", "PDF");
   }
 
-  async function handleDownloadReceiptPdf(kw: ReceiptRow) {
-    if (!company || !bundle) return;
+  async function handleDownloadInvoiceWord(inv: SalesInvoiceRow) {
+    const spec = makeInvoiceSpec(inv);
+    if (!spec) return;
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(blob, `${inv.invoice_number.replace(/\//g, "_")}.docx`);
+    await recordExportLog("SALES_INVOICE", "PDF");
+  }
+
+  function makeReceiptSpec(kw: ReceiptRow) {
+    if (!company || !bundle) return null;
     const inv = bundle.invoices.find((i) => i.id === kw.invoice_id);
     const prj = inv ? projectMap.get(inv.project_id) : undefined;
-    const spec = buildReceiptPdfSpec({
+    return buildReceiptPdfSpec({
       company,
       receiptNumber: kw.receipt_number,
       receiptDate: kw.receipt_date,
@@ -345,8 +398,21 @@ export function InvoicingPage() {
       projectName: prj ? `${prj.code} - ${prj.name}` : "Proyek Klien",
       amount: kw.amount,
     });
+  }
+
+  async function handleDownloadReceiptPdf(kw: ReceiptRow) {
+    const spec = makeReceiptSpec(kw);
+    if (!spec) return;
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, `${kw.receipt_number.replace(/\//g, "_")}.pdf`);
+    await recordExportLog("RECEIPT_KUITANSI", "PDF");
+  }
+
+  async function handleDownloadReceiptWord(kw: ReceiptRow) {
+    const spec = makeReceiptSpec(kw);
+    if (!spec) return;
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(blob, `${kw.receipt_number.replace(/\//g, "_")}.docx`);
     await recordExportLog("RECEIPT_KUITANSI", "PDF");
   }
 
@@ -379,7 +445,76 @@ export function InvoicingPage() {
       ]),
     });
     await recordExportLog("SALES_INVOICES", "EXCEL");
-    toast.success("Daftar invoice & piutang berhasil diekspor ke Excel.");
+    toast.success("Daftar invoice & piutang berhasil diekspor ke Excel (.xlsx).");
+  }
+
+  async function handleExportInvoicesPdf() {
+    if (!bundle) return;
+    const comp = company ?? (await getCompanyProfile());
+    const bytes = await generateDocumentPdf({
+      docTitle: "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+      docSubtitle: `Total Nilai Invoice: ${formatRupiah(totalInvoiced)} | Sisa Piutang: ${formatRupiah(totalOutstanding)}`,
+      docNumber: `INV-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
+      docDate: new Date().toISOString().slice(0, 10),
+      company: comp,
+      tableColumns: [
+        { header: "No. Invoice", widthRatio: 0.16 },
+        { header: "Tanggal", widthRatio: 0.12 },
+        { header: "Jatuh Tempo", widthRatio: 0.12 },
+        { header: "Proyek / Klien", widthRatio: 0.24 },
+        { header: "Total", widthRatio: 0.13, align: "right" },
+        { header: "Sisa", widthRatio: 0.13, align: "right" },
+        { header: "Status", widthRatio: 0.10 },
+      ],
+      tableRows: bundle.invoices.map((inv) => [
+        inv.invoice_number,
+        formatDateID(inv.invoice_date),
+        formatDateID(inv.due_date),
+        `${projectMap.get(inv.project_id)?.code ?? "-"} - ${customerMap.get(inv.customer_id)?.name ?? "Klien"}`,
+        formatRupiah(inv.total_amount),
+        formatRupiah(inv.total_amount - inv.paid_amount),
+        inv.payment_status === "paid"
+          ? "Lunas"
+          : inv.payment_status === "partial"
+            ? "Sebagian"
+            : "Belum Lunas",
+      ]),
+      rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
+    });
+    downloadPdfBytes(bytes, "Daftar_Invoice_dan_Piutang_Altcycles.pdf");
+    await recordExportLog("SALES_INVOICES", "PDF");
+    toast.success("Daftar invoice & piutang berhasil diekspor ke PDF (.pdf).");
+  }
+
+  async function handleExportInvoicesCsv() {
+    if (!bundle) return;
+    downloadCsvFile(
+      "Daftar_Invoice_dan_Piutang_Altcycles.csv",
+      [
+        "No. Invoice",
+        "Tanggal",
+        "Jatuh Tempo",
+        "Proyek",
+        "Pelanggan",
+        "Total Tagihan",
+        "Terbayar",
+        "Sisa Piutang",
+        "Status Bayar",
+      ],
+      bundle.invoices.map((inv) => [
+        inv.invoice_number,
+        inv.invoice_date,
+        inv.due_date,
+        projectMap.get(inv.project_id)?.code ?? "-",
+        customerMap.get(inv.customer_id)?.name ?? "Klien",
+        inv.total_amount,
+        inv.paid_amount,
+        inv.total_amount - inv.paid_amount,
+        inv.payment_status,
+      ]),
+    );
+    await recordExportLog("SALES_INVOICES", "CSV");
+    toast.success("Daftar invoice & piutang berhasil diekspor ke CSV (.csv).");
   }
 
   const totalInvoiced = (bundle?.invoices ?? []).reduce(
@@ -394,136 +529,224 @@ export function InvoicingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Invoice Penagihan, Umur Piutang, &amp; Kuitansi
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Validasi prasyarat dokumen PO, Berita Acara Progres (BAKP), dan BAST Serah Terima, disertai penerbitan PDF Invoice &amp; Kuitansi resmi lengkap dengan terbilang.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+            Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <ExportDownloadMenu
+            label="Unduh / Ekspor"
+            onExportExcel={handleExportInvoicesExcel}
+            onExportPdf={handleExportInvoicesPdf}
+            onExportCsv={handleExportInvoicesCsv}
+          />
           <Button
             type="button"
-            variant="outline"
-            onClick={() => void handleExportInvoicesExcel()}
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0"
           >
-            <FileSpreadsheetIcon data-icon="inline-start" />
-            Ekspor Excel
-          </Button>
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            <PlusIcon data-icon="inline-start" />
-            Terbitkan Invoice
+            <PlusIcon className="size-4" />
+            <span>Terbitkan Invoice</span>
           </Button>
         </div>
       </div>
 
+      {/* Ringkasan KPI Penagihan & Piutang */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Nilai Invoice Diterbitkan</CardDescription>
-            <CardTitle className="text-xl">
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              Total Nilai Invoice Diterbitkan
+            </p>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalInvoiced)}
-            </CardTitle>
-          </CardHeader>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {bundle?.invoices.length ?? 0} dokumen invoice terbit
+            </p>
+          </div>
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
+            <ReceiptTextIcon className="size-5" />
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Penerimaan Pembayaran</CardDescription>
-            <CardTitle className="text-xl">
+
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              Total Penerimaan Pembayaran
+            </p>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalCollected)}
-            </CardTitle>
-          </CardHeader>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {bundle?.receipts.length ?? 0} kuitansi pembayaran resmi
+            </p>
+          </div>
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <WalletIcon className="size-5" />
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Saldo Piutang Usaha Belum Tertagih</CardDescription>
-            <CardTitle className="text-xl">
+
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              Saldo Piutang Usaha Belum Tertagih
+            </p>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalOutstanding)}
-            </CardTitle>
-          </CardHeader>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {arAgingRows.length} tagihan menunggu pelunasan
+            </p>
+          </div>
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <ClockAlertIcon className="size-5" />
+          </div>
         </Card>
       </div>
 
-      <Tabs defaultValue="invoices">
-        <TabsList>
-          <TabsTrigger value="invoices">
-            Daftar Invoice ({bundle?.invoices.length ?? 0})
-          </TabsTrigger>
-          <TabsTrigger value="aging">
-            Umur Piutang / Jatuh Tempo ({arAgingRows.length})
-          </TabsTrigger>
-          <TabsTrigger value="receipts">
-            Kuitansi Pembayaran ({bundle?.receipts.length ?? 0})
-          </TabsTrigger>
-        </TabsList>
+      {/* Bar Navigasi Tab Penagihan & Piutang */}
+      <div className="bg-card rounded-2xl p-2 flex items-center gap-1.5 shadow-2xs border border-border/80 w-full overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {[
+          {
+            id: "invoices" as const,
+            label: "Daftar Invoice",
+            count: bundle?.invoices.length ?? 0,
+            icon: FileTextIcon,
+          },
+          {
+            id: "aging" as const,
+            label: "Umur Piutang / Jatuh Tempo",
+            count: arAgingRows.length,
+            icon: ClockIcon,
+          },
+          {
+            id: "receipts" as const,
+            label: "Kuitansi Pembayaran",
+            count: bundle?.receipts.length ?? 0,
+            icon: ReceiptIcon,
+          },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+              )}
+            >
+              <Icon
+                className={cn(
+                  "size-4 shrink-0 transition-colors",
+                  isActive ? "text-primary-foreground" : "text-muted-foreground",
+                )}
+              />
+              <span className="whitespace-nowrap">{tab.label}</span>
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-bold leading-none",
+                  isActive
+                    ? "bg-white/20 text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="invoices">
-          <Card>
-            <CardHeader>
-              <CardTitle>Daftar Invoice Klien</CardTitle>
-              <CardDescription>
-                Klik Catat Pembayaran saat dana masuk ke rekening perusahaan
-                untuk menerbitkan Kuitansi otomatis.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-                  <Spinner />
-                  <span>Memuat daftar invoice...</span>
-                </div>
-              ) : !bundle || bundle.invoices.length === 0 ? (
-                <EmptyState
-                  title="Belum ada invoice diterbitkan"
-                  description="Pastikan PO Klien telah diverifikasi sebelum menerbitkan invoice."
-                />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>No. Invoice</TableHead>
-                      <TableHead>Tanggal &amp; Jatuh Tempo</TableHead>
-                      <TableHead>Proyek &amp; Klien</TableHead>
-                      <TableHead>Total Tagihan</TableHead>
-                      <TableHead>Terbayar</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
+      {activeTab === "invoices" && (
+        <Card className="overflow-hidden">
+          <CardHeader className="px-6 py-4 border-b border-border/70">
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Daftar Invoice Klien
+            </CardTitle>
+            <CardDescription>
+              Klik ikon catat pembayaran saat dana masuk ke rekening perusahaan untuk menerbitkan Kuitansi otomatis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+                <Spinner />
+                <span>Memuat daftar invoice...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20 hover:bg-muted/20">
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. Invoice</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal &amp; Jatuh Tempo</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Proyek &amp; Klien</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Total Tagihan</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Terbayar</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!bundle || bundle.invoices.length === 0 ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={7} className="p-0">
+                        <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                          <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
+                            <FileTextIcon className="size-6" />
+                          </div>
+                          <h3 className="text-sm font-semibold text-foreground">
+                            Belum Ada Invoice Diterbitkan
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                            Pastikan PO Klien telah diverifikasi sebelum menerbitkan invoice.
+                          </p>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bundle.invoices.map((inv) => {
-                      const prj = projectMap.get(inv.project_id);
-                      const cust = customerMap.get(inv.customer_id);
-                      const remaining = inv.total_amount - inv.paid_amount;
+                  ) : (
+                    bundle.invoices.map((inv) => {
+                    const prj = projectMap.get(inv.project_id);
+                    const cust = customerMap.get(inv.customer_id);
+                    const remaining = inv.total_amount - inv.paid_amount;
 
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell className="font-mono text-xs font-semibold">
-                            {inv.invoice_number}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <div>Terbit: {formatDateID(inv.invoice_date)}</div>
-                            <div className="text-muted-foreground">
-                              Tempo: {formatDateID(inv.due_date)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <div className="font-medium">
-                              {prj ? `${prj.code} — ${prj.name}` : "-"}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {cust?.name ?? "Klien"}
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatRupiah(inv.total_amount)}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {formatRupiah(inv.paid_amount)}
-                          </TableCell>
-                          <TableCell>
+                    return (
+                      <TableRow key={inv.id}>
+                        <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                          {inv.invoice_number}
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                          <div className="text-foreground">Terbit: {formatDateID(inv.invoice_date)}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Tempo: {formatDateID(inv.due_date)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
+                          <div className="font-medium text-foreground">
+                            {prj ? `${prj.code} — ${prj.name}` : "-"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {cust?.name ?? "Klien"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                          <MonetaryCell amount={inv.total_amount} />
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                          <MonetaryCell amount={inv.paid_amount} className="font-normal" />
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                          <div className="inline-flex items-center min-h-5 -my-px">
                             <StatusBadge
                               tone={
                                 inv.payment_status === "paid"
@@ -540,106 +763,117 @@ export function InvoicingPage() {
                                     : "Belum Dibayar"
                               }
                             />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1.5">
-                              {remaining > 0 ? (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => {
-                                    setPayDate(inv.invoice_date);
-                                    setPayAmount(remaining);
-                                    setPayTarget(inv);
-                                  }}
-                                >
-                                  <BanknoteIcon data-icon="inline-start" />
-                                  Terima Bayar
-                                </Button>
-                              ) : null}
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  void handleDownloadInvoicePdf(inv)
-                                }
-                              >
-                                <DownloadIcon data-icon="inline-start" />
-                                PDF A.5
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="aging">
-          <Card>
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>
-                  Pemantauan Umur Piutang &amp; Tagihan Jatuh Tempo (UC-21)
-                </CardTitle>
-                <CardDescription>
-                  Mengelompokkan sisa piutang berdasarkan keterlambatan hari
-                  terhadap tanggal acuan.
-                </CardDescription>
-              </div>
-              <div className="w-48">
-                <Input
-                  type="date"
-                  value={agingRefDate}
-                  onChange={(e) => setAgingRefDate(e.target.value)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {arAgingRows.length === 0 ? (
-                <EmptyState
-                  title="Tidak ada piutang tertunggak"
-                  description="Seluruh invoice yang telah diterbitkan sudah lunas."
-                />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>No. Invoice</TableHead>
-                      <TableHead>Pelanggan &amp; Proyek</TableHead>
-                      <TableHead>Jatuh Tempo</TableHead>
-                      <TableHead>Sisa Tagihan</TableHead>
-                      <TableHead>Keterlambatan</TableHead>
-                      <TableHead>Kelompok Umur</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {arAgingRows.map((row) => (
-                      <TableRow key={row.invoiceId}>
-                        <TableCell className="font-mono text-xs font-semibold">
-                          {row.invoiceNumber}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="font-medium">{row.customerName}</div>
-                          <div className="text-muted-foreground">
-                            {row.projectCode}
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs">
-                          {formatDateID(row.dueDate)}
+                        <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                          <div className="flex justify-center items-center gap-1 -my-1.5">
+                            {remaining > 0 ? (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                title="Terima Pembayaran Invoice"
+                                onClick={() => {
+                                  setPayDate(inv.invoice_date);
+                                  setPayAmount(remaining);
+                                  setPayTarget(inv);
+                                }}
+                                className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                              >
+                                <BanknoteIcon className="size-4" />
+                                <span className="sr-only">Terima Pembayaran Invoice</span>
+                              </Button>
+                            ) : null}
+                            <DocumentDownloadMenu
+                              title="Unduh Invoice (PDF / Word)"
+                              onDownloadPdf={() => handleDownloadInvoicePdf(inv)}
+                              onDownloadWord={() => handleDownloadInvoiceWord(inv)}
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatRupiah(row.outstandingAmount)}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {row.daysOverdue} Hari
-                        </TableCell>
-                        <TableCell>
+                      </TableRow>
+                    );
+                  }))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "aging" && (
+        <Card className="overflow-visible">
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Pemantauan Umur Piutang &amp; Tagihan Jatuh Tempo
+              </CardTitle>
+              <CardDescription>
+                Mengelompokkan sisa piutang berdasarkan keterlambatan hari terhadap tanggal acuan.
+              </CardDescription>
+            </div>
+            <div className="w-full sm:w-64 shrink-0 space-y-1.5">
+              <span className="text-xs font-semibold text-foreground block">
+                Tanggal Acuan Perhitungan
+              </span>
+              <DatePicker
+                value={agingRefDate}
+                onChange={setAgingRefDate}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/20 hover:bg-muted/20">
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. Invoice</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Pelanggan &amp; Proyek</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Jatuh Tempo</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Sisa Tagihan</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Keterlambatan</TableHead>
+                  <TableHead className="pl-3 pr-6 text-center font-semibold whitespace-nowrap">Kelompok Umur</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {arAgingRows.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={6} className="p-0">
+                      <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                        <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
+                          <ClockIcon className="size-6" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-foreground">
+                          Tidak Ada Piutang Tertunggak
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                          Seluruh invoice yang telah diterbitkan sudah lunas.
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  arAgingRows.map((row) => (
+                    <TableRow key={row.invoiceId}>
+                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                        {row.invoiceNumber}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
+                        <div className="font-medium text-foreground">{row.customerName}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {row.projectCode}
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                        {formatDateID(row.dueDate)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                        <MonetaryCell amount={row.outstandingAmount} />
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                        {row.daysOverdue} Hari
+                      </TableCell>
+                      <TableCell className="pl-3 pr-6 py-3.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={
                               row.daysOverdue > 30
@@ -650,144 +884,152 @@ export function InvoicingPage() {
                             }
                             label={row.agingBucket}
                           />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="receipts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Kuitansi Bukti Pembayaran (Lampiran A.6)</CardTitle>
-              <CardDescription>
-                Diterbitkan otomatis setiap kali pembayaran invoice klien
-                dicatat.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!bundle || bundle.receipts.length === 0 ? (
-                <EmptyState
-                  title="Belum ada Kuitansi"
-                  description="Kuitansi diterbitkan otomatis saat pembayaran invoice dicatat."
-                />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nomor Kuitansi</TableHead>
-                      <TableHead>Tanggal Terima</TableHead>
-                      <TableHead>Diterima Dari</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead className="text-right">PDF</TableHead>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bundle.receipts.map((kw) => (
-                      <TableRow key={kw.id}>
-                        <TableCell className="font-mono text-xs font-semibold">
-                          {kw.receipt_number}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {formatDateID(kw.receipt_date)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {kw.received_from}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatRupiah(kw.amount)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void handleDownloadReceiptPdf(kw)}
-                          >
-                            <DownloadIcon data-icon="inline-start" />
-                            PDF A.6
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  )))}
+                </TableBody>
+              </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "receipts" && (
+        <Card className="overflow-hidden">
+          <CardHeader className="px-6 py-4 border-b border-border/70">
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Kuitansi Bukti Pembayaran (Lampiran A.6)
+            </CardTitle>
+            <CardDescription>
+              Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/20 hover:bg-muted/20">
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nomor Kuitansi</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Terima</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Diterima Dari</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Jumlah</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-24">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!bundle || bundle.receipts.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={5} className="p-0">
+                      <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                        <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
+                          <ReceiptIcon className="size-6" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-foreground">
+                          Belum Ada Kuitansi
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                          Kuitansi diterbitkan otomatis saat pembayaran invoice dicatat.
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  bundle.receipts.map((kw) => (
+                    <TableRow key={kw.id}>
+                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                        {kw.receipt_number}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                        {formatDateID(kw.receipt_date)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 font-medium text-xs sm:text-sm leading-5 text-foreground">
+                        {kw.received_from}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                        <MonetaryCell amount={kw.amount} />
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                        <div className="flex justify-center items-center -my-1.5">
+                          <DocumentDownloadMenu
+                            title="Unduh Kuitansi (PDF / Word)"
+                            onDownloadPdf={() => handleDownloadReceiptPdf(kw)}
+                            onDownloadWord={() => handleDownloadReceiptWord(kw)}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )))}
+                </TableBody>
+              </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dialog Terbitkan Invoice */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Terbitkan Invoice Penagihan Klien</DialogTitle>
-            <DialogDescription>
-              Otomatis memposting jurnal sesuai metode pengakuan pendapatan
-              proyek (mis. <code>K Penagihan atas Kontrak</code> pada Progress
-              Billing).
-            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleIssueInvoice}>
-            <FieldGroup>
+          <form onSubmit={handleIssueInvoice} className="min-w-0">
+            <FieldGroup className="gap-3.5">
               <Field>
-                <FieldLabel>Proyek Klien</FieldLabel>
+                <FieldLabel required>Proyek Klien</FieldLabel>
                 <Select
                   value={selectedProjectId}
                   onValueChange={setSelectedProjectId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih proyek" />
+                    <SelectValue placeholder="Pilih proyek klien" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {projects.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.code} — {p.name}
+                      {projects.length === 0 ? (
+                        <SelectItem value="__empty" disabled>
+                          Belum ada proyek klien aktif
                         </SelectItem>
-                      ))}
+                      ) : (
+                        projects.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.code} — {p.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="inv-date">Tanggal Invoice</FieldLabel>
-                  <Input
+                  <FieldLabel htmlFor="inv-date" required>Tanggal Invoice</FieldLabel>
+                  <DatePicker
                     id="inv-date"
-                    type="date"
                     required
                     value={invDate}
-                    onChange={(e) => setInvDate(e.target.value)}
+                    onChange={setInvDate}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="inv-due">Tanggal Jatuh Tempo</FieldLabel>
-                  <Input
+                  <FieldLabel htmlFor="inv-due" required>Tanggal Jatuh Tempo</FieldLabel>
+                  <DatePicker
                     id="inv-due"
-                    type="date"
                     required
+                    minDate={invDate}
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={setDueDate}
                   />
                 </Field>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel>Jenis Tagihan</FieldLabel>
+                  <FieldLabel required>Jenis Tagihan</FieldLabel>
                   <Select
                     value={invoiceKind}
                     onValueChange={(v) => setInvoiceKind(v as InvoiceKind)}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Pilih jenis tagihan" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -808,98 +1050,143 @@ export function InvoicingPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {projectVerifiedPos.map((cpo) => (
-                          <SelectItem key={cpo.id} value={cpo.id}>
-                            {cpo.po_number} ({formatRupiah(cpo.po_value)})
+                        {projectVerifiedPos.length === 0 ? (
+                          <SelectItem value="__empty" disabled>
+                            Belum ada PO Klien terverifikasi untuk proyek ini
                           </SelectItem>
-                        ))}
+                        ) : (
+                          projectVerifiedPos.map((cpo) => (
+                            <SelectItem key={cpo.id} value={cpo.id}>
+                              {cpo.po_number} ({formatRupiah(cpo.po_value)})
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  {projectVerifiedPos.length === 0 ? (
+                    <FieldDescription className="text-amber-600 dark:text-amber-400">
+                      Verifikasi PO klien di menu Dokumen &amp; Termin Proyek terlebih dahulu.
+                    </FieldDescription>
+                  ) : null}
                 </Field>
               </div>
 
-              <Field>
-                <FieldLabel>Termin Proyek</FieldLabel>
-                <Select
-                  value={milestoneId}
-                  onValueChange={(id) => {
-                    setMilestoneId(id);
-                    const ms = projectMilestones.find((m) => m.id === id);
-                    if (ms) setSubtotalAmount(ms.amount);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="none">Tanpa Termin Spesifik</SelectItem>
-                      {projectMilestones.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name}: {formatRupiah(m.amount)}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              {invoiceKind === "milestone" ? (
+              <div
+                className={cn(
+                  "grid gap-3.5",
+                  invoiceKind === "milestone" || invoiceKind === "final_settlement"
+                    ? "sm:grid-cols-2"
+                    : "grid-cols-1",
+                )}
+              >
                 <Field>
-                  <FieldLabel>Dokumen BAKP Disetujui Klien</FieldLabel>
-                  <Select value={bakpId} onValueChange={setBakpId}>
+                  <FieldLabel>Termin Proyek</FieldLabel>
+                  <Select
+                    value={milestoneId}
+                    onValueChange={(id) => {
+                      setMilestoneId(id);
+                      const ms = projectMilestones.find((m) => m.id === id);
+                      if (ms) setSubtotalAmount(ms.amount);
+                    }}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih BAKP" />
+                      <SelectValue placeholder="Pilih termin proyek" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">Pilih Dokumen BAKP</SelectItem>
-                        {projectApprovedBakps.map((b) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.bakp_number} ({b.cumulative_percentage}%)
+                        <SelectItem value="none">Tanpa Termin Spesifik</SelectItem>
+                        {projectMilestones.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}: {formatRupiah(m.amount)}
                           </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
                 </Field>
-              ) : null}
 
-              {invoiceKind === "final_settlement" ? (
-                <Field>
-                  <FieldLabel>Dokumen BAST Ditandatangani</FieldLabel>
-                  <Select value={bastId} onValueChange={setBastId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih BAST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Pilih Dokumen BAST</SelectItem>
-                        {projectSignedBasts.map((h) => (
-                          <SelectItem key={h.id} value={h.id}>
-                            {h.bast_number} ({formatDateID(h.bast_date)})
+                {invoiceKind === "milestone" ? (
+                  <Field>
+                    <FieldLabel>Dokumen BAKP Disetujui Klien</FieldLabel>
+                    <Select value={bakpId} onValueChange={setBakpId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih BAKP" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">
+                            {projectApprovedBakps.length === 0
+                              ? "Belum ada BAKP disetujui klien"
+                              : "Pilih Dokumen BAKP"}
                           </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              ) : null}
+                          {projectApprovedBakps.map((b) => (
+                            <SelectItem key={b.id} value={b.id}>
+                              {b.bakp_number} ({b.cumulative_percentage}%)
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                ) : null}
 
-              <div className="grid gap-3 sm:grid-cols-2">
+                {invoiceKind === "final_settlement" ? (
+                  <Field>
+                    <FieldLabel>Dokumen BAST Ditandatangani</FieldLabel>
+                    <Select value={bastId} onValueChange={setBastId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih BAST" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">
+                            {projectSignedBasts.length === 0
+                              ? "Belum ada BAST ditandatangani"
+                              : "Pilih Dokumen BAST"}
+                          </SelectItem>
+                          {projectSignedBasts.map((h) => (
+                            <SelectItem key={h.id} value={h.id}>
+                              {h.bast_number} ({formatDateID(h.bast_date)})
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                ) : null}
+              </div>
+
+              <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="inv-amt">
+                  <FieldLabel htmlFor="inv-amt" required>
                     Nominal Subtotal Tagihan (Rp Bulat)
                   </FieldLabel>
-                  <Input
+                  <NumberInput
                     id="inv-amt"
-                    type="number"
+                    allowDecimal={false}
                     min={1}
                     required
                     value={subtotalAmount}
-                    onChange={(e) => setSubtotalAmount(Number(e.target.value))}
+                    onValueChange={setSubtotalAmount}
                   />
+                  {company?.pkp_enabled && subtotalAmount > 0 ? (
+                    <FieldDescription>
+                      PPN {company.ppn_rate}%:{" "}
+                      <span className="font-medium text-foreground tabular-nums">
+                        {formatRupiah(
+                          roundRupiah((roundRupiah(subtotalAmount) * company.ppn_rate) / 100),
+                        )}
+                      </span>{" "}
+                      • Total:{" "}
+                      <span className="font-semibold text-foreground tabular-nums">
+                        {formatRupiah(
+                          roundRupiah(subtotalAmount) +
+                            roundRupiah((roundRupiah(subtotalAmount) * company.ppn_rate) / 100),
+                        )}
+                      </span>
+                    </FieldDescription>
+                  ) : null}
                 </Field>
                 <Field>
                   <FieldLabel>Mode Pencatatan Saat Terbit</FieldLabel>
@@ -925,8 +1212,7 @@ export function InvoicingPage() {
                     </SelectContent>
                   </Select>
                   <FieldDescription>
-                    Mendukung pencatatan lewat Piutang Usaha maupun penerimaan
-                    kas langsung.
+                    Mendukung pencatatan lewat Piutang Usaha maupun kas langsung.
                   </FieldDescription>
                 </Field>
               </div>
@@ -935,12 +1221,15 @@ export function InvoicingPage() {
                 <FieldLabel htmlFor="inv-notes">Catatan Invoice</FieldLabel>
                 <Textarea
                   id="inv-notes"
+                  rows={2}
+                  className="min-h-[64px]"
+                  placeholder="Opsional: keterangan penagihan, referensi kontrak, atau instruksi pembayaran..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
               </Field>
 
-              <DialogFooter>
+              <DialogFooter className="pt-1">
                 <Button
                   type="button"
                   variant="outline"
@@ -965,35 +1254,50 @@ export function InvoicingPage() {
           if (!open) setPayTarget(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               Catat Penerimaan Pembayaran {payTarget?.invoice_number}
             </DialogTitle>
-            <DialogDescription>
-              Menerbitkan jurnal pelunasan piutang (Debit Kas-Bank / Kredit
-              Piutang Usaha) dan membuat Kuitansi resmi secara otomatis.
-            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleRecordPayment}>
+          <form onSubmit={handleRecordPayment} className="space-y-4">
+            {payTarget ? (
+              <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs">
+                <div>
+                  <span className="text-muted-foreground block text-[11px]">
+                    Total Tagihan
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {formatRupiah(payTarget.total_amount)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-muted-foreground block text-[11px]">
+                    Sisa Belum Terbayar
+                  </span>
+                  <span className="font-bold text-primary dark:text-sky-400">
+                    {formatRupiah(payTarget.total_amount - payTarget.paid_amount)}
+                  </span>
+                </div>
+              </div>
+            ) : null}
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="pay-date">Tanggal Dana Masuk</FieldLabel>
-                <Input
+                <FieldLabel htmlFor="pay-date" required>Tanggal Dana Masuk</FieldLabel>
+                <DatePicker
                   id="pay-date"
-                  type="date"
                   required
                   value={payDate}
-                  onChange={(e) => setPayDate(e.target.value)}
+                  onChange={setPayDate}
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="pay-amt">
+                <FieldLabel htmlFor="pay-amt" required>
                   Nominal Pembayaran Diterima (Rp)
                 </FieldLabel>
-                <Input
+                <NumberInput
                   id="pay-amt"
-                  type="number"
+                  allowDecimal={false}
                   min={1}
                   max={
                     payTarget
@@ -1002,11 +1306,11 @@ export function InvoicingPage() {
                   }
                   required
                   value={payAmount}
-                  onChange={(e) => setPayAmount(Number(e.target.value))}
+                  onValueChange={setPayAmount}
                 />
               </Field>
               <Field>
-                <FieldLabel>Rekening Tujuan Kas / Bank Perusahaan</FieldLabel>
+                <FieldLabel required>Rekening Tujuan Kas / Bank Perusahaan</FieldLabel>
                 <Select
                   value={destCashAccountId}
                   onValueChange={setDestCashAccountId}
@@ -1016,11 +1320,17 @@ export function InvoicingPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {cashAccounts.map((ca) => (
-                        <SelectItem key={ca.id} value={ca.id}>
-                          {ca.code} — {ca.name}
+                      {cashAccounts.length === 0 ? (
+                        <SelectItem value="__empty" disabled>
+                          Belum ada akun kas/bank aktif
                         </SelectItem>
-                      ))}
+                      ) : (
+                        cashAccounts.map((ca) => (
+                          <SelectItem key={ca.id} value={ca.id}>
+                            {ca.code} — {ca.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

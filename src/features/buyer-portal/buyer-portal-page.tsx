@@ -11,6 +11,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -31,6 +32,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Table,
   TableBody,
@@ -231,7 +233,7 @@ export function BuyerPortalPage() {
                 Portal Pelanggan: Altvira Technology
               </h1>
               <p className="text-xs text-muted-foreground">
-                PT Representasi Mitra Mandiri · Akses Mandiri Pelanggan dengan Kode PO Unik
+                Akses informasi progres pengerjaan proyek dan dokumen invoice penagihan resmi klien secara mandiri.
               </p>
             </div>
           </div>
@@ -249,10 +251,12 @@ export function BuyerPortalPage() {
         <Tabs defaultValue="lookup">
           <TabsList>
             <TabsTrigger value="lookup">
-              Lacak Progres &amp; Unduh Dokumen PO
+              <SearchIcon className="size-4 shrink-0" />
+              <span>Lacak Progres &amp; Unduh Dokumen PO</span>
             </TabsTrigger>
             <TabsTrigger value="submit">
-              Ajukan Purchase Order (PO) Baru
+              <PlusIcon className="size-4 shrink-0" />
+              <span>Ajukan Purchase Order (PO) Baru</span>
             </TabsTrigger>
           </TabsList>
 
@@ -355,122 +359,142 @@ export function BuyerPortalPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
+                <Card className="overflow-hidden">
+                  <CardHeader className="px-6 py-4 border-b border-border/70">
                     <CardTitle>Jadwal &amp; Status Termin Proyek</CardTitle>
                     <CardDescription>
                       Informasi baca-saja tahapan penyelesaian dan penagihan
                       kontrak Anda.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    {lookupResult.milestones.length === 0 ? (
-                      <EmptyState
-                        title="Jadwal termin belum tersedia"
-                        description="Jadwal termin akan tampil setelah PO diverifikasi dan proyek diaktifkan."
-                      />
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>#</TableHead>
-                            <TableHead>Termin</TableHead>
-                            <TableHead>Porsi</TableHead>
-                            <TableHead>Nominal</TableHead>
-                            <TableHead>Status</TableHead>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/20 hover:bg-muted/20">
+                          <TableHead className="pl-6 pr-3 text-center w-16">#</TableHead>
+                          <TableHead className="px-3 text-center">Termin</TableHead>
+                          <TableHead className="px-3 text-center w-24">Porsi</TableHead>
+                          <TableHead className="px-3 text-center w-44">Nominal</TableHead>
+                          <TableHead className="pl-2 pr-6 text-center w-36">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lookupResult.milestones.length === 0 ? (
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={5} className="p-0">
+                              <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
+                                <EmptyState
+                                  title="Jadwal termin belum tersedia"
+                                  description="Jadwal termin akan tampil setelah PO diverifikasi dan proyek diaktifkan."
+                                />
+                              </div>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {lookupResult.milestones.map((m) => (
+                        ) : (
+                          lookupResult.milestones.map((m) => (
                             <TableRow key={m.sequence_no}>
-                              <TableCell>{m.sequence_no}</TableCell>
+                              <TableCell className="pl-6 pr-3 text-center tabular-nums">{m.sequence_no}</TableCell>
                               <TableCell className="font-medium">
                                 <div>{m.name}</div>
                                 <div className="text-xs text-muted-foreground">
                                   {m.achievement_criteria ?? ""}
                                 </div>
                               </TableCell>
-                              <TableCell>{m.percentage}%</TableCell>
+                              <TableCell className="text-center tabular-nums">{m.percentage}%</TableCell>
                               <TableCell className="font-semibold">
-                                {formatRupiah(m.amount)}
+                                <MonetaryCell amount={m.amount} />
                               </TableCell>
-                              <TableCell>
-                                <StatusBadge
-                                  tone={
-                                    m.status === "paid" ? "success" : "info"
-                                  }
-                                  label={m.status}
-                                />
+                              <TableCell className="pl-2 pr-6 text-center">
+                                <div className="-my-px inline-flex justify-center">
+                                  <StatusBadge
+                                    tone={
+                                      m.status === "paid" ? "success" : "info"
+                                    }
+                                    label={m.status}
+                                  />
+                                </div>
                               </TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
+                <Card className="overflow-hidden">
+                  <CardHeader className="px-6 py-4 border-b border-border/70">
                     <CardTitle>Unduh Dokumen Resmi Proyek (UC-36)</CardTitle>
                     <CardDescription>
                       Quotation, SoW, SPK, BAKP, UAT, BAST, Invoice, dan
                       Kuitansi yang terkait dengan Nomor PO ini.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    {lookupResult.documents.length === 0 ? (
-                      <EmptyState
-                        title="Belum ada dokumen terbit"
-                        description="Dokumen resmi akan muncul secara otomatis seiring tahapan proyek berjalan."
-                      />
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Kategori</TableHead>
-                            <TableHead>Nomor Dokumen</TableHead>
-                            <TableHead>Tanggal</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Unduh</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {lookupResult.documents.map((doc, idx) => (
-                            <TableRow key={`${doc.doc_number}-${idx}`}>
-                              <TableCell>
-                                <StatusBadge
-                                  tone="secondary"
-                                  label={doc.category}
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/20 hover:bg-muted/20">
+                          <TableHead className="pl-6 pr-3 text-center">Kategori</TableHead>
+                          <TableHead className="px-3 text-center">Nomor Dokumen</TableHead>
+                          <TableHead className="px-3 text-center">Tanggal</TableHead>
+                          <TableHead className="px-3 text-center">Status</TableHead>
+                          <TableHead className="pl-2 pr-6 text-center w-36">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lookupResult.documents.length === 0 ? (
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={5} className="p-0">
+                              <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
+                                <EmptyState
+                                  title="Belum ada dokumen terbit"
+                                  description="Dokumen resmi akan muncul secara otomatis seiring tahapan proyek berjalan."
                                 />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          lookupResult.documents.map((doc, idx) => (
+                            <TableRow key={`${doc.doc_number}-${idx}`}>
+                              <TableCell className="pl-6 pr-3 text-center">
+                                <div className="-my-px inline-flex justify-center">
+                                  <StatusBadge
+                                    tone="secondary"
+                                    label={doc.category}
+                                  />
+                                </div>
                               </TableCell>
-                              <TableCell className="font-mono text-xs font-semibold">
+                              <TableCell className="font-mono font-semibold text-center">
                                 {doc.doc_number}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="text-center">
                                 {formatDateID(doc.doc_date)}
                               </TableCell>
-                              <TableCell className="text-xs">
+                              <TableCell className="text-center">
                                 {doc.status}
                               </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    void handleDownloadBuyerDoc(doc)
-                                  }
-                                >
-                                  <DownloadIcon data-icon="inline-start" />
-                                  Unduh PDF
-                                </Button>
+                              <TableCell className="pl-2 pr-6 text-center">
+                                <div className="-my-1.5 inline-flex justify-center">
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Unduh Dokumen PDF"
+                                    className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 cursor-pointer"
+                                    onClick={() =>
+                                      void handleDownloadBuyerDoc(doc)
+                                    }
+                                  >
+                                    <DownloadIcon className="size-4" />
+                                    <span className="sr-only">Unduh PDF</span>
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -521,7 +545,7 @@ export function BuyerPortalPage() {
                   <FieldGroup>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field>
-                        <FieldLabel htmlFor="bp-name">
+                        <FieldLabel htmlFor="bp-name" required>
                           Nama Lengkap Penanggung Jawab
                         </FieldLabel>
                         <Input
@@ -533,7 +557,7 @@ export function BuyerPortalPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="bp-comp">
+                        <FieldLabel htmlFor="bp-comp" required>
                           Nama Perusahaan / Instansi
                         </FieldLabel>
                         <Input
@@ -548,7 +572,7 @@ export function BuyerPortalPage() {
 
                     <div className="grid gap-3 sm:grid-cols-3">
                       <Field>
-                        <FieldLabel htmlFor="bp-mail">Email Resmi</FieldLabel>
+                        <FieldLabel htmlFor="bp-mail" required>Email Resmi</FieldLabel>
                         <Input
                           id="bp-mail"
                           type="email"
@@ -622,35 +646,31 @@ export function BuyerPortalPage() {
                             />
                           </div>
                           <div className="sm:col-span-2">
-                            <Input
-                              type="number"
+                            <NumberInput
+                              allowDecimal={false}
                               min={1}
                               required
                               value={it.qty}
-                              onChange={(e) =>
+                              onValueChange={(qty) =>
                                 setItems((prev) =>
                                   prev.map((x, i) =>
-                                    i === idx
-                                      ? { ...x, qty: Number(e.target.value) }
-                                      : x,
+                                    i === idx ? { ...x, qty } : x,
                                   ),
                                 )
                               }
                             />
                           </div>
                           <div className="flex items-center gap-1 sm:col-span-4">
-                            <Input
-                              type="number"
+                            <NumberInput
+                              allowDecimal={false}
                               min={1}
                               required
                               placeholder="Harga satuan (Rp)"
-                              value={it.price || ""}
-                              onChange={(e) =>
+                              value={it.price || 0}
+                              onValueChange={(price) =>
                                 setItems((prev) =>
                                   prev.map((x, i) =>
-                                    i === idx
-                                      ? { ...x, price: Number(e.target.value) }
-                                      : x,
+                                    i === idx ? { ...x, price } : x,
                                   ),
                                 )
                               }

@@ -244,8 +244,133 @@ export function findDemoProfileByEmail(email: string): ProfileRow | null {
 }
 
 // =============================================================================
-// 1. Profil & Manajemen Pengguna (Super Admin)
+// 1. Profil & Manajemen Pengguna (Super Admin & Multi-Role)
 // =============================================================================
+export async function switchActiveRole(targetRole: UserRole): Promise<ProfileRow> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    const allowed = actor.roles && actor.roles.length > 0 ? actor.roles : [actor.role];
+    if (!allowed.includes(targetRole)) {
+      throw new Error(`Akses ditolak: Anda tidak memiliki wewenang untuk peran ${targetRole}.`);
+    }
+    const before = structuredClone(actor);
+    actor.role = targetRole;
+    actor.updated_at = new Date().toISOString();
+    appendDemoAudit(
+      actor,
+      "UPDATE",
+      "profiles",
+      actor.id,
+      { event: "ROLE_SWITCH", old_role: before.role },
+      { event: "ROLE_SWITCH", active_role: targetRole },
+    );
+    return structuredClone(actor);
+  }
+
+  const { data, error } = await supabase.rpc("switch_active_role", {
+    p_target_role: targetRole,
+  });
+  if (error) throw new Error(error.message);
+  return (data as unknown) as ProfileRow;
+}
+
+export async function updateMyProfile(payload: {
+  fullName: string;
+  username?: string | null;
+  phoneNumber?: string | null;
+  jobTitle?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+}): Promise<ProfileRow> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (!payload.fullName.trim()) {
+      throw new Error("Nama lengkap wajib diisi.");
+    }
+    if (payload.username?.trim()) {
+      const uname = payload.username.trim().toLowerCase();
+      const conflict = demoStore.profiles.some(
+        (p) => p.id !== actor.id && p.username?.toLowerCase() === uname,
+      );
+      if (conflict) {
+        throw new Error(`Username "${payload.username.trim()}" sudah digunakan oleh akun lain.`);
+      }
+    }
+    const before = structuredClone(actor);
+    actor.full_name = payload.fullName.trim();
+    actor.username = payload.username?.trim() || null;
+    actor.phone_number = payload.phoneNumber?.trim() || null;
+    actor.job_title = payload.jobTitle?.trim() || null;
+    actor.bio = payload.bio?.trim() || null;
+    if (payload.avatarUrl !== undefined) {
+      actor.avatar_url = payload.avatarUrl ? payload.avatarUrl.trim() : null;
+    }
+    actor.updated_at = new Date().toISOString();
+    appendDemoAudit(actor, "UPDATE", "profiles", actor.id, before, actor);
+    return structuredClone(actor);
+  }
+
+  const { data, error } = await supabase.rpc("update_my_profile", {
+    p_full_name: payload.fullName.trim(),
+    p_username: payload.username?.trim() || null,
+    p_phone_number: payload.phoneNumber?.trim() || null,
+    p_job_title: payload.jobTitle?.trim() || null,
+    p_bio: payload.bio?.trim() || null,
+    p_avatar_url: payload.avatarUrl ? payload.avatarUrl.trim() : null,
+  });
+  if (error) throw new Error(error.message);
+  return (data as unknown) as ProfileRow;
+}
+
+export async function uploadProfileAvatar(file: File): Promise<string> {
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("Ukuran berkas melebihi batas maksimal 2MB.");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Berkas harus berupa gambar (JPG, PNG, atau WebP).");
+  }
+
+  if (isDemoMode || !supabase) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Gagal membaca berkas gambar."));
+        }
+      };
+      reader.onerror = () => reject(new Error("Gagal memproses berkas avatar."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id || "user";
+  const ext = file.name.split(".").pop() || "png";
+  const filePath = `avatars/${userId}-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("altcycles-files")
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    // Fallback: Jika bucket belum disiapkan, ubah jadi base64 data URL
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error(uploadError.message));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from("altcycles-files")
+    .getPublicUrl(filePath);
+
+  return publicUrlData.publicUrl;
+}
+
 export async function listProfiles(): Promise<ProfileRow[]> {
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
@@ -314,6 +439,165 @@ export async function createInternalUser(input: {
   }
 }
 
+export async function updateInternalUserRoles(
+  targetUserId: string,
+  roles: UserRole[],
+  primaryRole?: UserRole,
+): Promise<ProfileRow> {
+  if (roles.length === 0) {
+    throw new Error("Pengguna harus memiliki minimal satu peran aktif.");
+  }
+
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang dapat mengubah peran pengguna.");
+    }
+    if (actor.id === targetUserId) {
+      throw new Error("Anda tidak dapat mengubah peran akun Anda sendiri.");
+    }
+    const target = demoStore.profiles.find((p) => p.id === targetUserId);
+    if (!target) throw new Error("Pengguna tidak ditemukan.");
+
+    const hadSuperAdmin =
+      target.role === "super_admin" || target.roles?.includes("super_admin");
+    if (hadSuperAdmin && !roles.includes("super_admin")) {
+      const otherSa = demoStore.profiles.filter(
+        (p) =>
+          p.id !== targetUserId &&
+          p.is_active &&
+          (p.role === "super_admin" || p.roles?.includes("super_admin")),
+      );
+      if (otherSa.length === 0) {
+        throw new Error("Tidak dapat mencabut hak Super Admin terakhir pada sistem.");
+      }
+    }
+
+    const before = structuredClone(target);
+    const newActiveRole: UserRole =
+      primaryRole && roles.includes(primaryRole)
+        ? primaryRole
+        : roles.includes(target.role)
+        ? target.role
+        : roles[0]!;
+
+    target.roles = roles;
+    target.role = newActiveRole;
+    target.updated_at = new Date().toISOString();
+
+    appendDemoAudit(
+      actor,
+      "UPDATE",
+      "profiles",
+      target.id,
+      { event: "USER_ROLES_UPDATED", previous_roles: before.roles || [before.role] },
+      { event: "USER_ROLES_UPDATED", new_roles: roles, new_active_role: newActiveRole },
+    );
+
+    return structuredClone(target);
+  }
+
+  const { data, error } = await supabase.rpc("update_user_roles", {
+    p_target_user_id: targetUserId,
+    p_roles: roles,
+    p_primary_role: primaryRole ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return (data as unknown) as ProfileRow;
+}
+
+export async function deleteInternalUser(targetUserId: string): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang berhak menghapus akun pengguna.");
+    }
+    if (actor.id === targetUserId) {
+      throw new Error("Anda tidak dapat menghapus akun Anda sendiri.");
+    }
+
+    const targetIdx = demoStore.profiles.findIndex((p) => p.id === targetUserId);
+    if (targetIdx === -1) throw new Error("Pengguna tidak ditemukan.");
+    const target = demoStore.profiles[targetIdx]!;
+
+    const isSa =
+      target.role === "super_admin" || target.roles?.includes("super_admin");
+    if (isSa) {
+      const otherSa = demoStore.profiles.filter(
+        (p) =>
+          p.id !== targetUserId &&
+          p.is_active &&
+          (p.role === "super_admin" || p.roles?.includes("super_admin")),
+      );
+      if (otherSa.length === 0) {
+        throw new Error("Tidak dapat menghapus Super Admin terakhir pada sistem.");
+      }
+    }
+
+    // Periksa keterkaitan data transaksi keuangan
+    const hasPo = demoStore.purchaseOrders.some(
+      (po: PurchaseOrderRow) => po.created_by === targetUserId || (po as any).verified_by === targetUserId,
+    );
+    if (hasPo) {
+      throw new Error(
+        "Pengguna tidak dapat dihapus permanen karena tercatat dalam dokumen PO Pembelian. Silakan gunakan opsi 'Nonaktifkan' untuk mencabut akses login.",
+      );
+    }
+
+    const hasPayment = demoStore.paymentRequests.some(
+      (pr) => pr.requester_id === targetUserId || (pr as any).reviewed_by === targetUserId,
+    );
+    if (hasPayment) {
+      throw new Error(
+        "Pengguna tidak dapat dihapus permanen karena tercatat dalam pengajuan pembayaran. Silakan gunakan opsi 'Nonaktifkan' untuk mencabut akses login.",
+      );
+    }
+
+    const hasJournal = demoStore.journals.some(
+      (j) => j.created_by === targetUserId,
+    );
+    if (hasJournal) {
+      throw new Error(
+        "Pengguna tidak dapat dihapus permanen karena telah menerbitkan ayat jurnal akuntansi. Silakan gunakan opsi 'Nonaktifkan' untuk mencabut akses login.",
+      );
+    }
+
+    const hasInvoice = demoStore.salesInvoices.some(
+      (inv) => inv.created_by === targetUserId,
+    );
+    if (hasInvoice) {
+      throw new Error(
+        "Pengguna tidak dapat dihapus permanen karena tercatat dalam penerbitan invoice penagihan. Silakan gunakan opsi 'Nonaktifkan' untuk mencabut akses login.",
+      );
+    }
+
+    const hasProjectMember = demoStore.projectMembers.some(
+      (pm) => pm.user_id === targetUserId,
+    );
+    if (hasProjectMember) {
+      throw new Error(
+        "Pengguna masih terdaftar sebagai anggota proyek aktif. Silakan cabut penugasan proyek terlebih dahulu atau pilih opsi 'Nonaktifkan'.",
+      );
+    }
+
+    demoStore.profiles.splice(targetIdx, 1);
+    appendDemoAudit(
+      actor,
+      "DELETE",
+      "profiles",
+      target.id,
+      target,
+      { event: "USER_DELETED", deleted_user_email: target.email },
+    );
+    return;
+  }
+
+  const { error } = await supabase.rpc("delete_internal_user", {
+    p_target_user_id: targetUserId,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function updateInternalUserRole(
   targetUserId: string,
   role: UserRole,
@@ -370,9 +654,41 @@ export async function toggleInternalUserActive(
 // =============================================================================
 // 2. Konfigurasi Sistem, Pajak, Penomoran, & Template (Super Admin)
 // =============================================================================
+const COMPANY_EXT_STORAGE_KEY = "altcycles_company_ext_v1";
+const CUSTOMER_EXT_STORAGE_KEY = "altcycles_customers_ext_v1";
+
+function readLocalJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLocalJson(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Abaikan kuota storage
+  }
+}
+
 export async function getCompanyProfile(): Promise<CompanyProfileRow> {
+  const localExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
   if (isDemoMode || !supabase) {
-    return structuredClone(demoStore.company);
+    const base = structuredClone(demoStore.company);
+    return {
+      ...base,
+      ...localExt,
+      bank_accounts_json: base.bank_accounts_json ?? localExt.bank_accounts_json ?? [
+        {
+          bank_name: base.bank_name,
+          account_number: base.bank_account_number,
+          account_holder: base.bank_account_holder,
+        },
+      ],
+    };
   }
   const { data, error } = await supabase
     .from("company_profile")
@@ -380,12 +696,54 @@ export async function getCompanyProfile(): Promise<CompanyProfileRow> {
     .eq("id", 1)
     .single();
   if (error) throw new Error(error.message);
-  return data;
+  return {
+    ...localExt,
+    ...data,
+    signer_name: data.signer_name,
+    signer_title: data.signer_title,
+    tax_id_number: data.tax_id_number ?? localExt.tax_id_number ?? null,
+    logo_storage_path: data.logo_storage_path ?? localExt.logo_storage_path ?? null,
+    tagline: data.tagline ?? localExt.tagline ?? "ADAPT TODAY, INNOVATE TOMORROW",
+    signing_city: data.signing_city ?? localExt.signing_city ?? "Bogor",
+    signer_signature_path: data.signer_signature_path ?? localExt.signer_signature_path ?? null,
+    signer_paraf_path: data.signer_paraf_path ?? localExt.signer_paraf_path ?? null,
+    bank_accounts_json: localExt.bank_accounts_json ?? [
+      {
+        bank_name: data.bank_name,
+        account_number: data.bank_account_number,
+        account_holder: data.bank_account_holder,
+      },
+    ],
+    social_links_json: data.social_links_json ?? localExt.social_links_json ?? [
+      { platform: "Instagram", username: "@altvira.tech" },
+      { platform: "LinkedIn", username: "altvira-technology" },
+      { platform: "TikTok", username: "@altvira.tech" },
+    ],
+  };
 }
 
 export async function updateCompanyProfile(
   patch: Partial<CompanyProfileRow>,
 ): Promise<CompanyProfileRow> {
+  const extKeys: Array<keyof CompanyProfileRow> = [
+    "tagline",
+    "signing_city",
+    "tax_id_number",
+    "signer_signature_path",
+    "signer_paraf_path",
+    "social_links_json",
+    "bank_accounts_json",
+    "logo_storage_path",
+  ];
+  const prevExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
+  const nextExt: Partial<CompanyProfileRow> = { ...prevExt };
+  for (const k of extKeys) {
+    if (k in patch) {
+      (nextExt as Record<string, unknown>)[k] = patch[k];
+    }
+  }
+  writeLocalJson(COMPANY_EXT_STORAGE_KEY, nextExt);
+
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     if (actor.role !== "super_admin") {
@@ -400,7 +758,7 @@ export async function updateCompanyProfile(
       updated_at: new Date().toISOString(),
     };
     appendDemoAudit(actor, "UPDATE", "company_profile", "1", before, demoStore.company);
-    return structuredClone(demoStore.company);
+    return { ...structuredClone(demoStore.company), ...nextExt };
   }
 
   const { data, error } = await supabase
@@ -409,8 +767,78 @@ export async function updateCompanyProfile(
     .eq("id", 1)
     .select("*")
     .single();
-  if (error) throw new Error(error.message);
-  return data;
+  if (!error) {
+    return { ...nextExt, ...data };
+  }
+
+  // Fallback jika kolom baru (migrasi 0014/0015) belum diterapkan di database cloud
+  if (error.message.includes("column") || error.message.includes("schema cache")) {
+    const corePatch: Record<string, unknown> = { ...patch };
+    delete corePatch.tagline;
+    delete corePatch.signing_city;
+    delete corePatch.tax_id_number;
+    delete corePatch.signer_signature_path;
+    delete corePatch.signer_paraf_path;
+    delete corePatch.social_links_json;
+    delete corePatch.bank_accounts_json;
+    if (Object.keys(corePatch).length > 0) {
+      const { data: coreData, error: coreErr } = await supabase
+        .from("company_profile")
+        .update(corePatch as Partial<CompanyProfileRow>)
+        .eq("id", 1)
+        .select("*")
+        .single();
+      if (coreErr) throw new Error(coreErr.message);
+      return { ...coreData, ...nextExt };
+    }
+    return getCompanyProfile();
+  }
+
+  throw new Error(error.message);
+}
+
+export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
+  demoStore.company.journal_lock_enabled = enabled;
+  if (isDemoMode || !supabase) {
+    return enabled;
+  }
+
+  // Coba update via RPC jika ada, atau fallback langsung ke update company_profile
+  try {
+    const { data, error } = await (supabase as any).rpc("set_journal_lock_status", {
+      p_enabled: enabled,
+    });
+    if (!error) {
+      return Boolean(data ?? enabled);
+    }
+  } catch {
+    // Abaikan dan gunakan update langsung ke company_profile
+  }
+
+  const { error: updErr } = await (supabase as any)
+    .from("company_profile")
+    .update({ journal_lock_enabled: enabled })
+    .eq("id", 1);
+  if (updErr) throw new Error(updErr.message);
+  return enabled;
+}
+
+export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
+  demoStore.company.auto_closing_enabled = enabled;
+  if (isDemoMode || !supabase) {
+    return enabled;
+  }
+
+  try {
+    const { error: updErr } = await (supabase as any)
+      .from("company_profile")
+      .update({ auto_closing_enabled: enabled })
+      .eq("id", 1);
+    if (!updErr) return enabled;
+  } catch {
+    // Abaikan jika kolom di Supabase belum dimigrasi
+  }
+  return enabled;
 }
 
 export async function listDocSequences(): Promise<{
@@ -522,7 +950,8 @@ export async function listAuditLogs(): Promise<AuditLogRow[]> {
     .from("audit_logs")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(200);
+    .order("id", { ascending: false })
+    .limit(1000);
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -826,26 +1255,71 @@ export async function saveVendor(
   }
 }
 
+export async function deleteVendor(id: string): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat menghapus Vendor.");
+    }
+    const idx = demoStore.vendors.findIndex((v) => v.id === id);
+    if (idx === -1) throw new Error("Vendor tidak ditemukan.");
+    const before = structuredClone(demoStore.vendors[idx]);
+    demoStore.vendors.splice(idx, 1);
+    appendDemoAudit(actor, "DELETE", "vendors", id, before, null);
+    return;
+  }
+  const { error } = await supabase.from("vendors").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") {
+      throw new Error(
+        "Vendor tidak dapat dihapus karena sudah memiliki riwayat transaksi atau PO terkait. Anda dapat mengubah statusnya menjadi Nonaktif.",
+      );
+    }
+    throw new Error(error.message);
+  }
+}
+
 export async function listCustomers(): Promise<CustomerRow[]> {
+  const extMap = readLocalJson<Record<string, Partial<CustomerRow>>>(CUSTOMER_EXT_STORAGE_KEY, {});
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     if (actor.role === "user") {
       throw new Error("Akses ditolak: User tidak memiliki akses daftar pelanggan.");
     }
-    return [...demoStore.customers].sort((a, b) => a.code.localeCompare(b.code));
+    return [...demoStore.customers]
+      .sort((a, b) => a.code.localeCompare(b.code))
+      .map((c) => ({ ...c, ...(extMap[c.id] ?? {}) }));
   }
   const { data, error } = await supabase
     .from("customers")
     .select("*")
     .order("code", { ascending: true });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).map((c) => ({
+    ...(extMap[c.id] ?? {}),
+    ...c,
+    logo_storage_path: c.logo_storage_path ?? extMap[c.id]?.logo_storage_path ?? null,
+    signature_storage_path: c.signature_storage_path ?? extMap[c.id]?.signature_storage_path ?? null,
+    paraf_storage_path: c.paraf_storage_path ?? extMap[c.id]?.paraf_storage_path ?? null,
+  }));
 }
 
 export async function saveCustomer(
   input: Pick<CustomerRow, "code" | "name"> &
     Partial<CustomerRow> & { id?: string },
 ): Promise<void> {
+  const extPatch: Partial<CustomerRow> = {};
+  if ("logo_storage_path" in input) extPatch.logo_storage_path = input.logo_storage_path ?? null;
+  if ("signature_storage_path" in input) extPatch.signature_storage_path = input.signature_storage_path ?? null;
+  if ("paraf_storage_path" in input) extPatch.paraf_storage_path = input.paraf_storage_path ?? null;
+
+  const saveCustomerExt = (custId: string) => {
+    if (Object.keys(extPatch).length === 0) return;
+    const extMap = readLocalJson<Record<string, Partial<CustomerRow>>>(CUSTOMER_EXT_STORAGE_KEY, {});
+    extMap[custId] = { ...(extMap[custId] ?? {}), ...extPatch };
+    writeLocalJson(CUSTOMER_EXT_STORAGE_KEY, extMap);
+  };
+
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     if (actor.role !== "admin") {
@@ -857,6 +1331,7 @@ export async function saveCustomer(
       if (!target) throw new Error("Pelanggan tidak ditemukan.");
       const before = structuredClone(target);
       Object.assign(target, input, { updated_at: now });
+      saveCustomerExt(target.id);
       appendDemoAudit(actor, "UPDATE", "customers", target.id, before, target);
     } else {
       const created: CustomerRow = {
@@ -870,12 +1345,16 @@ export async function saveCustomer(
         phone: input.phone ?? null,
         npwp: input.npwp ?? null,
         address: input.address ?? null,
+        logo_storage_path: input.logo_storage_path ?? null,
+        signature_storage_path: input.signature_storage_path ?? null,
+        paraf_storage_path: input.paraf_storage_path ?? null,
         is_active: input.is_active ?? true,
         created_by: actor.id,
         created_at: now,
         updated_at: now,
       };
       demoStore.customers.push(created);
+      saveCustomerExt(created.id);
       appendDemoAudit(actor, "INSERT", "customers", created.id, null, created);
     }
     return;
@@ -883,14 +1362,66 @@ export async function saveCustomer(
 
   if (input.id) {
     const { id, ...patch } = input;
+    saveCustomerExt(id);
     const { error } = await supabase
       .from("customers")
       .update(patch)
       .eq("id", id);
+    if (error && (error.message.includes("column") || error.message.includes("schema cache"))) {
+      const corePatch: Record<string, unknown> = { ...patch };
+      delete corePatch.logo_storage_path;
+      delete corePatch.signature_storage_path;
+      delete corePatch.paraf_storage_path;
+      const { error: coreErr } = await supabase
+        .from("customers")
+        .update(corePatch as Partial<CustomerRow>)
+        .eq("id", id);
+      if (coreErr) throw new Error(coreErr.message);
+      return;
+    }
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase.from("customers").insert(input);
+    const { data, error } = await supabase.from("customers").insert(input).select("id").single();
+    if (error && (error.message.includes("column") || error.message.includes("schema cache"))) {
+      const coreInput: Record<string, unknown> = { ...input };
+      delete coreInput.logo_storage_path;
+      delete coreInput.signature_storage_path;
+      delete coreInput.paraf_storage_path;
+      const { data: coreCreated, error: coreErr } = await supabase
+        .from("customers")
+        .insert(coreInput as unknown as typeof input)
+        .select("id")
+        .single();
+      if (coreErr) throw new Error(coreErr.message);
+      if (coreCreated?.id) saveCustomerExt(String(coreCreated.id));
+      return;
+    }
     if (error) throw new Error(error.message);
+    if (data?.id) saveCustomerExt(String(data.id));
+  }
+}
+
+export async function deleteCustomer(id: string): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat menghapus Pelanggan.");
+    }
+    const idx = demoStore.customers.findIndex((c) => c.id === id);
+    if (idx === -1) throw new Error("Pelanggan tidak ditemukan.");
+    const before = structuredClone(demoStore.customers[idx]);
+    demoStore.customers.splice(idx, 1);
+    appendDemoAudit(actor, "DELETE", "customers", id, before, null);
+    return;
+  }
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") {
+      throw new Error(
+        "Pelanggan tidak dapat dihapus karena sudah memiliki riwayat proyek atau dokumen penagihan terkait. Anda dapat mengubah statusnya menjadi Nonaktif.",
+      );
+    }
+    throw new Error(error.message);
   }
 }
 
@@ -1046,6 +1577,58 @@ export async function saveProject(
       );
       if (memErr) throw new Error(memErr.message);
     }
+  }
+}
+
+export async function deleteProjects(projectIds: string[]): Promise<void> {
+  if (projectIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat menghapus proyek.");
+    }
+    const idSet = new Set(projectIds);
+    const hasLinkedFinancial =
+      demoStore.journals.some((j) => j.project_id && idSet.has(j.project_id)) ||
+      demoStore.salesInvoices.some((inv) => idSet.has(inv.project_id)) ||
+      demoStore.purchaseOrders.some((po) => idSet.has(po.project_id)) ||
+      demoStore.paymentRequests.some((pa) => idSet.has(pa.project_id));
+    if (hasLinkedFinancial) {
+      throw new Error(
+        "Proyek yang sudah memiliki jurnal, PO, pengajuan pembayaran, atau invoice tidak dapat dihapus.",
+      );
+    }
+    demoStore.projectMembers = demoStore.projectMembers.filter(
+      (m) => !idSet.has(m.project_id),
+    );
+    demoStore.milestones = demoStore.milestones.filter((m) => !idSet.has(m.project_id));
+    demoStore.projectDocuments = demoStore.projectDocuments.filter(
+      (d) => !idSet.has(d.project_id),
+    );
+    demoStore.progressReports = demoStore.progressReports.filter(
+      (b) => !idSet.has(b.project_id),
+    );
+    demoStore.uatChecklists = demoStore.uatChecklists.filter(
+      (u) => !idSet.has(u.project_id),
+    );
+    demoStore.handoverReports = demoStore.handoverReports.filter(
+      (h) => !idSet.has(h.project_id),
+    );
+    demoStore.projectProgress = demoStore.projectProgress.filter(
+      (pp) => !idSet.has(pp.project_id),
+    );
+    demoStore.projects = demoStore.projects.filter((p) => !idSet.has(p.id));
+    return;
+  }
+
+  const { error } = await supabase.from("projects").delete().in("id", projectIds);
+  if (error) {
+    if (error.message.toLowerCase().includes("foreign key constraint")) {
+      throw new Error(
+        "Proyek yang sudah terhubung dengan jurnal, PO, pembayaran, atau invoice tidak dapat dihapus.",
+      );
+    }
+    throw new Error(error.message);
   }
 }
 

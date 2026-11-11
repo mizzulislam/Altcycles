@@ -129,6 +129,12 @@ export type ProfileRow = {
   full_name: string;
   email: string;
   role: UserRole;
+  roles?: UserRole[];
+  username?: string | null;
+  avatar_url?: string | null;
+  phone_number?: string | null;
+  job_title?: string | null;
+  bio?: string | null;
   is_active: boolean;
   last_login_at: string | null;
   created_by: string | null;
@@ -136,22 +142,42 @@ export type ProfileRow = {
   updated_at: string;
 };
 
+export type SocialMediaEntry = {
+  platform: string;
+  username: string;
+};
+
+export type BankAccountEntry = {
+  bank_name: string;
+  account_number: string;
+  account_holder: string;
+};
+
 export type CompanyProfileRow = {
   id: number;
   company_name: string;
   legal_entity_name: string;
+  tagline?: string | null;
   address: string;
   email: string;
   phone: string;
+  signing_city?: string | null;
   logo_storage_path: string | null;
   bank_name: string;
   bank_account_number: string;
   bank_account_holder: string;
+  bank_accounts_json?: BankAccountEntry[] | null;
   signer_name: string;
   signer_title: string;
+  tax_id_number?: string | null;
+  signer_signature_path?: string | null;
+  signer_paraf_path?: string | null;
+  social_links_json?: SocialMediaEntry[] | null;
   pkp_enabled: boolean;
   ppn_rate: number;
   pph_enabled: boolean;
+  journal_lock_enabled?: boolean;
+  auto_closing_enabled?: boolean;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
@@ -261,6 +287,9 @@ export type CustomerRow = {
   phone: string | null;
   npwp: string | null;
   address: string | null;
+  logo_storage_path?: string | null;
+  signature_storage_path?: string | null;
+  paraf_storage_path?: string | null;
   is_active: boolean;
   created_by: string | null;
   created_at: string;
@@ -355,7 +384,7 @@ export type ExportLogRow = {
   id: string;
   user_id: string;
   report_type: string;
-  format: "PDF" | "EXCEL";
+  format: "PDF" | "EXCEL" | "CSV";
   period_filter: string | null;
   created_at: string;
 };
@@ -506,6 +535,81 @@ export type ClientPurchaseOrderRow = {
   submitted_ip_hash: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type SpkPartyIdentity = {
+  name: string;
+  title: string;
+  company: string;
+  address: string;
+  email: string;
+  phone: string;
+};
+
+export type SpkScopeGroup = {
+  category: string;
+  items: string[];
+};
+
+export type SpkTimelineRow = {
+  week: string;
+  activities: string;
+  output: string;
+};
+
+export type SpkTeamRoleRow = {
+  role: string;
+  capacity: string;
+  responsibility: string;
+};
+
+export type SpkClientRoleRow = {
+  role: string;
+  responsibility: string;
+};
+
+export type SpkCeremonyRow = {
+  event: string;
+  frequency: string;
+  attendees: string;
+  schedule: string;
+};
+
+export type SpkCostDetailRow = {
+  label: string;
+  amount: number;
+};
+
+export type SpkCharterContent = {
+  summary?: string;
+  headerSubtitle?: string;
+  docVersion?: string;
+  signingCity?: string;
+  signingDate?: string;
+  partyOne?: SpkPartyIdentity;
+  partyTwo?: SpkPartyIdentity;
+  clientLogoDataUrl?: string | null;
+  partyOneSignatureUrl?: string | null;
+  partyTwoSignatureUrl?: string | null;
+  partyOneParafUrl?: string | null;
+  partyTwoParafUrl?: string | null;
+  pasal1Tujuan?: string;
+  scopeGroups?: SpkScopeGroup[];
+  outOfScope?: string[];
+  pasal3Intro?: string;
+  timelineRows?: SpkTimelineRow[];
+  teamRoles?: SpkTeamRoleRow[];
+  clientRoles?: SpkClientRoleRow[];
+  ceremonies?: SpkCeremonyRow[];
+  totalProjectCost?: number;
+  costDetails?: SpkCostDetailRow[];
+  paymentTermsText?: string[];
+  pasal6Kerahasiaan?: string;
+  pasal7Haki?: string[];
+  pasal8ForceMajeure?: string;
+  pasal9Penyelesaian?: string;
+  pasal10LainLain?: string;
+  closingText?: string;
 };
 
 export type ProjectDocumentRow = {
@@ -1162,6 +1266,33 @@ export type Database = {
           p_rejection_note?: string | null;
         };
         Returns: ClientPurchaseOrderRow;
+      };
+      switch_active_role: {
+        Args: { p_target_role: UserRole };
+        Returns: ProfileRow;
+      };
+      update_my_profile: {
+        Args: {
+          p_full_name: string;
+          p_username?: string | null;
+          p_phone_number?: string | null;
+          p_job_title?: string | null;
+          p_bio?: string | null;
+          p_avatar_url?: string | null;
+        };
+        Returns: ProfileRow;
+      };
+      delete_internal_user: {
+        Args: { p_target_user_id: string };
+        Returns: boolean;
+      };
+      update_user_roles: {
+        Args: {
+          p_target_user_id: string;
+          p_roles: UserRole[];
+          p_primary_role?: UserRole | null;
+        };
+        Returns: ProfileRow;
       };
     };
     Enums: {

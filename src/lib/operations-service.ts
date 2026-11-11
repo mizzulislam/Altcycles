@@ -8,10 +8,13 @@ import { inferRevenueMethodFromTerms, roundRupiah } from "@/lib/formatters";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   AttachmentRow,
+  BakpStatus,
+  BastStatus,
   BudgetComparisonRow,
   BudgetLineRow,
   BudgetRow,
   BuyerPortalLookupDto,
+  ClientPoStatus,
   ClientPurchaseOrderRow,
   HandoverReportRow,
   InvoiceKind,
@@ -19,6 +22,7 @@ import type {
   JournalRow,
   JournalType,
   MilestoneRow,
+  MilestoneStatus,
   NotificationRow,
   PaymentRequestRow,
   PoItemRow,
@@ -31,6 +35,7 @@ import type {
   PurchaseOrderRow,
   QuotationItemRow,
   QuotationRow,
+  QuotationStatus,
   ReceiptRow,
   SalesInvoiceRow,
   UatChecklistRow,
@@ -261,7 +266,7 @@ export async function markAllNotificationsRead(): Promise<void> {
 
 export async function recordExportLog(
   reportType: string,
-  format: "PDF" | "EXCEL",
+  format: "PDF" | "EXCEL" | "CSV",
   periodFilter?: string,
 ): Promise<void> {
   if (isDemoMode || !supabase) return;
@@ -513,6 +518,7 @@ export async function createAndSubmitPaymentRequest(input: {
     mimeType: string;
     sizeBytes: number;
     blob?: Blob;
+    storagePathOverride?: string;
   };
   budgetWarningAcknowledged?: boolean;
 }): Promise<PaymentRequestRow> {
@@ -558,7 +564,7 @@ export async function createAndSubmitPaymentRequest(input: {
       file_name: input.proofFile.name,
       mime_type: input.proofFile.mimeType,
       file_size_bytes: input.proofFile.sizeBytes,
-      storage_path: `demo/${input.proofFile.name}`,
+      storage_path: input.proofFile.storagePathOverride || `demo/${input.proofFile.name}`,
       uploaded_by: actor.id,
       created_at: now,
     });
@@ -607,9 +613,11 @@ export async function createAndSubmitPaymentRequest(input: {
   if (insErr) throw new Error(insErr.message);
 
   const safeFileName = input.proofFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storagePath = `proofs/${created.id}/${Date.now()}_${safeFileName}`;
+  const storagePath =
+    input.proofFile.storagePathOverride ||
+    `proofs/${created.id}/${Date.now()}_${safeFileName}`;
 
-  if (input.proofFile.blob) {
+  if (input.proofFile.blob && !input.proofFile.storagePathOverride) {
     const { error: upErr } = await supabase.storage
       .from("altcycles-files")
       .upload(storagePath, input.proofFile.blob, {
@@ -641,6 +649,9 @@ export async function createAndSubmitPaymentRequest(input: {
 export async function getAttachmentSignedUrl(
   storagePath: string,
 ): Promise<string | null> {
+  if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+    return storagePath;
+  }
   if (isDemoMode || !supabase || storagePath.startsWith("demo/")) {
     return null;
   }
@@ -1038,7 +1049,7 @@ export async function listJournalsWithLines(): Promise<{
 
 export async function createManualOrAdjustmentJournal(input: {
   journalDate: string;
-  journalType: "general" | "adjustment";
+  journalType: "general" | "adjustment" | "closing";
   description: string;
   projectId: string | null;
   autoReverseNextPeriod: boolean;
@@ -1080,6 +1091,165 @@ export async function createManualOrAdjustmentJournal(input: {
     p_auto_reverse_next_period: input.autoReverseNextPeriod,
   });
   if (error) throw new Error(error.message);
+}
+
+export async function updateJournal(input: {
+  journalId: string;
+  journalDate: string;
+  journalType: "general" | "adjustment";
+  description: string;
+  projectId: string | null;
+  autoReverseNextPeriod: boolean;
+  lines: Array<{
+    accountId: string;
+    description?: string;
+    debit: number;
+    credit: number;
+  }>;
+}): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat mengubah jurnal akuntansi.");
+    }
+    const jrn = demoStore.journals.find((j) => j.id === input.journalId);
+    if (!jrn) throw new Error("Jurnal tidak ditemukan.");
+    jrn.journal_date = input.journalDate;
+    jrn.journal_type = input.journalType;
+    jrn.description = input.description.trim();
+    jrn.project_id = input.projectId;
+    jrn.auto_reverse_next_period = input.autoReverseNextPeriod;
+    jrn.updated_at = new Date().toISOString();
+
+    // Replace lines
+    demoStore.journalLines = demoStore.journalLines.filter(
+      (l) => l.journal_id !== input.journalId,
+    );
+    input.lines.forEach((l, idx) => {
+      demoStore.journalLines.push({
+        id: crypto.randomUUID(),
+        journal_id: input.journalId,
+        line_no: idx + 1,
+        account_id: l.accountId,
+        project_id: input.projectId,
+        description: l.description ?? input.description.trim(),
+        debit: roundRupiah(l.debit),
+        credit: roundRupiah(l.credit),
+      });
+    });
+    return;
+  }
+
+  const { error: updErr } = await supabase
+    .from("journals")
+    .update({
+      journal_date: input.journalDate,
+      journal_type: input.journalType,
+      description: input.description.trim(),
+      project_id: input.projectId,
+      auto_reverse_next_period: input.autoReverseNextPeriod,
+    })
+    .eq("id", input.journalId);
+  if (updErr) throw new Error(updErr.message);
+
+  const { error: delErr } = await supabase
+    .from("journal_lines")
+    .delete()
+    .eq("journal_id", input.journalId);
+  if (delErr) throw new Error(delErr.message);
+
+  const { error: insErr } = await supabase.from("journal_lines").insert(
+    input.lines.map((l, idx) => ({
+      journal_id: input.journalId,
+      line_no: idx + 1,
+      account_id: l.accountId,
+      project_id: input.projectId,
+      description: l.description ?? input.description.trim(),
+      debit: roundRupiah(l.debit),
+      credit: roundRupiah(l.credit),
+    })),
+  );
+  if (insErr) throw new Error(insErr.message);
+}
+
+export async function deleteJournals(journalIds: string[]): Promise<void> {
+  if (journalIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat menghapus jurnal akuntansi.");
+    }
+    const idSet = new Set(journalIds);
+    demoStore.projectProgress.forEach((pp) => {
+      if (pp.adjustment_journal_id && idSet.has(pp.adjustment_journal_id)) {
+        pp.adjustment_journal_id = null;
+      }
+    });
+    demoStore.salesInvoices.forEach((inv) => {
+      if (inv.journal_id && idSet.has(inv.journal_id)) {
+        inv.journal_id = null;
+      }
+    });
+    demoStore.profitSharingResults.forEach((ps) => {
+      if (ps.journal_id && idSet.has(ps.journal_id)) {
+        ps.journal_id = null;
+      }
+    });
+    demoStore.journals.forEach((j) => {
+      if (j.reference_journal_id && idSet.has(j.reference_journal_id)) {
+        j.reference_journal_id = null;
+      }
+    });
+    demoStore.journalLines = demoStore.journalLines.filter(
+      (l) => !idSet.has(l.journal_id),
+    );
+    const affectedProjectIds = new Set(
+      demoStore.journals
+        .filter((j) => idSet.has(j.id) && j.project_id)
+        .map((j) => j.project_id!),
+    );
+    demoStore.journals = demoStore.journals.filter((j) => !idSet.has(j.id));
+    affectedProjectIds.forEach((pid) => {
+      const prj = demoStore.projects.find((p) => p.id === pid);
+      if (prj) {
+        prj.has_posted_journal = demoStore.journals.some(
+          (j) => j.project_id === pid && j.status === "posted",
+        );
+      }
+    });
+    return;
+  }
+
+  // Putuskan referensi FK opsional terlebih dahulu sebagai jaring pengaman, lalu hapus header
+  // jurnal secara atomik (journal_lines ikut terhapus oleh ON DELETE CASCADE).
+  await Promise.all([
+    supabase
+      .from("project_progress")
+      .update({ adjustment_journal_id: null })
+      .in("adjustment_journal_id", journalIds),
+    supabase
+      .from("sales_invoices")
+      .update({ journal_id: null })
+      .in("journal_id", journalIds),
+    supabase
+      .from("invoice_payments")
+      .update({ journal_id: null })
+      .in("journal_id", journalIds),
+    supabase
+      .from("profit_sharing_results")
+      .update({ journal_id: null })
+      .in("journal_id", journalIds),
+    supabase
+      .from("journals")
+      .update({ reference_journal_id: null })
+      .in("reference_journal_id", journalIds),
+  ]);
+
+  const { error: journalsError } = await supabase
+    .from("journals")
+    .delete()
+    .in("id", journalIds);
+  if (journalsError) throw new Error(journalsError.message);
 }
 
 export async function createCorrectionJournalEntry(input: {
@@ -1500,8 +1670,13 @@ export async function createProjectDocument(input: {
   summary: string;
   isSigned: boolean;
   signedFileName?: string;
+  contentJson?: Record<string, unknown>;
 }): Promise<ProjectDocumentRow> {
   const todayIso = new Date().toISOString().slice(0, 10);
+  const payloadContent = {
+    ...(input.contentJson ?? {}),
+    summary: input.summary.trim(),
+  };
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     const now = new Date().toISOString();
@@ -1513,7 +1688,7 @@ export async function createProjectDocument(input: {
       doc_number: docNumber,
       title: input.title.trim(),
       version: 1,
-      content_json: { summary: input.summary.trim() },
+      content_json: payloadContent as ProjectDocumentRow["content_json"],
       is_signed: input.isSigned,
       signed_storage_path: input.signedFileName ? `demo/${input.signedFileName}` : null,
       visible_to_buyer: true,
@@ -1542,7 +1717,7 @@ export async function createProjectDocument(input: {
       doc_type: input.docType,
       doc_number: docNo,
       title: input.title.trim(),
-      content_json: { summary: input.summary.trim() },
+      content_json: payloadContent as ProjectDocumentRow["content_json"],
       is_signed: input.isSigned,
       signed_storage_path: input.signedFileName ? `docs/${input.signedFileName}` : null,
       visible_to_buyer: true,
@@ -1614,9 +1789,19 @@ export async function saveProjectMilestonesSchedule(
     if (actor.role !== "admin") throw new Error("Hanya Admin yang berwenang.");
     const prj = demoStore.projects.find((p) => p.id === projectId);
     if (!prj) throw new Error("Proyek tidak ditemukan.");
-    if (prj.has_posted_journal) {
+    const existingIds = new Set(
+      demoStore.milestones
+        .filter((m) => m.project_id === projectId)
+        .map((m) => m.id),
+    );
+    const hasLockedMilestone =
+      demoStore.progressReports.some((pr) => existingIds.has(pr.milestone_id)) ||
+      demoStore.salesInvoices.some(
+        (si) => si.milestone_id !== null && existingIds.has(si.milestone_id),
+      );
+    if (hasLockedMilestone) {
       throw new Error(
-        "Jadwal termin tidak dapat disusun ulang setelah proyek memiliki jurnal terposting.",
+        "Jadwal termin tidak dapat disusun ulang karena sebagian termin sudah memiliki BAKP atau Invoice terkait.",
       );
     }
     const sumAmt = items.reduce((s, i) => s + roundRupiah(i.amount), 0);
@@ -2769,4 +2954,490 @@ export async function publicBuyerLookupPo(
     throw new Error(String(data.error));
   }
   return data as BuyerPortalLookupDto;
+}
+
+// =============================================================================
+// CRUD PENDUKUNG TABEL WORKSPACE PROYEK (Lihat / Edit / Hapus / Hapus Pilihan)
+// =============================================================================
+
+export async function updateProjectMilestone(
+  milestoneId: string,
+  input: {
+    name: string;
+    percentage: number;
+    amount: number;
+    achievementCriteria: string;
+    status: MilestoneStatus;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const ms = demoStore.milestones.find((m) => m.id === milestoneId);
+    if (!ms) throw new Error("Termin tidak ditemukan.");
+    ms.name = input.name.trim();
+    ms.percentage = input.percentage;
+    ms.amount = roundRupiah(input.amount);
+    ms.achievement_criteria = input.achievementCriteria.trim() || null;
+    ms.status = input.status;
+    return;
+  }
+  const { error } = await supabase
+    .from("milestones")
+    .update({
+      name: input.name.trim(),
+      percentage: input.percentage,
+      amount: roundRupiah(input.amount),
+      achievement_criteria: input.achievementCriteria.trim() || null,
+      status: input.status,
+    })
+    .eq("id", milestoneId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteProjectMilestones(
+  projectId: string,
+  milestoneIds: string[],
+): Promise<void> {
+  if (milestoneIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(milestoneIds);
+    const affectedBakpIds = new Set(
+      demoStore.progressReports
+        .filter((b) => idSet.has(b.milestone_id))
+        .map((b) => b.id),
+    );
+    demoStore.salesInvoices.forEach((inv) => {
+      if (inv.milestone_id && idSet.has(inv.milestone_id)) inv.milestone_id = null;
+      if (inv.bakp_id && affectedBakpIds.has(inv.bakp_id)) inv.bakp_id = null;
+    });
+    demoStore.progressReports = demoStore.progressReports.filter(
+      (b) => !idSet.has(b.milestone_id),
+    );
+    demoStore.milestones = demoStore.milestones.filter((m) => !idSet.has(m.id));
+    const remaining = demoStore.milestones
+      .filter((m) => m.project_id === projectId)
+      .sort((a, b) => a.sequence_no - b.sequence_no);
+    remaining.forEach((m, idx) => {
+      m.sequence_no = idx + 1;
+    });
+    const prj = demoStore.projects.find((p) => p.id === projectId);
+    if (prj) {
+      prj.term_count = remaining.length;
+      if (remaining.length > 0) {
+        prj.revenue_method = inferRevenueMethodFromTerms(remaining.length);
+      }
+    }
+    return;
+  }
+
+  const { data: linkedBakps, error: bakpLookupErr } = await supabase
+    .from("progress_reports")
+    .select("id")
+    .in("milestone_id", milestoneIds);
+  if (bakpLookupErr) throw new Error(bakpLookupErr.message);
+
+  const affectedBakpIds = (linkedBakps ?? []).map((b) => String(b.id));
+  if (affectedBakpIds.length > 0) {
+    const { error: invBakpErr } = await supabase
+      .from("sales_invoices")
+      .update({ bakp_id: null })
+      .in("bakp_id", affectedBakpIds);
+    if (invBakpErr) throw new Error(invBakpErr.message);
+
+    const { error: delBakpErr } = await supabase
+      .from("progress_reports")
+      .delete()
+      .in("id", affectedBakpIds);
+    if (delBakpErr) throw new Error(delBakpErr.message);
+  }
+
+  const { error: invMsErr } = await supabase
+    .from("sales_invoices")
+    .update({ milestone_id: null })
+    .in("milestone_id", milestoneIds);
+  if (invMsErr) throw new Error(invMsErr.message);
+
+  const { error } = await supabase.from("milestones").delete().in("id", milestoneIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateProjectProgressEntry(
+  entryId: string,
+  input: {
+    progressDate: string;
+    cumulativePercentage: number;
+    cumulativeRecognizedRevenue: number;
+    periodRecognizedRevenue: number;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const entry = demoStore.projectProgress.find((p) => p.id === entryId);
+    if (!entry) throw new Error("Catatan progres tidak ditemukan.");
+    entry.progress_date = input.progressDate;
+    entry.cumulative_percentage = input.cumulativePercentage;
+    entry.cumulative_recognized_revenue = roundRupiah(input.cumulativeRecognizedRevenue);
+    entry.period_recognized_revenue = roundRupiah(input.periodRecognizedRevenue);
+    return;
+  }
+  const { error } = await supabase
+    .from("project_progress")
+    .update({
+      progress_date: input.progressDate,
+      cumulative_percentage: input.cumulativePercentage,
+      cumulative_recognized_revenue: roundRupiah(input.cumulativeRecognizedRevenue),
+      period_recognized_revenue: roundRupiah(input.periodRecognizedRevenue),
+    })
+    .eq("id", entryId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteProjectProgressEntries(entryIds: string[]): Promise<void> {
+  if (entryIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(entryIds);
+    demoStore.projectProgress = demoStore.projectProgress.filter((p) => !idSet.has(p.id));
+    return;
+  }
+  const { error } = await supabase.from("project_progress").delete().in("id", entryIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateQuotation(
+  quotationId: string,
+  input: {
+    quotationDate: string;
+    validUntil: string;
+    projectTitle: string;
+    clientNeedSummary: string;
+    estimatedWeeks: number;
+    revisionLimit: number;
+    totalAmount: number;
+    status: QuotationStatus;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const qt = demoStore.quotations.find((q) => q.id === quotationId);
+    if (!qt) throw new Error("Quotation tidak ditemukan.");
+    qt.quotation_date = input.quotationDate;
+    qt.valid_until = input.validUntil;
+    qt.project_title = input.projectTitle.trim();
+    qt.client_need_summary = input.clientNeedSummary.trim() || null;
+    qt.estimated_weeks = input.estimatedWeeks;
+    qt.revision_limit = input.revisionLimit;
+    qt.total_amount = roundRupiah(input.totalAmount);
+    qt.status = input.status;
+    qt.updated_at = new Date().toISOString();
+    return;
+  }
+  const { error } = await supabase
+    .from("quotations")
+    .update({
+      quotation_date: input.quotationDate,
+      valid_until: input.validUntil,
+      project_title: input.projectTitle.trim(),
+      client_need_summary: input.clientNeedSummary.trim() || null,
+      estimated_weeks: input.estimatedWeeks,
+      revision_limit: input.revisionLimit,
+      total_amount: roundRupiah(input.totalAmount),
+      status: input.status,
+    })
+    .eq("id", quotationId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteQuotations(quotationIds: string[]): Promise<void> {
+  if (quotationIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(quotationIds);
+    demoStore.quotations = demoStore.quotations.filter((q) => !idSet.has(q.id));
+    demoStore.quotationItems = demoStore.quotationItems.filter(
+      (qi) => !idSet.has(qi.quotation_id),
+    );
+    return;
+  }
+  const { error } = await supabase.from("quotations").delete().in("id", quotationIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateClientPurchaseOrder(
+  cpoId: string,
+  input: {
+    clientName: string;
+    clientCompany: string;
+    clientEmail: string;
+    poValue: number;
+    status: ClientPoStatus;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const cpo = demoStore.clientPos.find((c) => c.id === cpoId);
+    if (!cpo) throw new Error("PO Klien tidak ditemukan.");
+    cpo.client_name = input.clientName.trim();
+    cpo.client_company = input.clientCompany.trim() || null;
+    cpo.client_email = input.clientEmail.trim();
+    cpo.po_value = roundRupiah(input.poValue);
+    cpo.status = input.status;
+    return;
+  }
+  const { error } = await supabase
+    .from("client_purchase_orders")
+    .update({
+      client_name: input.clientName.trim(),
+      client_company: input.clientCompany.trim() || null,
+      client_email: input.clientEmail.trim(),
+      po_value: roundRupiah(input.poValue),
+      status: input.status,
+    })
+    .eq("id", cpoId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteClientPurchaseOrders(cpoIds: string[]): Promise<void> {
+  if (cpoIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(cpoIds);
+    demoStore.clientPos = demoStore.clientPos.filter((c) => !idSet.has(c.id));
+    return;
+  }
+  const { error } = await supabase
+    .from("client_purchase_orders")
+    .delete()
+    .in("id", cpoIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateProjectDocument(
+  docId: string,
+  input: {
+    docType: "SOW" | "SPK";
+    title: string;
+    summary: string;
+    isSigned: boolean;
+    contentJson?: Record<string, unknown>;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const doc = demoStore.projectDocuments.find((d) => d.id === docId);
+    if (!doc) throw new Error("Dokumen tidak ditemukan.");
+    doc.doc_type = input.docType;
+    doc.title = input.title.trim();
+    doc.content_json = {
+      ...(doc.content_json as Record<string, unknown> | null),
+      ...(input.contentJson ?? {}),
+      summary: input.summary.trim(),
+    } as ProjectDocumentRow["content_json"];
+    doc.is_signed = input.isSigned;
+    doc.updated_at = new Date().toISOString();
+    return;
+  }
+  const { data: existingDoc } = await supabase
+    .from("project_documents")
+    .select("content_json")
+    .eq("id", docId)
+    .maybeSingle();
+  const mergedContent = {
+    ...((existingDoc?.content_json as Record<string, unknown> | null) ?? {}),
+    ...(input.contentJson ?? {}),
+    summary: input.summary.trim(),
+  };
+  const { error } = await supabase
+    .from("project_documents")
+    .update({
+      doc_type: input.docType,
+      title: input.title.trim(),
+      content_json: mergedContent as ProjectDocumentRow["content_json"],
+      is_signed: input.isSigned,
+    })
+    .eq("id", docId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteProjectDocuments(docIds: string[]): Promise<void> {
+  if (docIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(docIds);
+    demoStore.projectDocuments = demoStore.projectDocuments.filter((d) => !idSet.has(d.id));
+    return;
+  }
+  const { error } = await supabase.from("project_documents").delete().in("id", docIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateBakpReport(
+  bakpId: string,
+  input: {
+    bakpDate: string;
+    cumulativePercentage: number;
+    billableAmount: number;
+    findingsNotes: string;
+    status: BakpStatus;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const bakp = demoStore.progressReports.find((b) => b.id === bakpId);
+    if (!bakp) throw new Error("BAKP tidak ditemukan.");
+    bakp.bakp_date = input.bakpDate;
+    bakp.cumulative_percentage = input.cumulativePercentage;
+    bakp.billable_amount = roundRupiah(input.billableAmount);
+    bakp.findings_notes = input.findingsNotes.trim() || null;
+    bakp.status = input.status;
+    bakp.approved_at = input.status === "approved_by_client" ? (bakp.approved_at ?? new Date().toISOString()) : null;
+    return;
+  }
+  const { error } = await supabase
+    .from("progress_reports")
+    .update({
+      bakp_date: input.bakpDate,
+      cumulative_percentage: input.cumulativePercentage,
+      billable_amount: roundRupiah(input.billableAmount),
+      findings_notes: input.findingsNotes.trim() || null,
+      status: input.status,
+      approved_at: input.status === "approved_by_client" ? new Date().toISOString() : null,
+    })
+    .eq("id", bakpId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteBakpReports(bakpIds: string[]): Promise<void> {
+  if (bakpIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(bakpIds);
+    demoStore.salesInvoices.forEach((inv) => {
+      if (inv.bakp_id && idSet.has(inv.bakp_id)) inv.bakp_id = null;
+    });
+    demoStore.progressReports = demoStore.progressReports.filter((b) => !idSet.has(b.id));
+    return;
+  }
+  const { error: invErr } = await supabase
+    .from("sales_invoices")
+    .update({ bakp_id: null })
+    .in("bakp_id", bakpIds);
+  if (invErr) throw new Error(invErr.message);
+
+  const { error } = await supabase.from("progress_reports").delete().in("id", bakpIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateUatChecklist(
+  uatId: string,
+  input: {
+    testDate: string;
+    stagingUrl: string;
+    clientTesterName: string;
+    altviraCompanionName: string;
+    conclusion: UatConclusion;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const uat = demoStore.uatChecklists.find((u) => u.id === uatId);
+    if (!uat) throw new Error("Dokumen UAT tidak ditemukan.");
+    uat.test_date = input.testDate;
+    uat.staging_url = input.stagingUrl.trim() || null;
+    uat.client_tester_name = input.clientTesterName.trim();
+    uat.altvira_companion_name = input.altviraCompanionName.trim();
+    uat.conclusion = input.conclusion;
+    return;
+  }
+  const { error } = await supabase
+    .from("uat_checklists")
+    .update({
+      test_date: input.testDate,
+      staging_url: input.stagingUrl.trim() || null,
+      client_tester_name: input.clientTesterName.trim(),
+      altvira_companion_name: input.altviraCompanionName.trim(),
+      conclusion: input.conclusion,
+    })
+    .eq("id", uatId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteUatChecklists(uatIds: string[]): Promise<void> {
+  if (uatIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(uatIds);
+    const affectedBastIds = new Set(
+      demoStore.handoverReports
+        .filter((h) => idSet.has(h.uat_id))
+        .map((h) => h.id),
+    );
+    demoStore.salesInvoices.forEach((inv) => {
+      if (inv.bast_id && affectedBastIds.has(inv.bast_id)) inv.bast_id = null;
+    });
+    demoStore.handoverReports = demoStore.handoverReports.filter((h) => !idSet.has(h.uat_id));
+    demoStore.uatChecklists = demoStore.uatChecklists.filter((u) => !idSet.has(u.id));
+    demoStore.uatItems = demoStore.uatItems.filter((ui) => !idSet.has(ui.uat_id));
+    return;
+  }
+
+  const { data: linkedBasts, error: bastLookupErr } = await supabase
+    .from("handover_reports")
+    .select("id")
+    .in("uat_id", uatIds);
+  if (bastLookupErr) throw new Error(bastLookupErr.message);
+
+  const affectedBastIds = (linkedBasts ?? []).map((h) => String(h.id));
+  if (affectedBastIds.length > 0) {
+    const { error: invErr } = await supabase
+      .from("sales_invoices")
+      .update({ bast_id: null })
+      .in("bast_id", affectedBastIds);
+    if (invErr) throw new Error(invErr.message);
+
+    const { error: delBastErr } = await supabase
+      .from("handover_reports")
+      .delete()
+      .in("id", affectedBastIds);
+    if (delBastErr) throw new Error(delBastErr.message);
+  }
+
+  const { error } = await supabase.from("uat_checklists").delete().in("id", uatIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateBastHandover(
+  bastId: string,
+  input: {
+    bastDate: string;
+    warrantyDays: number;
+    status: BastStatus;
+  },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const bast = demoStore.handoverReports.find((h) => h.id === bastId);
+    if (!bast) throw new Error("BAST tidak ditemukan.");
+    bast.bast_date = input.bastDate;
+    bast.warranty_days = input.warrantyDays;
+    bast.status = input.status;
+    bast.signed_at = input.status === "signed" ? (bast.signed_at ?? new Date().toISOString()) : null;
+    return;
+  }
+  const { error } = await supabase
+    .from("handover_reports")
+    .update({
+      bast_date: input.bastDate,
+      warranty_days: input.warrantyDays,
+      status: input.status,
+      signed_at: input.status === "signed" ? new Date().toISOString() : null,
+    })
+    .eq("id", bastId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteBastHandovers(bastIds: string[]): Promise<void> {
+  if (bastIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(bastIds);
+    demoStore.salesInvoices.forEach((inv) => {
+      if (inv.bast_id && idSet.has(inv.bast_id)) inv.bast_id = null;
+    });
+    demoStore.handoverReports = demoStore.handoverReports.filter((h) => !idSet.has(h.id));
+    return;
+  }
+  const { error: invErr } = await supabase
+    .from("sales_invoices")
+    .update({ bast_id: null })
+    .in("bast_id", bastIds);
+  if (invErr) throw new Error(invErr.message);
+
+  const { error } = await supabase.from("handover_reports").delete().in("id", bastIds);
+  if (error) throw new Error(error.message);
 }

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { PencilIcon, PlusIcon, PowerIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,11 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmptyState, Spinner } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,7 +54,11 @@ import type {
   NormalBalance,
 } from "@/types/database.types";
 
-export function CoaAccountsPage() {
+export interface CoaAccountsPageProps {
+  hideHeader?: boolean;
+}
+
+export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {}) {
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -178,40 +182,63 @@ export function CoaAccountsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Bagan Akun (Chart of Accounts SAK)
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Kelola akun buku besar berbasis SAK. Akun yang telah memiliki transaksi jurnal terkunci dari penghapusan demi integritas audit pembukuan.
-          </p>
+      {!hideHeader ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1 max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Bagan Akun (Chart of Accounts SAK)
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+              Kelola struktur bagan akun standar SAK untuk pencatatan dan pengelompokan transaksi keuangan.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button type="button" onClick={openNewDialog} className="cursor-pointer shadow-xs">
+              <PlusIcon className="size-4" />
+              Tambah Akun Baru
+            </Button>
+          </div>
         </div>
-        <Button type="button" onClick={openNewDialog}>
-          <PlusIcon data-icon="inline-start" />
-          Tambah Akun Baru
-        </Button>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              Bagan Akun (Chart of Accounts)
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+              Kelola struktur bagan akun standar SAK untuk pencatatan dan pengelompokan transaksi keuangan.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={openNewDialog}
+              className="cursor-pointer shadow-xs"
+            >
+              <PlusIcon className="size-4" />
+              <span>Tambah Akun Baru</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Bagan Akun</CardTitle>
-          <CardDescription>
-            Akun bertanda <code>work_in_progress</code> dan{" "}
-            <code>contract_billings</code> digunakan otomatis oleh mesin
-            Progress Billing (≥ 3 termin).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
+      <Card className="overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1 min-w-0">
+            <CardTitle>Daftar Bagan Akun</CardTitle>
+            <CardDescription>
+              Struktur klasifikasi akun buku besar standar SAK untuk penjurnalan dan pelaporan keuangan.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Input
               placeholder="Cari kode atau nama akun..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="sm:max-w-xs"
+              className="w-56 sm:w-64 h-9 rounded-xl bg-background"
             />
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="sm:w-56">
+              <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
                 <SelectValue placeholder="Semua tipe akun" />
               </SelectTrigger>
               <SelectContent>
@@ -227,101 +254,131 @@ export function CoaAccountsPage() {
               </SelectContent>
             </Select>
           </div>
-
+        </CardHeader>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
               <span>Memuat bagan akun...</span>
             </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title="Tidak ada akun yang cocok"
-              description="Sesuaikan kata kunci atau tipe akun."
-            />
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Nama Akun</TableHead>
-                  <TableHead>Tipe</TableHead>
-                  <TableHead>Saldo Normal</TableHead>
-                  <TableHead>Tag Sistem</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Tindakan</TableHead>
+                <TableRow className="border-b border-border/80 bg-muted/20 hover:bg-muted/20">
+                  <TableHead className="text-center w-32 pl-6">Kode</TableHead>
+                  <TableHead className="text-center">Nama Akun</TableHead>
+                  <TableHead className="text-center w-36">Tipe</TableHead>
+                  <TableHead className="text-center w-36">Saldo Normal</TableHead>
+                  <TableHead className="text-center w-32">Status</TableHead>
+                  <TableHead className="text-center w-36 pr-6">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((acc) => (
-                  <TableRow key={acc.id}>
-                    <TableCell className="font-mono font-semibold">
-                      {acc.code}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{acc.name}</span>
-                        {!acc.is_postable ? (
-                          <span className="text-xs text-muted-foreground">
-                            Akun Induk (Header)
-                          </span>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>{ACCOUNT_TYPE_LABELS[acc.account_type]}</TableCell>
-                    <TableCell className="capitalize">
-                      {acc.normal_balance}
-                    </TableCell>
-                    <TableCell>
-                      {acc.system_tag !== "none" ? (
-                        <StatusBadge tone="info" label={acc.system_tag} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        tone={acc.is_active ? "success" : "secondary"}
-                        label={acc.is_active ? "Aktif" : "Nonaktif"}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(acc)}
-                        >
-                          <PencilIcon data-icon="inline-start" />
-                          Ubah
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setToggleTarget(acc)}
-                        >
-                          <PowerIcon data-icon="inline-start" />
-                          {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={acc.used_in_journal_count > 0}
-                          title={
-                            acc.used_in_journal_count > 0
-                              ? "Tidak dapat dihapus karena sudah memiliki riwayat mutasi jurnal"
-                              : "Hapus akun yang belum pernah dipakai"
-                          }
-                          onClick={() => setDeleteTarget(acc)}
-                        >
-                          <Trash2Icon />
-                        </Button>
+                {filtered.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={6} className="p-0">
+                      <div className="flex flex-col items-center justify-center gap-1.5 py-12 px-6 text-center bg-muted/10 border-t border-dashed border-border/70">
+                        <p className="text-sm font-semibold text-foreground">
+                          Tidak ada akun yang cocok
+                        </p>
+                        <p className="text-xs text-muted-foreground max-w-sm">
+                          Sesuaikan kata kunci pencarian atau filter tipe akun di kanan atas.
+                        </p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filtered.map((acc) => {
+                    const isHeader = !acc.is_postable;
+                    return (
+                      <TableRow
+                        key={acc.id}
+                        className={cn(
+                          "transition-colors",
+                          isHeader
+                            ? "bg-muted/40 hover:bg-muted/50 font-bold border-y border-border/80"
+                            : "hover:bg-muted/20",
+                        )}
+                      >
+                        <TableCell className={cn("pl-6 font-mono", isHeader ? "font-bold text-foreground" : "font-semibold")}>
+                          {acc.code}
+                        </TableCell>
+                        <TableCell>
+                          <span className={cn(isHeader ? "font-bold text-foreground tracking-wide" : "font-medium text-foreground")}>
+                            {acc.name}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {!isHeader ? ACCOUNT_TYPE_LABELS[acc.account_type] : null}
+                        </TableCell>
+                        <TableCell className="text-center capitalize">
+                          {!isHeader ? acc.normal_balance : null}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {!isHeader ? (
+                            <div className="-my-px inline-flex justify-center">
+                              <StatusBadge
+                                tone={acc.is_active ? "success" : "secondary"}
+                                label={acc.is_active ? "Aktif" : "Nonaktif"}
+                              />
+                            </div>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="text-center pr-6">
+                          {!isHeader ? (
+                            <div className="flex justify-center items-center gap-1.5 -my-1.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title="Ubah Akun"
+                                className="size-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                                onClick={() => openEditDialog(acc)}
+                              >
+                                <PencilIcon className="size-4" />
+                                <span className="sr-only">Ubah</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title={acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
+                                className={cn(
+                                  "size-8 rounded-lg cursor-pointer",
+                                  acc.is_active
+                                    ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+                                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
+                                )}
+                                onClick={() => setToggleTarget(acc)}
+                              >
+                                <PowerIcon className="size-4" />
+                                <span className="sr-only">
+                                  {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
+                                </span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                disabled={acc.used_in_journal_count > 0}
+                                title={
+                                  acc.used_in_journal_count > 0
+                                    ? "Tidak dapat dihapus karena sudah memiliki riwayat mutasi jurnal"
+                                    : "Hapus Akun"
+                                }
+                                className="size-8 rounded-lg text-destructive/80 hover:text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-40"
+                                onClick={() => setDeleteTarget(acc)}
+                              >
+                                <Trash2Icon className="size-4" />
+                                <span className="sr-only">Hapus</span>
+                              </Button>
+                            </div>
+                          ) : null}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           )}
@@ -330,20 +387,17 @@ export function CoaAccountsPage() {
 
       {/* Dialog Tambah / Ubah Akun */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingId ? "Ubah Akun Buku Besar" : "Tambah Akun Baru"}
             </DialogTitle>
-            <DialogDescription>
-              Pastikan tipe akun dan saldo normal sesuai klasifikasi SAK.
-            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="acc-code">Kode Akun</FieldLabel>
+                  <FieldLabel htmlFor="acc-code" required>Kode Akun</FieldLabel>
                   <Input
                     id="acc-code"
                     required
@@ -353,7 +407,7 @@ export function CoaAccountsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel>Tipe Akun</FieldLabel>
+                  <FieldLabel required>Tipe Akun</FieldLabel>
                   <Select
                     value={accountType}
                     onValueChange={(v) =>
@@ -378,7 +432,7 @@ export function CoaAccountsPage() {
               </div>
 
               <Field>
-                <FieldLabel htmlFor="acc-name">Nama Akun</FieldLabel>
+                <FieldLabel htmlFor="acc-name" required>Nama Akun</FieldLabel>
                 <Input
                   id="acc-name"
                   required
@@ -390,7 +444,7 @@ export function CoaAccountsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel>Saldo Normal</FieldLabel>
+                  <FieldLabel required>Saldo Normal</FieldLabel>
                   <Select
                     value={normalBalance}
                     onValueChange={(v) => setNormalBalance(v as NormalBalance)}
@@ -478,6 +532,7 @@ export function CoaAccountsPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setEditorOpen(false)}
+                  className="hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10 transition-colors"
                 >
                   Batal
                 </Button>

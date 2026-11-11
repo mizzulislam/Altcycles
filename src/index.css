@@ -23,6 +23,10 @@
   --input: #D8DCE3;
   --ring: #1FB1F2;
 
+  /* Warna kontras field input terhadap modal/card */
+  --field-bg: #F4F6F9;
+  --field-border: #D1D8E3;
+
   /* Token semantik status keuangan (selalu dipasangkan dengan label teks Bahasa Indonesia) */
   --status-success-bg: #DCFCE7;
   --status-success-fg: #15803D;
@@ -50,7 +54,7 @@
   --card-foreground: #F8FAFC;
   --popover: #121A2B;
   --popover-foreground: #F8FAFC;
-  --primary: #1FB1F2;
+  --primary: #0B43C8;
   --primary-foreground: #FFFFFF;
   --secondary: #1E293B;
   --secondary-foreground: #F8FAFC;
@@ -63,6 +67,10 @@
   --border: rgba(255, 255, 255, 0.09);
   --input: rgba(255, 255, 255, 0.12);
   --ring: #1FB1F2;
+
+  /* Warna field input terhadap modal/card (lebih gelap dan menyatu halus bernuansa dark navy) */
+  --field-bg: #0D1526;
+  --field-border: rgba(255, 255, 255, 0.08);
 
   --status-success-bg: rgba(34, 197, 94, 0.15);
   --status-success-fg: #4ADE80;
@@ -183,4 +191,176 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(31, 177, 242, 0.7);
 }
+
+/* =========================================================================
+   FIELD INPUT SIKU / RADIUS 0 (Poin 8)
+   Seluruh input teks/number/email/password/search/tel, textarea, select trigger
+   dibuat siku tegas (border-radius: 0), sedangkan tombol, badge, avatar,
+   kartu, dan modal tetap mempertahankan radius melengkung aslinya.
+   ========================================================================= */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([data-inner-input="true"]),
+textarea,
+select,
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"] {
+  border-radius: 0.625rem !important;
+  background-color: var(--field-bg) !important;
+  border-color: var(--field-border) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([data-inner-input="true"]):focus,
+textarea:focus,
+select:focus,
+[data-slot="input"]:focus,
+[data-slot="textarea"]:focus,
+[data-slot="select-trigger"]:focus-visible {
+  border-color: color-mix(in srgb, var(--ring) 60%, transparent) !important;
+}
+
+/* =========================================================================
+   COLOR SCHEME & POPPER Z-INDEX ELEVATION
+   ========================================================================= */
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+/* Pastikan seluruh popper Radix (Dropdown Select, Popover, Menu) berada di depan Modal Dialog */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* =========================================================================
+   STYLING FIELD & ICON TANGGAL MODERN
+   ========================================================================= */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"] {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px;
+  opacity: 0.85;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: var(--accent);
+  transform: scale(1.08);
+}
+
+/* Mode gelap: Ubah warna icon kalender menjadi cyan/biru terang kontras khas Altcycles agar tidak menyatu dengan field gelap */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(5) hue-rotate(185deg) brightness(1.25);
+  opacity: 0.95;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+.dark input[type="month"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) drop-shadow(0 0 6px rgba(31, 177, 242, 0.75));
+  background-color: rgba(31, 177, 242, 0.18);
+  transform: scale(1.1);
+}
+
+/* =========================================================================
+   CUSTOM SLEEK SCROLLBAR (Menghilangkan scrollbar kaku bawaan browser)
+   ========================================================================= */
+/* Sembunyikan scrollbar untuk elemen no-scrollbar dan dropdown radix */
+.no-scrollbar::-webkit-scrollbar,
+[data-radix-select-viewport]::-webkit-scrollbar,
+[data-radix-select-content]::-webkit-scrollbar,
+[data-radix-popper-content-wrapper]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+[data-radix-select-viewport],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* =========================================================================
+   GOOGLE PICKER OVERLAY & DIALOG FIX
+   Pastikan Google Picker berada di z-index tertinggi dan menerima interaksi pointer
+   ========================================================================= */
+.picker-dialog {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 750px !important;
+  height: 480px !important;
+  max-width: 92vw !important;
+  max-height: 88vh !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  border-radius: 14px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+.picker-dialog iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+.picker-dialog-bg {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999998 !important;
+  pointer-events: auto !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
 

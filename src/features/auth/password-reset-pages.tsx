@@ -65,7 +65,7 @@ export function ForgotPasswordPage() {
             <form onSubmit={handleSubmit}>
               <FieldGroup>
                 <Field data-invalid={Boolean(error)}>
-                  <FieldLabel htmlFor="reset-email">Email Kerja</FieldLabel>
+                  <FieldLabel htmlFor="reset-email" required>Email Kerja</FieldLabel>
                   <Input
                     id="reset-email"
                     type="email"
@@ -141,7 +141,7 @@ export function ResetPasswordPage() {
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field data-invalid={Boolean(error)}>
-                <FieldLabel htmlFor="new-pass">Kata Sandi Baru</FieldLabel>
+                <FieldLabel htmlFor="new-pass" required>Kata Sandi Baru</FieldLabel>
                 <Input
                   id="new-pass"
                   type="password"
@@ -153,7 +153,7 @@ export function ResetPasswordPage() {
                 />
               </Field>
               <Field data-invalid={Boolean(error)}>
-                <FieldLabel htmlFor="confirm-pass">
+                <FieldLabel htmlFor="confirm-pass" required>
                   Ulangi Kata Sandi Baru
                 </FieldLabel>
                 <Input

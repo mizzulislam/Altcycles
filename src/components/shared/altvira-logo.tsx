@@ -2,7 +2,7 @@ import * as React from "react";
 import { useOptionalTheme } from "@/lib/theme-context";
 
 export type AltviraIconVariant = "transparent" | "square";
-export type AltviraThemeVariant = "dark" | "light"; // "dark" = for light bg; "light" = for dark bg
+export type AltviraThemeVariant = "dark" | "light" | "white"; // "dark" = for light bg; "light" = for dark bg; "white" = pure white mark
 export type AltviraLayout = "horizontal" | "vertical";
 
 export interface AltviraLogoMarkProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -49,9 +49,11 @@ export function AltviraLogoMark({
   const src =
     iconVariant === "square"
       ? "/brand/altvira-icon-square.png"
-      : effectiveVariant === "dark"
-        ? "/brand/altvira-icon-dark.png"
-        : "/brand/altvira-icon.png";
+      : effectiveVariant === "white"
+        ? "/brand/altvira-icon-white.png"
+        : effectiveVariant === "dark"
+          ? "/brand/altvira-icon-dark.png"
+          : "/brand/altvira-icon.png";
 
   return (
     <img

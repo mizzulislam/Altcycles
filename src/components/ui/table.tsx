@@ -53,23 +53,34 @@ TableRow.displayName = "TableRow";
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      "h-10 px-3 text-left align-middle font-medium text-muted-foreground",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  // Pastikan seluruh teks judul di header tabel posisinya selalu tengah/middle
+  const sanitizedClassName = className
+    ?.replace(/\btext-(left|right|start|end)\b/g, "")
+    ?.replace(/\balign-(top|bottom)\b/g, "");
+
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        "h-10 px-3 text-center align-middle text-xs sm:text-sm font-semibold text-muted-foreground",
+        sanitizedClassName,
+      )}
+      {...props}
+    />
+  );
+});
 TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn("p-3 align-middle", className)} {...props} />
+  <td
+    ref={ref}
+    className={cn("px-3 py-3.5 align-top text-xs sm:text-sm leading-5", className)}
+    {...props}
+  />
 ));
 TableCell.displayName = "TableCell";
 

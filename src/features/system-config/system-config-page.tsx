@@ -22,6 +22,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,7 @@ import {
   getCompanyProfile,
   listDocSequences,
   listDocTemplates,
+  setJournalLockStatus,
   updateCompanyProfile,
   updateDocSequence,
   updateDocTemplate,
@@ -177,8 +179,7 @@ export function SystemConfigPage() {
           Konfigurasi Perusahaan, Pajak, &amp; Dokumen
         </h1>
         <p className="text-sm text-muted-foreground">
-          Diatur satu kali oleh Super Admin dan digunakan secara seragam pada
-          seluruh template PDF Lampiran A.
+          Atur profil identitas perusahaan, tarif pajak transaksi, dan format penomoran dokumen resmi.
         </p>
       </div>
 
@@ -186,6 +187,7 @@ export function SystemConfigPage() {
         <TabsList>
           <TabsTrigger value="identitas">Identitas &amp; Rekening</TabsTrigger>
           <TabsTrigger value="pajak">Pengaturan Pajak (PKP)</TabsTrigger>
+          <TabsTrigger value="akuntansi">Kunci Jurnal &amp; SAK</TabsTrigger>
           <TabsTrigger value="penomoran">Penomoran Dokumen</TabsTrigger>
           <TabsTrigger value="template">Template &amp; Placeholder</TabsTrigger>
         </TabsList>
@@ -205,7 +207,7 @@ export function SystemConfigPage() {
                 <FieldGroup>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel htmlFor="cp-name">Nama Unit Usaha</FieldLabel>
+                      <FieldLabel htmlFor="cp-name" required>Nama Unit Usaha</FieldLabel>
                       <Input
                         id="cp-name"
                         required
@@ -216,7 +218,7 @@ export function SystemConfigPage() {
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="cp-legal">Badan Hukum</FieldLabel>
+                      <FieldLabel htmlFor="cp-legal" required>Badan Hukum</FieldLabel>
                       <Input
                         id="cp-legal"
                         required
@@ -232,7 +234,7 @@ export function SystemConfigPage() {
                   </div>
 
                   <Field>
-                    <FieldLabel htmlFor="cp-addr">Alamat Lengkap Kop</FieldLabel>
+                    <FieldLabel htmlFor="cp-addr" required>Alamat Lengkap Kop</FieldLabel>
                     <Textarea
                       id="cp-addr"
                       required
@@ -245,7 +247,7 @@ export function SystemConfigPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel htmlFor="cp-email">Email Resmi</FieldLabel>
+                      <FieldLabel htmlFor="cp-email" required>Email Resmi</FieldLabel>
                       <Input
                         id="cp-email"
                         type="email"
@@ -257,7 +259,7 @@ export function SystemConfigPage() {
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="cp-phone">Telepon</FieldLabel>
+                      <FieldLabel htmlFor="cp-phone" required>Telepon</FieldLabel>
                       <Input
                         id="cp-phone"
                         required
@@ -273,7 +275,7 @@ export function SystemConfigPage() {
                     <FieldLegend>Rekening Penerimaan Pembayaran Klien</FieldLegend>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <Field>
-                        <FieldLabel htmlFor="cp-bank">Nama Bank</FieldLabel>
+                        <FieldLabel htmlFor="cp-bank" required>Nama Bank</FieldLabel>
                         <Input
                           id="cp-bank"
                           required
@@ -284,7 +286,7 @@ export function SystemConfigPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="cp-accno">Nomor Rekening</FieldLabel>
+                        <FieldLabel htmlFor="cp-accno" required>Nomor Rekening</FieldLabel>
                         <Input
                           id="cp-accno"
                           required
@@ -298,7 +300,7 @@ export function SystemConfigPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="cp-holder">Atas Nama</FieldLabel>
+                        <FieldLabel htmlFor="cp-holder" required>Atas Nama</FieldLabel>
                         <Input
                           id="cp-holder"
                           required
@@ -316,7 +318,7 @@ export function SystemConfigPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel htmlFor="cp-signer">
+                      <FieldLabel htmlFor="cp-signer" required>
                         Nama Penandatangan Default
                       </FieldLabel>
                       <Input
@@ -329,7 +331,7 @@ export function SystemConfigPage() {
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="cp-title">
+                      <FieldLabel htmlFor="cp-title" required>
                         Jabatan Penandatangan
                       </FieldLabel>
                       <Input
@@ -404,18 +406,18 @@ export function SystemConfigPage() {
 
                 <Field className="max-w-xs" data-disabled={!company.pkp_enabled}>
                   <FieldLabel htmlFor="ppn-rate">Tarif PPN Default (%)</FieldLabel>
-                  <Input
+                  <NumberInput
                     id="ppn-rate"
-                    type="number"
+                    allowDecimal
+                    maxDecimals={2}
                     min={0}
                     max={100}
-                    step="0.01"
                     disabled={!company.pkp_enabled}
                     value={company.ppn_rate}
-                    onChange={(e) =>
+                    onValueChange={(ppn_rate) =>
                       setCompany({
                         ...company,
-                        ppn_rate: Number(e.target.value),
+                        ppn_rate,
                       })
                     }
                   />
@@ -425,10 +427,74 @@ export function SystemConfigPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 3: PENOMORAN DOKUMEN */}
-        <TabsContent value="penomoran">
+        {/* TAB 3: KEBIJAKAN AKUNTANSI & KUNCI JURNAL */}
+        <TabsContent value="akuntansi">
           <Card>
             <CardHeader>
+              <CardTitle>Kebijakan Kunci Immutabilitas Jurnal &amp; Mode Pengujian (BR-2)</CardTitle>
+              <CardDescription>
+                Atur proteksi permanensi pencatatan jurnal akuntansi buku besar sesuai standar SAK atau aktifkan mode pengujian untuk kebebasan edit dan hapus transaksi testing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <Alert variant={company.journal_lock_enabled !== false ? "info" : "warning"}>
+                <AlertTitle>
+                  Status Kunci Jurnal:{" "}
+                  {company.journal_lock_enabled !== false
+                    ? "Terkunci (Standar SAK — Immutabilitas BR-2 Aktif)"
+                    : "Terbuka (Mode Pengujian / Testing Transaksi Aktif)"}
+                </AlertTitle>
+                <AlertDescription>
+                  {company.journal_lock_enabled !== false
+                    ? "Jurnal yang sudah diposting bersifat permanen dan tidak dapat diedit atau dihapus secara langsung. Segala perubahan wajib diterbitkan melalui jurnal koreksi/penyesuaian (BR-2) dengan jejak audit resmi."
+                    : "Perlindungan immutabilitas dinonaktifkan sementara. Anda dan tim Admin dapat mengedit serta menghapus transaksi jurnal yang sudah diposting langsung dari Buku Jurnal Harian."}
+                </AlertDescription>
+              </Alert>
+
+              <FieldSet>
+                <FieldLegend>Kontrol Penguncian Jurnal</FieldLegend>
+                <Field orientation="horizontal">
+                  <div className="flex flex-col gap-0.5">
+                    <FieldLabel htmlFor="sw-journal-lock">
+                      Kunci Immutabilitas Jurnal Akuntansi (BR-2)
+                    </FieldLabel>
+                    <FieldDescription>
+                      Aktifkan untuk mematuhi kaidah akuntansi standar SAK (permanen &amp; anti-manipulasi). Nonaktifkan jika sedang melakukan input transaksi testing dan ingin bebas mengubah atau menghapus data jurnal.
+                    </FieldDescription>
+                  </div>
+                  <Switch
+                    id="sw-journal-lock"
+                    checked={company.journal_lock_enabled !== false}
+                    onCheckedChange={async (checked) => {
+                      try {
+                        await setJournalLockStatus(checked);
+                        setCompany((prev) =>
+                          prev ? { ...prev, journal_lock_enabled: checked } : prev,
+                        );
+                        if (checked) {
+                          toast.success("Kunci jurnal diaktifkan (Standar SAK / Mode Produksi).");
+                        } else {
+                          toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit dan dihapus).");
+                        }
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error
+                            ? err.message
+                            : "Gagal memperbarui pengaturan kunci jurnal.",
+                        );
+                      }
+                    }}
+                  />
+                </Field>
+              </FieldSet>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 3: PENOMORAN DOKUMEN */}
+        <TabsContent value="penomoran">
+          <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle>Format Penomoran Dokumen Berurutan (Lampiran A.0)</CardTitle>
               <CardDescription>
                 Gunakan variabel <code>{"{{tahun}}"}</code>,{" "}
@@ -437,17 +503,17 @@ export function SystemConfigPage() {
                 kode acak 6 karakter (<code>PO-YYYYMM-XXXXXX</code>).
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Kode</TableHead>
-                    <TableHead>Dokumen</TableHead>
-                    <TableHead>Pola Nomor</TableHead>
-                    <TableHead>Digit</TableHead>
-                    <TableHead>Reset</TableHead>
-                    <TableHead>Urutan Terakhir</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                  <TableRow className="bg-muted/20 hover:bg-muted/20">
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Dokumen</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Pola Nomor</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Digit</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Reset</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Urutan Terakhir</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -457,11 +523,11 @@ export function SystemConfigPage() {
                       .sort((a, b) => b.period_key.localeCompare(a.period_key))[0];
                     return (
                       <TableRow key={seq.doc_type}>
-                        <TableCell className="font-mono font-semibold">
+                        <TableCell className="pl-6 pr-3 py-3 text-center font-mono font-semibold whitespace-nowrap">
                           {seq.doc_type}
                         </TableCell>
-                        <TableCell>{seq.label}</TableCell>
-                        <TableCell className="min-w-64">
+                        <TableCell className="px-3 py-3 text-xs sm:text-sm">{seq.label}</TableCell>
+                        <TableCell className="px-3 py-3 min-w-56">
                           <Input
                             value={seq.prefix_pattern}
                             onChange={(e) => {
@@ -477,7 +543,7 @@ export function SystemConfigPage() {
                             }}
                           />
                         </TableCell>
-                        <TableCell className="w-20">
+                        <TableCell className="px-3 py-3 w-20">
                           <Input
                             type="number"
                             min={2}
@@ -496,7 +562,7 @@ export function SystemConfigPage() {
                             }}
                           />
                         </TableCell>
-                        <TableCell className="w-36">
+                        <TableCell className="px-3 py-3 w-36">
                           <Select
                             value={seq.reset_period}
                             onValueChange={(val) => {
@@ -523,7 +589,7 @@ export function SystemConfigPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="px-3 py-3 text-center text-xs text-muted-foreground whitespace-nowrap">
                           {latestCounter ? (
                             <StatusBadge
                               tone="secondary"
@@ -533,15 +599,20 @@ export function SystemConfigPage() {
                             "Belum dipakai"
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => void handleSaveSequence(seq)}
-                          >
-                            Simpan
-                          </Button>
+                        <TableCell className="pl-2 pr-6 py-3 text-center whitespace-nowrap">
+                          <div className="flex justify-center items-center">
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              title="Simpan Pola Penomoran"
+                              onClick={() => void handleSaveSequence(seq)}
+                              className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
+                            >
+                              <SaveIcon className="size-4" />
+                              <span className="sr-only">Simpan</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

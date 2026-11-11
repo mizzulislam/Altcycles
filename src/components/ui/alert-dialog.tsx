@@ -12,7 +12,10 @@ const AlertDialogOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
-    className={cn("fixed inset-0 bg-foreground/40 backdrop-blur-[1px]", className)}
+    className={cn(
+      "fixed inset-0 z-[100] bg-black/60 dark:bg-white/10 dark:backdrop-blur-sm duration-200 animate-in fade-in-0",
+      className,
+    )}
     {...props}
     ref={ref}
   />
@@ -28,7 +31,7 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border bg-background p-6 shadow-lg",
+        "fixed left-1/2 top-1/2 z-[101] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] duration-200 animate-in fade-in-0 zoom-in-95",
         className,
       )}
       {...props}
@@ -42,7 +45,13 @@ function AlertDialogHeader({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex flex-col gap-2 text-left", className)} {...props} />
+    <div
+      className={cn(
+        "flex flex-col gap-1.5 pb-4 border-b border-border/70 dark:border-white/10 text-left",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -53,7 +62,7 @@ function AlertDialogFooter({
   return (
     <div
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-2",
         className,
       )}
       {...props}
@@ -67,7 +76,10 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold", className)}
+    className={cn(
+      "text-base sm:text-lg font-bold leading-tight tracking-tight text-foreground",
+      className,
+    )}
     {...props}
   />
 ));
@@ -104,7 +116,11 @@ const AlertDialogCancel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
-    className={cn(buttonVariants({ variant: "outline" }), className)}
+    className={cn(
+      buttonVariants({ variant: "outline" }),
+      "hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/30 active:bg-rose-500/20",
+      className,
+    )}
     {...props}
   />
 ));

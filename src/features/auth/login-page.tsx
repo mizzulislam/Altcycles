@@ -455,6 +455,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     <Field data-invalid={Boolean(error)}>
                       <FieldLabel
                         htmlFor="auth-fullname"
+                        required
                         className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
                       >
                         Nama Lengkap
@@ -479,6 +480,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                   <Field data-invalid={Boolean(error)}>
                     <FieldLabel
                       htmlFor="auth-username"
+                      required
                       className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
                     >
                       Username
@@ -508,6 +510,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     <div className="flex items-center justify-between">
                       <FieldLabel
                         htmlFor="auth-password"
+                        required
                         className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
                       >
                         Kata Sandi
@@ -697,6 +700,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     <Field data-invalid={Boolean(error)}>
                       <FieldLabel
                         htmlFor="auth-confirm-password"
+                        required
                         className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
                       >
                         Konfirmasi Kata Sandi
