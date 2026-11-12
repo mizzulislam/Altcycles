@@ -429,30 +429,6 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
   animation: oauth-logo-enter var(--oauth-d1) var(--oauth-ease) both;
 }
 
-/* Tahap 1–2 (0–850ms): Garis cahaya biru tipis penghubung Google <-> Altvira */
-@keyframes oauth-connector-beam {
-  0% {
-    opacity: 0;
-    transform: scaleX(0.15);
-  }
-  42% {
-    opacity: 0.85;
-    transform: scaleX(1);
-  }
-  75% {
-    opacity: 0.55;
-    transform: scaleX(0.45);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(0.05);
-  }
-}
-
-.oauth-beam-anim {
-  animation: oauth-connector-beam 900ms var(--oauth-ease) both;
-}
-
 /* Tahap 2 (400–1000ms): Altvira meluncur dalam SATU gerakan kontinu ke titik tengah */
 @keyframes oauth-altvira-slide-center {
   from {
@@ -568,7 +544,6 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
     animation: oauth-screen-out 300ms ease-out forwards;
   }
   .oauth-logo-enter,
-  .oauth-beam-anim,
   .oauth-altvira-track,
   .oauth-google-track,
   .oauth-altvira-settle,

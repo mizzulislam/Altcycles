@@ -74,6 +74,8 @@ export function OAuthLoadingCard({
   const onCancelRef = React.useRef(onCancel);
   onCancelRef.current = onCancel;
 
+  const exitCallbackRef = React.useRef<(() => void) | null>(null);
+
   // Timer sinkronisasi timeline utama (Tahap 1–5) tanpa mematahkan animasi CSS
   React.useEffect(() => {
     const holdDuration = prefersReducedMotion
@@ -87,17 +89,22 @@ export function OAuthLoadingCard({
     return () => window.clearTimeout(doneTimer);
   }, [prefersReducedMotion]);
 
-  // Tahap 6: Seluruh layar fade-out sekaligus setelah timeline selesai & autentikasi siap
+  // Tahap 6: Picu fade-out sekali saat timeline selesai & autentikasi siap
   React.useEffect(() => {
-    if (!minTimelineDone || !isProfileReady || isExiting) return;
-
+    if (!minTimelineDone || !isProfileReady || exitCallbackRef.current) return;
+    exitCallbackRef.current = () => onCompleteRef.current?.();
     setIsExiting(true);
+  }, [minTimelineDone, isProfileReady]);
+
+  // Eksekusi navigasi tepat setelah layar selesai fade-out (tidak dibatalkan oleh re-render isExiting)
+  React.useEffect(() => {
+    if (!isExiting) return;
     const exitTimer = window.setTimeout(() => {
-      onCompleteRef.current?.();
+      exitCallbackRef.current?.();
     }, TIMING.EXIT_FADE_MS);
 
     return () => window.clearTimeout(exitTimer);
-  }, [minTimelineDone, isProfileReady, isExiting]);
+  }, [isExiting]);
 
   // Fallback lambat > 8 detik: tampilkan tombol teks kecil "Batalkan"
   React.useEffect(() => {
@@ -110,12 +117,10 @@ export function OAuthLoadingCard({
   }, [isProfileReady]);
 
   const handleSlowCancel = React.useCallback(() => {
-    if (isExiting) return;
+    if (exitCallbackRef.current) return;
+    exitCallbackRef.current = () => onCancelRef.current?.();
     setIsExiting(true);
-    window.setTimeout(() => {
-      onCancelRef.current?.();
-    }, TIMING.EXIT_FADE_MS);
-  }, [isExiting]);
+  }, []);
 
   return (
     <div
@@ -165,16 +170,6 @@ export function OAuthLoadingCard({
         </div>
       ) : (
         <div className="relative z-10 flex h-40 w-full max-w-lg items-center justify-center">
-          {/* Tahap 1–2 (0–900ms): Garis cahaya biru tipis penghubung Google <-> Altvira */}
-          <div
-            aria-hidden="true"
-            className={`oauth-beam-anim pointer-events-none absolute z-0 h-[1.5px] w-24 sm:w-[104px] rounded-full ${
-              isDark
-                ? "bg-gradient-to-r from-[#4285F4]/60 via-[#1FB1F2]/85 to-[#0B43C8]/75"
-                : "bg-gradient-to-r from-[#4285F4]/55 via-[#1FB1F2]/75 to-[#0B43C8]/65"
-            }`}
-          />
-
           {/* Logo Google (z-10): muncul di -90px, lalu pada 600–1000ms terdorong -60px, mengecil, blur & fade-out, lalu dihapus dari DOM */}
           {!googleRemoved && (
             <div
