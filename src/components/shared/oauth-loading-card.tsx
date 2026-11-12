@@ -14,9 +14,9 @@ export interface OAuthLoadingCardProps {
 
 type AnimationStage =
   | "enter"
-  | "merge"
-  | "burst"
-  | "settle"
+  | "approach"
+  | "handoff"
+  | "center"
   | "waiting"
   | "exit";
 
@@ -30,17 +30,42 @@ const EASE_IN_OUT: [number, number, number, number] = [0.42, 0, 0.58, 1];
  * Konfigurasi durasi tiap tahap animasi (dalam milidetik) agar mudah disesuaikan.
  */
 const TIMING = {
-  STAGE_1_ENTER_MS: 400, // 0–400ms: Latar fade-in, logo Google & Altvira masuk (scale 0.8 -> 1)
-  STAGE_2_MERGE_MS: 700, // 400–1100ms: Kedua logo bergerak pelan ke titik tengah + jejak cahaya biru
-  STAGE_3_BURST_MS: 300, // 1100–1400ms: Saat bertemu, glow burst biru & logo Google memudar ke dalam Altvira
-  STAGE_4_SETTLE_MS: 400, // 1400–1800ms: Logo Altvira membesar (scale 1.15) dengan denyut glow lalu stabil
-  STAGE_5_EXIT_MS: 400, // 1800–2200ms: Seluruh layar fade-out halus sebelum mengarah ke dasbor
-  SLOW_FALLBACK_MS: 8000, // 8000ms: Tampilkan tombol teks kecil "Batalkan" jika pemuatan masih berlangsung
+  STAGE_1_ENTER_MS: 400, // 0–400ms: Logo Google (kiri) & Altvira (kanan) fade-in & scale 0.85 -> 1
+  STAGE_2_APPROACH_MS: 600, // 400–1000ms: Bergerak mendekat dengan jarak bersih >= 24px + garis & titik cahaya
+  STAGE_3_HANDOFF_MS: 400, // 1000–1400ms: Altvira denyut glow 1x; Google fade-out, scale 0.6, blur 6px ke kanan
+  STAGE_4_CENTER_MS: 500, // 1400–1900ms: Google sudah hilang total; Altvira bergeser halus ke tengah & scale 1.1
+  STAGE_5_EXIT_MS: 400, // 1900–2300ms: Layar fade-out halus sebelum masuk ke dasbor
+  SLOW_FALLBACK_MS: 8000, // 8000ms: Munculkan tombol teks kecil "Batalkan" jika autentikasi lambat
   REDUCED_ENTER_MS: 300, // Fade-in sederhana saat prefers-reduced-motion aktif
-  REDUCED_HOLD_MS: 900, // Tahan sebentar sebelum fade-out pada mode reduced-motion
+  REDUCED_HOLD_MS: 900, // Durasi tahan minimum pada mode prefers-reduced-motion
 } as const;
 
-function GoogleLogo({ className = "size-14 sm:size-[68px]" }: { className?: string }) {
+interface ResponsiveOffsets {
+  startOffset: number; // Jarak awal dari titik tengah layar (Tahap 1)
+  restOffset: number; // Jarak berhenti terpisah dengan celah >= 24px (Tahap 2)
+  beamTravel: number; // Rentang gerak titik cahaya di celah tengah
+}
+
+function getResponsiveOffsets(isDesktop: boolean): ResponsiveOffsets {
+  if (isDesktop) {
+    return {
+      startOffset: 140,
+      restOffset: 60, // Diameter total celah antar tepi: (60*2) - 34 - 37 = 49px (>= 24px)
+      beamTravel: 18,
+    };
+  }
+  return {
+    startOffset: 92,
+    restOffset: 46, // Diameter total celah antar tepi: (46*2) - 28 - 28 = 36px (>= 24px)
+    beamTravel: 13,
+  };
+}
+
+function GoogleLogo({
+  className = "size-14 sm:size-[68px]",
+}: {
+  className?: string;
+}) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
       <path
@@ -80,19 +105,18 @@ export function OAuthLoadingCard({
   const [showSlowCancel, setShowSlowCancel] = React.useState(false);
   const [isCancelling, setIsCancelling] = React.useState(false);
 
-  // Jarak awal responsif dari titik tengah layar: 72px di mobile, 140px (120–160px) di desktop
-  const [mergeOffset, setMergeOffset] = React.useState<number>(() => {
-    if (typeof window === "undefined") return 140;
-    return window.innerWidth < 640 ? 72 : 140;
+  const [offsets, setOffsets] = React.useState<ResponsiveOffsets>(() => {
+    if (typeof window === "undefined") return getResponsiveOffsets(true);
+    return getResponsiveOffsets(window.innerWidth >= 640);
   });
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(min-width: 640px)");
-    const updateOffset = () => setMergeOffset(mq.matches ? 140 : 72);
-    updateOffset();
-    mq.addEventListener("change", updateOffset);
-    return () => mq.removeEventListener("change", updateOffset);
+    const updateOffsets = () => setOffsets(getResponsiveOffsets(mq.matches));
+    updateOffsets();
+    mq.addEventListener("change", updateOffsets);
+    return () => mq.removeEventListener("change", updateOffsets);
   }, []);
 
   const onCompleteRef = React.useRef(onComplete);
@@ -101,7 +125,7 @@ export function OAuthLoadingCard({
   const onCancelRef = React.useRef(onCancel);
   onCancelRef.current = onCancel;
 
-  // Rangkaian timeline berurutan (Tahap 1 -> Tahap 2 -> Tahap 3 -> Tahap 4)
+  // Rangkaian timeline berurutan: Tahap 1 -> Tahap 2 -> Tahap 3 -> Tahap 4
   React.useEffect(() => {
     if (prefersReducedMotion) {
       const reducedTimer = window.setTimeout(() => {
@@ -110,14 +134,14 @@ export function OAuthLoadingCard({
       return () => window.clearTimeout(reducedTimer);
     }
 
-    const tStage2Start = TIMING.STAGE_1_ENTER_MS;
-    const tStage3Start = tStage2Start + TIMING.STAGE_2_MERGE_MS;
-    const tStage4Start = tStage3Start + TIMING.STAGE_3_BURST_MS;
-    const tStage4End = tStage4Start + TIMING.STAGE_4_SETTLE_MS;
+    const tStage2Start = TIMING.STAGE_1_ENTER_MS; // 400ms
+    const tStage3Start = tStage2Start + TIMING.STAGE_2_APPROACH_MS; // 1000ms
+    const tStage4Start = tStage3Start + TIMING.STAGE_3_HANDOFF_MS; // 1400ms
+    const tStage4End = tStage4Start + TIMING.STAGE_4_CENTER_MS; // 1900ms
 
-    const t2 = window.setTimeout(() => setStage("merge"), tStage2Start);
-    const t3 = window.setTimeout(() => setStage("burst"), tStage3Start);
-    const t4 = window.setTimeout(() => setStage("settle"), tStage4Start);
+    const t2 = window.setTimeout(() => setStage("approach"), tStage2Start);
+    const t3 = window.setTimeout(() => setStage("handoff"), tStage3Start);
+    const t4 = window.setTimeout(() => setStage("center"), tStage4Start);
     const tDone = window.setTimeout(() => setMinTimelineDone(true), tStage4End);
 
     return () => {
@@ -128,7 +152,7 @@ export function OAuthLoadingCard({
     };
   }, [prefersReducedMotion]);
 
-  // Tahap 4 -> Loop Waiting atau langsung Tahap 5 (Exit) tergantung kesiapan autentikasi
+  // Tahap 4 selesai -> loop denyut halus bila belum siap, atau Tahap 5 fade-out bila siap
   React.useEffect(() => {
     if (!minTimelineDone || isCancelling) return;
 
@@ -147,7 +171,7 @@ export function OAuthLoadingCard({
     return () => window.clearTimeout(exitTimer);
   }, [minTimelineDone, isProfileReady, isCancelling, prefersReducedMotion]);
 
-  // Fallback lambat: tampilkan tombol "Batalkan" hanya jika proses > 8 detik
+  // Fallback lambat > 8 detik: tampilkan tombol teks kecil "Batalkan"
   React.useEffect(() => {
     if (isProfileReady) return;
     const slowTimer = window.setTimeout(() => {
@@ -192,16 +216,14 @@ export function OAuthLoadingCard({
         className="pointer-events-none fixed inset-0 overflow-hidden"
         aria-hidden="true"
       >
-        {/* Radial Glow Tengah */}
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[520px] sm:size-[680px] rounded-full blur-[120px] transition-opacity duration-500 ${
             isDark
-              ? "bg-[radial-gradient(circle,rgba(11,67,200,0.28)_0%,rgba(31,177,242,0.12)_42%,transparent_72%)]"
-              : "bg-[radial-gradient(circle,rgba(11,67,200,0.14)_0%,rgba(31,177,242,0.08)_45%,transparent_72%)]"
+              ? "bg-[radial-gradient(circle,rgba(11,67,200,0.26)_0%,rgba(31,177,242,0.11)_42%,transparent_72%)]"
+              : "bg-[radial-gradient(circle,rgba(11,67,200,0.11)_0%,rgba(31,177,242,0.06)_45%,transparent_72%)]"
           }`}
         />
 
-        {/* Grid Latar Tipis */}
         <div
           className={`absolute inset-0 bg-[size:36px_36px] ${
             isDark
@@ -211,13 +233,13 @@ export function OAuthLoadingCard({
         />
       </div>
 
-      {/* Area Tengah: Hanya Logo Google & Logo Altvira */}
+      {/* Panggung Tengah: Hanya Logo Google & Logo Altvira */}
       {prefersReducedMotion ? (
         /* Mode prefers-reduced-motion: Hanya logo Altvira fade-in & fade-out sederhana */
         <div className="relative z-10 flex items-center justify-center">
-          <div className="size-16 sm:size-[76px] flex items-center justify-center">
+          <div className="size-14 sm:size-[74px] flex items-center justify-center">
             <AltviraLogoMark
-              size={76}
+              size={74}
               iconVariant="transparent"
               variant={isDark ? "light" : "dark"}
               style={{ width: "100%", height: "100%" }}
@@ -226,139 +248,157 @@ export function OAuthLoadingCard({
         </div>
       ) : (
         <div className="relative z-10 flex h-40 w-full max-w-lg items-center justify-center">
-          {/* Tahap 3 & 4: Radial Burst / Loop Denyut Glow di Tengah (GPU transform + opacity saja) */}
+          {/* Tahap 2 (400–1000ms): Garis Cahaya Biru Tipis & Titik Cahaya Mengalir (Google -> Altvira) */}
           <motion.div
             aria-hidden="true"
-            initial={{ scale: 0.45, opacity: 0 }}
+            initial={{ opacity: 0, scaleX: 0 }}
             animate={
-              stage === "enter" || stage === "merge"
-                ? { scale: 0.45, opacity: 0 }
-                : stage === "burst"
-                  ? {
-                      scale: [0.5, 1.85],
-                      opacity: [0, 0.92, 0.25],
-                    }
-                  : stage === "settle"
-                    ? {
-                        scale: [1.05, 1.45, 1],
-                        opacity: [0.3, 0.8, 0.22],
-                      }
-                    : stage === "waiting"
-                      ? {
-                          scale: [0.95, 1.28, 0.95],
-                          opacity: [0.22, 0.65, 0.22],
-                        }
-                      : { scale: 0.95, opacity: 0 }
+              stage === "approach"
+                ? { opacity: [0, 0.9, 0.9, 0], scaleX: [0.1, 1, 1, 0.85] }
+                : { opacity: 0, scaleX: 0 }
             }
-            transition={
-              stage === "burst"
-                ? { duration: TIMING.STAGE_3_BURST_MS / 1000, ease: EASE_OUT_EXPO }
-                : stage === "settle"
-                  ? { duration: TIMING.STAGE_4_SETTLE_MS / 1000, ease: EASE_OUT_EXPO }
-                  : stage === "waiting"
-                    ? { duration: 1.8, repeat: Infinity, ease: EASE_IN_OUT }
-                    : { duration: 0.35, ease: EASE_OUT_EXPO }
-            }
-            className={`pointer-events-none absolute size-36 sm:size-44 rounded-full blur-2xl ${
-              isDark
-                ? "bg-[radial-gradient(circle,rgba(31,177,242,0.72)_0%,rgba(11,67,200,0.45)_45%,transparent_75%)]"
-                : "bg-[radial-gradient(circle,rgba(11,67,200,0.45)_0%,rgba(31,177,242,0.32)_45%,transparent_75%)]"
-            }`}
-          />
-
-          {/* Tahap 1, 2, 3: Logo Google (Sisi Kiri -> Tengah -> Memudar ke Altvira) */}
-          <motion.div
-            initial={{ x: -mergeOffset, scale: 0.8, opacity: 0 }}
-            animate={
-              stage === "enter"
-                ? { x: -mergeOffset, scale: 1, opacity: 1 }
-                : stage === "merge"
-                  ? { x: 0, scale: 1, opacity: 1 }
-                  : { x: 0, scale: 0.25, opacity: 0 }
-            }
-            transition={
-              stage === "enter"
-                ? { duration: TIMING.STAGE_1_ENTER_MS / 1000, ease: EASE_OUT_EXPO }
-                : stage === "merge"
-                  ? { duration: TIMING.STAGE_2_MERGE_MS / 1000, ease: EASE_OUT_EXPO }
-                  : { duration: TIMING.STAGE_3_BURST_MS / 1000, ease: EASE_OUT_EXPO }
-            }
-            className="absolute flex items-center justify-center"
+            transition={{
+              duration: TIMING.STAGE_2_APPROACH_MS / 1000,
+              times: [0, 0.25, 0.85, 1],
+              ease: EASE_OUT_EXPO,
+            }}
+            className="pointer-events-none absolute z-0 flex items-center justify-center w-9 sm:w-11"
           >
-            {/* Jejak Cahaya Biru Tipis di Belakang Google (hanya transform + opacity) */}
-            <motion.div
-              aria-hidden="true"
-              initial={{ opacity: 0, scaleX: 0.2 }}
-              animate={
-                stage === "merge"
-                  ? { opacity: [0, 0.85, 0], scaleX: [0.35, 1.05, 0.2] }
-                  : { opacity: 0, scaleX: 0.2 }
-              }
-              transition={{
-                duration: TIMING.STAGE_2_MERGE_MS / 1000,
-                times: [0, 0.45, 1],
-                ease: EASE_OUT_EXPO,
-              }}
-              className={`pointer-events-none absolute right-1/2 mr-4 sm:mr-5 h-3 w-20 sm:w-28 origin-right rounded-full blur-[5px] ${
+            {/* Garis cahaya biru tipis */}
+            <div
+              className={`h-[1.5px] w-full rounded-full ${
                 isDark
-                  ? "bg-gradient-to-l from-[#1FB1F2]/80 via-[#0B43C8]/40 to-transparent"
-                  : "bg-gradient-to-l from-[#0B43C8]/65 via-[#1FB1F2]/35 to-transparent"
+                  ? "bg-gradient-to-r from-[#4285F4]/60 via-[#1FB1F2]/85 to-[#0B43C8]/75"
+                  : "bg-gradient-to-r from-[#4285F4]/55 via-[#1FB1F2]/75 to-[#0B43C8]/65"
               }`}
             />
-            <GoogleLogo className="relative z-10 size-14 sm:size-[68px]" />
+
+            {/* Satu titik cahaya mengalir dari tepi Google ke tepi Altvira */}
+            <motion.span
+              initial={{ x: -offsets.beamTravel, opacity: 0 }}
+              animate={
+                stage === "approach"
+                  ? {
+                      x: [-offsets.beamTravel, offsets.beamTravel],
+                      opacity: [0, 1, 1, 0],
+                    }
+                  : { x: -offsets.beamTravel, opacity: 0 }
+              }
+              transition={{
+                duration: TIMING.STAGE_2_APPROACH_MS / 1000,
+                times: [0, 0.2, 0.85, 1],
+                ease: EASE_OUT_EXPO,
+              }}
+              className="absolute size-2 rounded-full bg-[#1FB1F2] shadow-[0_0_10px_rgba(31,177,242,0.9)]"
+            />
           </motion.div>
 
-          {/* Tahap 1–4: Logo Altvira (Sisi Kanan -> Tengah -> Scale 1.15 -> Stabil / Loop Glow) */}
+          {/* Logo Google (z-10, selalu di bawah z-20 Altvira; hilang total sebelum Tahap 4 dimulai) */}
           <motion.div
-            initial={{ x: mergeOffset, scale: 0.8, opacity: 0 }}
+            initial={{
+              x: -offsets.startOffset,
+              scale: 0.85,
+              opacity: 0,
+              filter: "blur(0px)",
+            }}
             animate={
               stage === "enter"
-                ? { x: mergeOffset, scale: 1, opacity: 1 }
-                : stage === "merge" || stage === "burst"
-                  ? { x: 0, scale: 1, opacity: 1 }
-                  : stage === "settle"
-                    ? { x: 0, scale: [1, 1.15, 1], opacity: 1 }
-                    : stage === "waiting"
-                      ? { x: 0, scale: [1, 1.04, 1], opacity: 1 }
-                      : { x: 0, scale: 1, opacity: 1 }
+                ? {
+                    x: -offsets.startOffset,
+                    scale: 1,
+                    opacity: 1,
+                    filter: "blur(0px)",
+                  }
+                : stage === "approach"
+                  ? {
+                      x: -offsets.restOffset,
+                      scale: 1,
+                      opacity: 1,
+                      filter: "blur(0px)",
+                    }
+                  : {
+                      x: 0,
+                      scale: 0.6,
+                      opacity: 0,
+                      filter: "blur(6px)",
+                    }
             }
             transition={
               stage === "enter"
                 ? { duration: TIMING.STAGE_1_ENTER_MS / 1000, ease: EASE_OUT_EXPO }
-                : stage === "merge"
-                  ? { duration: TIMING.STAGE_2_MERGE_MS / 1000, ease: EASE_OUT_EXPO }
-                  : stage === "settle"
-                    ? {
-                        duration: TIMING.STAGE_4_SETTLE_MS / 1000,
-                        times: [0, 0.45, 1],
-                        ease: EASE_OUT_EXPO,
-                      }
+                : stage === "approach"
+                  ? { duration: TIMING.STAGE_2_APPROACH_MS / 1000, ease: EASE_OUT_EXPO }
+                  : {
+                      // Selesai lebih cepat (350ms < 400ms) agar opacity sudah 0 sebelum Tahap 4 (1400ms)
+                      duration: (TIMING.STAGE_3_HANDOFF_MS - 50) / 1000,
+                      ease: EASE_OUT_EXPO,
+                    }
+            }
+            className="pointer-events-none absolute z-10 flex items-center justify-center"
+          >
+            <GoogleLogo className="size-14 sm:size-[68px]" />
+          </motion.div>
+
+          {/* Logo Altvira (z-20 selalu di atas; berhenti terpisah pada Tahap 2-3 lalu bergerak ke x=0 pada Tahap 4) */}
+          <motion.div
+            initial={{ x: offsets.startOffset, scale: 0.85, opacity: 0 }}
+            animate={
+              stage === "enter"
+                ? { x: offsets.startOffset, scale: 1, opacity: 1 }
+                : stage === "approach" || stage === "handoff"
+                  ? { x: offsets.restOffset, scale: 1, opacity: 1 }
+                  : stage === "center"
+                    ? { x: 0, scale: 1.1, opacity: 1 }
                     : stage === "waiting"
-                      ? { duration: 1.8, repeat: Infinity, ease: EASE_IN_OUT }
-                      : { duration: TIMING.STAGE_3_BURST_MS / 1000, ease: EASE_OUT_EXPO }
+                      ? { x: 0, scale: [1.1, 1.14, 1.1], opacity: 1 }
+                      : { x: 0, scale: 1.1, opacity: 1 }
+            }
+            transition={
+              stage === "enter"
+                ? { duration: TIMING.STAGE_1_ENTER_MS / 1000, ease: EASE_OUT_EXPO }
+                : stage === "approach"
+                  ? { duration: TIMING.STAGE_2_APPROACH_MS / 1000, ease: EASE_OUT_EXPO }
+                  : stage === "handoff"
+                    ? { duration: TIMING.STAGE_3_HANDOFF_MS / 1000, ease: EASE_OUT_EXPO }
+                    : stage === "center"
+                      ? { duration: TIMING.STAGE_4_CENTER_MS / 1000, ease: EASE_OUT_EXPO }
+                      : stage === "waiting"
+                        ? { duration: 1.6, repeat: Infinity, ease: EASE_IN_OUT }
+                        : { duration: TIMING.STAGE_5_EXIT_MS / 1000, ease: EASE_OUT_EXPO }
             }
             className="relative z-20 flex items-center justify-center"
           >
-            {/* Jejak Cahaya Biru Tipis di Belakang Altvira (hanya transform + opacity) */}
+            {/* Glow Ring di Belakang Logo Altvira (z-0, tidak mengaburkan huruf V di tema terang/gelap) */}
             <motion.div
               aria-hidden="true"
-              initial={{ opacity: 0, scaleX: 0.2 }}
+              initial={{ scale: 0.75, opacity: 0 }}
               animate={
-                stage === "merge"
-                  ? { opacity: [0, 0.85, 0], scaleX: [0.35, 1.05, 0.2] }
-                  : { opacity: 0, scaleX: 0.2 }
+                stage === "handoff"
+                  ? {
+                      scale: [0.85, 1.45, 0.95],
+                      opacity: isDark ? [0, 0.75, 0] : [0, 0.4, 0],
+                    }
+                  : stage === "waiting"
+                    ? {
+                        scale: [0.95, 1.25, 0.95],
+                        opacity: isDark ? [0.2, 0.55, 0.2] : [0.1, 0.3, 0.1],
+                      }
+                    : { scale: 0.85, opacity: 0 }
               }
-              transition={{
-                duration: TIMING.STAGE_2_MERGE_MS / 1000,
-                times: [0, 0.45, 1],
-                ease: EASE_OUT_EXPO,
-              }}
-              className={`pointer-events-none absolute left-1/2 ml-4 sm:ml-5 h-3 w-20 sm:w-28 origin-left rounded-full blur-[5px] ${
+              transition={
+                stage === "handoff"
+                  ? { duration: TIMING.STAGE_3_HANDOFF_MS / 1000, ease: EASE_OUT_EXPO }
+                  : stage === "waiting"
+                    ? { duration: 1.6, repeat: Infinity, ease: EASE_IN_OUT }
+                    : { duration: 0.3, ease: EASE_OUT_EXPO }
+              }
+              className={`pointer-events-none absolute z-0 size-28 sm:size-36 rounded-full blur-xl ${
                 isDark
-                  ? "bg-gradient-to-r from-[#1FB1F2]/80 via-[#0B43C8]/40 to-transparent"
-                  : "bg-gradient-to-r from-[#0B43C8]/65 via-[#1FB1F2]/35 to-transparent"
+                  ? "bg-[radial-gradient(circle,rgba(31,177,242,0.55)_0%,rgba(11,67,200,0.3)_48%,transparent_75%)]"
+                  : "bg-[radial-gradient(circle,rgba(31,177,242,0.42)_0%,rgba(11,67,200,0.22)_48%,transparent_75%)]"
               }`}
             />
+
             <div className="relative z-10 size-14 sm:size-[74px] flex items-center justify-center">
               <AltviraLogoMark
                 size={74}
