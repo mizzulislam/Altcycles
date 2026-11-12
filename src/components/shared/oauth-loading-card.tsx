@@ -1,5 +1,5 @@
 import * as React from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { useOptionalTheme } from "@/lib/theme-context";
@@ -12,54 +12,17 @@ export interface OAuthLoadingCardProps {
   onCancel?: () => void;
 }
 
-type AnimationStage =
-  | "enter"
-  | "approach"
-  | "handoff"
-  | "center"
-  | "waiting"
-  | "exit";
-
 /**
- * Kurva easing halus sesuai spesifikasi teknis (cubic-bezier(0.22, 1, 0.36, 1)).
- */
-const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
-const EASE_IN_OUT: [number, number, number, number] = [0.42, 0, 0.58, 1];
-
-/**
- * Konfigurasi durasi tiap tahap animasi (dalam milidetik) agar mudah disesuaikan.
+ * Total waktu showcase sebelum boleh masuk ke Tahap 6 (fade-out ke dasbor):
+ * Tahap 1 (400ms) + Tahap 2 (600ms) + Tahap 4 (300ms) + Tahap 5 diam di tengah (400ms) = 1700ms.
+ * Samakan nilai ini bila mengubah variabel --oauth-d1 s/d --oauth-d5 di index.css.
  */
 const TIMING = {
-  STAGE_1_ENTER_MS: 400, // 0–400ms: Logo Google (kiri) & Altvira (kanan) fade-in & scale 0.85 -> 1
-  STAGE_2_APPROACH_MS: 600, // 400–1000ms: Bergerak mendekat dengan jarak bersih >= 24px + garis & titik cahaya
-  STAGE_3_HANDOFF_MS: 400, // 1000–1400ms: Altvira denyut glow 1x; Google fade-out, scale 0.6, blur 6px ke kanan
-  STAGE_4_CENTER_MS: 500, // 1400–1900ms: Google sudah hilang total; Altvira bergeser halus ke tengah & scale 1.1
-  STAGE_5_EXIT_MS: 400, // 1900–2300ms: Layar fade-out halus sebelum masuk ke dasbor
-  SLOW_FALLBACK_MS: 8000, // 8000ms: Munculkan tombol teks kecil "Batalkan" jika autentikasi lambat
-  REDUCED_ENTER_MS: 300, // Fade-in sederhana saat prefers-reduced-motion aktif
-  REDUCED_HOLD_MS: 900, // Durasi tahan minimum pada mode prefers-reduced-motion
+  MIN_SEQUENCE_MS: 1700, // 0–1700ms: Total durasi tahap 1–5 sebelum fade-out (jika auth sudah siap)
+  EXIT_FADE_MS: 350, // Tahap 6 (300–400ms): Fade-out seluruh layar ke dasbor
+  SLOW_FALLBACK_MS: 8000, // 8000ms: Munculkan tombol "Batalkan" bila proses masih belum selesai
+  REDUCED_HOLD_MS: 900, // Durasi tahan sederhana saat prefers-reduced-motion aktif
 } as const;
-
-interface ResponsiveOffsets {
-  startOffset: number; // Jarak awal dari titik tengah layar (Tahap 1)
-  restOffset: number; // Jarak berhenti terpisah dengan celah >= 24px (Tahap 2)
-  beamTravel: number; // Rentang gerak titik cahaya di celah tengah
-}
-
-function getResponsiveOffsets(isDesktop: boolean): ResponsiveOffsets {
-  if (isDesktop) {
-    return {
-      startOffset: 140,
-      restOffset: 60, // Diameter total celah antar tepi: (60*2) - 34 - 37 = 49px (>= 24px)
-      beamTravel: 18,
-    };
-  }
-  return {
-    startOffset: 92,
-    restOffset: 46, // Diameter total celah antar tepi: (46*2) - 28 - 28 = 36px (>= 24px)
-    beamTravel: 13,
-  };
-}
 
 function GoogleLogo({
   className = "size-14 sm:size-[68px]",
@@ -100,24 +63,10 @@ export function OAuthLoadingCard({
   const isDark = effectiveTheme === "dark";
   const prefersReducedMotion = Boolean(useReducedMotion());
 
-  const [stage, setStage] = React.useState<AnimationStage>("enter");
   const [minTimelineDone, setMinTimelineDone] = React.useState(false);
+  const [googleRemoved, setGoogleRemoved] = React.useState(false);
+  const [isExiting, setIsExiting] = React.useState(false);
   const [showSlowCancel, setShowSlowCancel] = React.useState(false);
-  const [isCancelling, setIsCancelling] = React.useState(false);
-
-  const [offsets, setOffsets] = React.useState<ResponsiveOffsets>(() => {
-    if (typeof window === "undefined") return getResponsiveOffsets(true);
-    return getResponsiveOffsets(window.innerWidth >= 640);
-  });
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 640px)");
-    const updateOffsets = () => setOffsets(getResponsiveOffsets(mq.matches));
-    updateOffsets();
-    mq.addEventListener("change", updateOffsets);
-    return () => mq.removeEventListener("change", updateOffsets);
-  }, []);
 
   const onCompleteRef = React.useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -125,51 +74,30 @@ export function OAuthLoadingCard({
   const onCancelRef = React.useRef(onCancel);
   onCancelRef.current = onCancel;
 
-  // Rangkaian timeline berurutan: Tahap 1 -> Tahap 2 -> Tahap 3 -> Tahap 4
+  // Timer sinkronisasi timeline utama (Tahap 1–5) tanpa mematahkan animasi CSS
   React.useEffect(() => {
-    if (prefersReducedMotion) {
-      const reducedTimer = window.setTimeout(() => {
-        setMinTimelineDone(true);
-      }, TIMING.REDUCED_HOLD_MS);
-      return () => window.clearTimeout(reducedTimer);
-    }
+    const holdDuration = prefersReducedMotion
+      ? TIMING.REDUCED_HOLD_MS
+      : TIMING.MIN_SEQUENCE_MS;
 
-    const tStage2Start = TIMING.STAGE_1_ENTER_MS; // 400ms
-    const tStage3Start = tStage2Start + TIMING.STAGE_2_APPROACH_MS; // 1000ms
-    const tStage4Start = tStage3Start + TIMING.STAGE_3_HANDOFF_MS; // 1400ms
-    const tStage4End = tStage4Start + TIMING.STAGE_4_CENTER_MS; // 1900ms
+    const doneTimer = window.setTimeout(() => {
+      setMinTimelineDone(true);
+    }, holdDuration);
 
-    const t2 = window.setTimeout(() => setStage("approach"), tStage2Start);
-    const t3 = window.setTimeout(() => setStage("handoff"), tStage3Start);
-    const t4 = window.setTimeout(() => setStage("center"), tStage4Start);
-    const tDone = window.setTimeout(() => setMinTimelineDone(true), tStage4End);
-
-    return () => {
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-      window.clearTimeout(t4);
-      window.clearTimeout(tDone);
-    };
+    return () => window.clearTimeout(doneTimer);
   }, [prefersReducedMotion]);
 
-  // Tahap 4 selesai -> loop denyut halus bila belum siap, atau Tahap 5 fade-out bila siap
+  // Tahap 6: Seluruh layar fade-out sekaligus setelah timeline selesai & autentikasi siap
   React.useEffect(() => {
-    if (!minTimelineDone || isCancelling) return;
+    if (!minTimelineDone || !isProfileReady || isExiting) return;
 
-    if (!isProfileReady) {
-      if (!prefersReducedMotion) {
-        setStage("waiting");
-      }
-      return;
-    }
-
-    setStage("exit");
+    setIsExiting(true);
     const exitTimer = window.setTimeout(() => {
       onCompleteRef.current?.();
-    }, TIMING.STAGE_5_EXIT_MS);
+    }, TIMING.EXIT_FADE_MS);
 
     return () => window.clearTimeout(exitTimer);
-  }, [minTimelineDone, isProfileReady, isCancelling, prefersReducedMotion]);
+  }, [minTimelineDone, isProfileReady, isExiting]);
 
   // Fallback lambat > 8 detik: tampilkan tombol teks kecil "Batalkan"
   React.useEffect(() => {
@@ -182,29 +110,18 @@ export function OAuthLoadingCard({
   }, [isProfileReady]);
 
   const handleSlowCancel = React.useCallback(() => {
-    if (isCancelling) return;
-    setIsCancelling(true);
-    setStage("exit");
+    if (isExiting) return;
+    setIsExiting(true);
     window.setTimeout(() => {
       onCancelRef.current?.();
-    }, 300);
-  }, [isCancelling]);
-
-  const isExiting = stage === "exit" || isCancelling;
+    }, TIMING.EXIT_FADE_MS);
+  }, [isExiting]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: isExiting ? 0 : 1 }}
-      transition={{
-        duration: isExiting
-          ? TIMING.STAGE_5_EXIT_MS / 1000
-          : (prefersReducedMotion
-              ? TIMING.REDUCED_ENTER_MS
-              : TIMING.STAGE_1_ENTER_MS) / 1000,
-        ease: EASE_OUT_EXPO,
-      }}
-      className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] overflow-hidden select-none transition-colors duration-300"
+    <div
+      className={`oauth-transition-stage relative min-h-screen w-full flex flex-col items-center justify-center bg-[#F0F1F3] dark:bg-[#090E19] overflow-hidden select-none transition-colors duration-300 ${
+        isExiting ? "oauth-screen-exit" : "oauth-screen-enter"
+      }`}
       aria-busy={!isProfileReady}
       aria-label="Memproses masuk akun"
     >
@@ -235,7 +152,7 @@ export function OAuthLoadingCard({
 
       {/* Panggung Tengah: Hanya Logo Google & Logo Altvira */}
       {prefersReducedMotion ? (
-        /* Mode prefers-reduced-motion: Hanya logo Altvira fade-in & fade-out sederhana */
+        /* prefers-reduced-motion: Hanya logo Altvira di tengah dengan fade-in & fade-out */
         <div className="relative z-10 flex items-center justify-center">
           <div className="size-14 sm:size-[74px] flex items-center justify-center">
             <AltviraLogoMark
@@ -248,186 +165,85 @@ export function OAuthLoadingCard({
         </div>
       ) : (
         <div className="relative z-10 flex h-40 w-full max-w-lg items-center justify-center">
-          {/* Tahap 2 (400–1000ms): Garis Cahaya Biru Tipis & Titik Cahaya Mengalir (Google -> Altvira) */}
-          <motion.div
+          {/* Tahap 1–2 (0–900ms): Garis cahaya biru tipis penghubung Google <-> Altvira */}
+          <div
             aria-hidden="true"
-            initial={{ opacity: 0, scaleX: 0 }}
-            animate={
-              stage === "approach"
-                ? { opacity: [0, 0.9, 0.9, 0], scaleX: [0.1, 1, 1, 0.85] }
-                : { opacity: 0, scaleX: 0 }
-            }
-            transition={{
-              duration: TIMING.STAGE_2_APPROACH_MS / 1000,
-              times: [0, 0.25, 0.85, 1],
-              ease: EASE_OUT_EXPO,
-            }}
-            className="pointer-events-none absolute z-0 flex items-center justify-center w-9 sm:w-11"
-          >
-            {/* Garis cahaya biru tipis */}
+            className={`oauth-beam-anim pointer-events-none absolute z-0 h-[1.5px] w-24 sm:w-[104px] rounded-full ${
+              isDark
+                ? "bg-gradient-to-r from-[#4285F4]/60 via-[#1FB1F2]/85 to-[#0B43C8]/75"
+                : "bg-gradient-to-r from-[#4285F4]/55 via-[#1FB1F2]/75 to-[#0B43C8]/65"
+            }`}
+          />
+
+          {/* Logo Google (z-10): muncul di -90px, lalu pada 600–1000ms terdorong -60px, mengecil, blur & fade-out, lalu dihapus dari DOM */}
+          {!googleRemoved && (
             <div
-              className={`h-[1.5px] w-full rounded-full ${
-                isDark
-                  ? "bg-gradient-to-r from-[#4285F4]/60 via-[#1FB1F2]/85 to-[#0B43C8]/75"
-                  : "bg-gradient-to-r from-[#4285F4]/55 via-[#1FB1F2]/75 to-[#0B43C8]/65"
-              }`}
-            />
-
-            {/* Satu titik cahaya mengalir dari tepi Google ke tepi Altvira */}
-            <motion.span
-              initial={{ x: -offsets.beamTravel, opacity: 0 }}
-              animate={
-                stage === "approach"
-                  ? {
-                      x: [-offsets.beamTravel, offsets.beamTravel],
-                      opacity: [0, 1, 1, 0],
-                    }
-                  : { x: -offsets.beamTravel, opacity: 0 }
-              }
-              transition={{
-                duration: TIMING.STAGE_2_APPROACH_MS / 1000,
-                times: [0, 0.2, 0.85, 1],
-                ease: EASE_OUT_EXPO,
+              className="oauth-google-track pointer-events-none absolute z-10 flex items-center justify-center"
+              onAnimationEnd={(e) => {
+                if (e.animationName === "oauth-google-push-away") {
+                  setGoogleRemoved(true);
+                }
               }}
-              className="absolute size-2 rounded-full bg-[#1FB1F2] shadow-[0_0_10px_rgba(31,177,242,0.9)]"
-            />
-          </motion.div>
-
-          {/* Logo Google (z-10, selalu di bawah z-20 Altvira; hilang total sebelum Tahap 4 dimulai) */}
-          <motion.div
-            initial={{
-              x: -offsets.startOffset,
-              scale: 0.85,
-              opacity: 0,
-              filter: "blur(0px)",
-            }}
-            animate={
-              stage === "enter"
-                ? {
-                    x: -offsets.startOffset,
-                    scale: 1,
-                    opacity: 1,
-                    filter: "blur(0px)",
-                  }
-                : stage === "approach"
-                  ? {
-                      x: -offsets.restOffset,
-                      scale: 1,
-                      opacity: 1,
-                      filter: "blur(0px)",
-                    }
-                  : {
-                      x: 0,
-                      scale: 0.6,
-                      opacity: 0,
-                      filter: "blur(6px)",
-                    }
-            }
-            transition={
-              stage === "enter"
-                ? { duration: TIMING.STAGE_1_ENTER_MS / 1000, ease: EASE_OUT_EXPO }
-                : stage === "approach"
-                  ? { duration: TIMING.STAGE_2_APPROACH_MS / 1000, ease: EASE_OUT_EXPO }
-                  : {
-                      // Selesai lebih cepat (350ms < 400ms) agar opacity sudah 0 sebelum Tahap 4 (1400ms)
-                      duration: (TIMING.STAGE_3_HANDOFF_MS - 50) / 1000,
-                      ease: EASE_OUT_EXPO,
-                    }
-            }
-            className="pointer-events-none absolute z-10 flex items-center justify-center"
-          >
-            <GoogleLogo className="size-14 sm:size-[68px]" />
-          </motion.div>
-
-          {/* Logo Altvira (z-20 selalu di atas; berhenti terpisah pada Tahap 2-3 lalu bergerak ke x=0 pada Tahap 4) */}
-          <motion.div
-            initial={{ x: offsets.startOffset, scale: 0.85, opacity: 0 }}
-            animate={
-              stage === "enter"
-                ? { x: offsets.startOffset, scale: 1, opacity: 1 }
-                : stage === "approach" || stage === "handoff"
-                  ? { x: offsets.restOffset, scale: 1, opacity: 1 }
-                  : stage === "center"
-                    ? { x: 0, scale: 1.1, opacity: 1 }
-                    : stage === "waiting"
-                      ? { x: 0, scale: [1.1, 1.14, 1.1], opacity: 1 }
-                      : { x: 0, scale: 1.1, opacity: 1 }
-            }
-            transition={
-              stage === "enter"
-                ? { duration: TIMING.STAGE_1_ENTER_MS / 1000, ease: EASE_OUT_EXPO }
-                : stage === "approach"
-                  ? { duration: TIMING.STAGE_2_APPROACH_MS / 1000, ease: EASE_OUT_EXPO }
-                  : stage === "handoff"
-                    ? { duration: TIMING.STAGE_3_HANDOFF_MS / 1000, ease: EASE_OUT_EXPO }
-                    : stage === "center"
-                      ? { duration: TIMING.STAGE_4_CENTER_MS / 1000, ease: EASE_OUT_EXPO }
-                      : stage === "waiting"
-                        ? { duration: 1.6, repeat: Infinity, ease: EASE_IN_OUT }
-                        : { duration: TIMING.STAGE_5_EXIT_MS / 1000, ease: EASE_OUT_EXPO }
-            }
-            className="relative z-20 flex items-center justify-center"
-          >
-            {/* Glow Ring di Belakang Logo Altvira (z-0, tidak mengaburkan huruf V di tema terang/gelap) */}
-            <motion.div
-              aria-hidden="true"
-              initial={{ scale: 0.75, opacity: 0 }}
-              animate={
-                stage === "handoff"
-                  ? {
-                      scale: [0.85, 1.45, 0.95],
-                      opacity: isDark ? [0, 0.75, 0] : [0, 0.4, 0],
-                    }
-                  : stage === "waiting"
-                    ? {
-                        scale: [0.95, 1.25, 0.95],
-                        opacity: isDark ? [0.2, 0.55, 0.2] : [0.1, 0.3, 0.1],
-                      }
-                    : { scale: 0.85, opacity: 0 }
-              }
-              transition={
-                stage === "handoff"
-                  ? { duration: TIMING.STAGE_3_HANDOFF_MS / 1000, ease: EASE_OUT_EXPO }
-                  : stage === "waiting"
-                    ? { duration: 1.6, repeat: Infinity, ease: EASE_IN_OUT }
-                    : { duration: 0.3, ease: EASE_OUT_EXPO }
-              }
-              className={`pointer-events-none absolute z-0 size-28 sm:size-36 rounded-full blur-xl ${
-                isDark
-                  ? "bg-[radial-gradient(circle,rgba(31,177,242,0.55)_0%,rgba(11,67,200,0.3)_48%,transparent_75%)]"
-                  : "bg-[radial-gradient(circle,rgba(31,177,242,0.42)_0%,rgba(11,67,200,0.22)_48%,transparent_75%)]"
-              }`}
-            />
-
-            <div className="relative z-10 size-14 sm:size-[74px] flex items-center justify-center">
-              <AltviraLogoMark
-                size={74}
-                iconVariant="transparent"
-                variant={isDark ? "light" : "dark"}
-                style={{ width: "100%", height: "100%" }}
-              />
+            >
+              <div className="oauth-logo-enter flex items-center justify-center">
+                <GoogleLogo className="size-14 sm:size-[68px]" />
+              </div>
             </div>
-          </motion.div>
+          )}
+
+          {/* Logo Altvira (z-20 selalu di atas): +90px -> 0px kontinu (400–1000ms), overshoot 1.08 -> 1.0 (1000–1300ms), diam/loop glow di tengah */}
+          <div className="oauth-altvira-track relative z-20 flex items-center justify-center">
+            <div className="oauth-logo-enter relative flex items-center justify-center">
+              {/* Tahap 4 (1000–1300ms): Satu denyut glow biru lembut di belakang Altvira */}
+              <div
+                aria-hidden="true"
+                className={`oauth-altvira-glow-once pointer-events-none absolute z-0 size-28 sm:size-36 rounded-full blur-xl ${
+                  isDark
+                    ? "bg-[radial-gradient(circle,rgba(31,177,242,0.58)_0%,rgba(11,67,200,0.32)_48%,transparent_75%)]"
+                    : "bg-[radial-gradient(circle,rgba(31,177,242,0.42)_0%,rgba(11,67,200,0.2)_48%,transparent_75%)]"
+                }`}
+              />
+
+              {/* Tahap 5 (1300ms+): Denyut glow halus berulang di belakang jika autentikasi belum selesai */}
+              {!isProfileReady && (
+                <div
+                  aria-hidden="true"
+                  className={`oauth-altvira-glow-wait pointer-events-none absolute z-0 size-28 sm:size-36 rounded-full blur-xl ${
+                    isDark
+                      ? "bg-[radial-gradient(circle,rgba(31,177,242,0.5)_0%,rgba(11,67,200,0.26)_48%,transparent_75%)]"
+                      : "bg-[radial-gradient(circle,rgba(31,177,242,0.36)_0%,rgba(11,67,200,0.16)_48%,transparent_75%)]"
+                  }`}
+                />
+              )}
+
+              {/* Ikon Altvira berada di atas lapisan glow agar tetap tajam pada tema terang & gelap */}
+              <div className="oauth-altvira-settle relative z-10 size-14 sm:size-[74px] flex items-center justify-center">
+                <AltviraLogoMark
+                  size={74}
+                  iconVariant="transparent"
+                  variant={isDark ? "light" : "dark"}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Tombol Teks Kecil "Batalkan" di Bawah Layar (Hanya Muncul Setelah > 8 Detik) */}
       {showSlowCancel && onCancel && !isExiting && (
-        <motion.button
+        <button
           type="button"
           onClick={handleSlowCancel}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-          className={`fixed bottom-8 z-20 cursor-pointer text-xs font-medium tracking-wide transition-colors focus:outline-none ${
+          className={`oauth-slow-cancel fixed bottom-8 z-20 cursor-pointer text-xs font-medium tracking-wide transition-colors focus:outline-none ${
             isDark
               ? "text-slate-400 hover:text-white"
               : "text-slate-500 hover:text-slate-900"
           }`}
         >
           Batalkan
-        </motion.button>
+        </button>
       )}
-    </motion.div>
+    </div>
   );
 }
