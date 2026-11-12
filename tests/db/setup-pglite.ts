@@ -73,20 +73,37 @@ export async function createMigratedTestDb(): Promise<PGlite> {
   const seedSql = fs.readFileSync(seedPath, "utf8");
   await db.exec(seedSql);
 
-  // Masukkan 4 pengguna uji ke auth.users (trigger otomatis membuat public.profiles)
+  // Masukkan 4 pengguna uji ke auth.users (trigger default selalu membuat peran 'user'),
+  // lalu tetapkan peran istimewa secara eksplisit layaknya service_role / seed resmi.
   await db.query(
     `INSERT INTO auth.users (id, email, raw_user_meta_data)
      VALUES
-       ($1, 'superadmin@altvira.id', '{"full_name":"Super Admin Uji","role":"super_admin"}'::jsonb),
-       ($2, 'admin@altvira.id',      '{"full_name":"Admin Bendahara Uji","role":"admin"}'::jsonb),
-       ($3, 'user1@altvira.id',      '{"full_name":"User Anggota Proyek","role":"user"}'::jsonb),
-       ($4, 'user2@altvira.id',      '{"full_name":"User Proyek Lain","role":"user"}'::jsonb)`,
+       ($1, 'superadmin@altvira.id', '{"full_name":"Super Admin Uji"}'::jsonb),
+       ($2, 'admin@altvira.id',      '{"full_name":"Admin Bendahara Uji"}'::jsonb),
+       ($3, 'user1@altvira.id',      '{"full_name":"User Anggota Proyek"}'::jsonb),
+       ($4, 'user2@altvira.id',      '{"full_name":"User Proyek Lain"}'::jsonb)`,
     [
       TEST_ACTORS.superAdminId,
       TEST_ACTORS.adminId,
       TEST_ACTORS.userAssignedId,
       TEST_ACTORS.userOtherId,
     ],
+  );
+
+  await db.query(
+    `UPDATE public.profiles
+     SET role = 'super_admin',
+         roles = ARRAY['super_admin', 'admin', 'user']::public.user_role[]
+     WHERE id = $1`,
+    [TEST_ACTORS.superAdminId],
+  );
+
+  await db.query(
+    `UPDATE public.profiles
+     SET role = 'admin',
+         roles = ARRAY['admin', 'user']::public.user_role[]
+     WHERE id = $1`,
+    [TEST_ACTORS.adminId],
   );
 
   // Tugaskan userAssignedId ke proyek contoh PRJ/ALT/2026/001

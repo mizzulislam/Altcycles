@@ -1,4 +1,4 @@
-import writeXlsxFile, { type SheetData } from "write-excel-file/universal";
+import type { SheetData } from "write-excel-file/universal";
 
 export interface ExcelColumnSpec {
   header: string;
@@ -35,6 +35,7 @@ export async function createExcelBlob(params: {
   const sheetData: SheetData = [headerRow, ...bodyRows];
   const columnsConfig = params.columns.map((c) => ({ width: c.width ?? 22 }));
 
+  const { default: writeXlsxFile } = await import("write-excel-file/universal");
   return writeXlsxFile(sheetData, {
     columns: columnsConfig,
     sheet: params.sheetName.slice(0, 31),

@@ -56,7 +56,12 @@ import {
   listProjects,
 } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import {
+  SHORT_MONTHS_ID,
+  formatCompactRupiah,
+  formatDateID,
+  formatRupiah,
+} from "@/lib/formatters";
 import {
   getProjectWorkspace,
   listJournalsWithLines,
@@ -84,36 +89,6 @@ interface MonthlyFinancialPoint {
   revenue: number;
   expense: number;
   netCash: number;
-}
-
-const SHORT_MONTHS_ID = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mei",
-  "Jun",
-  "Jul",
-  "Agu",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Des",
-];
-
-function formatCompactRupiah(amount: number): string {
-  const abs = Math.abs(amount);
-  const sign = amount < 0 ? "-" : "";
-  if (abs >= 1_000_000_000) {
-    return `${sign}Rp ${(abs / 1_000_000_000).toFixed(1).replace(".", ",")} M`;
-  }
-  if (abs >= 1_000_000) {
-    return `${sign}Rp ${(abs / 1_000_000).toFixed(1).replace(".", ",")} jt`;
-  }
-  if (abs >= 1_000) {
-    return `${sign}Rp ${Math.round(abs / 1_000)} rb`;
-  }
-  return formatRupiah(amount);
 }
 
 function buildMonthlySeries(
@@ -246,6 +221,12 @@ export function AdminDashboardPage() {
         setPendingClientPos(
           ws.clientPos.filter((c) => c.status === "pending_verification")
             .length,
+        );
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Gagal memuat data dasbor keuangan.",
         );
       } finally {
         setLoading(false);

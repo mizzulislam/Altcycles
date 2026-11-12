@@ -1317,6 +1317,12 @@ export type Database = {
         };
         Returns: ProfileRow;
       };
+      set_journal_lock_status: {
+        Args: {
+          p_enabled: boolean;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       user_role: UserRole;

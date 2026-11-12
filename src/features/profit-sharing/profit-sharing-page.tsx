@@ -90,7 +90,9 @@ export function ProfitSharingPage() {
   const [lines, setLines] = React.useState<ProfitSharingLineRow[]>([]);
   const [loading, setLoading] = React.useState(true);
 
-  const [postingDate, setPostingDate] = React.useState("2027-01-31");
+  const [postingDate, setPostingDate] = React.useState(() =>
+    new Date().toLocaleDateString("en-CA"),
+  );
   const [useManualSharedCost, setUseManualSharedCost] = React.useState(false);
   const [manualSharedCost, setManualSharedCost] = React.useState(0);
   const [simulating, setSimulating] = React.useState(false);

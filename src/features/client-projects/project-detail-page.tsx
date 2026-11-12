@@ -5,12 +5,10 @@ import {
   CheckCircle2Icon,
   ClipboardCheckIcon,
   DownloadIcon,
-  EyeIcon,
   FileCheck2Icon,
   FileSignatureIcon,
   FileTextIcon,
   FolderKanbanIcon,
-  PencilIcon,
   PlusIcon,
   RotateCcwIcon,
   Trash2Icon,
@@ -25,6 +23,20 @@ import { DocumentDownloadMenu } from "@/components/shared/document-download-menu
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { SpkCharterFields } from "@/components/shared/spk-charter-fields";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import {
+  BAKP_STATUS_META,
+  BAST_STATUS_META,
+  CPO_STATUS_META,
+  MILESTONE_STATUS_META,
+  QUOTATION_STATUS_META,
+  RowEditActionButtons,
+  SectionEditControls,
+  UAT_CONCLUSION_META,
+  type DraftMilestone,
+  type EditableRecord,
+  type SectionKey,
+  type ViewDetailState,
+} from "@/features/client-projects/components/project-detail-shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -133,11 +145,9 @@ import type {
   CompanyProfileRow,
   CustomerRow,
   HandoverReportRow,
-  MilestoneRow,
   MilestoneStatus,
   ProgressReportRow,
   ProjectDocumentRow,
-  ProjectProgressRow,
   ProjectRow,
   QuotationRow,
   QuotationStatus,
@@ -145,184 +155,6 @@ import type {
   UatChecklistRow,
   UatConclusion,
 } from "@/types/database.types";
-
-interface DraftMilestone {
-  name: string;
-  isDownPayment: boolean;
-  isFinalSettlement: boolean;
-  percentage: number;
-  amount: number;
-  achievementCriteria: string;
-}
-
-const MILESTONE_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
-  planned: { label: "Direncanakan", tone: "info" },
-  in_progress: { label: "Berjalan", tone: "info" },
-  bakp_approved: { label: "BAKP Disetujui", tone: "warning" },
-  invoiced: { label: "Ditagihkan", tone: "info" },
-  paid: { label: "Lunas", tone: "success" },
-};
-
-const QUOTATION_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
-  draft: { label: "Draf", tone: "secondary" },
-  sent: { label: "Terkirim", tone: "info" },
-  accepted: { label: "Disetujui", tone: "success" },
-  rejected: { label: "Ditolak", tone: "destructive" },
-  expired: { label: "Kedaluwarsa", tone: "secondary" },
-};
-
-type SectionKey =
-  | "milestones"
-  | "progress"
-  | "quotations"
-  | "clientPos"
-  | "documents"
-  | "bakp"
-  | "uat"
-  | "bast";
-
-type EditableRecord =
-  | { section: "milestones"; item: MilestoneRow }
-  | { section: "progress"; item: ProjectProgressRow }
-  | { section: "quotations"; item: QuotationRow }
-  | { section: "clientPos"; item: ClientPurchaseOrderRow }
-  | { section: "documents"; item: ProjectDocumentRow }
-  | { section: "bakp"; item: ProgressReportRow }
-  | { section: "uat"; item: UatChecklistRow }
-  | { section: "bast"; item: HandoverReportRow };
-
-interface ViewDetailState {
-  title: string;
-  subtitle?: string;
-  rows: Array<{ label: string; value: string }>;
-  onDownloadPdf?: () => void;
-  onDownloadWord?: () => void;
-}
-
-function SectionEditControls({
-  hasItems,
-  isEditing,
-  selectedCount,
-  onStartEdit,
-  onCancelEdit,
-  onDeleteSelected,
-}: {
-  hasItems: boolean;
-  isEditing: boolean;
-  selectedCount: number;
-  onStartEdit: () => void;
-  onCancelEdit: () => void;
-  onDeleteSelected: () => void;
-}) {
-  if (!hasItems) {
-    return null;
-  }
-
-  if (!isEditing) {
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onStartEdit}
-        className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
-      >
-        <PencilIcon className="size-3.5" />
-        <span>Edit</span>
-      </Button>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onCancelEdit}
-        className="h-9 rounded-xl text-xs font-medium cursor-pointer"
-      >
-        Batal
-      </Button>
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={onDeleteSelected}
-        disabled={selectedCount === 0}
-        className="h-9 rounded-xl text-xs font-medium cursor-pointer"
-      >
-        Hapus Pilihan ({selectedCount})
-      </Button>
-    </div>
-  );
-}
-
-function RowEditActionButtons({
-  onView,
-  onEdit,
-  onDelete,
-}: {
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-1 -my-1.5">
-      <button
-        type="button"
-        onClick={onView}
-        className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-        title="Lihat rincian"
-        aria-label="Lihat rincian"
-      >
-        <EyeIcon className="size-4" />
-      </button>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-        title="Edit data"
-        aria-label="Edit data"
-      >
-        <PencilIcon className="size-4" />
-      </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-        title="Hapus data"
-        aria-label="Hapus data"
-      >
-        <Trash2Icon className="size-4" />
-      </button>
-    </div>
-  );
-}
-
-const CPO_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
-  pending_verification: { label: "Menunggu Verifikasi", tone: "warning" },
-  verified: { label: "Terverifikasi", tone: "success" },
-  rejected: { label: "Ditolak", tone: "destructive" },
-};
-
-const BAKP_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
-  draft: { label: "Draf", tone: "secondary" },
-  submitted_to_client: { label: "Diajukan ke Klien", tone: "warning" },
-  approved_by_client: { label: "Disetujui Klien", tone: "success" },
-};
-
-const UAT_CONCLUSION_META: Record<string, { label: string; tone: SemanticTone }> = {
-  pending: { label: "Menunggu Hasil", tone: "warning" },
-  accepted: { label: "Diterima Penuh", tone: "success" },
-  accepted_with_notes: { label: "Diterima (Catatan)", tone: "info" },
-  rejected: { label: "Ditolak / Revisi", tone: "destructive" },
-};
-
-const BAST_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
-  draft: { label: "Draf", tone: "secondary" },
-  signed: { label: "Ditandatangani", tone: "success" },
-};
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();

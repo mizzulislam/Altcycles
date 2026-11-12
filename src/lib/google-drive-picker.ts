@@ -3,10 +3,86 @@
  * Menggunakan library resmi Google (gapi + gis) untuk membuka Google Drive Picker asli.
  */
 
+interface GooglePickerDoc {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes?: number;
+  url?: string;
+  thumbnails?: Array<{ url: string }>;
+}
+
+interface GooglePickerCallbackData {
+  action: string;
+  docs?: GooglePickerDoc[];
+}
+
+interface GoogleDocsViewInstance {
+  setParent: (parentId: string) => GoogleDocsViewInstance;
+  setIncludeFolders: (include: boolean) => GoogleDocsViewInstance;
+  setSelectFolderEnabled: (enabled: boolean) => GoogleDocsViewInstance;
+  setLabel: (label: string) => GoogleDocsViewInstance;
+  setMimeTypes: (mimeTypes: string) => GoogleDocsViewInstance;
+  setOwnedByMe: (ownedByMe: boolean) => GoogleDocsViewInstance;
+  setStarred: (starred: boolean) => GoogleDocsViewInstance;
+}
+
+interface GooglePickerBuilderInstance {
+  addView: (view: unknown) => GooglePickerBuilderInstance;
+  enableFeature: (feature: string) => GooglePickerBuilderInstance;
+  setSize: (width: number, height: number) => GooglePickerBuilderInstance;
+  setLocale: (locale: string) => GooglePickerBuilderInstance;
+  setOAuthToken: (token: string) => GooglePickerBuilderInstance;
+  setDeveloperKey: (key: string) => GooglePickerBuilderInstance;
+  setAppId: (appId: string) => GooglePickerBuilderInstance;
+  setTitle: (title: string) => GooglePickerBuilderInstance;
+  setCallback: (cb: (data: GooglePickerCallbackData) => void) => GooglePickerBuilderInstance;
+  build: () => { setVisible: (visible: boolean) => void };
+}
+
+interface GoogleOAuthErrorResponse {
+  message?: string;
+}
+
+interface GoogleOAuthTokenResponse {
+  error?: string;
+  access_token?: string;
+  expires_in?: number | string;
+}
+
+interface GapiNamespace {
+  load: (api: string, options: { callback: () => void }) => void;
+}
+
+interface GoogleNamespace {
+  accounts?: {
+    oauth2?: {
+      initTokenClient: (config: {
+        client_id: string;
+        scope: string;
+        error_callback: (err: GoogleOAuthErrorResponse) => void;
+        callback: (response: GoogleOAuthTokenResponse) => void;
+      }) => { requestAccessToken: (options?: { prompt?: string }) => void };
+    };
+  };
+  picker?: {
+    Action: { PICKED: string; CANCEL: string };
+    ViewId: {
+      DOCS: string;
+      RECENTLY_PICKED: string;
+      DOCS_IMAGES: string;
+    };
+    Feature?: { SUPPORT_DRIVES?: string };
+    DocsView: new (viewId: string) => GoogleDocsViewInstance;
+    DocsUploadView: new () => unknown;
+    PickerBuilder: new () => GooglePickerBuilderInstance;
+  };
+}
+
 declare global {
   interface Window {
-    gapi: any;
-    google: any;
+    gapi?: GapiNamespace;
+    google?: GoogleNamespace;
   }
 }
 
@@ -71,8 +147,8 @@ export const GOOGLE_OAUTH_USER_EMAIL_KEY = "altcycles_google_oauth_user_email";
 export const GOOGLE_OAUTH_USER_NAME_KEY = "altcycles_google_oauth_user_name";
 
 export function getStoredGoogleCredentials(): { clientId: string; apiKey: string } {
-  const envClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "";
-  const envApiKey = (import.meta as any).env?.VITE_GOOGLE_API_KEY || "";
+  const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  const envApiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
   const storedClientId =
     typeof localStorage !== "undefined"
       ? localStorage.getItem(GOOGLE_CLIENT_ID_STORAGE_KEY) || ""
@@ -183,8 +259,12 @@ export async function openOfficialGooglePicker(options: {
   await Promise.all([loadGapiScript(), loadGsiScript()]);
 
   // Muat modul 'picker' gapi
+  const gapi = window.gapi;
+  if (!gapi) {
+    throw new Error("Google API Script (gapi) belum siap digunakan.");
+  }
   await new Promise<void>((resolve) => {
-    window.gapi.load("picker", { callback: resolve });
+    gapi.load("picker", { callback: resolve });
   });
 
   // Injeksi style untuk memastikan dialog picker berukuran standar modal (tidak memenuhi layar) & terpusat sempurna
@@ -234,11 +314,15 @@ export async function openOfficialGooglePicker(options: {
     // Fungsi pembangun dan penampil Google Picker
     function renderPicker(accessToken: string) {
       try {
+        const googlePicker = window.google?.picker;
+        if (!googlePicker) {
+          throw new Error("Modul Google Picker belum termuat dengan sempurna.");
+        }
         const imgMimes = "image/png,image/jpeg,image/webp,image/gif";
 
         // View 1: Drive Saya (My Drive) - Menampilkan struktur folder root asli pengguna
-        const myDriveView = new window.google.picker.DocsView(
-          window.google.picker.ViewId.DOCS,
+        const myDriveView = new googlePicker.DocsView(
+          googlePicker.ViewId.DOCS,
         )
           .setParent("root")
           .setIncludeFolders(true)
@@ -250,8 +334,8 @@ export async function openOfficialGooglePicker(options: {
         }
 
         // View 2: Dibagikan kepada saya (Shared with me)
-        const sharedView = new window.google.picker.DocsView(
-          window.google.picker.ViewId.DOCS,
+        const sharedView = new googlePicker.DocsView(
+          googlePicker.ViewId.DOCS,
         )
           .setOwnedByMe(false)
           .setIncludeFolders(true)
@@ -263,13 +347,13 @@ export async function openOfficialGooglePicker(options: {
         }
 
         // View 3: Terbaru (Recent)
-        const recentView = new window.google.picker.DocsView(
-          window.google.picker.ViewId.RECENTLY_PICKED,
+        const recentView = new googlePicker.DocsView(
+          googlePicker.ViewId.RECENTLY_PICKED,
         ).setLabel("Terbaru");
 
         // View 4: Berbintang (Starred)
-        const starredView = new window.google.picker.DocsView(
-          window.google.picker.ViewId.DOCS,
+        const starredView = new googlePicker.DocsView(
+          googlePicker.ViewId.DOCS,
         )
           .setStarred(true)
           .setIncludeFolders(true)
@@ -281,10 +365,10 @@ export async function openOfficialGooglePicker(options: {
         }
 
         // View 5: Upload langsung dari komputer ke Drive
-        const uploadView = new window.google.picker.DocsUploadView();
+        const uploadView = new googlePicker.DocsUploadView();
 
         // Inisialisasi PickerBuilder
-        const pickerBuilder = new window.google.picker.PickerBuilder()
+        const pickerBuilder = new googlePicker.PickerBuilder()
           .addView(myDriveView)
           .addView(sharedView)
           .addView(recentView)
@@ -292,8 +376,8 @@ export async function openOfficialGooglePicker(options: {
 
         // View tambahan: Jika mencari foto, tambahkan tab "Semua Gambar" untuk pencarian cepat
         if (options.mimeTypeFilter === "image") {
-          const allImagesView = new window.google.picker.DocsView(
-            window.google.picker.ViewId.DOCS_IMAGES,
+          const allImagesView = new googlePicker.DocsView(
+            googlePicker.ViewId.DOCS_IMAGES,
           ).setLabel("Semua Gambar");
           pickerBuilder.addView(allImagesView);
         }
@@ -302,8 +386,8 @@ export async function openOfficialGooglePicker(options: {
         pickerBuilder.addView(uploadView);
 
         // Aktifkan dukungan Shared Drives jika tersedia
-        if (window.google?.picker?.Feature?.SUPPORT_DRIVES) {
-          pickerBuilder.enableFeature(window.google.picker.Feature.SUPPORT_DRIVES);
+        if (googlePicker.Feature?.SUPPORT_DRIVES) {
+          pickerBuilder.enableFeature(googlePicker.Feature.SUPPORT_DRIVES);
         }
 
         // Ukuran standar modal Google Picker yang kompak dan proporsional (750px x 480px)
@@ -317,8 +401,8 @@ export async function openOfficialGooglePicker(options: {
         pickerBuilder.setAppId(clientId.split("-")[0] || "");
         pickerBuilder.setTitle("Pilih Berkas dari Google Drive Anda");
 
-        pickerBuilder.setCallback((data: any) => {
-          if (data.action === window.google.picker.Action.PICKED) {
+        pickerBuilder.setCallback((data: GooglePickerCallbackData) => {
+          if (data.action === googlePicker.Action.PICKED) {
             const doc = data.docs?.[0];
             if (doc) {
               let directImg = `https://lh3.googleusercontent.com/d/${doc.id}`;
@@ -336,7 +420,7 @@ export async function openOfficialGooglePicker(options: {
               });
               resolve();
             }
-          } else if (data.action === window.google.picker.Action.CANCEL) {
+          } else if (data.action === googlePicker.Action.CANCEL) {
             options.onCancel?.();
             resolve();
           }
@@ -374,16 +458,22 @@ export async function openOfficialGooglePicker(options: {
     }
 
     // 2. Jika belum ada token, minta izin OAuth 2.0 lewat GIS satu kali
-    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+    const oauth2 = window.google?.accounts?.oauth2;
+    if (!oauth2) {
+      options.onCancel?.();
+      reject(new Error("Layanan autentikasi Google Identity (GSI) belum termuat."));
+      return;
+    }
+    const tokenClient = oauth2.initTokenClient({
       client_id: clientId,
       scope: "https://www.googleapis.com/auth/drive.readonly",
-      error_callback: (err: any) => {
+      error_callback: (err: GoogleOAuthErrorResponse) => {
         options.onCancel?.();
         reject(
           new Error(err?.message || "Otorisasi akun Google dibatalkan atau ditutup."),
         );
       },
-      callback: (response: any) => {
+      callback: (response: GoogleOAuthTokenResponse) => {
         if (response.error !== undefined) {
           options.onCancel?.();
           reject(new Error(`Otorisasi Google gagal: ${response.error}`));

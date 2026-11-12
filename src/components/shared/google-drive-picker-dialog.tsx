@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -101,7 +100,7 @@ export function GoogleDrivePickerDialog({
   onOpenChange,
   mode = "image",
   title = mode === "image" ? "Pilih Foto dari Google Drive" : "Pilih Berkas dari Google Drive",
-  description = "Tempelkan tautan berbagi (share link) berkas dari Google Drive Anda.",
+  description: _description,
   onSelect,
 }: GoogleDrivePickerDialogProps) {
   const [urlInput, setUrlInput] = React.useState("");
@@ -171,19 +170,9 @@ export function GoogleDrivePickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-lg rounded-2xl">
         <DialogHeader>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="size-8 rounded-xl bg-muted/60 flex items-center justify-center p-1.5 border border-border/80">
-              <GoogleDriveIcon className="size-5" />
-            </div>
-            <DialogTitle className="text-base font-bold text-foreground">
-              {title}
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-xs text-muted-foreground">
-            {description}
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3.5 py-2">

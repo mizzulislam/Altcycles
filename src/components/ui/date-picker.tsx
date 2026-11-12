@@ -73,7 +73,7 @@ function parseTypedDate(str: string): { date: Date; iso: string } | null {
   const trimmed = str.trim();
 
   // Coba format MM/DD/YYYY atau MM-DD-YYYY
-  const parts = trimmed.split(/[\/\-]/);
+  const parts = trimmed.split(/[/-]/);
   if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
     const p0 = parts[0];
     const p1 = parts[1];

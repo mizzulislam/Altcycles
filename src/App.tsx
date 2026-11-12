@@ -1,37 +1,131 @@
+import * as React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { RoleGuard } from "@/app/role-guard";
 import { PortalShell } from "@/components/layout/portal-shell";
-import { AccountingPage } from "@/features/accounting/accounting-page";
+import { Spinner } from "@/components/ui/empty";
 import { AuthProvider, portalHomeForRole, useAuth } from "@/features/auth/auth-context";
-import { LoginPage } from "@/features/auth/login-page";
-import {
-  ForgotPasswordPage,
-  ResetPasswordPage,
-} from "@/features/auth/password-reset-pages";
-import { BudgetPage } from "@/features/budgeting/budget-page";
-import { BuyerPortalPage } from "@/features/buyer-portal/buyer-portal-page";
-import { ProjectDetailPage } from "@/features/client-projects/project-detail-page";
-import { UserDashboardPage } from "@/features/dashboard/user-dashboard";
-import { InvoicingPage } from "@/features/invoicing/invoicing-page";
-import { AdminDashboardPage } from "@/features/master-data/admin-dashboard";
-import { PartiesMasterPage } from "@/features/master-data/parties-master-page";
-import { ProjectsPage } from "@/features/master-data/projects-page";
-import { AdminApprovalsPage } from "@/features/payment-approvals/admin-approvals-page";
-import { UserPaymentsPage } from "@/features/payment-approvals/user-payments-page";
-import { ProfileOverviewPage } from "@/features/profile/profile-overview-page";
-import { ProfileSettingsPage } from "@/features/profile/profile-settings-page";
-import { ProfitSharingPage } from "@/features/profit-sharing/profit-sharing-page";
-import { PurchaseOrdersPage } from "@/features/purchase-orders/po-page";
-import { AuditTrailPage } from "@/features/system-config/audit-trail-page";
-import { AdminSettingsPage } from "@/features/system-config/admin-settings-page";
-import { CompanyProfilePage } from "@/features/system-config/company-profile-page";
-import { LoginMediaPage } from "@/features/system-config/login-media-page";
-import { MasterReadonlyPage } from "@/features/system-config/master-readonly-page";
-import { SuperAdminDashboardPage } from "@/features/system-config/super-admin-dashboard";
 import { ThemeProvider } from "@/lib/theme-context";
-import { SystemConfigPage } from "@/features/system-config/system-config-page";
-import { UsersManagementPage } from "@/features/system-config/users-management-page";
+
+const lazyPage = <P extends object = Record<string, never>>(
+  loader: () => Promise<Record<string, unknown>>,
+  exportName: string,
+) =>
+  React.lazy(async () => {
+    const mod = await loader();
+    return { default: mod[exportName] as React.ComponentType<P> };
+  });
+
+const LoginPage = lazyPage(() => import("@/features/auth/login-page"), "LoginPage");
+const ForgotPasswordPage = lazyPage(
+  () => import("@/features/auth/password-reset-pages"),
+  "ForgotPasswordPage",
+);
+const ResetPasswordPage = lazyPage(
+  () => import("@/features/auth/password-reset-pages"),
+  "ResetPasswordPage",
+);
+const BuyerPortalPage = lazyPage(
+  () => import("@/features/buyer-portal/buyer-portal-page"),
+  "BuyerPortalPage",
+);
+const ProfileOverviewPage = lazyPage(
+  () => import("@/features/profile/profile-overview-page"),
+  "ProfileOverviewPage",
+);
+const ProfileSettingsPage = lazyPage(
+  () => import("@/features/profile/profile-settings-page"),
+  "ProfileSettingsPage",
+);
+const SuperAdminDashboardPage = lazyPage(
+  () => import("@/features/system-config/super-admin-dashboard"),
+  "SuperAdminDashboardPage",
+);
+const CompanyProfilePage = lazyPage(
+  () => import("@/features/system-config/company-profile-page"),
+  "CompanyProfilePage",
+);
+const AdminSettingsPage = lazyPage(
+  () => import("@/features/system-config/admin-settings-page"),
+  "AdminSettingsPage",
+);
+const UsersManagementPage = lazyPage(
+  () => import("@/features/system-config/users-management-page"),
+  "UsersManagementPage",
+);
+const SystemConfigPage = lazyPage(
+  () => import("@/features/system-config/system-config-page"),
+  "SystemConfigPage",
+);
+const MasterReadonlyPage = lazyPage(
+  () => import("@/features/system-config/master-readonly-page"),
+  "MasterReadonlyPage",
+);
+const AuditTrailPage = lazyPage(
+  () => import("@/features/system-config/audit-trail-page"),
+  "AuditTrailPage",
+);
+const LoginMediaPage = lazyPage(
+  () => import("@/features/system-config/login-media-page"),
+  "LoginMediaPage",
+);
+const AdminDashboardPage = lazyPage(
+  () => import("@/features/master-data/admin-dashboard"),
+  "AdminDashboardPage",
+);
+const AdminApprovalsPage = lazyPage(
+  () => import("@/features/payment-approvals/admin-approvals-page"),
+  "AdminApprovalsPage",
+);
+const PurchaseOrdersPage = lazyPage<{ mode: "admin" | "user" }>(
+  () => import("@/features/purchase-orders/po-page"),
+  "PurchaseOrdersPage",
+);
+const ProjectsPage = lazyPage(
+  () => import("@/features/master-data/projects-page"),
+  "ProjectsPage",
+);
+const ProjectDetailPage = lazyPage(
+  () => import("@/features/client-projects/project-detail-page"),
+  "ProjectDetailPage",
+);
+const InvoicingPage = lazyPage(
+  () => import("@/features/invoicing/invoicing-page"),
+  "InvoicingPage",
+);
+const BudgetPage = lazyPage<{ mode: "admin" | "user" }>(
+  () => import("@/features/budgeting/budget-page"),
+  "BudgetPage",
+);
+const AccountingPage = lazyPage(
+  () => import("@/features/accounting/accounting-page"),
+  "AccountingPage",
+);
+const ProfitSharingPage = lazyPage(
+  () => import("@/features/profit-sharing/profit-sharing-page"),
+  "ProfitSharingPage",
+);
+const PartiesMasterPage = lazyPage(
+  () => import("@/features/master-data/parties-master-page"),
+  "PartiesMasterPage",
+);
+const UserDashboardPage = lazyPage(
+  () => import("@/features/dashboard/user-dashboard"),
+  "UserDashboardPage",
+);
+const UserPaymentsPage = lazyPage(
+  () => import("@/features/payment-approvals/user-payments-page"),
+  "UserPaymentsPage",
+);
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[45vh] items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Spinner />
+      <span>Memuat halaman...</span>
+    </div>
+  );
+}
 
 function AuthenticatedIndexRedirect() {
   const { profile, activeRole, loading } = useAuth();
@@ -47,7 +141,8 @@ export function App() {
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <React.Suspense fallback={<RouteFallback />}>
+            <Routes>
             <Route path="/" element={<AuthenticatedIndexRedirect />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/lupa-kata-sandi" element={<ForgotPasswordPage />} />
@@ -165,8 +260,9 @@ export function App() {
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Toaster richColors position="top-right" />
+            </Routes>
+          </React.Suspense>
+          <Toaster richColors position="bottom-right" />
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

@@ -102,7 +102,9 @@ export function AdminApprovalsPage() {
   // Dialog Persetujuan (dengan tanggal akuntansi untuk posting akrual D Beban / K Utang)
   const [approveTarget, setApproveTarget] =
     React.useState<PaymentRequestRow | null>(null);
-  const [accountingDate, setAccountingDate] = React.useState("2026-11-07");
+  const [accountingDate, setAccountingDate] = React.useState(() =>
+    new Date().toLocaleDateString("en-CA"),
+  );
   const [approving, setApproving] = React.useState(false);
 
   // Dialog Penolakan (wajib alasan BR-5)
@@ -112,7 +114,9 @@ export function AdminApprovalsPage() {
   // Dialog Pencairan Dana / Realisasi Pembayaran (D Utang / K Kas-Bank)
   const [disburseTarget, setDisburseTarget] =
     React.useState<PaymentRequestRow | null>(null);
-  const [paidDate, setPaidDate] = React.useState("2026-11-07");
+  const [paidDate, setPaidDate] = React.useState(() =>
+    new Date().toLocaleDateString("en-CA"),
+  );
   const [sourceCashAccountId, setSourceCashAccountId] = React.useState("");
   const [disbursing, setDisbursing] = React.useState(false);
 
@@ -755,7 +759,7 @@ export function AdminApprovalsPage() {
             requestId: rejectTarget.id,
             decision: "reject",
             rejectionReason: reason,
-            accountingDate: "2026-11-07",
+            accountingDate: new Date().toLocaleDateString("en-CA"),
           });
           toast.success(
             `Pengajuan ${rejectTarget.request_number} telah ditolak.`,

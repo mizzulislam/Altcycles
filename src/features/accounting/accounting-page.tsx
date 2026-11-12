@@ -23,6 +23,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { listPeriods, listProjects } from "@/lib/data-service";
 import { formatDateID } from "@/lib/formatters";
@@ -238,8 +245,8 @@ export function AccountingPage() {
 
       {/* Navigasi Tab Siklus Akuntansi & Button Filter */}
       <div className="bg-card rounded-2xl p-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shadow-2xs border border-border/80 w-full">
-        {/* Horizontal Scrollable Tabs */}
-        <div className="flex flex-1 items-center gap-1.5 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* Responsive Tab Bar (wrap rapi di layar sempit, satu baris di layar lebar) */}
+        <div className="flex flex-wrap lg:flex-1 lg:min-w-0 items-center gap-1.5">
           {ACCOUNTING_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = normalizedTab === tab.id;
@@ -250,7 +257,7 @@ export function AccountingPage() {
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
                 className={cn(
-                  "shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
+                  "shrink-0 flex items-center gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -384,18 +391,21 @@ export function AccountingPage() {
                     <label className="text-xs sm:text-sm font-semibold text-foreground block">
                       Entitas / Proyek
                     </label>
-                    <select
-                      value={projectFilter}
-                      onChange={(e) => setProjectFilter(e.target.value)}
-                      className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs sm:text-sm text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
-                    >
-                      <option value="ALL">Semua Proyek (Seluruh Entitas Altvira)</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.code}: {p.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={projectFilter} onValueChange={setProjectFilter}>
+                      <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
+                        <SelectValue placeholder="Pilih proyek" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">
+                          Semua Proyek (Seluruh Entitas Altvira)
+                        </SelectItem>
+                        {projects.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.code}: {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {(normalizedTab === "jurnal" || normalizedTab === "penyesuaian") ? (
@@ -403,18 +413,19 @@ export function AccountingPage() {
                       <label className="text-xs sm:text-sm font-semibold text-foreground block">
                         Jenis Jurnal
                       </label>
-                      <select
-                        value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs sm:text-sm text-foreground focus:outline-hidden focus:ring-1 focus:ring-ring cursor-pointer"
-                      >
-                        <option value="ALL">Semua Jenis Jurnal</option>
-                        {Object.entries(JOURNAL_TYPE_LABELS).map(([k, v]) => (
-                          <option key={k} value={k}>
-                            {v.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
+                          <SelectValue placeholder="Pilih jenis jurnal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Semua Jenis Jurnal</SelectItem>
+                          {Object.entries(JOURNAL_TYPE_LABELS).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>
+                              {v.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   ) : (
                     <div className="space-y-2">

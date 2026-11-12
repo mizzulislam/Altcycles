@@ -76,6 +76,12 @@ export function MasterReadonlyPage() {
         setCustomers(c);
         setJournalLockEnabled(Boolean(comp.journal_lock_enabled ?? true));
         setAutoClosingEnabled(Boolean(comp.auto_closing_enabled ?? false));
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Gagal memuat konfigurasi sistem.",
+        );
       } finally {
         setLoading(false);
       }

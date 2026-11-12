@@ -538,7 +538,7 @@ export async function deleteInternalUser(targetUserId: string): Promise<void> {
 
     // Periksa keterkaitan data transaksi keuangan
     const hasPo = demoStore.purchaseOrders.some(
-      (po: PurchaseOrderRow) => po.created_by === targetUserId || (po as any).verified_by === targetUserId,
+      (po: PurchaseOrderRow) => po.created_by === targetUserId,
     );
     if (hasPo) {
       throw new Error(
@@ -547,7 +547,7 @@ export async function deleteInternalUser(targetUserId: string): Promise<void> {
     }
 
     const hasPayment = demoStore.paymentRequests.some(
-      (pr) => pr.requester_id === targetUserId || (pr as any).reviewed_by === targetUserId,
+      (pr) => pr.requester_id === targetUserId || pr.approver_id === targetUserId,
     );
     if (hasPayment) {
       throw new Error(
@@ -809,7 +809,7 @@ export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
 
   // Coba update via RPC jika ada, atau fallback langsung ke update company_profile
   try {
-    const { data, error } = await (supabase as any).rpc("set_journal_lock_status", {
+    const { data, error } = await supabase.rpc("set_journal_lock_status", {
       p_enabled: enabled,
     });
     if (!error) {
@@ -819,7 +819,7 @@ export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
     // Abaikan dan gunakan update langsung ke company_profile
   }
 
-  const { error: updErr } = await (supabase as any)
+  const { error: updErr } = await supabase
     .from("company_profile")
     .update({ journal_lock_enabled: enabled })
     .eq("id", 1);
@@ -834,7 +834,7 @@ export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
   }
 
   try {
-    const { error: updErr } = await (supabase as any)
+    const { error: updErr } = await supabase
       .from("company_profile")
       .update({ auto_closing_enabled: enabled })
       .eq("id", 1);

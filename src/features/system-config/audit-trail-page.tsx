@@ -1,4 +1,5 @@
 import * as React from "react";
+import { toast } from "sonner";
 import {
   ArrowUpDownIcon,
   ChevronLeftIcon,
@@ -77,6 +78,10 @@ export function AuditTrailPage() {
       try {
         const data = await listAuditLogs();
         setLogs(data);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Gagal memuat riwayat audit trail.",
+        );
       } finally {
         setLoading(false);
       }

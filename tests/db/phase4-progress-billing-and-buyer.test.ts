@@ -655,4 +655,111 @@ describe("Fase 4 Uji Penerimaan Wajib Progress Billing (>= 3 Termin), Skenario 2
     );
     expect(revJrn.rows).toHaveLength(1);
   });
+
+  it("Faktur PKP memisahkan kredit Utang PPN Keluaran (2-1501) dan verify_client_po menjaga transisi status serta audit reject", async () => {
+    // Aktifkan mode PKP dan akun 2-1501 untuk skenario PKP
+    await db.query(
+      "UPDATE public.company_profile SET pkp_enabled = true WHERE id = 1",
+    );
+    await db.query(
+      "UPDATE public.accounts SET is_active = true WHERE code = '2-1501'",
+    );
+
+    const custRes = await db.query<{ id: string }>(
+      "SELECT id FROM public.customers LIMIT 1",
+    );
+    const custId = custRes.rows[0]!.id;
+
+    // Uji verify_client_po: reject menulis audit_logs, dan PO verified tidak dapat ditimpa ulang
+    const cpoIds = await runAsServiceRole(db, async (tx) => {
+      const po1 = await tx.query<{ po_number: string }>(
+        `SELECT (public.rpc_buyer_submit_po('Klien A', 'PT A', 'a@a.com', '', '', 5000000, '[]'::jsonb, 'ip-1'))->>'po_number' AS po_number`,
+      );
+      const po2 = await tx.query<{ po_number: string }>(
+        `SELECT (public.rpc_buyer_submit_po('Klien B', 'PT B', 'b@b.com', '', '', 10000000, '[]'::jsonb, 'ip-2'))->>'po_number' AS po_number`,
+      );
+      const r1 = await tx.query<{ id: string }>(
+        "SELECT id FROM public.client_purchase_orders WHERE po_number = $1",
+        [po1.rows[0]!.po_number],
+      );
+      const r2 = await tx.query<{ id: string }>(
+        "SELECT id FROM public.client_purchase_orders WHERE po_number = $1",
+        [po2.rows[0]!.po_number],
+      );
+      return { rejectId: r1.rows[0]!.id, verifyId: r2.rows[0]!.id };
+    });
+
+    await runAsAuthenticated(db, TEST_ACTORS.adminId, async (tx) => {
+      await tx.query(
+        "SELECT public.verify_client_po($1, NULL, false, 'Lampiran belum lengkap')",
+        [cpoIds.rejectId],
+      );
+    });
+
+    const rejectAudit = await db.query<{ status: string | null }>(
+      `SELECT new_data->>'status' AS status
+       FROM public.audit_logs
+       WHERE entity_name = 'client_purchase_orders' AND entity_id = $1
+       ORDER BY id DESC LIMIT 1`,
+      [cpoIds.rejectId],
+    );
+    expect(rejectAudit.rows[0]?.status).toBe("rejected");
+
+    const invJournalId = await runAsAuthenticated(
+      db,
+      TEST_ACTORS.adminId,
+      async (tx) => {
+        const prj = await tx.query<{ id: string }>(
+          `INSERT INTO public.projects (code, name, project_category, customer_id, status, start_date, target_end_date, contract_value, term_count)
+           VALUES ('PRJ/ALT/2026/PKP', 'Proyek Uji PKP', 'client', $1, 'active', DATE '2026-11-01', DATE '2026-12-31', 10000000, 1)
+           RETURNING id`,
+          [custId],
+        );
+
+        await tx.query(
+          "SELECT public.verify_client_po($1, $2, true, NULL)",
+          [cpoIds.verifyId, prj.rows[0]!.id],
+        );
+
+        const inv = await tx.query<{ id: string }>(
+          `INSERT INTO public.sales_invoices (
+             invoice_number, invoice_date, due_date, project_id, customer_id, client_po_id,
+             invoice_kind, subtotal_amount, ppn_amount, total_amount
+           )
+           VALUES ('INV/ALT/2026/11/PKP', DATE '2026-11-10', DATE '2026-11-24', $1, $2, $3, 'down_payment', 10000000, 1100000, 11100000)
+           RETURNING id`,
+          [prj.rows[0]!.id, custId, cpoIds.verifyId],
+        );
+
+        const issued = await tx.query<{ journal_id: string }>(
+          "SELECT journal_id FROM public.issue_sales_invoice($1, NULL)",
+          [inv.rows[0]!.id],
+        );
+        return issued.rows[0]!.journal_id;
+      },
+    );
+
+    await runAsAuthenticated(db, TEST_ACTORS.adminId, async (tx) => {
+      await expect(
+        tx.query(
+          "SELECT public.verify_client_po($1, NULL, false, 'Coba timpa ulang')",
+          [cpoIds.verifyId],
+        ),
+      ).rejects.toThrow(/sudah diproses dengan status verified/i);
+    });
+
+    const lines = await db.query<{ code: string; debit: string; credit: string }>(
+      `SELECT a.code, jl.debit::text, jl.credit::text
+       FROM public.journal_lines jl
+       JOIN public.accounts a ON a.id = jl.account_id
+       WHERE jl.journal_id = $1
+       ORDER BY a.code`,
+      [invJournalId],
+    );
+    expect(lines.rows).toEqual([
+      { code: "1-1201", debit: "11100000", credit: "0" },
+      { code: "2-1401", debit: "0", credit: "10000000" },
+      { code: "2-1501", debit: "0", credit: "1100000" },
+    ]);
+  });
 });

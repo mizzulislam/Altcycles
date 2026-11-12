@@ -46,7 +46,10 @@ describe("Uji DB & RLS: Multi-Role Switcher & Pembaruan Profil (PostgreSQL)", ()
       await tx.query("SELECT public.switch_active_role('super_admin')");
 
       // Periksa bahwa riwayat penggantian peran tercatat di audit_logs
-      const auditRes = await tx.query<{ action: string; new_data: any }>(
+      const auditRes = await tx.query<{
+        action: string;
+        new_data: { active_role?: string; role?: string } | null;
+      }>(
         "SELECT action, new_data FROM public.audit_logs WHERE actor_id = $1 AND entity_name = 'profiles' ORDER BY id DESC LIMIT 5",
         [TEST_ACTORS.superAdminId],
       );
@@ -149,6 +152,52 @@ describe("Uji DB & RLS: Multi-Role Switcher & Pembaruan Profil (PostgreSQL)", ()
         await expect(
           tx.query("SELECT public.delete_internal_user($1::UUID)", [TEST_ACTORS.userOtherId]),
         ).rejects.toThrow(/Hanya Super Admin/i);
+      });
+    });
+
+    it("Trigger signup mengabaikan metadata role super_admin dan memaksa peran default 'user'", async () => {
+      const rogueId = "99999999-9999-4999-8999-999999999999";
+      await db.query(
+        `INSERT INTO auth.users (id, email, raw_user_meta_data)
+         VALUES ($1, 'attacker@example.com', '{"full_name":"Rogue","role":"super_admin","roles":["super_admin"]}'::jsonb)`,
+        [rogueId],
+      );
+      const res = await db.query<{ role: string; roles: string[] }>(
+        "SELECT role, roles FROM public.profiles WHERE id = $1",
+        [rogueId],
+      );
+      expect(res.rows[0]?.role).toBe("user");
+      expect(String(res.rows[0]?.roles)).toBe("{user}");
+    });
+
+    it("update_user_roles mencatat previous_active_role sebelum mutasi dan set_journal_lock_status dibatasi ke super_admin", async () => {
+      await runAsAuthenticated(db, TEST_ACTORS.superAdminId, async (tx) => {
+        await tx.query(
+          `SELECT public.update_user_roles($1::UUID, ARRAY['admin', 'user']::public.user_role[], 'admin'::public.user_role)`,
+          [TEST_ACTORS.userOtherId],
+        );
+        const auditRes = await tx.query<{
+          old_data: { previous_active_role?: string } | null;
+          new_data: { new_active_role?: string } | null;
+        }>(
+          "SELECT old_data, new_data FROM public.audit_logs WHERE entity_id = $1 AND entity_name = 'profiles' ORDER BY id DESC LIMIT 1",
+          [TEST_ACTORS.userOtherId],
+        );
+        expect(auditRes.rows[0]?.old_data?.previous_active_role).toBe("user");
+        expect(auditRes.rows[0]?.new_data?.new_active_role).toBe("admin");
+      });
+
+      await runAsAuthenticated(db, TEST_ACTORS.adminId, async (tx) => {
+        await expect(
+          tx.query("SELECT public.set_journal_lock_status(false)"),
+        ).rejects.toThrow(/Hanya Super Admin/i);
+      });
+
+      await runAsAuthenticated(db, TEST_ACTORS.superAdminId, async (tx) => {
+        const lockRes = await tx.query<{ set_journal_lock_status: boolean }>(
+          "SELECT public.set_journal_lock_status(false)",
+        );
+        expect(lockRes.rows[0]?.set_journal_lock_status).toBe(false);
       });
     });
   });

@@ -98,7 +98,9 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [poDate, setPoDate] = React.useState("2026-11-07");
+  const [poDate, setPoDate] = React.useState(() =>
+    new Date().toLocaleDateString("en-CA"),
+  );
   const [vendorId, setVendorId] = React.useState("");
   const [projectId, setProjectId] = React.useState("");
   const [notes, setNotes] = React.useState("");
@@ -123,19 +125,20 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         listProjects(),
         getCompanyProfile(),
       ]);
+      const activeVendors = vnds.filter((v) => v.is_active);
       setOrders(poRes.orders);
       setItems(poRes.items);
-      setVendors(vnds.filter((v) => v.is_active));
+      setVendors(activeVendors);
       setProjects(prjs.projects);
       setCompany(comp);
-      if (!vendorId && vnds[0]) setVendorId(vnds[0].id);
-      if (!projectId && prjs.projects[0]) setProjectId(prjs.projects[0].id);
+      setVendorId((prev) => prev || activeVendors[0]?.id || "");
+      setProjectId((prev) => prev || prjs.projects[0]?.id || "");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memuat data PO.");
     } finally {
       setLoading(false);
     }
-  }, [vendorId, projectId]);
+  }, []);
 
   React.useEffect(() => {
     void reload();

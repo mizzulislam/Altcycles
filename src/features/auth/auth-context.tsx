@@ -141,11 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: authData } = await supabase.auth.getUser();
         if (authData?.user && authData.user.id === userId) {
           const authUser = authData.user;
-          const isSuperAdminEmail =
-            authUser.email?.toLowerCase() === "mizzulislam.id@gmail.com";
-          const rawRole =
-            (authUser.user_metadata?.role as UserRole | undefined) ||
-            (isSuperAdminEmail ? "super_admin" : "user");
+          const rawRole: UserRole = "user";
           const fullName =
             authUser.user_metadata?.full_name ||
             authUser.user_metadata?.name ||
@@ -168,8 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return inserted;
           }
         }
-      } catch (err) {
-        console.error("Failsafe profile creation error:", err);
+      } catch {
+        // Gagal membuat profil failsafe otomatis; lanjutkan proses signOut di bawah
       }
 
       await supabase.auth.signOut();
@@ -383,22 +379,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!rawInput) {
         throw new Error("Username wajib diisi.");
       }
-      if (password.length < 6) {
-        throw new Error("Kata sandi minimal 6 karakter.");
+      if (password.length < 8) {
+        throw new Error("Kata sandi minimal 8 karakter.");
       }
 
       const email = rawInput.includes("@")
         ? rawInput
         : `${rawInput.toLowerCase()}@altvira.id`;
-      const isSuperAdminEmail =
-        email.toLowerCase() === "mizzulislam.id@gmail.com";
 
       if (isDemoMode || !supabase) {
         const newDemoProfile: ProfileRow = {
           id: crypto.randomUUID(),
           email,
           full_name: fullName,
-          role: isSuperAdminEmail ? "super_admin" : "user",
+          role: "user",
           is_active: true,
           created_by: null,
           last_login_at: new Date().toISOString(),
@@ -421,7 +415,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options: {
           data: {
             full_name: fullName,
-            role: isSuperAdminEmail ? "super_admin" : "user",
           },
         },
       });
@@ -488,6 +481,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [profile]);
 
   const routeRole = roleForPathname(pathname);
+  const syncingRoleRef = React.useRef<UserRole | null>(null);
 
   React.useEffect(() => {
     if (!profile) return;
@@ -496,6 +490,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTabRole(routeRole);
       }
       writeTabRoleToSession(routeRole);
+      if (profile.role !== routeRole && syncingRoleRef.current !== routeRole) {
+        syncingRoleRef.current = routeRole;
+        void switchActiveRole(routeRole)
+          .then((updated) => {
+            setProfile(updated);
+          })
+          .catch(() => {
+            // Biarkan state UI tetap mengikuti routeRole bila sinkronisasi sementara gagal
+          })
+          .finally(() => {
+            if (syncingRoleRef.current === routeRole) {
+              syncingRoleRef.current = null;
+            }
+          });
+      }
       return;
     }
 

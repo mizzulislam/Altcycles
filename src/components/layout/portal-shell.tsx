@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { MotionConfig, motion } from "motion/react";
+import { toast } from "sonner";
 import {
   ArrowRightLeftIcon,
   BellIcon,
@@ -526,7 +527,7 @@ export function PortalShell() {
       await switchRole(targetRole);
       navigate(portalHomeForRole(targetRole), { replace: true });
     } catch (err) {
-      console.error("Gagal beralih peran:", err);
+      toast.error(err instanceof Error ? err.message : "Gagal beralih peran.");
     } finally {
       setTimeout(() => setIsSwitchingRole(false), 500);
     }

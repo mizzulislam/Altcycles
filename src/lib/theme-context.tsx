@@ -58,18 +58,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
-  function setTheme(newTheme: Theme) {
+  const setTheme = React.useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
     try {
       localStorage.setItem(STORAGE_KEY, newTheme);
     } catch {
       // Abaikan jika localStorage dibatasi
     }
-  }
+  }, []);
 
-  function toggleTheme() {
+  const toggleTheme = React.useCallback(() => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  }
+  }, [resolvedTheme, setTheme]);
 
   const value = React.useMemo(
     () => ({
@@ -78,7 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme,
       toggleTheme,
     }),
-    [theme, resolvedTheme],
+    [theme, resolvedTheme, setTheme, toggleTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

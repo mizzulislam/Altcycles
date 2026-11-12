@@ -37,6 +37,39 @@ export function formatRupiah(amount: number): string {
   return whole < 0 ? `-Rp${absFormatted}` : `Rp${absFormatted}`;
 }
 
+export const SHORT_MONTHS_ID = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
+] as const;
+
+/**
+ * Memformat angka menjadi ringkasan Rupiah kompak (contoh: Rp 1,2 M, Rp 45,0 jt, Rp 500 rb).
+ */
+export function formatCompactRupiah(amount: number): string {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  if (abs >= 1_000_000_000) {
+    return `${sign}Rp ${(abs / 1_000_000_000).toFixed(1).replace(".", ",")} M`;
+  }
+  if (abs >= 1_000_000) {
+    return `${sign}Rp ${(abs / 1_000_000).toFixed(1).replace(".", ",")} jt`;
+  }
+  if (abs >= 1_000) {
+    return `${sign}Rp ${Math.round(abs / 1_000)} rb`;
+  }
+  return formatRupiah(amount);
+}
+
 /**
  * Memformat tanggal ke format lokal Indonesia dd/mm/yyyy (contoh: 07/11/2026).
  */
@@ -56,6 +89,20 @@ export function formatDateID(value: string | Date | null | undefined): string {
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const yyyy = String(date.getFullYear());
   return `${dd}/${mm}/${yyyy}`;
+}
+
+/**
+ * Mengembalikan tanggal hari ini (atau offset hari) dalam format ISO YYYY-MM-DD sesuai zona waktu lokal.
+ */
+export function todayIsoDate(offsetDays = 0): string {
+  const d = new Date();
+  if (offsetDays !== 0) {
+    d.setDate(d.getDate() + offsetDays);
+  }
+  const yyyy = String(d.getFullYear());
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /**

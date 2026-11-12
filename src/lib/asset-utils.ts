@@ -188,14 +188,6 @@ export function getFooterSocialEntries(
   );
 }
 
-export function formatSocialFooterItems(
-  company?: Partial<CompanyProfileRow> | null,
-): string[] {
-  return getFooterSocialEntries(company).map(
-    (s) => `${s.platform}: ${s.username}`,
-  );
-}
-
 /**
  * Merender ikon vektor sosial media ke byte PNG transparan 36x36 secara sinkron
  * untuk disematkan langsung di footer PDF (`pdf-lib`) & Word (`docx`).

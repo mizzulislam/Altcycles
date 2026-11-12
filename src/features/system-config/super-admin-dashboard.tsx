@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ActivityIcon,
   ArrowRightIcon,
@@ -83,6 +84,10 @@ export function SuperAdminDashboardPage() {
         setAccounts(accs);
         setAllLogs(logs);
         setRecentLogs(logs.slice(0, 8));
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Gagal memuat ringkasan sistem.",
+        );
       } finally {
         setLoading(false);
       }

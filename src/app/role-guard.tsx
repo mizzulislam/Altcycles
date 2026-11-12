@@ -23,6 +23,15 @@ export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "a
     return <Navigate to={portalHomeForRole(activeRole || profile.role)} replace />;
   }
 
+  if (allowedRole !== "any" && profile.role !== allowedRole) {
+    return (
+      <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Spinner />
+        <span>Menyelaraskan peran aktif...</span>
+      </div>
+    );
+  }
+
   return <Outlet />;
 }
 

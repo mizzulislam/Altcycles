@@ -54,13 +54,6 @@ export function getGoogleDriveDirectImageUrl(fileId: string): string {
 }
 
 /**
- * Menghasilkan URL thumbnail Google Drive alternatif dengan ukuran tertentu
- */
-export function getGoogleDriveThumbnailUrl(fileId: string, size = 800): string {
-  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
-}
-
-/**
  * Menghasilkan URL pratinjau web Google Drive standar
  */
 export function getGoogleDriveViewUrl(fileId: string): string {
@@ -84,51 +77,6 @@ export interface GoogleDriveFileItem {
 export const DEFAULT_GOOGLE_DRIVE_FILES: GoogleDriveFileItem[] = [];
 
 const STORAGE_KEY = "altcycles_google_drive_files_v1";
-const AUTH_STORAGE_KEY = "altcycles_google_drive_auth_v1";
-
-export interface GoogleDriveUserSession {
-  email: string;
-  name: string;
-  connectedAt: string;
-}
-
-export function isGoogleDriveAuthenticated(): boolean {
-  try {
-    return localStorage.getItem(AUTH_STORAGE_KEY) !== null;
-  } catch {
-    return false;
-  }
-}
-
-export function getGoogleDriveUserSession(): GoogleDriveUserSession | null {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function setGoogleDriveUserSession(email: string, name = "Akun Google Terhubung"): void {
-  try {
-    const session: GoogleDriveUserSession = {
-      email,
-      name,
-      connectedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-  } catch {
-    // Ignore
-  }
-}
-
-export function disconnectGoogleDriveUser(): void {
-  try {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-  } catch {
-    // Ignore
-  }
-}
 
 /**
  * Mengambil daftar berkas Google Drive pengguna (kombinasi berkas tersimpan di cache + default)
@@ -162,33 +110,6 @@ export function saveGoogleDriveFile(item: GoogleDriveFileItem): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // Abaikan jika localStorage dibatasi
-  }
-}
-
-
-/**
- * Mengunduh gambar dari Google Drive (jika dibagikan publik) dan mengonversinya
- * menjadi instance `File` JavaScript yang siap diunggah ke storage internal.
- */
-export async function fetchGoogleDriveImageAsFile(
-  fileId: string,
-  fileName = "google-drive-image.jpg",
-): Promise<File> {
-  const directUrl = getGoogleDriveDirectImageUrl(fileId);
-  try {
-    const response = await fetch(directUrl, { mode: "cors" });
-    if (!response.ok) {
-      throw new Error(`Google Drive merespons dengan status ${response.status}`);
-    }
-    const blob = await response.blob();
-    return new File([blob], fileName, {
-      type: blob.type || "image/jpeg",
-    });
-  } catch {
-    // Jika CORS fetch gagal (misal file private), kembalikan null atau gunakan direct URL langsung
-    throw new Error(
-      "Tidak dapat mengunduh berkas langsung dari Google Drive. Pastikan izin berbagi file disetel ke 'Siapa saja yang memiliki link'.",
-    );
   }
 }
 

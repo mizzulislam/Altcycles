@@ -6,10 +6,26 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://altcycles.vercel.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+function buildCorsHeaders(req: Request): Record<string, string> {
+  const configured = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const allowed = configured.length > 0 ? configured : DEFAULT_ALLOWED_ORIGINS;
+  const reqOrigin = req.headers.get("Origin")?.trim() ?? "";
+  const origin = allowed.includes(reqOrigin) ? reqOrigin : allowed[0];
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 interface SubmitPoRequest {
   clientName: string;
@@ -31,6 +47,7 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = buildCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -62,7 +79,18 @@ Deno.serve(async (req: Request) => {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
 
-    // Verifikasi Cloudflare Turnstile apabila TURNSTILE_SECRET_KEY terkonfigurasi di server
+    const allowUnverified = Deno.env.get("ALLOW_UNVERIFIED_BUYER_PO") === "true";
+
+    // Wajibkan verifikasi Cloudflare Turnstile di produksi kecuali secara eksplisit diizinkan untuk dev
+    if (!turnstileSecret && !allowUnverified) {
+      return new Response(
+        JSON.stringify({
+          error: "Verifikasi keamanan Turnstile belum dikonfigurasi di server.",
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (turnstileSecret) {
       if (!body.turnstileToken) {
         return new Response(

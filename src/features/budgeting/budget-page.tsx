@@ -88,6 +88,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         if (prjRes.projects[0]) {
           setSelectedProjectId(prjRes.projects[0].id);
         }
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Gagal memuat daftar proyek anggaran.",
+        );
       } finally {
         setLoading(false);
       }
