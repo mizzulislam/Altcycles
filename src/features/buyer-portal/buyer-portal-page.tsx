@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import {
   CheckCircle2Icon,
+  CheckIcon,
   CopyIcon,
   DownloadIcon,
   FolderKanbanIcon,
@@ -16,7 +17,6 @@ import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +25,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState, Spinner } from "@/components/ui/empty";
 import {
   Field,
@@ -64,9 +71,18 @@ declare global {
           "expired-callback"?: () => void;
         },
       ) => string;
+      reset?: (widgetId?: string) => void;
       remove?: (widgetId: string) => void;
     };
   }
+}
+
+interface SubmittedPoDialogState {
+  poNumber: string;
+  clientName: string;
+  clientCompany: string;
+  items: Array<{ item: string; qty: number; price: number }>;
+  totalAmount: number;
 }
 
 export function BuyerPortalPage() {
@@ -93,9 +109,12 @@ export function BuyerPortalPage() {
   >([{ item: "Pengembangan Sistem Aplikasi Web", qty: 1, price: 0 }]);
   const [turnstileToken, setTurnstileToken] = React.useState("");
   const [submittingPo, setSubmittingPo] = React.useState(false);
-  const [createdPoCode, setCreatedPoCode] = React.useState<string | null>(null);
+  const [submittedPoModal, setSubmittedPoModal] =
+    React.useState<SubmittedPoDialogState | null>(null);
+  const [copiedModalPo, setCopiedModalPo] = React.useState(false);
 
   const turnstileContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetIdRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     if (!turnstileSiteKey || isDemoMode) return;
@@ -107,6 +126,7 @@ export function BuyerPortalPage() {
           callback: (token: string) => setTurnstileToken(token),
           "expired-callback": () => setTurnstileToken(""),
         });
+        turnstileWidgetIdRef.current = widgetId;
       }
     };
 
@@ -129,8 +149,24 @@ export function BuyerPortalPage() {
       if (widgetId && window.turnstile?.remove) {
         window.turnstile.remove(widgetId);
       }
+      turnstileWidgetIdRef.current = null;
     };
   }, [turnstileSiteKey]);
+
+  function handleCloseSuccessModal() {
+    setSubmittedPoModal(null);
+    setCopiedModalPo(false);
+    setClientName("");
+    setClientCompany("");
+    setClientEmail("");
+    setClientPhone("");
+    setQuotationReference("");
+    setItems([{ item: "", qty: 1, price: 0 }]);
+    setTurnstileToken("");
+    if (turnstileWidgetIdRef.current && window.turnstile?.reset) {
+      window.turnstile.reset(turnstileWidgetIdRef.current);
+    }
+  }
 
   async function handleLookup(e: React.FormEvent) {
     e.preventDefault();
@@ -167,7 +203,25 @@ export function BuyerPortalPage() {
         items,
         turnstileToken: turnstileToken || undefined,
       });
-      setCreatedPoCode(res.po_number);
+      const validItems = items
+        .map((it) => ({
+          item: it.item.trim(),
+          qty: Math.max(1, Math.round(it.qty)),
+          price: Math.max(0, Math.round(it.price)),
+        }))
+        .filter((it) => it.item.length > 0);
+      const totalAmount = validItems.reduce(
+        (s, it) => s + Math.round(it.qty * it.price),
+        0,
+      );
+      setCopiedModalPo(false);
+      setSubmittedPoModal({
+        poNumber: res.po_number,
+        clientName: clientName.trim(),
+        clientCompany: clientCompany.trim(),
+        items: validItems,
+        totalAmount,
+      });
       setPoQuery(res.po_number);
       toast.success(
         `PO Klien berhasil diajukan dengan kode ${res.po_number}.`,
@@ -588,33 +642,6 @@ export function BuyerPortalPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 flex flex-col gap-6">
-                {createdPoCode ? (
-                  <Alert>
-                    <CheckCircle2Icon className="size-4" />
-                    <AlertTitle>
-                      PO Klien Berhasil Diterima: {createdPoCode}
-                    </AlertTitle>
-                    <AlertDescription className="mt-2 flex flex-wrap items-center gap-2">
-                      <span>
-                        Mohon simpan kode unik ini. Status awal PO adalah
-                        Menunggu Verifikasi Admin Altvira.
-                      </span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          void navigator.clipboard?.writeText(createdPoCode);
-                          toast.success("Kode PO disalin ke papan klip.");
-                        }}
-                      >
-                        <CopyIcon className="size-3.5" />
-                        <span>Salin Kode PO</span>
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-
                 <form onSubmit={handleSubmitPo}>
                   <FieldGroup className="gap-5">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -1031,6 +1058,119 @@ export function BuyerPortalPage() {
         </Tabs>
         </div>
       </main>
+
+      {/* Dialog Konfirmasi Pengiriman PO Klien & Instruksi Simpan Kode PO */}
+      <Dialog
+        open={submittedPoModal !== null}
+        onOpenChange={(open) => {
+          if (!open) handleCloseSuccessModal();
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Purchase Order (PO) Berhasil Dikirim</DialogTitle>
+          </DialogHeader>
+
+          {submittedPoModal ? (
+            <div className="flex flex-col gap-4">
+              {/* Kartu Kode / Nomor PO */}
+              <div className="rounded-2xl border border-primary/25 bg-primary/10 p-4 flex items-center justify-between gap-4">
+                <div className="flex flex-col justify-between min-h-11 py-0.5 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground leading-none">
+                    Kode / Nomor Purchase Order
+                  </p>
+                  <p className="text-lg sm:text-xl font-bold font-mono tracking-wide leading-none text-primary dark:text-sky-400 select-all break-all mt-1.5">
+                    {submittedPoModal.poNumber}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  title={copiedModalPo ? "Kode PO Tersalin" : "Salin Kode PO"}
+                  className="size-11 rounded-xl border-primary/25 bg-background/80 text-primary dark:text-sky-400 hover:bg-primary/15 shrink-0"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(
+                      submittedPoModal.poNumber,
+                    );
+                    setCopiedModalPo(true);
+                    toast.success("Kode PO disalin ke papan klip.");
+                  }}
+                >
+                  {copiedModalPo ? (
+                    <CheckIcon className="size-5" />
+                  ) : (
+                    <CopyIcon className="size-5" />
+                  )}
+                  <span className="sr-only">Salin Kode PO</span>
+                </Button>
+              </div>
+
+              {/* Ringkasan Pekerjaan / Layanan / Barang yang Dipesan */}
+              <div className="rounded-2xl border border-border/80 bg-muted/15 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-border/70 bg-muted/20 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-semibold text-foreground shrink-0">
+                    Rincian Pesanan
+                  </span>
+                  <span className="text-muted-foreground truncate text-right">
+                    {submittedPoModal.clientName}
+                    {submittedPoModal.clientCompany
+                      ? ` dari ${submittedPoModal.clientCompany}`
+                      : ""}
+                  </span>
+                </div>
+                <div className="divide-y divide-border/60 max-h-48 overflow-y-auto">
+                  {submittedPoModal.items.map((it, idx) => (
+                    <div
+                      key={idx}
+                      className="px-4 py-2.5 grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-start gap-x-2 text-xs"
+                    >
+                      <span className="font-medium text-muted-foreground tabular-nums">
+                        {idx + 1}.
+                      </span>
+                      <div className="min-w-0 pr-4 sm:pr-6">
+                        <p className="font-medium text-foreground break-words">
+                          {it.item}
+                        </p>
+                        <p className="text-muted-foreground mt-0.5 tabular-nums">
+                          {it.qty.toLocaleString("id-ID")} &times;{" "}
+                          {formatRupiah(it.price)}
+                        </p>
+                      </div>
+                      <span className="font-semibold text-foreground tabular-nums text-right whitespace-nowrap">
+                        {formatRupiah(Math.round(it.qty * it.price))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-2.5 border-t border-border/70 bg-muted/20 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Total Estimasi Nilai PO
+                  </span>
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {formatRupiah(submittedPoModal.totalAmount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Instruksi Penyimpanan Kode PO & Reset Formulir */}
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[11px] text-foreground/90 leading-relaxed">
+                Harap simpan dan salin kode/nomor PO di atas dengan baik untuk
+                memantau progres pekerjaan maupun mengunduh dokumen resmi.
+                Setelah dialog ini ditutup, seluruh kolom formulir pengajuan
+                akan direset menjadi kosong kembali.
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter className="pt-2">
+            <Button type="button" onClick={handleCloseSuccessModal}>
+              <CheckCircle2Icon className="size-4" />
+              <span>Tutup &amp; Reset Formulir</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
