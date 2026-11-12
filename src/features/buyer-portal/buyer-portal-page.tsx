@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   CheckCircle2Icon,
   CopyIcon,
   DownloadIcon,
@@ -224,52 +223,67 @@ export function BuyerPortalPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-8 sm:py-10">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        {/* Header Portal Pelanggan */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-card shadow-2xs">
-              <AltviraLogoMark size={28} iconVariant="transparent" />
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* Top Header Bar sejajar sistem internal: Breadcrumb di kiri, Toggle Tema di ujung kanan atas */}
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/80 bg-card/90 px-4 sm:px-6 backdrop-blur-md">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-xs text-muted-foreground min-w-0"
+        >
+          <Link
+            to="/login"
+            className="hover:text-foreground transition-colors font-medium whitespace-nowrap"
+          >
+            Beranda
+          </Link>
+          <span className="text-muted-foreground/60 select-none">/</span>
+          <span className="text-foreground font-semibold truncate">
+            Portal Pembeli
+          </span>
+        </nav>
+
+        <ThemeToggle
+          size="sm"
+          className="size-9 rounded-2xl border border-border shadow-2xs shrink-0"
+        />
+      </header>
+
+      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6">
+          {/* Header Portal Pelanggan: Logo Altvira sejajar ujung atas judul & ujung bawah deskripsi */}
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-card shadow-2xs">
+              <AltviraLogoMark size={36} iconVariant="transparent" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <div className="flex flex-col justify-between min-w-0 sm:min-h-14 py-0.5">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight sm:leading-none text-foreground">
                 Portal Pelanggan Altvira Technology
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-0 leading-relaxed sm:leading-snug">
                 Lacak progres proyek, unduh dokumen tagihan resmi, dan ajukan purchase order secara mandiri.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <ThemeToggle size="sm" />
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/login">
-                <ArrowLeftIcon className="size-3.5" />
-                <span>Login Tim Internal</span>
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        <Tabs defaultValue="lookup" className="w-full">
-          <TabsList>
-            <TabsTrigger value="lookup">
-              <SearchIcon className="size-4 shrink-0" />
-              <span>Lacak Progres &amp; Unduh Dokumen PO</span>
-            </TabsTrigger>
-            <TabsTrigger value="submit">
-              <PlusIcon className="size-4 shrink-0" />
-              <span>Ajukan Purchase Order (PO) Baru</span>
-            </TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="lookup" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
+              <TabsTrigger value="lookup" className="w-full">
+                <SearchIcon className="size-4 shrink-0" />
+                <span>Lacak Progres &amp; Unduh Dokumen PO</span>
+              </TabsTrigger>
+              <TabsTrigger value="submit" className="w-full">
+                <PlusIcon className="size-4 shrink-0" />
+                <span>Ajukan Purchase Order (PO) Baru</span>
+              </TabsTrigger>
+            </TabsList>
 
           {/* TAB 1: Pelacakan Progres & Dokumen 1 PO */}
           <TabsContent value="lookup" className="flex flex-col gap-6 mt-5">
             <Card className="overflow-hidden">
               <CardHeader className="px-6 py-4 border-b border-border/70">
-                <CardTitle>Masukkan Nomor Akses PO Anda</CardTitle>
+                <CardTitle className="text-base sm:text-lg font-bold">
+                  Masukkan Nomor Akses PO Anda
+                </CardTitle>
                 <CardDescription>
                   Demi kerahasiaan antar klien, pencocokan dilakukan di sisi server dan hanya menampilkan satu proyek yang cocok beserta pembatasan percobaan per IP.
                   {isDemoMode
@@ -287,12 +301,12 @@ export function BuyerPortalPage() {
                     value={poQuery}
                     onChange={(e) => setPoQuery(e.target.value.toUpperCase())}
                     placeholder="Contoh: PO-202611-SN8K4P"
-                    className="font-mono h-10 flex-1"
+                    className="flex-1 font-mono placeholder:font-sans"
                   />
                   <Button
                     type="submit"
                     disabled={searching}
-                    className="h-10 px-5 shrink-0"
+                    className="shrink-0"
                   >
                     {searching ? (
                       <Spinner data-icon="inline-start" />
@@ -389,7 +403,9 @@ export function BuyerPortalPage() {
                 {/* Tabel Termin Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
-                    <CardTitle>Jadwal &amp; Status Termin Proyek</CardTitle>
+                    <CardTitle className="text-base sm:text-lg font-bold">
+                      Jadwal &amp; Status Termin Proyek
+                    </CardTitle>
                     <CardDescription>
                       Informasi baca-saja tahapan penyelesaian dan penagihan kontrak Anda.
                     </CardDescription>
@@ -468,7 +484,9 @@ export function BuyerPortalPage() {
                 {/* Tabel Dokumen Resmi Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
-                    <CardTitle>Dokumen Resmi Proyek</CardTitle>
+                    <CardTitle className="text-base sm:text-lg font-bold">
+                      Dokumen Resmi Proyek
+                    </CardTitle>
                     <CardDescription>
                       Quotation, SoW, SPK, BAKP, UAT, BAST, Invoice, dan Kuitansi yang terkait dengan Nomor PO ini.
                     </CardDescription>
@@ -558,16 +576,18 @@ export function BuyerPortalPage() {
           <TabsContent value="submit" className="mt-5">
             <Card className="overflow-hidden">
               <CardHeader className="px-6 py-4 border-b border-border/70">
-                <CardTitle>
+                <CardTitle className="text-base sm:text-lg font-bold">
                   Formulir Pengajuan Purchase Order (PO) Klien
                 </CardTitle>
                 <CardDescription>
                   Setelah dikirim, sistem menerbitkan Nomor PO dengan kode unik{" "}
-                  <code className="font-mono text-foreground">PO-YYYYMM-XXXXXX</code>.
-                  Simpan kode tersebut untuk memantau progres proyek Anda.
+                  <span className="font-semibold text-foreground">
+                    PO-YYYYMM-XXXXXX
+                  </span>
+                  . Simpan kode tersebut untuk memantau progres proyek Anda.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 flex flex-col gap-5">
+              <CardContent className="p-6 flex flex-col gap-6">
                 {createdPoCode ? (
                   <Alert>
                     <CheckCircle2Icon className="size-4" />
@@ -599,7 +619,11 @@ export function BuyerPortalPage() {
                   <FieldGroup className="gap-5">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Field>
-                        <FieldLabel htmlFor="bp-name" required>
+                        <FieldLabel
+                          htmlFor="bp-name"
+                          required
+                          className="text-xs sm:text-sm font-medium"
+                        >
                           Nama Lengkap Penanggung Jawab
                         </FieldLabel>
                         <Input
@@ -608,10 +632,15 @@ export function BuyerPortalPage() {
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
                           placeholder="Contoh: Hendra Wijaya"
+                          className="text-xs sm:text-sm"
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="bp-comp" required>
+                        <FieldLabel
+                          htmlFor="bp-comp"
+                          required
+                          className="text-xs sm:text-sm font-medium"
+                        >
                           Nama Perusahaan / Instansi
                         </FieldLabel>
                         <Input
@@ -620,13 +649,18 @@ export function BuyerPortalPage() {
                           value={clientCompany}
                           onChange={(e) => setClientCompany(e.target.value)}
                           placeholder="Contoh: PT Sinar Niaga Distribusi"
+                          className="text-xs sm:text-sm"
                         />
                       </Field>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-3">
                       <Field>
-                        <FieldLabel htmlFor="bp-mail" required>
+                        <FieldLabel
+                          htmlFor="bp-mail"
+                          required
+                          className="text-xs sm:text-sm font-medium"
+                        >
                           Email Resmi
                         </FieldLabel>
                         <Input
@@ -636,19 +670,29 @@ export function BuyerPortalPage() {
                           value={clientEmail}
                           onChange={(e) => setClientEmail(e.target.value)}
                           placeholder="Contoh: finance@perusahaan.co.id"
+                          className="text-xs sm:text-sm"
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="bp-phone">Nomor Telepon</FieldLabel>
+                        <FieldLabel
+                          htmlFor="bp-phone"
+                          className="text-xs sm:text-sm font-medium"
+                        >
+                          Nomor Telepon
+                        </FieldLabel>
                         <Input
                           id="bp-phone"
                           value={clientPhone}
                           onChange={(e) => setClientPhone(e.target.value)}
                           placeholder="Contoh: 0812-3456-7890"
+                          className="text-xs sm:text-sm"
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="bp-qt">
+                        <FieldLabel
+                          htmlFor="bp-qt"
+                          className="text-xs sm:text-sm font-medium"
+                        >
                           Nomor Referensi Quotation Altvira
                         </FieldLabel>
                         <Input
@@ -658,19 +702,22 @@ export function BuyerPortalPage() {
                             setQuotationReference(e.target.value)
                           }
                           placeholder="Contoh: QT/ALT/2026/11/001"
-                          className="font-mono"
+                          className="text-xs sm:text-sm"
                         />
                       </Field>
                     </div>
 
-                    {/* Rincian Item Pekerjaan / Layanan */}
-                    <div className="rounded-2xl border border-border/80 bg-muted/15 p-4 sm:p-5 space-y-3.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <FieldLabel required className="text-xs sm:text-sm font-semibold text-foreground">
+                    {/* Rincian Item Pekerjaan / Layanan (Nested Edge-to-Edge Table Card) */}
+                    <div className="rounded-2xl border border-border/80 bg-card/40 overflow-hidden">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-border/70 bg-muted/15">
+                        <div className="space-y-1 min-w-0">
+                          <FieldLabel
+                            required
+                            className="text-xs sm:text-sm font-semibold text-foreground"
+                          >
                             Rincian Pekerjaan / Layanan yang Dipesan
                           </FieldLabel>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground leading-relaxed">
                             Tambahkan daftar paket pekerjaan beserta kuantitas dan estimasi harga satuan.
                           </p>
                         </div>
@@ -678,6 +725,7 @@ export function BuyerPortalPage() {
                           type="button"
                           size="sm"
                           variant="outline"
+                          className="border-primary/25 bg-primary/10 text-primary dark:text-sky-400 hover:bg-primary/15 shrink-0 self-start sm:self-center"
                           onClick={() =>
                             setItems((prev) => [
                               ...prev,
@@ -690,38 +738,174 @@ export function BuyerPortalPage() {
                         </Button>
                       </div>
 
-                      {/* Header Kolom Desktop */}
-                      <div className="hidden sm:grid sm:grid-cols-12 gap-2.5 px-1 text-[11px] font-semibold text-muted-foreground">
-                        <span className="sm:col-span-5">
-                          Deskripsi Paket / Pekerjaan
-                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
-                        </span>
-                        <span className="sm:col-span-2 text-center">
-                          Qty
-                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
-                        </span>
-                        <span className="sm:col-span-3">
-                          Harga Satuan (Rp)
-                          <span className="text-destructive ml-1" aria-hidden="true">*</span>
-                        </span>
-                        <span className="sm:col-span-2 text-right">Subtotal</span>
+                      {/* Tabel Rincian Item (Desktop) */}
+                      <div className="hidden sm:block">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/25 hover:bg-muted/25">
+                              <TableHead className="pl-5 pr-2 text-center text-xs sm:text-sm font-semibold w-12 whitespace-nowrap">
+                                No
+                              </TableHead>
+                              <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold">
+                                Deskripsi Paket / Pekerjaan
+                                <span className="text-destructive ml-1" aria-hidden="true">
+                                  *
+                                </span>
+                              </TableHead>
+                              <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold w-24 whitespace-nowrap">
+                                Qty
+                                <span className="text-destructive ml-1" aria-hidden="true">
+                                  *
+                                </span>
+                              </TableHead>
+                              <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold w-48 whitespace-nowrap">
+                                Harga Satuan
+                                <span className="text-destructive ml-1" aria-hidden="true">
+                                  *
+                                </span>
+                              </TableHead>
+                              <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-44 whitespace-nowrap">
+                                Subtotal
+                              </TableHead>
+                              <TableHead className="pl-2 pr-5 text-center text-xs sm:text-sm font-semibold w-16 whitespace-nowrap">
+                                Aksi
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {items.map((it, idx) => {
+                              const rowSubtotal = Math.round(it.qty * it.price);
+                              return (
+                                <TableRow key={idx} className="hover:bg-muted/10">
+                                  <TableCell className="align-middle pl-5 pr-2 py-3 text-center text-xs sm:text-sm font-medium text-muted-foreground tabular-nums">
+                                    {idx + 1}
+                                  </TableCell>
+                                  <TableCell className="align-middle px-2.5 py-3">
+                                    <Input
+                                      required
+                                      placeholder="Deskripsi paket/pekerjaan"
+                                      className="h-9 text-xs sm:text-sm"
+                                      value={it.item}
+                                      onChange={(e) =>
+                                        setItems((prev) =>
+                                          prev.map((x, i) =>
+                                            i === idx
+                                              ? { ...x, item: e.target.value }
+                                              : x,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell className="align-middle px-2.5 py-3">
+                                    <NumberInput
+                                      allowDecimal={false}
+                                      min={1}
+                                      required
+                                      className="h-9 text-center text-xs sm:text-sm tabular-nums"
+                                      value={it.qty}
+                                      onValueChange={(qty) =>
+                                        setItems((prev) =>
+                                          prev.map((x, i) =>
+                                            i === idx ? { ...x, qty } : x,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell className="align-middle px-2.5 py-3">
+                                    <div className="relative flex items-center">
+                                      <span className="pointer-events-none absolute left-3 text-xs text-muted-foreground select-none">
+                                        Rp
+                                      </span>
+                                      <NumberInput
+                                        allowDecimal={false}
+                                        min={1}
+                                        required
+                                        placeholder="0"
+                                        className="h-9 pl-9 text-right text-xs sm:text-sm tabular-nums"
+                                        value={it.price || 0}
+                                        onValueChange={(price) =>
+                                          setItems((prev) =>
+                                            prev.map((x, i) =>
+                                              i === idx ? { ...x, price } : x,
+                                            ),
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="align-middle px-3 py-3">
+                                    <MonetaryCell amount={rowSubtotal} />
+                                  </TableCell>
+                                  <TableCell className="align-middle pl-2 pr-5 py-3 text-center">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      disabled={items.length === 1}
+                                      title={
+                                        items.length === 1
+                                          ? "Minimal harus terdapat 1 item"
+                                          : "Hapus Baris Item"
+                                      }
+                                      className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-35"
+                                      onClick={() =>
+                                        setItems((prev) =>
+                                          prev.filter((_, i) => i !== idx),
+                                        )
+                                      }
+                                    >
+                                      <Trash2Icon className="size-4" />
+                                      <span className="sr-only">
+                                        Hapus Baris
+                                      </span>
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
                       </div>
 
-                      <div className="space-y-2.5">
+                      {/* Tampilan Kartu Ringkas (Seluler < 640px) */}
+                      <div className="sm:hidden divide-y divide-border/70">
                         {items.map((it, idx) => {
                           const rowSubtotal = Math.round(it.qty * it.price);
                           return (
-                            <div
-                              key={idx}
-                              className="grid items-center gap-2.5 sm:grid-cols-12 rounded-xl border border-border/60 bg-card/70 p-2.5 sm:border-0 sm:bg-transparent sm:p-0"
-                            >
-                              <div className="sm:col-span-5 space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
-                                  Deskripsi Pekerjaan <span className="text-destructive">*</span>
+                            <div key={idx} className="p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-muted-foreground tabular-nums">
+                                  Item #{idx + 1}
+                                </span>
+                                {items.length > 1 ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Hapus Baris Item"
+                                    className="size-8 rounded-lg text-destructive hover:bg-destructive/10"
+                                    onClick={() =>
+                                      setItems((prev) =>
+                                        prev.filter((_, i) => i !== idx),
+                                      )
+                                    }
+                                  >
+                                    <Trash2Icon className="size-4" />
+                                    <span className="sr-only">Hapus Baris</span>
+                                  </Button>
+                                ) : null}
+                              </div>
+                              <div className="space-y-1.5">
+                                <span className="block text-xs font-medium text-muted-foreground">
+                                  Deskripsi Paket / Pekerjaan{" "}
+                                  <span className="text-destructive">*</span>
                                 </span>
                                 <Input
                                   required
                                   placeholder="Deskripsi paket/pekerjaan"
+                                  className="text-xs sm:text-sm"
                                   value={it.item}
                                   onChange={(e) =>
                                     setItems((prev) =>
@@ -734,79 +918,73 @@ export function BuyerPortalPage() {
                                   }
                                 />
                               </div>
-
-                              <div className="sm:col-span-2 space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
-                                  Qty <span className="text-destructive">*</span>
-                                </span>
-                                <NumberInput
-                                  allowDecimal={false}
-                                  min={1}
-                                  required
-                                  className="sm:text-center"
-                                  value={it.qty}
-                                  onValueChange={(qty) =>
-                                    setItems((prev) =>
-                                      prev.map((x, i) =>
-                                        i === idx ? { ...x, qty } : x,
-                                      ),
-                                    )
-                                  }
-                                />
-                              </div>
-
-                              <div className="sm:col-span-3 space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground sm:hidden">
-                                  Harga Satuan (Rp) <span className="text-destructive">*</span>
-                                </span>
-                                <NumberInput
-                                  allowDecimal={false}
-                                  min={1}
-                                  required
-                                  placeholder="Harga satuan (Rp)"
-                                  value={it.price || 0}
-                                  onValueChange={(price) =>
-                                    setItems((prev) =>
-                                      prev.map((x, i) =>
-                                        i === idx ? { ...x, price } : x,
-                                      ),
-                                    )
-                                  }
-                                />
-                              </div>
-
-                              <div className="flex items-center justify-between sm:justify-end gap-2 sm:col-span-2 pt-1 sm:pt-0">
-                                <span className="text-xs font-semibold text-foreground tabular-nums truncate">
-                                  {formatRupiah(rowSubtotal)}
-                                </span>
-                                {items.length > 1 ? (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    title="Hapus Baris Item"
-                                    className="size-8 rounded-lg text-destructive hover:bg-destructive/10 shrink-0"
-                                    onClick={() =>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="col-span-1 space-y-1.5">
+                                  <span className="block text-xs font-medium text-muted-foreground">
+                                    Qty{" "}
+                                    <span className="text-destructive">*</span>
+                                  </span>
+                                  <NumberInput
+                                    allowDecimal={false}
+                                    min={1}
+                                    required
+                                    className="text-center text-xs sm:text-sm tabular-nums"
+                                    value={it.qty}
+                                    onValueChange={(qty) =>
                                       setItems((prev) =>
-                                        prev.filter((_, i) => i !== idx),
+                                        prev.map((x, i) =>
+                                          i === idx ? { ...x, qty } : x,
+                                        ),
                                       )
                                     }
-                                  >
-                                    <Trash2Icon className="size-4" />
-                                    <span className="sr-only">Hapus Baris</span>
-                                  </Button>
-                                ) : null}
+                                  />
+                                </div>
+                                <div className="col-span-2 space-y-1.5">
+                                  <span className="block text-xs font-medium text-muted-foreground">
+                                    Harga Satuan{" "}
+                                    <span className="text-destructive">*</span>
+                                  </span>
+                                  <div className="relative flex items-center">
+                                    <span className="pointer-events-none absolute left-3 text-xs text-muted-foreground select-none">
+                                      Rp
+                                    </span>
+                                    <NumberInput
+                                      allowDecimal={false}
+                                      min={1}
+                                      required
+                                      placeholder="0"
+                                      className="pl-9 text-right text-xs sm:text-sm tabular-nums"
+                                      value={it.price || 0}
+                                      onValueChange={(price) =>
+                                        setItems((prev) =>
+                                          prev.map((x, i) =>
+                                            i === idx ? { ...x, price } : x,
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  Subtotal
+                                </span>
+                                <span className="text-xs sm:text-sm font-semibold text-foreground tabular-nums">
+                                  {formatRupiah(rowSubtotal)}
+                                </span>
                               </div>
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className="border-t border-border/70 pt-3 flex items-center justify-between text-xs sm:text-sm">
-                        <span className="text-muted-foreground font-medium">
+                      {/* Ringkasan Total Estimasi PO */}
+                      <div className="px-5 py-3.5 border-t border-border/70 bg-muted/15 flex items-center justify-between gap-4">
+                        <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
                           Total Estimasi Nilai Purchase Order
                         </span>
-                        <span className="text-base font-bold text-foreground tabular-nums">
+                        <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
                           {formatRupiah(totalDraftPo)}
                         </span>
                       </div>
@@ -814,7 +992,9 @@ export function BuyerPortalPage() {
 
                     {turnstileSiteKey && !isDemoMode ? (
                       <Field>
-                        <FieldLabel required>Verifikasi Keamanan Anti-Bot</FieldLabel>
+                        <FieldLabel required className="text-xs sm:text-sm font-medium">
+                          Verifikasi Keamanan Anti-Bot
+                        </FieldLabel>
                         <div ref={turnstileContainerRef} />
                         <FieldDescription>
                           Dilindungi oleh verifikasi Cloudflare Turnstile.
@@ -824,7 +1004,7 @@ export function BuyerPortalPage() {
 
                     {/* Footer Form Pengajuan PO */}
                     <div className="pt-4 border-t border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 leading-relaxed">
                         <ShieldCheckIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
                         <span>
                           Endpoint publik dilindungi verifikasi Cloudflare Turnstile &amp; pembatasan laju pada server produksi.
@@ -833,7 +1013,7 @@ export function BuyerPortalPage() {
                       <Button
                         type="submit"
                         disabled={submittingPo}
-                        className="h-10 px-5 shrink-0"
+                        className="shrink-0"
                       >
                         {submittingPo ? (
                           <Spinner data-icon="inline-start" />
@@ -849,7 +1029,8 @@ export function BuyerPortalPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
