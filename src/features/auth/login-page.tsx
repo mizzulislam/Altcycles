@@ -226,7 +226,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
     if (hasCode || hasToken) {
       setOauthChecking(true);
-      // Timeout pengaman 7 detik jika sesi tidak berhasil diverifikasi
+      // Timeout pengaman 15 detik jika sesi tidak berhasil diverifikasi (memberi ruang tombol Batalkan pada 8 detik)
       const timer = window.setTimeout(() => {
         setOauthChecking(false);
         setError(
@@ -237,7 +237,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
           document.title,
           window.location.pathname,
         );
-      }, 7000);
+      }, 15000);
       return () => window.clearTimeout(timer);
     }
   }, []);
