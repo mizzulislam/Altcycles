@@ -17,6 +17,7 @@ import {
   terbilangRupiah,
 } from "@/lib/formatters";
 import type {
+  ClientPoItemJson,
   CompanyProfileRow,
   SpkCharterContent,
 } from "@/types/database.types";
@@ -1542,6 +1543,85 @@ export function buildReceiptPdfSpec(params: {
       "Kuitansi ini sah diterbitkan setelah dana tercatat masuk ke rekening resmi perusahaan.",
     ],
     rightSignatureLabel: `Penerima, ${params.company.company_name}`,
+    rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
+    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+  };
+}
+
+/**
+ * Helper pembuat spesifikasi PDF resmi untuk Purchase Order (PO) Klien dari Portal Pembeli.
+ */
+export function buildClientPoPdfSpec(params: {
+  company: CompanyProfileRow;
+  poNumber: string;
+  poDate: string;
+  clientName: string;
+  clientCompany?: string | null;
+  clientEmail?: string | null;
+  clientPhone?: string | null;
+  quotationReference?: string | null;
+  statusLabel: string;
+  projectLabel?: string | null;
+  items: ClientPoItemJson[];
+  poValue: number;
+}): PdfDocumentSpec {
+  const safeItems =
+    params.items.length > 0
+      ? params.items
+      : [{ item: "Paket Pekerjaan / Layanan Sesuai Pengajuan PO", qty: 1, price: params.poValue }];
+
+  const recipientLines = [
+    params.clientName,
+    params.clientCompany?.trim() || null,
+    params.clientEmail?.trim() || null,
+    params.clientPhone?.trim() || null,
+  ].filter((line): line is string => Boolean(line));
+
+  const metaRows: PdfKeyValue[] = [
+    { label: "Nomor PO Klien", value: params.poNumber },
+    { label: "Status Verifikasi", value: params.statusLabel },
+    ...(params.quotationReference?.trim()
+      ? [{ label: "Referensi Quotation", value: params.quotationReference.trim() }]
+      : []),
+    ...(params.projectLabel?.trim()
+      ? [{ label: "Proyek Terkait", value: params.projectLabel.trim() }]
+      : []),
+  ];
+
+  return {
+    docTitle: "PURCHASE ORDER (PO) KLIEN",
+    docSubtitle: "Dokumen Pengajuan Pesanan Resmi Pelanggan",
+    docNumber: params.poNumber,
+    docDate: params.poDate,
+    company: params.company,
+    recipientTitle: "Diajukan Oleh Klien:",
+    recipientLines,
+    metaRows,
+    paragraphsBefore: [
+      "Dokumen Purchase Order (PO) Klien ini diterbitkan secara resmi melalui Portal Pelanggan Altvira Technology sebagai bukti pengajuan pesanan pekerjaan atau layanan.",
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.08, align: "center" },
+      { header: "Deskripsi Paket / Pekerjaan", widthRatio: 0.44 },
+      { header: "Qty", widthRatio: 0.1, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.18, align: "right" },
+      { header: "Subtotal", widthRatio: 0.2, align: "right" },
+    ],
+    tableRows: safeItems.map((it, idx) => [
+      String(idx + 1),
+      it.item,
+      it.qty.toLocaleString("id-ID"),
+      formatRupiah(it.price),
+      formatRupiah(Math.round(it.qty * it.price)),
+    ]),
+    summaryRows: [
+      { label: "TOTAL NILAI PURCHASE ORDER", value: formatRupiah(params.poValue) },
+    ],
+    terbilangAmount: params.poValue,
+    notes: [
+      "Gunakan Kode Akses PO di atas pada Portal Pembeli untuk memantau progres pekerjaan dan mengunduh dokumen tagihan resmi.",
+    ],
+    rightSignatureLabel: `Diterima Oleh, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
   };

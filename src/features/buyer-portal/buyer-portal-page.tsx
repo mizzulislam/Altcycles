@@ -5,12 +5,10 @@ import {
   CheckIcon,
   CopyIcon,
   DownloadIcon,
-  FolderKanbanIcon,
   PlusIcon,
   SearchIcon,
   ShieldCheckIcon,
   Trash2Icon,
-  WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
@@ -52,11 +50,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DEMO_COMPANY } from "@/lib/demo-seed";
 import { formatDateID, formatDateTimeID, formatRupiah } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
 import {
   publicBuyerLookupPo,
   publicBuyerSubmitPo,
 } from "@/lib/operations-service";
-import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
+import {
+  buildClientPoPdfSpec,
+  downloadPdfBytes,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
 import { isDemoMode } from "@/lib/supabase";
 import type { BuyerPortalLookupDto } from "@/types/database.types";
 
@@ -81,6 +84,10 @@ interface SubmittedPoDialogState {
   poNumber: string;
   clientName: string;
   clientCompany: string;
+  clientEmail: string;
+  clientPhone: string;
+  quotationReference: string;
+  submittedAt: string;
   items: Array<{ item: string; qty: number; price: number }>;
   totalAmount: number;
 }
@@ -112,6 +119,7 @@ export function BuyerPortalPage() {
   const [submittedPoModal, setSubmittedPoModal] =
     React.useState<SubmittedPoDialogState | null>(null);
   const [copiedModalPo, setCopiedModalPo] = React.useState(false);
+  const [downloadingPoPdf, setDownloadingPoPdf] = React.useState(false);
 
   const turnstileContainerRef = React.useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = React.useRef<string | null>(null);
@@ -219,6 +227,10 @@ export function BuyerPortalPage() {
         poNumber: res.po_number,
         clientName: clientName.trim(),
         clientCompany: clientCompany.trim(),
+        clientEmail: clientEmail.trim(),
+        clientPhone: clientPhone.trim(),
+        quotationReference: quotationReference.trim(),
+        submittedAt: new Date().toISOString().slice(0, 10),
         items: validItems,
         totalAmount,
       });
@@ -232,6 +244,37 @@ export function BuyerPortalPage() {
       );
     } finally {
       setSubmittingPo(false);
+    }
+  }
+
+  async function handleDownloadSubmittedPoPdf() {
+    if (!submittedPoModal) return;
+    setDownloadingPoPdf(true);
+    try {
+      const spec = buildClientPoPdfSpec({
+        company: DEMO_COMPANY,
+        poNumber: submittedPoModal.poNumber,
+        poDate: submittedPoModal.submittedAt,
+        clientName: submittedPoModal.clientName,
+        clientCompany: submittedPoModal.clientCompany,
+        clientEmail: submittedPoModal.clientEmail,
+        clientPhone: submittedPoModal.clientPhone,
+        quotationReference: submittedPoModal.quotationReference,
+        statusLabel: "Menunggu Verifikasi Admin",
+        items: submittedPoModal.items,
+        poValue: submittedPoModal.totalAmount,
+      });
+      const bytes = await generateDocumentPdf(spec);
+      downloadPdfBytes(
+        bytes,
+        `PO_Klien_${submittedPoModal.poNumber.replace(/[^A-Za-z0-9_-]/g, "_")}.pdf`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mengunduh dokumen PO.",
+      );
+    } finally {
+      setDownloadingPoPdf(false);
     }
   }
 
@@ -375,81 +418,109 @@ export function BuyerPortalPage() {
 
             {lookupResult ? (
               <div className="flex flex-col gap-6">
-                {/* Identitas & 3 KPI PO Terlacak */}
+                {/* Detail Purchase Order */}
                 <Card className="overflow-hidden">
-                  <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-1 min-w-0">
-                      <CardTitle className="font-mono text-base sm:text-lg">
-                        {lookupResult.po_number}
-                      </CardTitle>
-                      <CardDescription>
-                        {lookupResult.client_name}
-                        {lookupResult.client_company
-                          ? ` — ${lookupResult.client_company}`
-                          : ""}{" "}
-                        &bull; Diajukan {formatDateTimeID(lookupResult.submitted_at)}
-                      </CardDescription>
-                    </div>
-                    <StatusBadge
-                      tone={
-                        lookupResult.verification_status === "verified"
-                          ? "success"
-                          : lookupResult.verification_status === "rejected"
-                            ? "destructive"
-                            : "warning"
-                      }
-                      label={
-                        lookupResult.verification_status === "verified"
-                          ? "PO Terverifikasi Admin"
-                          : lookupResult.verification_status === "rejected"
-                            ? "PO Ditolak"
-                            : "Menunggu Verifikasi Admin"
-                      }
-                    />
+                  <CardHeader className="px-6 py-4 border-b border-border/70">
+                    <p className="text-[11px] font-medium text-muted-foreground">
+                      Nomor Purchase Order
+                    </p>
+                    <CardTitle className="font-mono text-lg sm:text-xl font-bold mt-0.5">
+                      {lookupResult.po_number}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6 grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Nilai Purchase Order
-                        </p>
-                        <p className="text-lg sm:text-xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-                          {formatRupiah(lookupResult.po_value)}
-                        </p>
+                  <CardContent className="p-6 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 sm:gap-8">
+                      {/* Kolom Kiri */}
+                      <div className="space-y-5 min-w-0 flex-1">
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">Nama</p>
+                          <p className="text-sm font-semibold text-foreground mt-1 break-words">
+                            {lookupResult.client_name}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Perusahaan
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mt-1 break-words">
+                            {lookupResult.client_company || "-"}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Tanggal Pengajuan
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
+                            {formatDateTimeID(lookupResult.submitted_at)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-                        <WalletIcon className="size-5" />
+
+                      {/* Kolom Kanan (seimbang di sisi kanan tanpa menempel ke tepi) */}
+                      <div className="space-y-5 shrink-0 sm:w-64 md:w-72 min-w-0">
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Status Verifikasi
+                          </p>
+                          <p
+                            className={cn(
+                              "text-sm font-semibold mt-1",
+                              lookupResult.verification_status === "verified"
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : lookupResult.verification_status === "rejected"
+                                  ? "text-destructive"
+                                  : "text-amber-600 dark:text-amber-400",
+                            )}
+                          >
+                            {lookupResult.verification_status === "verified"
+                              ? "PO Terverifikasi Admin"
+                              : lookupResult.verification_status === "rejected"
+                                ? "PO Ditolak"
+                                : "Menunggu Verifikasi Admin"}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Nilai Purchase Order
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
+                            {formatRupiah(lookupResult.po_value)}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Capaian Penyelesaian
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
+                            {lookupResult.project?.cumulative_progress_pct ?? 0}%
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Proyek Terkait
+                    {/* Proyek Terkait: Lebar penuh hingga ujung kanan div */}
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        Proyek Terkait
+                      </p>
+                      {lookupResult.project ? (
+                        <div className="mt-1 space-y-0.5 min-w-0">
+                          <p className="text-sm font-semibold text-foreground">
+                            {lookupResult.project.code}
+                          </p>
+                          <p className="text-sm font-normal text-foreground leading-relaxed break-words">
+                            {lookupResult.project.name}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-semibold text-foreground mt-1">
+                          Sedang Disiapkan Admin
                         </p>
-                        <p className="text-xs sm:text-sm font-bold text-foreground mt-1.5 line-clamp-2">
-                          {lookupResult.project
-                            ? `${lookupResult.project.code} — ${lookupResult.project.name}`
-                            : "Sedang Disiapkan Admin"}
-                        </p>
-                      </div>
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                        <FolderKanbanIcon className="size-5" />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border/70 bg-muted/15 p-4 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Capaian Penyelesaian
-                        </p>
-                        <p className="text-lg sm:text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
-                          {lookupResult.project?.cumulative_progress_pct ?? 0}%
-                        </p>
-                      </div>
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        <CheckCircle2Icon className="size-5" />
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -638,7 +709,7 @@ export function BuyerPortalPage() {
                   <span className="font-semibold text-foreground">
                     PO-YYYYMM-XXXXXX
                   </span>
-                  . Simpan kode tersebut untuk memantau progres proyek Anda.
+                  .
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 flex flex-col gap-6">
@@ -1164,6 +1235,20 @@ export function BuyerPortalPage() {
           ) : null}
 
           <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={downloadingPoPdf}
+              className="border-primary/25 bg-primary/10 text-primary dark:text-sky-400 hover:bg-primary/15"
+              onClick={() => void handleDownloadSubmittedPoPdf()}
+            >
+              {downloadingPoPdf ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <DownloadIcon className="size-4" />
+              )}
+              <span>Unduh Dokumen PO</span>
+            </Button>
             <Button type="button" onClick={handleCloseSuccessModal}>
               <CheckCircle2Icon className="size-4" />
               <span>Tutup &amp; Reset Formulir</span>

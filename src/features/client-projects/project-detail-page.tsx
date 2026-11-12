@@ -110,6 +110,7 @@ import {
   verifyClientPurchaseOrder,
 } from "@/lib/operations-service";
 import {
+  buildClientPoPdfSpec,
   downloadPdfBytes,
   generateDocumentPdf,
   generateSpkProjectCharterPdf,
@@ -2020,7 +2021,8 @@ export function ProjectDetailPage() {
                       </TableHead>
                     )}
                     <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode Akses PO</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Klien &amp; Perusahaan</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Klien</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Perusahaan / Instansi</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nilai PO</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status Verifikasi</TableHead>
                     <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
@@ -2029,7 +2031,7 @@ export function ProjectDetailPage() {
                 <TableBody>
                   {bundle.clientPos.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5 + (isSectionEditing("clientPos") ? 1 : 0)} className="p-0">
+                      <TableCell colSpan={6 + (isSectionEditing("clientPos") ? 1 : 0)} className="p-0">
                         <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                           <EmptyState
                             title="Belum ada PO Klien"
@@ -2059,19 +2061,19 @@ export function ProjectDetailPage() {
                               />
                             </TableCell>
                           )}
-                          <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
+                          <TableCell className="align-top pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
                             {cpo.po_number}
                           </TableCell>
-                          <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
-                            <div className="font-medium text-foreground">{cpo.client_name}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {cpo.client_company ?? cpo.client_email}
-                            </div>
+                          <TableCell className="align-top px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
+                            {cpo.client_name}
                           </TableCell>
-                          <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                          <TableCell className="align-top px-3 py-3.5 text-xs sm:text-sm leading-5 text-muted-foreground">
+                            {cpo.client_company || "-"}
+                          </TableCell>
+                          <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
                             <MonetaryCell amount={cpo.po_value} />
                           </TableCell>
-                          <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                          <TableCell className="align-top px-3 py-3.5 text-center whitespace-nowrap">
                             <div className="inline-flex items-center min-h-5 -my-px">
                               <StatusBadge
                                 tone={cpoStatus.tone}
@@ -2079,7 +2081,7 @@ export function ProjectDetailPage() {
                               />
                             </div>
                           </TableCell>
-                          <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                          <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                             {isSectionEditing("clientPos") ? (
                               <RowEditActionButtons
                                 onView={() =>
@@ -2139,9 +2141,49 @@ export function ProjectDetailPage() {
                                   <span className="sr-only">Tolak</span>
                                 </Button>
                               </div>
+                            ) : cpo.status === "verified" ? (
+                              <div className="flex justify-center items-center -my-1.5">
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  title="Unduh Dokumen PO"
+                                  onClick={async () => {
+                                    if (!company) return;
+                                    const spec = buildClientPoPdfSpec({
+                                      company,
+                                      poNumber: cpo.po_number,
+                                      poDate: cpo.created_at.slice(0, 10),
+                                      clientName: cpo.client_name,
+                                      clientCompany: cpo.client_company,
+                                      clientEmail: cpo.client_email,
+                                      clientPhone: cpo.client_phone,
+                                      quotationReference: cpo.quotation_reference,
+                                      statusLabel: cpoStatus.label,
+                                      projectLabel: project
+                                        ? `${project.code} - ${project.name}`
+                                        : null,
+                                      items: Array.isArray(cpo.items_json)
+                                        ? cpo.items_json
+                                        : [],
+                                      poValue: cpo.po_value,
+                                    });
+                                    const bytes = await generateDocumentPdf(spec);
+                                    downloadPdfBytes(
+                                      bytes,
+                                      `PO_Klien_${cpo.po_number.replace(/[^A-Za-z0-9_-]/g, "_")}.pdf`,
+                                    );
+                                    await recordExportLog("CLIENT_PO", "PDF");
+                                  }}
+                                  className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 cursor-pointer"
+                                >
+                                  <DownloadIcon className="size-4" />
+                                  <span className="sr-only">Unduh Dokumen PO</span>
+                                </Button>
+                              </div>
                             ) : (
                               <span className="text-xs sm:text-sm leading-5 text-muted-foreground">
-                                Terverifikasi
+                                -
                               </span>
                             )}
                           </TableCell>
