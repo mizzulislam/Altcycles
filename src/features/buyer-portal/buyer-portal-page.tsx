@@ -507,20 +507,11 @@ export function BuyerPortalPage() {
                       <p className="text-xs text-muted-foreground">
                         Proyek Terkait
                       </p>
-                      {lookupResult.project ? (
-                        <div className="mt-1 space-y-0.5 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">
-                            {lookupResult.project.code}
-                          </p>
-                          <p className="text-sm font-normal text-foreground leading-relaxed break-words">
-                            {lookupResult.project.name}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm font-semibold text-foreground mt-1">
-                          Sedang Disiapkan Admin
-                        </p>
-                      )}
+                      <p className="text-sm font-semibold text-foreground mt-1 leading-relaxed break-words">
+                        {lookupResult.project
+                          ? `${lookupResult.project.code}: ${lookupResult.project.name}`
+                          : "Sedang Disiapkan Admin"}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
