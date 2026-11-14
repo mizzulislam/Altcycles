@@ -178,7 +178,7 @@ export function SuperAdminDashboardPage() {
       values: val,
     }));
 
-  // Komposisi peran pengguna & tipe bagan akun SAK
+  // Komposisi peran pengguna & tipe bagan akun
   let superAdminRoles = 0;
   let adminRoles = 0;
   let userRoles = 0;
@@ -307,7 +307,7 @@ export function SuperAdminDashboardPage() {
               {accounts.length} Akun
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Standar Akuntansi Keuangan SAK
+              Standar Akuntansi Keuangan
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -453,7 +453,7 @@ export function SuperAdminDashboardPage() {
           </ChartCardFooter>
         </Card>
 
-        {/* Grafik 2: Komposisi Peran Pengguna & Bagan Akun SAK */}
+        {/* Grafik 2: Komposisi Peran Pengguna & Bagan Akun */}
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
@@ -461,7 +461,7 @@ export function SuperAdminDashboardPage() {
               <CardDescription>
                 {compDataset === "roles"
                   ? "Sebaran hak akses peran pengguna internal."
-                  : "Struktur klasifikasi bagan akun SAK."}
+                  : "Struktur klasifikasi bagan akun."}
               </CardDescription>
             </div>
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">

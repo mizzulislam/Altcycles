@@ -63,7 +63,7 @@ const ACCOUNTING_TABS: AccountingTabDef[] = [
     id: "buku_besar",
     label: "Buku Besar",
     icon: ScrollTextIcon,
-    description: "Mutasi debit-kredit dan saldo berjalan per akun COA SAK",
+    description: "Mutasi debit-kredit dan saldo berjalan per akun COA",
   },
   {
     id: "neraca_saldo",
@@ -93,7 +93,7 @@ const ACCOUNTING_TABS: AccountingTabDef[] = [
     id: "coa",
     label: "Bagan Akun (CoA)",
     icon: FolderTreeIcon,
-    description: "Daftar bagan akun standar SAK (Chart of Accounts)",
+    description: "Daftar bagan akun (Chart of Accounts)",
   },
 ];
 
@@ -235,10 +235,10 @@ export function AccountingPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1 min-w-0 max-w-2xl">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Siklus Akuntansi &amp; Laporan Keuangan SAK
+            Siklus Akuntansi &amp; Laporan Keuangan
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan berstandar SAK secara terpadu.
+            Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan secara terpadu.
           </p>
         </div>
       </div>

@@ -340,7 +340,7 @@ export function ProjectsPage() {
             Master Proyek &amp; Penugasan Tim
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan SAK.
+            Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">

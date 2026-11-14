@@ -392,7 +392,7 @@ export function AdminDashboardPage() {
         { header: "Tanggal", width: 14 },
         { header: "Tipe", width: 18 },
         { header: "Status", width: 14 },
-        { header: "Akun SAK", width: 32 },
+        { header: "Akun", width: 32 },
         { header: "Keterangan", width: 38 },
         { header: "Debit", width: 18 },
         { header: "Kredit", width: 18 },
@@ -429,7 +429,7 @@ export function AdminDashboardPage() {
       tableColumns: [
         { header: "Tanggal", widthRatio: 0.14 },
         { header: "No. Jurnal", widthRatio: 0.18 },
-        { header: "Akun SAK", widthRatio: 0.28 },
+        { header: "Akun", widthRatio: 0.28 },
         { header: "Keterangan", widthRatio: 0.20 },
         { header: "Debit", widthRatio: 0.10, align: "right" },
         { header: "Kredit", widthRatio: 0.10, align: "right" },
@@ -467,7 +467,7 @@ export function AdminDashboardPage() {
         "Tanggal",
         "Tipe",
         "Status",
-        "Akun SAK",
+        "Akun",
         "Keterangan",
         "Debit",
         "Kredit",
@@ -586,7 +586,7 @@ export function AdminDashboardPage() {
     {
       to: "/admin/akuntansi",
       label: "Jurnal & Buku Besar",
-      desc: "Catat transaksi SAK",
+      desc: "Catat transaksi keuangan",
       icon: ScaleIcon,
       tone: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
       badge: null,
@@ -1169,7 +1169,7 @@ export function AdminDashboardPage() {
               <CardDescription>
                 {expenseChartType === "histogram"
                   ? "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting."
-                  : "Distribusi pengeluaran per akun SAK dan catatan transaksi terkini."}
+                  : "Distribusi pengeluaran per akun dan catatan transaksi terkini."}
               </CardDescription>
             </div>
             <Link

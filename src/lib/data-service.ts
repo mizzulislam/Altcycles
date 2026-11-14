@@ -1224,7 +1224,7 @@ export async function listAuditLogs(): Promise<AuditLogRow[]> {
 }
 
 // =============================================================================
-// 4. Bagan Akun / COA SAK (Admin Kelola, Super Admin Baca)
+// 4. Bagan Akun / COA (Admin Kelola, Super Admin Baca)
 // =============================================================================
 export async function listAccounts(): Promise<AccountRow[]> {
   if (isDemoMode || !supabase) {

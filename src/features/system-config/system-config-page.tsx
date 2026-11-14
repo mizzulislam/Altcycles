@@ -187,7 +187,7 @@ export function SystemConfigPage() {
         <TabsList>
           <TabsTrigger value="identitas">Identitas &amp; Rekening</TabsTrigger>
           <TabsTrigger value="pajak">Pengaturan Pajak (PKP)</TabsTrigger>
-          <TabsTrigger value="akuntansi">Kunci Jurnal &amp; SAK</TabsTrigger>
+          <TabsTrigger value="akuntansi">Kunci Jurnal</TabsTrigger>
           <TabsTrigger value="penomoran">Penomoran Dokumen</TabsTrigger>
           <TabsTrigger value="template">Template &amp; Placeholder</TabsTrigger>
         </TabsList>
@@ -433,7 +433,7 @@ export function SystemConfigPage() {
             <CardHeader>
               <CardTitle>Kebijakan Kunci Immutabilitas Jurnal &amp; Mode Pengujian (BR-2)</CardTitle>
               <CardDescription>
-                Atur proteksi permanensi pencatatan jurnal akuntansi buku besar sesuai standar SAK atau aktifkan mode pengujian untuk kebebasan edit dan hapus transaksi testing.
+                Atur proteksi permanensi pencatatan jurnal akuntansi buku besar atau aktifkan mode pengujian untuk kebebasan edit dan hapus transaksi testing.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
@@ -441,7 +441,7 @@ export function SystemConfigPage() {
                 <AlertTitle>
                   Status Kunci Jurnal:{" "}
                   {company.journal_lock_enabled !== false
-                    ? "Terkunci (Standar SAK — Immutabilitas BR-2 Aktif)"
+                    ? "Terkunci (Immutabilitas BR-2 Aktif)"
                     : "Terbuka (Mode Pengujian / Testing Transaksi Aktif)"}
                 </AlertTitle>
                 <AlertDescription>
@@ -459,7 +459,7 @@ export function SystemConfigPage() {
                       Kunci Immutabilitas Jurnal Akuntansi (BR-2)
                     </FieldLabel>
                     <FieldDescription>
-                      Aktifkan untuk mematuhi kaidah akuntansi standar SAK (permanen &amp; anti-manipulasi). Nonaktifkan jika sedang melakukan input transaksi testing dan ingin bebas mengubah atau menghapus data jurnal.
+                      Aktifkan untuk mematuhi kaidah akuntansi (permanen &amp; anti-manipulasi). Nonaktifkan jika sedang melakukan input transaksi testing dan ingin bebas mengubah atau menghapus data jurnal.
                     </FieldDescription>
                   </div>
                   <Switch
@@ -472,7 +472,7 @@ export function SystemConfigPage() {
                           prev ? { ...prev, journal_lock_enabled: checked } : prev,
                         );
                         if (checked) {
-                          toast.success("Kunci jurnal diaktifkan (Standar SAK / Mode Produksi).");
+                          toast.success("Kunci jurnal diaktifkan (Mode Produksi).");
                         } else {
                           toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit dan dihapus).");
                         }

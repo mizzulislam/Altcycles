@@ -376,7 +376,7 @@ export function PortalShell() {
   // State Accordion Sub-Menu Terbuka/Tertutup
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => {
     return {
-      "akuntansi-sak": true,
+      "akuntansi": true,
       "operasional-pengeluaran": true,
       "proyek-penagihan": true,
     };

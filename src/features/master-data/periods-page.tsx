@@ -298,7 +298,7 @@ export function PeriodsPage({
   async function handleDeleteClosingEntries() {
     if (selectedClosingIds.length === 0) return;
     if (company?.journal_lock_enabled) {
-      toast.error("Kunci jurnal sedang aktif sesuai standar SAK. Buka kunci terlebih dahulu di portal Super Admin.");
+      toast.error("Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.");
       return;
     }
     try {
@@ -1239,7 +1239,7 @@ export function PeriodsPage({
           if (!open) setReopenTarget(null);
         }}
         title={`Buka Kembali Periode: ${reopenTarget?.name ?? ""}`}
-        description={`Masukkan alasan pembukaan kembali periode ${reopenTarget?.name}. Tindakan ini akan dicatat dalam jejak audit kepatuhan SAK.`}
+        description={`Masukkan alasan pembukaan kembali periode ${reopenTarget?.name}. Tindakan ini akan dicatat dalam jejak audit kepatuhan.`}
         confirmLabel="Buka Kembali Periode"
         requireReason
         reasonPlaceholder="Contoh: Perbaikan jurnal penyesuaian..."

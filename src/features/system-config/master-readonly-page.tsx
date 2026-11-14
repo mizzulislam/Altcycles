@@ -106,7 +106,7 @@ export function MasterReadonlyPage() {
             Pengaturan &amp; Kontrol Akuntansi
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola kontrol kunci jurnal kepatuhan SAK serta tinjau struktur bagan akun dan entitas master.
+            Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master.
           </p>
         </div>
       </div>
@@ -118,12 +118,12 @@ export function MasterReadonlyPage() {
             <div className="flex items-center gap-2">
               <ShieldCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
               <h2 className="text-base font-bold text-foreground">
-                Kunci Jurnal &amp; Standar Kepatuhan SAK
+                Kunci Jurnal &amp; Kepatuhan Pembukuan
               </h2>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {journalLockEnabled
-                ? "Seluruh transaksi jurnal terkunci otomatis sesuai standar PSAK / SAK untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus sembarangan."
+                ? "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus sembarangan."
                 : "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan untuk mengedit, mengoreksi, dan menghapus transaksi jurnal pada portal Akuntansi untuk keperluan pengujian sistem."}
             </p>
           </div>
@@ -138,14 +138,14 @@ export function MasterReadonlyPage() {
               id="journal-lock-switch"
               checked={journalLockEnabled}
               disabled={togglingLock}
-              aria-label="Toggle Kunci Jurnal Standar SAK"
+              aria-label="Toggle Kunci Jurnal"
               onCheckedChange={async (nextVal) => {
                 setTogglingLock(true);
                 try {
                   await setJournalLockStatus(nextVal);
                   setJournalLockEnabled(nextVal);
                   if (nextVal) {
-                    toast.success("Kunci jurnal diaktifkan (Standar Kepatuhan SAK / Mode Produksi).");
+                    toast.success("Kunci jurnal diaktifkan (Mode Produksi).");
                   } else {
                     toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus).");
                   }
@@ -213,7 +213,7 @@ export function MasterReadonlyPage() {
         <TabsList>
           <TabsTrigger value="coa">
             <BookOpenIcon className="size-4 shrink-0" />
-            <span>Bagan Akun SAK</span>
+            <span>Bagan Akun</span>
             <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums bg-muted text-muted-foreground group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white transition-colors">
               {accounts.length}
             </span>

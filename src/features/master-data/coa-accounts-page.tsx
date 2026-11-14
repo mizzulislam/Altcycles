@@ -186,10 +186,10 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Bagan Akun (Chart of Accounts SAK)
+              Bagan Akun (Chart of Accounts)
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun standar SAK untuk pencatatan dan pengelompokan transaksi keuangan.
+              Kelola struktur bagan akun untuk pencatatan dan pengelompokan transaksi keuangan.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -206,7 +206,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               Bagan Akun (Chart of Accounts)
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun standar SAK untuk pencatatan dan pengelompokan transaksi keuangan.
+              Kelola struktur bagan akun untuk pencatatan dan pengelompokan transaksi keuangan.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -227,7 +227,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
           <div className="space-y-1 min-w-0">
             <CardTitle>Daftar Bagan Akun</CardTitle>
             <CardDescription>
-              Struktur klasifikasi akun buku besar standar SAK untuk penjurnalan dan pelaporan keuangan.
+              Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">

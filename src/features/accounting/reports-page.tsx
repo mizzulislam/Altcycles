@@ -359,7 +359,7 @@ export function AccountingReportsPage({
       ];
 
       const bytes = await generateDocumentPdf({
-        docTitle: "LAPORAN POSISI KEUANGAN (NERACA SAK)",
+        docTitle: "LAPORAN POSISI KEUANGAN (NERACA)",
         docSubtitle: `Per Tanggal ${formatDateID(endDate)}`,
         docNumber: `RPT-BS/${endDate.replace(/-/g, "")}`,
         docDate: endDate,
@@ -412,7 +412,7 @@ export function AccountingReportsPage({
         company,
         tableColumns: [
           { header: "Kategori", widthRatio: 0.3 },
-          { header: "Akun SAK", widthRatio: 0.45 },
+          { header: "Akun", widthRatio: 0.45 },
           { header: "Jumlah (IDR)", widthRatio: 0.25, align: "right" },
         ],
         tableRows,
@@ -578,8 +578,8 @@ export function AccountingReportsPage({
   async function handleExportActiveExcel() {
     if (activeTab === "neraca") {
       await downloadExcelSheet({
-        fileName: `Neraca_SAK_${endDate}.xlsx`,
-        sheetName: "Neraca SAK",
+        fileName: `Neraca_${endDate}.xlsx`,
+        sheetName: "Neraca",
         columns: [
           { header: "Kelompok", width: 28 },
           { header: "Kode / Proyek", width: 18 },
@@ -956,7 +956,7 @@ export function AccountingReportsPage({
     return (
       <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
         <Spinner />
-        <span>Menyusun laporan keuangan berbasis akrual SAK...</span>
+        <span>Menyusun laporan keuangan berbasis akrual...</span>
       </div>
     );
   }
@@ -1141,7 +1141,7 @@ export function AccountingReportsPage({
               </div>
               {balanceSheet.contractAssets.length > 0 && (
                 <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                  <span className="text-muted-foreground font-medium">Aset Kontrak SAK (WIP &gt; Tagihan)</span>
+                  <span className="text-muted-foreground font-medium">Aset Kontrak (WIP &gt; Tagihan)</span>
                   {formatCurrency(balanceSheet.contractAssets.reduce((s, a) => s + a.netContractPosition, 0))}
                 </div>
               )}
@@ -1370,7 +1370,7 @@ export function AccountingReportsPage({
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead className="text-center px-6 font-semibold text-xs text-foreground/80">Komponen / Akun SAK</TableHead>
+                <TableHead className="text-center px-6 font-semibold text-xs text-foreground/80">Komponen / Akun</TableHead>
                 <TableHead className="w-56 text-center pr-6 font-semibold text-xs text-foreground/80">Nominal</TableHead>
               </TableRow>
             </TableHeader>
@@ -1516,7 +1516,7 @@ export function AccountingReportsPage({
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-lg font-bold text-foreground">
-              Laporan Posisi Keuangan (Neraca SAK) per {formatDateID(endDate)}
+              Laporan Posisi Keuangan (Neraca) per {formatDateID(endDate)}
             </CardTitle>
             <CardDescription>
               Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual.
@@ -1539,7 +1539,7 @@ export function AccountingReportsPage({
               <TableHeader className="bg-muted/30">
                 <TableRow>
                   <TableHead className="text-center px-6 font-semibold text-xs text-foreground/80">
-                    Komponen / Akun SAK
+                    Komponen / Akun
                   </TableHead>
                   <TableHead className="w-56 text-center pr-6 font-semibold text-xs text-foreground/80">
                     Nominal
@@ -2228,10 +2228,10 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0 max-w-xl">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Laporan Keuangan Akrual Standar SAK
+              Laporan Keuangan Akrual
             </h1>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual standar SAK.
+              Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
@@ -2248,7 +2248,7 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Laporan Keuangan SAK
+              Laporan Keuangan
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
               Laporan Laba/Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas.
@@ -2370,7 +2370,7 @@ export function AccountingReportsPage({
                   Perubahan Ekuitas
                 </TabsTrigger>
                 <TabsTrigger value="neraca" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Neraca SAK
+                  Neraca
                 </TabsTrigger>
                 <TabsTrigger value="arus_kas" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
                   Arus Kas
@@ -2402,7 +2402,7 @@ export function AccountingReportsPage({
             {detailedRetainedEarnings}
           </TabsContent>
 
-          {/* 3. Neraca SAK */}
+          {/* 3. Neraca */}
           <TabsContent value="neraca" className="space-y-4">
             {detailedBalanceSheet}
           </TabsContent>

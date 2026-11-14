@@ -266,7 +266,7 @@ export function JournalsPage({
   function openEditJournal(j: JournalRow) {
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif sesuai standar SAK. Untuk mengedit atau menghapus transaksi jurnal, Super Admin perlu membuka kunci jurnal di menu Pengaturan & Kontrol Akuntansi.",
+        "Kunci jurnal sedang aktif. Untuk mengedit atau menghapus transaksi jurnal, Super Admin perlu membuka kunci jurnal di menu Pengaturan & Kontrol Akuntansi.",
       );
       return;
     }
@@ -428,7 +428,7 @@ export function JournalsPage({
   async function handleDeleteSingle(journal: JournalRow) {
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif sesuai standar SAK. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
       );
       return;
     }
@@ -450,7 +450,7 @@ export function JournalsPage({
     if (selectedJournalIds.length === 0) return;
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif sesuai standar SAK. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
       );
       return;
     }
@@ -570,7 +570,7 @@ export function JournalsPage({
 
   const printDocTitle =
     filterMode === "adjusting"
-      ? "Jurnal Penyesuaian & Koreksi SAK"
+      ? "Jurnal Penyesuaian & Koreksi"
       : "Jurnal Umum";
 
   const printBrandName = company?.company_name
@@ -614,7 +614,7 @@ export function JournalsPage({
         { header: "Tanggal", width: 14 },
         { header: "Jenis Jurnal", width: 24 },
         { header: "Proyek", width: 16 },
-        { header: "Akun SAK", width: 32 },
+        { header: "Akun", width: 32 },
         { header: "Uraian", width: 36 },
         { header: "Debit (Rp)", width: 18 },
         { header: "Kredit (Rp)", width: 18 },
@@ -693,11 +693,11 @@ export function JournalsPage({
 
       <table className="print-table">
         <colgroup>
-          <col style={{ width: "12%" }} />
-          <col style={{ width: "54%" }} />
+          <col style={{ width: "13%" }} />
+          <col style={{ width: "45%" }} />
           <col style={{ width: "10%" }} />
-          <col style={{ width: "12%" }} />
-          <col style={{ width: "12%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "16%" }} />
         </colgroup>
         <thead>
           <tr>
@@ -773,14 +773,14 @@ export function JournalsPage({
                           return (
                             <div key={`deb-${idx}`} className="print-amount-row">
                               <span className="print-currency">Rp</span>
-                              <span>{row.debit.toLocaleString("id-ID")}</span>
+                              <span className="print-val">{row.debit.toLocaleString("id-ID")}</span>
                             </div>
                           );
                         }
                         return (
-                          <div key={`deb-blank-${idx}`} className="print-amount-row print-blank">
-                            <span>Rp</span>
-                            <span>0</span>
+                          <div key={`deb-blank-${idx}`} className="print-amount-row print-blank" aria-hidden="true">
+                            <span className="print-currency">Rp</span>
+                            <span className="print-val">0</span>
                           </div>
                         );
                       })}
@@ -793,14 +793,14 @@ export function JournalsPage({
                           return (
                             <div key={`cred-${idx}`} className="print-amount-row">
                               <span className="print-currency">Rp</span>
-                              <span>{Math.abs(row.credit).toLocaleString("id-ID")}</span>
+                              <span className="print-val">{Math.abs(row.credit).toLocaleString("id-ID")}</span>
                             </div>
                           );
                         }
                         return (
-                          <div key={`cred-blank-${idx}`} className="print-amount-row print-blank">
-                            <span>Rp</span>
-                            <span>0</span>
+                          <div key={`cred-blank-${idx}`} className="print-amount-row print-blank" aria-hidden="true">
+                            <span className="print-currency">Rp</span>
+                            <span className="print-val">0</span>
                           </div>
                         );
                       })}
@@ -1715,7 +1715,7 @@ export function JournalsPage({
                     <TableHeader className="bg-muted/40">
                       <TableRow>
                         <TableHead className="text-xs font-bold text-left py-2.5">
-                          Akun SAK
+                          Akun
                         </TableHead>
                         <TableHead className="text-xs font-bold text-center w-20 py-2.5">
                           Ref
@@ -1914,9 +1914,8 @@ export function JournalsPage({
 
             [data-accounting-print-area="${printAreaId}"] td {
               border: 1px solid #e5e7eb !important;
-              padding: 6px 10px !important;
+              padding: 6px 8px !important;
               vertical-align: top !important;
-              word-break: break-word !important;
               color: #374151 !important;
             }
 
@@ -1932,6 +1931,7 @@ export function JournalsPage({
               display: flex !important;
               flex-direction: column !important;
               gap: 4px !important;
+              word-break: break-word !important;
             }
 
             [data-accounting-print-area="${printAreaId}"] .print-account-debit {
@@ -1946,7 +1946,7 @@ export function JournalsPage({
               color: #111827 !important;
               font-weight: 600 !important;
               min-height: 16.5px !important;
-              padding-left: 20px !important;
+              padding-left: 18px !important;
               display: flex !important;
               align-items: center !important;
             }
@@ -1958,6 +1958,7 @@ export function JournalsPage({
               font-style: italic !important;
               font-weight: 500 !important;
               line-height: 1.4 !important;
+              word-break: break-word !important;
             }
 
             [data-accounting-print-area="${printAreaId}"] .print-ref-wrap {
@@ -1973,6 +1974,7 @@ export function JournalsPage({
               align-items: center !important;
               justify-content: center !important;
               font-size: 10.5px !important;
+              white-space: nowrap !important;
             }
 
             [data-accounting-print-area="${printAreaId}"] .print-amount-wrap {
@@ -1989,12 +1991,23 @@ export function JournalsPage({
               min-height: 16.5px !important;
               align-items: center !important;
               width: 100% !important;
+              white-space: nowrap !important;
+              word-break: normal !important;
+              font-variant-numeric: tabular-nums !important;
             }
 
             [data-accounting-print-area="${printAreaId}"] .print-currency {
               color: #9ca3af !important;
               font-weight: 400 !important;
-              margin-right: 8px !important;
+              margin-right: 4px !important;
+              white-space: nowrap !important;
+              flex-shrink: 0 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-val {
+              white-space: nowrap !important;
+              font-variant-numeric: tabular-nums !important;
+              flex-shrink: 0 !important;
             }
 
             [data-accounting-print-area="${printAreaId}"] .print-blank {

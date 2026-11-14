@@ -757,7 +757,7 @@ export function ProfileSettingsPage() {
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                 <div className="space-y-0.5 pr-4">
                   <p className="text-xs font-bold text-foreground">
-                    Tutup Buku & Pelaporan Periode SAK
+                    Tutup Buku & Pelaporan Periode
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     Pemberitahuan resmi terkait pembekuan jurnal dan finalisasi laporan keuangan.

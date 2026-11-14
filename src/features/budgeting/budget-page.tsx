@@ -554,7 +554,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
                   {expenseAccounts.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">
-                      Belum ada akun beban aktif pada Bagan Akun SAK.
+                      Belum ada akun beban aktif pada Bagan Akun.
                     </p>
                   ) : (
                     expenseAccounts.map((acc) => (
