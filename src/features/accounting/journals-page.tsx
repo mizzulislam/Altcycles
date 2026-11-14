@@ -1,5 +1,4 @@
 import * as React from "react";
-import { createPortal } from "react-dom";
 import {
   AlertTriangleIcon,
   ArrowUpDownIcon,
@@ -66,6 +65,7 @@ import {
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
@@ -152,12 +152,7 @@ export function JournalsPage({
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
-  const [mounted, setMounted] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const [periodFilter] = React.useState("ALL");
   const [projectFilter] = React.useState("ALL");
@@ -573,10 +568,6 @@ export function JournalsPage({
       ? "Jurnal Penyesuaian & Koreksi"
       : "Jurnal Umum";
 
-  const printBrandName = company?.company_name
-    ? company.company_name.toUpperCase()
-    : "ALTVIRA TECHNOLOGY";
-
   function handleExportPdf() {
     setTimeout(() => {
       window.print();
@@ -684,20 +675,19 @@ export function JournalsPage({
   }
 
   const journalPrintContent = (
-    <div data-accounting-print-area={printAreaId} aria-hidden="true">
-      <div className="print-brand">{printBrandName}</div>
-      <h1>{printDocTitle}</h1>
-      <div className="print-meta">
-        Periode: {printPeriodLabel} | Dicetak: {new Date().toLocaleString("id-ID")}
-      </div>
-
+    <AccountingPrintLayout
+      printAreaId={printAreaId}
+      company={company}
+      docTitle={printDocTitle}
+      periodLabel={printPeriodLabel}
+    >
       <table className="print-table">
         <colgroup>
-          <col style={{ width: "13%" }} />
-          <col style={{ width: "45%" }} />
-          <col style={{ width: "10%" }} />
-          <col style={{ width: "16%" }} />
-          <col style={{ width: "16%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "38%" }} />
+          <col style={{ width: "8%" }} />
+          <col style={{ width: "21%" }} />
+          <col style={{ width: "21%" }} />
         </colgroup>
         <thead>
           <tr>
@@ -812,7 +802,7 @@ export function JournalsPage({
           )}
         </tbody>
       </table>
-    </div>
+    </AccountingPrintLayout>
   );
 
   return (
@@ -848,13 +838,13 @@ export function JournalsPage({
         </div>
       </div>
 
-      {/* Penerapan Asumsi Akuntansi (IFRS & PSAK) - Tampil pada Tab Jurnal Penyesuaian (Splitz Style) */}
+      {/* Penerapan Asumsi Akuntansi Keuangan - Tampil pada Tab Jurnal Penyesuaian (Splitz Style) */}
       {filterMode === "adjusting" && (
         <Card className="p-5 border-border/80 bg-card shadow-xs">
           <div className="flex items-center gap-2 mb-3">
             <SlidersHorizontalIcon className="size-4 text-primary dark:text-cyan-400" />
             <h3 className="font-bold text-sm text-foreground">
-              Penerapan Asumsi Akuntansi (IFRS &amp; PSAK)
+              Penerapan Asumsi Akuntansi Keuangan
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1828,196 +1818,8 @@ export function JournalsPage({
         onConfirm={handleDeleteBatch}
       />
 
-      {/* Style & Portal Cetak Save as PDF Standar Splitz */}
-      <style>
-        {`
-          @media screen {
-            [data-accounting-print-area="${printAreaId}"] {
-              display: none !important;
-            }
-          }
-
-          @media print {
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-
-            @page {
-              size: A4 portrait;
-              margin: 15mm 20mm;
-            }
-
-            body > :not([data-accounting-print-area="${printAreaId}"]) {
-              display: none !important;
-            }
-
-            body {
-              background: #ffffff !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] {
-              display: block !important;
-              width: 100% !important;
-              box-sizing: border-box !important;
-              background: #ffffff !important;
-              color: #1f2937 !important;
-              font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif !important;
-              line-height: 1.5 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-brand {
-              font-size: 11px !important;
-              font-weight: 700 !important;
-              color: #0B43C8 !important;
-              text-transform: uppercase !important;
-              letter-spacing: 0.05em !important;
-              margin: 0 0 4px 0 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] h1 {
-              margin: 0 0 6px !important;
-              font-size: 22px !important;
-              font-weight: 800 !important;
-              color: #111827 !important;
-              line-height: 1.2 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-meta {
-              margin-bottom: 20px !important;
-              color: #4b5563 !important;
-              font-size: 11px !important;
-              border-bottom: 2px solid #0B43C8 !important;
-              padding-bottom: 8px !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] table.print-table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-              table-layout: fixed !important;
-              font-size: 10.5px !important;
-              margin-top: 10px !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] th {
-              border: 1px solid #d1d5db !important;
-              background: #f8fafc !important;
-              color: #1f2937 !important;
-              padding: 8px 10px !important;
-              font-weight: 700 !important;
-              font-size: 11px !important;
-              text-transform: uppercase !important;
-              text-align: center !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] td {
-              border: 1px solid #e5e7eb !important;
-              padding: 6px 8px !important;
-              vertical-align: top !important;
-              color: #374151 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] tr:nth-child(even) td {
-              background-color: #fafafa !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-center {
-              text-align: center !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-deskripsi-wrap {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 4px !important;
-              word-break: break-word !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-account-debit {
-              color: #111827 !important;
-              font-weight: 600 !important;
-              min-height: 16.5px !important;
-              display: flex !important;
-              align-items: center !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-account-credit {
-              color: #111827 !important;
-              font-weight: 600 !important;
-              min-height: 16.5px !important;
-              padding-left: 18px !important;
-              display: flex !important;
-              align-items: center !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-memo {
-              margin-top: 5px !important;
-              font-size: 10px !important;
-              color: #0B43C8 !important;
-              font-style: italic !important;
-              font-weight: 500 !important;
-              line-height: 1.4 !important;
-              word-break: break-word !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-ref-wrap {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 4px !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-ref-item {
-              color: #6b7280 !important;
-              min-height: 16.5px !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              font-size: 10.5px !important;
-              white-space: nowrap !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-amount-wrap {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 4px !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-amount-row {
-              color: #111827 !important;
-              font-weight: 600 !important;
-              display: flex !important;
-              justify-content: space-between !important;
-              min-height: 16.5px !important;
-              align-items: center !important;
-              width: 100% !important;
-              white-space: nowrap !important;
-              word-break: normal !important;
-              font-variant-numeric: tabular-nums !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-currency {
-              color: #9ca3af !important;
-              font-weight: 400 !important;
-              margin-right: 4px !important;
-              white-space: nowrap !important;
-              flex-shrink: 0 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-val {
-              white-space: nowrap !important;
-              font-variant-numeric: tabular-nums !important;
-              flex-shrink: 0 !important;
-            }
-
-            [data-accounting-print-area="${printAreaId}"] .print-blank {
-              visibility: hidden !important;
-            }
-          }
-        `}
-      </style>
-
-      {mounted && typeof document !== "undefined" && createPortal(journalPrintContent, document.body)}
+      {/* Komponen Portal Cetak A4 Standar Altcycles */}
+      {journalPrintContent}
     </div>
   );
 }
