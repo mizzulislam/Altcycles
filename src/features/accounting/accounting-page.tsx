@@ -245,8 +245,11 @@ export function AccountingPage() {
 
       {/* Navigasi Tab Siklus Akuntansi & Button Filter */}
       <div className="bg-card rounded-2xl p-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shadow-2xs border border-border/80 w-full">
-        {/* Responsive Tab Bar (wrap rapi di layar sempit, satu baris di layar lebar) */}
-        <div className="flex flex-wrap lg:flex-1 lg:min-w-0 items-center gap-1.5">
+        {/* Tab Bar satu baris, dapat digeser horizontal dengan scrollbar tersembunyi */}
+        <div
+          className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {ACCOUNTING_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = normalizedTab === tab.id;
@@ -257,7 +260,7 @@ export function AccountingPage() {
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
                 className={cn(
-                  "shrink-0 flex items-center gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
+                  "shrink-0 h-10 inline-flex items-center gap-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -277,12 +280,12 @@ export function AccountingPage() {
         </div>
 
         {/* Filter Button Terpadu (Menampung Periode, Proyek, & Jenis Jurnal) */}
-        <div className="shrink-0 w-full lg:w-auto">
+        <div className="shrink-0 w-full lg:w-auto flex items-center">
           <button
             type="button"
             onClick={() => setIsFilterModalOpen(true)}
             className={cn(
-              "w-full lg:w-auto inline-flex items-center justify-between lg:justify-start gap-2.5 rounded-xl border border-border/80 bg-background/90 dark:bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground transition-all duration-200 cursor-pointer shadow-2xs select-none",
+              "w-full lg:w-auto h-10 inline-flex items-center justify-between lg:justify-start gap-2.5 rounded-xl border border-border/80 bg-background/90 dark:bg-card px-3.5 text-xs sm:text-sm font-semibold text-foreground transition-all duration-200 cursor-pointer shadow-2xs select-none",
               "hover:bg-muted/70 hover:border-primary/50",
               (periodFilter.preset !== "all" || projectFilter !== "ALL" || typeFilter !== "ALL") &&
                 "border-primary/70 bg-primary/10 text-primary dark:text-cyan-400",

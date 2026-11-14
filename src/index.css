@@ -280,24 +280,6 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 /* =========================================================================
    CUSTOM SLEEK SCROLLBAR (Menghilangkan scrollbar kaku bawaan browser)
    ========================================================================= */
-/* Sembunyikan scrollbar untuk elemen no-scrollbar dan dropdown radix */
-.no-scrollbar::-webkit-scrollbar,
-[data-radix-select-viewport]::-webkit-scrollbar,
-[data-radix-select-content]::-webkit-scrollbar,
-[data-radix-popper-content-wrapper]::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.no-scrollbar,
-[data-radix-select-viewport],
-[data-radix-select-content],
-[data-radix-popper-content-wrapper] {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -322,6 +304,27 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.28);
+}
+
+/* Sembunyikan scrollbar untuk elemen no-scrollbar dan dropdown radix */
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar,
+[data-radix-select-viewport]::-webkit-scrollbar,
+[data-radix-select-content]::-webkit-scrollbar,
+[data-radix-popper-content-wrapper]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.no-scrollbar,
+.no-scrollbar *,
+[data-radix-select-viewport],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* =========================================================================
