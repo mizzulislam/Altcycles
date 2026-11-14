@@ -448,29 +448,36 @@ export async function generateDocumentPdf(
     font: fontBold,
     color: SLATE_900,
   });
-  const dateText = sanitizePdfText(`Tanggal: ${formatDateID(spec.docDate)}`);
-  const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
-  page.drawText(dateText, {
-    x: pageWidth - marginX - dateWidth,
-    y,
-    size: 9,
-    font: fontRegular,
-    color: SLATE_700,
-  });
+
+  if (spec.docDate && spec.docDate.trim()) {
+    const dateText = sanitizePdfText(`Tanggal: ${formatDateID(spec.docDate)}`);
+    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
+    page.drawText(dateText, {
+      x: pageWidth - marginX - dateWidth,
+      y,
+      size: 9,
+      font: fontRegular,
+      color: SLATE_700,
+    });
+  }
   y -= 14;
 
-  page.drawText(sanitizePdfText(`Nomor Dokumen: ${spec.docNumber}`), {
-    x: marginX,
-    y,
-    size: 9,
-    font: fontBold,
-    color: BRAND_BLUE,
-  });
+  const hasDocNumber = Boolean(spec.docNumber && spec.docNumber.trim());
+  if (hasDocNumber) {
+    page.drawText(sanitizePdfText(`Nomor Dokumen: ${spec.docNumber}`), {
+      x: marginX,
+      y,
+      size: 9,
+      font: fontBold,
+      color: BRAND_BLUE,
+    });
+  }
+
   if (spec.docSubtitle) {
     const subClean = sanitizePdfText(spec.docSubtitle);
     const subW = fontRegular.widthOfTextAtSize(subClean, 9);
     page.drawText(subClean, {
-      x: pageWidth - marginX - subW,
+      x: hasDocNumber ? pageWidth - marginX - subW : marginX,
       y,
       size: 9,
       font: fontRegular,

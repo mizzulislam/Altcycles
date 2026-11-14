@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   AlertTriangleIcon,
   ArrowUpDownIcon,
@@ -64,7 +65,6 @@ import {
 } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
-import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -78,6 +78,7 @@ import {
 } from "@/lib/operations-service";
 import type {
   AccountRow,
+  CompanyProfileRow,
   JournalLineRow,
   JournalRow,
   JournalType,
@@ -150,7 +151,13 @@ export function JournalsPage({
   const [lines, setLines] = React.useState<JournalLineRow[]>([]);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
+  const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
+  const [mounted, setMounted] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [periodFilter] = React.useState("ALL");
   const [projectFilter] = React.useState("ALL");
@@ -213,6 +220,7 @@ export function JournalsPage({
       setLines(jRes.lines);
       setAccounts(accs);
       setProjects(prjRes.projects);
+      setCompany(comp);
       setJournalLockEnabled(comp.journal_lock_enabled !== false);
     } catch (err) {
       toast.error(
@@ -551,6 +559,31 @@ export function JournalsPage({
     });
   }, [filteredJournals, sortOrder]);
 
+  const printAreaId = `altcycles-journal-print-${filterMode}`;
+
+  const printPeriodLabel =
+    externalStartDate && externalEndDate
+      ? `${formatDateID(externalStartDate)} s.d. ${formatDateID(externalEndDate)}`
+      : periodFilter === "ALL"
+        ? "Semua Periode"
+        : periodFilter;
+
+  const printDocTitle =
+    filterMode === "adjusting"
+      ? "Jurnal Penyesuaian & Koreksi SAK"
+      : "Jurnal Umum";
+
+  const printBrandName = company?.company_name
+    ? company.company_name.toUpperCase()
+    : "ALTVIRA TECHNOLOGY";
+
+  function handleExportPdf() {
+    setTimeout(() => {
+      window.print();
+    }, 60);
+    void recordExportLog("JOURNALS", "PDF", periodFilter);
+  }
+
   async function handleExportExcel() {
     const exportRows: Array<Array<string | number>> = [];
     for (const j of filteredJournals) {
@@ -592,81 +625,44 @@ export function JournalsPage({
     toast.success("Jurnal akuntansi berhasil diekspor ke Excel (.xlsx).");
   }
 
-  async function handleExportPdf() {
-    const comp = await getCompanyProfile();
-    const tableRows: string[][] = [];
-    for (const j of filteredJournals) {
-      const jLines = lines
-        .filter((l) => l.journal_id === j.id)
-        .sort((a, b) => a.line_no - b.line_no);
-      for (const l of jLines) {
-        const acc = accountMap.get(l.account_id);
-        tableRows.push([
-          formatDateID(j.journal_date),
-          j.journal_number,
-          acc ? `${acc.code} - ${acc.name}` : "-",
-          l.description || j.description || "-",
-          l.debit > 0 ? formatRupiah(l.debit) : "-",
-          l.credit > 0 ? formatRupiah(l.credit) : "-",
-        ]);
-      }
-    }
-
-    const bytes = await generateDocumentPdf({
-      docTitle:
-        filterMode === "adjusting"
-          ? "JURNAL PENYESUAIAN & KOREKSI SAK"
-          : "JURNAL UMUM TRANSAKSI KEUANGAN",
-      docSubtitle: `Periode: ${
-        externalStartDate && externalEndDate
-          ? `${formatDateID(externalStartDate)} s.d. ${formatDateID(externalEndDate)}`
-          : periodFilter === "ALL"
-            ? "Semua Periode"
-            : periodFilter
-      }`,
-      docNumber: `JRN/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
-      docDate: new Date().toISOString().slice(0, 10),
-      company: comp,
-      tableColumns: [
-        { header: "Tanggal", widthRatio: 0.14 },
-        { header: "No. Jurnal", widthRatio: 0.18 },
-        { header: "Akun SAK", widthRatio: 0.28 },
-        { header: "Uraian Baris", widthRatio: 0.20 },
-        { header: "Debit", widthRatio: 0.10, align: "right" },
-        { header: "Kredit", widthRatio: 0.10, align: "right" },
-      ],
-      tableRows,
-      rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
-    });
-
-    downloadPdfBytes(
-      bytes,
-      filterMode === "adjusting"
-        ? "Jurnal_Penyesuaian_Altcycles.pdf"
-        : "Jurnal_Umum_Altcycles.pdf",
-    );
-    await recordExportLog("JOURNALS", "PDF", periodFilter);
-    toast.success("Jurnal akuntansi berhasil diekspor ke PDF (.pdf).");
-  }
-
   async function handleExportCsv() {
     const exportRows: Array<Array<string | number>> = [];
-    for (const j of filteredJournals) {
+    for (const j of sortedJournals) {
       const jLines = lines
         .filter((l) => l.journal_id === j.id)
         .sort((a, b) => a.line_no - b.line_no);
-      const prj = j.project_id ? projectMap.get(j.project_id) : undefined;
-      for (const l of jLines) {
+      const debitLines = jLines.filter((l) => l.debit > 0);
+      const creditLines = jLines.filter((l) => l.credit > 0);
+
+      debitLines.forEach((l, idx) => {
         const acc = accountMap.get(l.account_id);
         exportRows.push([
-          j.journal_number,
-          j.journal_date,
-          JOURNAL_TYPE_LABELS[j.journal_type].label,
-          prj ? prj.code : "-",
-          acc ? `${acc.code}: ${acc.name}` : "-",
-          l.description || j.description,
+          idx === 0 ? formatDateID(j.journal_date) : "",
+          acc?.name ?? "Akun Debit",
+          acc?.code ?? "-",
           l.debit,
-          l.credit,
+          "",
+        ]);
+      });
+
+      creditLines.forEach((l) => {
+        const acc = accountMap.get(l.account_id);
+        exportRows.push([
+          "",
+          `    ${acc?.name ?? "Akun Kredit"}`,
+          acc?.code ?? "-",
+          "",
+          Math.abs(l.credit),
+        ]);
+      });
+
+      if (j.description) {
+        exportRows.push([
+          "",
+          `(${j.description})`,
+          "",
+          "",
+          "",
         ]);
       }
     }
@@ -675,12 +671,9 @@ export function JournalsPage({
         ? "Jurnal_Penyesuaian_Altcycles.csv"
         : "Jurnal_Umum_Altcycles.csv",
       [
-        "No. Jurnal",
         "Tanggal",
-        "Jenis Jurnal",
-        "Proyek",
-        "Akun SAK",
-        "Uraian",
+        "Deskripsi",
+        "Ref",
         "Debit",
         "Kredit",
       ],
@@ -689,6 +682,138 @@ export function JournalsPage({
     await recordExportLog("JOURNALS", "CSV", periodFilter);
     toast.success("Jurnal akuntansi berhasil diekspor ke CSV (.csv).");
   }
+
+  const journalPrintContent = (
+    <div data-accounting-print-area={printAreaId} aria-hidden="true">
+      <div className="print-brand">{printBrandName}</div>
+      <h1>{printDocTitle}</h1>
+      <div className="print-meta">
+        Periode: {printPeriodLabel} | Dicetak: {new Date().toLocaleString("id-ID")}
+      </div>
+
+      <table className="print-table">
+        <colgroup>
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "54%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "12%" }} />
+          <col style={{ width: "12%" }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th className="print-center">Tanggal</th>
+            <th className="print-center">Deskripsi</th>
+            <th className="print-center">Ref</th>
+            <th className="print-center">Debit</th>
+            <th className="print-center">Kredit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedJournals.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="print-center" style={{ padding: "28px", color: "#6b7280" }}>
+                Belum ada transaksi pada periode ini.
+              </td>
+            </tr>
+          ) : (
+            sortedJournals.map((j) => {
+              const jLines = lines
+                .filter((l) => l.journal_id === j.id)
+                .sort((a, b) => a.line_no - b.line_no);
+              const debitLines = jLines.filter((l) => l.debit > 0);
+              const creditLines = jLines.filter((l) => l.credit > 0);
+              const journalRows = [...debitLines, ...creditLines];
+
+              return (
+                <tr key={j.id} className="align-top">
+                  <td className="print-center whitespace-nowrap">
+                    {formatDateID(j.journal_date)}
+                  </td>
+                  <td>
+                    <div className="print-deskripsi-wrap">
+                      {debitLines.map((row, idx) => {
+                        const acc = accountMap.get(row.account_id);
+                        return (
+                          <div key={`d-${idx}`} className="print-account-debit">
+                            {acc?.name ?? "Akun Debit"}
+                          </div>
+                        );
+                      })}
+                      {creditLines.map((row, idx) => {
+                        const acc = accountMap.get(row.account_id);
+                        return (
+                          <div key={`c-${idx}`} className="print-account-credit">
+                            {acc?.name ?? "Akun Kredit"}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {j.description && (
+                      <div className="print-memo">
+                        ({j.description})
+                      </div>
+                    )}
+                  </td>
+                  <td className="print-center">
+                    <div className="print-ref-wrap">
+                      {journalRows.map((row, idx) => {
+                        const acc = accountMap.get(row.account_id);
+                        return (
+                          <div key={`r-${idx}`} className="print-ref-item">
+                            {acc?.code ?? "-"}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="print-amount-wrap">
+                      {journalRows.map((row, idx) => {
+                        if (row.debit > 0) {
+                          return (
+                            <div key={`deb-${idx}`} className="print-amount-row">
+                              <span className="print-currency">Rp</span>
+                              <span>{row.debit.toLocaleString("id-ID")}</span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={`deb-blank-${idx}`} className="print-amount-row print-blank">
+                            <span>Rp</span>
+                            <span>0</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="print-amount-wrap">
+                      {journalRows.map((row, idx) => {
+                        if (row.credit > 0) {
+                          return (
+                            <div key={`cred-${idx}`} className="print-amount-row">
+                              <span className="print-currency">Rp</span>
+                              <span>{Math.abs(row.credit).toLocaleString("id-ID")}</span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={`cred-blank-${idx}`} className="print-amount-row print-blank">
+                            <span>Rp</span>
+                            <span>0</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -1702,6 +1827,184 @@ export function JournalsPage({
         destructive
         onConfirm={handleDeleteBatch}
       />
+
+      {/* Style & Portal Cetak Save as PDF Standar Splitz */}
+      <style>
+        {`
+          @media screen {
+            [data-accounting-print-area="${printAreaId}"] {
+              display: none !important;
+            }
+          }
+
+          @media print {
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+
+            @page {
+              size: A4 portrait;
+              margin: 15mm 20mm;
+            }
+
+            body > :not([data-accounting-print-area="${printAreaId}"]) {
+              display: none !important;
+            }
+
+            body {
+              background: #ffffff !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] {
+              display: block !important;
+              width: 100% !important;
+              box-sizing: border-box !important;
+              background: #ffffff !important;
+              color: #1f2937 !important;
+              font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif !important;
+              line-height: 1.5 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-brand {
+              font-size: 11px !important;
+              font-weight: 700 !important;
+              color: #0B43C8 !important;
+              text-transform: uppercase !important;
+              letter-spacing: 0.05em !important;
+              margin: 0 0 4px 0 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] h1 {
+              margin: 0 0 6px !important;
+              font-size: 22px !important;
+              font-weight: 800 !important;
+              color: #111827 !important;
+              line-height: 1.2 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-meta {
+              margin-bottom: 20px !important;
+              color: #4b5563 !important;
+              font-size: 11px !important;
+              border-bottom: 2px solid #0B43C8 !important;
+              padding-bottom: 8px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] table.print-table {
+              width: 100% !important;
+              border-collapse: collapse !important;
+              table-layout: fixed !important;
+              font-size: 10.5px !important;
+              margin-top: 10px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] th {
+              border: 1px solid #d1d5db !important;
+              background: #f8fafc !important;
+              color: #1f2937 !important;
+              padding: 8px 10px !important;
+              font-weight: 700 !important;
+              font-size: 11px !important;
+              text-transform: uppercase !important;
+              text-align: center !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] td {
+              border: 1px solid #e5e7eb !important;
+              padding: 6px 10px !important;
+              vertical-align: top !important;
+              word-break: break-word !important;
+              color: #374151 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] tr:nth-child(even) td {
+              background-color: #fafafa !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-center {
+              text-align: center !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-deskripsi-wrap {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 4px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-account-debit {
+              color: #111827 !important;
+              font-weight: 600 !important;
+              min-height: 16.5px !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-account-credit {
+              color: #111827 !important;
+              font-weight: 600 !important;
+              min-height: 16.5px !important;
+              padding-left: 20px !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-memo {
+              margin-top: 5px !important;
+              font-size: 10px !important;
+              color: #0B43C8 !important;
+              font-style: italic !important;
+              font-weight: 500 !important;
+              line-height: 1.4 !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-ref-wrap {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 4px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-ref-item {
+              color: #6b7280 !important;
+              min-height: 16.5px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              font-size: 10.5px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-amount-wrap {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 4px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-amount-row {
+              color: #111827 !important;
+              font-weight: 600 !important;
+              display: flex !important;
+              justify-content: space-between !important;
+              min-height: 16.5px !important;
+              align-items: center !important;
+              width: 100% !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-currency {
+              color: #9ca3af !important;
+              font-weight: 400 !important;
+              margin-right: 8px !important;
+            }
+
+            [data-accounting-print-area="${printAreaId}"] .print-blank {
+              visibility: hidden !important;
+            }
+          }
+        `}
+      </style>
+
+      {mounted && typeof document !== "undefined" && createPortal(journalPrintContent, document.body)}
     </div>
   );
 }
