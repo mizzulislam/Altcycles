@@ -1453,6 +1453,38 @@ export async function reopenPeriod(
   if (error) throw new Error(error.message);
 }
 
+export async function deletePeriod(periodId: string): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") {
+      throw new Error("Hanya Admin yang dapat menghapus periode akuntansi.");
+    }
+    const targetIdx = demoStore.periods.findIndex((p) => p.id === periodId);
+    if (targetIdx === -1) throw new Error("Periode tidak ditemukan.");
+    const target = demoStore.periods[targetIdx]!;
+    const hasJournals = demoStore.journals.some((j) => j.period_id === periodId);
+    if (hasJournals) {
+      throw new Error("Tidak dapat menghapus periode yang sudah memiliki transaksi jurnal.");
+    }
+    const before = structuredClone(target);
+    demoStore.periods.splice(targetIdx, 1);
+    appendDemoAudit(actor, "DELETE", "periods", target.id, before, null);
+    return;
+  }
+
+  const { count, error: cntError } = await supabase
+    .from("journals")
+    .select("id", { count: "exact", head: true })
+    .eq("period_id", periodId);
+  if (cntError) throw new Error(cntError.message);
+  if (count && count > 0) {
+    throw new Error("Tidak dapat menghapus periode yang sudah memiliki transaksi jurnal.");
+  }
+
+  const { error } = await supabase.from("periods").delete().eq("id", periodId);
+  if (error) throw new Error(error.message);
+}
+
 // =============================================================================
 // 6. Master Vendor, Pelanggan, & Proyek
 // =============================================================================

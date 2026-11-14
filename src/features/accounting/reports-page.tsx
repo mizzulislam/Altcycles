@@ -326,25 +326,25 @@ export function AccountingReportsPage({
 
     if (activeTab === "neraca") {
       const tableRows: string[][] = [
-        ...balanceSheet.assets.map((a) => ["Aset", `${a.code} - ${a.name}`, formatRupiah(a.amount)]),
+        ...balanceSheet.assets.map((a) => ["Aset", a.name, formatRupiah(a.amount)]),
         ...balanceSheet.contractAssets.map((ca) => [
           "Aset Kontrak (Selisih WIP > Penagihan)",
-          `${ca.projectCode} - ${ca.projectName}`,
+          ca.projectName,
           formatRupiah(ca.netContractPosition),
         ]),
         ...balanceSheet.liabilities.map((l) => [
           "Liabilitas",
-          `${l.code} - ${l.name}`,
+          l.name,
           formatRupiah(l.amount),
         ]),
         ...balanceSheet.contractLiabilities.map((cl) => [
           "Liabilitas Kontrak (Penagihan > WIP)",
-          `${cl.projectCode} - ${cl.projectName}`,
+          cl.projectName,
           formatRupiah(Math.abs(cl.netContractPosition)),
         ]),
         ...balanceSheet.equities.map((eq) => [
           "Ekuitas",
-          `${eq.code} - ${eq.name}`,
+          eq.name,
           formatRupiah(eq.amount),
         ]),
         ...(balanceSheet.currentUnclosedEarnings !== 0
@@ -369,7 +369,6 @@ export function AccountingReportsPage({
           { header: "Akun / Posisi Kontrak Proyek", widthRatio: 0.45 },
           { header: "Saldo (IDR)", widthRatio: 0.25, align: "right" },
         ],
-        tableRows,
         summaryRows: [
           { label: "TOTAL ASET", value: formatRupiah(balanceSheet.totalAssets) },
           {
@@ -377,6 +376,7 @@ export function AccountingReportsPage({
             value: formatRupiah(balanceSheet.totalLiabilitiesAndEquity),
           },
         ],
+        tableRows,
         rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       });
       downloadPdfBytes(bytes, `Neraca_SAK_${endDate}.pdf`);
@@ -389,17 +389,17 @@ export function AccountingReportsPage({
       const tableRows: string[][] = [
         ...incomeStatement.revenues.map((r) => [
           "Pendapatan",
-          `${r.code} - ${r.name}`,
+          r.name,
           formatRupiah(r.amount),
         ]),
         ...incomeStatement.directExpenses.map((e) => [
           "Beban Langsung Proyek",
-          `${e.code} - ${e.name}`,
+          e.name,
           formatRupiah(e.amount),
         ]),
         ...incomeStatement.sharedExpenses.map((s) => [
           "Beban Operasional Bersama",
-          `${s.code} - ${s.name}`,
+          s.name,
           formatRupiah(s.amount),
         ]),
       ];
@@ -1390,7 +1390,7 @@ export function AccountingReportsPage({
                 incomeStatement.revenues.map((r) => (
                   <TableRow key={r.code}>
                     <TableCell className="px-6 text-xs text-foreground pl-8">
-                      <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{r.code}</span>: {r.name}
+                      {r.name}
                     </TableCell>
                     <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                       {formatRupiah(r.amount)}
@@ -1420,7 +1420,7 @@ export function AccountingReportsPage({
                 incomeStatement.directExpenses.map((e) => (
                   <TableRow key={e.code}>
                     <TableCell className="px-6 text-xs text-foreground pl-8">
-                      <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{e.code}</span>: {e.name}
+                      {e.name}
                     </TableCell>
                     <TableCell className="pr-6 text-right text-xs text-foreground">
                       ({formatRupiah(e.amount)})
@@ -1450,7 +1450,7 @@ export function AccountingReportsPage({
                 incomeStatement.sharedExpenses.map((s) => (
                   <TableRow key={s.code}>
                     <TableCell className="px-6 text-xs text-foreground pl-8">
-                      <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{s.code}</span>: {s.name}
+                      {s.name}
                     </TableCell>
                     <TableCell className="pr-6 text-right text-xs text-foreground">
                       ({formatRupiah(s.amount)})
@@ -1473,133 +1473,333 @@ export function AccountingReportsPage({
     </Card>
   );
 
-  const detailedBalanceSheet = (
-    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-lg font-bold text-foreground">
-            Laporan Posisi Keuangan (Neraca SAK) per {formatDateID(endDate)}
-          </CardTitle>
-          <CardDescription>
-            Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual.
-          </CardDescription>
-        </div>
-        <div className="flex items-center gap-3">
-          <StatusBadge
-            tone={balanceSheet.isBalanced ? "success" : "destructive"}
-            label={
-              balanceSheet.isBalanced
-                ? "Neraca Seimbang"
-                : "Selisih Neraca"
-            }
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-2 p-6">
-        <div className="flex flex-col gap-3 rounded-xl border border-border/70 p-4 bg-muted/10">
-          <h3 className="text-sm font-bold text-foreground pb-2 border-b border-border/70">
-            Aset Lancar &amp; Kontrak
-          </h3>
-          <Table>
-            <TableBody>
-              {balanceSheet.assets.map((a) => (
-                <TableRow key={a.code}>
-                  <TableCell className="text-xs px-2 py-2">
-                    <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{a.code}</span>: {a.name}
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-medium px-2 py-2">
-                    {formatRupiah(a.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {balanceSheet.contractAssets.map((ca) => (
-                <TableRow key={ca.projectId} className="bg-primary/5">
-                  <TableCell className="text-xs px-2 py-2">
-                    <div className="font-semibold text-foreground">
-                      Aset Kontrak: {ca.projectCode} ({ca.projectName})
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      WIP {formatRupiah(ca.wipBalance)} &minus; Penagihan {formatRupiah(ca.billingsBalance)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-bold text-primary dark:text-cyan-400 px-2 py-2">
-                    {formatRupiah(ca.netContractPosition)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="bg-muted/40 font-bold border-t-2 border-b-2 border-border/80">
-                <TableCell className="px-2 py-2.5 text-xs text-foreground font-bold">Total Aset</TableCell>
-                <TableCell className="text-right px-2 py-2.5 text-xs font-bold text-primary dark:text-cyan-400">
-                  {formatRupiah(balanceSheet.totalAssets)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
+  const detailedBalanceSheet = (() => {
+    const currentAssets = balanceSheet.assets.filter(
+      (a) => a.code.startsWith("1-1") || a.code.startsWith("1-2"),
+    );
+    const fixedAssets = balanceSheet.assets.filter(
+      (a) => !a.code.startsWith("1-1") && !a.code.startsWith("1-2"),
+    );
+    const totalCurrentAssets =
+      currentAssets.reduce((s, a) => s + a.amount, 0) +
+      balanceSheet.contractAssets.reduce((s, ca) => s + ca.netContractPosition, 0);
+    const totalFixedAssets = fixedAssets.reduce((s, a) => s + a.amount, 0);
 
-        <div className="flex flex-col gap-3 rounded-xl border border-border/70 p-4 bg-muted/10">
-          <h3 className="text-sm font-bold text-foreground pb-2 border-b border-border/70">
-            Liabilitas &amp; Ekuitas
-          </h3>
-          <Table>
-            <TableBody>
-              {balanceSheet.liabilities.map((l) => (
-                <TableRow key={l.code}>
-                  <TableCell className="text-xs px-2 py-2">
-                    <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{l.code}</span>: {l.name}
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-medium px-2 py-2">
-                    {formatRupiah(l.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {balanceSheet.contractLiabilities.map((cl) => (
-                <TableRow key={cl.projectId} className="bg-primary/5">
-                  <TableCell className="text-xs px-2 py-2">
-                    <div className="font-semibold text-foreground">
-                      Liabilitas Kontrak: {cl.projectCode} ({cl.projectName})
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
-                      Penagihan {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-bold text-primary dark:text-cyan-400 px-2 py-2">
-                    {formatRupiah(Math.abs(cl.netContractPosition))}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {balanceSheet.equities.map((eq) => (
-                <TableRow key={eq.code}>
-                  <TableCell className="text-xs px-2 py-2">
-                    <span className="font-mono text-primary dark:text-cyan-400 font-semibold">{eq.code}</span>: {eq.name}
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-medium px-2 py-2">
-                    {formatRupiah(eq.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {balanceSheet.currentUnclosedEarnings !== 0 ? (
+    const currentLiabilities = balanceSheet.liabilities.filter((l) =>
+      l.code.startsWith("2-1"),
+    );
+    const longTermLiabilities = balanceSheet.liabilities.filter(
+      (l) => !l.code.startsWith("2-1"),
+    );
+    const totalCurrentLiabilities =
+      currentLiabilities.reduce((s, l) => s + l.amount, 0) +
+      balanceSheet.contractLiabilities.reduce(
+        (s, cl) => s + Math.abs(cl.netContractPosition),
+        0,
+      );
+    const totalLongTermLiabilities = longTermLiabilities.reduce(
+      (s, l) => s + l.amount,
+      0,
+    );
+    const totalLiabilities = totalCurrentLiabilities + totalLongTermLiabilities;
+    const totalEquity =
+      balanceSheet.equities.reduce((s, eq) => s + eq.amount, 0) +
+      balanceSheet.currentUnclosedEarnings;
+
+    const formatBalanceAmount = (amount: number) => {
+      if (amount < 0) return `(${formatRupiah(Math.abs(amount))})`;
+      return formatRupiah(amount);
+    };
+
+    return (
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="text-lg font-bold text-foreground">
+              Laporan Posisi Keuangan (Neraca SAK) per {formatDateID(endDate)}
+            </CardTitle>
+            <CardDescription>
+              Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusBadge
+              tone={balanceSheet.isBalanced ? "success" : "destructive"}
+              label={
+                balanceSheet.isBalanced
+                  ? "Neraca Seimbang"
+                  : "Selisih Neraca"
+              }
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableCell className="text-xs italic text-muted-foreground px-2 py-2">
-                    Laba/Rugi Periode Berjalan (Belum Ditutup)
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-medium px-2 py-2">
-                    {formatRupiah(balanceSheet.currentUnclosedEarnings)}
+                  <TableHead className="text-center px-6 font-semibold text-xs text-foreground/80">
+                    Komponen / Akun SAK
+                  </TableHead>
+                  <TableHead className="w-56 text-center pr-6 font-semibold text-xs text-foreground/80">
+                    Nominal
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* ASET */}
+                <TableRow className="bg-muted/30 font-bold border-t border-border/80">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
+                    ASET (HARTA)
                   </TableCell>
                 </TableRow>
-              ) : null}
-              <TableRow className="bg-muted/40 font-bold border-t-2 border-b-2 border-border/80">
-                <TableCell className="px-2 py-2.5 text-xs text-foreground font-bold">Total Liabilitas &amp; Ekuitas</TableCell>
-                <TableCell className="text-right px-2 py-2.5 text-xs font-bold text-primary dark:text-cyan-400">
-                  {formatRupiah(balanceSheet.totalLiabilitiesAndEquity)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
+                <TableRow className="bg-muted/10 font-bold">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
+                    ASET LANCAR
+                  </TableCell>
+                </TableRow>
+                {currentAssets.length === 0 && balanceSheet.contractAssets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
+                      Belum ada aset lancar pada periode ini.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <>
+                    {currentAssets.map((a) => (
+                      <TableRow key={a.code}>
+                        <TableCell className="px-6 text-xs text-foreground pl-12">
+                          {a.name}
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                          {formatBalanceAmount(a.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {balanceSheet.contractAssets.map((ca) => (
+                      <TableRow key={ca.projectId} className="bg-primary/5">
+                        <TableCell className="px-6 text-xs pl-12">
+                          <div className="font-semibold text-foreground">
+                            Aset Kontrak: {ca.projectName}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            WIP {formatRupiah(ca.wipBalance)} &minus; Penagihan {formatRupiah(ca.billingsBalance)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
+                          {formatBalanceAmount(ca.netContractPosition)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </>
+                )}
+                <TableRow className="bg-muted/20 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
+                    Total Aset Lancar
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalCurrentAssets)}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow className="bg-muted/10 font-bold border-t border-border/70">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
+                    ASET TETAP
+                  </TableCell>
+                </TableRow>
+                {fixedAssets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
+                      Tidak ada aset tetap
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  fixedAssets.map((a) => (
+                    <TableRow key={a.code}>
+                      <TableCell className="px-6 text-xs text-foreground pl-12">
+                        {a.name}
+                      </TableCell>
+                      <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                        {formatBalanceAmount(a.amount)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+                <TableRow className="bg-muted/20 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
+                    Total Aset Tetap (Net)
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalFixedAssets)}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow className="bg-muted/40 font-bold border-t-2 border-b-2 border-border/80">
+                  <TableCell className="px-6 text-xs font-bold text-foreground uppercase tracking-wide">
+                    TOTAL ASET
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
+                    {formatBalanceAmount(balanceSheet.totalAssets)}
+                  </TableCell>
+                </TableRow>
+
+                {/* LIABILITAS */}
+                <TableRow className="bg-muted/30 font-bold border-t-2 border-border/80">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
+                    LIABILITAS (KEWAJIBAN)
+                  </TableCell>
+                </TableRow>
+                <TableRow className="bg-muted/10 font-bold">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
+                    LIABILITAS JANGKA PENDEK
+                  </TableCell>
+                </TableRow>
+                {currentLiabilities.length === 0 && balanceSheet.contractLiabilities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
+                      Belum ada liabilitas jangka pendek pada periode ini.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <>
+                    {currentLiabilities.map((l) => (
+                      <TableRow key={l.code}>
+                        <TableCell className="px-6 text-xs text-foreground pl-12">
+                          {l.name}
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                          {formatBalanceAmount(l.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {balanceSheet.contractLiabilities.map((cl) => (
+                      <TableRow key={cl.projectId} className="bg-primary/5">
+                        <TableCell className="px-6 text-xs pl-12">
+                          <div className="font-semibold text-foreground">
+                            Liabilitas Kontrak: {cl.projectName}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            Penagihan {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
+                          {formatBalanceAmount(Math.abs(cl.netContractPosition))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </>
+                )}
+                <TableRow className="bg-muted/20 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
+                    Total Liabilitas Jangka Pendek
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalCurrentLiabilities)}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow className="bg-muted/10 font-bold border-t border-border/70">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
+                    LIABILITAS JANGKA PANJANG
+                  </TableCell>
+                </TableRow>
+                {longTermLiabilities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
+                      Tidak ada liabilitas jangka panjang
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  longTermLiabilities.map((l) => (
+                    <TableRow key={l.code}>
+                      <TableCell className="px-6 text-xs text-foreground pl-12">
+                        {l.name}
+                      </TableCell>
+                      <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                        {formatBalanceAmount(l.amount)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+                <TableRow className="bg-muted/20 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
+                    Total Liabilitas Jangka Panjang
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalLongTermLiabilities)}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow className="bg-muted/25 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs font-bold text-foreground pl-8">
+                    Total Liabilitas
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalLiabilities)}
+                  </TableCell>
+                </TableRow>
+
+                {/* EKUITAS */}
+                <TableRow className="bg-muted/30 font-bold border-t-2 border-border/80">
+                  <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
+                    EKUITAS (MODAL)
+                  </TableCell>
+                </TableRow>
+                {balanceSheet.equities.length === 0 && balanceSheet.currentUnclosedEarnings === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
+                      Belum ada akun ekuitas pada periode ini.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <>
+                    {balanceSheet.equities.map((eq) => (
+                      <TableRow key={eq.code}>
+                        <TableCell className="px-6 text-xs text-foreground pl-12">
+                          {eq.name}
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                          {formatBalanceAmount(eq.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {balanceSheet.currentUnclosedEarnings !== 0 ? (
+                      <TableRow>
+                        <TableCell className="px-6 text-xs italic text-muted-foreground pl-12">
+                          Laba (Rugi) Periode Berjalan (Belum Ditutup)
+                        </TableCell>
+                        <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
+                          {formatBalanceAmount(balanceSheet.currentUnclosedEarnings)}
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </>
+                )}
+                <TableRow className="bg-muted/20 font-bold border-t border-border/70">
+                  <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
+                    Total Ekuitas
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
+                    {formatBalanceAmount(totalEquity)}
+                  </TableCell>
+                </TableRow>
+
+                {/* TOTAL LIABILITAS & EKUITAS */}
+                <TableRow className="bg-muted/50 font-bold border-t-2 border-b-4 border-double border-border/90">
+                  <TableCell className="px-6 text-xs font-bold text-foreground uppercase tracking-wide">
+                    TOTAL LIABILITAS DAN EKUITAS
+                  </TableCell>
+                  <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
+                    {formatBalanceAmount(balanceSheet.totalLiabilitiesAndEquity)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  })();
 
   const detailedCashFlow = (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">

@@ -59,6 +59,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   createPeriod,
+  deletePeriod,
   getCompanyProfile,
   listAccounts,
   listPeriods,
@@ -111,9 +112,10 @@ export function PeriodsPage({
   const [month, setMonth] = React.useState("2");
   const [creating, setCreating] = React.useState(false);
 
-  // Targets Tutup / Buka Periode
+  // Targets Tutup / Buka / Hapus Periode
   const [closeTarget, setCloseTarget] = React.useState<PeriodRow | null>(null);
   const [reopenTarget, setReopenTarget] = React.useState<PeriodRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<PeriodRow | null>(null);
 
   // Dialog Jurnal Pembalik Opsional
   const [reverseOpen, setReverseOpen] = React.useState(false);
@@ -278,6 +280,18 @@ export function PeriodsPage({
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal membuka kembali periode.");
+    }
+  }
+
+  async function handleConfirmDeletePeriod() {
+    if (!deleteTarget) return;
+    try {
+      await deletePeriod(deleteTarget.id);
+      toast.success(`Periode ${deleteTarget.name} berhasil dihapus.`);
+      setDeleteTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus periode.");
     }
   }
 
@@ -531,7 +545,7 @@ export function PeriodsPage({
                 Tutup Buku Otomatis Dinonaktifkan
               </h4>
               <p className="text-xs mt-0.5 text-muted-foreground leading-relaxed">
-                Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin. Bendahara dan Admin dapat mencatat jurnal penutup secara manual atau menutup buku periode secara mandiri.
+                Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin.
               </p>
             </div>
           </div>
@@ -553,10 +567,6 @@ export function PeriodsPage({
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="text-xs font-semibold text-muted-foreground bg-muted/70 px-3 py-2 rounded-xl border border-border/80">
-              Total jurnal: <span className="text-foreground font-bold">{closingJournals.length}</span>
-            </div>
-
             <Button
               type="button"
               size="sm"
@@ -787,7 +797,7 @@ export function PeriodsPage({
                             : "-"}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-1.5 -my-1.5">
                           {p.status === "open" ? (
                             <Button
                               type="button"
@@ -813,6 +823,17 @@ export function PeriodsPage({
                               <span className="sr-only">Buka Kembali Periode</span>
                             </Button>
                           )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setDeleteTarget(p)}
+                            className="size-8 rounded-lg text-rose-600 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/30 dark:text-rose-400 dark:hover:text-rose-300 transition-all cursor-pointer shadow-2xs"
+                            title="Hapus Periode"
+                          >
+                            <Trash2Icon className="size-4" />
+                            <span className="sr-only">Hapus Periode</span>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1223,6 +1244,19 @@ export function PeriodsPage({
         requireReason
         reasonPlaceholder="Contoh: Perbaikan jurnal penyesuaian..."
         onConfirm={handleConfirmReopenPeriod}
+      />
+
+      {/* Dialog Konfirmasi Hapus Periode */}
+      <ConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={`Hapus Periode: ${deleteTarget?.name ?? ""}`}
+        description={`Apakah Anda yakin ingin menghapus periode "${deleteTarget?.name}"? Periode yang sudah memiliki transaksi jurnal pembukuan tidak dapat dihapus.`}
+        confirmLabel="Ya, Hapus Periode"
+        destructive
+        onConfirm={handleConfirmDeletePeriod}
       />
     </div>
   );
