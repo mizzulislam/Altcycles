@@ -883,9 +883,9 @@ async function renderDocumentPdfInternal(
     const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // Target tinggi tinta ikon & wordmark Altvira (ikon lebih besar, wordmark sedikit lebih kecil sesuai arahan)
-    const iconInkHeight = 28; // Ikon logo diperbesar (~28 pt)
-    const wordmarkInkHeight = 17; // Wordmark sedikit lebih kecil (~17 pt)
+    // Target tinggi tinta ikon & wordmark Altvira (diperbesar sedikit lagi secara proporsional)
+    const iconInkHeight = 32; // Ikon logo (~32 pt)
+    const wordmarkInkHeight = 19.5; // Wordmark (~19.5 pt)
 
     // Perhitungan dimensi aset berdasarkan rasio asli dan bounding box tinta
     const iconInkH = BRAND_IMAGE_METRICS.icon.inkHeight; // 731 px
