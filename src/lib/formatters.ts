@@ -83,18 +83,21 @@ export function formatDocEmpty(value?: string | number | null | undefined): stri
 
 /**
  * Memformat angka moneter dokumen resmi Altvira:
- * - Jika nilai bulat atau desimalnya ,00 maka ditulis dengan pembulatan (contoh: Rp1.234.567)
- * - Jika memiliki nilai desimal pecahan (misal ,01 s/d ,99) maka ditulis lengkap dengan desimal (contoh: Rp1.234.567,50)
+ * - Jika nilai bulat dan `forceTwoDecimals` false maka ditulis tanpa sen (contoh: Rp1.234.567)
+ * - Jika memiliki nilai desimal pecahan (misal ,01 s/d ,99) atau `forceTwoDecimals` true maka ditulis lengkap 2 desimal (contoh: Rp1.234.567,50 / Rp1.234.567,00)
  * - Format Indonesia: pemisah ribuan titik (.) dan pemisah desimal koma (,).
  */
-export function formatDocRupiah(amount: number): string {
+export function formatDocRupiah(
+  amount: number,
+  forceTwoDecimals = false,
+): string {
   if (!Number.isFinite(amount)) return `${DOC_EMPTY_CELL}`;
   const sign = amount < 0 ? "-Rp" : "Rp";
   const abs = Math.abs(amount);
   const roundedCent = Math.round(abs * 100);
   const isWhole = roundedCent % 100 === 0;
 
-  if (isWhole) {
+  if (isWhole && !forceTwoDecimals) {
     const wholeVal = Math.round(abs);
     const absFormatted = wholeVal
       .toString()
@@ -106,6 +109,18 @@ export function formatDocRupiah(amount: number): string {
   const [wholePart, decPart] = fixed.split(".");
   const wholeFormatted = wholePart!.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `${sign}${wholeFormatted},${decPart}`;
+}
+
+/**
+ * Mengecek apakah di antara daftar angka terdapat minimal satu angka yang memiliki desimal non-nol.
+ */
+export function hasAnyDecimalCurrency(
+  values: Array<number | null | undefined>,
+): boolean {
+  return values.some((v) => {
+    if (typeof v !== "number" || !Number.isFinite(v)) return false;
+    return Math.round(Math.abs(v) * 100) % 100 !== 0;
+  });
 }
 
 /**

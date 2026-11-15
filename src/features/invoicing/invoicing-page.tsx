@@ -440,7 +440,11 @@ export function InvoicingPage() {
       spkNumber: spk?.doc_number ?? null,
       bakpNumber: bakp?.bakp_number ?? null,
       bastNumber: bast?.bast_number ?? null,
-      servicePeriod: ms ? `Termin: ${ms.name}` : undefined,
+      servicePeriod: ms
+        ? /^termin\b/i.test(ms.name.trim())
+          ? ms.name.trim()
+          : `Termin: ${ms.name.trim()}`
+        : undefined,
       description: ms
         ? `${ms.name} — Proyek ${prj?.name ?? ""}`
         : `Penagihan Proyek ${prj?.name ?? ""}`,
@@ -494,7 +498,11 @@ export function InvoicingPage() {
       invoiceNumber: inv?.invoice_number ?? "-",
       projectName: prj ? `${prj.code} - ${prj.name}` : "Proyek Klien",
       clientPoNumber: cpo?.po_number ?? null,
-      servicePeriod: ms ? `Termin: ${ms.name}` : null,
+      servicePeriod: ms
+        ? /^termin\b/i.test(ms.name.trim())
+          ? ms.name.trim()
+          : `Termin: ${ms.name.trim()}`
+        : null,
       paymentMethod: "Transfer Bank Resmi Altvira",
       amount: kw.amount,
       hasMeterai: kw.amount > 5_000_000,

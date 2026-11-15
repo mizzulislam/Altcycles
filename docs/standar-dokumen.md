@@ -17,7 +17,7 @@ Keputusan desain untuk Altvira:
 7. Kuitansi di atas Rp5.000.000 disiapkan dengan ruang e-Meterai Rp10.000.
 8. Penomoran seragam `ALT/JENIS/TAHUN/BULAN/URUT`; pasangan invoice dan kuitansi memakai nomor urut yang sama.
 9. Setiap dokumen punya status (Draft, Terbit, Lunas, Batal) dan versi yang dikendalikan dari Altcycles, bukan diketik manual.
-10. Angka dan tanggal memakai format Indonesia: 1.234.567,00 dan 14 Oktober 2026.
+10. Angka dan tanggal memakai format Indonesia: `Rp2.000.000` untuk angka bulat (atau dua desimal `Rp1.234.567,50` bila terdapat nilai sen; jika ada satu angka berdesimal di dalam satu dokumen, seluruh angka uang di dokumen tersebut ditampilkan dua desimal agar kolom sejajar) dan `14 Oktober 2026`.
 
 ## Inventaris dokumen sampel
 
@@ -220,7 +220,7 @@ Semua jenis dokumen memakai satu kerangka sembilan zona; hanya zona B sampai G y
 - Kertas A4 portrait dengan margin 15–20 mm; lampiran rincian boleh landscape seperti lampiran iForte.
 - Satu keluarga font sans gratis (Inter, Noto Sans, atau Roboto dari Google Fonts); isi 9–10 pt, judul dokumen 18–20 pt; angka rata kanan dengan lebar tabular.
 - Satu warna aksen dari logo Altvira; header tabel memakai satu gaya saja (gelap atau terang).
-- Angka berformat Indonesia 1.234.567,00 dengan Rp di depan; mata uang asing memakai kode (USD).
+- Angka berformat Indonesia dengan `Rp` di depan: `Rp2.000.000` untuk angka bulat, namun apabila terdapat satu angka berdesimal pada dokumen, semua angka uang pada dokumen tersebut ditampilkan dua desimal (`Rp1.234.567,00` dan `Rp1.234.567,50`) agar kolom sejajar; mata uang asing memakai kode (`USD`).
 - Tanggal selalu dengan nama bulan: 14 Oktober 2026.
 - Label berbahasa Indonesia; untuk klien asing, label dwibahasa Indonesia / English.
 - Sel kosong ditulis “–”, bukan “0”, kecuali nilainya memang nol.
