@@ -104,6 +104,7 @@ export interface PdfDocumentSpec {
   footerDocNumber?: string;
   hideSystemFooter?: boolean;
   refDocNumber?: string | null;
+  appreciationBarText?: string | null;
   docStatus?: string | null;
   watermarkText?: string | null;
 }
@@ -1268,6 +1269,57 @@ async function renderDocumentPdfInternal(
   // Gambar Header pada halaman pertama
   drawDocumentHeader();
 
+  // Baris Abu Apresiasi Kuitansi ("Terima kasih telah memilih Altvira, {nama klien}")
+  const clientNameVal =
+    spec.appreciationBarText ||
+    (spec.docTitle.toUpperCase().includes("KUITANSI")
+      ? spec.metaRows?.find((m) => /telah\s+terima\s+dari/i.test(m.label))?.value
+      : null);
+  const appreciationText = clientNameVal
+    ? clientNameVal.startsWith("Terima kasih")
+      ? clientNameVal
+      : `Terima kasih telah memilih Altvira, ${clientNameVal}`
+    : null;
+
+  if (appreciationText) {
+    const cleanAppText = sanitizePdfText(appreciationText);
+    const maxBarW = contentWidth - 24;
+    const appLines = wrapTextByWidth(cleanAppText, fontBold, 9, maxBarW);
+    const barHeight = Math.max(22, appLines.length * 12 + 10);
+    const barY = y - barHeight;
+
+    page.drawRectangle({
+      x: marginX,
+      y: barY,
+      width: contentWidth,
+      height: barHeight,
+      color: CHIP_BG,
+    });
+
+    appLines.forEach((line, lIdx) => {
+      const textW = fontBold.widthOfTextAtSize(line, 9);
+      const textX = marginX + (contentWidth - textW) / 2;
+      const lineBaselineY =
+        appLines.length === 1
+          ? barY + (barHeight - 9) / 2
+          : barY + barHeight - 13 - lIdx * 12;
+
+      drawTrackedText(
+        line,
+        {
+          x: textX,
+          y: lineBaselineY,
+          size: 9,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "A-receipt-appreciation-bar",
+      );
+    });
+
+    y = barY - 15;
+  }
+
   // ==========================================================================
   // KOMPONEN 2: BLOK PIHAK & PASANGAN LABEL : NILAI (ZONA B)
   // - Tanggal dokumen otomatis dimasukkan ke awal metaRows bila belum ada.
@@ -2069,132 +2121,196 @@ async function renderDocumentPdfInternal(
     );
 
     const isReceiptDoc = spec.docTitle.toUpperCase().includes("KUITANSI");
-    const terbilangStr = hasTerbilang
-      ? isReceiptDoc
-        ? `Terbilang: # ${terbilangRupiah(spec.terbilangAmount!)} #`
-        : `Terbilang: ${terbilangRupiah(spec.terbilangAmount!)}`
-      : null;
-    const terbilangLines = terbilangStr
-      ? wrapTextByWidth(terbilangStr, fontBold, 8.5, contentWidth)
-      : [];
 
-    const neededH =
-      primaryRows.length * 18 +
-      (secondaryRows.length > 0 ? secondaryRows.length * 14 + 12 : 0) +
-      (terbilangLines.length > 0 ? terbilangLines.length * 13 + 12 : 0) +
-      8;
-    ensureSpace(neededH);
-
-    // Render baris perhitungan utama
-    primaryRows.forEach((row, idx) => {
-      const isGrandTotal =
-        idx === primaryRows.length - 1 ||
-        /^total\b/i.test(row.label.trim());
-
-      if (isGrandTotal) {
-        page.drawLine({
-          start: { x: totalBlockX, y: y + 11 },
-          end: { x: rightEdgeX, y: y + 11 },
-          thickness: 0.75,
-          color: TEXT_DARK,
-        });
-        y -= 2;
-      }
-
-      const rowFont = isGrandTotal ? fontBold : fontRegular;
-      const labelSize = isGrandTotal ? 9.5 : 8.5;
-      const valSize = isGrandTotal ? 10.5 : 9.5;
-      const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
-
-      const cleanLabel = sanitizePdfText(row.label);
-      const cleanVal = sanitizePdfText(stripCurrencySymbol(row.value));
-      const valW = rowFont.widthOfTextAtSize(cleanVal, valSize);
-
-      drawTrackedText(
-        cleanLabel,
-        {
-          x: totalBlockX,
-          y,
-          size: labelSize,
-          font: rowFont,
-          color: labelColor,
-        },
-        "E-total-label",
+    if (isReceiptDoc) {
+      // Kuitansi: "Jumlah Diterima" dan "Terbilang" dibungkus dalam SATU KOTAK ABU selebar konten, rata tengah, tanpa garis hitam di atasnya, tanpa "# ... #"
+      const receiptAmountVal = sanitizePdfText(
+        stripCurrencySymbol(primaryRows[0]?.value ?? ""),
       );
-      drawTrackedText(
-        cleanVal,
-        {
-          x: rightEdgeX - valW,
-          y,
-          size: valSize,
-          font: rowFont,
-          color: TEXT_DARK,
-        },
-        "E-total-value",
-      );
+      const rawTerbilang = spec.terbilangAmount
+        ? terbilangRupiah(spec.terbilangAmount).toUpperCase()
+        : "";
 
-      y -= isGrandTotal ? 17 : 15;
-    });
+      const boxW = contentWidth;
+      const terbStr = `Terbilang : ${rawTerbilang}`;
+      const terbSize = 8.5;
+      const maxTerbW = boxW - 24;
+      const terbLines = wrapTextByWidth(terbStr, fontBold, terbSize, maxTerbW);
+      const boxH = Math.max(52, 26 + terbLines.length * 12 + 8);
+      ensureSpace(boxH + 20);
 
-    // Render baris informasi progres kontrak (bila ada)
-    if (secondaryRows.length > 0) {
-      y -= 2;
-      page.drawLine({
-        start: { x: totalBlockX, y: y + 9 },
-        end: { x: rightEdgeX, y: y + 9 },
-        thickness: 0.4,
-        color: BORDER_GRAY,
+      const boxTopY = y;
+      const boxBottomY = boxTopY - boxH;
+
+      page.drawRectangle({
+        x: marginX,
+        y: boxBottomY,
+        width: boxW,
+        height: boxH,
+        color: CHIP_BG,
       });
-      for (const sRow of secondaryRows) {
-        const cleanLabel = sanitizePdfText(sRow.label);
-        const cleanVal = sanitizePdfText(stripCurrencySymbol(sRow.value));
-        const valW = fontRegular.widthOfTextAtSize(cleanVal, 8.5);
+
+      // Baris 1: "Jumlah Diterima : {nominal}" (rata tengah, tetap tebal)
+      const amtStr = `Jumlah Diterima : ${receiptAmountVal}`;
+      const amtSize = 11;
+      const amtW = fontBold.widthOfTextAtSize(amtStr, amtSize);
+      const amtX = marginX + (boxW - amtW) / 2;
+      drawTrackedText(
+        amtStr,
+        {
+          x: amtX,
+          y: boxTopY - 18,
+          size: amtSize,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "E-receipt-amount",
+      );
+
+      // Baris Terbilang (rata tengah, tanpa "# ... #", di-wrap agar tidak lewat margin)
+      terbLines.forEach((tLine, tIdx) => {
+        const tw = fontBold.widthOfTextAtSize(tLine, terbSize);
+        const tx = marginX + (boxW - tw) / 2;
+        drawTrackedText(
+          tLine,
+          {
+            x: tx,
+            y: boxTopY - 35 - tIdx * 12,
+            size: terbSize,
+            font: fontBold,
+            color: TEXT_DARK,
+          },
+          "E-receipt-terbilang",
+        );
+      });
+
+      y = boxBottomY - 16;
+    } else {
+      const terbilangStr = hasTerbilang
+        ? `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
+        : null;
+      const terbilangLines = terbilangStr
+        ? wrapTextByWidth(terbilangStr, fontBold, 8.5, contentWidth)
+        : [];
+
+      const neededH =
+        primaryRows.length * 18 +
+        (secondaryRows.length > 0 ? secondaryRows.length * 14 + 12 : 0) +
+        (terbilangLines.length > 0 ? terbilangLines.length * 13 + 12 : 0) +
+        8;
+      ensureSpace(neededH);
+
+      // Render baris perhitungan utama
+      primaryRows.forEach((row, idx) => {
+        const isGrandTotal =
+          idx === primaryRows.length - 1 ||
+          /^total\b/i.test(row.label.trim());
+
+        if (isGrandTotal) {
+          page.drawLine({
+            start: { x: totalBlockX, y: y + 11 },
+            end: { x: rightEdgeX, y: y + 11 },
+            thickness: 0.75,
+            color: TEXT_DARK,
+          });
+          y -= 2;
+        }
+
+        const rowFont = isGrandTotal ? fontBold : fontRegular;
+        const labelSize = isGrandTotal ? 9.5 : 8.5;
+        const valSize = isGrandTotal ? 10.5 : 9.5;
+        const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
+
+        const cleanLabel = sanitizePdfText(row.label);
+        const cleanVal = sanitizePdfText(stripCurrencySymbol(row.value));
+        const valW = rowFont.widthOfTextAtSize(cleanVal, valSize);
+
         drawTrackedText(
           cleanLabel,
           {
             x: totalBlockX,
             y,
-            size: 8,
-            font: fontRegular,
-            color: TEXT_LABEL,
+            size: labelSize,
+            font: rowFont,
+            color: labelColor,
           },
-          "E-contract-label",
+          "E-total-label",
         );
         drawTrackedText(
           cleanVal,
           {
             x: rightEdgeX - valW,
             y,
-            size: 8.5,
-            font: fontRegular,
+            size: valSize,
+            font: rowFont,
             color: TEXT_DARK,
           },
-          "E-contract-value",
+          "E-total-value",
         );
-        y -= 13.5;
-      }
-    }
 
-    // Render kalimat Terbilang
-    if (terbilangLines.length > 0) {
-      y -= 4;
-      for (const tLine of terbilangLines) {
-        drawTrackedText(
-          tLine,
-          {
-            x: marginX,
-            y,
-            size: 8.5,
-            font: fontBold,
-            color: TEXT_LABEL,
-          },
-          "E-terbilang",
-        );
-        y -= 12.5;
-      }
-    }
+        y -= isGrandTotal ? 17 : 15;
+      });
 
-    y -= 10;
+      // Render baris informasi progres kontrak (bila ada)
+      if (secondaryRows.length > 0) {
+        y -= 2;
+        page.drawLine({
+          start: { x: totalBlockX, y: y + 9 },
+          end: { x: rightEdgeX, y: y + 9 },
+          thickness: 0.4,
+          color: BORDER_GRAY,
+        });
+        for (const sRow of secondaryRows) {
+          const cleanLabel = sanitizePdfText(sRow.label);
+          const cleanVal = sanitizePdfText(stripCurrencySymbol(sRow.value));
+          const valW = fontRegular.widthOfTextAtSize(cleanVal, 8.5);
+          drawTrackedText(
+            cleanLabel,
+            {
+              x: totalBlockX,
+              y,
+              size: 8,
+              font: fontRegular,
+              color: TEXT_LABEL,
+            },
+            "E-contract-label",
+          );
+          drawTrackedText(
+            cleanVal,
+            {
+              x: rightEdgeX - valW,
+              y,
+              size: 8.5,
+              font: fontRegular,
+              color: TEXT_DARK,
+            },
+            "E-contract-value",
+          );
+          y -= 13.5;
+        }
+      }
+
+      // Render kalimat Terbilang
+      if (terbilangLines.length > 0) {
+        y -= 4;
+        for (const tLine of terbilangLines) {
+          drawTrackedText(
+            tLine,
+            {
+              x: marginX,
+              y,
+              size: 8.5,
+              font: fontBold,
+              color: TEXT_LABEL,
+            },
+            "E-terbilang",
+          );
+          y -= 12.5;
+        }
+      }
+
+      y -= 10;
+    }
   }
 
   // ==========================================================================
@@ -2202,7 +2318,12 @@ async function renderDocumentPdfInternal(
   // - Dua kolom: marker (lebar tetap 12 pt) | teks (hanging indent sejajar huruf pertama).
   // - Jarak antar item 3.5 pt; teks tidak melewati margin kanan.
   // ==========================================================================
-  if (spec.notes && spec.notes.length > 0) {
+  const rawNotes = (spec.notes ?? []).filter(
+    (n) =>
+      !/tanpa\s+tanda\s+tangan\s+basah/i.test(n) &&
+      !/sistem\s+komputerisasi/i.test(n),
+  );
+  if (rawNotes.length > 0) {
     const defaultNotesTitle = spec.docTitle.toUpperCase().includes("UAT")
       ? "Catatan Pengujian & Tindak Lanjut"
       : spec.docTitle.toUpperCase().includes("BAST")
@@ -2243,7 +2364,7 @@ async function renderDocumentPdfInternal(
     );
     y -= 14;
 
-    for (const rawNote of spec.notes) {
+    for (const rawNote of rawNotes) {
       // Bersihkan marker bawaan bila string sudah diawali "• " atau "- "
       const strippedNote = rawNote.replace(/^[•\-*]\s+/, "").trim();
       const wrappedLines = wrapTextByWidth(
@@ -2299,8 +2420,8 @@ async function renderDocumentPdfInternal(
     spec.leftSignatureName ||
     spec.thirdSignatureName
   ) {
-    const meteraiW = 71; // 25 mm
-    const meteraiH = 99; // 35 mm
+    const meteraiW = 56.7; // 20 mm
+    const meteraiH = 56.7; // 20 mm
     const sigSpaceH = spec.hasMeterai ? meteraiH + 8 : (spec.minSignatureSpace || 46);
     // Blok Altvira (kanan) memiliki 2 baris teks judul (Baris 1: pembuka, Baris 2: "Altvira Technology"),
     // sehingga membutuhkan alokasi 24 pt sebelum ruang tanda tangan.
@@ -2555,7 +2676,7 @@ async function renderDocumentPdfInternal(
         let sigImgOffsetX = colRightX;
 
         if (spec.hasMeterai) {
-          // Kotak e-Meterai 25x35 mm (71 x 99 pt) di atas nama penandatangan kanan
+          // Kotak e-Meterai 20x20 mm (56.7 x 56.7 pt) di atas nama penandatangan kanan
           const mBoxX = colRightX;
           const mBoxY = lineY + 4;
           page.drawRectangle({
@@ -2569,11 +2690,10 @@ async function renderDocumentPdfInternal(
           });
 
           const mLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
-            { text: "METERAI", size: 7.5, bold: true, color: TEXT_LABEL, dy: 20 },
-            { text: "ELEKTRONIK", size: 7.5, bold: true, color: TEXT_LABEL, dy: 32 },
-            { text: "Rp10.000", size: 9.5, bold: true, color: TEXT_DARK, dy: 52 },
-            { text: "Tempat e-Meterai", size: 7.5, bold: false, color: TEXT_LABEL, dy: 72 },
-            { text: "25 x 35 mm", size: 7.5, bold: false, color: TEXT_LABEL, dy: 84 },
+            { text: "METERAI", size: 6.5, bold: true, color: TEXT_LABEL, dy: 13 },
+            { text: "ELEKTRONIK", size: 6.5, bold: true, color: TEXT_LABEL, dy: 22 },
+            { text: "Rp10.000", size: 7.5, bold: true, color: TEXT_DARK, dy: 34 },
+            { text: "20 x 20 mm", size: 6, bold: false, color: TEXT_LABEL, dy: 46 },
           ];
 
           for (const ml of mLines) {
@@ -3286,13 +3406,13 @@ export async function generateSpkProjectCharterPdf(params: {
   const sigY = y;
   const p1X = marginX + 12;
   const p2X = pageWidth - marginX - 185;
-  const lineY = sigY - 118;
+  const lineY = sigY - 76;
   const nameY = lineY - 13;
   const titleY = nameY - 12;
 
-  // Slot e-Meterai Rp10.000 proporsional 25 x 35 mm (71 x 99 pt, min 7.5 pt)
-  const spkMeteraiW = 71;
-  const spkMeteraiH = 99;
+  // Slot e-Meterai Rp10.000 proporsional 20 x 20 mm (56.7 x 56.7 pt)
+  const spkMeteraiW = 56.7;
+  const spkMeteraiH = 56.7;
   const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
   const spkMeteraiY = lineY + 4;
 
@@ -3307,11 +3427,10 @@ export async function generateSpkProjectCharterPdf(params: {
   });
 
   const spkMLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
-    { text: "METERAI", size: 7.5, bold: true, color: SLATE_600, dy: 20 },
-    { text: "ELEKTRONIK", size: 7.5, bold: true, color: SLATE_600, dy: 32 },
-    { text: "Rp10.000", size: 9.5, bold: true, color: SLATE_900, dy: 52 },
-    { text: "Tempat e-Meterai", size: 7.5, bold: false, color: SLATE_500, dy: 72 },
-    { text: "25 x 35 mm", size: 7.5, bold: false, color: SLATE_500, dy: 84 },
+    { text: "METERAI", size: 6.5, bold: true, color: SLATE_600, dy: 13 },
+    { text: "ELEKTRONIK", size: 6.5, bold: true, color: SLATE_600, dy: 22 },
+    { text: "Rp10.000", size: 7.5, bold: true, color: SLATE_900, dy: 34 },
+    { text: "20 x 20 mm", size: 6, bold: false, color: SLATE_500, dy: 46 },
   ];
 
   for (const ml of spkMLines) {
@@ -3890,12 +4009,12 @@ export function buildReceiptPdfSpec(params: {
     terbilangAmount: params.amount,
     hasMeterai: needsMeterai,
     meteraiLabel: "TEMPAT E-METERAI Rp10.000",
+    appreciationBarText: `Terima kasih telah memilih Altvira, ${params.receivedFrom}`,
     notes: [
       "Kuitansi ini merupakan bukti penerimaan pembayaran yang sah dan mengikat atas tagihan invoice terkait.",
       needsMeterai
         ? "Bea meterai Rp10.000 telah diperhitungkan sesuai UU No. 10 Tahun 2020 tentang Bea Meterai."
         : "Nilai pembayaran di bawah batas pengenaan bea meterai sesuai UU No. 10 Tahun 2020.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
     rightSignatureLabel: `Penerima, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
@@ -3996,7 +4115,6 @@ export function buildClientPoPdfSpec(params: {
     terbilangAmount: params.poValue,
     notes: [
       "Gunakan Kode Akses PO di atas pada Portal Pembeli untuk memantau progres pekerjaan dan mengunduh dokumen tagihan resmi.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
     leftSignatureLabel: "Diajukan Oleh (Klien),",
     leftSignatureName: `${params.clientName} - ${params.clientCompany?.trim() || "Pihak Klien"}`,
@@ -4116,7 +4234,6 @@ export function buildPaymentApprovalPdfSpec(params: {
         ? [`Dokumen Pendukung Terlampir: ${params.attachmentNames.join(", ")}`]
         : []),
       "Pengajuan pembayaran ini wajib diverifikasi dan disetujui Pejabat Keuangan sebelum pencairan kas atau transfer bank dilakukan.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
     leftSignatureLabel: "Diajukan Oleh (Pemohon),",
     leftSignatureName: leftSigDisplay,

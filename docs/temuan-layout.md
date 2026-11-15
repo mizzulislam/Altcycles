@@ -528,14 +528,37 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-32
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Kuitansi & Seluruh Dokumen Administrasi PDF (`renderDocumentPdfInternal`, `buildReceiptPdfSpec`, `buildClientPoPdfSpec`, `buildPaymentApprovalPdfSpec`)
+- **Apa yang bertentangan:**
+  1. Pada dokumen Kuitansi, setelah header belum terdapat baris apresiasi. Pengguna meminta baris abu (*chip background*) rata tengah berisi: `"Terima kasih telah memilih Altvira, {nama klien}"`.
+  2. Nilai *Jumlah Diterima* sebelumnya memiliki garis hitam di atasnya dan terpisah dari *Terbilang*. Pengguna meminta garis hitam dihapus, nominal tetap tebal, serta *Jumlah Diterima* dan *Terbilang* dipindahkan ke tengah (rata tengah) dibungkus dalam satu kotak abu selebar konten. Tanda `# ... #` pada terbilang kuitansi dihapus.
+  3. Nilai/isi teks label *Terbilang* diinstruksikan ditulis UPPERCASE / KAPITAL semua secara global di seluruh jenis dokumen.
+  4. Ukuran kotak e-meterai sebelumnya 25x35 mm (71x99 pt). Pengguna meminta diubah menjadi ukuran standar **20x20 mm** (56.7 x 56.7 pt).
+  5. Kalimat *"Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah"* sebelumnya tercetak pada catatan kuitansi/dokumen. Pengguna meminta kalimat ini dihapus secara global dari seluruh dokumen.
+- **Yang kulakukan:**
+  1. Menambahkan baris abu apresiasi kuitansi (`spec.appreciationBarText`) di bawah garis header dengan pembungkusan teks (*text wrap*) dan posisi rata tengah.
+  2. Menghapus garis pemisah di atas Jumlah Diterima, membungkus Jumlah Diterima dan Terbilang (tanpa `# ... #`) dalam satu kotak abu `CHIP_BG` dengan teks rata tengah dan *auto-wrap*.
+  3. Menerapkan konversi `.toUpperCase()` pada seluruh nilai terbilang secara global di generator dokumen.
+  4. Mengubah ukuran kotak e-meterai menjadi 20x20 mm (`56.7 x 56.7 pt`) dengan label meterai proporsional di seluruh dokumen (termasuk SPK Project Charter).
+  5. Menghapus kalimat klausul komputerisasi tanpa tanda tangan basah secara global dari `rawNotes` dan seluruh pembuat spesifikasi dokumen.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan baris apresiasi kuitansi, kotak gabungan abu jumlah & terbilang, terbilang uppercase global, kotak meterai 20x20 mm, dan penghapusan teks komputerisasi. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 16 | 14 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 17 | 15 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **31** | **24** | **7** | **1** |
+| **Total Temuan** | **32** | **25** | **7** | **1** |
