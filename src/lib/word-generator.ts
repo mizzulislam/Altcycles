@@ -23,8 +23,6 @@ import {
   formatDateID,
   formatDateTimeID,
   formatDocDateLong,
-  formatDocEmpty,
-  formatDocRupiah,
   formatRupiah,
   terbilangRupiah,
 } from "@/lib/formatters";
@@ -279,7 +277,9 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
 
   const logoLeftRun = buildImageRun(companyLogo, 84, 42);
   const logoRightRun = buildImageRun(clientLogo, 84, 42);
-  const npwpPart = spec.company.tax_id ? ` | NPWP: ${spec.company.tax_id}` : "";
+  const npwpPart = spec.company.tax_id_number
+    ? ` | NPWP: ${spec.company.tax_id_number}`
+    : "";
 
   const headerTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },

@@ -354,7 +354,7 @@ export function AdminApprovalsPage() {
       amount: req.amount,
       status: req.status,
       statusLabel: PA_STATUS_META[req.status].label,
-      approverName: req.decided_by ? profileMap.get(req.decided_by) ?? "Admin Keuangan" : null,
+      approverName: req.approver_id ? profileMap.get(req.approver_id) ?? "Admin Keuangan" : null,
       approvedAt: req.decided_at ?? null,
       paidDate: req.paid_date ?? null,
       rejectionReason: req.rejection_reason ?? null,

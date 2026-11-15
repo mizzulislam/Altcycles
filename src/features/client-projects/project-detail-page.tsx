@@ -593,7 +593,7 @@ export function ProjectDetailPage() {
       (i) => i.quotation_id === qt.id,
     );
     const statusText =
-      qt.status === "approved"
+      qt.status === "accepted"
         ? "DISETUJUI"
         : qt.status === "sent"
           ? "TERKIRIM"
@@ -601,7 +601,7 @@ export function ProjectDetailPage() {
             ? "DITOLAK"
             : "DRAF";
     const statusTone: DocStatusVariant =
-      qt.status === "approved"
+      qt.status === "accepted"
         ? "success"
         : qt.status === "sent"
           ? "info"
@@ -706,7 +706,7 @@ export function ProjectDetailPage() {
       balanceDueBox: {
         label: "NILAI KONTRAK PEKERJAAN",
         amountText: formatDocRupiah(project.contract_value),
-        dueDateText: `Target Selesai: ${formatDocDateLong(project.end_date ?? doc.created_at.slice(0, 10))}`,
+        dueDateText: `Target Selesai: ${formatDocDateLong(project.target_end_date ?? doc.created_at.slice(0, 10))}`,
       },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
@@ -805,11 +805,7 @@ export function ProjectDetailPage() {
       docDate: bakp.bakp_date,
       statusBadge: {
         text:
-          bakp.status === "approved_by_client"
-            ? "DISETUJUI KLIEN"
-            : bakp.status === "submitted"
-              ? "DIAJUKAN"
-              : "DRAF",
+          bakp.status === "approved_by_client" ? "DISETUJUI KLIEN" : "DRAF",
         variant: bakp.status === "approved_by_client" ? "success" : "neutral",
       },
       balanceDueBox: {
@@ -887,18 +883,22 @@ export function ProjectDetailPage() {
     );
 
     const conclusionLabel =
-      uat.conclusion === "pass"
-        ? "LULUS / SESUAI (PASS)"
-        : uat.conclusion === "conditional_pass"
-          ? "LULUS BERSYARAT (CONDITIONAL)"
-          : "PERLU REVISI (FAIL)";
+      uat.conclusion === "accepted"
+        ? "LULUS / SESUAI (ACCEPTED)"
+        : uat.conclusion === "accepted_with_notes"
+          ? "LULUS BERSYARAT (WITH NOTES)"
+          : uat.conclusion === "rejected"
+            ? "PERLU REVISI (REJECTED)"
+            : "DALAM PENGUJIAN (PENDING)";
 
     const conclusionTone: DocStatusVariant =
-      uat.conclusion === "pass"
+      uat.conclusion === "accepted"
         ? "success"
-        : uat.conclusion === "conditional_pass"
+        : uat.conclusion === "accepted_with_notes"
           ? "warning"
-          : "danger";
+          : uat.conclusion === "rejected"
+            ? "danger"
+            : "neutral";
 
     return {
       docTitle: "USER ACCEPTANCE TEST (UAT) CHECKLIST",
@@ -906,12 +906,15 @@ export function ProjectDetailPage() {
       docNumber: uat.uat_number,
       docDate: uat.test_date,
       statusBadge: {
-        text: uat.conclusion.toUpperCase(),
+        text: conclusionLabel,
         variant: conclusionTone,
       },
       balanceDueBox: {
         label: "KESIMPULAN PENGUJIAN UAT",
-        amountText: uat.conclusion === "pass" ? "LULUS 100%" : uat.conclusion.toUpperCase(),
+        amountText:
+          uat.conclusion === "accepted"
+            ? "LULUS 100%"
+            : uat.conclusion.toUpperCase(),
         dueDateText: `Tanggal Uji: ${formatDocDateLong(uat.test_date)}`,
       },
       company,
@@ -948,7 +951,7 @@ export function ProjectDetailPage() {
         it.result === "pass" ? "SESUAI" : it.result === "fail" ? "REVISI" : "PENDING",
       ]),
       notes: [
-        uat.conclusion === "pass"
+        uat.conclusion === "accepted"
           ? "Seluruh skenario pengujian telah dinyatakan SESUAI oleh penguji klien dan siap dilanjutkan ke tahap serah terima (BAST)."
           : "Terdapat catatan perbaikan yang harus diselesaikan oleh tim pengembang sebelum penandatanganan Berita Acara Serah Terima (BAST).",
         "Dokumen UAT ini sah sebagai lampiran teknis Berita Acara Serah Terima (BAST).",

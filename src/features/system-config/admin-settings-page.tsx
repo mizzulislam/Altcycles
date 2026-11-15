@@ -743,7 +743,6 @@ export function AdminSettingsPage() {
               ? "Beralih ke Standar 2027"
               : "Terapkan Mode 2026"
         }
-        variant={confirmMasterPolicy.period === "yearly" ? "default" : "secondary"}
         onConfirm={handleApplyMasterPolicy}
       />
     </div>

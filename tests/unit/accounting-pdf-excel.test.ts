@@ -244,14 +244,14 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     // Validasi Butir 1.2: Judul dokumen INVOICE
     expect(invSpec.docTitle).toBe("INVOICE");
     // Validasi Butir 1.5 & 1.6: Rujukan SPK, BAKP, Periode Layanan
-    expect(invSpec.metaRows.some((r) => r.label === "Referensi SPK / Kontrak")).toBe(true);
-    expect(invSpec.metaRows.some((r) => r.label === "Referensi BAKP Acuan")).toBe(true);
-    expect(invSpec.metaRows.some((r) => r.label === "Periode Layanan")).toBe(true);
+    expect(invSpec.metaRows?.some((r) => r.label === "Referensi SPK / Kontrak")).toBe(true);
+    expect(invSpec.metaRows?.some((r) => r.label === "Referensi BAKP Acuan")).toBe(true);
+    expect(invSpec.metaRows?.some((r) => r.label === "Periode Layanan")).toBe(true);
     // Validasi Butir 1.11: Akumulasi termin dan sisa kontrak
-    expect(invSpec.summaryRows.some((r) => r.label === "Total Nilai Kontrak Proyek")).toBe(true);
-    expect(invSpec.summaryRows.some((r) => r.label === "Sisa Nilai Kontrak")).toBe(true);
+    expect(invSpec.summaryRows?.some((r) => r.label === "Total Nilai Kontrak Proyek")).toBe(true);
+    expect(invSpec.summaryRows?.some((r) => r.label === "Sisa Nilai Kontrak")).toBe(true);
     // Validasi Butir 1.16: Estimasi PPh 23
-    expect(invSpec.summaryRows.some((r) => r.label === "Estimasi Potongan PPh 23 (2%)")).toBe(true);
+    expect(invSpec.summaryRows?.some((r) => r.label === "Estimasi Potongan PPh 23 (2%)")).toBe(true);
 
     const pdfBytes = await generateDocumentPdf(invSpec);
     expect(pdfBytes.byteLength).toBeGreaterThan(1000);
@@ -277,7 +277,7 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     expect(receiptOver5M.docTitle).toBe("KUITANSI");
     expect(receiptOver5M.hasMeterai).toBe(true);
     expect(receiptOver5M.meteraiLabel).toContain("Rp10.000");
-    expect(receiptOver5M.metaRows.some((r) => r.label === "Referensi PO Klien")).toBe(true);
+    expect(receiptOver5M.metaRows?.some((r) => r.label === "Referensi PO Klien")).toBe(true);
 
     const pdfOver5M = await generateDocumentPdf(receiptOver5M);
     expect(pdfOver5M.byteLength).toBeGreaterThan(1000);
@@ -299,10 +299,12 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
   });
 
   it("Langkah 4: menghasilkan dokumen SPK / Project Charter (PDF & Word) lengkap dengan slot e-meterai dan paraf footer", async () => {
+    const prj = DEMO_PROJECTS[0]!;
     const defaultSpk = buildDefaultSpkContent({
-      project: DEMO_PROJECTS[0],
+      project: prj,
       customer: {
         id: "cst-001",
+        code: "CST-001",
         name: "PT Sinar Niaga Digital",
         company_name: "PT Sinar Niaga Digital",
         address: "Jakarta Barat",
@@ -310,16 +312,20 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
         contact_title: "Direktur Operasional",
         email: "budi@sinarniaga.co.id",
         phone: "08123456789",
-        tax_id: "01.234.567.8-012.000",
+        npwp: "01.234.567.8-012.000",
         logo_storage_path: null,
         signature_storage_path: null,
-        created_at: "2026-11-01",
+        paraf_storage_path: null,
+        is_active: true,
+        created_by: null,
+        created_at: "2026-11-01T00:00:00Z",
+        updated_at: "2026-11-01T00:00:00Z",
       },
       company: DEMO_COMPANY,
       milestones: [
         {
           id: "m1",
-          project_id: DEMO_PROJECTS[0].id,
+          project_id: prj.id,
           sequence_no: 1,
           name: "Termin 1 (DP)",
           percentage: 25,
@@ -327,7 +333,7 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
           is_down_payment: true,
           is_final_settlement: false,
           achievement_criteria: "Tandatangan SPK",
-          status: "pending",
+          status: "planned",
           created_at: "2026-11-01",
         },
       ],
@@ -379,7 +385,7 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     expect(paSpec.docTitle).toContain("PAYMENT APPROVAL");
     expect(paSpec.statusBadge?.text).toBe("DISETUJUI (APPROVED)");
     expect(paSpec.balanceDueBox?.amountText).toContain("2.500.000");
-    expect(paSpec.metaRows.some((r) => r.label === "Nomor Form PA")).toBe(true);
+    expect(paSpec.metaRows?.some((r) => r.label === "Nomor Form PA")).toBe(true);
 
     const pdfBytes = await generateDocumentPdf(paSpec);
     expect(pdfBytes.byteLength).toBeGreaterThan(1000);

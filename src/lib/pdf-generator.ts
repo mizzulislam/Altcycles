@@ -466,7 +466,9 @@ export async function generateDocumentPdf(
   });
 
   const addrMaxW = contentWidth - (logoOffsetX - marginX) - rightHeaderReserve;
-  const npwpPart = spec.company.tax_id ? ` | NPWP: ${spec.company.tax_id}` : "";
+  const npwpPart = spec.company.tax_id_number
+    ? ` | NPWP: ${spec.company.tax_id_number}`
+    : "";
   const addrLines = wrapTextByWidth(
     `${spec.company.address} | Email: ${spec.company.email} | Telp: ${spec.company.phone}${npwpPart}`,
     fontRegular,
@@ -1821,8 +1823,8 @@ export function buildInvoicePdfSpec(params: {
   includePph23Estimate?: boolean;
   paymentTermsText?: string | null;
   overdueClauseText?: string | null;
-  docStatus?: InvoiceDocStatus | "draft" | "issued" | "paid" | "cancelled";
-  paymentStatus?: InvoicePaymentStatus;
+  docStatus?: "draft" | "issued" | "paid" | "cancelled" | string;
+  paymentStatus?: "unpaid" | "partial" | "paid" | "cancelled" | string;
   balanceDue?: number;
   statusBadge?: {
     text: string;

@@ -1195,10 +1195,16 @@ export async function bulkUpdateDocSequencesResetPeriod(
     return;
   }
 
-  const { error } = await supabase.rpc("set_all_doc_sequences_reset_period", {
-    p_reset_period: resetPeriod,
-    p_apply_standard_2027: Boolean(options?.applyStandard2027Prefix),
-  });
+  const { error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ error: { message: string } | null }>)(
+    "set_all_doc_sequences_reset_period",
+    {
+      p_reset_period: resetPeriod,
+      p_apply_standard_2027: Boolean(options?.applyStandard2027Prefix),
+    },
+  );
 
   if (error) {
     const { data: currentSeqs } = await supabase

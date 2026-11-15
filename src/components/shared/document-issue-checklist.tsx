@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   AlertCircleIcon,
   CheckCircle2Icon,

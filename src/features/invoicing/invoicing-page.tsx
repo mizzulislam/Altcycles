@@ -250,11 +250,11 @@ export function InvoicingPage() {
     ? customers.find((c) => c.id === selectedProject.customer_id) ?? null
     : null;
   const selectedClientPo =
-    clientPos.find((po) => po.id === clientPoId) ?? null;
+    bundle?.clientPos.find((po) => po.id === clientPoId) ?? null;
   const selectedBakp =
-    bundle?.progressReports.find((b) => b.id === bakpId) ?? null;
+    bundle?.bakpList.find((b) => b.id === bakpId) ?? null;
   const selectedBast =
-    bundle?.handoverReports.find((b) => b.id === bastId) ?? null;
+    bundle?.bastList.find((b) => b.id === bastId) ?? null;
 
   const invoiceChecklist = React.useMemo(() => {
     return validateInvoiceChecklist({

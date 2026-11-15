@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   BanIcon,
   CheckCircle2Icon,
-  DownloadIcon,
   FileTextIcon,
   PlusIcon,
   SendIcon,
@@ -66,7 +65,6 @@ import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
   formatDateID,
   formatDocDateLong,
-  formatDocEmpty,
   formatDocRupiah,
   formatRupiah,
   roundRupiah,
