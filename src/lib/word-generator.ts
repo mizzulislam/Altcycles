@@ -449,70 +449,85 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     );
   }
 
-  if (spec.recipientLines && spec.recipientLines.length > 0) {
+  const hasRecipient = Boolean(spec.recipientLines && spec.recipientLines.length > 0);
+  const hasMeta = Boolean(spec.metaRows && spec.metaRows.length > 0);
+
+  if (hasRecipient || hasMeta) {
+    const leftCellChildren: Paragraph[] = [];
+    if (hasRecipient) {
+      leftCellChildren.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({
+              text: (spec.recipientTitle ?? "DITERBITKAN UNTUK:").toUpperCase(),
+              bold: true,
+              size: 15,
+              color: SLATE_600,
+            }),
+          ],
+        }),
+      );
+      spec.recipientLines!.forEach((rl, idx) => {
+        leftCellChildren.push(
+          new Paragraph({
+            spacing: { after: idx === spec.recipientLines!.length - 1 ? 40 : 20 },
+            children: [
+              new TextRun({
+                text: rl,
+                bold: idx === 0,
+                size: idx === 0 ? 19 : 17,
+                color: idx === 0 ? SLATE_900 : SLATE_600,
+              }),
+            ],
+          }),
+        );
+      });
+    }
+
+    const rightCellChildren: Paragraph[] = [];
+    if (hasMeta) {
+      spec.metaRows!.forEach((m) => {
+        rightCellChildren.push(
+          new Paragraph({
+            spacing: { after: 25 },
+            children: [
+              new TextRun({ text: `${m.label}: `, bold: true, size: 16, color: SLATE_600 }),
+              new TextRun({ text: m.value, size: 17, color: SLATE_900 }),
+            ],
+          }),
+        );
+      });
+    }
+
     bodyChildren.push(
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+          left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        },
         rows: [
           new TableRow({
             children: [
               new TableCell({
-                shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
-                borders: {
-                  top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                },
-                children: [
-                  new Paragraph({
-                    spacing: { before: 60, after: 40 },
-                    children: [
-                      new TextRun({
-                        text: spec.recipientTitle ?? "Kepada Yth.:",
-                        bold: true,
-                        size: 17,
-                        color: SLATE_600,
-                      }),
-                    ],
-                  }),
-                  ...spec.recipientLines.map(
-                    (rl, idx) =>
-                      new Paragraph({
-                        spacing: { after: idx === spec.recipientLines!.length - 1 ? 60 : 30 },
-                        children: [
-                          new TextRun({
-                            text: rl,
-                            bold: idx === 0,
-                            size: 18,
-                            color: SLATE_900,
-                          }),
-                        ],
-                      }),
-                  ),
-                ],
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: leftCellChildren.length > 0 ? leftCellChildren : [new Paragraph({ children: [] })],
+              }),
+              new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: rightCellChildren.length > 0 ? rightCellChildren : [new Paragraph({ children: [] })],
               }),
             ],
           }),
         ],
       }),
     );
-    bodyChildren.push(new Paragraph({ spacing: { after: 100 }, children: [] }));
-  }
-
-  if (spec.metaRows && spec.metaRows.length > 0) {
-    for (const m of spec.metaRows) {
-      bodyChildren.push(
-        new Paragraph({
-          spacing: { after: 50 },
-          children: [
-            new TextRun({ text: `${m.label}: `, bold: true, size: 18, color: SLATE_600 }),
-            new TextRun({ text: m.value, size: 18, color: SLATE_900 }),
-          ],
-        }),
-      );
-    }
-    bodyChildren.push(new Paragraph({ spacing: { after: 100 }, children: [] }));
+    bodyChildren.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
   }
 
   for (const p of spec.paragraphsBefore ?? []) {
@@ -591,12 +606,26 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
   }
 
   if (spec.notes && spec.notes.length > 0) {
+    const defaultNotesTitle =
+      spec.docTitle.toUpperCase().includes("UAT")
+        ? "Catatan Pengujian & Tindak Lanjut:"
+        : spec.docTitle.toUpperCase().includes("SERAH TERIMA") || spec.docTitle.toUpperCase().includes("BAST")
+          ? "Catatan & Ketentuan Serah Terima:"
+          : spec.docTitle.toUpperCase().includes("KEMAJUAN") || spec.docTitle.toUpperCase().includes("BAKP")
+            ? "Catatan Pemeriksaan Capaian:"
+            : spec.docTitle.toUpperCase().includes("PENAWARAN") || spec.docTitle.toUpperCase().includes("QUOTATION")
+              ? "Ketentuan Penawaran Harga:"
+              : spec.docTitle.toUpperCase().includes("SPK") || spec.docTitle.toUpperCase().includes("KERJA")
+                ? "Ketentuan Pelaksanaan Pekerjaan:"
+                : "Catatan & Ketentuan Pembayaran:";
+    const notesHeading = spec.notesTitle ?? defaultNotesTitle;
+
     bodyChildren.push(
       new Paragraph({
         spacing: { before: 80, after: 50 },
         children: [
           new TextRun({
-            text: "Catatan & Ketentuan Pembayaran:",
+            text: notesHeading,
             bold: true,
             size: 18,
             color: SLATE_900,

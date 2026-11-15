@@ -634,9 +634,7 @@ export function ProjectDetailPage() {
       metaRows: [
         { label: "Judul Proyek", value: qt.project_title },
         { label: "Estimasi Durasi", value: `${qt.estimated_weeks} Minggu Kalender` },
-        { label: "Batas Revisi", value: `${qt.revision_limit}x Sesi Revisi` },
-        { label: "Tanggal Penawaran", value: formatDocDateLong(qt.quotation_date) },
-        { label: "Masa Berlaku", value: formatDocDateLong(qt.valid_until) },
+        { label: "Batas Sesi Revisi", value: `${qt.revision_limit}x Sesi` },
       ],
       paragraphsBefore: qt.client_need_summary
         ? [`Ringkasan Kebutuhan Proyek: ${qt.client_need_summary}`]
@@ -655,6 +653,7 @@ export function ProjectDetailPage() {
         { label: "TOTAL PENAWARAN HARGA", value: formatDocRupiah(qt.total_amount) },
       ],
       terbilangAmount: qt.total_amount,
+      notesTitle: "Ketentuan Penawaran Harga:",
       notes: [
         company.pkp_enabled
           ? `Harga belum termasuk PPN ${company.ppn_rate}%.`
@@ -706,11 +705,6 @@ export function ProjectDetailPage() {
         text: doc.is_signed ? "DISETUJUI SAH" : "DRAF REVIEW",
         variant: doc.is_signed ? "success" : "neutral",
       },
-      balanceDueBox: {
-        label: "NILAI KONTRAK PEKERJAAN",
-        amountText: formatDocRupiah(project.contract_value),
-        dueDateText: `Target Selesai: ${formatDocDateLong(project.target_end_date ?? doc.created_at.slice(0, 10))}`,
-      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Pihak Klien (Pemberi Kerja):",
@@ -722,17 +716,21 @@ export function ProjectDetailPage() {
       metaRows: [
         { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
-        { label: "Nilai Kontrak Disepakati", value: formatDocRupiah(project.contract_value) },
-        { label: "Tanggal Dokumen", value: formatDocDateLong(doc.created_at.slice(0, 10)) },
+        { label: "Nilai Kontrak", value: formatDocRupiah(project.contract_value) },
+        {
+          label: "Target Penyelesaian",
+          value: formatDocDateLong(project.target_end_date ?? doc.created_at.slice(0, 10)),
+        },
         {
           label: "Status Pengesahan",
-          value: doc.is_signed ? "Telah Ditandatangani Kedua Pihak" : "Draf Review",
+          value: doc.is_signed ? "Telah Ditandatangani Sah" : "Draf Review",
         },
       ],
       paragraphsBefore: [
         summaryText ||
           `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin pelaksanaan pekerjaan proyek ${project.name}.`,
       ],
+      notesTitle: "Ketentuan Pelaksanaan Pekerjaan:",
       leftSignatureLabel: "Disetujui Pihak Klien,",
       leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
@@ -811,11 +809,6 @@ export function ProjectDetailPage() {
           bakp.status === "approved_by_client" ? "DISETUJUI KLIEN" : "DRAF",
         variant: bakp.status === "approved_by_client" ? "success" : "neutral",
       },
-      balanceDueBox: {
-        label: "NILAI TAGIHAN TERMIN",
-        amountText: formatDocRupiah(bakp.billable_amount),
-        dueDateText: `Kemajuan Fisik Kumulatif: ${bakp.cumulative_percentage}%`,
-      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Pihak Klien (Pemberi Kerja):",
@@ -829,9 +822,8 @@ export function ProjectDetailPage() {
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
         { label: "Termin Terkait", value: ms?.name ?? "-" },
-        { label: "Capaian Kumulatif", value: `${bakp.cumulative_percentage}%` },
+        { label: "Capaian Fisik", value: `${bakp.cumulative_percentage}%` },
         { label: "Nilai Tagihan Termin", value: formatDocRupiah(bakp.billable_amount) },
-        { label: "Tanggal Evaluasi", value: formatDocDateLong(bakp.bakp_date) },
       ],
       paragraphsBefore: [
         bakp.findings_notes ||
@@ -849,6 +841,7 @@ export function ProjectDetailPage() {
         deliverables.length > 0
           ? deliverables.map((d, i) => [String(i + 1), d.name, d.status])
           : undefined,
+      notesTitle: "Catatan Pemeriksaan Capaian:",
       notes: [
         "Dokumen Berita Acara Kemajuan Pekerjaan (BAKP) ini sah sebagai dasar penagihan Invoice Termin.",
         "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
@@ -912,14 +905,6 @@ export function ProjectDetailPage() {
         text: conclusionLabel,
         variant: conclusionTone,
       },
-      balanceDueBox: {
-        label: "KESIMPULAN PENGUJIAN UAT",
-        amountText:
-          uat.conclusion === "accepted"
-            ? "LULUS 100%"
-            : uat.conclusion.toUpperCase(),
-        dueDateText: `Tanggal Uji: ${formatDocDateLong(uat.test_date)}`,
-      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Pihak Penguji (Klien):",
@@ -933,10 +918,9 @@ export function ProjectDetailPage() {
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
         { label: "Lingkungan Uji (Staging)", value: uat.staging_url ?? "-" },
-        { label: "Tanggal Pengujian", value: formatDocDateLong(uat.test_date) },
         { label: "Penguji Pihak Klien", value: uat.client_tester_name },
         { label: "Pendamping Altvira", value: uat.altvira_companion_name },
-        { label: "Kesimpulan UAT", value: conclusionLabel },
+        { label: "Hasil Pengujian", value: conclusionLabel },
       ],
       paragraphsBefore: [
         `Pengujian User Acceptance Test (UAT) untuk proyek ${project.name} telah dilaksanakan bersama pada lingkungan ${uat.staging_url ?? "Staging"}. Seluruh skenario di bawah ini telah diuji dan diverifikasi langsung oleh perwakilan Klien.`,
@@ -953,6 +937,7 @@ export function ProjectDetailPage() {
         it.test_scenario,
         it.result === "pass" ? "SESUAI" : it.result === "fail" ? "REVISI" : "PENDING",
       ]),
+      notesTitle: "Catatan Pengujian & Tindak Lanjut:",
       notes: [
         uat.conclusion === "accepted"
           ? "Seluruh skenario pengujian telah dinyatakan SESUAI oleh penguji klien dan siap dilanjutkan ke tahap serah terima (BAST)."
@@ -1003,11 +988,6 @@ export function ProjectDetailPage() {
         text: bast.status === "signed" ? "DITANDATANGANI SAH" : "DRAF",
         variant: bast.status === "signed" ? "success" : "neutral",
       },
-      balanceDueBox: {
-        label: "STATUS SERAH TERIMA PEKERJAAN",
-        amountText: "SELESAI 100%",
-        dueDateText: `Masa Garansi Bug-Fix: ${bast.warranty_days} Hari Kalender`,
-      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Pihak Klien (Pemberi Kerja):",
@@ -1021,7 +1001,6 @@ export function ProjectDetailPage() {
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
         ...(uatDoc ? [{ label: "Referensi Dokumen UAT", value: uatDoc.uat_number }] : []),
-        { label: "Tanggal Serah Terima", value: formatDocDateLong(bast.bast_date) },
         { label: "Masa Garansi Bug-Fix", value: `${bast.warranty_days} Hari Kalender` },
       ],
       paragraphsBefore: [
@@ -1048,6 +1027,7 @@ export function ProjectDetailPage() {
           : undefined,
       hasMeterai: true,
       meteraiLabel: "TEMPAT E-METERAI Rp10.000",
+      notesTitle: "Catatan & Ketentuan Serah Terima:",
       notes: [
         "Berita Acara Serah Terima (BAST) ini merupakan dokumen sah penyelesaian pekerjaan dan menjadi syarat penerbitan Invoice Pelunasan.",
         "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",

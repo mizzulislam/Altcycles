@@ -8,8 +8,6 @@ import {
 } from "pdf-lib";
 import {
   decodeImageBytes,
-  getFooterSocialEntries,
-  renderSocialIconPngBytes,
 } from "@/lib/asset-utils";
 import {
   formatDateID,
@@ -71,6 +69,7 @@ export interface PdfDocumentSpec {
   summaryRows?: PdfKeyValue[];
   terbilangAmount?: number;
   notes?: string[];
+  notesTitle?: string;
   closingNote?: string;
   hasMeterai?: boolean;
   meteraiLabel?: string;
@@ -178,7 +177,7 @@ async function drawSocialMediaFooters(params: {
   pages: PDFPage[];
   company: CompanyProfileRow;
   fontRegular: PDFFont;
-  fontBold: PDFFont;
+  fontBold?: PDFFont;
   marginX: number;
   pageWidth: number;
   docNumber?: string;
@@ -191,38 +190,15 @@ async function drawSocialMediaFooters(params: {
   };
 }) {
   const {
-    pdfDoc,
     pages,
     company,
     fontRegular,
-    fontBold,
     marginX,
     pageWidth,
     docNumber,
-    hideSystemFooter,
     parafInfo,
   } = params;
 
-  const entries = getFooterSocialEntries(company);
-  const embeddedEntries = await Promise.all(
-    entries.map(async (entry) => {
-      const iconBytes = renderSocialIconPngBytes(entry.platform, "#0B43C8");
-      let iconImg: PDFImage | null = null;
-      if (iconBytes) {
-        try {
-          iconImg = await pdfDoc.embedPng(iconBytes);
-        } catch {
-          iconImg = null;
-        }
-      }
-      return {
-        username: sanitizePdfText(entry.username),
-        iconImg,
-      };
-    }),
-  );
-
-  const fallbackText = sanitizePdfText(`${company.email}   |   ${company.phone}`);
   const total = pages.length;
 
   pages.forEach((p, idx) => {
@@ -281,95 +257,33 @@ async function drawSocialMediaFooters(params: {
       }
     }
 
-    // Garis pemisah footer sosial media & legal
+    // Garis pemisah footer legal resmi - hairline netral
     p.drawLine({
-      start: { x: marginX, y: 34 },
-      end: { x: pageWidth - marginX, y: 34 },
-      thickness: 0.6,
+      start: { x: marginX, y: 30 },
+      end: { x: pageWidth - marginX, y: 30 },
+      thickness: 0.45,
       color: BORDER_SLATE,
     });
 
-    const docNumPart = docNumber ? ` | ${docNumber}` : "";
+    const docNumPart = docNumber ? `   •   ${docNumber}` : "";
     const brandLabel = sanitizePdfText(`${company.company_name}${docNumPart}`);
     p.drawText(brandLabel, {
       x: marginX,
-      y: 22,
+      y: 18,
       size: 7.2,
-      font: fontBold,
-      color: BRAND_BLUE,
-    });
-
-    const pageStr = `Hal. ${idx + 1}/${total}`;
-    const pageStrW = fontRegular.widthOfTextAtSize(pageStr, 7.5);
-    p.drawText(pageStr, {
-      x: pageWidth - marginX - pageStrW,
-      y: 22,
-      size: 7.5,
       font: fontRegular,
       color: SLATE_500,
     });
 
-    // Gambar ikon sosial media + username tanpa teks nama platform di area tengah footer
-    const minSocialX = marginX + fontBold.widthOfTextAtSize(brandLabel, 7.5) + 16;
-    const maxSocialX = pageWidth - marginX - pageStrW - 14;
-    if (embeddedEntries.length > 0) {
-      const iconSize = 8.5;
-      const itemGap = 11;
-      const totalWidth = embeddedEntries.reduce((sum, item, i) => {
-        const w =
-          (item.iconImg ? iconSize + 3.5 : 0) +
-          fontRegular.widthOfTextAtSize(item.username, 7.3);
-        return sum + w + (i > 0 ? itemGap : 0);
-      }, 0);
-      let cursorX = Math.max(
-        minSocialX,
-        minSocialX + Math.max(0, (maxSocialX - minSocialX - totalWidth) / 2),
-      );
-      for (const item of embeddedEntries) {
-        const itemW =
-          (item.iconImg ? iconSize + 3.5 : 0) +
-          fontRegular.widthOfTextAtSize(item.username, 7.3);
-        if (cursorX + itemW > maxSocialX) break;
-        if (item.iconImg) {
-          p.drawImage(item.iconImg, {
-            x: cursorX,
-            y: 20.5,
-            width: iconSize,
-            height: iconSize,
-          });
-          cursorX += iconSize + 3.5;
-        }
-        p.drawText(item.username, {
-          x: cursorX,
-          y: 22,
-          size: 7.3,
-          font: fontRegular,
-          color: SLATE_500,
-        });
-        cursorX += fontRegular.widthOfTextAtSize(item.username, 7.3) + itemGap;
-      }
-    } else {
-      const fbW = fontRegular.widthOfTextAtSize(fallbackText, 7.5);
-      p.drawText(fallbackText, {
-        x: Math.max(minSocialX, (pageWidth - fbW) / 2),
-        y: 22,
-        size: 7.5,
-        font: fontRegular,
-        color: SLATE_500,
-      });
-    }
-
-    if (!hideSystemFooter) {
-      const sysFoot = `Dibuat otomatis oleh Altcycles ERP Keuangan Altvira • ${formatDateTimeID(new Date())}`;
-      const sysW = fontRegular.widthOfTextAtSize(sysFoot, 6.5);
-      p.drawText(sysFoot, {
-        x: (pageWidth - sysW) / 2,
-        y: 11,
-        size: 6.5,
-        font: fontRegular,
-        color: SLATE_500,
-      });
-    }
+    const pageStr = `Hal. ${idx + 1} / ${total}`;
+    const pageStrW = fontRegular.widthOfTextAtSize(pageStr, 7.2);
+    p.drawText(pageStr, {
+      x: pageWidth - marginX - pageStrW,
+      y: 18,
+      size: 7.2,
+      font: fontRegular,
+      color: SLATE_500,
+    });
   });
 }
 
@@ -577,11 +491,11 @@ export async function generateDocumentPdf(
   }
   y -= 18;
 
-  // Zona C. Hero Typography Statement (Balance Due / Total Tagihan Bersih ala Figma)
+  // Zona C. Hero Typography Statement (HANYA jika ada spec.balanceDueBox)
   if (spec.balanceDueBox) {
-    ensureSpace(44);
+    ensureSpace(42);
     const boxW = contentWidth;
-    const boxH = 36;
+    const boxH = 34;
     page.drawRectangle({
       x: marginX,
       y: y - boxH + 6,
@@ -589,13 +503,13 @@ export async function generateDocumentPdf(
       height: boxH,
       color: SURFACE_CARD,
       borderColor: BORDER_SLATE,
-      borderWidth: 0.55,
+      borderWidth: 0.5,
     });
 
     page.drawText(sanitizePdfText(spec.balanceDueBox.label.toUpperCase()), {
       x: marginX + 12,
-      y: y - 9,
-      size: 7.2,
+      y: y - 8,
+      size: 7,
       font: fontBold,
       color: SLATE_500,
     });
@@ -603,93 +517,152 @@ export async function generateDocumentPdf(
     if (spec.balanceDueBox.dueDateText) {
       page.drawText(sanitizePdfText(spec.balanceDueBox.dueDateText), {
         x: marginX + 12,
-        y: y - 22,
-        size: 7.8,
+        y: y - 20,
+        size: 7.5,
         font: fontRegular,
         color: SLATE_700,
       });
     }
 
     const amtClean = sanitizePdfText(spec.balanceDueBox.amountText);
-    const amtW = fontBold.widthOfTextAtSize(amtClean, 14);
+    const amtW = fontBold.widthOfTextAtSize(amtClean, 13);
     page.drawText(amtClean, {
       x: pageWidth - marginX - 12 - amtW,
-      y: y - 17,
-      size: 14,
+      y: y - 16,
+      size: 13,
       font: fontBold,
       color: SLATE_900,
     });
 
-    y -= boxH + 10;
+    y -= boxH + 12;
   }
 
-  // 3. Tujuan / Identitas Pihak Kedua & Metadata
-  if (spec.recipientLines && spec.recipientLines.length > 0) {
-    ensureSpace(22 + spec.recipientLines.length * 12);
-    const boxLines: string[] = [];
-    for (const rLine of spec.recipientLines) {
-      boxLines.push(...wrapTextByWidth(rLine, fontRegular, 8.8, contentWidth - 20));
-    }
-    const boxHeight = 20 + boxLines.length * 11.5;
-    page.drawRectangle({
-      x: marginX,
-      y: y - boxHeight + 10,
-      width: contentWidth,
-      height: boxHeight,
-      color: SURFACE_SUBTLE,
-      borderColor: BORDER_SLATE,
-      borderWidth: 0.7,
-    });
+  // Zona B. Two-Column Information Grid (Pihak Terkait & Metadata Dokumen Bersih ala Figma/Atlassian)
+  const hasRecipient = Boolean(spec.recipientLines && spec.recipientLines.length > 0);
+  const hasMeta = Boolean(spec.metaRows && spec.metaRows.length > 0);
 
-    page.drawText(sanitizePdfText(spec.recipientTitle ?? "Kepada Yth.:"), {
-      x: marginX + 10,
-      y: y - 4,
-      size: 8.5,
-      font: fontBold,
-      color: BRAND_BLUE,
-    });
-    let rY = y - 16;
-    boxLines.forEach((bLine, i) => {
-      page.drawText(bLine, {
-        x: marginX + 10,
-        y: rY,
-        size: 8.8,
-        font: i === 0 ? fontBold : fontRegular,
-        color: SLATE_900,
-      });
-      rY -= 11.5;
-    });
-    y = y - boxHeight - 4;
-  }
+  if (hasRecipient || hasMeta) {
+    const colGap = 24;
+    const colWidth = (contentWidth - colGap) / 2;
+    const leftColX = marginX;
+    const rightColX = marginX + colWidth + colGap;
 
-  if (spec.metaRows && spec.metaRows.length > 0) {
-    for (const meta of spec.metaRows) {
-      const valLines = wrapTextByWidth(
-        meta.value,
-        fontRegular,
-        8.8,
-        contentWidth - 150,
-      );
-      ensureSpace(valLines.length * 12 + 4);
-      page.drawText(sanitizePdfText(`${meta.label}:`), {
-        x: marginX,
-        y,
-        size: 8.8,
-        font: fontBold,
-        color: SLATE_700,
+    // Persiapkan teks kolom kiri
+    const leftItems: Array<{ text: string; fontType: "heading" | "title" | "body" }> = [];
+    if (hasRecipient) {
+      leftItems.push({
+        text: sanitizePdfText((spec.recipientTitle ?? "DITERBITKAN UNTUK:").toUpperCase()),
+        fontType: "heading",
       });
-      valLines.forEach((vLine, lIdx) => {
-        page.drawText(vLine, {
-          x: marginX + 145,
-          y: y - lIdx * 12,
-          size: 8.8,
-          font: fontRegular,
-          color: SLATE_900,
+      spec.recipientLines!.forEach((rLine, idx) => {
+        const wrapFont = idx === 0 ? fontBold : fontRegular;
+        const wrapSize = idx === 0 ? 9.5 : 8.2;
+        const wrapped = wrapTextByWidth(rLine, wrapFont, wrapSize, colWidth);
+        wrapped.forEach((w) => {
+          leftItems.push({ text: w, fontType: idx === 0 ? "title" : "body" });
         });
       });
-      y -= Math.max(13, valLines.length * 12 + 2);
     }
-    y -= 6;
+
+    // Persiapkan teks kolom kanan
+    const metaLabelW = 86;
+    const metaValMaxW = colWidth - metaLabelW;
+    const rightItems: Array<{ label: string; valueLines: string[] }> = [];
+    if (hasMeta) {
+      spec.metaRows!.forEach((meta) => {
+        const valLines = wrapTextByWidth(meta.value, fontRegular, 8.2, metaValMaxW);
+        rightItems.push({
+          label: sanitizePdfText(meta.label),
+          valueLines: valLines,
+        });
+      });
+    }
+
+    // Hitung ketinggian section
+    let leftTotalH = 0;
+    leftItems.forEach((it) => {
+      leftTotalH += it.fontType === "heading" ? 14 : it.fontType === "title" ? 13 : 11.5;
+    });
+
+    let rightTotalH = 0;
+    rightItems.forEach((it) => {
+      rightTotalH += Math.max(1, it.valueLines.length) * 13;
+    });
+
+    const infoGridHeight = Math.max(leftTotalH, rightTotalH, 32);
+    ensureSpace(infoGridHeight + 16);
+
+    const gridTopY = y;
+
+    // Render Kolom Kiri
+    if (hasRecipient) {
+      let curLeftY = gridTopY;
+      for (const item of leftItems) {
+        if (item.fontType === "heading") {
+          page.drawText(item.text, {
+            x: leftColX,
+            y: curLeftY,
+            size: 7.2,
+            font: fontBold,
+            color: SLATE_500,
+          });
+          curLeftY -= 13;
+        } else if (item.fontType === "title") {
+          page.drawText(item.text, {
+            x: leftColX,
+            y: curLeftY,
+            size: 9.5,
+            font: fontBold,
+            color: SLATE_900,
+          });
+          curLeftY -= 12.5;
+        } else {
+          page.drawText(item.text, {
+            x: leftColX,
+            y: curLeftY,
+            size: 8.2,
+            font: fontRegular,
+            color: SLATE_700,
+          });
+          curLeftY -= 11.5;
+        }
+      }
+    }
+
+    // Render Kolom Kanan
+    if (hasMeta) {
+      let curRightY = gridTopY;
+      for (const meta of rightItems) {
+        page.drawText(`${meta.label}:`, {
+          x: rightColX,
+          y: curRightY,
+          size: 8,
+          font: fontBold,
+          color: SLATE_600,
+        });
+        meta.valueLines.forEach((vl, vIdx) => {
+          page.drawText(vl, {
+            x: rightColX + metaLabelW,
+            y: curRightY - vIdx * 11.5,
+            size: 8.2,
+            font: fontRegular,
+            color: SLATE_900,
+          });
+        });
+        curRightY -= Math.max(1, meta.valueLines.length) * 13;
+      }
+    }
+
+    y = gridTopY - infoGridHeight;
+
+    // Hairline netral tipis pemisah section
+    page.drawLine({
+      start: { x: marginX, y },
+      end: { x: pageWidth - marginX, y },
+      thickness: 0.45,
+      color: BORDER_SUBTLE,
+    });
+    y -= 14;
   }
 
   // 4. Paragraf Pembuka / Klausul
@@ -877,37 +850,64 @@ export async function generateDocumentPdf(
 
   // 7. Catatan Ketentuan / Non-PKP / Rekening Tujuan
   if (spec.notes && spec.notes.length > 0) {
-    ensureSpace(24);
-    page.drawText("Catatan & Ketentuan Pembayaran:", {
+    ensureSpace(28);
+    const defaultNotesTitle = spec.docTitle.toUpperCase().includes("UAT")
+      ? "Catatan Pengujian & Tindak Lanjut:"
+      : spec.docTitle.toUpperCase().includes("BAST")
+        ? "Catatan & Ketentuan Serah Terima:"
+        : spec.docTitle.toUpperCase().includes("BAKP")
+          ? "Catatan Pemeriksaan Capaian:"
+          : spec.docTitle.toUpperCase().includes("QUOTATION")
+            ? "Ketentuan Penawaran Harga:"
+            : spec.docTitle.toUpperCase().includes("SPK") || spec.docTitle.toUpperCase().includes("SOW")
+              ? "Ketentuan Pelaksanaan Pekerjaan:"
+              : spec.docTitle.toUpperCase().includes("INVOICE") || spec.docTitle.toUpperCase().includes("TAGIHAN")
+                ? "Catatan & Instruksi Pembayaran:"
+                : "Catatan Tambahan:";
+    const notesHeading = spec.notesTitle ?? defaultNotesTitle;
+
+    page.drawText(sanitizePdfText(notesHeading), {
       x: marginX,
       y,
       size: 8.5,
       font: fontBold,
       color: SLATE_700,
     });
-    y -= 12;
+    y -= 13;
+
     for (const note of spec.notes) {
-      const wrapped = wrapTextByWidth(`- ${note}`, fontRegular, 8, contentWidth);
-      for (const l of wrapped) {
-        ensureSpace(12);
+      const wrapped = wrapTextByWidth(note, fontRegular, 8, contentWidth - 12);
+      ensureSpace(wrapped.length * 11.5 + 6);
+      wrapped.forEach((l, lIdx) => {
+        if (lIdx === 0) {
+          page.drawText("•", {
+            x: marginX,
+            y,
+            size: 8,
+            font: fontBold,
+            color: SLATE_500,
+          });
+        }
         page.drawText(l, {
-          x: marginX,
+          x: marginX + 10,
           y,
           size: 8,
           font: fontRegular,
           color: SLATE_600,
         });
-        y -= 11;
-      }
+        y -= 11.5;
+      });
     }
     y -= 8;
   }
 
-  // Zona G. Blok Tanda Tangan, Slot e-Meterai, & Pengesahan
+  // Zona G. Blok Tanda Tangan, Slot e-Meterai, & Pengesahan Simetris
   if (spec.rightSignatureName || spec.leftSignatureName || spec.thirdSignatureName) {
-    ensureSpace(104);
+    const sigBoxHeight = 46;
+    ensureSpace(sigBoxHeight + 54);
     y -= 6;
     const sigTopY = y;
+    const nameY = sigTopY - 14 - sigBoxHeight - 8;
 
     // Skenario 3 Kolom TTD (misal: PO Vendor -> Dibuat, Disetujui, Diterima)
     if (spec.thirdSignatureName) {
@@ -921,23 +921,23 @@ export async function generateDocumentPdf(
         page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Dibuat Oleh,"), {
           x: col1X,
           y: sigTopY,
-          size: 8.3,
+          size: 8.2,
           font: fontRegular,
           color: SLATE_700,
         });
         if (leftSigImg) {
-          const dims = fitDimensions(leftSigImg, 80, 36);
+          const dims = fitDimensions(leftSigImg, colW - 10, sigBoxHeight);
           page.drawImage(leftSigImg, {
             x: col1X,
-            y: sigTopY - 44,
+            y: sigTopY - 14 - dims.height,
             width: dims.width,
             height: dims.height,
           });
         }
         page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
           x: col1X,
-          y: sigTopY - 56,
-          size: 8.3,
+          y: nameY,
+          size: 8.5,
           font: fontBold,
           color: SLATE_900,
         });
@@ -947,23 +947,23 @@ export async function generateDocumentPdf(
       page.drawText(sanitizePdfText(spec.thirdSignatureLabel ?? "Disetujui Oleh,"), {
         x: col2X,
         y: sigTopY,
-        size: 8.3,
+        size: 8.2,
         font: fontRegular,
         color: SLATE_700,
       });
       if (thirdSigImg) {
-        const dims = fitDimensions(thirdSigImg, 80, 36);
+        const dims = fitDimensions(thirdSigImg, colW - 10, sigBoxHeight);
         page.drawImage(thirdSigImg, {
           x: col2X,
-          y: sigTopY - 44,
+          y: sigTopY - 14 - dims.height,
           width: dims.width,
           height: dims.height,
         });
       }
       page.drawText(sanitizePdfText(`(${spec.thirdSignatureName})`), {
         x: col2X,
-        y: sigTopY - 56,
-        size: 8.3,
+        y: nameY,
+        size: 8.5,
         font: fontBold,
         color: SLATE_900,
       });
@@ -973,63 +973,80 @@ export async function generateDocumentPdf(
         page.drawText(sanitizePdfText(spec.rightSignatureLabel ?? "Diterima Vendor,"), {
           x: col3X,
           y: sigTopY,
-          size: 8.3,
+          size: 8.2,
           font: fontRegular,
           color: SLATE_700,
         });
         if (rightSigImg) {
-          const dims = fitDimensions(rightSigImg, 80, 36);
+          const dims = fitDimensions(rightSigImg, colW - 10, sigBoxHeight);
           page.drawImage(rightSigImg, {
             x: col3X,
-            y: sigTopY - 44,
+            y: sigTopY - 14 - dims.height,
             width: dims.width,
             height: dims.height,
           });
         }
         page.drawText(sanitizePdfText(`(${spec.rightSignatureName})`), {
           x: col3X,
-          y: sigTopY - 56,
-          size: 8.3,
-          font: fontBold,
-          color: SLATE_900,
-        });
-      }
-    } else {
-      // Skenario 2 Kolom TTD Standar (Pihak Klien & Altvira)
-      if (spec.leftSignatureName) {
-        page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Pihak Klien,"), {
-          x: marginX,
-          y: sigTopY,
-          size: 8.5,
-          font: fontRegular,
-          color: SLATE_600,
-        });
-        if (leftSigImg) {
-          const dims = fitDimensions(leftSigImg, 110, 42);
-          page.drawImage(leftSigImg, {
-            x: marginX,
-            y: sigTopY - 48,
-            width: dims.width,
-            height: dims.height,
-          });
-        }
-        page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
-          x: marginX,
-          y: sigTopY - 60,
+          y: nameY,
           size: 8.5,
           font: fontBold,
           color: SLATE_900,
         });
       }
 
-      // Slot e-Meterai Rp10.000 jika dokumen memerlukan meterai (Kuitansi > 5jt / SPK)
+      y = nameY - 16;
+    } else {
+      // Skenario 2 Kolom Simetris (Kiri: Pihak Kedua / Klien, Kanan: Pihak Pertama / Altvira)
+      const colW = (contentWidth - 48) / 2;
+      const colLeftX = marginX;
+      const colRightX = marginX + colW + 48;
+
+      // Kolom Kiri
+      if (spec.leftSignatureName) {
+        page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Pihak Klien,"), {
+          x: colLeftX,
+          y: sigTopY,
+          size: 8.5,
+          font: fontRegular,
+          color: SLATE_700,
+        });
+        if (leftSigImg) {
+          const dims = fitDimensions(leftSigImg, colW - 20, sigBoxHeight);
+          page.drawImage(leftSigImg, {
+            x: colLeftX,
+            y: sigTopY - 14 - dims.height + 4,
+            width: dims.width,
+            height: dims.height,
+          });
+        }
+        const leftParts = spec.leftSignatureName.split(" - ");
+        page.drawText(sanitizePdfText(`(${leftParts[0]?.trim()})`), {
+          x: colLeftX,
+          y: nameY,
+          size: 8.5,
+          font: fontBold,
+          color: SLATE_900,
+        });
+        if (leftParts[1]) {
+          page.drawText(sanitizePdfText(leftParts[1].trim()), {
+            x: colLeftX,
+            y: nameY - 11,
+            size: 7.8,
+            font: fontRegular,
+            color: SLATE_500,
+          });
+        }
+      }
+
+      // Slot e-Meterai jika dokumen memerlukan meterai (Kuitansi > 5jt / SPK)
       if (spec.hasMeterai) {
-        const meteraiW = 84;
-        const meteraiH = 48;
+        const meteraiW = 76;
+        const meteraiH = 44;
         const meteraiX = spec.leftSignatureName
           ? marginX + (contentWidth - meteraiW) / 2
-          : pageWidth - marginX - 185 - meteraiW - 16;
-        const meteraiY = sigTopY - 48;
+          : colRightX - meteraiW - 16;
+        const meteraiY = sigTopY - 14 - meteraiH + 4;
 
         page.drawRectangle({
           x: meteraiX,
@@ -1038,74 +1055,83 @@ export async function generateDocumentPdf(
           height: meteraiH,
           color: SURFACE_CARD,
           borderColor: BORDER_SLATE,
-          borderWidth: 0.6,
+          borderWidth: 0.5,
         });
 
         const mTitle = "METERAI ELEKTRONIK";
-        const mW1 = fontBold.widthOfTextAtSize(mTitle, 6.5);
+        const mW1 = fontBold.widthOfTextAtSize(mTitle, 6.2);
         page.drawText(mTitle, {
           x: meteraiX + (meteraiW - mW1) / 2,
-          y: meteraiY + meteraiH - 13,
-          size: 6.5,
+          y: meteraiY + meteraiH - 12,
+          size: 6.2,
           font: fontBold,
           color: SLATE_600,
         });
 
         const mNominal = "Rp 10.000";
-        const mW2 = fontBold.widthOfTextAtSize(mNominal, 8);
+        const mW2 = fontBold.widthOfTextAtSize(mNominal, 7.5);
         page.drawText(mNominal, {
           x: meteraiX + (meteraiW - mW2) / 2,
-          y: meteraiY + meteraiH - 25,
-          size: 8,
+          y: meteraiY + meteraiH - 24,
+          size: 7.5,
           font: fontBold,
           color: SLATE_900,
         });
 
         const mSub = sanitizePdfText(spec.meteraiLabel ?? "TEMPAT E-METERAI");
-        const mW3 = fontRegular.widthOfTextAtSize(mSub, 5.5);
+        const mW3 = fontRegular.widthOfTextAtSize(mSub, 5.2);
         page.drawText(mSub, {
           x: meteraiX + (meteraiW - mW3) / 2,
-          y: meteraiY + 8,
-          size: 5.5,
+          y: meteraiY + 6,
+          size: 5.2,
           font: fontRegular,
           color: SLATE_500,
         });
       }
 
-      const rightX = pageWidth - marginX - 185;
-      page.drawText(
-        sanitizePdfText(
-          spec.rightSignatureLabel ?? `Hormat kami, ${spec.company.company_name}`,
-        ),
-        {
-          x: rightX,
-          y: sigTopY,
-          size: 8.5,
-          font: fontRegular,
-          color: SLATE_600,
-        },
-      );
-      if (rightSigImg) {
-        const dims = fitDimensions(rightSigImg, 110, 42);
-        page.drawImage(rightSigImg, {
-          x: rightX,
-          y: sigTopY - 48,
-          width: dims.width,
-          height: dims.height,
-        });
-      }
-      page.drawText(
-        sanitizePdfText(
-          `(${spec.rightSignatureName ?? `${spec.company.signer_name} - ${spec.company.signer_title}`})`,
-        ),
-        {
-          x: rightX,
-          y: sigTopY - 60,
+      // Kolom Kanan
+      if (spec.rightSignatureName) {
+        page.drawText(
+          sanitizePdfText(
+            spec.rightSignatureLabel ?? `Hormat kami, ${spec.company.company_name}`,
+          ),
+          {
+            x: colRightX,
+            y: sigTopY,
+            size: 8.5,
+            font: fontRegular,
+            color: SLATE_700,
+          },
+        );
+        if (rightSigImg) {
+          const dims = fitDimensions(rightSigImg, colW - 20, sigBoxHeight);
+          page.drawImage(rightSigImg, {
+            x: colRightX,
+            y: sigTopY - 14 - dims.height + 4,
+            width: dims.width,
+            height: dims.height,
+          });
+        }
+        const rightParts = spec.rightSignatureName.split(" - ");
+        page.drawText(sanitizePdfText(`(${rightParts[0]?.trim()})`), {
+          x: colRightX,
+          y: nameY,
           size: 8.5,
           font: fontBold,
           color: SLATE_900,
-        },
-      );
+        });
+        if (rightParts[1]) {
+          page.drawText(sanitizePdfText(rightParts[1].trim()), {
+            x: colRightX,
+            y: nameY - 11,
+            size: 7.8,
+            font: fontRegular,
+            color: SLATE_500,
+          });
+        }
+      }
+
+      y = nameY - 22;
     }
 
     if (spec.closingNote) {
