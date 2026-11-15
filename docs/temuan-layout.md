@@ -384,14 +384,76 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Langkah A Putaran Penyempurnaan)
+### ID: K-24
+- **Status:** Selesai (Diterapkan sesuai Perintah Langkah B Butir 5)
+- **Jenis:** `sistem-menghalangi`
+- **Dokumen terdampak:** Invoice (`buildInvoicePdfSpec`)
+- **Apa yang bertentangan:**
+  - Butir 5 meminta kotak "Keterangan" di sebelah kiri blok total diisi dari field catatan dokumen bila sudah ada di data.
+  - Saat ini skema database tabel invoice belum memiliki field eksplisit catatan/keterangan dokumen publik (hanya ada deskripsi termin).
+- **Yang kulakukan:**
+  - Menampilkan kotak "Keterangan" berbingkai sudut membulat yang sejajar dengan blok total. Bila data `documentNotes` dioper, teks akan di-wrap rapi; bila belum ada, kotak tetap tampil rapi dengan judul "Keterangan" tanpa mengubah skema database tersimpan.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Tambahkan kolom migrasi `notes` atau `invoice_notes` pada tabel invoice di masa depan saat ada perubahan skema database. (Rekomendasi).
+  - **Opsi B:** Menggunakan field deskripsi sebagai isi keterangan.
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-25
+- **Status:** Selesai (Diterapkan sesuai Perintah Langkah B Butir 6)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Invoice (`buildInvoicePdfSpec`)
+- **Apa yang bertentangan:**
+  - Standar dokumen lama menyertakan 2 bullet: status non-PKP dan keabsahan dokumen komputerisasi tanpa tanda tangan basah.
+  - Perintah Langkah B Butir 6 meminta kedua bullet ini dihapus total dari invoice.
+- **Yang kulakukan:** Menghapus kedua bullet tersebut dari daftar catatan invoice.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Hapus permanen dari dokumen invoice sesuai arahan pemilik produk. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-26
+- **Status:** Selesai (Diterapkan sesuai Perintah Langkah B Butir 7 & 8)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Invoice (`renderDocumentPdfInternal`, `buildInvoicePdfSpec`)
+- **Apa yang bertentangan:**
+  - Standar dokumen lama menampilkan instruksi bank dalam bentuk bullet teks dan kalimat Terbilang di luar blok terpisah.
+  - Butir 7 meminta kotak "Detail Pembayaran" berbingkai sudut membulat dengan Terbilang di kiri dan info bank (grid label : nilai sejajar) di kanan, serta kontak konfirmasi finance pada bullet.
+- **Yang kulakukan:** Mengimplementasikan kotak Detail Pembayaran dan memindahkan Terbilang ke dalam kotak tersebut, menghapus baris Terbilang luar yang duplikat, serta memperbarui kontak finance.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan kotak Detail Pembayaran modern sesuai spesifikasi. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-27
+- **Status:** Aktif (Dicatat sesuai Perintah Prompt)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Invoice (`metaRows` vs Header `Ref :`)
+- **Apa yang bertentangan:**
+  - Blok metadata invoice menampilkan "Referensi SPK / Kontrak" dan "Referensi BAKP Acuan" selain "Referensi PO Klien", sementara header dokumen sudah menampilkan "Ref :" yang merujuk pada dokumen induk.
+- **Yang kulakukan:** Mencatat potensi duplikasi informasi tanpa mengubah susunan metadata tersimpan.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Pertahankan seluruh referensi di metadata demi kelengkapan audit penagihan proyek. (Rekomendasi).
+  - **Opsi B:** Hapus baris metadata yang nomornya sudah identik dengan `Ref :` header.
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Langkah B Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 9 | 8 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`) | 1 (`K-20`) | 1 (`K-20`) |
+| `standar-vs-layout` | 12 | 10 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
-| `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
+| `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **23** | **17** | **6** | **1** |
+| **Total Temuan** | **27** | **20** | **7** | **1** |

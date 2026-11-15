@@ -75,6 +75,16 @@ export interface PdfDocumentSpec {
   tableRows?: string[][];
   summaryRows?: PdfKeyValue[];
   terbilangAmount?: number;
+  documentNotes?: string | null;
+  paymentDetail?: {
+    terbilangText: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+    transferNews: string;
+    isPaid?: boolean;
+    swiftCode?: string | null;
+  } | null;
   notes?: string[];
   notesTitle?: string;
   closingNote?: string;
@@ -735,6 +745,35 @@ async function drawSocialMediaFooters(params: {
 }
 
 /**
+ * Menggambar kotak berbingkai sudut membulat dengan SVG path.
+ */
+function drawRoundedRect(
+  page: PDFPage,
+  x: number,
+  topY: number,
+  width: number,
+  height: number,
+  radius: number,
+  options?: {
+    borderColor?: RGB;
+    borderWidth?: number;
+    color?: RGB;
+  },
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  const w = width;
+  const h = height;
+  const d = `M ${r} 0 L ${w - r} 0 Q ${w} 0 ${w} ${r} L ${w} ${h - r} Q ${w} ${h} ${w - r} ${h} L ${r} ${h} Q 0 ${h} 0 ${h - r} L 0 ${r} Q 0 0 ${r} 0 Z`;
+  page.drawSvgPath(d, {
+    x,
+    y: topY,
+    borderColor: options?.borderColor,
+    borderWidth: options?.borderWidth,
+    color: options?.color,
+  });
+}
+
+/**
  * Mesin internal pembuat PDF beserta perekam kotak batas (bounding box) setiap elemen teks
  * untuk verifikasi anti-tabrakan dan anti-keluar-margin.
  */
@@ -883,9 +922,9 @@ async function renderDocumentPdfInternal(
     const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // Target tinggi tinta ikon & wordmark Altvira (diperbesar sedikit lagi secara proporsional)
-    const iconInkHeight = 32; // Ikon logo (~32 pt)
-    const wordmarkInkHeight = 19.5; // Wordmark (~19.5 pt)
+    // Target tinggi tinta ikon & wordmark Altvira (diperbesar lagi sesuai arahan)
+    const iconInkHeight = 36; // Ikon logo (~36 pt)
+    const wordmarkInkHeight = 22; // Wordmark (~22 pt)
 
     // Perhitungan dimensi aset berdasarkan rasio asli dan bounding box tinta
     const iconInkH = BRAND_IMAGE_METRICS.icon.inkHeight; // 731 px
@@ -1734,8 +1773,251 @@ async function renderDocumentPdfInternal(
   // ==========================================================================
   const hasSummary = Boolean(spec.summaryRows && spec.summaryRows.length > 0);
   const hasTerbilang = typeof spec.terbilangAmount === "number";
+  const isInvoiceDoc =
+    spec.docTitle.toUpperCase().includes("INVOICE") || Boolean(spec.paymentDetail);
 
-  if (hasSummary || hasTerbilang) {
+  if (isInvoiceDoc && (hasSummary || Boolean(spec.paymentDetail))) {
+    const totalBlockW = 215;
+    const totalBlockX = pageWidth - marginX - totalBlockW;
+    const rightEdgeX = pageWidth - marginX;
+    const gap = 12;
+    const keteranganX = marginX;
+    const keteranganW = totalBlockX - marginX - gap;
+
+    const allSummaryRows = spec.summaryRows ?? [];
+    const summaryFontSize = 8.5;
+    const rowPitch = 15;
+    const summaryBlockH = Math.max(allSummaryRows.length * rowPitch + 4, 60);
+
+    ensureSpace(summaryBlockH + (spec.paymentDetail ? 75 : 0) + 15);
+
+    const blockTopY = y;
+    const blockBottomY = blockTopY - summaryBlockH;
+
+    // 1. Kotak Keterangan di sebelah kiri blok total (tinggi sejajar dengan blok total)
+    drawRoundedRect(
+      page,
+      keteranganX,
+      blockTopY,
+      keteranganW,
+      summaryBlockH,
+      4,
+      { borderWidth: 0.5, borderColor: BORDER_GRAY },
+    );
+    drawTrackedText(
+      "Keterangan",
+      {
+        x: keteranganX + 10,
+        y: blockTopY - 13,
+        size: 8.5,
+        font: fontBold,
+        color: TEXT_DARK,
+      },
+      "E-keterangan-title",
+    );
+
+    if (spec.documentNotes && spec.documentNotes.trim()) {
+      const noteLines = wrapTextByWidth(
+        spec.documentNotes.trim(),
+        fontRegular,
+        8,
+        keteranganW - 20,
+      );
+      noteLines.slice(0, 4).forEach((nLine, nIdx) => {
+        drawTrackedText(
+          nLine,
+          {
+            x: keteranganX + 10,
+            y: blockTopY - 26 - nIdx * 11,
+            size: 8,
+            font: fontRegular,
+            color: TEXT_LABEL,
+          },
+          "E-keterangan-content",
+        );
+      });
+    }
+
+    // 2. Blok Subtotal dan Total di sebelah kanan (font size seragam, garis tipis di bawah tiap baris)
+    let curSummaryY = blockTopY - 11;
+    allSummaryRows.forEach((row) => {
+      const isGrandTotal =
+        /^total\s+tagihan\s+invoice/i.test(row.label.trim()) ||
+        (/^total\b/i.test(row.label.trim()) && !/kontrak/i.test(row.label));
+      const rowFont = isGrandTotal ? fontBold : fontRegular;
+      const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
+
+      const cleanLabel = sanitizePdfText(row.label);
+      const cleanVal = sanitizePdfText(row.value);
+      const valW = rowFont.widthOfTextAtSize(cleanVal, summaryFontSize);
+
+      drawTrackedText(
+        cleanLabel,
+        {
+          x: totalBlockX,
+          y: curSummaryY,
+          size: summaryFontSize,
+          font: rowFont,
+          color: labelColor,
+        },
+        "E-total-label",
+      );
+      drawTrackedText(
+        cleanVal,
+        {
+          x: rightEdgeX - valW,
+          y: curSummaryY,
+          size: summaryFontSize,
+          font: rowFont,
+          color: TEXT_DARK,
+        },
+        "E-total-value",
+      );
+
+      // Garis tipis pemisah yang sama di bawah tiap baris
+      const lineY = curSummaryY - 4;
+      page.drawLine({
+        start: { x: totalBlockX, y: lineY },
+        end: { x: rightEdgeX, y: lineY },
+        thickness: 0.4,
+        color: BORDER_GRAY,
+      });
+
+      curSummaryY -= rowPitch;
+    });
+
+    y = blockBottomY - 10;
+
+    // 3. Kotak Detail Pembayaran (Payment Detail)
+    if (spec.paymentDetail) {
+      const pd = spec.paymentDetail;
+      const pdBoxW = contentWidth;
+      const pdBoxH = 68;
+      ensureSpace(pdBoxH + 15);
+      const pdBoxTopY = y;
+      const pdBoxBottomY = pdBoxTopY - pdBoxH;
+
+      drawRoundedRect(
+        page,
+        marginX,
+        pdBoxTopY,
+        pdBoxW,
+        pdBoxH,
+        4,
+        { borderWidth: 0.5, borderColor: BORDER_GRAY },
+      );
+
+      // Header Detail Pembayaran
+      drawTrackedText(
+        "Detail Pembayaran",
+        {
+          x: marginX + 10,
+          y: pdBoxTopY - 12,
+          size: 8.5,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "E-pd-title",
+      );
+
+      // Garis pemisah di bawah judul
+      const pdDividerY = pdBoxTopY - 18;
+      page.drawLine({
+        start: { x: marginX + 8, y: pdDividerY },
+        end: { x: rightEdgeX - 8, y: pdDividerY },
+        thickness: 0.4,
+        color: BORDER_GRAY,
+      });
+
+      // Kolom Kiri: Terbilang
+      const leftColX = marginX + 10;
+      const leftColW = Math.round(pdBoxW * 0.42);
+      const leftColTopY = pdDividerY - 11;
+      drawTrackedText(
+        "Terbilang",
+        {
+          x: leftColX,
+          y: leftColTopY,
+          size: 8,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "E-pd-terbilang-lbl",
+      );
+      const tLines = wrapTextByWidth(pd.terbilangText, fontRegular, 8, leftColW);
+      tLines.slice(0, 3).forEach((tLine, tIdx) => {
+        drawTrackedText(
+          tLine,
+          {
+            x: leftColX,
+            y: leftColTopY - 11 - tIdx * 10,
+            size: 8,
+            font: fontRegular,
+            color: TEXT_LABEL,
+          },
+          "E-pd-terbilang-val",
+        );
+      });
+
+      // Kolom Kanan: Info Bank & Transfer Grid
+      const rightColX = marginX + Math.round(pdBoxW * 0.46);
+      const rightColTopY = pdDividerY - 11;
+      const bLabelW = 75;
+
+      const bankItems: Array<{ label: string; value: string; isBold?: boolean; isStatus?: boolean }> = [
+        { label: "Nama Bank", value: pd.bankName },
+        { label: "Nomor Rekening", value: pd.accountNumber, isBold: true },
+        { label: "Atas Nama", value: pd.accountHolder },
+        { label: "Berita Transfer", value: pd.transferNews, isBold: true },
+      ];
+      if (pd.isPaid) {
+        bankItems.push({ label: "Status", value: "LUNAS", isBold: true, isStatus: true });
+      }
+      if (pd.swiftCode) {
+        bankItems.push({ label: "Swift Code", value: pd.swiftCode });
+      }
+
+      let bCursorY = rightColTopY;
+      bankItems.slice(0, 4).forEach((bItem) => {
+        drawTrackedText(
+          bItem.label,
+          {
+            x: rightColX,
+            y: bCursorY,
+            size: 8,
+            font: fontRegular,
+            color: TEXT_LABEL,
+          },
+          "E-pd-bank-lbl",
+        );
+        drawTrackedText(
+          ":",
+          {
+            x: rightColX + bLabelW,
+            y: bCursorY,
+            size: 8,
+            font: fontRegular,
+            color: TEXT_LABEL,
+          },
+          "E-pd-bank-colon",
+        );
+        drawTrackedText(
+          bItem.value,
+          {
+            x: rightColX + bLabelW + 6,
+            y: bCursorY,
+            size: 8,
+            font: bItem.isBold ? fontBold : fontRegular,
+            color: bItem.isStatus ? BRAND_BLUE : TEXT_DARK,
+          },
+          "E-pd-bank-val",
+        );
+        bCursorY -= 10.5;
+      });
+
+      y = pdBoxBottomY - 10;
+    }
+  } else if (hasSummary || hasTerbilang) {
     const totalBlockW = Math.round(contentWidth * 0.45); // ~222 pt
     const totalBlockX = pageWidth - marginX - totalBlockW;
     const rightEdgeX = pageWidth - marginX;
@@ -1902,7 +2184,7 @@ async function renderDocumentPdfInternal(
               ? "Ketentuan Pelaksanaan Pekerjaan"
               : spec.docTitle.toUpperCase().includes("INVOICE") ||
                   spec.docTitle.toUpperCase().includes("TAGIHAN")
-                ? "Instruksi & Ketentuan Pembayaran"
+                ? "Ketentuan Pembayaran"
                 : "Catatan & Ketentuan";
     const notesHeading = (spec.notesTitle ?? defaultNotesTitle).replace(
       /\s*:\s*$/,
@@ -3320,8 +3602,8 @@ export function buildInvoicePdfSpec(params: {
     if (hasDuration) {
       tableColumns = [
         { header: "No", widthRatio: 0.06, align: "center" },
-        { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.34 },
-        { header: "Kuantitas", widthRatio: 0.11, align: "center" },
+        { header: "Deskripsi", widthRatio: 0.34 },
+        { header: "Qty", widthRatio: 0.11, align: "center" },
         { header: "Durasi", widthRatio: 0.11, align: "center" },
         { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
         { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
@@ -3337,8 +3619,8 @@ export function buildInvoicePdfSpec(params: {
     } else {
       tableColumns = [
         { header: "No", widthRatio: 0.07, align: "center" },
-        { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.43 },
-        { header: "Kuantitas", widthRatio: 0.12, align: "center" },
+        { header: "Deskripsi", widthRatio: 0.43 },
+        { header: "Qty", widthRatio: 0.12, align: "center" },
         { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
         { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
       ];
@@ -3356,8 +3638,8 @@ export function buildInvoicePdfSpec(params: {
       params.unitPrice ?? Math.round(params.subtotal / Math.max(1, qty));
     tableColumns = [
       { header: "No", widthRatio: 0.07, align: "center" },
-      { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.43 },
-      { header: "Kuantitas", widthRatio: 0.12, align: "center" },
+      { header: "Deskripsi", widthRatio: 0.43 },
+      { header: "Qty", widthRatio: 0.12, align: "center" },
       { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
       { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
     ];
@@ -3424,10 +3706,8 @@ export function buildInvoicePdfSpec(params: {
     ? params.servicePeriod.replace(/^Termin:\s*(Termin\b)/i, "$1")
     : null;
 
-  const rawBankName = (params.company.bank_name || "").trim();
-  const bankLabel = /^bank\b/i.test(rawBankName)
-    ? rawBankName
-    : `Bank ${rawBankName}`.trim();
+  const rawBankName = (params.company.bank_name || "").trim().replace(/^bank\s+/i, "");
+  const cleanBankName = rawBankName ? `Bank ${rawBankName}` : "-";
 
   return {
     docTitle: "INVOICE",
@@ -3485,13 +3765,21 @@ export function buildInvoicePdfSpec(params: {
     summaryRows,
     terbilangAmount: params.totalAmount,
     notes: [
-      `Instruksi Pembayaran: ${bankLabel} · No. Rek: ${params.company.bank_account_number} · a.n. ${params.company.bank_account_holder}.`,
-      `Mohon cantumkan nomor invoice (${params.invoiceNumber}) pada berita transfer pembayaran bank.`,
-      `Syarat Pembayaran: Jatuh tempo pembayaran pada tanggal ${formatDocDateLong(params.dueDate)}. ${params.paymentTermsText ?? ""}`.trim(),
+      "Pembayaran dilakukan via transfer ke rekening di atas paling lambat pada tanggal jatuh tempo.",
       `Klausul Keterlambatan: ${params.overdueClauseText ?? "Keterlambatan pembayaran setelah tanggal jatuh tempo dapat mengakibatkan penangguhan sementara operasional layanan dan/atau penyesuaian jadwal pelaksanaan sesuai perjanjian kerja sama."}`,
-      nonPkpNote,
-      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+      "Konfirmasi pembayaran ke finance +62 878-0256-8095 atau altvira.tech@gmail.com",
     ],
+    notesTitle: "Ketentuan Pembayaran",
+    paymentDetail: {
+      terbilangText: terbilangRupiah(params.totalAmount),
+      bankName: cleanBankName,
+      accountNumber: params.company.bank_account_number || "-",
+      accountHolder: params.company.bank_account_holder || "-",
+      transferNews: params.invoiceNumber,
+      isPaid: params.paymentStatus === "paid" || dueAmount === 0,
+      swiftCode: (params.company as any).swift_code || null,
+    },
+    documentNotes: (params as any).documentNotes ?? null,
     rightSignatureLabel: `Hormat kami, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
