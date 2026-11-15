@@ -105,7 +105,7 @@ export function ExportDownloadMenu({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-50 mt-1.5 w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 transition-all",
+            "absolute z-50 mt-1.5 w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left transition-all",
             align === "end" ? "right-0" : "left-0",
           )}
           role="menu"
@@ -129,7 +129,7 @@ export function ExportDownloadMenu({
                   <FileSpreadsheetIcon className="size-4" />
                 )}
               </div>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 text-left">
                 <span className="font-semibold text-foreground">Excel (.xlsx)</span>
                 <span className="text-[11px] text-muted-foreground">Buku kerja spreadsheet lengkap</span>
               </div>
@@ -155,7 +155,7 @@ export function ExportDownloadMenu({
                   <FileTextIcon className="size-4" />
                 )}
               </div>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 text-left">
                 <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
                 <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
               </div>
@@ -181,7 +181,7 @@ export function ExportDownloadMenu({
                   <TableIcon className="size-4" />
                 )}
               </div>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 text-left">
                 <span className="font-semibold text-foreground">Format CSV (.csv)</span>
                 <span className="text-[11px] text-muted-foreground">Tabel data pemisah koma</span>
               </div>

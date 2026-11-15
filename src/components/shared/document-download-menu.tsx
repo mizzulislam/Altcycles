@@ -38,8 +38,8 @@ export function DocumentDownloadMenu({
     const btn = triggerRef.current;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const menuWidth = 224; // w-56
-    const menuHeight = 112;
+    const menuWidth = 240; // w-60 (sama dengan ExportDownloadMenu)
+    const menuHeight = 124;
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUpward = spaceBelow < menuHeight + 12 && rect.top > menuHeight + 12;
 
@@ -162,25 +162,29 @@ export function DocumentDownloadMenu({
             ref={menuRef}
             role="menu"
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-50 w-56 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/20 text-left animate-in fade-in-0 zoom-in-95 duration-100"
+            className="fixed z-50 w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-100"
           >
             <button
               type="button"
               disabled={loadingFmt !== null}
               onClick={() => void trigger("pdf", onDownloadPdf)}
-              className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+              className={cn(
+                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                "hover:bg-muted/80 text-foreground",
+                loadingFmt === "pdf" && "opacity-70",
+              )}
               role="menuitem"
             >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
                 {loadingFmt === "pdf" ? (
-                  <Loader2Icon className="size-3.5 animate-spin" />
+                  <Loader2Icon className="size-4 animate-spin" />
                 ) : (
-                  <FileTextIcon className="size-3.5" />
+                  <FileTextIcon className="size-4" />
                 )}
               </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-foreground text-xs">PDF Dokumen (.pdf)</div>
-                <div className="text-[10px] text-muted-foreground leading-tight">Format cetak &amp; laporan resmi</div>
+              <div className="flex flex-col min-w-0 text-left">
+                <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
+                <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
               </div>
             </button>
 
@@ -188,19 +192,23 @@ export function DocumentDownloadMenu({
               type="button"
               disabled={loadingFmt !== null}
               onClick={() => void trigger("word", onDownloadWord)}
-              className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors cursor-pointer mt-0.5"
+              className={cn(
+                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                "hover:bg-muted/80 text-foreground",
+                loadingFmt === "word" && "opacity-70",
+              )}
               role="menuitem"
             >
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                 {loadingFmt === "word" ? (
-                  <Loader2Icon className="size-3.5 animate-spin" />
+                  <Loader2Icon className="size-4 animate-spin" />
                 ) : (
-                  <FileTextIcon className="size-3.5" />
+                  <FileTextIcon className="size-4" />
                 )}
               </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-foreground text-xs">Word Dokumen (.docx)</div>
-                <div className="text-[10px] text-muted-foreground leading-tight">Dapat disunting</div>
+              <div className="flex flex-col min-w-0 text-left">
+                <span className="font-semibold text-foreground">Word Dokumen (.docx)</span>
+                <span className="text-[11px] text-muted-foreground">Dapat disunting</span>
               </div>
             </button>
           </div>,
