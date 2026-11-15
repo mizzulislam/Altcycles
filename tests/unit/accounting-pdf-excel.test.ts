@@ -8,6 +8,7 @@ import { DEMO_ACCOUNTS, DEMO_COMPANY, DEMO_PROJECTS } from "@/lib/demo-seed";
 import { createExcelBlob } from "@/lib/excel-exporter";
 import {
   buildInvoicePdfSpec,
+  buildPaymentApprovalPdfSpec,
   buildReceiptPdfSpec,
   generateDocumentPdf,
   generateSpkProjectCharterPdf,
@@ -354,6 +355,39 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     expect(spkWordBlob.type).toBe(
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
+  });
+
+  it("Langkah 5: menghasilkan formulir Payment Approval (PA) individual (PDF & Word) dengan status badge dan tanda tangan", async () => {
+    const paSpec = buildPaymentApprovalPdfSpec({
+      company: DEMO_COMPANY,
+      requestNumber: "PA/ALT/2026/11/0001",
+      revisionNo: 0,
+      requestDate: "2026-11-05",
+      requesterName: "Ahmad Staff",
+      projectName: "Portal Distribusi B2B",
+      expenseAccountName: "5-1102 Beban Server & Cloud Hosting",
+      recipientName: "PT Cloud Hosting Indonesia",
+      recipientBankInfo: "Bank BCA - 1234567890 a.n. Cloud Hosting",
+      purpose: "Perpanjangan server staging dan database PostgreSQL",
+      amount: 2_500_000,
+      status: "approved",
+      approverName: "Direktur Keuangan",
+      approvedAt: "2026-11-05T14:30:00Z",
+      attachmentNames: ["invoice-hosting-nov2026.pdf"],
+    });
+
+    expect(paSpec.docTitle).toContain("PAYMENT APPROVAL");
+    expect(paSpec.statusBadge?.text).toBe("DISETUJUI (APPROVED)");
+    expect(paSpec.balanceDueBox?.amountText).toContain("2.500.000");
+    expect(paSpec.metaRows.some((r) => r.label === "Nomor Form PA")).toBe(true);
+
+    const pdfBytes = await generateDocumentPdf(paSpec);
+    expect(pdfBytes.byteLength).toBeGreaterThan(1000);
+    const pdfHeader = new TextDecoder().decode(pdfBytes.slice(0, 7));
+    expect(pdfHeader).toBe("%PDF-1.");
+
+    const wordBlob = await generateDocumentWord(paSpec);
+    expect(wordBlob.size).toBeGreaterThan(1000);
   });
 });
 

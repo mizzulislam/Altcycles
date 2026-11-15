@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { GoogleDriveIcon } from "@/components/shared/google-drive-picker-dialog";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
@@ -68,7 +69,12 @@ import {
   recordExportLog,
   recordPaymentDisbursement,
 } from "@/lib/operations-service";
-import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
+import {
+  buildPaymentApprovalPdfSpec,
+  downloadPdfBytes,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
+import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import type {
   AccountRow,
   AttachmentRow,
@@ -329,6 +335,47 @@ export function AdminApprovalsPage() {
     );
     await recordExportLog("PAYMENT_APPROVALS", "CSV");
     toast.success("Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).");
+  }
+
+  async function makePaDocSpec(req: PaymentRequestRow) {
+    const comp = await getCompanyProfile();
+    const reqAttachments = attachments.filter((a) => a.entity_id === req.id);
+    return buildPaymentApprovalPdfSpec({
+      company: comp,
+      requestNumber: req.request_number,
+      revisionNo: req.revision_no,
+      requestDate: (req.submitted_at ?? req.created_at).slice(0, 10),
+      requesterName: profileMap.get(req.requester_id) ?? "Anggota Tim",
+      projectName: projectMap.get(req.project_id) ?? "Operasional Umum",
+      expenseAccountName: accountMap.get(req.expense_account_id) ?? "-",
+      recipientName: req.recipient_name,
+      recipientBankInfo: req.recipient_bank_info ?? null,
+      purpose: req.purpose,
+      amount: req.amount,
+      status: req.status,
+      statusLabel: PA_STATUS_META[req.status].label,
+      approverName: req.decided_by ? profileMap.get(req.decided_by) ?? "Admin Keuangan" : null,
+      approvedAt: req.decided_at ?? null,
+      paidDate: req.paid_date ?? null,
+      rejectionReason: req.rejection_reason ?? null,
+      attachmentNames: reqAttachments.map((a) => a.file_name),
+    });
+  }
+
+  async function handleDownloadPaPdf(req: PaymentRequestRow) {
+    const spec = await makePaDocSpec(req);
+    const bytes = await generateDocumentPdf(spec);
+    downloadPdfBytes(bytes, `PA_${req.request_number.replace(/\//g, "-")}.pdf`);
+    await recordExportLog("PAYMENT_APPROVALS", "PDF");
+    toast.success(`Form PA ${req.request_number} (PDF) berhasil diunduh.`);
+  }
+
+  async function handleDownloadPaWord(req: PaymentRequestRow) {
+    const spec = await makePaDocSpec(req);
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(blob, `PA_${req.request_number.replace(/\//g, "-")}.docx`);
+    await recordExportLog("PAYMENT_APPROVALS", "PDF");
+    toast.success(`Form PA ${req.request_number} (Word) berhasil diunduh.`);
   }
 
   const pendingCount = requests.filter((r) => r.status === "submitted").length;
@@ -598,50 +645,55 @@ export function AdminApprovalsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                        {req.status === "submitted" ? (
-                          isSelfRequest ? (
-                            <div className="inline-flex items-center min-h-5 -my-px">
-                              <StatusBadge
-                                tone="warning"
-                                label="Pengajuan Sendiri"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex justify-center items-center gap-1 -my-1.5">
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                title="Setujui Pengajuan"
-                                onClick={() => {
-                                  setAccountingDate(
-                                    (req.submitted_at ?? req.created_at).slice(
-                                      0,
-                                      10,
-                                    ),
-                                  );
-                                  setApproveTarget(req);
-                                }}
-                                className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
-                              >
-                                <CheckCircle2Icon className="size-4" />
-                                <span className="sr-only">Setujui Pengajuan</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                title="Tolak Pengajuan"
-                                onClick={() => setRejectTarget(req)}
-                                className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                              >
-                                <XCircleIcon className="size-4" />
-                                <span className="sr-only">Tolak Pengajuan</span>
-                              </Button>
-                            </div>
-                          )
-                        ) : req.status === "approved" ? (
-                          <div className="flex justify-center items-center -my-1.5">
+                        <div className="flex justify-center items-center gap-1 -my-1.5">
+                          <DocumentDownloadMenu
+                            title="Unduh Form PA (PDF / Word)"
+                            onDownloadPdf={() => void handleDownloadPaPdf(req)}
+                            onDownloadWord={() => void handleDownloadPaWord(req)}
+                          />
+                          {req.status === "submitted" ? (
+                            isSelfRequest ? (
+                              <div className="inline-flex items-center min-h-5 -my-px">
+                                <StatusBadge
+                                  tone="warning"
+                                  label="Pengajuan Sendiri"
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  title="Setujui Pengajuan"
+                                  onClick={() => {
+                                    setAccountingDate(
+                                      (req.submitted_at ?? req.created_at).slice(
+                                        0,
+                                        10,
+                                      ),
+                                    );
+                                    setApproveTarget(req);
+                                  }}
+                                  className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                                >
+                                  <CheckCircle2Icon className="size-4" />
+                                  <span className="sr-only">Setujui Pengajuan</span>
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  title="Tolak Pengajuan"
+                                  onClick={() => setRejectTarget(req)}
+                                  className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                                >
+                                  <XCircleIcon className="size-4" />
+                                  <span className="sr-only">Tolak Pengajuan</span>
+                                </Button>
+                              </>
+                            )
+                          ) : req.status === "approved" ? (
                             <Button
                               type="button"
                               size="icon"
@@ -658,13 +710,13 @@ export function AdminApprovalsPage() {
                               <BanknoteIcon className="size-4" />
                               <span className="sr-only">Catat Pencairan Dana</span>
                             </Button>
-                          </div>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs leading-5 text-muted-foreground">
-                            <LockIcon className="size-3.5" />
-                            <span>Terkunci</span>
-                          </span>
-                        )}
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs leading-5 text-muted-foreground">
+                              <LockIcon className="size-3.5" />
+                              <span>Terkunci</span>
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

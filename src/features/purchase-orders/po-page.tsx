@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -60,7 +61,14 @@ import {
 } from "@/lib/data-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import {
+  formatDateID,
+  formatDocDateLong,
+  formatDocEmpty,
+  formatDocRupiah,
+  formatRupiah,
+  roundRupiah,
+} from "@/lib/formatters";
 import {
   createPurchaseOrder,
   getProjectBudgetComparison,
@@ -68,7 +76,13 @@ import {
   recordExportLog,
   updatePurchaseOrderStatus,
 } from "@/lib/operations-service";
-import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
+import {
+  downloadPdfBytes,
+  generateDocumentPdf,
+  type DocStatusVariant,
+  type PdfDocumentSpec,
+} from "@/lib/pdf-generator";
+import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import type {
   CompanyProfileRow,
   PoItemRow,
@@ -201,54 +215,99 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     }
   }
 
-  async function handleDownloadPdf(po: PurchaseOrderRow) {
-    if (!company) return;
+  function makePoDocSpec(po: PurchaseOrderRow): PdfDocumentSpec | null {
+    if (!company) return null;
     const vendor = vendors.find((v) => v.id === po.vendor_id);
     const prj = projects.find((p) => p.id === po.project_id);
     const poLines = items.filter((i) => i.po_id === po.id);
 
-    const bytes = await generateDocumentPdf({
+    const statusTone: DocStatusVariant =
+      po.status === "completed"
+        ? "success"
+        : po.status === "issued"
+          ? "info"
+          : po.status === "cancelled"
+            ? "danger"
+            : "neutral";
+
+    return {
       docTitle: "PURCHASE ORDER (PO PEMBELIAN VENDOR)",
-      docSubtitle: `Status: ${PO_STATUS_META[po.status].label}`,
+      docSubtitle: "PESANAN PENGADAAN BARANG / JASA INTERNAL",
       docNumber: po.po_number,
       docDate: po.po_date,
+      statusBadge: {
+        text: PO_STATUS_META[po.status].label.toUpperCase(),
+        variant: statusTone,
+      },
+      balanceDueBox: {
+        label: "TOTAL NILAI PESANAN (PO)",
+        amountText: formatDocRupiah(po.total_amount),
+        dueDateText: "Syarat Pembayaran: Transfer Bank Resmi",
+      },
       company,
       recipientTitle: "Kepada Vendor / Pemasok:",
       recipientLines: [
-        vendor?.name ?? "Vendor",
+        vendor?.name ?? "Vendor Mitra",
         vendor?.address ?? "-",
         `Kontak: ${vendor?.contact_name ?? "-"} | Telp: ${vendor?.phone ?? "-"}`,
       ],
       metaRows: [
-        { label: "Proyek Referensi", value: prj ? `${prj.code} - ${prj.name}` : "-" },
-        { label: "Catatan", value: po.notes ?? "-" },
+        { label: "Nomor PO", value: po.po_number },
+        { label: "Tanggal Terbit", value: formatDocDateLong(po.po_date) },
+        { label: "Proyek Terkait", value: prj ? `${prj.code} - ${prj.name}` : "-" },
+        { label: "Alamat Pengiriman", value: company.address },
+        { label: "Kontak Penerima", value: `${company.signer_name} (${company.phone})` },
+        { label: "Catatan Tambahan", value: po.notes ?? "-" },
       ],
       tableColumns: [
-        { header: "No", widthRatio: 0.08 },
+        { header: "No", widthRatio: 0.08, align: "center" },
         { header: "Deskripsi Barang / Jasa", widthRatio: 0.44 },
-        { header: "Qty", widthRatio: 0.14 },
+        { header: "Qty", widthRatio: 0.14, align: "center" },
         { header: "Harga Satuan", widthRatio: 0.17, align: "right" },
-        { header: "Subtotal", widthRatio: 0.17, align: "right" },
+        { header: "Subtotal (IDR)", widthRatio: 0.17, align: "right" },
       ],
       tableRows: poLines.map((l) => [
         String(l.line_no),
         l.description,
         `${l.quantity} ${l.unit}`,
-        formatRupiah(l.unit_price),
-        formatRupiah(l.line_total),
+        formatDocRupiah(l.unit_price),
+        formatDocRupiah(l.line_total),
       ]),
-      summaryRows: [{ label: "TOTAL NILAI PO", value: formatRupiah(po.total_amount) }],
+      summaryRows: [
+        { label: "TOTAL NILAI PO", value: formatDocRupiah(po.total_amount) },
+      ],
       terbilangAmount: po.total_amount,
       notes: [
-        "Harap cantumkan Nomor PO ini pada setiap surat jalan dan tagihan/invoice vendor.",
-        "Dokumen PO yang telah diterbitkan bersifat terkunci secara permanen.",
+        "Harap cantumkan Nomor PO ini pada setiap surat jalan, tanda terima, dan tagihan/invoice vendor.",
+        "Barang atau jasa yang dikirim harus sesuai dengan spesifikasi dan dalam kondisi baik saat diterima.",
+        "Dokumen PO ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
-      rightSignatureLabel: `Pemesan, ${company.company_name}`,
-      rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
-    });
+      leftSignatureLabel: "Dibuat Oleh (Staff Pengadaan),",
+      leftSignatureName: company.signer_name,
+      thirdSignatureLabel: "Disetujui Oleh (Finance / Admin),",
+      thirdSignatureName: "Direktur Keuangan",
+      rightSignatureLabel: `Diterima & Dikonfirmasi Oleh, ${vendor?.name ?? "Pihak Vendor"}`,
+      rightSignatureName: vendor?.contact_name ?? "Perwakilan Vendor",
+      footerDocNumber: po.po_number,
+    };
+  }
 
+  async function handleDownloadPdf(po: PurchaseOrderRow) {
+    const spec = makePoDocSpec(po);
+    if (!spec) return;
+    const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, po.po_number.replace(/\//g, "-"));
+    await recordExportLog("PO_INTERNAL", "PDF");
     toast.success(`PDF ${po.po_number} berhasil diunduh.`);
+  }
+
+  async function handleDownloadWord(po: PurchaseOrderRow) {
+    const spec = makePoDocSpec(po);
+    if (!spec) return;
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(blob, `${po.po_number.replace(/\//g, "-")}.docx`);
+    await recordExportLog("PO_INTERNAL", "PDF");
+    toast.success(`Word ${po.po_number} berhasil diunduh.`);
   }
 
   async function handleExportExcel() {
@@ -460,17 +519,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title="Unduh PDF PO"
-                            onClick={() => void handleDownloadPdf(po)}
-                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
-                          >
-                            <DownloadIcon className="size-4" />
-                            <span className="sr-only">Unduh PDF PO</span>
-                          </Button>
+                          <DocumentDownloadMenu
+                            title="Unduh PO (PDF / Word)"
+                            onDownloadPdf={() => void handleDownloadPdf(po)}
+                            onDownloadWord={() => void handleDownloadWord(po)}
+                          />
                           {po.status === "draft" ? (
                             <Button
                               type="button"

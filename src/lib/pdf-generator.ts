@@ -23,6 +23,7 @@ import {
 import type {
   ClientPoItemJson,
   CompanyProfileRow,
+  PaymentRequestStatus,
   SpkCharterContent,
 } from "@/types/database.types";
 
@@ -2182,5 +2183,119 @@ export function buildClientPoPdfSpec(params: {
     rightSignatureLabel: `Diterima Oleh, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+  };
+}
+
+/**
+ * Helper pembuat spesifikasi PDF/Word Form Persetujuan Pembayaran & Pencairan Dana (Payment Approval)
+ * Sesuai PRD Lampiran A & Standar Dokumen Altvira Butir 5.1–5.8.
+ */
+export function buildPaymentApprovalPdfSpec(params: {
+  company: CompanyProfileRow;
+  requestNumber: string;
+  revisionNo?: number;
+  requestDate: string;
+  requesterName: string;
+  requesterRole?: string;
+  projectName?: string | null;
+  expenseAccountName?: string | null;
+  recipientName: string;
+  recipientBankInfo?: string | null;
+  purpose: string;
+  amount: number;
+  status: PaymentRequestStatus | string;
+  statusLabel?: string;
+  approverName?: string | null;
+  approvedAt?: string | null;
+  paidDate?: string | null;
+  rejectionReason?: string | null;
+  attachmentNames?: string[];
+}): PdfDocumentSpec {
+  const statusTone: DocStatusVariant =
+    params.status === "paid"
+      ? "success"
+      : params.status === "approved"
+        ? "info"
+        : params.status === "rejected"
+          ? "danger"
+          : "warning";
+
+  const statusText =
+    params.status === "paid"
+      ? "TELAH DICAIRKAN (PAID)"
+      : params.status === "approved"
+        ? "DISETUJUI (APPROVED)"
+        : params.status === "rejected"
+          ? "DITOLAK (REJECTED)"
+          : "MENUNGGU PERSETUJUAN";
+
+  return {
+    docTitle: "FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)",
+    docSubtitle:
+      params.revisionNo && params.revisionNo > 0
+        ? `LEMBAR VERIFIKASI & PENCAIRAN DANA BIAYA (REV.${params.revisionNo})`
+        : "LEMBAR VERIFIKASI & PENCAIRAN DANA BIAYA",
+    docNumber: params.requestNumber,
+    docDate: params.requestDate,
+    statusBadge: {
+      text: statusText,
+      variant: statusTone,
+    },
+    balanceDueBox: {
+      label: "TOTAL NOMINAL PEMBAYARAN",
+      amountText: formatDocRupiah(params.amount),
+      dueDateText: params.paidDate
+        ? `Telah Dicairkan: ${formatDocDateLong(params.paidDate)}`
+        : `Diajukan Pada: ${formatDocDateLong(params.requestDate)}`,
+    },
+    company: params.company,
+    recipientTitle: "Penerima Dana / Rekening Tujuan:",
+    recipientLines: [
+      params.recipientName,
+      params.recipientBankInfo
+        ? `Rekening / Bank: ${params.recipientBankInfo}`
+        : "Rekening Tujuan: –",
+    ],
+    metaRows: [
+      { label: "Nomor Form PA", value: params.requestNumber },
+      { label: "Pemohon / Pengaju", value: params.requesterName },
+      { label: "Proyek Terkait", value: params.projectName ?? "Operasional Umum" },
+      { label: "Pos Akun Beban", value: params.expenseAccountName ?? "-" },
+      { label: "Tanggal Pengajuan", value: formatDocDateLong(params.requestDate) },
+      ...(params.approvedAt
+        ? [{ label: "Disetujui Pada", value: formatDateTimeID(params.approvedAt) }]
+        : []),
+      ...(params.paidDate
+        ? [{ label: "Tanggal Pencairan Kas", value: formatDocDateLong(params.paidDate) }]
+        : []),
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.08, align: "center" },
+      { header: "Deskripsi Keperluan Pembayaran", widthRatio: 0.62 },
+      { header: "Nominal (IDR)", widthRatio: 0.3, align: "right" },
+    ],
+    tableRows: [["1", params.purpose, formatDocRupiah(params.amount)]],
+    summaryRows: [
+      { label: "TOTAL BIAYA DIAJUKAN", value: formatDocRupiah(params.amount) },
+    ],
+    terbilangAmount: params.amount,
+    notes: [
+      ...(params.rejectionReason
+        ? [`Alasan Penolakan: ${params.rejectionReason}`]
+        : []),
+      ...(params.attachmentNames && params.attachmentNames.length > 0
+        ? [`Dokumen Pendukung Terlampir: ${params.attachmentNames.join(", ")}`]
+        : []),
+      "Pengajuan pembayaran ini wajib diverifikasi dan disetujui Pejabat Keuangan sebelum pencairan kas atau transfer bank dilakukan.",
+      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+    ],
+    leftSignatureLabel: "Diajukan Oleh (Pemohon),",
+    leftSignatureName: params.requesterName,
+    rightSignatureLabel: "Disetujui Oleh (Finance / Admin),",
+    rightSignatureName:
+      params.approverName ??
+      `${params.company.signer_name} - ${params.company.signer_title}`,
+    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    footerDocNumber: params.requestNumber,
   };
 }
