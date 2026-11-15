@@ -1161,6 +1161,68 @@ export async function updateDocSequence(
   if (error) throw new Error(error.message);
 }
 
+export async function bulkUpdateDocSequencesResetPeriod(
+  resetPeriod: "monthly" | "yearly" | "never",
+  options?: { applyStandard2027Prefix?: boolean },
+): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "super_admin") {
+      throw new Error("Hanya Super Admin yang dapat mengatur penomoran.");
+    }
+    const before = structuredClone(demoStore.sequences);
+    for (const seq of demoStore.sequences) {
+      seq.reset_period = resetPeriod;
+      if (options?.applyStandard2027Prefix) {
+        seq.padding_digits = 4;
+        if (seq.doc_type === "PRJ") {
+          seq.prefix_pattern = "ALT/PRJ/{{tahun}}/{{urut}}";
+        } else {
+          seq.prefix_pattern = `ALT/${seq.doc_type}/{{tahun}}/{{bulan}}/{{urut}}`;
+        }
+      }
+      seq.updated_by = actor.id;
+      seq.updated_at = new Date().toISOString();
+    }
+    appendDemoAudit(
+      actor,
+      "UPDATE",
+      "doc_sequences",
+      "ALL",
+      before,
+      demoStore.sequences,
+    );
+    return;
+  }
+
+  const { error } = await supabase.rpc("set_all_doc_sequences_reset_period", {
+    p_reset_period: resetPeriod,
+    p_apply_standard_2027: Boolean(options?.applyStandard2027Prefix),
+  });
+
+  if (error) {
+    const { data: currentSeqs } = await supabase
+      .from("doc_sequences")
+      .select("doc_type");
+    if (currentSeqs) {
+      for (const item of currentSeqs) {
+        const patch: Partial<DocSequenceRow> = { reset_period: resetPeriod };
+        if (options?.applyStandard2027Prefix) {
+          patch.padding_digits = 4;
+          patch.prefix_pattern =
+            item.doc_type === "PRJ"
+              ? "ALT/PRJ/{{tahun}}/{{urut}}"
+              : `ALT/${item.doc_type}/{{tahun}}/{{bulan}}/{{urut}}`;
+        }
+        await supabase
+          .from("doc_sequences")
+          .update(patch)
+          .eq("doc_type", item.doc_type);
+      }
+    }
+  }
+}
+
 export async function listDocTemplates(): Promise<DocTemplateRow[]> {
   if (isDemoMode || !supabase) {
     getDemoActor();

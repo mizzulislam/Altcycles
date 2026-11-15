@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,6 +48,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  bulkUpdateDocSequencesResetPeriod,
   listDocSequences,
   listDocTemplates,
   updateDocSequence,
@@ -87,6 +89,51 @@ export function AdminSettingsPage() {
   const [tmplJsonText, setTmplJsonText] = React.useState("");
   const [tmplFooterNotes, setTmplFooterNotes] = React.useState("");
   const [savingTmpl, setSavingTmpl] = React.useState(false);
+
+  const [confirmMasterPolicy, setConfirmMasterPolicy] = React.useState<{
+    open: boolean;
+    period: "monthly" | "yearly";
+    applyStandard2027Prefix: boolean;
+  }>({
+    open: false,
+    period: "monthly",
+    applyStandard2027Prefix: false,
+  });
+  const [savingMasterPolicy, setSavingMasterPolicy] = React.useState(false);
+
+  const allYearly =
+    sequences.length > 0 && sequences.every((s) => s.reset_period === "yearly");
+  const allMonthly =
+    sequences.length > 0 && sequences.every((s) => s.reset_period === "monthly");
+  const currentGlobalResetPeriod: "monthly" | "yearly" | "custom" = allYearly
+    ? "yearly"
+    : allMonthly
+      ? "monthly"
+      : "custom";
+
+  async function handleApplyMasterPolicy() {
+    setSavingMasterPolicy(true);
+    try {
+      await bulkUpdateDocSequencesResetPeriod(confirmMasterPolicy.period, {
+        applyStandard2027Prefix: confirmMasterPolicy.applyStandard2027Prefix,
+      });
+      toast.success(
+        confirmMasterPolicy.period === "yearly"
+          ? "Kebijakan penomoran berhasil dialihkan ke Mode Tahunan (Standar 2027)."
+          : "Kebijakan penomoran berhasil disetel ke Mode Bulanan (Aktif 2026).",
+      );
+      setConfirmMasterPolicy((prev) => ({ ...prev, open: false }));
+      await reload();
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Gagal memperbarui kebijakan penomoran.",
+      );
+    } finally {
+      setSavingMasterPolicy(false);
+    }
+  }
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -192,8 +239,125 @@ export function AdminSettingsPage() {
         </p>
       </div>
 
+      {/* Master Switch Kebijakan Periode Reset Penomoran (Konflik 2 & Standar 2027) */}
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Kebijakan Periode Reset Penomoran Dokumen
+              </CardTitle>
+              <StatusBadge
+                tone={
+                  currentGlobalResetPeriod === "yearly"
+                    ? "info"
+                    : currentGlobalResetPeriod === "monthly"
+                      ? "success"
+                      : "warning"
+                }
+                label={
+                  currentGlobalResetPeriod === "yearly"
+                    ? "Tahunan (Standar 2027)"
+                    : currentGlobalResetPeriod === "monthly"
+                      ? "Bulanan (Aktif 2026)"
+                      : "Kustom / Campuran"
+                }
+              />
+            </div>
+            <CardDescription>
+              Atur siklus nomor urut seluruh dokumen resmi Altvira. Saat ini aktif <strong>Bulanan</strong> (periode 2026). Anda dapat beralih ke <strong>Tahunan</strong> untuk persiapan tahun 2027 tanpa perlu mengubah kode (hardcode).
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Opsi 1: Bulanan (2026) */}
+            <div
+              className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                currentGlobalResetPeriod === "monthly"
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border/70 bg-muted/10"
+              }`}
+            >
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">
+                    Mode 2026: Reset Bulanan
+                  </span>
+                  {currentGlobalResetPeriod === "monthly" && (
+                    <StatusBadge tone="success" label="Sedang Aktif" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Pencacah mereset ke 001 tiap awal bulan (<code>YYYY-MM</code>). Format: <code>JENIS/ALT/YYYY/MM/URUT3</code>.
+                </p>
+                <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
+                  Contoh: INV/ALT/2026/11/001
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant={currentGlobalResetPeriod === "monthly" ? "secondary" : "outline"}
+                disabled={currentGlobalResetPeriod === "monthly" || savingMasterPolicy}
+                onClick={() =>
+                  setConfirmMasterPolicy({
+                    open: true,
+                    period: "monthly",
+                    applyStandard2027Prefix: false,
+                  })
+                }
+                className="w-full rounded-xl text-xs h-9 cursor-pointer"
+              >
+                Terapkan Reset Bulanan (2026)
+              </Button>
+            </div>
+
+            {/* Opsi 2: Tahunan (2027) */}
+            <div
+              className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                currentGlobalResetPeriod === "yearly"
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border/70 bg-muted/10"
+              }`}
+            >
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">
+                    Mode 2027: Reset Tahunan (Standar Baru)
+                  </span>
+                  {currentGlobalResetPeriod === "yearly" && (
+                    <StatusBadge tone="info" label="Sedang Aktif" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Pencacah berlanjut 1 tahun penuh dan reset per 1 Januari. Format standar: <code>ALT/JENIS/YYYY/MM/URUT4</code> (4 digit).
+                </p>
+                <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
+                  Contoh: ALT/INV/2027/01/0001
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant={currentGlobalResetPeriod === "yearly" ? "secondary" : "default"}
+                disabled={currentGlobalResetPeriod === "yearly" || savingMasterPolicy}
+                onClick={() =>
+                  setConfirmMasterPolicy({
+                    open: true,
+                    period: "yearly",
+                    applyStandard2027Prefix: true,
+                  })
+                }
+                className="w-full rounded-xl text-xs h-9 cursor-pointer"
+              >
+                Beralih ke Standar Tahunan (2027)
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Card 1: Format Penomoran Dokumen */}
-      <Card className="overflow-hidden">
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
@@ -556,6 +720,32 @@ export function AdminSettingsPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={confirmMasterPolicy.open}
+        onOpenChange={(open) =>
+          setConfirmMasterPolicy((prev) => ({ ...prev, open }))
+        }
+        title={
+          confirmMasterPolicy.period === "yearly"
+            ? "Beralih ke Kebijakan Reset Tahunan (Standar 2027)"
+            : "Terapkan Kebijakan Reset Bulanan (Mode 2026)"
+        }
+        description={
+          confirmMasterPolicy.period === "yearly"
+            ? "Seluruh jenis dokumen resmi akan dialihkan ke siklus reset nomor urut tahunan (1 tahun penuh tanpa reset bulanan) dengan format standar baru ALT/{JENIS}/{YYYY}/{MM}/{URUT4} (4 digit). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
+            : "Seluruh jenis dokumen resmi akan menggunakan siklus reset nomor urut bulanan (reset ke 001 tiap awal bulan baru). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
+        }
+        confirmLabel={
+          savingMasterPolicy
+            ? "Menerapkan..."
+            : confirmMasterPolicy.period === "yearly"
+              ? "Beralih ke Standar 2027"
+              : "Terapkan Mode 2026"
+        }
+        variant={confirmMasterPolicy.period === "yearly" ? "default" : "secondary"}
+        onConfirm={handleApplyMasterPolicy}
+      />
     </div>
   );
 }
