@@ -112,9 +112,9 @@ export const DEMO_COMPANY: CompanyProfileRow = {
   signer_signature_path: null,
   signer_paraf_path: null,
   social_links_json: [
-    { platform: "Instagram", username: "@altvira.tech" },
-    { platform: "LinkedIn", username: "altvira-technology" },
-    { platform: "TikTok", username: "@altvira.tech" },
+    { platform: "Instagram", username: "@altvira.tech", url: "https://instagram.com/altvira.tech" },
+    { platform: "LinkedIn", username: "altvira-technology", url: "https://linkedin.com/company/altvira-technology" },
+    { platform: "TikTok", username: "@altvira.tech", url: "https://tiktok.com/@altvira.tech" },
   ],
   pkp_enabled: false,
   ppn_rate: 11,

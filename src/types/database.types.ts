@@ -145,6 +145,7 @@ export type ProfileRow = {
 export type SocialMediaEntry = {
   platform: string;
   username: string;
+  url?: string;
 };
 
 export type BankAccountEntry = {

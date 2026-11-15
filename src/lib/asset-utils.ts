@@ -1,9 +1,21 @@
 import type { CompanyProfileRow, SocialMediaEntry } from "@/types/database.types";
 
 export const DEFAULT_SOCIAL_LINKS: SocialMediaEntry[] = [
-  { platform: "Instagram", username: "@altvira.tech" },
-  { platform: "LinkedIn", username: "altvira-technology" },
-  { platform: "TikTok", username: "@altvira.tech" },
+  {
+    platform: "Instagram",
+    username: "@altvira.tech",
+    url: "https://instagram.com/altvira.tech",
+  },
+  {
+    platform: "LinkedIn",
+    username: "altvira-technology",
+    url: "https://linkedin.com/company/altvira-technology",
+  },
+  {
+    platform: "TikTok",
+    username: "@altvira.tech",
+    url: "https://tiktok.com/@altvira.tech",
+  },
 ];
 
 export const SOCIAL_PLATFORM_OPTIONS = [
@@ -172,10 +184,12 @@ export function getNormalizedSocialLinks(
     const fallback = DEFAULT_SOCIAL_LINKS[idx] ?? {
       platform: "Instagram",
       username: "",
+      url: "",
     };
     return {
       platform: item?.platform?.trim() || fallback.platform,
       username: item?.username?.trim() ?? "",
+      url: item?.url?.trim() ?? fallback.url ?? "",
     };
   });
 }

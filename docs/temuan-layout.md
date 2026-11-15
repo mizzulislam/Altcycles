@@ -446,14 +446,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Langkah B Selesai)
+### ID: K-28
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen PDF (`addDocumentFooters`, `renderDocumentPdfInternal`, `company-profile-page.tsx`)
+- **Apa yang bertentangan:**
+  1. Pada tabel Detail Pembayaran invoice, label (*Nama Bank*, *Nomor Rekening*, *Atas Nama*, *Berita Transfer*) sebelumnya berbobot reguler. Pengguna meminta label ditebalkan (`fontBold`, `TEXT_DARK`) dan nilainya reguler (`fontRegular`, `TEXT_LABEL`) seragam dengan isi Terbilang.
+  2. Footer sebelumnya memiliki pita/band biru navy gelap di dasar halaman. Pengguna meminta band navy tersebut dihapus total dan teks footer kiri digantikan dengan 3 icon media sosial interaktif (Instagram, LinkedIn, TikTok) yang memiliki anotasi tautan langsung ke URL profil, diikuti teks *Altvira Technology*. Di portal Super Admin tab Sosial Media Footer ditambahkan input *Tautan / URL Profil*.
+  3. Garis batas tanda tangan di blok pengesahan kanan sebelumnya memiliki lebar tetap yang menyisakan celah ke margin kanan. Pengguna meminta garis ditarik memanjang hingga menyentuh tepi batas margin kanan halaman.
+- **Yang kulakukan:**
+  1. Mengubah perataan dan bobot label Detail Pembayaran menjadi bold serta nilainya reguler dengan spasi baris 12.5 pt.
+  2. Menghapus pita navy gelap, menyematkan ikon vektor SVG medsos beranotasi `Link` (`URI`), dan menambahkan input link URL profil pada portal Super Admin.
+  3. Menggeser dan menyelaraskan garis tanda tangan kanan dari `pageWidth - marginX - sigLineWidth` hingga tepat menyentuh margin kanan `pageWidth - marginX`.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan pembaruan detail pembayaran, footer sosmed interaktif, dan penjajaran garis tanda tangan ke margin kanan. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 12 | 10 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 13 | 11 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **27** | **20** | **7** | **1** |
+| **Total Temuan** | **28** | **21** | **7** | **1** |

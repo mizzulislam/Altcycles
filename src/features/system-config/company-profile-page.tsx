@@ -155,6 +155,7 @@ export function CompanyProfilePage() {
         social_links_json: socials.map((s) => ({
           platform: s.platform.trim() || "Instagram",
           username: s.username.trim(),
+          url: s.url?.trim() || undefined,
         })),
         ppn_rate: company.ppn_rate,
       });
@@ -792,6 +793,26 @@ export function CompanyProfilePage() {
                             )
                           }
                           placeholder="Contoh: @altvira.tech"
+                          className="h-9 text-xs bg-background"
+                        />
+                      </Field>
+
+                      <Field>
+                        <FieldLabel className="text-[11px] font-semibold">
+                          Tautan / URL Profil
+                        </FieldLabel>
+                        <Input
+                          value={entry.url ?? ""}
+                          onChange={(e) =>
+                            setSocials((prev) =>
+                              prev.map((item, i) =>
+                                i === idx
+                                  ? { ...item, url: e.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                          placeholder="Contoh: https://instagram.com/altvira.tech"
                           className="h-9 text-xs bg-background"
                         />
                       </Field>

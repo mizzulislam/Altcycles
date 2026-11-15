@@ -1,6 +1,7 @@
 import {
   degrees,
   PDFDocument,
+  PDFString,
   StandardFonts,
   rgb,
   type PDFFont,
@@ -10,6 +11,7 @@ import {
 } from "pdf-lib";
 import {
   decodeImageBytes,
+  DEFAULT_SOCIAL_LINKS,
 } from "@/lib/asset-utils";
 import {
   getAltviraIconBytes,
@@ -641,17 +643,82 @@ async function drawSocialMediaFooters(params: {
       color: BORDER_GRAY,
     });
 
-    const docNumClean = docNumber?.trim() ? ` · ${docNumber.trim()}` : "";
-    const leftText = sanitizePdfText(`${company.company_name}${docNumClean}`);
-    const leftW = fontRegular.widthOfTextAtSize(leftText, fontSize);
-    p.drawText(leftText, {
-      x: marginX,
+    // 3 ikon medsos di sebelah kiri teks Altvira Technology (dapat diklik membuka profil)
+    const rawSocials = (company.social_links_json || []).filter(
+      (s) => s && s.platform && (s.username?.trim() || s.url?.trim()),
+    );
+    const activeSocials = (
+      rawSocials.length > 0 ? rawSocials : DEFAULT_SOCIAL_LINKS
+    ).slice(0, 3);
+
+    const iconSize = 10;
+    const iconGap = 4;
+    const iconTopY = textY + 6.5;
+    const iconBottomY = textY - 3.5;
+    let curIconX = marginX;
+
+    for (const soc of activeSocials) {
+      const pKey = soc.platform.toLowerCase();
+      let iconPath = "M 4 2 L 20 2 Q 22 2 22 4 L 22 20 Q 22 22 20 22 L 4 22 Q 2 22 2 20 L 2 4 Q 2 2 4 2 Z";
+      if (pKey.includes("instagram")) {
+        iconPath = "M 4 2 L 20 2 Q 22 2 22 4 L 22 20 Q 22 22 20 22 L 4 22 Q 2 22 2 20 L 2 4 Q 2 2 4 2 Z M 12 8 A 4 4 0 1 0 12 16 A 4 4 0 1 0 12 8 Z";
+      } else if (pKey.includes("linkedin")) {
+        iconPath = "M 4 2 L 20 2 Q 22 2 22 4 L 22 20 Q 22 22 20 22 L 4 22 Q 2 22 2 20 L 2 4 Q 2 2 4 2 Z M 7 10 L 7 17 M 7 6.5 L 7 7.5 M 11 17 L 11 11 Q 11 9 14 9 Q 17 9 17 12 L 17 17";
+      } else if (pKey.includes("tiktok")) {
+        iconPath = "M 9 12 A 4 4 0 1 0 13 16 L 13 4 Q 14 8 18 8";
+      } else if (pKey.includes("x") || pKey.includes("twitter")) {
+        iconPath = "M 4 4 L 20 20 M 20 4 L 4 20";
+      } else {
+        iconPath = "M 12 2 A 10 10 0 1 0 12 22 A 10 10 0 1 0 12 2 Z M 2 12 L 22 12";
+      }
+
+      p.drawSvgPath(iconPath, {
+        x: curIconX,
+        y: iconTopY,
+        scale: iconSize / 24,
+        borderColor: BRAND_BLUE,
+        borderWidth: 0.9,
+      });
+
+      const targetUrl =
+        soc.url?.trim() ||
+        (pKey.includes("instagram")
+          ? `https://instagram.com/${soc.username.replace(/^@/, "").trim()}`
+          : pKey.includes("linkedin")
+            ? `https://linkedin.com/company/${soc.username.replace(/^@/, "").trim()}`
+            : pKey.includes("tiktok")
+              ? `https://tiktok.com/@${soc.username.replace(/^@/, "").trim()}`
+              : `https://${soc.username.replace(/^@/, "").trim()}`);
+
+      if (targetUrl) {
+        const linkAnnot = p.doc.context.obj({
+          Type: "Annot",
+          Subtype: "Link",
+          Rect: [curIconX, iconBottomY, curIconX + iconSize, iconTopY],
+          Border: [0, 0, 0],
+          A: {
+            Type: "Action",
+            S: "URI",
+            URI: PDFString.of(targetUrl),
+          },
+        });
+        p.node.addAnnot(p.doc.context.register(linkAnnot));
+      }
+
+      curIconX += iconSize + iconGap;
+    }
+
+    const companyNameX = curIconX + 3;
+    const companyNameText = sanitizePdfText(company.company_name || "Altvira Technology");
+    const companyNameW = fontRegular.widthOfTextAtSize(companyNameText, fontSize);
+    p.drawText(companyNameText, {
+      x: companyNameX,
       y: textY,
       size: fontSize,
       font: fontRegular,
       color: TEXT_LABEL,
     });
-    recordBox?.(idx, marginX, textY, leftW, fontSize, leftText, "I-footer");
+    recordBox?.(idx, companyNameX, textY, companyNameW, fontSize, companyNameText, "I-footer");
 
     const rightText = `Hal. ${idx + 1} / ${total}`;
     const rightW = fontRegular.widthOfTextAtSize(rightText, fontSize);
@@ -669,7 +736,7 @@ async function drawSocialMediaFooters(params: {
       const centerText = "Dokumen ini dibuat otomatis oleh Altcycles";
       const centerW = fontRegular.widthOfTextAtSize(centerText, 7.5);
       const centerX = (pageWidth - centerW) / 2;
-      if (centerX > marginX + leftW + 12 && centerX + centerW < rightX - 12) {
+      if (centerX > companyNameX + companyNameW + 12 && centerX + centerW < rightX - 12) {
         p.drawText(centerText, {
           x: centerX,
           y: textY,
@@ -678,67 +745,6 @@ async function drawSocialMediaFooters(params: {
           color: TEXT_LABEL,
         });
         recordBox?.(idx, centerX, textY, centerW, 7.5, centerText, "I-footer");
-      }
-    }
-
-    // Band media sosial selebar halaman penuh sampai tepi bawah
-    const socials = (company.social_links_json || []).filter(
-      (s) => s && s.platform && s.username && s.username.trim(),
-    );
-    if (socials.length > 0) {
-      const bandH = PDF_LAYOUT_TOKENS.socialBandHeight;
-      p.drawRectangle({
-        x: 0,
-        y: 0,
-        width: pageWidth,
-        height: bandH,
-        color: NAVY_DARK,
-      });
-
-      const socialText = socials
-        .map((s) => `${s.platform} ${s.username.trim()}`)
-        .join("   ·   ");
-      const socialFontSize = 8;
-      const whiteColor = rgb(1, 1, 1);
-      const textW = fontRegular.widthOfTextAtSize(socialText, socialFontSize);
-
-      if (textW <= pageWidth - 36) {
-        // Muat 1 baris rata tengah
-        const textX = (pageWidth - textW) / 2;
-        p.drawText(socialText, {
-          x: textX,
-          y: 11,
-          size: socialFontSize,
-          font: fontRegular,
-          color: whiteColor,
-        });
-      } else {
-        // Bagi menjadi 2 baris rata tengah
-        const midIdx = Math.ceil(socials.length / 2);
-        const line1 = socials
-          .slice(0, midIdx)
-          .map((s) => `${s.platform} ${s.username.trim()}`)
-          .join("   ·   ");
-        const line2 = socials
-          .slice(midIdx)
-          .map((s) => `${s.platform} ${s.username.trim()}`)
-          .join("   ·   ");
-        const w1 = fontRegular.widthOfTextAtSize(line1, socialFontSize);
-        const w2 = fontRegular.widthOfTextAtSize(line2, socialFontSize);
-        p.drawText(line1, {
-          x: (pageWidth - w1) / 2,
-          y: 17,
-          size: socialFontSize,
-          font: fontRegular,
-          color: whiteColor,
-        });
-        p.drawText(line2, {
-          x: (pageWidth - w2) / 2,
-          y: 7,
-          size: socialFontSize,
-          font: fontRegular,
-          color: whiteColor,
-        });
       }
     }
   });
@@ -1892,7 +1898,7 @@ async function renderDocumentPdfInternal(
     if (spec.paymentDetail) {
       const pd = spec.paymentDetail;
       const pdBoxW = contentWidth;
-      const pdBoxH = 68;
+      const pdBoxH = 76;
       ensureSpace(pdBoxH + 15);
       const pdBoxTopY = y;
       const pdBoxBottomY = pdBoxTopY - pdBoxH;
@@ -1950,7 +1956,7 @@ async function renderDocumentPdfInternal(
           tLine,
           {
             x: leftColX,
-            y: leftColTopY - 11 - tIdx * 10,
+            y: leftColTopY - 12 - tIdx * 11.5,
             size: 8,
             font: fontRegular,
             color: TEXT_LABEL,
@@ -1959,19 +1965,19 @@ async function renderDocumentPdfInternal(
         );
       });
 
-      // Kolom Kanan: Info Bank & Transfer Grid
+      // Kolom Kanan: Info Bank & Transfer Grid (Label tebal, Nilai reguler selaras teks Terbilang)
       const rightColX = marginX + Math.round(pdBoxW * 0.46);
       const rightColTopY = pdDividerY - 11;
       const bLabelW = 75;
 
-      const bankItems: Array<{ label: string; value: string; isBold?: boolean; isStatus?: boolean }> = [
+      const bankItems: Array<{ label: string; value: string }> = [
         { label: "Nama Bank", value: pd.bankName },
-        { label: "Nomor Rekening", value: pd.accountNumber, isBold: true },
+        { label: "Nomor Rekening", value: pd.accountNumber },
         { label: "Atas Nama", value: pd.accountHolder },
-        { label: "Berita Transfer", value: pd.transferNews, isBold: true },
+        { label: "Berita Transfer", value: pd.transferNews },
       ];
       if (pd.isPaid) {
-        bankItems.push({ label: "Status", value: "LUNAS", isBold: true, isStatus: true });
+        bankItems.push({ label: "Status", value: "LUNAS" });
       }
       if (pd.swiftCode) {
         bankItems.push({ label: "Swift Code", value: pd.swiftCode });
@@ -1985,8 +1991,8 @@ async function renderDocumentPdfInternal(
             x: rightColX,
             y: bCursorY,
             size: 8,
-            font: fontRegular,
-            color: TEXT_LABEL,
+            font: fontBold,
+            color: TEXT_DARK,
           },
           "E-pd-bank-lbl",
         );
@@ -1996,8 +2002,8 @@ async function renderDocumentPdfInternal(
             x: rightColX + bLabelW,
             y: bCursorY,
             size: 8,
-            font: fontRegular,
-            color: TEXT_LABEL,
+            font: fontBold,
+            color: TEXT_DARK,
           },
           "E-pd-bank-colon",
         );
@@ -2007,12 +2013,12 @@ async function renderDocumentPdfInternal(
             x: rightColX + bLabelW + 6,
             y: bCursorY,
             size: 8,
-            font: bItem.isBold ? fontBold : fontRegular,
-            color: bItem.isStatus ? BRAND_BLUE : TEXT_DARK,
+            font: fontRegular,
+            color: TEXT_LABEL,
           },
           "E-pd-bank-val",
         );
-        bCursorY -= 10.5;
+        bCursorY -= 12.5;
       });
 
       y = pdBoxBottomY - 10;
@@ -2418,11 +2424,11 @@ async function renderDocumentPdfInternal(
       }
       y = titleY - 14;
     } else {
-      // Skenario 2 Kolom Sejajar dengan Lebar Sama
-      const colGap = 48;
-      const colW = (contentWidth - colGap) / 2; // 222.62 pt
+      // Skenario 2 Kolom: Kolom kiri menempel ke margin kiri, kolom kanan digeser hingga menyentuh margin kanan
       const colLeftX = marginX;
-      const colRightX = marginX + colW + colGap;
+      const rightEdgeX = pageWidth - marginX;
+      const sigLineWidth = 176;
+      const colRightX = rightEdgeX - sigLineWidth;
 
       // Kolom Kiri (Pihak Kedua / Klien)
       if (spec.leftSignatureName) {
@@ -2575,7 +2581,7 @@ async function renderDocumentPdfInternal(
 
         page.drawLine({
           start: { x: colRightX, y: lineY },
-          end: { x: colRightX + 176, y: lineY },
+          end: { x: rightEdgeX, y: lineY },
           thickness: 0.6,
           color: BORDER_GRAY,
         });
