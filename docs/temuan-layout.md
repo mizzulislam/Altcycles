@@ -365,14 +365,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-23
+- **Status:** Selesai (Diterapkan sesuai Instruksi Langsung Pengguna)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen (Header Bersama)
+- **Apa yang bertentangan:**
+  - Sebelumnya Butir 1 meminta tinggi tinta ikon sama dengan tinggi tinta wordmark (21 pt).
+  - Pengguna secara eksplisit menginstruksikan agar ukuran logo ikon diperbesar lagi, wordmark sedikit diperkecil, serta diberi spasi lebih lega antara logo/judul dan teks header di bawahnya.
+- **Yang kulakukan:**
+  - Memperbesar tinggi ikon logo menjadi 28 pt (lebar ~39.22 pt).
+  - Mengecilkan tinggi wordmark menjadi 17 pt (lebar ~85.75 pt).
+  - Memperlebar spasi vertikal ke teks kontak kiri dan No/Ref kanan (`brandToContactGap = 16 pt`).
+  - Menyesuaikan penegasan uji verifikasi otomatis pada `tests/unit/generate-render-check.test.ts`.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan rasio kontras ukuran ikon 28 pt dan wordmark 17 pt serta spasi lega 16 pt di komponen header bersama. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah A Putaran Penyempurnaan)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 8 | 7 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`) | 1 (`K-20`) | 1 (`K-20`) |
+| `standar-vs-layout` | 9 | 8 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`) | 1 (`K-20`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **22** | **16** | **6** | **1** |
+| **Total Temuan** | **23** | **17** | **6** | **1** |

@@ -883,17 +883,16 @@ async function renderDocumentPdfInternal(
     const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // Target tinggi tinta non-transparan ikon & wordmark Altvira (dikembalikan ke 21 pt sesuai permintaan)
-    const TARGET_BRAND_INK_HEIGHT = 21;
-    const iconInkHeight = TARGET_BRAND_INK_HEIGHT;
-    const wordmarkInkHeight = TARGET_BRAND_INK_HEIGHT;
+    // Target tinggi tinta ikon & wordmark Altvira (ikon lebih besar, wordmark sedikit lebih kecil sesuai arahan)
+    const iconInkHeight = 28; // Ikon logo diperbesar (~28 pt)
+    const wordmarkInkHeight = 17; // Wordmark sedikit lebih kecil (~17 pt)
 
     // Perhitungan dimensi aset berdasarkan rasio asli dan bounding box tinta
     const iconInkH = BRAND_IMAGE_METRICS.icon.inkHeight; // 731 px
     const iconFileW_raw = BRAND_IMAGE_METRICS.icon.fileWidth; // 1024 px
     const iconScale = iconInkHeight / iconInkH;
-    const iconH = iconInkHeight; // 21 pt
-    const iconW = iconFileW_raw * iconScale; // ~29.42 pt (rasio asli 1024:731)
+    const iconH = iconInkHeight; // 28 pt
+    const iconW = iconFileW_raw * iconScale; // ~39.22 pt (rasio asli 1024:731)
 
     const wmInkH = BRAND_IMAGE_METRICS.wordmark.inkHeight; // 203 px
     const wmFileH_raw = BRAND_IMAGE_METRICS.wordmark.fileHeight; // 208 px
@@ -901,17 +900,17 @@ async function renderDocumentPdfInternal(
     const wmBottomPad_raw = BRAND_IMAGE_METRICS.wordmark.inkBottomPad; // 5 px
 
     const wmScale = wordmarkInkHeight / wmInkH;
-    const wmH = wmFileH_raw * wmScale; // ~21.52 pt
-    const wmW = wmFileW_raw * wmScale; // ~105.93 pt
-    const wmBottomPad = wmBottomPad_raw * wmScale; // ~0.52 pt
+    const wmH = wmFileH_raw * wmScale; // ~17.42 pt
+    const wmW = wmFileW_raw * wmScale; // ~85.75 pt
+    const wmBottomPad = wmBottomPad_raw * wmScale; // ~0.42 pt
 
     // Common Center Y untuk ikon, wordmark, dan judul dokumen di kolom kanan
-    const headerCenterY = headerTopY - 18;
-    const brandInkTopY = headerCenterY + TARGET_BRAND_INK_HEIGHT / 2;
-    const brandInkBottomY = headerCenterY - TARGET_BRAND_INK_HEIGHT / 2;
+    const headerCenterY = headerTopY - 17;
+    const iconY = headerCenterY - iconH / 2;
+    const wmY = headerCenterY - wmH / 2 - wmBottomPad / 2;
+    const brandInkBottomY = Math.min(iconY, wmY);
 
     const iconX = marginX;
-    const iconY = brandInkBottomY;
 
     if (altviraIconImg) {
       page.drawImage(altviraIconImg, {
@@ -932,10 +931,9 @@ async function renderDocumentPdfInternal(
       drawDefaultAltviraMark(page, iconX, headerCenterY + 14);
     }
 
-    // 2. Wordmark Altvira (ditempatkan tepat agar ujung atas huruf ALTVIRA sejajar ujung atas ikon,
-    //    dan ujung bawah tagline ADAPT TODAY, INNOVATE TOMORROW sejajar ujung bawah ikon)
-    const wmX = iconX + iconW + 8; // jarak ikon ke wordmark seragam 8 pt
-    const wmY = brandInkBottomY - wmBottomPad;
+    // 2. Wordmark Altvira (posisi sejajar vertikal di tengah dengan ikon)
+    const wmX = iconX + iconW + 8; // jarak ikon ke wordmark 8 pt
+
 
     if (altviraWordmarkImg) {
       page.drawImage(altviraWordmarkImg, {
@@ -979,8 +977,8 @@ async function renderDocumentPdfInternal(
     );
 
     // 4. Blok Kontak Kiri di bawah brand
-    // Jarak dari batas bawah brand ink ke baris pertama nama badan usaha
-    const brandToContactGap = 12;
+    // Jarak dari batas bawah brand ink ke baris pertama nama badan usaha (diberi spasi lebih lega sesuai arahan)
+    const brandToContactGap = 16;
     const legalNameBaselineY = brandInkBottomY - brandToContactGap;
     const contactSize = HEADER_COMMON_FONT_SIZE; // 8 pt (konstanta bersama untuk blok kiri & No/Ref kanan)
     const contactLineH = 10;
