@@ -742,7 +742,7 @@ async function renderDocumentPdfInternal(
     let titleSize = 22;
     let titleLines = wrapTextByWidth(rawTitle, fontBold, titleSize, rightColMaxW);
     if (titleLines.length > 1) {
-      for (const candidateSize of [20, 18, 16, 14.5, 13.5]) {
+      for (const candidateSize of [20, 18, 16, 14.5, 13.5, 12.5, 11.5]) {
         const candidateLines = wrapTextByWidth(
           rawTitle,
           fontBold,
@@ -1659,12 +1659,26 @@ async function renderDocumentPdfInternal(
 
     const splitSigner = (raw?: string): { name: string; title: string } => {
       if (!raw) return { name: "", title: "" };
-      const cleaned = raw.replace(/^\(|\)$/g, "").trim();
-      const parts = cleaned.split(/\s+-\s+/);
-      return {
-        name: parts[0]?.trim() ?? cleaned,
-        title: parts.slice(1).join(" - ").trim(),
-      };
+      const trimmed = raw.trim();
+      const cleaned =
+        trimmed.startsWith("(") && trimmed.endsWith(")")
+          ? trimmed.slice(1, -1).trim()
+          : trimmed;
+      const dashParts = cleaned.split(/\s+-\s+/);
+      if (dashParts.length > 1) {
+        return {
+          name: dashParts[0]?.trim() ?? cleaned,
+          title: dashParts.slice(1).join(" - ").trim(),
+        };
+      }
+      const parenMatch = cleaned.match(/^(.+?)\s*\(([^)]+)\)$/);
+      if (parenMatch) {
+        return {
+          name: parenMatch[1]!.trim(),
+          title: parenMatch[2]!.trim(),
+        };
+      }
+      return { name: cleaned, title: "" };
     };
 
     if (spec.thirdSignatureName) {
@@ -1810,7 +1824,14 @@ async function renderDocumentPdfInternal(
           "G-sig-left-name",
         );
 
-        const leftRole = leftSigner.title || "Perwakilan Klien";
+        const defaultLeftRole = /pemohon|pengaju/i.test(
+          spec.leftSignatureLabel ?? "",
+        )
+          ? "Pemohon / Pengaju"
+          : /penguji/i.test(spec.leftSignatureLabel ?? "")
+            ? "Penguji Pihak Klien"
+            : "Perwakilan Klien";
+        const leftRole = leftSigner.title || defaultLeftRole;
         drawTrackedText(
           leftRole,
           {
@@ -2555,7 +2576,7 @@ export async function generateSpkProjectCharterPdf(params: {
   drawParagraph(content.pasal10LainLain || "-");
 
   // PENUTUP & TANDA TANGAN
-  ensureSpace(145);
+  ensureSpace(178);
   y -= 4;
   drawParagraph("PENUTUP", { bold: true, size: 9.5, color: BRAND_BLUE });
   drawParagraph(
@@ -2569,14 +2590,17 @@ export async function generateSpkProjectCharterPdf(params: {
 
   y -= 6;
   const sigY = y;
-  const p1X = marginX + 20;
+  const p1X = marginX + 12;
   const p2X = pageWidth - marginX - 185;
+  const lineY = sigY - 118;
+  const nameY = lineY - 13;
+  const titleY = nameY - 12;
 
-  // Slot e-Meterai Rp10.000 di tengah antara kedua penandatangan SPK
-  const spkMeteraiW = 84;
-  const spkMeteraiH = 48;
+  // Slot e-Meterai Rp10.000 proporsional 25 x 35 mm (71 x 99 pt, min 7.5 pt)
+  const spkMeteraiW = 71;
+  const spkMeteraiH = 99;
   const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
-  const spkMeteraiY = sigY - 58;
+  const spkMeteraiY = lineY + 4;
 
   page.drawRectangle({
     x: spkMeteraiX,
@@ -2585,38 +2609,28 @@ export async function generateSpkProjectCharterPdf(params: {
     height: spkMeteraiH,
     color: SURFACE_CARD,
     borderColor: BORDER_SLATE,
-    borderWidth: 0.6,
+    borderWidth: 0.75,
   });
 
-  const spkMTitle = "METERAI ELEKTRONIK";
-  const spkMW1 = fontBold.widthOfTextAtSize(spkMTitle, 6.5);
-  page.drawText(spkMTitle, {
-    x: spkMeteraiX + (spkMeteraiW - spkMW1) / 2,
-    y: spkMeteraiY + spkMeteraiH - 13,
-    size: 6.5,
-    font: fontBold,
-    color: SLATE_600,
-  });
+  const spkMLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
+    { text: "METERAI", size: 7.5, bold: true, color: SLATE_600, dy: 20 },
+    { text: "ELEKTRONIK", size: 7.5, bold: true, color: SLATE_600, dy: 32 },
+    { text: "Rp10.000", size: 9.5, bold: true, color: SLATE_900, dy: 52 },
+    { text: "Tempat e-Meterai", size: 7.5, bold: false, color: SLATE_500, dy: 72 },
+    { text: "25 x 35 mm", size: 7.5, bold: false, color: SLATE_500, dy: 84 },
+  ];
 
-  const spkMNominal = "Rp 10.000";
-  const spkMW2 = fontBold.widthOfTextAtSize(spkMNominal, 8);
-  page.drawText(spkMNominal, {
-    x: spkMeteraiX + (spkMeteraiW - spkMW2) / 2,
-    y: spkMeteraiY + spkMeteraiH - 25,
-    size: 8,
-    font: fontBold,
-    color: SLATE_900,
-  });
-
-  const spkMSub = "TEMPAT E-METERAI";
-  const spkMW3 = fontRegular.widthOfTextAtSize(spkMSub, 5.5);
-  page.drawText(spkMSub, {
-    x: spkMeteraiX + (spkMeteraiW - spkMW3) / 2,
-    y: spkMeteraiY + 8,
-    size: 5.5,
-    font: fontRegular,
-    color: SLATE_500,
-  });
+  for (const ml of spkMLines) {
+    const mFont = ml.bold ? fontBold : fontRegular;
+    const tw = mFont.widthOfTextAtSize(ml.text, ml.size);
+    page.drawText(ml.text, {
+      x: spkMeteraiX + (spkMeteraiW - tw) / 2,
+      y: spkMeteraiY + spkMeteraiH - ml.dy,
+      size: ml.size,
+      font: mFont,
+      color: ml.color,
+    });
+  }
 
   page.drawText("PIHAK PERTAMA", {
     x: p1X,
@@ -2628,29 +2642,35 @@ export async function generateSpkProjectCharterPdf(params: {
   page.drawText(sanitizePdfText(content.partyOne?.company || company.company_name), {
     x: p1X,
     y: sigY - 12,
-    size: 8.8,
+    size: 8.5,
     font: fontRegular,
     color: SLATE_700,
   });
   if (p1SigImg) {
-    const d1 = fitDimensions(p1SigImg, 110, 44);
+    const d1 = fitDimensions(p1SigImg, 115, 52);
     page.drawImage(p1SigImg, {
       x: p1X,
-      y: sigY - 62,
+      y: lineY + 6,
       width: d1.width,
       height: d1.height,
     });
   }
+  page.drawLine({
+    start: { x: p1X, y: lineY },
+    end: { x: p1X + 160, y: lineY },
+    thickness: 0.6,
+    color: BORDER_SLATE,
+  });
   page.drawText(sanitizePdfText(content.partyOne?.name || company.signer_name), {
     x: p1X,
-    y: sigY - 74,
-    size: 9,
+    y: nameY,
+    size: 9.5,
     font: fontBold,
     color: SLATE_900,
   });
   page.drawText(sanitizePdfText(content.partyOne?.title || company.signer_title), {
     x: p1X,
-    y: sigY - 85,
+    y: titleY,
     size: 8.5,
     font: fontRegular,
     color: SLATE_500,
@@ -2666,29 +2686,35 @@ export async function generateSpkProjectCharterPdf(params: {
   page.drawText(sanitizePdfText(content.partyTwo?.company || "Pihak Klien"), {
     x: p2X,
     y: sigY - 12,
-    size: 8.8,
+    size: 8.5,
     font: fontRegular,
     color: SLATE_700,
   });
   if (p2SigImg) {
-    const d2 = fitDimensions(p2SigImg, 110, 44);
+    const d2 = fitDimensions(p2SigImg, 115, 52);
     page.drawImage(p2SigImg, {
       x: p2X,
-      y: sigY - 62,
+      y: lineY + 6,
       width: d2.width,
       height: d2.height,
     });
   }
+  page.drawLine({
+    start: { x: p2X, y: lineY },
+    end: { x: p2X + 160, y: lineY },
+    thickness: 0.6,
+    color: BORDER_SLATE,
+  });
   page.drawText(sanitizePdfText(content.partyTwo?.name || "Perwakilan Klien"), {
     x: p2X,
-    y: sigY - 74,
-    size: 9,
+    y: nameY,
+    size: 9.5,
     font: fontBold,
     color: SLATE_900,
   });
   page.drawText(sanitizePdfText(content.partyTwo?.title || "Direktur"), {
     x: p2X,
-    y: sigY - 85,
+    y: titleY,
     size: 8.5,
     font: fontRegular,
     color: SLATE_500,
@@ -2703,6 +2729,7 @@ export async function generateSpkProjectCharterPdf(params: {
     fontBold,
     marginX,
     pageWidth,
+    docNumber,
     parafInfo: {
       leftImage: p1ParafImg,
       rightImage: p2ParafImg,
@@ -3249,6 +3276,12 @@ export function buildPaymentApprovalPdfSpec(params: {
           ? "DITOLAK (REJECTED)"
           : "MENUNGGU PERSETUJUAN";
 
+  const forceTwoDecimals = hasAnyDecimalCurrency([params.amount]);
+  const fmtAmount = formatDocRupiah(params.amount, forceTwoDecimals);
+  const leftSigDisplay = params.requesterRole
+    ? `${params.requesterName} - ${params.requesterRole}`
+    : params.requesterName;
+
   return {
     docTitle: "FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)",
     docSubtitle:
@@ -3263,13 +3296,13 @@ export function buildPaymentApprovalPdfSpec(params: {
     },
     balanceDueBox: {
       label: "TOTAL NOMINAL PEMBAYARAN",
-      amountText: formatDocRupiah(params.amount),
+      amountText: fmtAmount,
       dueDateText: params.paidDate
         ? `Telah Dicairkan: ${formatDocDateLong(params.paidDate)}`
         : `Diajukan Pada: ${formatDocDateLong(params.requestDate)}`,
     },
     company: params.company,
-    recipientTitle: "Penerima Dana / Rekening Tujuan:",
+    recipientTitle: "Penerima Dana / Rekening Tujuan",
     recipientLines: [
       params.recipientName,
       params.recipientBankInfo
@@ -3277,11 +3310,11 @@ export function buildPaymentApprovalPdfSpec(params: {
         : "Rekening Tujuan: –",
     ],
     metaRows: [
+      { label: "Tanggal Pengajuan", value: formatDocDateLong(params.requestDate) },
       { label: "Nomor Form PA", value: params.requestNumber },
       { label: "Pemohon / Pengaju", value: params.requesterName },
       { label: "Proyek Terkait", value: params.projectName ?? "Operasional Umum" },
       { label: "Pos Akun Beban", value: params.expenseAccountName ?? "-" },
-      { label: "Tanggal Pengajuan", value: formatDocDateLong(params.requestDate) },
       ...(params.approvedAt
         ? [{ label: "Disetujui Pada", value: formatDateTimeID(params.approvedAt) }]
         : []),
@@ -3294,9 +3327,9 @@ export function buildPaymentApprovalPdfSpec(params: {
       { header: "Deskripsi Keperluan Pembayaran", widthRatio: 0.62 },
       { header: "Nominal (IDR)", widthRatio: 0.3, align: "right" },
     ],
-    tableRows: [["1", params.purpose, formatDocRupiah(params.amount)]],
+    tableRows: [["1", params.purpose, fmtAmount]],
     summaryRows: [
-      { label: "TOTAL BIAYA DIAJUKAN", value: formatDocRupiah(params.amount) },
+      { label: "Total Biaya Diajukan", value: fmtAmount },
     ],
     terbilangAmount: params.amount,
     notes: [
@@ -3310,7 +3343,7 @@ export function buildPaymentApprovalPdfSpec(params: {
       "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
     leftSignatureLabel: "Diajukan Oleh (Pemohon),",
-    leftSignatureName: params.requesterName,
+    leftSignatureName: leftSigDisplay,
     rightSignatureLabel: "Disetujui Oleh (Finance / Admin),",
     rightSignatureName:
       params.approverName ??

@@ -229,14 +229,37 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Akhir Langkah 2)
+### ID: K-15
+- **Status:** Selesai (Diterapkan pada Langkah 3)
+- **Jenis:** `standar-vs-sistem`
+- **Dokumen terdampak:** SoW (`makeSowDocSpec`), SPK Project Charter (`generateSpkProjectCharterPdf`), BAKP (`makeBakpSpec`), UAT (`makeUatSpec`), BAST (`makeBastSpec`), Payment Approval (`buildPaymentApprovalPdfSpec`), dan Jadwal Termin (`handleExportMilestonesPdf`)
+- **Apa yang bertentangan:**
+  1. **SoW:** Pada `makeSowDocSpec` (`src/features/client-projects/project-detail-page.tsx:742`), `notesTitle` disetel `"Ketentuan Pelaksanaan Pekerjaan:"` namun properti `notes` belum diisi sehingga seksi ketentuan kosong saat diunduh dari halaman detail proyek; selain itu `Tanggal Terbit` belum masuk ke baris pertama `metaRows`.
+  2. **SPK Project Charter 10 Pasal:** Pada `generateSpkProjectCharterPdf` (`src/lib/pdf-generator.ts:2643-2672`), kotak e-Meterai sebelumnya masih berukuran `84 × 48 pt` dengan teks `5.5 pt` (melanggar batas minimum `7.5 pt` dan ukuran `25 × 35 mm`), serta `docNumber` belum diteruskan ke footer halaman.
+  3. **UAT:** Pada `makeUatSpec` (`src/features/client-projects/project-detail-page.tsx:960`), `rightSignatureName` hanya berisi `uat.altvira_companion_name` tanpa jabatan sehingga di blok tanda tangan kanan muncul fallback `Finance & Accounting` alih-alih `Pendamping Teknis Altvira`.
+  4. **Payment Approval (PA):** Pada `buildPaymentApprovalPdfSpec` (`src/lib/pdf-generator.ts:3274-3345`), judul dokumen sepanjang 46 karakter (`FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)`) sebelumnya terbungkus menjadi 3 baris di header kanan, dan `requesterName` berformat `"Nama (Jabatan)"` belum terpecah menjadi baris nama dan baris jabatan di Zona G.
+  5. **Jadwal Termin:** Pada `handleExportMilestonesPdf` (`src/features/client-projects/project-detail-page.tsx:1106-1146`), belum terdapat `statusBadge`, `metaRows` terstruktur, maupun `footerDocNumber`, serta masih menggunakan `formatRupiah` dan label kapital `TOTAL NILAI TERMIN`.
+- **Yang kulakukan:**
+  1. Menambahkan `Tanggal Terbit`/`Tanggal Pemeriksaan`/`Tanggal Pengujian`/`Tanggal Serah Terima`/`Tanggal Pengajuan`/`Tanggal Cetak` di baris pertama `metaRows` seluruh dokumen Langkah 3, serta melengkapi `notes` default pada `makeSowDocSpec`.
+  2. Memperbarui slot e-Meterai pada `generateSpkProjectCharterPdf` menjadi ukuran standar `25 × 35 mm` (`71 × 99 pt`) dengan teks `7.5–9.5 pt` dan meneruskan `docNumber` ke footer setiap halaman.
+  3. Menambahkan jabatan `- Penguji Pihak Klien` dan `- Pendamping Teknis Altvira` pada `makeUatSpec`, serta mendukung pemisahan `"Nama (Jabatan)"` pada `splitSigner` untuk Payment Approval.
+  4. Menambahkan kandidat ukuran font `12.5` dan `11.5` pt pada `drawDocumentHeader` agar judul panjang Payment Approval tampil rapi dalam 2 baris.
+  5. Melengkapi `statusBadge`, `metaRows`, `formatDocRupiah`, Proper Case `Total Nilai Termin`, dan `footerDocNumber` pada `handleExportMilestonesPdf`.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Lengkapi seluruh builder dokumen Langkah 3 dan penyeragaman slot e-Meterai SPK. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Akhir Langkah 3 — Selesai Seluruh Dokumen)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
 | `standar-vs-layout` | 3 | 3 (`K-01`, `K-03`, `K-11`) | 0 | 0 |
-| `standar-vs-sistem` | 5 | 4 (`K-02`, `K-06`, `K-13`, `K-14`) | 1 (`K-09`) | 0 |
+| `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
 | `data-janggal` | 4 | 2 (`K-04`, `K-05`) | 2 (`K-10`, `K-12`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **14** | **11** | **3** | **0** |
+| **Total Temuan** | **15** | **12** | **3** | **0** |

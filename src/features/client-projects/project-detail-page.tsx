@@ -723,6 +723,7 @@ export function ProjectDetailPage() {
         customer?.address ?? "-",
       ],
       metaRows: [
+        { label: "Tanggal Terbit", value: formatDocDateLong(doc.created_at.slice(0, 10)) },
         { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         { label: "Nilai Kontrak", value: formatDocRupiah(project.contract_value) },
@@ -740,8 +741,13 @@ export function ProjectDetailPage() {
           `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin pelaksanaan pekerjaan proyek ${project.name}.`,
       ],
       notesTitle: "Ketentuan Pelaksanaan Pekerjaan:",
+      notes: [
+        "Perubahan di luar ruang lingkup yang telah disepakati akan diproses melalui mekanisme Change Request (CR) tertulis.",
+        "Hak cipta kode sumber beralih sepenuhnya kepada Pihak Klien setelah pelunasan 100% nilai kontrak.",
+        "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+      ],
       leftSignatureLabel: "Disetujui Pihak Klien,",
-      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
+      leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
       rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
@@ -827,6 +833,7 @@ export function ProjectDetailPage() {
         customer?.address ?? "-",
       ],
       metaRows: [
+        { label: "Tanggal Pemeriksaan", value: formatDocDateLong(bakp.bakp_date) },
         { label: "Proyek", value: `${project.code} - ${project.name}` },
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
@@ -856,7 +863,7 @@ export function ProjectDetailPage() {
         "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
       leftSignatureLabel: "Disetujui Pihak Klien,",
-      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
+      leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
       rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
@@ -923,6 +930,7 @@ export function ProjectDetailPage() {
         customer?.address ?? "-",
       ],
       metaRows: [
+        { label: "Tanggal Pengujian", value: formatDocDateLong(uat.test_date) },
         { label: "Proyek", value: `${project.code} - ${project.name}` },
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
@@ -954,10 +962,14 @@ export function ProjectDetailPage() {
         "Dokumen UAT ini sah sebagai lampiran teknis Berita Acara Serah Terima (BAST).",
       ],
       leftSignatureLabel: "Penguji Pihak Klien,",
-      leftSignatureName: uat.client_tester_name,
+      leftSignatureName: uat.client_tester_name.includes(" - ")
+        ? uat.client_tester_name
+        : `${uat.client_tester_name} - Penguji Pihak Klien`,
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
       rightSignatureLabel: "Pendamping Teknis Altvira,",
-      rightSignatureName: uat.altvira_companion_name,
+      rightSignatureName: uat.altvira_companion_name.includes(" - ")
+        ? uat.altvira_companion_name
+        : `${uat.altvira_companion_name} - Pendamping Teknis Altvira`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
       footerDocNumber: uat.uat_number,
     };
@@ -1006,6 +1018,7 @@ export function ProjectDetailPage() {
         customer?.address ?? "-",
       ],
       metaRows: [
+        { label: "Tanggal Serah Terima", value: formatDocDateLong(bast.bast_date) },
         { label: "Proyek", value: `${project.code} - ${project.name}` },
         ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
         ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
@@ -1042,7 +1055,7 @@ export function ProjectDetailPage() {
         "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
       leftSignatureLabel: "Penerima Hasil Pekerjaan (Klien),",
-      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
+      leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
       rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
@@ -1103,17 +1116,28 @@ export function ProjectDetailPage() {
       toast.error("Belum ada data jadwal termin untuk diekspor.");
       return;
     }
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const docNum = `SCH/${project.code}/${new Date().getFullYear()}`;
     const spec: PdfDocumentSpec = {
       docTitle: "JADWAL TERMIN PENAGIHAN PROYEK",
       docSubtitle: `${project.code} - ${project.name}`,
-      docNumber: `SCH/${project.code}/${new Date().getFullYear()}`,
-      docDate: new Date().toISOString().slice(0, 10),
+      docNumber: docNum,
+      docDate: todayStr,
+      statusBadge: {
+        text: "JADWAL AKTIF",
+        variant: "info",
+      },
       company,
       recipientTitle: "Informasi Proyek & Klien:",
       recipientLines: [
-        `Nama Proyek: ${project.name} (${project.code})`,
-        `Klien: ${customer?.name ?? "Proyek Internal"}`,
-        `Total Nilai Kontrak: ${formatRupiah(project.contract_value)}`,
+        customer?.company_name ?? customer?.name ?? "Proyek Internal",
+        ...(customer?.contact_person ? [customer.contact_person] : []),
+        customer?.address ?? "-",
+      ],
+      metaRows: [
+        { label: "Tanggal Cetak", value: formatDocDateLong(todayStr) },
+        { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
+        { label: "Total Nilai Kontrak", value: formatDocRupiah(project.contract_value) },
       ],
       tableColumns: [
         { header: "Termin", widthRatio: 0.16, align: "center" },
@@ -1129,7 +1153,7 @@ export function ProjectDetailPage() {
       ]),
       summaryRows: [
         {
-          label: "TOTAL NILAI TERMIN",
+          label: "Total Nilai Termin",
           value: formatDocRupiah(
             bundle.milestones.reduce((sum, m) => sum + m.amount, 0),
           ),
@@ -1143,6 +1167,7 @@ export function ProjectDetailPage() {
       rightSignatureLabel: `Dikeluarkan Oleh, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: docNum,
     };
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(
