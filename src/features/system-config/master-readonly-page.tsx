@@ -4,6 +4,7 @@ import {
   BookOpenIcon,
   Building2Icon,
   FolderKanbanIcon,
+  PercentIcon,
   ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
@@ -36,6 +37,7 @@ import {
   listVendors,
   setAutoClosingStatus,
   setJournalLockStatus,
+  setPph23EstimateStatus,
 } from "@/lib/data-service";
 import {
   ACCOUNT_TYPE_LABELS,
@@ -58,6 +60,8 @@ export function MasterReadonlyPage() {
   const [togglingLock, setTogglingLock] = React.useState(false);
   const [autoClosingEnabled, setAutoClosingEnabled] = React.useState(false);
   const [togglingAutoClosing, setTogglingAutoClosing] = React.useState(false);
+  const [pph23Enabled, setPph23Enabled] = React.useState(false);
+  const [togglingPph23, setTogglingPph23] = React.useState(false);
 
   React.useEffect(() => {
     async function load() {
@@ -76,6 +80,7 @@ export function MasterReadonlyPage() {
         setCustomers(c);
         setJournalLockEnabled(Boolean(comp.journal_lock_enabled ?? true));
         setAutoClosingEnabled(Boolean(comp.auto_closing_enabled ?? false));
+        setPph23Enabled(Boolean(comp.pph_enabled ?? false));
       } catch (err) {
         toast.error(
           err instanceof Error
@@ -111,103 +116,155 @@ export function MasterReadonlyPage() {
         </div>
       </div>
 
-      {/* Card Kontrol Kunci Jurnal (Journal Lock Control) */}
-      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <ShieldCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
-              <h2 className="text-base font-bold text-foreground">
-                Kunci Jurnal &amp; Kepatuhan Pembukuan
-              </h2>
+      {/* Grid 3 Kolom Kontrol Akuntansi Sejajar */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-stretch">
+        {/* Card 1: Kontrol Kunci Jurnal (Journal Lock Control) */}
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
+            <div className="space-y-1.5 min-w-0 flex-1 self-start">
+              <div className="flex items-center gap-2">
+                <ShieldCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
+                  Kunci Jurnal &amp; Pembukuan
+                </h2>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {journalLockEnabled
+                  ? "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus."
+                  : "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan mengedit serta menghapus transaksi jurnal untuk pengujian sistem."}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {journalLockEnabled
-                ? "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus sembarangan."
-                : "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan untuk mengedit, mengoreksi, dan menghapus transaksi jurnal pada portal Akuntansi untuk keperluan pengujian sistem."}
-            </p>
-          </div>
-          <label
-            htmlFor="journal-lock-switch"
-            className="flex items-center gap-3 shrink-0 cursor-pointer select-none"
-          >
-            <span className="text-xs font-medium text-muted-foreground">
-              {journalLockEnabled ? "Aktif" : "Nonaktif"}
-            </span>
-            <Switch
-              id="journal-lock-switch"
-              checked={journalLockEnabled}
-              disabled={togglingLock}
-              aria-label="Toggle Kunci Jurnal"
-              onCheckedChange={async (nextVal) => {
-                setTogglingLock(true);
-                try {
-                  await setJournalLockStatus(nextVal);
-                  setJournalLockEnabled(nextVal);
-                  if (nextVal) {
-                    toast.success("Kunci jurnal diaktifkan (Mode Produksi).");
-                  } else {
-                    toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus).");
+            <label
+              htmlFor="journal-lock-switch"
+              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
+            >
+              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
+                {journalLockEnabled ? "Aktif" : "Nonaktif"}
+              </span>
+              <Switch
+                id="journal-lock-switch"
+                checked={journalLockEnabled}
+                disabled={togglingLock}
+                aria-label="Toggle Kunci Jurnal"
+                onCheckedChange={async (nextVal) => {
+                  setTogglingLock(true);
+                  try {
+                    await setJournalLockStatus(nextVal);
+                    setJournalLockEnabled(nextVal);
+                    if (nextVal) {
+                      toast.success("Kunci jurnal diaktifkan (Mode Produksi).");
+                    } else {
+                      toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus).");
+                    }
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status kunci jurnal.");
+                  } finally {
+                    setTogglingLock(false);
                   }
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Gagal mengubah status kunci jurnal.");
-                } finally {
-                  setTogglingLock(false);
-                }
-              }}
-            />
-          </label>
-        </div>
-      </Card>
+                }}
+              />
+            </label>
+          </div>
+        </Card>
 
-      {/* Card Kontrol Tutup Buku Otomatis (Auto Closing Books Control) */}
-      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <BookCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
-              <h2 className="text-base font-bold text-foreground">
-                Tutup Buku Otomatis (Auto Closing Books)
-              </h2>
+        {/* Card 2: Kontrol Tutup Buku Otomatis (Auto Closing Books Control) */}
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
+            <div className="space-y-1.5 min-w-0 flex-1 self-start">
+              <div className="flex items-center gap-2">
+                <BookCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
+                  Tutup Buku Otomatis
+                </h2>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {autoClosingEnabled
+                  ? "Sistem otomatis menghitung dan memposting jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Laba Ditahan saat tutup buku periode."
+                  : "Tutup buku otomatis dinonaktifkan. Bendahara dan Admin dapat mencatat jurnal penutup secara manual atau menutup periode tanpa auto-posting."}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {autoClosingEnabled
-                ? "Sistem secara otomatis menghitung dan memposting 4 langkah jurnal penutup GAAP/IFRS (menutup akun nominal Pendapatan & Beban ke Ikhtisar Laba Rugi lalu ke Laba Ditahan) saat Bendahara mengeksekusi tutup buku periode."
-                : "Tutup buku otomatis dinonaktifkan. Bendahara dan Admin dapat mencatat jurnal penutup secara manual melalui formulir pencatatan jurnal atau menutup periode buku secara fleksibel tanpa auto-posting."}
-            </p>
-          </div>
-          <label
-            htmlFor="auto-closing-switch"
-            className="flex items-center gap-3 shrink-0 cursor-pointer select-none"
-          >
-            <span className="text-xs font-medium text-muted-foreground">
-              {autoClosingEnabled ? "Aktif" : "Nonaktif"}
-            </span>
-            <Switch
-              id="auto-closing-switch"
-              checked={autoClosingEnabled}
-              disabled={togglingAutoClosing}
-              aria-label="Toggle Tutup Buku Otomatis"
-              onCheckedChange={async (nextVal) => {
-                setTogglingAutoClosing(true);
-                try {
-                  await setAutoClosingStatus(nextVal);
-                  setAutoClosingEnabled(nextVal);
-                  if (nextVal) {
-                    toast.success("Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode.");
-                  } else {
-                    toast.info("Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara.");
+            <label
+              htmlFor="auto-closing-switch"
+              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
+            >
+              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
+                {autoClosingEnabled ? "Aktif" : "Nonaktif"}
+              </span>
+              <Switch
+                id="auto-closing-switch"
+                checked={autoClosingEnabled}
+                disabled={togglingAutoClosing}
+                aria-label="Toggle Tutup Buku Otomatis"
+                onCheckedChange={async (nextVal) => {
+                  setTogglingAutoClosing(true);
+                  try {
+                    await setAutoClosingStatus(nextVal);
+                    setAutoClosingEnabled(nextVal);
+                    if (nextVal) {
+                      toast.success("Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode.");
+                    } else {
+                      toast.info("Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara.");
+                    }
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status tutup buku otomatis.");
+                  } finally {
+                    setTogglingAutoClosing(false);
                   }
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Gagal mengubah status tutup buku otomatis.");
-                } finally {
-                  setTogglingAutoClosing(false);
-                }
-              }}
-            />
-          </label>
-        </div>
-      </Card>
+                }}
+              />
+            </label>
+          </div>
+        </Card>
+
+        {/* Card 3: Kontrol Estimasi PPh 23 (2%) pada Invoice Klien */}
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
+            <div className="space-y-1.5 min-w-0 flex-1 self-start">
+              <div className="flex items-center gap-2">
+                <PercentIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
+                  Estimasi PPh 23 (2%)
+                </h2>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {pph23Enabled
+                  ? "Informasi pemotongan PPh Pasal 23 (2% dari DPP) dan estimasi kas bersih ditampilkan otomatis pada dokumen cetak PDF/Word Invoice klien."
+                  : "Estimasi potongan PPh Pasal 23 (2%) disembunyikan dari dokumen cetak Invoice klien sehingga hanya menampilkan nilai tagihan standar."}
+              </p>
+            </div>
+            <label
+              htmlFor="pph23-estimate-switch"
+              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
+            >
+              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
+                {pph23Enabled ? "Aktif" : "Nonaktif"}
+              </span>
+              <Switch
+                id="pph23-estimate-switch"
+                checked={pph23Enabled}
+                disabled={togglingPph23}
+                aria-label="Toggle Estimasi PPh 23 (2%)"
+                onCheckedChange={async (nextVal) => {
+                  setTogglingPph23(true);
+                  try {
+                    await setPph23EstimateStatus(nextVal);
+                    setPph23Enabled(nextVal);
+                    if (nextVal) {
+                      toast.success("Estimasi PPh 23 (2%) diaktifkan pada dokumen cetak Invoice klien.");
+                    } else {
+                      toast.info("Estimasi PPh 23 (2%) dinonaktifkan pada dokumen cetak Invoice klien.");
+                    }
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status estimasi PPh 23.");
+                  } finally {
+                    setTogglingPph23(false);
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </Card>
+      </div>
 
       <Tabs defaultValue="coa">
         <TabsList>

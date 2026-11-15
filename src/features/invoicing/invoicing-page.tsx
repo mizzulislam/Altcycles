@@ -1,10 +1,10 @@
 import * as React from "react";
 import {
+  ArrowUpDownIcon,
   BanknoteIcon,
   ClockAlertIcon,
   ClockIcon,
   FileTextIcon,
-  PercentIcon,
   PlusIcon,
   ReceiptIcon,
   ReceiptTextIcon,
@@ -12,12 +12,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -57,6 +60,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  RowEditActionButtons,
+  SectionEditControls,
+  type ViewDetailState,
+} from "@/features/client-projects/components/project-detail-shared";
 import { buildArAging } from "@/lib/accounting-engine";
 import {
   getCompanyProfile,
@@ -69,10 +77,14 @@ import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
 import {
   createAndIssueSalesInvoice,
+  deleteReceipts,
+  deleteSalesInvoices,
   getProjectWorkspace,
   type ProjectWorkspaceBundle,
   recordClientInvoicePayment,
   recordExportLog,
+  updateReceipt,
+  updateSalesInvoice,
 } from "@/lib/operations-service";
 import {
   buildInvoicePdfSpec,
@@ -88,6 +100,7 @@ import type {
   CompanyProfileRow,
   CustomerRow,
   InvoiceKind,
+  InvoicePaymentStatus,
   ProjectRow,
   ReceiptRow,
   SalesInvoiceRow,
@@ -110,7 +123,26 @@ export function InvoicingPage() {
   const [loading, setLoading] = React.useState(true);
   const [agingRefDate, setAgingRefDate] = React.useState("2026-12-31");
   const [activeTab, setActiveTab] = React.useState<"invoices" | "aging" | "receipts">("invoices");
-  const [includePph23, setIncludePph23] = React.useState(false);
+
+  // Sort & Edit Mode untuk Daftar Invoice Klien dan Kuitansi Bukti Pembayaran
+  const [invoiceSortOrder, setInvoiceSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [receiptSortOrder, setReceiptSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [isEditingInvoices, setIsEditingInvoices] = React.useState(false);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = React.useState<string[]>([]);
+  const [isEditingReceipts, setIsEditingReceipts] = React.useState(false);
+  const [selectedReceiptIds, setSelectedReceiptIds] = React.useState<string[]>([]);
+  const [viewModal, setViewModal] = React.useState<ViewDetailState | null>(null);
+  const [editRecord, setEditRecord] = React.useState<
+    | { section: "invoices"; item: SalesInvoiceRow }
+    | { section: "receipts"; item: ReceiptRow }
+    | null
+  >(null);
+  const [savingEditRecord, setSavingEditRecord] = React.useState(false);
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{
+    section: "invoices" | "receipts";
+    ids: string[];
+    label: string;
+  } | null>(null);
 
   // Dialog Terbitkan Invoice Baru
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -456,11 +488,106 @@ export function InvoicingPage() {
       contractValue: totalContractValue,
       previousBilledAmount: prevBilled,
       remainingContractAmount: remainingContract,
-      includePph23Estimate: includePph23,
+      includePph23Estimate: Boolean(company.pph_enabled),
       docStatus: inv.doc_status,
       paymentStatus: inv.payment_status,
       balanceDue: inv.total_amount - inv.paid_amount,
     });
+  }
+
+  const sortedInvoices = React.useMemo(() => {
+    const list = bundle?.invoices ?? [];
+    return [...list].sort((a, b) => {
+      if (invoiceSortOrder === "asc") {
+        return (
+          a.invoice_date.localeCompare(b.invoice_date) ||
+          a.invoice_number.localeCompare(b.invoice_number)
+        );
+      }
+      return (
+        b.invoice_date.localeCompare(a.invoice_date) ||
+        b.invoice_number.localeCompare(a.invoice_number)
+      );
+    });
+  }, [bundle?.invoices, invoiceSortOrder]);
+
+  const sortedReceipts = React.useMemo(() => {
+    const list = bundle?.receipts ?? [];
+    return [...list].sort((a, b) => {
+      if (receiptSortOrder === "asc") {
+        return (
+          a.receipt_date.localeCompare(b.receipt_date) ||
+          a.receipt_number.localeCompare(b.receipt_number)
+        );
+      }
+      return (
+        b.receipt_date.localeCompare(a.receipt_date) ||
+        b.receipt_number.localeCompare(a.receipt_number)
+      );
+    });
+  }, [bundle?.receipts, receiptSortOrder]);
+
+  async function handleSaveEditRecord(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editRecord) return;
+    setSavingEditRecord(true);
+    try {
+      if (editRecord.section === "invoices") {
+        await updateSalesInvoice(editRecord.item.id, {
+          invoiceDate: editRecord.item.invoice_date,
+          dueDate: editRecord.item.due_date,
+          subtotalAmount: editRecord.item.subtotal_amount,
+          paymentStatus: editRecord.item.payment_status,
+          notes: editRecord.item.notes ?? "",
+        });
+        toast.success(
+          `Invoice ${editRecord.item.invoice_number} berhasil diperbarui.`,
+        );
+      } else {
+        await updateReceipt(editRecord.item.id, {
+          receiptDate: editRecord.item.receipt_date,
+          receivedFrom: editRecord.item.received_from,
+          amount: editRecord.item.amount,
+        });
+        toast.success(
+          `Kuitansi ${editRecord.item.receipt_number} berhasil diperbarui.`,
+        );
+      }
+      setEditRecord(null);
+      await reload();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal menyimpan perubahan data.",
+      );
+    } finally {
+      setSavingEditRecord(false);
+    }
+  }
+
+  async function executeDeleteRecords() {
+    if (!deleteConfirm) return;
+    try {
+      if (deleteConfirm.section === "invoices") {
+        await deleteSalesInvoices(deleteConfirm.ids);
+        setSelectedInvoiceIds((prev) =>
+          prev.filter((id) => !deleteConfirm.ids.includes(id)),
+        );
+        setIsEditingInvoices(false);
+      } else {
+        await deleteReceipts(deleteConfirm.ids);
+        setSelectedReceiptIds((prev) =>
+          prev.filter((id) => !deleteConfirm.ids.includes(id)),
+        );
+        setIsEditingReceipts(false);
+      }
+      toast.success("Data berhasil dihapus.");
+      setDeleteConfirm(null);
+      await reload();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal menghapus data.",
+      );
+    }
   }
 
   async function handleDownloadInvoicePdf(inv: SalesInvoiceRow) {
@@ -787,23 +914,36 @@ export function InvoicingPage() {
                 Klik ikon catat pembayaran saat dana masuk ke rekening perusahaan untuk menerbitkan Kuitansi otomatis.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIncludePph23((prev) => !prev)}
-                className={cn(
-                  "h-8 rounded-xl px-3 text-xs font-semibold cursor-pointer transition-colors",
-                  includePph23
-                    ? "bg-primary/10 border-primary/25 text-primary dark:text-sky-400 hover:bg-primary/20"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                title="Sertakan estimasi pemotongan PPh 23 (2%) dan penerimaan kas neto pada lembar dokumen cetak invoice"
+                onClick={() =>
+                  setInvoiceSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                }
+                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
               >
-                <PercentIcon className="size-3.5 mr-1.5" />
-                Estimasi PPh 23 (2%): {includePph23 ? "Aktif" : "Nonaktif"}
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>Urutan: {invoiceSortOrder === "asc" ? "Terlama" : "Terbaru"}</span>
               </Button>
+              <SectionEditControls
+                hasItems={sortedInvoices.length > 0}
+                isEditing={isEditingInvoices}
+                selectedCount={selectedInvoiceIds.length}
+                onStartEdit={() => setIsEditingInvoices(true)}
+                onCancelEdit={() => {
+                  setIsEditingInvoices(false);
+                  setSelectedInvoiceIds([]);
+                }}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "invoices",
+                    ids: selectedInvoiceIds,
+                    label: "invoice terpilih",
+                  })
+                }
+              />
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -816,19 +956,43 @@ export function InvoicingPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
+                    {isEditingInvoices && (
+                      <TableHead className="w-12 text-center align-middle px-3">
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={
+                              sortedInvoices.length > 0 &&
+                              selectedInvoiceIds.length === sortedInvoices.length
+                            }
+                            indeterminate={
+                              selectedInvoiceIds.length > 0 &&
+                              selectedInvoiceIds.length < sortedInvoices.length
+                            }
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedInvoiceIds(sortedInvoices.map((i) => i.id));
+                              } else {
+                                setSelectedInvoiceIds([]);
+                              }
+                            }}
+                            aria-label="Pilih semua invoice"
+                          />
+                        </div>
+                      </TableHead>
+                    )}
                     <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. Invoice</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal &amp; Jatuh Tempo</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Proyek &amp; Klien</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Total Tagihan</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Terbayar</TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!bundle || bundle.invoices.length === 0 ? (
+                  {sortedInvoices.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={7} className="p-0">
+                      <TableCell colSpan={7 + (isEditingInvoices ? 1 : 0)} className="p-0">
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
                           <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
                             <FileTextIcon className="size-6" />
@@ -843,85 +1007,138 @@ export function InvoicingPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    bundle.invoices.map((inv) => {
-                    const prj = projectMap.get(inv.project_id);
-                    const cust = customerMap.get(inv.customer_id);
-                    const remaining = inv.total_amount - inv.paid_amount;
+                    sortedInvoices.map((inv) => {
+                      const prj = projectMap.get(inv.project_id);
+                      const cust = customerMap.get(inv.customer_id);
+                      const remaining = inv.total_amount - inv.paid_amount;
+                      const isChecked = selectedInvoiceIds.includes(inv.id);
+                      const statusLabel =
+                        inv.payment_status === "paid"
+                          ? "Lunas"
+                          : inv.payment_status === "partial"
+                            ? "Dibayar Sebagian"
+                            : "Belum Dibayar";
 
-                    return (
-                      <TableRow key={inv.id}>
-                        <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
-                          {inv.invoice_number}
-                        </TableCell>
-                        <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                          <div className="text-foreground">Terbit: {formatDateID(inv.invoice_date)}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            Tempo: {formatDateID(inv.due_date)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
-                          <div className="font-medium text-foreground">
-                            {prj ? `${prj.code} — ${prj.name}` : "-"}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {cust?.name ?? "Klien"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                          <MonetaryCell amount={inv.total_amount} />
-                        </TableCell>
-                        <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                          <MonetaryCell amount={inv.paid_amount} className="font-normal" />
-                        </TableCell>
-                        <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
-                          <div className="inline-flex items-center min-h-5 -my-px">
-                            <StatusBadge
-                              tone={
-                                inv.payment_status === "paid"
-                                  ? "success"
-                                  : inv.payment_status === "partial"
-                                    ? "warning"
-                                    : "info"
-                              }
-                              label={
-                                inv.payment_status === "paid"
-                                  ? "Lunas"
-                                  : inv.payment_status === "partial"
-                                    ? "Dibayar Sebagian"
-                                    : "Belum Dibayar"
-                              }
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                          <div className="flex justify-center items-center gap-1 -my-1.5">
-                            {remaining > 0 ? (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                title="Terima Pembayaran Invoice"
-                                onClick={() => {
-                                  setPayDate(inv.invoice_date);
-                                  setPayAmount(remaining);
-                                  setPayTarget(inv);
+                      return (
+                        <TableRow key={inv.id}>
+                          {isEditingInvoices && (
+                            <TableCell className="align-top text-center px-3 py-3.5">
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  setSelectedInvoiceIds((prev) =>
+                                    checked
+                                      ? [...prev, inv.id]
+                                      : prev.filter((id) => id !== inv.id),
+                                  );
                                 }}
-                                className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
-                              >
-                                <BanknoteIcon className="size-4" />
-                                <span className="sr-only">Terima Pembayaran Invoice</span>
-                              </Button>
-                            ) : null}
-                            <DocumentDownloadMenu
-                              title="Unduh Invoice (PDF / Word)"
-                              onDownloadPdf={() => handleDownloadInvoicePdf(inv)}
-                              onDownloadWord={() => handleDownloadInvoiceWord(inv)}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }))}
+                                className="mt-0.5"
+                                aria-label={`Pilih ${inv.invoice_number}`}
+                              />
+                            </TableCell>
+                          )}
+                          <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                            {inv.invoice_number}
+                          </TableCell>
+                          <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                            <div className="text-foreground">Terbit: {formatDateID(inv.invoice_date)}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              Tempo: {formatDateID(inv.due_date)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
+                            <div className="font-medium text-foreground">
+                              {prj ? `${prj.code} — ${prj.name}` : "-"}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {cust?.name ?? "Klien"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                            <MonetaryCell amount={inv.total_amount} />
+                          </TableCell>
+                          <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                            <MonetaryCell amount={inv.paid_amount} className="font-normal" />
+                          </TableCell>
+                          <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                            <div className="inline-flex items-center min-h-5 -my-px">
+                              <StatusBadge
+                                tone={
+                                  inv.payment_status === "paid"
+                                    ? "success"
+                                    : inv.payment_status === "partial"
+                                      ? "warning"
+                                      : "info"
+                                }
+                                label={statusLabel}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                            {isEditingInvoices ? (
+                              <RowEditActionButtons
+                                onView={() =>
+                                  setViewModal({
+                                    title: `Rincian ${inv.invoice_number}`,
+                                    subtitle: prj ? `${prj.code} — ${prj.name}` : cust?.name ?? "Klien",
+                                    rows: [
+                                      { label: "Nomor Invoice", value: inv.invoice_number },
+                                      { label: "Tanggal Terbit", value: formatDateID(inv.invoice_date) },
+                                      { label: "Tanggal Jatuh Tempo", value: formatDateID(inv.due_date) },
+                                      { label: "Klien", value: cust?.company_name ?? cust?.name ?? "-" },
+                                      { label: "Jenis Tagihan", value: INVOICE_KIND_LABELS[inv.invoice_kind] ?? inv.invoice_kind },
+                                      { label: "Subtotal", value: formatRupiah(inv.subtotal_amount) },
+                                      { label: "PPN", value: formatRupiah(inv.ppn_amount) },
+                                      { label: "Total Tagihan", value: formatRupiah(inv.total_amount) },
+                                      { label: "Telah Dibayar", value: formatRupiah(inv.paid_amount) },
+                                      { label: "Status Pembayaran", value: statusLabel },
+                                      { label: "Catatan", value: inv.notes ?? "-" },
+                                    ],
+                                    onDownloadPdf: () => void handleDownloadInvoicePdf(inv),
+                                    onDownloadWord: () => void handleDownloadInvoiceWord(inv),
+                                  })
+                                }
+                                onEdit={() =>
+                                  setEditRecord({ section: "invoices", item: { ...inv } })
+                                }
+                                onDelete={() =>
+                                  setDeleteConfirm({
+                                    section: "invoices",
+                                    ids: [inv.id],
+                                    label: inv.invoice_number,
+                                  })
+                                }
+                              />
+                            ) : (
+                              <div className="flex justify-center items-center gap-1 -my-1.5">
+                                {remaining > 0 ? (
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Terima Pembayaran Invoice"
+                                    onClick={() => {
+                                      setPayDate(inv.invoice_date);
+                                      setPayAmount(remaining);
+                                      setPayTarget(inv);
+                                    }}
+                                    className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                                  >
+                                    <BanknoteIcon className="size-4" />
+                                    <span className="sr-only">Terima Pembayaran Invoice</span>
+                                  </Button>
+                                ) : null}
+                                <DocumentDownloadMenu
+                                  title="Unduh Invoice (PDF / Word)"
+                                  onDownloadPdf={() => handleDownloadInvoicePdf(inv)}
+                                  onDownloadWord={() => handleDownloadInvoiceWord(inv)}
+                                />
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }))}
                 </TableBody>
               </Table>
             )}
@@ -931,7 +1148,7 @@ export function InvoicingPage() {
 
       {activeTab === "aging" && (
         <Card className="overflow-visible">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1 min-w-0">
               <CardTitle className="text-base sm:text-lg font-bold">
                 Pemantauan Umur Piutang &amp; Tagihan Jatuh Tempo
@@ -940,13 +1157,14 @@ export function InvoicingPage() {
                 Mengelompokkan sisa piutang berdasarkan keterlambatan hari terhadap tanggal acuan.
               </CardDescription>
             </div>
-            <div className="w-full sm:w-64 shrink-0 space-y-1.5">
-              <span className="text-xs font-semibold text-foreground block">
+            <div className="w-full sm:w-64 shrink-0 flex flex-col justify-between sm:-mb-1.5">
+              <span className="text-xs font-semibold text-foreground leading-[22px] block">
                 Tanggal Acuan Perhitungan
               </span>
               <DatePicker
                 value={agingRefDate}
                 onChange={setAgingRefDate}
+                className="mt-0.5 [&_[data-slot=input]]:h-[30px] [&_[data-inner-input=true]]:text-xs"
               />
             </div>
           </CardHeader>
@@ -1024,29 +1242,86 @@ export function InvoicingPage() {
 
       {activeTab === "receipts" && (
         <Card className="overflow-hidden">
-          <CardHeader className="px-6 py-4 border-b border-border/70">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              Kuitansi Bukti Pembayaran (Lampiran A.6)
-            </CardTitle>
-            <CardDescription>
-              Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat.
-            </CardDescription>
+          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1 min-w-0">
+              <CardTitle className="text-base sm:text-lg font-bold">
+                Kuitansi Bukti Pembayaran (Lampiran A.6)
+              </CardTitle>
+              <CardDescription>
+                Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setReceiptSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                }
+                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+              >
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>Urutan: {receiptSortOrder === "asc" ? "Terlama" : "Terbaru"}</span>
+              </Button>
+              <SectionEditControls
+                hasItems={sortedReceipts.length > 0}
+                isEditing={isEditingReceipts}
+                selectedCount={selectedReceiptIds.length}
+                onStartEdit={() => setIsEditingReceipts(true)}
+                onCancelEdit={() => {
+                  setIsEditingReceipts(false);
+                  setSelectedReceiptIds([]);
+                }}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "receipts",
+                    ids: selectedReceiptIds,
+                    label: "kuitansi terpilih",
+                  })
+                }
+              />
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
+                  {isEditingReceipts && (
+                    <TableHead className="w-12 text-center align-middle px-3">
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={
+                            sortedReceipts.length > 0 &&
+                            selectedReceiptIds.length === sortedReceipts.length
+                          }
+                          indeterminate={
+                            selectedReceiptIds.length > 0 &&
+                            selectedReceiptIds.length < sortedReceipts.length
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedReceiptIds(sortedReceipts.map((r) => r.id));
+                            } else {
+                              setSelectedReceiptIds([]);
+                            }
+                          }}
+                          aria-label="Pilih semua kuitansi"
+                        />
+                      </div>
+                    </TableHead>
+                  )}
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nomor Kuitansi</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Terima</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Diterima Dari</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Jumlah</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-24">Aksi</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!bundle || bundle.receipts.length === 0 ? (
+                {sortedReceipts.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={5} className="p-0">
+                    <TableCell colSpan={5 + (isEditingReceipts ? 1 : 0)} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
                         <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
                           <ReceiptIcon className="size-6" />
@@ -1061,31 +1336,81 @@ export function InvoicingPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  bundle.receipts.map((kw) => (
-                    <TableRow key={kw.id}>
-                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
-                        {kw.receipt_number}
-                      </TableCell>
-                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                        {formatDateID(kw.receipt_date)}
-                      </TableCell>
-                      <TableCell className="px-3 py-3.5 font-medium text-xs sm:text-sm leading-5 text-foreground">
-                        {kw.received_from}
-                      </TableCell>
-                      <TableCell className="px-3 py-3.5 whitespace-nowrap">
-                        <MonetaryCell amount={kw.amount} />
-                      </TableCell>
-                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                        <div className="flex justify-center items-center -my-1.5">
-                          <DocumentDownloadMenu
-                            title="Unduh Kuitansi (PDF / Word)"
-                            onDownloadPdf={() => handleDownloadReceiptPdf(kw)}
-                            onDownloadWord={() => handleDownloadReceiptWord(kw)}
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )))}
+                  sortedReceipts.map((kw) => {
+                    const isChecked = selectedReceiptIds.includes(kw.id);
+                    const linkedInv = bundle?.invoices.find((i) => i.id === kw.invoice_id);
+                    return (
+                      <TableRow key={kw.id}>
+                        {isEditingReceipts && (
+                          <TableCell className="align-top text-center px-3 py-3.5">
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                setSelectedReceiptIds((prev) =>
+                                  checked
+                                    ? [...prev, kw.id]
+                                    : prev.filter((id) => id !== kw.id),
+                                );
+                              }}
+                              className="mt-0.5"
+                              aria-label={`Pilih ${kw.receipt_number}`}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                          {kw.receipt_number}
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                          {formatDateID(kw.receipt_date)}
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 font-medium text-xs sm:text-sm leading-5 text-foreground">
+                          {kw.received_from}
+                        </TableCell>
+                        <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                          <MonetaryCell amount={kw.amount} />
+                        </TableCell>
+                        <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                          {isEditingReceipts ? (
+                            <RowEditActionButtons
+                              onView={() =>
+                                setViewModal({
+                                  title: `Rincian ${kw.receipt_number}`,
+                                  subtitle: kw.received_from,
+                                  rows: [
+                                    { label: "Nomor Kuitansi", value: kw.receipt_number },
+                                    { label: "Tanggal Terima", value: formatDateID(kw.receipt_date) },
+                                    { label: "Diterima Dari", value: kw.received_from },
+                                    { label: "Referensi Invoice", value: linkedInv?.invoice_number ?? "-" },
+                                    { label: "Jumlah Diterima", value: formatRupiah(kw.amount) },
+                                  ],
+                                  onDownloadPdf: () => void handleDownloadReceiptPdf(kw),
+                                  onDownloadWord: () => void handleDownloadReceiptWord(kw),
+                                })
+                              }
+                              onEdit={() =>
+                                setEditRecord({ section: "receipts", item: { ...kw } })
+                              }
+                              onDelete={() =>
+                                setDeleteConfirm({
+                                  section: "receipts",
+                                  ids: [kw.id],
+                                  label: kw.receipt_number,
+                                })
+                              }
+                            />
+                          ) : (
+                            <div className="flex justify-center items-center -my-1.5">
+                              <DocumentDownloadMenu
+                                title="Unduh Kuitansi (PDF / Word)"
+                                onDownloadPdf={() => handleDownloadReceiptPdf(kw)}
+                                onDownloadWord={() => handleDownloadReceiptWord(kw)}
+                              />
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }))}
                 </TableBody>
               </Table>
           </CardContent>
@@ -1494,6 +1819,274 @@ export function InvoicingPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Lihat Rincian (Aksi Mode Edit) */}
+      <Dialog
+        open={Boolean(viewModal)}
+        onOpenChange={(open) => {
+          if (!open) setViewModal(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewModal?.title ?? "Rincian Data"}</DialogTitle>
+          </DialogHeader>
+          {viewModal ? (
+            <div className="space-y-4">
+              {viewModal.subtitle ? (
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  {viewModal.subtitle}
+                </p>
+              ) : null}
+              <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-muted/15">
+                {viewModal.rows.map((r, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                  >
+                    <span className="text-xs font-medium text-muted-foreground shrink-0">
+                      {r.label}
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold text-foreground sm:text-right break-words">
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setViewModal(null)}
+                  className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+                >
+                  Tutup
+                </Button>
+                {viewModal.onDownloadPdf && viewModal.onDownloadWord ? (
+                  <DocumentDownloadMenu
+                    variant="button"
+                    label="Unduh / Ekspor"
+                    title={`Unduh ${viewModal.title} (PDF / Word)`}
+                    onDownloadPdf={viewModal.onDownloadPdf}
+                    onDownloadWord={viewModal.onDownloadWord}
+                  />
+                ) : null}
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Edit Data Baris (Aksi Mode Edit) */}
+      <Dialog
+        open={Boolean(editRecord)}
+        onOpenChange={(open) => {
+          if (!open) setEditRecord(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editRecord?.section === "invoices"
+                ? `Edit Invoice ${editRecord.item.invoice_number}`
+                : editRecord?.section === "receipts"
+                  ? `Edit Kuitansi ${editRecord.item.receipt_number}`
+                  : "Edit Data"}
+            </DialogTitle>
+          </DialogHeader>
+          {editRecord ? (
+            <form onSubmit={handleSaveEditRecord}>
+              <FieldGroup>
+                {editRecord.section === "invoices" && (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field>
+                        <FieldLabel required>Tanggal Invoice</FieldLabel>
+                        <DatePicker
+                          required
+                          value={editRecord.item.invoice_date}
+                          onChange={(v) =>
+                            setEditRecord({
+                              section: "invoices",
+                              item: { ...editRecord.item, invoice_date: v },
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel required>Tanggal Jatuh Tempo</FieldLabel>
+                        <DatePicker
+                          required
+                          minDate={editRecord.item.invoice_date}
+                          value={editRecord.item.due_date}
+                          onChange={(v) =>
+                            setEditRecord({
+                              section: "invoices",
+                              item: { ...editRecord.item, due_date: v },
+                            })
+                          }
+                        />
+                      </Field>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field>
+                        <FieldLabel required>Nominal Subtotal (Rp)</FieldLabel>
+                        <NumberInput
+                          allowDecimal={false}
+                          min={1}
+                          required
+                          value={editRecord.item.subtotal_amount}
+                          onValueChange={(subtotal_amount) =>
+                            setEditRecord({
+                              section: "invoices",
+                              item: {
+                                ...editRecord.item,
+                                subtotal_amount,
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel required>Status Pembayaran</FieldLabel>
+                        <Select
+                          value={editRecord.item.payment_status}
+                          onValueChange={(v) =>
+                            setEditRecord({
+                              section: "invoices",
+                              item: {
+                                ...editRecord.item,
+                                payment_status: v as InvoicePaymentStatus,
+                              },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="unpaid">Belum Dibayar</SelectItem>
+                              <SelectItem value="partial">Dibayar Sebagian</SelectItem>
+                              <SelectItem value="paid">Lunas</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </div>
+                    <Field>
+                      <FieldLabel>Catatan Invoice</FieldLabel>
+                      <Textarea
+                        value={editRecord.item.notes ?? ""}
+                        onChange={(e) =>
+                          setEditRecord({
+                            section: "invoices",
+                            item: {
+                              ...editRecord.item,
+                              notes: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                  </>
+                )}
+
+                {editRecord.section === "receipts" && (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field>
+                        <FieldLabel required>Tanggal Terima</FieldLabel>
+                        <DatePicker
+                          required
+                          value={editRecord.item.receipt_date}
+                          onChange={(v) =>
+                            setEditRecord({
+                              section: "receipts",
+                              item: { ...editRecord.item, receipt_date: v },
+                            })
+                          }
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel required>Jumlah Diterima (Rp)</FieldLabel>
+                        <NumberInput
+                          allowDecimal={false}
+                          min={1}
+                          required
+                          value={editRecord.item.amount}
+                          onValueChange={(amount) =>
+                            setEditRecord({
+                              section: "receipts",
+                              item: {
+                                ...editRecord.item,
+                                amount,
+                              },
+                            })
+                          }
+                        />
+                      </Field>
+                    </div>
+                    <Field>
+                      <FieldLabel required>Diterima Dari</FieldLabel>
+                      <Input
+                        required
+                        value={editRecord.item.received_from}
+                        onChange={(e) =>
+                          setEditRecord({
+                            section: "receipts",
+                            item: {
+                              ...editRecord.item,
+                              received_from: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                  </>
+                )}
+
+                <DialogFooter className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditRecord(null)}
+                    className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
+                  >
+                    Batal
+                  </Button>
+                  <Button type="submit" disabled={savingEditRecord} className="cursor-pointer">
+                    {savingEditRecord ? <Spinner data-icon="inline-start" /> : null}
+                    Simpan Perubahan
+                  </Button>
+                </DialogFooter>
+              </FieldGroup>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Konfirmasi Hapus Data / Hapus Pilihan (Aksi Mode Edit) */}
+      <ConfirmActionDialog
+        open={Boolean(deleteConfirm)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title={
+          deleteConfirm && deleteConfirm.ids.length > 1
+            ? `Hapus ${deleteConfirm.ids.length} ${deleteConfirm.label}?`
+            : `Hapus ${deleteConfirm?.label ?? "data ini"}?`
+        }
+        description={
+          deleteConfirm?.section === "invoices" &&
+          bundle?.receipts.some((r) => deleteConfirm.ids.includes(r.invoice_id))
+            ? "Data yang dihapus tidak dapat dikembalikan. Dokumen Kuitansi yang terhubung dengan invoice terpilih juga akan ikut dihapus."
+            : "Data yang dihapus tidak dapat dikembalikan."
+        }
+        destructive
+        confirmLabel="Hapus Permanen"
+        onConfirm={executeDeleteRecords}
+      />
     </div>
   );
 }

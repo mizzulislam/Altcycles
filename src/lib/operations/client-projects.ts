@@ -13,6 +13,7 @@ import type {
   ClientPurchaseOrderRow,
   HandoverReportRow,
   InvoiceKind,
+  InvoicePaymentStatus,
   MilestoneRow,
   MilestoneStatus,
   ProgressReportRow,
@@ -1528,4 +1529,185 @@ export async function deleteBastHandovers(bastIds: string[]): Promise<void> {
   const { error } = await supabase.from("handover_reports").delete().in("id", bastIds);
   if (error) throw new Error(error.message);
 }
+
+export async function updateSalesInvoice(
+  invoiceId: string,
+  input: {
+    invoiceDate: string;
+    dueDate: string;
+    subtotalAmount: number;
+    paymentStatus: InvoicePaymentStatus;
+    notes: string;
+  },
+): Promise<void> {
+  const subtotal = roundRupiah(input.subtotalAmount);
+  if (input.dueDate < input.invoiceDate) {
+    throw new Error(
+      "Tanggal jatuh tempo tidak boleh lebih awal dari tanggal invoice.",
+    );
+  }
+  if (subtotal <= 0) {
+    throw new Error("Nominal subtotal tagihan harus lebih besar dari Rp 0.");
+  }
+
+  if (isDemoMode || !supabase) {
+    const inv = demoStore.salesInvoices.find((i) => i.id === invoiceId);
+    if (!inv) throw new Error("Invoice tidak ditemukan.");
+    const ppnAmount = demoStore.company.pkp_enabled
+      ? roundRupiah((subtotal * demoStore.company.ppn_rate) / 100)
+      : 0;
+    const totalAmount = subtotal + ppnAmount;
+    inv.invoice_date = input.invoiceDate;
+    inv.due_date = input.dueDate;
+    inv.subtotal_amount = subtotal;
+    inv.ppn_amount = ppnAmount;
+    inv.total_amount = totalAmount;
+    inv.payment_status = input.paymentStatus;
+    if (input.paymentStatus === "paid") {
+      inv.paid_amount = totalAmount;
+    } else if (input.paymentStatus === "unpaid") {
+      inv.paid_amount = 0;
+    } else {
+      inv.paid_amount = Math.min(Math.max(1, inv.paid_amount), totalAmount - 1);
+    }
+    inv.notes = input.notes.trim() || null;
+    inv.updated_at = new Date().toISOString();
+    return;
+  }
+
+  const [companyRes, existingRes] = await Promise.all([
+    supabase
+      .from("company_profile")
+      .select("pkp_enabled, ppn_rate")
+      .eq("id", 1)
+      .single(),
+    supabase
+      .from("sales_invoices")
+      .select("doc_status, subtotal_amount, paid_amount")
+      .eq("id", invoiceId)
+      .single(),
+  ]);
+  if (existingRes.error) throw new Error(existingRes.error.message);
+  const pkpEnabled = companyRes.data?.pkp_enabled ?? false;
+  const ppnRate = companyRes.data?.ppn_rate ?? 11;
+  const ppnAmount = pkpEnabled ? roundRupiah((subtotal * ppnRate) / 100) : 0;
+  const totalAmount = subtotal + ppnAmount;
+  const prevPaid = Number(existingRes.data?.paid_amount ?? 0);
+  const nextPaidAmount =
+    input.paymentStatus === "paid"
+      ? totalAmount
+      : input.paymentStatus === "unpaid"
+        ? 0
+        : Math.min(Math.max(1, prevPaid), Math.max(1, totalAmount - 1));
+
+  if (existingRes.data?.doc_status === "issued" && subtotal !== existingRes.data.subtotal_amount) {
+    const { error: draftErr } = await supabase
+      .from("sales_invoices")
+      .update({ doc_status: "draft" })
+      .eq("id", invoiceId);
+    if (draftErr) throw new Error(draftErr.message);
+  }
+
+  const { error } = await supabase
+    .from("sales_invoices")
+    .update({
+      invoice_date: input.invoiceDate,
+      due_date: input.dueDate,
+      subtotal_amount: subtotal,
+      ppn_amount: ppnAmount,
+      total_amount: totalAmount,
+      paid_amount: nextPaidAmount,
+      payment_status: input.paymentStatus,
+      notes: input.notes.trim() || null,
+      doc_status: existingRes.data?.doc_status ?? "issued",
+    })
+    .eq("id", invoiceId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteSalesInvoices(invoiceIds: string[]): Promise<void> {
+  if (invoiceIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(invoiceIds);
+    demoStore.receipts = demoStore.receipts.filter((r) => !idSet.has(r.invoice_id));
+    demoStore.salesInvoices = demoStore.salesInvoices.filter((i) => !idSet.has(i.id));
+    return;
+  }
+
+  const { error: recErr } = await supabase
+    .from("receipts")
+    .delete()
+    .in("invoice_id", invoiceIds);
+  if (recErr) throw new Error(recErr.message);
+
+  const { error: payErr } = await supabase
+    .from("invoice_payments")
+    .delete()
+    .in("invoice_id", invoiceIds);
+  if (payErr) throw new Error(payErr.message);
+
+  const { error: draftErr } = await supabase
+    .from("sales_invoices")
+    .update({ doc_status: "draft" })
+    .in("id", invoiceIds);
+  if (draftErr) throw new Error(draftErr.message);
+
+  const { error } = await supabase
+    .from("sales_invoices")
+    .delete()
+    .in("id", invoiceIds);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateReceipt(
+  receiptId: string,
+  input: {
+    receiptDate: string;
+    receivedFrom: string;
+    amount: number;
+  },
+): Promise<void> {
+  const amt = roundRupiah(input.amount);
+  if (amt <= 0) {
+    throw new Error("Jumlah pembayaran kuitansi harus lebih besar dari Rp 0.");
+  }
+  if (!input.receivedFrom.trim()) {
+    throw new Error("Nama pembayar (Diterima Dari) wajib diisi.");
+  }
+
+  if (isDemoMode || !supabase) {
+    const kw = demoStore.receipts.find((r) => r.id === receiptId);
+    if (!kw) throw new Error("Kuitansi tidak ditemukan.");
+    kw.receipt_date = input.receiptDate;
+    kw.received_from = input.receivedFrom.trim();
+    kw.amount = amt;
+    return;
+  }
+
+  const { error } = await supabase
+    .from("receipts")
+    .update({
+      receipt_date: input.receiptDate,
+      received_from: input.receivedFrom.trim(),
+      amount: amt,
+    })
+    .eq("id", receiptId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteReceipts(receiptIds: string[]): Promise<void> {
+  if (receiptIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const idSet = new Set(receiptIds);
+    demoStore.receipts = demoStore.receipts.filter((r) => !idSet.has(r.id));
+    return;
+  }
+
+  const { error } = await supabase
+    .from("receipts")
+    .delete()
+    .in("id", receiptIds);
+  if (error) throw new Error(error.message);
+}
+
 

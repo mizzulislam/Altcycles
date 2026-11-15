@@ -845,6 +845,20 @@ export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
   return enabled;
 }
 
+export async function setPph23EstimateStatus(enabled: boolean): Promise<boolean> {
+  demoStore.company.pph_enabled = enabled;
+  if (isDemoMode || !supabase) {
+    return enabled;
+  }
+
+  const { error: updErr } = await supabase
+    .from("company_profile")
+    .update({ pph_enabled: enabled })
+    .eq("id", 1);
+  if (updErr) throw new Error(updErr.message);
+  return enabled;
+}
+
 function isLoginMediaMissingTableError(message: string): boolean {
   const m = message.toLowerCase();
   return (
