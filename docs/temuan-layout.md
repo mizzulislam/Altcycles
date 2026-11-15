@@ -551,14 +551,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-33
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen PDF (`renderDocumentPdfInternal`, `drawDocumentHeader`, `PDF_LAYOUT_TOKENS`)
+- **Apa yang bertentangan:**
+  1. Judul lengkap dokumen (misal *STATEMENT OF WORK (SOW)*, *SURAT PENAWARAN HARGA (QUOTATION)*, *JADWAL TERMIN PENAGIHAN PROYEK*, dsb.) pada baris abu di bawah header sebelumnya rata kiri (`x: marginX + 10`). Pengguna meminta judul lengkap ditulis rata tengah (*middle/center*).
+  2. Total nilai dokumen pada Quotation (*Total Penawaran Harga* / *Total Nilai Termin*), Purchase Order Klien (*Total Nilai Purchase Order*), Purchase Order Vendor (*Total Nilai PO*), Payment Approval (*Total Biaya Diajukan*), dan JTPP (*Total Nilai Termin*) sebelumnya dirender sebagai blok subtotal terpisah di bawah tabel. Pengguna meminta total tersebut menjadi baris terakhir tabel, dengan label di kolom paling kiri dan nilai di kolom nominal terkait (*Biaya (IDR)*, *Subtotal (IDR)*, atau *Nominal (IDR)*).
+  3. Ukuran font antar elemen body/isi dokumen sebelumnya beragam (8 pt, 8.5 pt, 9.5 pt, 10.5 pt). Pengguna menginstruksikan agar seluruh teks body/isi dokumen diseragamkan ukurannya menjadi sama menggunakan patokan ukuran isi label kanan invoice (`1 November 2026` = **9.5 pt**), kecuali teks nama instansi/perusahaan klien (tetap 10 pt) dan blok pengesahan/tanda tangan (tetap ukuran aslinya). Teks header dan footer tidak diganggu gugat.
+- **Yang kulakukan:**
+  1. Mengubah perataan teks judul lengkap dokumen pada baris abu di bawah header menjadi rata tengah sempurna (*middle/center*) dengan pembungkusan teks (*auto-wrap*) adaptif.
+  2. Mengintegrasikan baris total pada dokumen Quotation, PO Klien, PO Vendor, Payment Approval, dan JTPP langsung ke dalam baris terakhir tabel berlatar abu `CHIP_BG` dengan teks tebal `fontBold`, label di kolom paling kiri, nilai rata kanan di kolom nominal terkait tanpa simbol `Rp`, serta menghapus blok subtotal terpisah di Zona E agar tidak terjadi duplikasi.
+  3. Menyeragamkan ukuran font seluruh elemen body/isi dokumen (label metadata, alamat klien, teks tabel, header tabel, isi keterangan, detail pembayaran bank dan terbilang, catatan dan ketentuan) menjadi **9.5 pt**, mempertahankan ukuran nama klien (10 pt), blok tanda tangan (8.5/9.5 pt), serta header dan footer.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan judul lengkap baris abu rata tengah, baris total tabel terpadu pada Quotation/PO/PA/JTPP, dan penyeragaman ukuran font body 9.5 pt. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 17 | 15 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 18 | 16 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **32** | **25** | **7** | **1** |
+| **Total Temuan** | **33** | **26** | **7** | **1** |

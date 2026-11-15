@@ -202,16 +202,16 @@ export const PDF_LAYOUT_TOKENS = {
     companyName: 15.5,
     legalName: 9,
     body: 9.5,
-    label: 8.5,
-    tableHeader: 8.5,
-    note: 8.5,
+    label: 9.5,
+    tableHeader: 9.5,
+    note: 9.5,
     meterai: 7.5,
     footer: 8,
   },
   lineHeights: {
     body: 13.8, // 9.5 * 1.45
-    label: 12.2,
-    note: 12.4,
+    label: 13.5,
+    note: 13.5,
   },
 } as const;
 
@@ -1223,10 +1223,14 @@ async function renderDocumentPdfInternal(
       color: BORDER_GRAY,
     });
 
-    // 7. Baris Abu Judul Lengkap (jika judul panjang)
+    // 7. Baris Abu Judul Lengkap (rata tengah / middle di baris abu)
     if (docTitleConfig.fullTitleBar) {
       const barTopMargin = 6;
-      const barHeight = 22;
+      const cleanTitle = sanitizePdfText(docTitleConfig.fullTitleBar);
+      const titleFontSize = 9.5;
+      const maxTitleW = contentWidth - 24;
+      const titleLines = wrapTextByWidth(cleanTitle, fontBold, titleFontSize, maxTitleW);
+      const barHeight = Math.max(22, titleLines.length * 12 + 10);
       const barY = separatorLineY - barTopMargin - barHeight;
 
       page.drawRectangle({
@@ -1237,17 +1241,26 @@ async function renderDocumentPdfInternal(
         color: CHIP_BG,
       });
 
-      drawTrackedText(
-        docTitleConfig.fullTitleBar,
-        {
-          x: marginX + 10,
-          y: barY + 6,
-          size: 10,
-          font: fontBold,
-          color: TEXT_DARK,
-        },
-        "A-header-fulltitle-bar",
-      );
+      titleLines.forEach((tLine, tIdx) => {
+        const textW = fontBold.widthOfTextAtSize(tLine, titleFontSize);
+        const textX = marginX + (contentWidth - textW) / 2;
+        const lineY =
+          titleLines.length === 1
+            ? barY + (barHeight - titleFontSize) / 2 + 1
+            : barY + barHeight - 13 - tIdx * 12;
+
+        drawTrackedText(
+          tLine,
+          {
+            x: textX,
+            y: lineY,
+            size: titleFontSize,
+            font: fontBold,
+            color: TEXT_DARK,
+          },
+          "A-header-fulltitle-bar",
+        );
+      });
 
       y = barY - 15;
     } else {
@@ -1377,10 +1390,10 @@ async function renderDocumentPdfInternal(
   const hasMeta = effectiveMetaRows.length > 0;
 
   if (hasRecipient || hasMeta) {
-    const labelFontSize = PDF_LAYOUT_TOKENS.fontSizes.label; // 8.5 pt
-    const valFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
+    const labelFontSize = PDF_LAYOUT_TOKENS.fontSizes.label; // 9.5 pt (patokan seragam)
+    const valFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt (patokan seragam)
     const rowLineH = 12.2;
-    const rowGap = 4;
+    const rowGap = 2.5;
 
     if (hasRecipient && hasMeta) {
       // Tata Letak 2 Kolom: Kiri = Penerima, Kanan = Grid Label : Nilai (digeser & dipersempit ke kanan)
@@ -1405,14 +1418,14 @@ async function renderDocumentPdfInternal(
           font: fontBold,
           size: labelFontSize,
           color: TEXT_LABEL,
-          gapAfter: 4,
+          gapAfter: 3,
         },
       ];
 
       spec.recipientLines!.forEach((rLine, idx) => {
         const isFirst = idx === 0;
         const rFont = isFirst ? fontBold : fontRegular;
-        const rSize = isFirst ? 10 : 8.5;
+        const rSize = isFirst ? 10 : valFontSize; // Nama klien tetap 10 pt bold, alamat 9.5 pt
         const rColor = TEXT_DARK; // Nama klien maupun alamat klien di blok kiri berseragam warna TEXT_DARK
         const wrapped = wrapTextByWidth(rLine, rFont, rSize, leftColW);
         leftPrepared.push({
@@ -1420,13 +1433,13 @@ async function renderDocumentPdfInternal(
           font: rFont,
           size: rSize,
           color: rColor,
-          gapAfter: isFirst ? 3 : 2,
+          gapAfter: isFirst ? 2.5 : 1.5,
         });
       });
 
       // Hitung lebar kolom label adaptif (fontBold selaras dengan Ditagihkan Kepada)
-      const minLabelW = 96.4; // 34 mm
-      const maxLabelW = 110;
+      const minLabelW = 98; // ~34.5 mm
+      const maxLabelW = 114;
       const colonColW = 8;
       const longestSingleLineLabel = Math.max(
         ...effectiveMetaRows.map((m) =>
@@ -1455,7 +1468,7 @@ async function renderDocumentPdfInternal(
       });
 
       const leftTotalH = leftPrepared.reduce(
-        (sum, item) => sum + item.lines.length * 12.5 + item.gapAfter,
+        (sum, item) => sum + item.lines.length * 12.2 + item.gapAfter,
         0,
       );
       const rightTotalH = rightPrepared.reduce(
@@ -1482,7 +1495,7 @@ async function renderDocumentPdfInternal(
             },
             "B-recipient",
           );
-          curLeftY -= 12.5;
+          curLeftY -= 12.2;
         }
         curLeftY -= item.gapAfter;
       }
@@ -1639,7 +1652,7 @@ async function renderDocumentPdfInternal(
       spec.recipientLines!.forEach((rLine, idx) => {
         const isFirst = idx === 0;
         const rFont = isFirst ? fontBold : fontRegular;
-        const rSize = isFirst ? 10 : 9;
+        const rSize = isFirst ? 10 : valFontSize;
         const wrapped = wrapTextByWidth(rLine, rFont, rSize, contentWidth);
         for (const wLine of wrapped) {
           drawTrackedText(
@@ -1701,10 +1714,12 @@ async function renderDocumentPdfInternal(
 
   // ==========================================================================
   // KOMPONEN 4: TABEL RINCIAN (ZONA D)
-  // - Header tabel tinggi 28 pt, teks 8.5 pt tebal, latar #f3f4f6.
-  // - Hanya garis horizontal tipis antar baris (#e5e7eb), padding vertikal 8 pt.
+  // - Header tabel tinggi 28 pt, teks 9.5 pt tebal, latar #f3f4f6.
+  // - Hanya garis horizontal tipis antar baris (#e5e7eb), padding vertikal 6 pt.
   // - Header tabel berulang tiap halaman; satu baris tidak terpotong antar halaman.
   // ==========================================================================
+  let tableSummaryRenderedInTable = false;
+
   if (
     spec.tableColumns &&
     spec.tableColumns.length > 0 &&
@@ -1715,10 +1730,10 @@ async function renderDocumentPdfInternal(
     const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
     const colWidths = cols.map((c) => (c.widthRatio / totalRatio) * contentWidth);
     const headerH = 28;
-    const headerFontSize = PDF_LAYOUT_TOKENS.fontSizes.tableHeader; // 8.5 pt
+    const headerFontSize = PDF_LAYOUT_TOKENS.fontSizes.tableHeader; // 9.5 pt
     const cellFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
-    const cellLineH = 13.5;
-    const cellPadY = 8;
+    const cellLineH = 13;
+    const cellPadY = 6;
 
     const drawTableHeader = () => {
       const rectBottomY = y - headerH + 8;
@@ -1770,6 +1785,93 @@ async function renderDocumentPdfInternal(
 
       y = rectBottomY - cellPadY - 9;
     };
+
+    // Deteksi apakah dokumen memiliki baris total yang harus menjadi baris terakhir tabel (Poin 2 - 7)
+    const docUpper = spec.docTitle.toUpperCase();
+    const isQuotation = docUpper.includes("QUOTATION") || docUpper.includes("PENAWARAN");
+    const isClientPo =
+      docUpper.includes("PURCHASE ORDER") &&
+      (docUpper.includes("KLIEN") || Boolean((spec as any).isClientPo) || Boolean(spec.clientLogoUrl));
+    const isVendorPo =
+      docUpper.includes("PURCHASE ORDER") && (docUpper.includes("VENDOR") || !isClientPo);
+    const isPaymentApproval =
+      docUpper.includes("PAYMENT APPROVAL") || docUpper.includes("PERSETUJUAN PEMBAYARAN");
+    const isJtpp = docUpper.includes("JTPP") || docUpper.includes("JADWAL TERMIN");
+
+    let tableSummaryTargetColIdx = -1;
+    let tableSummaryLabel = "";
+    let tableSummaryValue = "";
+
+    if (spec.summaryRows && spec.summaryRows.length > 0) {
+      if (isQuotation) {
+        // Poin 2 & 3: "Total Penawaran Harga" / "Total Nilai Termin" pada Quotation -> kolom "Biaya (IDR)"
+        const found =
+          spec.summaryRows.find(
+            (s) =>
+              /total\s+penawaran\s+harga/i.test(s.label) ||
+              /total\s+nilai\s+termin/i.test(s.label),
+          ) ?? spec.summaryRows[0];
+        if (found) {
+          tableSummaryLabel = found.label;
+          tableSummaryValue = found.value;
+          tableSummaryTargetColIdx = cols.findIndex((c) => /biaya/i.test(c.header));
+          if (tableSummaryTargetColIdx === -1) tableSummaryTargetColIdx = cols.length - 1;
+        }
+      } else if (isClientPo) {
+        // Poin 4: "Total Nilai Purchase Order" pada PO Klien -> kolom "Subtotal (IDR)"
+        const found =
+          spec.summaryRows.find(
+            (s) =>
+              /total\s+nilai\s+purchase\s+order/i.test(s.label) ||
+              /total\s+nilai\s+po/i.test(s.label) ||
+              /total/i.test(s.label),
+          ) ?? spec.summaryRows[0];
+        if (found) {
+          tableSummaryLabel = "Total Nilai Purchase Order";
+          tableSummaryValue = found.value;
+          tableSummaryTargetColIdx = cols.findIndex((c) => /subtotal/i.test(c.header));
+          if (tableSummaryTargetColIdx === -1) tableSummaryTargetColIdx = cols.length - 1;
+        }
+      } else if (isVendorPo) {
+        // Poin 5: "Total Nilai PO" pada PO Vendor -> kolom "Subtotal (IDR)"
+        const found =
+          spec.summaryRows.find(
+            (s) => /total\s+nilai\s+po/i.test(s.label) || /total/i.test(s.label),
+          ) ?? spec.summaryRows[0];
+        if (found) {
+          tableSummaryLabel = "Total Nilai PO";
+          tableSummaryValue = found.value;
+          tableSummaryTargetColIdx = cols.findIndex((c) => /subtotal/i.test(c.header));
+          if (tableSummaryTargetColIdx === -1) tableSummaryTargetColIdx = cols.length - 1;
+        }
+      } else if (isPaymentApproval) {
+        // Poin 6: "Total Biaya Diajukan" pada Payment Approval -> kolom "Nominal (IDR)"
+        const found =
+          spec.summaryRows.find(
+            (s) => /total\s+biaya\s+diajukan/i.test(s.label) || /total/i.test(s.label),
+          ) ?? spec.summaryRows[0];
+        if (found) {
+          tableSummaryLabel = "Total Biaya Diajukan";
+          tableSummaryValue = found.value;
+          tableSummaryTargetColIdx = cols.findIndex((c) => /nominal/i.test(c.header));
+          if (tableSummaryTargetColIdx === -1) tableSummaryTargetColIdx = cols.length - 1;
+        }
+      } else if (isJtpp) {
+        // Poin 7: "Total Nilai Termin" pada JTPP -> kolom "Nominal (IDR)"
+        const found =
+          spec.summaryRows.find(
+            (s) => /total\s+nilai\s+termin/i.test(s.label) || /total/i.test(s.label),
+          ) ?? spec.summaryRows[0];
+        if (found) {
+          tableSummaryLabel = "Total Nilai Termin";
+          tableSummaryValue = found.value;
+          tableSummaryTargetColIdx = cols.findIndex((c) => /nominal/i.test(c.header));
+          if (tableSummaryTargetColIdx === -1) tableSummaryTargetColIdx = cols.length - 1;
+        }
+      }
+    }
+
+    tableSummaryRenderedInTable = false;
 
     // Pastikan ruang cukup untuk header tabel + minimal 1 baris pertama
     ensureSpace(headerH + 36);
@@ -1841,8 +1943,75 @@ async function renderDocumentPdfInternal(
       void totalRowH;
     }
 
-    y += cellPadY; // sesuaikan offset setelah baris terakhir
-    y -= 8;
+    // Baris Total pada baris terakhir tabel (Poin 2 - 7)
+    if (tableSummaryTargetColIdx !== -1 && tableSummaryLabel && tableSummaryValue) {
+      tableSummaryRenderedInTable = true;
+      const summaryRowH = 22;
+      if (y - summaryRowH < bottomSafeY) {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        pages.push(page);
+        pageIndex = pages.length - 1;
+        y = pageHeight - marginTop;
+        drawDocumentHeader();
+        drawTableHeader();
+      }
+
+      const rectBottomY = y - summaryRowH + 4;
+      page.drawRectangle({
+        x: marginX,
+        y: rectBottomY,
+        width: contentWidth,
+        height: summaryRowH,
+        color: CHIP_BG,
+      });
+
+      // Kolom 0: Label
+      const cleanSummLbl = sanitizePdfText(tableSummaryLabel);
+      drawTrackedText(
+        cleanSummLbl,
+        {
+          x: marginX + 8,
+          y: rectBottomY + (summaryRowH - cellFontSize) / 2 + 1,
+          size: cellFontSize,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "D-table-total-label",
+      );
+
+      // Kolom target: Nilai (tanpa simbol Rp)
+      let targetColX = marginX;
+      for (let i = 0; i < tableSummaryTargetColIdx; i++) {
+        targetColX += colWidths[i]!;
+      }
+      const targetColW = colWidths[tableSummaryTargetColIdx]!;
+      const cleanSummVal = sanitizePdfText(stripCurrencySymbol(tableSummaryValue));
+      const valW = fontBold.widthOfTextAtSize(cleanSummVal, cellFontSize);
+      drawTrackedText(
+        cleanSummVal,
+        {
+          x: targetColX + targetColW - valW - 8,
+          y: rectBottomY + (summaryRowH - cellFontSize) / 2 + 1,
+          size: cellFontSize,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "D-table-total-value",
+      );
+
+      // Garis penutup bawah tabel
+      page.drawLine({
+        start: { x: marginX, y: rectBottomY },
+        end: { x: pageWidth - marginX, y: rectBottomY },
+        thickness: 0.75,
+        color: BORDER_GRAY,
+      });
+
+      y = rectBottomY - 10;
+    } else {
+      y += cellPadY; // sesuaikan offset setelah baris terakhir
+      y -= 8;
+    }
   }
 
   // ==========================================================================
@@ -1866,8 +2035,8 @@ async function renderDocumentPdfInternal(
     const keteranganW = totalBlockX - marginX - gap;
 
     const allSummaryRows = spec.summaryRows ?? [];
-    const summaryFontSize = 8.5;
-    const rowPitch = 15;
+    const summaryFontSize = 9.5;
+    const rowPitch = 15.5;
     const summaryBlockH = Math.max(allSummaryRows.length * rowPitch + 4, 60);
 
     ensureSpace(summaryBlockH + (spec.paymentDetail ? 75 : 0) + 15);
@@ -1890,7 +2059,7 @@ async function renderDocumentPdfInternal(
       {
         x: keteranganX + 10,
         y: blockTopY - 13,
-        size: 8.5,
+        size: 9.5,
         font: fontBold,
         color: TEXT_DARK,
       },
@@ -1901,7 +2070,7 @@ async function renderDocumentPdfInternal(
       const noteLines = wrapTextByWidth(
         spec.documentNotes.trim(),
         fontRegular,
-        8,
+        9.5,
         keteranganW - 20,
       );
       noteLines.slice(0, 4).forEach((nLine, nIdx) => {
@@ -1909,8 +2078,8 @@ async function renderDocumentPdfInternal(
           nLine,
           {
             x: keteranganX + 10,
-            y: blockTopY - 26 - nIdx * 11,
-            size: 8,
+            y: blockTopY - 26 - nIdx * 12.5,
+            size: 9.5,
             font: fontRegular,
             color: TEXT_DARK,
           },
@@ -1995,7 +2164,7 @@ async function renderDocumentPdfInternal(
         {
           x: marginX + 10,
           y: pdBoxTopY - 12,
-          size: 8.5,
+          size: 9.5,
           font: fontBold,
           color: TEXT_DARK,
         },
@@ -2014,7 +2183,7 @@ async function renderDocumentPdfInternal(
       // Kolom Kanan Info Bank sejajar dengan posisi teks blok subtotal (totalBlockX)
       const rightColX = totalBlockX;
       const rightColTopY = pdDividerY - 11;
-      const bLabelW = 70;
+      const bLabelW = 82;
 
       // Kolom Kiri: Terbilang (Nilai wajib UPPERCASE / KAPITAL semua, warna hitam TEXT_DARK)
       const leftColX = marginX + 10;
@@ -2025,21 +2194,21 @@ async function renderDocumentPdfInternal(
         {
           x: leftColX,
           y: leftColTopY,
-          size: 8,
+          size: 9.5,
           font: fontBold,
           color: TEXT_LABEL,
         },
         "E-pd-terbilang-lbl",
       );
       const terbilangUpper = sanitizePdfText(pd.terbilangText.toUpperCase());
-      const tLines = wrapTextByWidth(terbilangUpper, fontRegular, 8, leftColW);
+      const tLines = wrapTextByWidth(terbilangUpper, fontRegular, 9.5, leftColW);
       tLines.slice(0, 3).forEach((tLine, tIdx) => {
         drawTrackedText(
           tLine,
           {
             x: leftColX,
             y: leftColTopY - 12 - tIdx * 11.5,
-            size: 8,
+            size: 9.5,
             font: fontRegular,
             color: TEXT_DARK,
           },
@@ -2067,7 +2236,7 @@ async function renderDocumentPdfInternal(
           {
             x: rightColX,
             y: bCursorY,
-            size: 8,
+            size: 9.5,
             font: fontBold,
             color: TEXT_LABEL,
           },
@@ -2078,7 +2247,7 @@ async function renderDocumentPdfInternal(
           {
             x: rightColX + bLabelW,
             y: bCursorY,
-            size: 8,
+            size: 9.5,
             font: fontBold,
             color: TEXT_LABEL,
           },
@@ -2089,17 +2258,17 @@ async function renderDocumentPdfInternal(
           {
             x: rightColX + bLabelW + 6,
             y: bCursorY,
-            size: 8,
+            size: 9.5,
             font: fontRegular,
             color: TEXT_DARK,
           },
           "E-pd-bank-val",
         );
-        bCursorY -= 12.5;
+        bCursorY -= 12;
       });
 
       // Jarak lega ke blok seksi berikutnya agar tidak menabrak kotak
-      y = pdBoxBottomY - 18;
+      y = pdBoxBottomY - 14;
     }
   } else if (hasSummary || hasTerbilang) {
     const totalBlockW = Math.round(contentWidth * 0.45); // ~222 pt
@@ -2185,12 +2354,40 @@ async function renderDocumentPdfInternal(
       });
 
       y = boxBottomY - 16;
+    } else if (tableSummaryRenderedInTable) {
+      // Total sudah menjadi baris terakhir tabel (Poin 2 - 7); hanya render Terbilang bila ada
+      const terbilangStr = hasTerbilang
+        ? `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
+        : null;
+      const terbilangLines = terbilangStr
+        ? wrapTextByWidth(terbilangStr, fontBold, 9.5, contentWidth)
+        : [];
+
+      if (terbilangLines.length > 0) {
+        ensureSpace(terbilangLines.length * 13 + 12);
+        y -= 2;
+        for (const tLine of terbilangLines) {
+          drawTrackedText(
+            tLine,
+            {
+              x: marginX,
+              y,
+              size: 9.5,
+              font: fontBold,
+              color: TEXT_DARK,
+            },
+            "E-terbilang",
+          );
+          y -= 13;
+        }
+        y -= 8;
+      }
     } else {
       const terbilangStr = hasTerbilang
         ? `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
         : null;
       const terbilangLines = terbilangStr
-        ? wrapTextByWidth(terbilangStr, fontBold, 8.5, contentWidth)
+        ? wrapTextByWidth(terbilangStr, fontBold, 9.5, contentWidth)
         : [];
 
       const neededH =
@@ -2217,8 +2414,8 @@ async function renderDocumentPdfInternal(
         }
 
         const rowFont = isGrandTotal ? fontBold : fontRegular;
-        const labelSize = isGrandTotal ? 9.5 : 8.5;
-        const valSize = isGrandTotal ? 10.5 : 9.5;
+        const labelSize = 9.5;
+        const valSize = 9.5;
         const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
 
         const cleanLabel = sanitizePdfText(row.label);
@@ -2263,13 +2460,13 @@ async function renderDocumentPdfInternal(
         for (const sRow of secondaryRows) {
           const cleanLabel = sanitizePdfText(sRow.label);
           const cleanVal = sanitizePdfText(stripCurrencySymbol(sRow.value));
-          const valW = fontRegular.widthOfTextAtSize(cleanVal, 8.5);
+          const valW = fontRegular.widthOfTextAtSize(cleanVal, 9.5);
           drawTrackedText(
             cleanLabel,
             {
               x: totalBlockX,
               y,
-              size: 8,
+              size: 9.5,
               font: fontRegular,
               color: TEXT_LABEL,
             },
@@ -2280,7 +2477,7 @@ async function renderDocumentPdfInternal(
             {
               x: rightEdgeX - valW,
               y,
-              size: 8.5,
+              size: 9.5,
               font: fontRegular,
               color: TEXT_DARK,
             },
@@ -2299,13 +2496,13 @@ async function renderDocumentPdfInternal(
             {
               x: marginX,
               y,
-              size: 8.5,
+              size: 9.5,
               font: fontBold,
-              color: TEXT_LABEL,
+              color: TEXT_DARK,
             },
             "E-terbilang",
           );
-          y -= 12.5;
+          y -= 13;
         }
       }
 
@@ -2346,9 +2543,9 @@ async function renderDocumentPdfInternal(
 
     const markerColW = 12;
     const noteTextMaxW = contentWidth - markerColW;
-    const noteSize = PDF_LAYOUT_TOKENS.fontSizes.note; // 8.5 pt
-    const noteLineH = 11.5; // proporsional untuk 8.5 pt
-    const itemGap = 2.5;
+    const noteSize = PDF_LAYOUT_TOKENS.fontSizes.note; // 9.5 pt (patokan seragam)
+    const noteLineH = 12.2; // proporsional untuk 9.5 pt
+    const itemGap = 2;
 
     ensureSpace(28);
     drawTrackedText(
@@ -2356,13 +2553,13 @@ async function renderDocumentPdfInternal(
       {
         x: marginX,
         y,
-        size: 8.5,
+        size: 9.5,
         font: fontBold,
         color: TEXT_DARK,
       },
       "F-notes-heading",
     );
-    y -= 14;
+    y -= 12;
 
     for (const rawNote of rawNotes) {
       // Bersihkan marker bawaan bila string sudah diawali "• " atau "- "
