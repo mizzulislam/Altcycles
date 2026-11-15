@@ -162,10 +162,10 @@ export const BRAND_IMAGE_METRICS = {
   },
   icon: {
     fileWidth: 1024,
-    fileHeight: 1024,
+    fileHeight: 731,
     inkTopPad: 0,
     inkBottomPad: 0,
-    inkHeight: 1024,
+    inkHeight: 731,
     inkWidth: 1024,
   },
 } as const;
@@ -883,14 +883,17 @@ async function renderDocumentPdfInternal(
     const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // Target tinggi tinta non-transparan ikon & wordmark Altvira (selaras sempurna)
-    const TARGET_BRAND_INK_HEIGHT = 28;
+    // Target tinggi tinta non-transparan ikon & wordmark Altvira (dikembalikan ke 21 pt sesuai permintaan)
+    const TARGET_BRAND_INK_HEIGHT = 21;
     const iconInkHeight = TARGET_BRAND_INK_HEIGHT;
     const wordmarkInkHeight = TARGET_BRAND_INK_HEIGHT;
 
     // Perhitungan dimensi aset berdasarkan rasio asli dan bounding box tinta
-    const iconH = iconInkHeight;
-    const iconW = iconInkHeight; // rasio asli 1:1
+    const iconInkH = BRAND_IMAGE_METRICS.icon.inkHeight; // 731 px
+    const iconFileW_raw = BRAND_IMAGE_METRICS.icon.fileWidth; // 1024 px
+    const iconScale = iconInkHeight / iconInkH;
+    const iconH = iconInkHeight; // 21 pt
+    const iconW = iconFileW_raw * iconScale; // ~29.42 pt (rasio asli 1024:731)
 
     const wmInkH = BRAND_IMAGE_METRICS.wordmark.inkHeight; // 203 px
     const wmFileH_raw = BRAND_IMAGE_METRICS.wordmark.fileHeight; // 208 px
@@ -898,9 +901,9 @@ async function renderDocumentPdfInternal(
     const wmBottomPad_raw = BRAND_IMAGE_METRICS.wordmark.inkBottomPad; // 5 px
 
     const wmScale = wordmarkInkHeight / wmInkH;
-    const wmH = wmFileH_raw * wmScale; // ~28.69 pt
-    const wmW = wmFileW_raw * wmScale; // ~141.20 pt
-    const wmBottomPad = wmBottomPad_raw * wmScale; // ~0.69 pt
+    const wmH = wmFileH_raw * wmScale; // ~21.52 pt
+    const wmW = wmFileW_raw * wmScale; // ~105.93 pt
+    const wmBottomPad = wmBottomPad_raw * wmScale; // ~0.52 pt
 
     // Common Center Y untuk ikon, wordmark, dan judul dokumen di kolom kanan
     const headerCenterY = headerTopY - 18;

@@ -18,6 +18,8 @@ export async function getAltviraIconBytes(): Promise<Uint8Array | null> {
         const path = await import("path");
         const cwd = process.cwd();
         const candidatePaths = [
+          path.resolve(cwd, "assets/brand/altvira-icon-dark.png"),
+          path.resolve(cwd, "public/brand/altvira-icon-dark.png"),
           path.resolve(cwd, "assets/brand/altvira-icon.png"),
           path.resolve(cwd, "public/brand/altvira-icon.png"),
         ];
@@ -35,8 +37,8 @@ export async function getAltviraIconBytes(): Promise<Uint8Array | null> {
 
     // 2. Browser environment
     if (typeof window !== "undefined" && typeof fetch === "function") {
-      const res = await fetch("/brand/altvira-icon.png");
-      if (res.ok) {
+      const res = await fetch("/brand/altvira-icon-dark.png").catch(() => fetch("/brand/altvira-icon.png"));
+      if (res && res.ok) {
         const buf = await res.arrayBuffer();
         cachedIconBytes = new Uint8Array(buf);
         return cachedIconBytes;
