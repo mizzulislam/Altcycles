@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -18,6 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
+import { validatePurchaseOrderChecklist } from "@/lib/document-checklist";
 import {
   Card,
   CardContent,
@@ -183,8 +185,26 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const exceedsBudget =
     budgetRemaining !== null && draftTotal > budgetRemaining;
 
+  const selectedVendor = vendors.find((v) => v.id === vendorId) ?? null;
+  const poChecklist = React.useMemo(() => {
+    return validatePurchaseOrderChecklist({
+      vendor: selectedVendor,
+      poDate,
+      items: formItems,
+      exceedsBudget,
+      ackBudgetWarning,
+    });
+  }, [selectedVendor, poDate, formItems, exceedsBudget, ackBudgetWarning]);
+
   async function handleCreatePo(e: React.FormEvent) {
     e.preventDefault();
+    if (!poChecklist.isValid) {
+      const firstInvalid = poChecklist.items.find((i) => !i.passed);
+      toast.error(
+        firstInvalid?.message || "Checklist PO sebelum terbit belum terpenuhi.",
+      );
+      return;
+    }
     if (exceedsBudget && !ackBudgetWarning) {
       toast.error(
         "Nilai PO melampaui sisa anggaran proyek. Centang konfirmasi peringatan anggaran untuk melanjutkan.",
@@ -809,6 +829,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 />
               </Field>
 
+              <DocumentIssueChecklistCard
+                items={poChecklist.items}
+                title="Checklist Validasi PO Vendor (Standar Altvira)"
+              />
+
               <DialogFooter>
                 <Button
                   type="button"
@@ -817,7 +842,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={saving || !vendorId || !projectId}>
+                <Button
+                  type="submit"
+                  disabled={
+                    saving || !vendorId || !projectId || !poChecklist.isValid
+                  }
+                >
                   {saving ? <Spinner data-icon="inline-start" /> : null}
                   Simpan PO
                 </Button>

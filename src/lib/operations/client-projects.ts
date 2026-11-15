@@ -783,6 +783,14 @@ export async function createAndIssueSalesInvoice(input: {
   directCashAccountId?: string | null;
 }): Promise<SalesInvoiceRow> {
   const subtotal = roundRupiah(input.subtotalAmount);
+  if (input.dueDate < input.invoiceDate) {
+    throw new Error(
+      "Tanggal jatuh tempo tidak boleh lebih awal dari tanggal invoice (Checklist Standar).",
+    );
+  }
+  if (subtotal <= 0) {
+    throw new Error("Nominal subtotal tagihan harus lebih besar dari Rp 0.");
+  }
 
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();

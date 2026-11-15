@@ -80,6 +80,8 @@ import {
   downloadPdfBytes,
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
+import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
+import { validateInvoiceChecklist } from "@/lib/document-checklist";
 import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import type {
   AccountRow,
@@ -243,8 +245,50 @@ export function InvoicingPage() {
     return buildArAging(bundle.invoices, cNameMap, pCodeMap, agingRefDate);
   }, [bundle, customers, projects, agingRefDate]);
 
+  const selectedProject = projectMap.get(selectedProjectId) ?? null;
+  const selectedCustomer = selectedProject?.customer_id
+    ? customers.find((c) => c.id === selectedProject.customer_id) ?? null
+    : null;
+  const selectedClientPo =
+    clientPos.find((po) => po.id === clientPoId) ?? null;
+  const selectedBakp =
+    bundle?.progressReports.find((b) => b.id === bakpId) ?? null;
+  const selectedBast =
+    bundle?.handoverReports.find((b) => b.id === bastId) ?? null;
+
+  const invoiceChecklist = React.useMemo(() => {
+    return validateInvoiceChecklist({
+      company,
+      customer: selectedCustomer,
+      clientPo: selectedClientPo,
+      invoiceDate: invDate,
+      dueDate,
+      invoiceKind,
+      bakp: selectedBakp,
+      bast: selectedBast,
+      subtotalAmount,
+    });
+  }, [
+    company,
+    selectedCustomer,
+    selectedClientPo,
+    invDate,
+    dueDate,
+    invoiceKind,
+    selectedBakp,
+    selectedBast,
+    subtotalAmount,
+  ]);
+
   async function handleIssueInvoice(e: React.FormEvent) {
     e.preventDefault();
+    if (!invoiceChecklist.isValid) {
+      const firstInvalid = invoiceChecklist.items.find((i) => !i.passed);
+      toast.error(
+        firstInvalid?.message || "Checklist sebelum terbit belum terpenuhi.",
+      );
+      return;
+    }
     const prj = projectMap.get(selectedProjectId);
     if (!prj || !prj.customer_id) {
       toast.error("Proyek belum memiliki pelanggan terkait.");
@@ -1083,7 +1127,16 @@ export function InvoicingPage() {
                     id="inv-date"
                     required
                     value={invDate}
-                    onChange={setInvDate}
+                    onChange={(v) => {
+                      setInvDate(v);
+                      try {
+                        const d = new Date(v);
+                        if (!isNaN(d.getTime())) {
+                          d.setDate(d.getDate() + 14);
+                          setDueDate(d.toISOString().split("T")[0]!);
+                        }
+                      } catch {}
+                    }}
                   />
                 </Field>
                 <Field>
@@ -1306,6 +1359,8 @@ export function InvoicingPage() {
                 />
               </Field>
 
+              <DocumentIssueChecklistCard items={invoiceChecklist.items} />
+
               <DialogFooter className="pt-1">
                 <Button
                   type="button"
@@ -1314,7 +1369,10 @@ export function InvoicingPage() {
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={issuing}>
+                <Button
+                  type="submit"
+                  disabled={issuing || !invoiceChecklist.isValid}
+                >
                   {issuing ? <Spinner data-icon="inline-start" /> : null}
                   Terbitkan Invoice &amp; Posting Jurnal
                 </Button>
