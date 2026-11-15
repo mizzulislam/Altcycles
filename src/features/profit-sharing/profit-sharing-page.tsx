@@ -283,7 +283,6 @@ export function ProfitSharingPage() {
     });
     downloadPdfBytes(bytes, `Bagi_Hasil_${selectedProject.code}.pdf`);
     await recordExportLog("PROFIT_SHARING", "PDF");
-    toast.success("Rincian bagi hasil berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {

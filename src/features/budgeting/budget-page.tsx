@@ -231,7 +231,6 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
     });
     downloadPdfBytes(bytes, `Anggaran_Proyek_${projectCode}.pdf`);
     await recordExportLog("PROJECT_BUDGET", "PDF", selectedProject?.code);
-    toast.success("Perbandingan anggaran proyek berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {

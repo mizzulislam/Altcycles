@@ -1175,7 +1175,6 @@ export function ProjectDetailPage() {
       `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.pdf`,
     );
     await recordExportLog("PROJECT_WORKSPACE", "PDF");
-    toast.success("Jadwal termin proyek berhasil diekspor ke PDF Dokumen (.pdf).");
   }
 
   async function handleExportMilestonesCsv() {

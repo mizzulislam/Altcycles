@@ -302,7 +302,6 @@ export function AdminApprovalsPage() {
     });
     downloadPdfBytes(bytes, "Daftar_Payment_Approval_Altcycles.pdf");
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {
@@ -367,7 +366,6 @@ export function AdminApprovalsPage() {
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, `PA_${req.request_number.replace(/\//g, "-")}.pdf`);
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
-    toast.success(`Form PA ${req.request_number} (PDF) berhasil diunduh.`);
   }
 
   async function handleDownloadPaWord(req: PaymentRequestRow) {

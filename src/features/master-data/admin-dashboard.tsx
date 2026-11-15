@@ -439,7 +439,6 @@ export function AdminDashboardPage() {
     });
     downloadPdfBytes(bytes, "Cadangan_Buku_Jurnal_Altcycles.pdf");
     await recordExportLog("FULL_BACKUP_LEDGER", "PDF");
-    toast.success("Cadangan data jurnal berhasil diunduh ke PDF (.pdf).");
   }
 
   async function handleBackupExportCsv() {

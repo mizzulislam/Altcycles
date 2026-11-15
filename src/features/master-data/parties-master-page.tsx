@@ -217,7 +217,6 @@ export function PartiesMasterPage() {
     });
     downloadPdfBytes(bytes, "Master_Vendor_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
-    toast.success("Daftar vendor berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportVendorsCsv() {
@@ -327,7 +326,6 @@ export function PartiesMasterPage() {
     });
     downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
-    toast.success("Daftar pelanggan berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCustomersCsv() {

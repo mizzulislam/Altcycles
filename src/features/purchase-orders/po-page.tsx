@@ -316,7 +316,6 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, po.po_number.replace(/\//g, "-"));
     await recordExportLog("PO_INTERNAL", "PDF");
-    toast.success(`PDF ${po.po_number} berhasil diunduh.`);
   }
 
   async function handleDownloadWord(po: PurchaseOrderRow) {
@@ -385,7 +384,6 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     });
     downloadPdfBytes(bytes, "Daftar_Purchase_Order_Altcycles.pdf");
     await recordExportLog("PO_INTERNAL", "PDF");
-    toast.success("Daftar PO berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {

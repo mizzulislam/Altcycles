@@ -296,7 +296,6 @@ export function ProjectsPage() {
     });
     downloadPdfBytes(bytes, "Daftar_Proyek_Altvira_Altcycles.pdf");
     await recordExportLog("PROJECTS_MASTER", "PDF");
-    toast.success("Daftar proyek berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {

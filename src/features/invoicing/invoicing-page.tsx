@@ -592,7 +592,6 @@ export function InvoicingPage() {
     });
     downloadPdfBytes(bytes, "Daftar_Invoice_dan_Piutang_Altcycles.pdf");
     await recordExportLog("SALES_INVOICES", "PDF");
-    toast.success("Daftar invoice & piutang berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportInvoicesCsv() {

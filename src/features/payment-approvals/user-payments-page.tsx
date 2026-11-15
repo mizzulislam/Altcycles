@@ -375,7 +375,6 @@ export function UserPaymentsPage() {
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(bytes, `PA_${req.request_number.replace(/\//g, "-")}.pdf`);
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
-    toast.success(`Form PA ${req.request_number} (PDF) berhasil diunduh.`);
   }
 
   async function handleDownloadPaWord(req: PaymentRequestRow) {
@@ -459,7 +458,6 @@ export function UserPaymentsPage() {
     });
     downloadPdfBytes(bytes, "Pengajuan_Pembayaran_Saya.pdf");
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke PDF (.pdf).");
   }
 
   async function handleExportCsv() {
