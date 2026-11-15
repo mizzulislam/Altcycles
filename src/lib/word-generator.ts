@@ -21,6 +21,10 @@ import {
 } from "@/lib/asset-utils";
 import {
   formatDateID,
+  formatDateTimeID,
+  formatDocDateLong,
+  formatDocEmpty,
+  formatDocRupiah,
   formatRupiah,
   terbilangRupiah,
 } from "@/lib/formatters";
@@ -56,6 +60,7 @@ function buildSocialFooter(
     leftImg: Awaited<ReturnType<typeof decodeImageBytes>>;
     rightImg: Awaited<ReturnType<typeof decodeImageBytes>>;
   },
+  spec?: PdfDocumentSpec,
 ): Footer {
   const entries = getFooterSocialEntries(company);
   const children: Array<Paragraph | Table> = [];
@@ -111,11 +116,12 @@ function buildSocialFooter(
     );
   }
 
+  const docNumText = spec?.footerDocNumber ?? (spec?.docNumber ? ` | ${spec.docNumber}` : "");
   const socialRuns: Array<TextRun | ImageRun> = [
     new TextRun({
-      text: `${company.company_name}    `,
+      text: `${company.company_name}${docNumText}    `,
       bold: true,
-      size: 16,
+      size: 15,
       color: BRAND_HEX,
     }),
   ];
@@ -158,11 +164,26 @@ function buildSocialFooter(
       border: {
         top: { style: BorderStyle.SINGLE, size: 6, color: BORDER_HEX },
       },
-      spacing: { before: 80 },
+      spacing: { before: 80, after: 30 },
       alignment: AlignmentType.CENTER,
       children: socialRuns,
     }),
   );
+
+  if (!spec?.hideSystemFooter) {
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: `Dibuat otomatis oleh Altcycles ERP Keuangan Altvira • ${formatDateTimeID(new Date())}`,
+            size: 14,
+            color: SLATE_600,
+          }),
+        ],
+      }),
+    );
+  }
 
   return new Footer({ children });
 }
@@ -244,7 +265,7 @@ function styledTable(
  * Menghasilkan berkas Microsoft Word (.docx) dari spesifikasi dokumen standar Altcycles.
  */
 export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob> {
-  const [companyLogo, clientLogo, rightSig, leftSig] = await Promise.all([
+  const [companyLogo, clientLogo, rightSig, leftSig, thirdSig] = await Promise.all([
     decodeImageBytes(spec.company.logo_storage_path),
     decodeImageBytes(spec.clientLogoUrl),
     decodeImageBytes(
@@ -253,10 +274,12 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
         : spec.company.signer_signature_path,
     ),
     decodeImageBytes(spec.leftSignatureImageUrl),
+    decodeImageBytes(spec.thirdSignatureImageUrl),
   ]);
 
   const logoLeftRun = buildImageRun(companyLogo, 84, 42);
   const logoRightRun = buildImageRun(clientLogo, 84, 42);
+  const npwpPart = spec.company.tax_id ? ` | NPWP: ${spec.company.tax_id}` : "";
 
   const headerTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -309,7 +332,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                 spacing: { after: 100 },
                 children: [
                   new TextRun({
-                    text: `${spec.company.address} | Email: ${spec.company.email} | Telp: ${spec.company.phone}`,
+                    text: `${spec.company.address} | Email: ${spec.company.email} | Telp: ${spec.company.phone}${npwpPart}`,
                     size: 16,
                     color: SLATE_600,
                   }),
@@ -335,6 +358,11 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     ],
   });
 
+  const verStr = spec.docVersion
+    ? ` (${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion})`
+    : "";
+  const badgeStr = spec.statusBadge ? `   •   [ ${spec.statusBadge.text.toUpperCase()} ]` : "";
+
   const bodyChildren: Array<Paragraph | Table> = [
     headerTable,
     new Paragraph({
@@ -352,7 +380,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
       spacing: { after: 180 },
       children: [
         new TextRun({
-          text: `Nomor Dokumen: ${spec.docNumber}   •   Tanggal: ${formatDateID(spec.docDate)}`,
+          text: `Nomor Dokumen: ${spec.docNumber}${verStr}   •   Tanggal: ${formatDocDateLong(spec.docDate)}${badgeStr}`,
           bold: true,
           size: 19,
           color: BRAND_HEX,
@@ -369,6 +397,57 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
       ],
     }),
   ];
+
+  if (spec.balanceDueBox) {
+    bodyChildren.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                shading: { fill: BRAND_SOFT_HEX, type: ShadingType.CLEAR },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  left: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  right: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                },
+                children: [
+                  new Paragraph({
+                    spacing: { before: 80, after: 60 },
+                    children: [
+                      new TextRun({
+                        text: `${spec.balanceDueBox.label.toUpperCase()}:  `,
+                        bold: true,
+                        size: 19,
+                        color: BRAND_HEX,
+                      }),
+                      new TextRun({
+                        text: spec.balanceDueBox.amountText,
+                        bold: true,
+                        size: 24,
+                        color: BRAND_HEX,
+                      }),
+                      ...(spec.balanceDueBox.dueDateText
+                        ? [
+                            new TextRun({
+                              text: `   (${spec.balanceDueBox.dueDateText})`,
+                              size: 17,
+                              color: SLATE_600,
+                            }),
+                          ]
+                        : []),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+  }
 
   if (spec.recipientLines && spec.recipientLines.length > 0) {
     bodyChildren.push(
@@ -522,92 +601,254 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     }
   }
 
-  if (spec.rightSignatureName || spec.leftSignatureName) {
+  if (spec.rightSignatureName || spec.leftSignatureName || spec.thirdSignatureName) {
     const leftSigRun = buildImageRun(leftSig, 110, 44);
     const rightSigRun = buildImageRun(rightSig, 110, 44);
+    const thirdSigRun = buildImageRun(thirdSig, 110, 44);
     bodyChildren.push(new Paragraph({ spacing: { before: 200 }, children: [] }));
-    bodyChildren.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: {
-          top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-          insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        },
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                children: spec.leftSignatureName
-                  ? [
-                      new Paragraph({
-                        children: [
-                          new TextRun({
-                            text: spec.leftSignatureLabel ?? "Pihak Klien,",
-                            size: 18,
-                            color: SLATE_600,
-                          }),
-                        ],
-                      }),
-                      new Paragraph({
-                        spacing: { before: 80, after: 80 },
-                        children: leftSigRun ? [leftSigRun] : [new TextRun({ text: "\n" })],
-                      }),
-                      new Paragraph({
-                        children: [
-                          new TextRun({
-                            text: `(${spec.leftSignatureName})`,
-                            bold: true,
-                            size: 18,
-                            color: SLATE_900,
-                          }),
-                        ],
-                      }),
-                    ]
-                  : [new Paragraph({ children: [] })],
-              }),
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    children: [
-                      new TextRun({
-                        text:
-                          spec.rightSignatureLabel ??
-                          `Hormat kami, ${spec.company.company_name}`,
-                        size: 18,
-                        color: SLATE_600,
-                      }),
-                    ],
-                  }),
-                  new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    spacing: { before: 80, after: 80 },
-                    children: rightSigRun ? [rightSigRun] : [new TextRun({ text: "\n" })],
-                  }),
-                  new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    children: [
-                      new TextRun({
-                        text: `(${spec.rightSignatureName ?? `${spec.company.signer_name} - ${spec.company.signer_title}`})`,
-                        bold: true,
-                        size: 18,
-                        color: SLATE_900,
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-    );
+
+    if (spec.thirdSignatureName) {
+      // 3 Kolom Tanda Tangan (Dibuat, Disetujui, Diterima)
+      bodyChildren.push(
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  width: { size: 33, type: WidthType.PERCENTAGE },
+                  children: spec.leftSignatureName
+                    ? [
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: spec.leftSignatureLabel ?? "Dibuat Oleh,",
+                              size: 17,
+                              color: SLATE_600,
+                            }),
+                          ],
+                        }),
+                        new Paragraph({
+                          spacing: { before: 80, after: 80 },
+                          children: leftSigRun ? [leftSigRun] : [new TextRun({ text: "\n" })],
+                        }),
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: `(${spec.leftSignatureName})`,
+                              bold: true,
+                              size: 17,
+                              color: SLATE_900,
+                            }),
+                          ],
+                        }),
+                      ]
+                    : [new Paragraph({ children: [] })],
+                }),
+                new TableCell({
+                  width: { size: 34, type: WidthType.PERCENTAGE },
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      children: [
+                        new TextRun({
+                          text: spec.thirdSignatureLabel ?? "Disetujui Oleh,",
+                          size: 17,
+                          color: SLATE_600,
+                        }),
+                      ],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      spacing: { before: 80, after: 80 },
+                      children: thirdSigRun ? [thirdSigRun] : [new TextRun({ text: "\n" })],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      children: [
+                        new TextRun({
+                          text: `(${spec.thirdSignatureName})`,
+                          bold: true,
+                          size: 17,
+                          color: SLATE_900,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+                new TableCell({
+                  width: { size: 33, type: WidthType.PERCENTAGE },
+                  children: spec.rightSignatureName
+                    ? [
+                        new Paragraph({
+                          alignment: AlignmentType.RIGHT,
+                          children: [
+                            new TextRun({
+                              text: spec.rightSignatureLabel ?? "Diterima Oleh,",
+                              size: 17,
+                              color: SLATE_600,
+                            }),
+                          ],
+                        }),
+                        new Paragraph({
+                          alignment: AlignmentType.RIGHT,
+                          spacing: { before: 80, after: 80 },
+                          children: rightSigRun ? [rightSigRun] : [new TextRun({ text: "\n" })],
+                        }),
+                        new Paragraph({
+                          alignment: AlignmentType.RIGHT,
+                          children: [
+                            new TextRun({
+                              text: `(${spec.rightSignatureName})`,
+                              bold: true,
+                              size: 17,
+                              color: SLATE_900,
+                            }),
+                          ],
+                        }),
+                      ]
+                    : [new Paragraph({ children: [] })],
+                }),
+              ],
+            }),
+          ],
+        }),
+      );
+    } else {
+      // 2 Kolom Tanda Tangan Standar + Slot e-Meterai Opsional
+      const meteraiCell = spec.hasMeterai
+        ? [
+            new TableCell({
+              width: { size: 24, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  border: {
+                    top: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                    bottom: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                    left: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                    right: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                  },
+                  spacing: { before: 60, after: 60 },
+                  children: [
+                    new TextRun({
+                      text: "METERAI ELEKTRONIK\n",
+                      bold: true,
+                      size: 13,
+                      color: BRAND_HEX,
+                    }),
+                    new TextRun({
+                      text: "Rp 10.000\n",
+                      bold: true,
+                      size: 16,
+                      color: SLATE_900,
+                    }),
+                    new TextRun({
+                      text: spec.meteraiLabel ?? "TEMPAT E-METERAI",
+                      size: 11,
+                      color: SLATE_600,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ]
+        : [];
+
+      const sideColWidth = spec.hasMeterai ? 38 : 50;
+
+      bodyChildren.push(
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  width: { size: sideColWidth, type: WidthType.PERCENTAGE },
+                  children: spec.leftSignatureName
+                    ? [
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: spec.leftSignatureLabel ?? "Pihak Klien,",
+                              size: 18,
+                              color: SLATE_600,
+                            }),
+                          ],
+                        }),
+                        new Paragraph({
+                          spacing: { before: 80, after: 80 },
+                          children: leftSigRun ? [leftSigRun] : [new TextRun({ text: "\n" })],
+                        }),
+                        new Paragraph({
+                          children: [
+                            new TextRun({
+                              text: `(${spec.leftSignatureName})`,
+                              bold: true,
+                              size: 18,
+                              color: SLATE_900,
+                            }),
+                          ],
+                        }),
+                      ]
+                    : [new Paragraph({ children: [] })],
+                }),
+                ...meteraiCell,
+                new TableCell({
+                  width: { size: sideColWidth, type: WidthType.PERCENTAGE },
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.RIGHT,
+                      children: [
+                        new TextRun({
+                          text:
+                            spec.rightSignatureLabel ??
+                            `Hormat kami, ${spec.company.company_name}`,
+                          size: 18,
+                          color: SLATE_600,
+                        }),
+                      ],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.RIGHT,
+                      spacing: { before: 80, after: 80 },
+                      children: rightSigRun ? [rightSigRun] : [new TextRun({ text: "\n" })],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.RIGHT,
+                      children: [
+                        new TextRun({
+                          text: `(${spec.rightSignatureName ?? `${spec.company.signer_name} - ${spec.company.signer_title}`})`,
+                          bold: true,
+                          size: 18,
+                          color: SLATE_900,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      );
+    }
 
     if (spec.closingNote) {
       bodyChildren.push(
@@ -637,7 +878,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
           },
         },
         footers: {
-          default: buildSocialFooter(spec.company),
+          default: buildSocialFooter(spec.company, undefined, spec),
         },
         children: bodyChildren,
       },

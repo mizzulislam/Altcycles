@@ -7,6 +7,7 @@ import {
 import { DEMO_ACCOUNTS, DEMO_COMPANY, DEMO_PROJECTS } from "@/lib/demo-seed";
 import { createExcelBlob } from "@/lib/excel-exporter";
 import { buildInvoicePdfSpec, generateDocumentPdf } from "@/lib/pdf-generator";
+import { generateDocumentWord } from "@/lib/word-generator";
 import type { JournalLineRow, JournalRow } from "@/types/database.types";
 
 describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xlsx)", () => {
@@ -152,6 +153,46 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
       rows: [["4-1101", "Pendapatan Jasa", 80_000_000]],
     });
     expect(excelBlob.size).toBeGreaterThan(500);
+  });
+
+  it("menghasilkan berkas PDF dan Word (.docx) dengan atribut 9 zona standar (status badge, balance due, meterai, 3 tanda tangan)", async () => {
+    const spec = {
+      ...buildInvoicePdfSpec({
+        company: DEMO_COMPANY,
+        invoiceNumber: "INV/ALT/2026/11/001",
+        invoiceDate: "2026-11-01",
+        dueDate: "2026-11-08",
+        customerName: "PT Sinar Niaga Digital",
+        customerAddress: "Jakarta Barat",
+        projectName: "Portal Distribusi",
+        clientPoNumber: "PO-202611-AB3K9M",
+        description: "Termin 1 (DP 25%)",
+        subtotal: 30_000_000,
+        ppnAmount: 0,
+        totalAmount: 30_000_000,
+      }),
+      docVersion: "v1.0",
+      statusBadge: { text: "DISETUJUI", variant: "success" as const },
+      balanceDueBox: {
+        label: "TOTAL PEMBAYARAN JATUH TEMPO",
+        amountText: "Rp 30.000.000",
+        dueDateText: "Jatuh Tempo: 08 November 2026",
+      },
+      hasMeterai: true,
+      meteraiLabel: "TEMPAT E-METERAI Rp10.000",
+      thirdSignatureLabel: "Menyetujui,",
+      thirdSignatureName: "Komisaris Utama",
+      footerDocNumber: "INV/ALT/2026/11/001",
+    };
+
+    const pdfBytes = await generateDocumentPdf(spec);
+    expect(pdfBytes.byteLength).toBeGreaterThan(1000);
+    const pdfHeader = new TextDecoder().decode(pdfBytes.slice(0, 7));
+    expect(pdfHeader).toBe("%PDF-1.");
+
+    const wordBlob = await generateDocumentWord(spec);
+    expect(wordBlob.size).toBeGreaterThan(1000);
+    expect(wordBlob.type).toBe("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   });
 });
 

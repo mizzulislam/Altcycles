@@ -13,6 +13,10 @@ import {
 } from "@/lib/asset-utils";
 import {
   formatDateID,
+  formatDateTimeID,
+  formatDocDateLong,
+  formatDocEmpty,
+  formatDocRupiah,
   formatRupiah,
   terbilangRupiah,
 } from "@/lib/formatters";
@@ -21,6 +25,13 @@ import type {
   CompanyProfileRow,
   SpkCharterContent,
 } from "@/types/database.types";
+
+export type DocStatusVariant =
+  | "neutral"
+  | "info"
+  | "success"
+  | "danger"
+  | "warning";
 
 export interface PdfKeyValue {
   label: string;
@@ -38,6 +49,16 @@ export interface PdfDocumentSpec {
   docSubtitle?: string;
   docNumber: string;
   docDate: string;
+  docVersion?: number | string;
+  statusBadge?: {
+    text: string;
+    variant?: DocStatusVariant;
+  };
+  balanceDueBox?: {
+    label: string;
+    amountText: string;
+    dueDateText?: string;
+  };
   company: CompanyProfileRow;
   clientLogoUrl?: string | null;
   recipientTitle?: string;
@@ -50,12 +71,19 @@ export interface PdfDocumentSpec {
   terbilangAmount?: number;
   notes?: string[];
   closingNote?: string;
+  hasMeterai?: boolean;
+  meteraiLabel?: string;
   leftSignatureLabel?: string;
   leftSignatureName?: string;
   leftSignatureImageUrl?: string | null;
   rightSignatureLabel?: string;
   rightSignatureName?: string;
   rightSignatureImageUrl?: string | null;
+  thirdSignatureLabel?: string;
+  thirdSignatureName?: string;
+  thirdSignatureImageUrl?: string | null;
+  footerDocNumber?: string;
+  hideSystemFooter?: boolean;
 }
 
 // Palet warna resmi Altcycles (senada dengan tema biru Altvira #0B43C8)
@@ -66,6 +94,12 @@ const SLATE_700 = rgb(0.2, 0.255, 0.333);
 const SLATE_500 = rgb(0.392, 0.455, 0.545);
 const BORDER_SLATE = rgb(0.82, 0.855, 0.902);
 const SURFACE_SUBTLE = rgb(0.973, 0.98, 0.988);
+const EMERALD_700 = rgb(0.016, 0.537, 0.345);
+const EMERALD_SOFT = rgb(0.925, 0.984, 0.953);
+const ROSE_700 = rgb(0.745, 0.118, 0.176);
+const ROSE_SOFT = rgb(1.0, 0.949, 0.957);
+const AMBER_700 = rgb(0.706, 0.447, 0.047);
+const AMBER_SOFT = rgb(1.0, 0.984, 0.922);
 
 export function sanitizePdfText(text: string): string {
   // StandardFonts Helvetica menggunakan WinAnsiEncoding; normalkan karakter Unicode non-WinAnsi
@@ -150,6 +184,8 @@ async function drawSocialMediaFooters(params: {
   fontBold: PDFFont;
   marginX: number;
   pageWidth: number;
+  docNumber?: string;
+  hideSystemFooter?: boolean;
   parafInfo?: {
     leftImage?: PDFImage | null;
     rightImage?: PDFImage | null;
@@ -165,6 +201,8 @@ async function drawSocialMediaFooters(params: {
     fontBold,
     marginX,
     pageWidth,
+    docNumber,
+    hideSystemFooter,
     parafInfo,
   } = params;
 
@@ -246,7 +284,7 @@ async function drawSocialMediaFooters(params: {
       }
     }
 
-    // Garis pemisah footer sosial media
+    // Garis pemisah footer sosial media & legal
     p.drawLine({
       start: { x: marginX, y: 34 },
       end: { x: pageWidth - marginX, y: 34 },
@@ -254,11 +292,12 @@ async function drawSocialMediaFooters(params: {
       color: BORDER_SLATE,
     });
 
-    const brandLabel = sanitizePdfText(company.company_name);
+    const docNumPart = docNumber ? ` | ${docNumber}` : "";
+    const brandLabel = sanitizePdfText(`${company.company_name}${docNumPart}`);
     p.drawText(brandLabel, {
       x: marginX,
       y: 22,
-      size: 7.5,
+      size: 7.2,
       font: fontBold,
       color: BRAND_BLUE,
     });
@@ -322,6 +361,18 @@ async function drawSocialMediaFooters(params: {
         color: SLATE_500,
       });
     }
+
+    if (!hideSystemFooter) {
+      const sysFoot = `Dibuat otomatis oleh Altcycles ERP Keuangan Altvira • ${formatDateTimeID(new Date())}`;
+      const sysW = fontRegular.widthOfTextAtSize(sysFoot, 6.5);
+      p.drawText(sysFoot, {
+        x: (pageWidth - sysW) / 2,
+        y: 11,
+        size: 6.5,
+        font: fontRegular,
+        color: SLATE_500,
+      });
+    }
   });
 }
 
@@ -336,7 +387,7 @@ export async function generateDocumentPdf(
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const [companyLogo, clientLogo, rightSigImg, leftSigImg] = await Promise.all([
+  const [companyLogo, clientLogo, rightSigImg, leftSigImg, thirdSigImg] = await Promise.all([
     embedOptionalImage(pdfDoc, spec.company.logo_storage_path),
     embedOptionalImage(pdfDoc, spec.clientLogoUrl),
     embedOptionalImage(
@@ -346,6 +397,7 @@ export async function generateDocumentPdf(
         : spec.company.signer_signature_path,
     ),
     embedOptionalImage(pdfDoc, spec.leftSignatureImageUrl),
+    embedOptionalImage(pdfDoc, spec.thirdSignatureImageUrl),
   ]);
 
   const pageWidth = 595.28; // A4
@@ -413,8 +465,9 @@ export async function generateDocumentPdf(
   });
 
   const addrMaxW = contentWidth - (logoOffsetX - marginX) - rightHeaderReserve;
+  const npwpPart = spec.company.tax_id ? ` | NPWP: ${spec.company.tax_id}` : "";
   const addrLines = wrapTextByWidth(
-    `${spec.company.address} | Email: ${spec.company.email} | Telp: ${spec.company.phone}`,
+    `${spec.company.address} | Email: ${spec.company.email} | Telp: ${spec.company.phone}${npwpPart}`,
     fontRegular,
     8,
     addrMaxW,
@@ -440,7 +493,7 @@ export async function generateDocumentPdf(
   });
   y -= 20;
 
-  // 2. Judul Dokumen, Nomor, & Tanggal
+  // Zona A. Judul Dokumen, Versi, Status Badge, Nomor, & Tanggal
   page.drawText(sanitizePdfText(spec.docTitle.toUpperCase()), {
     x: marginX,
     y,
@@ -449,8 +502,53 @@ export async function generateDocumentPdf(
     color: SLATE_900,
   });
 
-  if (spec.docDate && spec.docDate.trim()) {
-    const dateText = sanitizePdfText(`Tanggal: ${formatDateID(spec.docDate)}`);
+  if (spec.statusBadge) {
+    const badgeText = sanitizePdfText(spec.statusBadge.text.toUpperCase());
+    const badgeW = fontBold.widthOfTextAtSize(badgeText, 7.5) + 14;
+    const badgeH = 15;
+    const badgeX = pageWidth - marginX - badgeW;
+    const badgeY = y - 3;
+
+    let bg = BRAND_BLUE_SOFT;
+    let border = BRAND_BLUE;
+    let txtCol = BRAND_BLUE;
+
+    if (spec.statusBadge.variant === "success") {
+      bg = EMERALD_SOFT;
+      border = EMERALD_700;
+      txtCol = EMERALD_700;
+    } else if (spec.statusBadge.variant === "danger") {
+      bg = ROSE_SOFT;
+      border = ROSE_700;
+      txtCol = ROSE_700;
+    } else if (spec.statusBadge.variant === "warning") {
+      bg = AMBER_SOFT;
+      border = AMBER_700;
+      txtCol = AMBER_700;
+    } else if (spec.statusBadge.variant === "neutral") {
+      bg = SURFACE_SUBTLE;
+      border = BORDER_SLATE;
+      txtCol = SLATE_700;
+    }
+
+    page.drawRectangle({
+      x: badgeX,
+      y: badgeY,
+      width: badgeW,
+      height: badgeH,
+      color: bg,
+      borderColor: border,
+      borderWidth: 0.7,
+    });
+    page.drawText(badgeText, {
+      x: badgeX + 7,
+      y: badgeY + 4,
+      size: 7.5,
+      font: fontBold,
+      color: txtCol,
+    });
+  } else if (spec.docDate && spec.docDate.trim()) {
+    const dateText = sanitizePdfText(`Tanggal: ${formatDocDateLong(spec.docDate)}`);
     const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
     page.drawText(dateText, {
       x: pageWidth - marginX - dateWidth,
@@ -464,7 +562,10 @@ export async function generateDocumentPdf(
 
   const hasDocNumber = Boolean(spec.docNumber && spec.docNumber.trim());
   if (hasDocNumber) {
-    page.drawText(sanitizePdfText(`Nomor Dokumen: ${spec.docNumber}`), {
+    const verText = spec.docVersion
+      ? ` (${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion})`
+      : "";
+    page.drawText(sanitizePdfText(`Nomor Dokumen: ${spec.docNumber}${verText}`), {
       x: marginX,
       y,
       size: 9,
@@ -473,7 +574,17 @@ export async function generateDocumentPdf(
     });
   }
 
-  if (spec.docSubtitle) {
+  if (spec.statusBadge && spec.docDate && spec.docDate.trim()) {
+    const dateText = sanitizePdfText(`Tanggal: ${formatDocDateLong(spec.docDate)}`);
+    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
+    page.drawText(dateText, {
+      x: pageWidth - marginX - dateWidth,
+      y,
+      size: 9,
+      font: fontRegular,
+      color: SLATE_700,
+    });
+  } else if (spec.docSubtitle) {
     const subClean = sanitizePdfText(spec.docSubtitle);
     const subW = fontRegular.widthOfTextAtSize(subClean, 9);
     page.drawText(subClean, {
@@ -485,6 +596,52 @@ export async function generateDocumentPdf(
     });
   }
   y -= 18;
+
+  // Zona C. Kotak Ringkasan Nilai Menonjol (Balance Due / Total Tagihan)
+  if (spec.balanceDueBox) {
+    ensureSpace(42);
+    const boxW = contentWidth;
+    const boxH = 34;
+    page.drawRectangle({
+      x: marginX,
+      y: y - boxH + 6,
+      width: boxW,
+      height: boxH,
+      color: BRAND_BLUE_SOFT,
+      borderColor: BRAND_BLUE,
+      borderWidth: 0.8,
+    });
+
+    page.drawText(sanitizePdfText(spec.balanceDueBox.label.toUpperCase()), {
+      x: marginX + 12,
+      y: y - 10,
+      size: 8,
+      font: fontBold,
+      color: BRAND_BLUE,
+    });
+
+    if (spec.balanceDueBox.dueDateText) {
+      page.drawText(sanitizePdfText(spec.balanceDueBox.dueDateText), {
+        x: marginX + 12,
+        y: y - 22,
+        size: 7.5,
+        font: fontRegular,
+        color: SLATE_500,
+      });
+    }
+
+    const amtClean = sanitizePdfText(spec.balanceDueBox.amountText);
+    const amtW = fontBold.widthOfTextAtSize(amtClean, 13);
+    page.drawText(amtClean, {
+      x: pageWidth - marginX - 12 - amtW,
+      y: y - 16,
+      size: 13,
+      font: fontBold,
+      color: BRAND_BLUE,
+    });
+
+    y -= boxH + 8;
+  }
 
   // 3. Tujuan / Identitas Pihak Kedua & Metadata
   if (spec.recipientLines && spec.recipientLines.length > 0) {
@@ -742,72 +899,210 @@ export async function generateDocumentPdf(
     y -= 8;
   }
 
-  // 8. Blok Tanda Tangan + Gambar TTD Digital
-  if (spec.rightSignatureName || spec.leftSignatureName) {
-    ensureSpace(98);
+  // Zona G. Blok Tanda Tangan, Slot e-Meterai, & Pengesahan
+  if (spec.rightSignatureName || spec.leftSignatureName || spec.thirdSignatureName) {
+    ensureSpace(104);
     y -= 6;
     const sigTopY = y;
 
-    if (spec.leftSignatureName) {
-      page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Pihak Klien,"), {
-        x: marginX,
+    // Skenario 3 Kolom TTD (misal: PO Vendor -> Dibuat, Disetujui, Diterima)
+    if (spec.thirdSignatureName) {
+      const colW = (contentWidth - 24) / 3;
+      const col1X = marginX;
+      const col2X = marginX + colW + 12;
+      const col3X = marginX + (colW + 12) * 2;
+
+      // Kolom 1 (Kiri - Pembuat)
+      if (spec.leftSignatureName) {
+        page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Dibuat Oleh,"), {
+          x: col1X,
+          y: sigTopY,
+          size: 8.3,
+          font: fontRegular,
+          color: SLATE_700,
+        });
+        if (leftSigImg) {
+          const dims = fitDimensions(leftSigImg, 80, 36);
+          page.drawImage(leftSigImg, {
+            x: col1X,
+            y: sigTopY - 44,
+            width: dims.width,
+            height: dims.height,
+          });
+        }
+        page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
+          x: col1X,
+          y: sigTopY - 56,
+          size: 8.3,
+          font: fontBold,
+          color: SLATE_900,
+        });
+      }
+
+      // Kolom 2 (Tengah - Penyetuju)
+      page.drawText(sanitizePdfText(spec.thirdSignatureLabel ?? "Disetujui Oleh,"), {
+        x: col2X,
         y: sigTopY,
-        size: 8.8,
+        size: 8.3,
         font: fontRegular,
         color: SLATE_700,
       });
-      if (leftSigImg) {
-        const dims = fitDimensions(leftSigImg, 110, 42);
-        page.drawImage(leftSigImg, {
+      if (thirdSigImg) {
+        const dims = fitDimensions(thirdSigImg, 80, 36);
+        page.drawImage(thirdSigImg, {
+          x: col2X,
+          y: sigTopY - 44,
+          width: dims.width,
+          height: dims.height,
+        });
+      }
+      page.drawText(sanitizePdfText(`(${spec.thirdSignatureName})`), {
+        x: col2X,
+        y: sigTopY - 56,
+        size: 8.3,
+        font: fontBold,
+        color: SLATE_900,
+      });
+
+      // Kolom 3 (Kanan - Penerima / Vendor)
+      if (spec.rightSignatureName) {
+        page.drawText(sanitizePdfText(spec.rightSignatureLabel ?? "Diterima Vendor,"), {
+          x: col3X,
+          y: sigTopY,
+          size: 8.3,
+          font: fontRegular,
+          color: SLATE_700,
+        });
+        if (rightSigImg) {
+          const dims = fitDimensions(rightSigImg, 80, 36);
+          page.drawImage(rightSigImg, {
+            x: col3X,
+            y: sigTopY - 44,
+            width: dims.width,
+            height: dims.height,
+          });
+        }
+        page.drawText(sanitizePdfText(`(${spec.rightSignatureName})`), {
+          x: col3X,
+          y: sigTopY - 56,
+          size: 8.3,
+          font: fontBold,
+          color: SLATE_900,
+        });
+      }
+    } else {
+      // Skenario 2 Kolom TTD Standar (Pihak Klien & Altvira)
+      if (spec.leftSignatureName) {
+        page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Pihak Klien,"), {
           x: marginX,
+          y: sigTopY,
+          size: 8.8,
+          font: fontRegular,
+          color: SLATE_700,
+        });
+        if (leftSigImg) {
+          const dims = fitDimensions(leftSigImg, 110, 42);
+          page.drawImage(leftSigImg, {
+            x: marginX,
+            y: sigTopY - 48,
+            width: dims.width,
+            height: dims.height,
+          });
+        }
+        page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
+          x: marginX,
+          y: sigTopY - 60,
+          size: 8.8,
+          font: fontBold,
+          color: SLATE_900,
+        });
+      }
+
+      // Slot e-Meterai Rp10.000 jika dokumen memerlukan meterai (Kuitansi > 5jt / SPK)
+      if (spec.hasMeterai) {
+        const meteraiW = 86;
+        const meteraiH = 50;
+        const meteraiX = spec.leftSignatureName
+          ? marginX + (contentWidth - meteraiW) / 2
+          : pageWidth - marginX - 185 - meteraiW - 16;
+        const meteraiY = sigTopY - 50;
+
+        page.drawRectangle({
+          x: meteraiX,
+          y: meteraiY,
+          width: meteraiW,
+          height: meteraiH,
+          color: SURFACE_SUBTLE,
+          borderColor: BRAND_BLUE,
+          borderWidth: 0.8,
+        });
+
+        const mTitle = "METERAI ELEKTRONIK";
+        const mW1 = fontBold.widthOfTextAtSize(mTitle, 6.8);
+        page.drawText(mTitle, {
+          x: meteraiX + (meteraiW - mW1) / 2,
+          y: meteraiY + meteraiH - 14,
+          size: 6.8,
+          font: fontBold,
+          color: BRAND_BLUE,
+        });
+
+        const mNominal = "Rp 10.000";
+        const mW2 = fontBold.widthOfTextAtSize(mNominal, 8);
+        page.drawText(mNominal, {
+          x: meteraiX + (meteraiW - mW2) / 2,
+          y: meteraiY + meteraiH - 26,
+          size: 8,
+          font: fontBold,
+          color: SLATE_900,
+        });
+
+        const mSub = sanitizePdfText(spec.meteraiLabel ?? "TEMPAT E-METERAI");
+        const mW3 = fontRegular.widthOfTextAtSize(mSub, 5.8);
+        page.drawText(mSub, {
+          x: meteraiX + (meteraiW - mW3) / 2,
+          y: meteraiY + 8,
+          size: 5.8,
+          font: fontRegular,
+          color: SLATE_500,
+        });
+      }
+
+      const rightX = pageWidth - marginX - 185;
+      page.drawText(
+        sanitizePdfText(
+          spec.rightSignatureLabel ?? `Hormat kami, ${spec.company.company_name}`,
+        ),
+        {
+          x: rightX,
+          y: sigTopY,
+          size: 8.8,
+          font: fontRegular,
+          color: SLATE_700,
+        },
+      );
+      if (rightSigImg) {
+        const dims = fitDimensions(rightSigImg, 110, 42);
+        page.drawImage(rightSigImg, {
+          x: rightX,
           y: sigTopY - 48,
           width: dims.width,
           height: dims.height,
         });
       }
-      page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
-        x: marginX,
-        y: sigTopY - 60,
-        size: 8.8,
-        font: fontBold,
-        color: SLATE_900,
-      });
+      page.drawText(
+        sanitizePdfText(
+          `(${spec.rightSignatureName ?? `${spec.company.signer_name} - ${spec.company.signer_title}`})`,
+        ),
+        {
+          x: rightX,
+          y: sigTopY - 60,
+          size: 8.8,
+          font: fontBold,
+          color: SLATE_900,
+        },
+      );
     }
-
-    const rightX = pageWidth - marginX - 185;
-    page.drawText(
-      sanitizePdfText(
-        spec.rightSignatureLabel ?? `Hormat kami, ${spec.company.company_name}`,
-      ),
-      {
-        x: rightX,
-        y: sigTopY,
-        size: 8.8,
-        font: fontRegular,
-        color: SLATE_700,
-      },
-    );
-    if (rightSigImg) {
-      const dims = fitDimensions(rightSigImg, 110, 42);
-      page.drawImage(rightSigImg, {
-        x: rightX,
-        y: sigTopY - 48,
-        width: dims.width,
-        height: dims.height,
-      });
-    }
-    page.drawText(
-      sanitizePdfText(
-        `(${spec.rightSignatureName ?? `${spec.company.signer_name} - ${spec.company.signer_title}`})`,
-      ),
-      {
-        x: rightX,
-        y: sigTopY - 60,
-        size: 8.8,
-        font: fontBold,
-        color: SLATE_900,
-      },
-    );
 
     if (spec.closingNote) {
       const cClean = sanitizePdfText(spec.closingNote);
@@ -822,7 +1117,7 @@ export async function generateDocumentPdf(
     }
   }
 
-  // 9. Footer Ikon Sosial Media di Setiap Halaman
+  // Zona I. Footer Ikon Sosial Media & Legal di Setiap Halaman
   await drawSocialMediaFooters({
     pdfDoc,
     pages,
@@ -831,6 +1126,8 @@ export async function generateDocumentPdf(
     fontBold,
     marginX,
     pageWidth,
+    docNumber: spec.footerDocNumber ?? (spec.docNumber ? spec.docNumber : undefined),
+    hideSystemFooter: spec.hideSystemFooter,
   });
 
   return pdfDoc.save();
