@@ -314,14 +314,65 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Langkah 1 Putaran Penyempurnaan)
+---
+
+### ID: K-20
+- **Status:** Aktif (Dicatat sesuai Perintah Prompt)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Invoice (`buildInvoicePdfSpec` di `src/lib/pdf-generator.ts`)
+- **Apa yang bertentangan:**
+  - Header dokumen kini sudah menampilkan nomor dokumen induk secara ringkas dan konsisten pada baris kedua kanan (`Ref : {refDocNumber}`), misalnya `Ref : BAKP/ALT/2026/11/001`.
+  - Namun di blok metadata invoice (Zona B), sistem saat ini masih menampilkan beberapa baris referensi sekaligus: `Referensi PO Klien`, `Referensi SPK / Kontrak`, `Referensi BAKP Acuan`, dan `Referensi BAST Acuan`. Hal ini berpotensi menimbulkan duplikasi informasi antara header dan metadata.
+- **Yang kulakukan:** Mencatat potensi duplikasi ini tanpa mengubah kode sesuai arahan.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A (Rekomendasi):** Pertahankan `Ref : ...` di header untuk dokumen acuan langsung (misal BAKP/SPK), dan di metadata pertahankan nomor kontrak/PO klien jika diperlukan secara legalitas kontrak formal.
+  - **Opsi B:** Hapus baris referensi yang nilainya identik dengan nilai `Ref` di header dari blok metadata Zona B.
+  - **Opsi C:** Hapus `Ref : ...` dari header khusus untuk invoice dan pusatkan seluruh referensi di metadata.
+- **Rekomendasi:** **Opsi A** (atau Opsi B bila ingin menghemat ruang vertikal).
+- **Perlu keputusanku?** ya
+
+---
+
+### ID: K-21
+- **Status:** Aktif (Dicatat sesuai Perintah Prompt)
+- **Jenis:** `data-janggal`
+- **Dokumen terdampak:** Invoice (`tests/fixtures/document-layout-fixtures.ts` dan data klien sistem)
+- **Apa yang bertentangan:**
+  - Nilai nama klien pada Invoice contoh/fixture tertulis: `"PT Satu Dental Indonesia (TIMTravel RMM)"`.
+  - Sementara pada dokumen proyek lainnya (misalnya BAST, Quotation, PO), nama klien tertulis: `"TIMTravel RMM"`. Terdapat inkonsistensi penamaan identitas klien antar dokumen untuk proyek yang sama.
+- **Yang kulakukan:** Mencatat inkonsistensi ini sebagai data janggal tanpa mengubah data tersimpan.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Pertahankan data tersimpan saat ini sesuai batasan keras tidak mengubah data/database. (Diterapkan).
+  - **Opsi B:** Sinkronisasi nama entitas pelanggan di data master klien saat pembersihan data master dilakukan oleh pengguna.
+- **Rekomendasi:** **Opsi A** untuk lapisan dokumen, lakukan **Opsi B** pada master data di portal jika disetujui pengguna.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-22
+- **Status:** Aktif (Dicatat sesuai Perintah Prompt)
+- **Jenis:** `data-janggal`
+- **Dokumen terdampak:** Invoice vs Dokumen Lain (`tests/fixtures/document-layout-fixtures.ts` dan data klien sistem)
+- **Apa yang bertentangan:**
+  - Alamat klien pada invoice tertulis: `"Komplek City Resort, Ruko Hawai Blok B No. 61 Timur, Cengkareng, Jakarta Barat, DKI Jakarta 11730"`.
+  - Sementara pada dokumen BAST/Quotation, alamat pihak kedua/klien tertulis: `"Area Pandu Raya, Villa Citra, Bantarjati Jl. Flamboyan F2 No. 12 Kota Bogor, Jawa Barat."` (sama dengan alamat Altvira).
+- **Yang kulakukan:** Mencatat perbedaan alamat ini sebagai data janggal tanpa mengubah data tersimpan.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Pertahankan data masing-masing dokumen tanpa manipulasi kode renderer. (Diterapkan).
+  - **Opsi B:** Perbaiki alamat pihak kedua di master data klien melalui portal admin.
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Langkah A Putaran Penyempurnaan)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 7 | 7 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`) | 0 | 0 |
+| `standar-vs-layout` | 8 | 7 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`) | 1 (`K-20`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
-| `data-janggal` | 4 | 2 (`K-04`, `K-05`) | 2 (`K-10`, `K-12`) | 0 |
+| `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **19** | **16** | **3** | **0** |
+| **Total Temuan** | **22** | **16** | **6** | **1** |

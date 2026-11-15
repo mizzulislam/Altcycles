@@ -23,6 +23,23 @@ describe("Render Check Generator & Collision Detector", () => {
         `Margin violations on ${fixture.slug}`,
       ).toEqual([]);
 
+      // Pemeriksa Kesejajaran Otomatis Header (Butir 2e):
+      // - Baseline No dan baris nama badan usaha selisih paling banyak 1 pt
+      // - Baseline Ref dan baris alamat pertama selisih paling banyak 1 pt
+      // - Tinggi ikon sama dengan tinggi tinta wordmark selisih paling banyak 1 pt
+      expect(
+        layout.headerAlignment.deltaNoVsLegalName,
+        `Kesejajaran No vs Nama PT pada ${fixture.slug}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        layout.headerAlignment.deltaRefVsAddr1,
+        `Kesejajaran Ref vs Alamat 1 pada ${fixture.slug}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        layout.headerAlignment.deltaIconVsWordmarkInk,
+        `Kesejajaran tinggi tinta ikon vs wordmark pada ${fixture.slug}`,
+      ).toBeLessThanOrEqual(1);
+
       const singlePageSlugs = new Set([
         "01-invoice-normal",
         "01c-invoice-minimum",

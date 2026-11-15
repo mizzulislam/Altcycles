@@ -120,13 +120,55 @@ export interface PdfMarginIssue {
   reason: string;
 }
 
+export interface PdfHeaderAlignmentMetrics {
+  legalNameBaselineY: number;
+  noBaselineY: number;
+  addrLine1BaselineY: number;
+  refBaselineY: number;
+  iconInkHeight: number;
+  wordmarkInkHeight: number;
+  deltaNoVsLegalName: number;
+  deltaRefVsAddr1: number;
+  deltaIconVsWordmarkInk: number;
+}
+
 export interface PdfLayoutInspectionResult {
   pdfBytes: Uint8Array;
   pageCount: number;
   textBoxes: PdfTextBox[];
   collisions: PdfCollisionIssue[];
   marginViolations: PdfMarginIssue[];
+  headerAlignment: PdfHeaderAlignmentMetrics;
 }
+
+/**
+ * Ukuran font bersama untuk teks blok kontak kiri (alamat, email, telp, npwp)
+ * dan teks blok No / Ref kanan di header.
+ */
+export const HEADER_COMMON_FONT_SIZE = 8;
+
+/**
+ * Metrik bounding box tinta asli (piksel non-transparan) dari aset penjenamaan Altvira
+ * untuk menjamin tinggi ikon sama persis dengan tinggi tinta wordmark.
+ */
+export const BRAND_IMAGE_METRICS = {
+  wordmark: {
+    fileWidth: 1024,
+    fileHeight: 208,
+    inkTopPad: 0,
+    inkBottomPad: 5,
+    inkHeight: 203,
+    inkWidth: 1024,
+  },
+  icon: {
+    fileWidth: 1024,
+    fileHeight: 1024,
+    inkTopPad: 0,
+    inkBottomPad: 0,
+    inkHeight: 1024,
+    inkWidth: 1024,
+  },
+} as const;
 
 // ============================================================================
 // DESIGN TOKENS (Spesifikasi Layout Arental / Figma)
@@ -698,7 +740,12 @@ async function drawSocialMediaFooters(params: {
  */
 async function renderDocumentPdfInternal(
   rawSpec: PdfDocumentSpec,
-): Promise<{ pdfBytes: Uint8Array; pageCount: number; textBoxes: PdfTextBox[] }> {
+): Promise<{
+  pdfBytes: Uint8Array;
+  pageCount: number;
+  textBoxes: PdfTextBox[];
+  headerAlignment: PdfHeaderAlignmentMetrics;
+}> {
   const spec = normalizeSpecCurrencyDecimals(rawSpec);
   const pdfDoc = await PDFDocument.create();
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -819,20 +866,49 @@ async function renderDocumentPdfInternal(
   // - Baris abu selebar penuh konten di bawah garis header jika judul panjang.
   // ==========================================================================
   const docTitleConfig = resolveDocTitleConfig(spec.docTitle);
+  let headerAlignment: PdfHeaderAlignmentMetrics = {
+    legalNameBaselineY: 0,
+    noBaselineY: 0,
+    addrLine1BaselineY: 0,
+    refBaselineY: 0,
+    iconInkHeight: 0,
+    wordmarkInkHeight: 0,
+    deltaNoVsLegalName: 0,
+    deltaRefVsAddr1: 0,
+    deltaIconVsWordmarkInk: 0,
+  };
 
   const drawDocumentHeader = () => {
     const headerTopY = y;
     const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // Common Center Y untuk ikon, wordmark, dan judul dokumen
-    const headerCenterY = headerTopY - 22;
+    // Target tinggi tinta non-transparan ikon & wordmark Altvira (selaras sempurna)
+    const TARGET_BRAND_INK_HEIGHT = 28;
+    const iconInkHeight = TARGET_BRAND_INK_HEIGHT;
+    const wordmarkInkHeight = TARGET_BRAND_INK_HEIGHT;
 
-    // 1. Ikon Altvira (tinggi ~15 mm / 42.5 pt, rasio 1:1)
-    const iconH = 42.5;
-    const iconW = 42.5;
+    // Perhitungan dimensi aset berdasarkan rasio asli dan bounding box tinta
+    const iconH = iconInkHeight;
+    const iconW = iconInkHeight; // rasio asli 1:1
+
+    const wmInkH = BRAND_IMAGE_METRICS.wordmark.inkHeight; // 203 px
+    const wmFileH_raw = BRAND_IMAGE_METRICS.wordmark.fileHeight; // 208 px
+    const wmFileW_raw = BRAND_IMAGE_METRICS.wordmark.fileWidth; // 1024 px
+    const wmBottomPad_raw = BRAND_IMAGE_METRICS.wordmark.inkBottomPad; // 5 px
+
+    const wmScale = wordmarkInkHeight / wmInkH;
+    const wmH = wmFileH_raw * wmScale; // ~28.69 pt
+    const wmW = wmFileW_raw * wmScale; // ~141.20 pt
+    const wmBottomPad = wmBottomPad_raw * wmScale; // ~0.69 pt
+
+    // Common Center Y untuk ikon, wordmark, dan judul dokumen di kolom kanan
+    const headerCenterY = headerTopY - 18;
+    const brandInkTopY = headerCenterY + TARGET_BRAND_INK_HEIGHT / 2;
+    const brandInkBottomY = headerCenterY - TARGET_BRAND_INK_HEIGHT / 2;
+
     const iconX = marginX;
-    const iconY = headerCenterY - iconH / 2;
+    const iconY = brandInkBottomY;
 
     if (altviraIconImg) {
       page.drawImage(altviraIconImg, {
@@ -842,7 +918,7 @@ async function renderDocumentPdfInternal(
         height: iconH,
       });
     } else if (companyLogo) {
-      const dims = fitDimensions(companyLogo, 52, 42.5);
+      const dims = fitDimensions(companyLogo, 52, 28);
       page.drawImage(companyLogo, {
         x: iconX,
         y: headerCenterY - dims.height / 2,
@@ -850,14 +926,13 @@ async function renderDocumentPdfInternal(
         height: dims.height,
       });
     } else {
-      drawDefaultAltviraMark(page, iconX, headerCenterY + 16);
+      drawDefaultAltviraMark(page, iconX, headerCenterY + 14);
     }
 
-    // 2. Wordmark Altvira (rasio asli 1024x208 = 4.923, tinggi 21 pt, lebar 103.38 pt)
-    const wmH = 21;
-    const wmW = 103.38;
-    const wmX = iconX + iconW + 8;
-    const wmY = headerCenterY - wmH / 2;
+    // 2. Wordmark Altvira (ditempatkan tepat agar ujung atas huruf ALTVIRA sejajar ujung atas ikon,
+    //    dan ujung bawah tagline ADAPT TODAY, INNOVATE TOMORROW sejajar ujung bawah ikon)
+    const wmX = iconX + iconW + 8; // jarak ikon ke wordmark seragam 8 pt
+    const wmY = brandInkBottomY - wmBottomPad;
 
     if (altviraWordmarkImg) {
       page.drawImage(altviraWordmarkImg, {
@@ -880,7 +955,7 @@ async function renderDocumentPdfInternal(
       );
     }
 
-    // 3. Judul Dokumen di kolom kanan (rata kanan, garis tengah sama di headerCenterY)
+    // 3. Judul Dokumen di kolom kanan (rata kanan, berpusat di garis tengah headerCenterY)
     const titleText = sanitizePdfText(docTitleConfig.headerTitle.toUpperCase());
     const titleSize = 22;
     const titleCapCenterOffset = 7.5;
@@ -897,26 +972,31 @@ async function renderDocumentPdfInternal(
         font: fontBold,
         color: TEXT_DARK,
       },
-      "A-header-right",
+      "A-header-right-title",
     );
 
-    // 4. Blok Kontak Kiri di bawah brand (diberi jarak 11 pt di bawah batas bawah ikon)
-    let leftCursorY = iconY - 11;
-    const contactSize = 8; // 8 pt sesuai instruksi
+    // 4. Blok Kontak Kiri di bawah brand
+    // Jarak dari batas bawah brand ink ke baris pertama nama badan usaha
+    const brandToContactGap = 12;
+    const legalNameBaselineY = brandInkBottomY - brandToContactGap;
+    const contactSize = HEADER_COMMON_FONT_SIZE; // 8 pt (konstanta bersama untuk blok kiri & No/Ref kanan)
     const contactLineH = 10;
+    let leftCursorY = legalNameBaselineY;
 
-    // 4a. Nama Badan Usaha (8.5 pt fontBold)
-    const legalNameClean = sanitizePdfText(spec.company.legal_entity_name || "PT Representasi Mitra Mandiri");
+    // 4a. Nama Badan Usaha (8 pt fontBold)
+    const legalNameClean = sanitizePdfText(
+      spec.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+    );
     drawTrackedText(
       legalNameClean,
       {
         x: marginX,
-        y: leftCursorY,
-        size: 8.5,
+        y: legalNameBaselineY,
+        size: contactSize,
         font: fontBold,
         color: TEXT_DARK,
       },
-      "A-header-contact",
+      "A-header-legal-name",
     );
     leftCursorY -= 11;
 
@@ -928,9 +1008,24 @@ async function renderDocumentPdfInternal(
       leftColMaxW,
     );
     const addrLines = rawAddrLines.slice(0, 2);
-    for (const aLine of addrLines) {
+    const addrLine1BaselineY = leftCursorY;
+    if (addrLines[0]) {
       drawTrackedText(
-        aLine,
+        addrLines[0],
+        {
+          x: marginX,
+          y: addrLine1BaselineY,
+          size: contactSize,
+          font: fontRegular,
+          color: TEXT_LABEL,
+        },
+        "A-header-addr-1",
+      );
+      leftCursorY -= contactLineH;
+    }
+    if (addrLines[1]) {
+      drawTrackedText(
+        addrLines[1],
         {
           x: marginX,
           y: leftCursorY,
@@ -944,7 +1039,9 @@ async function renderDocumentPdfInternal(
     }
 
     // 4c. Email
-    const emailVal = spec.company.email ? `Email : ${spec.company.email}` : "Email : -";
+    const emailVal = spec.company.email
+      ? `Email : ${spec.company.email}`
+      : "Email : -";
     drawTrackedText(
       emailVal,
       {
@@ -958,14 +1055,15 @@ async function renderDocumentPdfInternal(
     );
     leftCursorY -= contactLineH;
 
-    // 4d. Telepon (baris kedua dari bawah)
-    const telpBaselineY = leftCursorY;
-    const phoneVal = spec.company.phone ? `Telp. : ${spec.company.phone}` : "Telp. : -";
+    // 4d. Telepon
+    const phoneVal = spec.company.phone
+      ? `Telp. : ${spec.company.phone}`
+      : "Telp. : -";
     drawTrackedText(
       phoneVal,
       {
         x: marginX,
-        y: telpBaselineY,
+        y: leftCursorY,
         size: contactSize,
         font: fontRegular,
         color: TEXT_LABEL,
@@ -974,7 +1072,7 @@ async function renderDocumentPdfInternal(
     );
     leftCursorY -= contactLineH;
 
-    // 4e. NPWP (baris terakhir)
+    // 4e. NPWP
     const npwpBaselineY = leftCursorY;
     const npwpVal = spec.company.tax_id_number?.trim()
       ? `NPWP : ${spec.company.tax_id_number.trim()}`
@@ -992,18 +1090,22 @@ async function renderDocumentPdfInternal(
     );
     leftCursorY -= contactLineH;
 
-    // 5. Blok No & Ref di Kanan (sejajar Telp. & NPWP)
+    // 5. Blok No & Ref di Kanan (sejajar baseline dengan Nama Badan Usaha & Baris Pertama Alamat)
     const verSuffix = spec.docVersion
       ? ` · ${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion}`
       : "";
-    const noClean = spec.docNumber?.trim() ? `${spec.docNumber.trim()}${verSuffix}` : "-";
+    const noClean = spec.docNumber?.trim()
+      ? `${spec.docNumber.trim()}${verSuffix}`
+      : "-";
     const noStr = `No : ${noClean}`;
     const refClean = spec.refDocNumber?.trim() ? spec.refDocNumber.trim() : "-";
     const refStr = `Ref : ${refClean}`;
 
-    const numSize = PDF_LAYOUT_TOKENS.fontSizes.docNumber; // 8.5 pt
-    const noW = fontRegular.widthOfTextAtSize(noStr, numSize);
-    const refW = fontRegular.widthOfTextAtSize(refStr, numSize);
+    const noBaselineY = legalNameBaselineY;
+    const refBaselineY = addrLine1BaselineY;
+
+    const noW = fontRegular.widthOfTextAtSize(noStr, contactSize);
+    const refW = fontRegular.widthOfTextAtSize(refStr, contactSize);
     const maxBlockW = Math.max(noW, refW);
     const noRefStartX = rightEdgeX - maxBlockW;
 
@@ -1011,25 +1113,38 @@ async function renderDocumentPdfInternal(
       noStr,
       {
         x: noRefStartX,
-        y: telpBaselineY,
-        size: numSize,
+        y: noBaselineY,
+        size: contactSize,
         font: fontRegular,
         color: TEXT_DARK,
       },
-      "A-header-right",
+      "A-header-right-no",
     );
 
     drawTrackedText(
       refStr,
       {
         x: noRefStartX,
-        y: npwpBaselineY,
-        size: numSize,
+        y: refBaselineY,
+        size: contactSize,
         font: fontRegular,
         color: TEXT_DARK,
       },
-      "A-header-right",
+      "A-header-right-ref",
     );
+
+    // Simpan metrik penjajaran header untuk automated alignment verifier
+    headerAlignment = {
+      legalNameBaselineY,
+      noBaselineY,
+      addrLine1BaselineY,
+      refBaselineY,
+      iconInkHeight,
+      wordmarkInkHeight,
+      deltaNoVsLegalName: Math.abs(noBaselineY - legalNameBaselineY),
+      deltaRefVsAddr1: Math.abs(refBaselineY - addrLine1BaselineY),
+      deltaIconVsWordmarkInk: Math.abs(iconInkHeight - wordmarkInkHeight),
+    };
 
     // 6. Garis pemisah horizontal di bawah header (0.75 pt #e5e7eb)
     const separatorLineY = npwpBaselineY - 7;
@@ -2254,6 +2369,7 @@ async function renderDocumentPdfInternal(
     pdfBytes,
     pageCount: pages.length,
     textBoxes,
+    headerAlignment,
   };
 }
 
@@ -2275,7 +2391,7 @@ export async function generateDocumentPdf(
 export async function inspectPdfDocumentLayout(
   spec: PdfDocumentSpec,
 ): Promise<PdfLayoutInspectionResult> {
-  const { pdfBytes, pageCount, textBoxes } =
+  const { pdfBytes, pageCount, textBoxes, headerAlignment } =
     await renderDocumentPdfInternal(spec);
   const collisions: PdfCollisionIssue[] = [];
   const marginViolations: PdfMarginIssue[] = [];
@@ -2349,6 +2465,7 @@ export async function inspectPdfDocumentLayout(
     textBoxes,
     collisions,
     marginViolations,
+    headerAlignment,
   };
 }
 
