@@ -1735,7 +1735,7 @@ export function downloadPdfBytes(bytes: Uint8Array, fileName: string): void {
 }
 
 /**
- * Helper pembuat spesifikasi PDF/Word Invoice Penagihan sesuai PRD Lampiran A.5 + Referensi Altvira Invoice.
+ * Helper pembuat spesifikasi PDF/Word Invoice Penagihan sesuai PRD Lampiran A.5 + Standar Dokumen Altvira.
  */
 export function buildInvoicePdfSpec(params: {
   company: CompanyProfileRow;
@@ -1751,23 +1751,196 @@ export function buildInvoicePdfSpec(params: {
   clientPoNumber: string;
   description: string;
   qty?: number;
+  unit?: string;
+  unitPrice?: number;
   subtotal: number;
   ppnAmount: number;
   totalAmount: number;
+  spkNumber?: string | null;
+  bakpNumber?: string | null;
+  bastNumber?: string | null;
+  servicePeriod?: string | null;
+  items?: Array<{
+    description: string;
+    qty: number;
+    unit?: string;
+    unitPrice: number;
+    duration?: string;
+    subtotal: number;
+  }>;
+  contractValue?: number | null;
+  previousBilledAmount?: number | null;
+  remainingContractAmount?: number | null;
+  includePph23Estimate?: boolean;
+  paymentTermsText?: string | null;
+  overdueClauseText?: string | null;
+  docStatus?: InvoiceDocStatus | "draft" | "issued" | "paid" | "cancelled";
+  paymentStatus?: InvoicePaymentStatus;
+  balanceDue?: number;
+  statusBadge?: {
+    text: string;
+    variant?: DocStatusVariant;
+  };
 }): PdfDocumentSpec {
   const nonPkpNote = params.company.pkp_enabled
-    ? `PPN (${params.company.ppn_rate}%) telah diperhitungkan sebesar ${formatRupiah(params.ppnAmount)}.`
+    ? `PPN (${params.company.ppn_rate}%) telah diperhitungkan sebesar ${formatDocRupiah(params.ppnAmount)}.`
     : "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).";
 
   const picDisplay = params.customerPic
     ? `${params.customerPic}${params.customerTitle ? ` (${params.customerTitle})` : ""}`
     : null;
 
+  const dueAmount =
+    params.balanceDue !== undefined ? params.balanceDue : params.totalAmount;
+
+  // Status badge logic
+  const statusBadge =
+    params.statusBadge ??
+    (params.paymentStatus === "paid"
+      ? { text: "LUNAS", variant: "success" as const }
+      : params.docStatus === "cancelled"
+        ? { text: "DIBATALKAN", variant: "danger" as const }
+        : params.docStatus === "draft"
+          ? { text: "DRAFT", variant: "neutral" as const }
+          : { text: "TERBIT", variant: "info" as const });
+
+  // Tabel rincian item: dukung multi-item dan single-item
+  let tableColumns: PdfTableColumn[];
+  let tableRows: string[][];
+
+  if (params.items && params.items.length > 0) {
+    const hasDuration = params.items.some((it) => Boolean(it.duration));
+    if (hasDuration) {
+      tableColumns = [
+        { header: "No", widthRatio: 0.06, align: "center" },
+        { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.38 },
+        { header: "Kuantitas", widthRatio: 0.14, align: "center" },
+        { header: "Durasi", widthRatio: 0.12, align: "center" },
+        { header: "Harga Satuan", widthRatio: 0.15, align: "right" },
+        { header: "Subtotal (IDR)", widthRatio: 0.15, align: "right" },
+      ];
+      tableRows = params.items.map((it, idx) => [
+        String(idx + 1),
+        it.description,
+        `${it.qty} ${it.unit ?? "Paket"}`,
+        it.duration ?? formatDocEmpty(),
+        formatDocRupiah(it.unitPrice),
+        formatDocRupiah(it.subtotal),
+      ]);
+    } else {
+      tableColumns = [
+        { header: "No", widthRatio: 0.08, align: "center" },
+        { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.44 },
+        { header: "Kuantitas", widthRatio: 0.16, align: "center" },
+        { header: "Harga Satuan", widthRatio: 0.16, align: "right" },
+        { header: "Subtotal (IDR)", widthRatio: 0.16, align: "right" },
+      ];
+      tableRows = params.items.map((it, idx) => [
+        String(idx + 1),
+        it.description,
+        `${it.qty} ${it.unit ?? "Paket"}`,
+        formatDocRupiah(it.unitPrice),
+        formatDocRupiah(it.subtotal),
+      ]);
+    }
+  } else {
+    const qty = params.qty ?? 1;
+    const unitPrice =
+      params.unitPrice ?? Math.round(params.subtotal / Math.max(1, qty));
+    tableColumns = [
+      { header: "No", widthRatio: 0.08, align: "center" },
+      { header: "Deskripsi Layanan / Pekerjaan", widthRatio: 0.44 },
+      { header: "Kuantitas", widthRatio: 0.16, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.16, align: "right" },
+      { header: "Subtotal (IDR)", widthRatio: 0.16, align: "right" },
+    ];
+    tableRows = [
+      [
+        "1",
+        params.description,
+        `${qty} ${params.unit ?? "Paket"}`,
+        formatDocRupiah(unitPrice),
+        formatDocRupiah(params.subtotal),
+      ],
+    ];
+  }
+
+  // Akumulasi termin dan estimasi PPh 23
+  const summaryRows: PdfKeyValue[] = [
+    { label: "Subtotal Tagihan", value: formatDocRupiah(params.subtotal) },
+    ...(params.company.pkp_enabled
+      ? [
+          {
+            label: `PPN (${params.company.ppn_rate}%)`,
+            value: formatDocRupiah(params.ppnAmount),
+          },
+        ]
+      : []),
+    { label: "Total Tagihan Invoice", value: formatDocRupiah(params.totalAmount) },
+  ];
+
+  if (params.contractValue && params.contractValue > 0) {
+    const prevBilled = params.previousBilledAmount ?? 0;
+    const remaining =
+      params.remainingContractAmount !== undefined &&
+      params.remainingContractAmount !== null
+        ? params.remainingContractAmount
+        : Math.max(0, params.contractValue - (prevBilled + params.subtotal));
+
+    summaryRows.push(
+      {
+        label: "Total Nilai Kontrak Proyek",
+        value: formatDocRupiah(params.contractValue),
+      },
+      {
+        label: "Akumulasi Tagihan Sebelumnya",
+        value: formatDocRupiah(prevBilled),
+      },
+      {
+        label: "Tagihan Termin Berjalan",
+        value: formatDocRupiah(params.subtotal),
+      },
+      {
+        label: "Sisa Nilai Kontrak",
+        value: formatDocRupiah(remaining),
+      },
+    );
+  }
+
+  if (params.includePph23Estimate) {
+    const pph23Est = Math.round(params.subtotal * 0.02);
+    const netEst = Math.max(0, params.totalAmount - pph23Est);
+    summaryRows.push(
+      {
+        label: "Estimasi Potongan PPh 23 (2%)",
+        value: formatDocRupiah(pph23Est),
+      },
+      {
+        label: "Estimasi Kas Neto Diterima",
+        value: formatDocRupiah(netEst),
+      },
+    );
+  }
+
   return {
-    docTitle: "INVOICE PENAGIHAN",
-    docSubtitle: `Please pay by: ${formatDateID(params.dueDate)}`,
+    docTitle: "INVOICE",
+    docSubtitle: params.company.pkp_enabled
+      ? undefined
+      : "DOKUMEN TAGIHAN RESMI (NON-PKP)",
     docNumber: params.invoiceNumber,
     docDate: params.invoiceDate,
+    statusBadge,
+    balanceDueBox: {
+      label:
+        dueAmount === 0
+          ? "STATUS TAGIHAN"
+          : "TOTAL TAGIHAN JATUH TEMPO",
+      amountText: dueAmount === 0 ? "LUNAS" : formatDocRupiah(dueAmount),
+      dueDateText:
+        dueAmount === 0
+          ? "Lunas Sepenuhnya"
+          : `Jatuh Tempo: ${formatDocDateLong(params.dueDate)}`,
+    },
     company: params.company,
     clientLogoUrl: params.customerLogoUrl ?? null,
     recipientTitle: "Bill To / Ditagihkan Kepada:",
@@ -1779,44 +1952,45 @@ export function buildInvoicePdfSpec(params: {
     metaRows: [
       { label: "Proyek", value: params.projectName },
       { label: "Referensi PO Klien", value: params.clientPoNumber },
-      { label: "Please Pay By (Jatuh Tempo)", value: formatDateID(params.dueDate) },
-    ],
-    tableColumns: [
-      { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Description", widthRatio: 0.54 },
-      { header: "Qty", widthRatio: 0.1, align: "center" },
-      { header: "Total (IDR)", widthRatio: 0.28, align: "right" },
-    ],
-    tableRows: [
-      [
-        "1",
-        params.description,
-        String(params.qty ?? 1),
-        formatRupiah(params.subtotal),
-      ],
-    ],
-    summaryRows: [
-      { label: "Subtotal", value: formatRupiah(params.subtotal) },
-      ...(params.company.pkp_enabled
-        ? [{ label: "PPN", value: formatRupiah(params.ppnAmount) }]
+      ...(params.spkNumber
+        ? [{ label: "Referensi SPK / Kontrak", value: params.spkNumber }]
         : []),
-      { label: "Total Amount", value: formatRupiah(params.totalAmount) },
+      ...(params.bakpNumber
+        ? [{ label: "Referensi BAKP Acuan", value: params.bakpNumber }]
+        : []),
+      ...(params.bastNumber
+        ? [{ label: "Referensi BAST Acuan", value: params.bastNumber }]
+        : []),
+      ...(params.servicePeriod
+        ? [{ label: "Periode Layanan", value: params.servicePeriod }]
+        : []),
+      {
+        label: "Tanggal Jatuh Tempo",
+        value: formatDocDateLong(params.dueDate),
+      },
     ],
+    tableColumns,
+    tableRows,
+    summaryRows,
     terbilangAmount: params.totalAmount,
     notes: [
-      `Payable to: ${params.company.bank_account_holder} | Account: ${params.company.bank_account_number} | Bank Name: ${params.company.bank_name}`,
+      `Instruksi Pembayaran: Bank ${params.company.bank_name} | No. Rek: ${params.company.bank_account_number} | a.n. ${params.company.bank_account_holder}.`,
+      `Mohon cantumkan nomor invoice (${params.invoiceNumber}) pada berita transfer pembayaran bank.`,
+      `Syarat Pembayaran: Jatuh tempo pembayaran pada tanggal ${formatDocDateLong(params.dueDate)}. ${params.paymentTermsText ?? ""}`.trim(),
+      `Klausul Keterlambatan: ${params.overdueClauseText ?? "Keterlambatan pembayaran setelah tanggal jatuh tempo dapat mengakibatkan penangguhan sementara operasional layanan dan/atau penyesuaian jadwal pelaksanaan sesuai perjanjian kerja sama."}`,
       nonPkpNote,
-      "Mohon cantumkan nomor invoice pada berita transfer pembayaran.",
+      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
-    rightSignatureLabel: `Finance of ${params.company.company_name}`,
+    rightSignatureLabel: `Hormat kami, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
-    closingNote: "Thank You for Your Purchase",
+    footerDocNumber: params.invoiceNumber,
+    closingNote: "Thank You for Your Business",
   };
 }
 
 /**
- * Helper pembuat spesifikasi PDF/Word Kuitansi Bukti Pembayaran sesuai PRD Lampiran A.6.
+ * Helper pembuat spesifikasi PDF/Word Kuitansi Bukti Pembayaran sesuai PRD Lampiran A.6 + Standar Dokumen Altvira.
  */
 export function buildReceiptPdfSpec(params: {
   company: CompanyProfileRow;
@@ -1826,11 +2000,30 @@ export function buildReceiptPdfSpec(params: {
   invoiceNumber: string;
   projectName: string;
   amount: number;
+  clientPoNumber?: string | null;
+  servicePeriod?: string | null;
+  paymentMethod?: string | null;
+  hasMeterai?: boolean;
 }): PdfDocumentSpec {
+  const needsMeterai =
+    params.hasMeterai !== undefined
+      ? params.hasMeterai
+      : params.amount > 5_000_000;
+
   return {
-    docTitle: "KUITANSI BUKTI PEMBAYARAN",
+    docTitle: "KUITANSI",
+    docSubtitle: "BUKTI PENERIMAAN PEMBAYARAN RESMI",
     docNumber: params.receiptNumber,
     docDate: params.receiptDate,
+    statusBadge: {
+      text: "LUNAS",
+      variant: "success",
+    },
+    balanceDueBox: {
+      label: "STATUS PEMBAYARAN: LUNAS",
+      amountText: formatDocRupiah(params.amount),
+      dueDateText: `Diterima Pada: ${formatDocDateLong(params.receiptDate)}`,
+    },
     company: params.company,
     metaRows: [
       { label: "Telah Terima Dari", value: params.receivedFrom },
@@ -1839,16 +2032,31 @@ export function buildReceiptPdfSpec(params: {
         value: `Pelunasan / Pembayaran Invoice ${params.invoiceNumber}`,
       },
       { label: "Nama Proyek", value: params.projectName },
-      { label: "Jumlah Diterima", value: formatRupiah(params.amount) },
+      ...(params.clientPoNumber
+        ? [{ label: "Referensi PO Klien", value: params.clientPoNumber }]
+        : []),
+      ...(params.servicePeriod
+        ? [{ label: "Periode Layanan", value: params.servicePeriod }]
+        : []),
+      ...(params.paymentMethod
+        ? [{ label: "Metode / Rekening", value: params.paymentMethod }]
+        : []),
+      { label: "Jumlah Pembayaran", value: formatDocRupiah(params.amount) },
     ],
     terbilangAmount: params.amount,
+    hasMeterai: needsMeterai,
+    meteraiLabel: "TEMPAT E-METERAI Rp10.000",
     notes: [
-      "Bea meterai dikenakan sesuai ketentuan peraturan perundang-undangan yang berlaku.",
-      "Kuitansi ini sah diterbitkan setelah dana tercatat masuk ke rekening resmi perusahaan.",
+      "Kuitansi ini merupakan bukti penerimaan pembayaran yang sah dan mengikat atas tagihan invoice terkait.",
+      needsMeterai
+        ? "Bea meterai Rp10.000 telah diperhitungkan sesuai UU No. 10 Tahun 2020 tentang Bea Meterai."
+        : "Nilai pembayaran di bawah batas pengenaan bea meterai sesuai UU No. 10 Tahun 2020.",
+      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
     rightSignatureLabel: `Penerima, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    footerDocNumber: params.receiptNumber,
   };
 }
 

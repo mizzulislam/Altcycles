@@ -6,7 +6,11 @@ import {
 } from "@/lib/accounting-engine";
 import { DEMO_ACCOUNTS, DEMO_COMPANY, DEMO_PROJECTS } from "@/lib/demo-seed";
 import { createExcelBlob } from "@/lib/excel-exporter";
-import { buildInvoicePdfSpec, generateDocumentPdf } from "@/lib/pdf-generator";
+import {
+  buildInvoicePdfSpec,
+  buildReceiptPdfSpec,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
 import { generateDocumentWord } from "@/lib/word-generator";
 import type { JournalLineRow, JournalRow } from "@/types/database.types";
 
@@ -193,6 +197,99 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     const wordBlob = await generateDocumentWord(spec);
     expect(wordBlob.size).toBeGreaterThan(1000);
     expect(wordBlob.type).toBe("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  });
+
+  it("Langkah 3: menghasilkan spesifikasi INVOICE standar dengan rujukan dokumen induk, riwayat termin, dan estimasi PPh 23", async () => {
+    const invSpec = buildInvoicePdfSpec({
+      company: DEMO_COMPANY,
+      invoiceNumber: "INV/ALT/2026/11/001",
+      invoiceDate: "2026-11-01",
+      dueDate: "2026-11-15",
+      customerName: "PT Sinar Niaga Digital",
+      customerAddress: "Jakarta Barat",
+      projectName: "Portal Distribusi B2B",
+      clientPoNumber: "PO-202611-AB3K9M",
+      spkNumber: "SPK/ALT/2026/10/001",
+      bakpNumber: "BAKP/ALT/2026/11/001",
+      servicePeriod: "01 November 2026 s/d 15 November 2026",
+      description: "Termin 1 (DP 25%) Pengembangan Portal",
+      items: [
+        {
+          description: "Pengembangan Modul Autentikasi & Dashboard",
+          qty: 1,
+          unit: "Paket",
+          duration: "14 Hari",
+          unitPrice: 30_000_000,
+          subtotal: 30_000_000,
+        },
+      ],
+      subtotal: 30_000_000,
+      ppnAmount: 0,
+      totalAmount: 30_000_000,
+      contractValue: 120_000_000,
+      previousBilledAmount: 0,
+      remainingContractAmount: 90_000_000,
+      includePph23Estimate: true,
+      paymentStatus: "unpaid",
+      docStatus: "issued",
+      balanceDue: 30_000_000,
+    });
+
+    // Validasi Butir 1.2: Judul dokumen INVOICE
+    expect(invSpec.docTitle).toBe("INVOICE");
+    // Validasi Butir 1.5 & 1.6: Rujukan SPK, BAKP, Periode Layanan
+    expect(invSpec.metaRows.some((r) => r.label === "Referensi SPK / Kontrak")).toBe(true);
+    expect(invSpec.metaRows.some((r) => r.label === "Referensi BAKP Acuan")).toBe(true);
+    expect(invSpec.metaRows.some((r) => r.label === "Periode Layanan")).toBe(true);
+    // Validasi Butir 1.11: Akumulasi termin dan sisa kontrak
+    expect(invSpec.summaryRows.some((r) => r.label === "Total Nilai Kontrak Proyek")).toBe(true);
+    expect(invSpec.summaryRows.some((r) => r.label === "Sisa Nilai Kontrak")).toBe(true);
+    // Validasi Butir 1.16: Estimasi PPh 23
+    expect(invSpec.summaryRows.some((r) => r.label === "Estimasi Potongan PPh 23 (2%)")).toBe(true);
+
+    const pdfBytes = await generateDocumentPdf(invSpec);
+    expect(pdfBytes.byteLength).toBeGreaterThan(1000);
+    const wordBlob = await generateDocumentWord(invSpec);
+    expect(wordBlob.size).toBeGreaterThan(1000);
+  });
+
+  it("Langkah 3: menghasilkan spesifikasi KUITANSI berpasangan dengan aktivasi e-meterai otomatis (> Rp5 juta)", async () => {
+    // Kuitansi > 5 juta => hasMeterai: true (Butir 2.6)
+    const receiptOver5M = buildReceiptPdfSpec({
+      company: DEMO_COMPANY,
+      receiptNumber: "KW/ALT/2026/11/001",
+      receiptDate: "2026-11-07",
+      receivedFrom: "PT Sinar Niaga Digital",
+      invoiceNumber: "INV/ALT/2026/11/001",
+      projectName: "Portal Distribusi B2B",
+      clientPoNumber: "PO-202611-AB3K9M",
+      servicePeriod: "Termin 1",
+      paymentMethod: "Transfer Bank Mandiri",
+      amount: 30_000_000,
+    });
+
+    expect(receiptOver5M.docTitle).toBe("KUITANSI");
+    expect(receiptOver5M.hasMeterai).toBe(true);
+    expect(receiptOver5M.meteraiLabel).toContain("Rp10.000");
+    expect(receiptOver5M.metaRows.some((r) => r.label === "Referensi PO Klien")).toBe(true);
+
+    const pdfOver5M = await generateDocumentPdf(receiptOver5M);
+    expect(pdfOver5M.byteLength).toBeGreaterThan(1000);
+
+    // Kuitansi <= 5 juta => hasMeterai: false (tidak kena bea meterai)
+    const receiptUnder5M = buildReceiptPdfSpec({
+      company: DEMO_COMPANY,
+      receiptNumber: "KW/ALT/2026/11/002",
+      receiptDate: "2026-11-08",
+      receivedFrom: "PT Sinar Niaga Digital",
+      invoiceNumber: "INV/ALT/2026/11/002",
+      projectName: "Portal Distribusi B2B",
+      amount: 4_500_000,
+    });
+
+    expect(receiptUnder5M.hasMeterai).toBe(false);
+    const pdfUnder5M = await generateDocumentPdf(receiptUnder5M);
+    expect(pdfUnder5M.byteLength).toBeGreaterThan(1000);
   });
 });
 
