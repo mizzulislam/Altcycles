@@ -88,6 +88,9 @@ import {
 } from "@/lib/data-service";
 import {
   formatDateID,
+  formatDocDateLong,
+  formatDocEmpty,
+  formatDocRupiah,
   formatRupiah,
   roundRupiah,
 } from "@/lib/formatters";
@@ -126,6 +129,7 @@ import {
   downloadPdfBytes,
   generateDocumentPdf,
   generateSpkProjectCharterPdf,
+  type DocStatusVariant,
   type PdfDocumentSpec,
 } from "@/lib/pdf-generator";
 import {
@@ -588,11 +592,34 @@ export function ProjectDetailPage() {
     const qItems = bundle.quotationItems.filter(
       (i) => i.quotation_id === qt.id,
     );
+    const statusText =
+      qt.status === "approved"
+        ? "DISETUJUI"
+        : qt.status === "sent"
+          ? "TERKIRIM"
+          : qt.status === "rejected"
+            ? "DITOLAK"
+            : "DRAF";
+    const statusTone: DocStatusVariant =
+      qt.status === "approved"
+        ? "success"
+        : qt.status === "sent"
+          ? "info"
+          : qt.status === "rejected"
+            ? "danger"
+            : "neutral";
+
     return {
       docTitle: "SURAT PENAWARAN HARGA (QUOTATION)",
-      docSubtitle: `Berlaku s.d. ${formatDateID(qt.valid_until)}`,
+      docSubtitle: `Masa Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
       docNumber: qt.quotation_number,
       docDate: qt.quotation_date,
+      statusBadge: { text: statusText, variant: statusTone },
+      balanceDueBox: {
+        label: "TOTAL PENAWARAN HARGA",
+        amountText: formatDocRupiah(qt.total_amount),
+        dueDateText: `Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
+      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Kepada Yth.:",
@@ -603,34 +630,39 @@ export function ProjectDetailPage() {
       ],
       metaRows: [
         { label: "Judul Proyek", value: qt.project_title },
-        { label: "Estimasi Durasi", value: `${qt.estimated_weeks} Minggu` },
-        { label: "Batas Revisi Desain/Fitur", value: `${qt.revision_limit}x Revisi` },
+        { label: "Estimasi Durasi", value: `${qt.estimated_weeks} Minggu Kalender` },
+        { label: "Batas Revisi", value: `${qt.revision_limit}x Sesi Revisi` },
+        { label: "Tanggal Penawaran", value: formatDocDateLong(qt.quotation_date) },
+        { label: "Masa Berlaku", value: formatDocDateLong(qt.valid_until) },
       ],
       paragraphsBefore: qt.client_need_summary
-        ? [`Ringkasan Kebutuhan: ${qt.client_need_summary}`]
+        ? [`Ringkasan Kebutuhan Proyek: ${qt.client_need_summary}`]
         : undefined,
       tableColumns: [
         { header: "No", widthRatio: 0.08, align: "center" },
-        { header: "Modul / Fitur Pekerjaan", widthRatio: 0.62 },
+        { header: "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
         { header: "Biaya (IDR)", widthRatio: 0.3, align: "right" },
       ],
       tableRows: qItems.map((it, idx) => [
         String(idx + 1),
         `${it.feature_name}${it.description ? ` - ${it.description}` : ""}`,
-        formatRupiah(it.cost_amount),
+        formatDocRupiah(it.cost_amount),
       ]),
       summaryRows: [
-        { label: "TOTAL PENAWARAN", value: formatRupiah(qt.total_amount) },
+        { label: "TOTAL PENAWARAN HARGA", value: formatDocRupiah(qt.total_amount) },
       ],
       terbilangAmount: qt.total_amount,
       notes: [
         company.pkp_enabled
           ? `Harga belum termasuk PPN ${company.ppn_rate}%.`
-          : "Harga tidak dikenakan PPN karena Altvira Technology belum dikukuhkan sebagai PKP.",
-        "Penawaran ini sah sebagai referensi penerbitan Purchase Order (PO) Klien.",
+          : "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).",
+        "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
+        "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
+      rightSignatureLabel: `Hormat kami, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: qt.quotation_number,
     };
   }
 
@@ -658,13 +690,24 @@ export function ProjectDetailPage() {
       "summary" in doc.content_json
         ? String((doc.content_json as Record<string, unknown>).summary ?? "")
         : "";
+    const cpo = bundle?.clientPos.find((c) => c.project_id === project.id);
     return {
       docTitle:
         doc.doc_type === "SOW"
-          ? "STATEMENT OF WORK (RUANG LINGKUP PEKERJAAN)"
-          : "SURAT PERINTAH KERJA / PERJANJIAN JASA (SPK)",
+          ? "STATEMENT OF WORK (SOW)"
+          : "SURAT PERINTAH KERJA (SPK)",
+      docSubtitle: "RUANG LINGKUP PEKERJAAN & KRITERIA PENERIMAAN",
       docNumber: doc.doc_number,
       docDate: doc.created_at.slice(0, 10),
+      statusBadge: {
+        text: doc.is_signed ? "DISETUJUI SAH" : "DRAF REVIEW",
+        variant: doc.is_signed ? "success" : "neutral",
+      },
+      balanceDueBox: {
+        label: "NILAI KONTRAK PEKERJAAN",
+        amountText: formatDocRupiah(project.contract_value),
+        dueDateText: `Target Selesai: ${formatDocDateLong(project.end_date ?? doc.created_at.slice(0, 10))}`,
+      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
       recipientTitle: "Pihak Klien (Pemberi Kerja):",
@@ -675,15 +718,17 @@ export function ProjectDetailPage() {
       ],
       metaRows: [
         { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
-        { label: "Nilai Kontrak Disepakati", value: formatRupiah(project.contract_value) },
+        ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
+        { label: "Nilai Kontrak Disepakati", value: formatDocRupiah(project.contract_value) },
+        { label: "Tanggal Dokumen", value: formatDocDateLong(doc.created_at.slice(0, 10)) },
         {
-          label: "Status Tanda Tangan",
+          label: "Status Pengesahan",
           value: doc.is_signed ? "Telah Ditandatangani Kedua Pihak" : "Draf Review",
         },
       ],
       paragraphsBefore: [
         summaryText ||
-          `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin proyek ${project.name}.`,
+          `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin pelaksanaan pekerjaan proyek ${project.name}.`,
       ],
       leftSignatureLabel: "Disetujui Pihak Klien,",
       leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
@@ -691,6 +736,7 @@ export function ProjectDetailPage() {
       rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: doc.doc_number,
     };
   }
 
@@ -743,27 +789,78 @@ export function ProjectDetailPage() {
   function makeBakpSpec(bakp: ProgressReportRow): PdfDocumentSpec | null {
     if (!company || !project || !bundle) return null;
     const ms = bundle.milestones.find((m) => m.id === bakp.milestone_id);
+    const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
+    const spkDoc = bundle.documents.find(
+      (d) => d.project_id === project.id && d.doc_type === "SPK",
+    );
+
+    const deliverables = Array.isArray(bakp.deliverables_json)
+      ? bakp.deliverables_json
+      : [];
+
     return {
       docTitle: "BERITA ACARA KEMAJUAN PEKERJAAN (BAKP)",
+      docSubtitle: "BUKTI CAPAIAN PROGRES TERMIN PEKERJAAN",
       docNumber: bakp.bakp_number,
       docDate: bakp.bakp_date,
+      statusBadge: {
+        text:
+          bakp.status === "approved_by_client"
+            ? "DISETUJUI KLIEN"
+            : bakp.status === "submitted"
+              ? "DIAJUKAN"
+              : "DRAF",
+        variant: bakp.status === "approved_by_client" ? "success" : "neutral",
+      },
+      balanceDueBox: {
+        label: "NILAI TAGIHAN TERMIN",
+        amountText: formatDocRupiah(bakp.billable_amount),
+        dueDateText: `Kemajuan Fisik Kumulatif: ${bakp.cumulative_percentage}%`,
+      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
+      recipientTitle: "Pihak Klien (Pemberi Kerja):",
+      recipientLines: [
+        customer?.company_name ?? customer?.name ?? "Klien",
+        ...(customer?.contact_person ? [customer.contact_person] : []),
+        customer?.address ?? "-",
+      ],
       metaRows: [
         { label: "Proyek", value: `${project.code} - ${project.name}` },
+        ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
+        ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
         { label: "Termin Terkait", value: ms?.name ?? "-" },
         { label: "Capaian Kumulatif", value: `${bakp.cumulative_percentage}%` },
-        { label: "Nilai Tagihan Termin", value: formatRupiah(bakp.billable_amount) },
+        { label: "Nilai Tagihan Termin", value: formatDocRupiah(bakp.billable_amount) },
+        { label: "Tanggal Evaluasi", value: formatDocDateLong(bakp.bakp_date) },
       ],
       paragraphsBefore: [
         bakp.findings_notes ||
-          "Pekerjaan pada tahapan ini telah diperiksa bersama dan dinyatakan memenuhi kriteria pencapaian termin untuk dasar penagihan invoice.",
+          `Pada tanggal ${formatDocDateLong(bakp.bakp_date)}, telah dilakukan pemeriksaan bersama atas pencapaian pekerjaan termin ${ms?.name ?? ""} proyek ${project.name} dengan capaian fisik kumulatif sebesar ${bakp.cumulative_percentage}%. Hasil pemeriksaan dinyatakan memenuhi syarat dan dapat ditagihkan melalui Invoice Termin resmi.`,
       ],
-      leftSignatureLabel: "Disetujui Klien,",
-      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Klien",
+      tableColumns:
+        deliverables.length > 0
+          ? [
+              { header: "No", widthRatio: 0.1, align: "center" },
+              { header: "Deliverable / Komponen Pekerjaan", widthRatio: 0.65 },
+              { header: "Status Capaian", widthRatio: 0.25, align: "center" },
+            ]
+          : undefined,
+      tableRows:
+        deliverables.length > 0
+          ? deliverables.map((d, i) => [String(i + 1), d.name, d.status])
+          : undefined,
+      notes: [
+        "Dokumen Berita Acara Kemajuan Pekerjaan (BAKP) ini sah sebagai dasar penagihan Invoice Termin.",
+        "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+      ],
+      leftSignatureLabel: "Disetujui Pihak Klien,",
+      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+      rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: bakp.bakp_number,
     };
   }
 
@@ -784,36 +881,85 @@ export function ProjectDetailPage() {
   function makeUatSpec(uat: UatChecklistRow): PdfDocumentSpec | null {
     if (!company || !project || !bundle) return null;
     const items = bundle.uatItems.filter((i) => i.uat_id === uat.id);
+    const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
+    const spkDoc = bundle.documents.find(
+      (d) => d.project_id === project.id && d.doc_type === "SPK",
+    );
+
+    const conclusionLabel =
+      uat.conclusion === "pass"
+        ? "LULUS / SESUAI (PASS)"
+        : uat.conclusion === "conditional_pass"
+          ? "LULUS BERSYARAT (CONDITIONAL)"
+          : "PERLU REVISI (FAIL)";
+
+    const conclusionTone: DocStatusVariant =
+      uat.conclusion === "pass"
+        ? "success"
+        : uat.conclusion === "conditional_pass"
+          ? "warning"
+          : "danger";
+
     return {
       docTitle: "USER ACCEPTANCE TEST (UAT) CHECKLIST",
+      docSubtitle: "BERITA ACARA PENGUJIAN PENERIMAAN PENGGUNA",
       docNumber: uat.uat_number,
       docDate: uat.test_date,
+      statusBadge: {
+        text: uat.conclusion.toUpperCase(),
+        variant: conclusionTone,
+      },
+      balanceDueBox: {
+        label: "KESIMPULAN PENGUJIAN UAT",
+        amountText: uat.conclusion === "pass" ? "LULUS 100%" : uat.conclusion.toUpperCase(),
+        dueDateText: `Tanggal Uji: ${formatDocDateLong(uat.test_date)}`,
+      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
+      recipientTitle: "Pihak Penguji (Klien):",
+      recipientLines: [
+        customer?.company_name ?? customer?.name ?? "Klien",
+        `Penguji: ${uat.client_tester_name}`,
+        customer?.address ?? "-",
+      ],
       metaRows: [
         { label: "Proyek", value: `${project.code} - ${project.name}` },
-        { label: "Lingkungan Uji", value: uat.staging_url ?? "-" },
-        { label: "Penguji Klien", value: uat.client_tester_name },
+        ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
+        ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
+        { label: "Lingkungan Uji (Staging)", value: uat.staging_url ?? "-" },
+        { label: "Tanggal Pengujian", value: formatDocDateLong(uat.test_date) },
+        { label: "Penguji Pihak Klien", value: uat.client_tester_name },
         { label: "Pendamping Altvira", value: uat.altvira_companion_name },
-        { label: "Kesimpulan UAT", value: uat.conclusion.toUpperCase() },
+        { label: "Kesimpulan UAT", value: conclusionLabel },
+      ],
+      paragraphsBefore: [
+        `Pengujian User Acceptance Test (UAT) untuk proyek ${project.name} telah dilaksanakan bersama pada lingkungan ${uat.staging_url ?? "Staging"}. Seluruh skenario di bawah ini telah diuji dan diverifikasi langsung oleh perwakilan Klien.`,
       ],
       tableColumns: [
         { header: "No", widthRatio: 0.08, align: "center" },
-        { header: "Fitur", widthRatio: 0.32 },
+        { header: "Fitur / Modul", widthRatio: 0.32 },
         { header: "Skenario Uji", widthRatio: 0.44 },
-        { header: "Hasil", widthRatio: 0.16, align: "center" },
+        { header: "Hasil Pengujian", widthRatio: 0.16, align: "center" },
       ],
       tableRows: items.map((it) => [
         String(it.line_no),
         it.feature_name,
         it.test_scenario,
-        it.result === "pass" ? "SESUAI" : "REVISI",
+        it.result === "pass" ? "SESUAI" : it.result === "fail" ? "REVISI" : "PENDING",
       ]),
-      leftSignatureLabel: "Penguji Klien,",
+      notes: [
+        uat.conclusion === "pass"
+          ? "Seluruh skenario pengujian telah dinyatakan SESUAI oleh penguji klien dan siap dilanjutkan ke tahap serah terima (BAST)."
+          : "Terdapat catatan perbaikan yang harus diselesaikan oleh tim pengembang sebelum penandatanganan Berita Acara Serah Terima (BAST).",
+        "Dokumen UAT ini sah sebagai lampiran teknis Berita Acara Serah Terima (BAST).",
+      ],
+      leftSignatureLabel: "Penguji Pihak Klien,",
       leftSignatureName: uat.client_tester_name,
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+      rightSignatureLabel: "Pendamping Teknis Altvira,",
       rightSignatureName: uat.altvira_companion_name,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: uat.uat_number,
     };
   }
 
@@ -832,29 +978,81 @@ export function ProjectDetailPage() {
   }
 
   function makeBastSpec(bast: HandoverReportRow): PdfDocumentSpec | null {
-    if (!company || !project) return null;
+    if (!company || !project || !bundle) return null;
+    const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
+    const spkDoc = bundle.documents.find(
+      (d) => d.project_id === project.id && d.doc_type === "SPK",
+    );
+    const uatDoc = bundle.uatList.find((u) => u.id === bast.uat_id);
+    const handoverItems = Array.isArray(bast.handover_items_json)
+      ? bast.handover_items_json
+      : [];
+
     return {
-      docTitle: "BERITA ACARA SERAH TERIMA PEKERJAAN (BAST)",
+      docTitle: "BERITA ACARA SERAH TERIMA (BAST)",
+      docSubtitle: "SERAH TERIMA HASIL PEKERJAAN PENGEMBANGAN SISTEM",
       docNumber: bast.bast_number,
       docDate: bast.bast_date,
+      statusBadge: {
+        text: bast.status === "signed" ? "DITANDATANGANI SAH" : "DRAF",
+        variant: bast.status === "signed" ? "success" : "neutral",
+      },
+      balanceDueBox: {
+        label: "STATUS SERAH TERIMA PEKERJAAN",
+        amountText: "SELESAI 100%",
+        dueDateText: `Masa Garansi Bug-Fix: ${bast.warranty_days} Hari Kalender`,
+      },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
+      recipientTitle: "Pihak Klien (Pemberi Kerja):",
+      recipientLines: [
+        customer?.company_name ?? customer?.name ?? "Klien",
+        ...(customer?.contact_person ? [customer.contact_person] : []),
+        customer?.address ?? "-",
+      ],
       metaRows: [
         { label: "Proyek", value: `${project.code} - ${project.name}` },
+        ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
+        ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
+        ...(uatDoc ? [{ label: "Referensi Dokumen UAT", value: uatDoc.uat_number }] : []),
+        { label: "Tanggal Serah Terima", value: formatDocDateLong(bast.bast_date) },
         { label: "Masa Garansi Bug-Fix", value: `${bast.warranty_days} Hari Kalender` },
-        {
-          label: "Status Dokumen",
-          value: bast.status === "signed" ? "Ditandatangani Sah" : "Draf",
-        },
       ],
       paragraphsBefore: [
-        `Pada tanggal ${formatDateID(bast.bast_date)}, kedua belah pihak menyatakan bahwa seluruh ruang lingkup pengembangan perangkat lunak pada proyek ${project.name} telah selesai 100%, lulus pengujian UAT, dan diserahterimakan dengan baik.`,
+        `Pada hari ini, ${formatDocDateLong(bast.bast_date)}, telah dilakukan serah terima penyelesaian pekerjaan proyek ${project.name} antara PIHAK PERTAMA (${company.company_name}) dan PIHAK KEDUA (${customer?.company_name ?? customer?.name ?? "Pihak Klien"}).`,
+        `Kedua belah pihak menyatakan bahwa seluruh ruang lingkup pekerjaan pengembangan perangkat lunak telah diselesaikan 100%, seluruh item pengujian UAT telah disetujui, dan seluruh artefak hasil pekerjaan diserahkan dengan baik. Masa garansi bug-fix berlaku selama ${bast.warranty_days} hari kalender terhitung sejak tanggal dokumen ini ditandatangani.`,
+      ],
+      tableColumns:
+        handoverItems.length > 0
+          ? [
+              { header: "No", widthRatio: 0.08, align: "center" },
+              { header: "Objek / Komponen Serah Terima", widthRatio: 0.46 },
+              { header: "Format / Media", widthRatio: 0.22 },
+              { header: "Catatan Kelengkapan", widthRatio: 0.24 },
+            ]
+          : undefined,
+      tableRows:
+        handoverItems.length > 0
+          ? handoverItems.map((h, i) => [
+              String(i + 1),
+              h.item,
+              h.format,
+              h.note || formatDocEmpty(),
+            ])
+          : undefined,
+      hasMeterai: true,
+      meteraiLabel: "TEMPAT E-METERAI Rp10.000",
+      notes: [
+        "Berita Acara Serah Terima (BAST) ini merupakan dokumen sah penyelesaian pekerjaan dan menjadi syarat penerbitan Invoice Pelunasan.",
+        "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
       leftSignatureLabel: "Penerima Hasil Pekerjaan (Klien),",
-      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Klien",
+      leftSignatureName: customer?.contact_person ?? customer?.name ?? "Perwakilan Klien",
       leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+      rightSignatureLabel: `Pelaksana, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,
+      footerDocNumber: bast.bast_number,
     };
   }
 

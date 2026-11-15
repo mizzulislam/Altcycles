@@ -10,8 +10,13 @@ import {
   buildInvoicePdfSpec,
   buildReceiptPdfSpec,
   generateDocumentPdf,
+  generateSpkProjectCharterPdf,
 } from "@/lib/pdf-generator";
-import { generateDocumentWord } from "@/lib/word-generator";
+import {
+  generateDocumentWord,
+  generateSpkProjectCharterWord,
+} from "@/lib/word-generator";
+import { buildDefaultSpkContent } from "@/lib/spk-defaults";
 import type { JournalLineRow, JournalRow } from "@/types/database.types";
 
 describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xlsx)", () => {
@@ -290,6 +295,65 @@ describe("Mesin Laporan Keuangan, Generator PDF Lampiran A, & Ekspor Excel (.xls
     expect(receiptUnder5M.hasMeterai).toBe(false);
     const pdfUnder5M = await generateDocumentPdf(receiptUnder5M);
     expect(pdfUnder5M.byteLength).toBeGreaterThan(1000);
+  });
+
+  it("Langkah 4: menghasilkan dokumen SPK / Project Charter (PDF & Word) lengkap dengan slot e-meterai dan paraf footer", async () => {
+    const defaultSpk = buildDefaultSpkContent({
+      project: DEMO_PROJECTS[0],
+      customer: {
+        id: "cst-001",
+        name: "PT Sinar Niaga Digital",
+        company_name: "PT Sinar Niaga Digital",
+        address: "Jakarta Barat",
+        contact_person: "Budi Santoso",
+        contact_title: "Direktur Operasional",
+        email: "budi@sinarniaga.co.id",
+        phone: "08123456789",
+        tax_id: "01.234.567.8-012.000",
+        logo_storage_path: null,
+        signature_storage_path: null,
+        created_at: "2026-11-01",
+      },
+      company: DEMO_COMPANY,
+      milestones: [
+        {
+          id: "m1",
+          project_id: DEMO_PROJECTS[0].id,
+          sequence_no: 1,
+          name: "Termin 1 (DP)",
+          percentage: 25,
+          amount: 30_000_000,
+          is_down_payment: true,
+          is_final_settlement: false,
+          achievement_criteria: "Tandatangan SPK",
+          status: "pending",
+          created_at: "2026-11-01",
+        },
+      ],
+    });
+
+    const spkPdfBytes = await generateSpkProjectCharterPdf({
+      docNumber: "SPK/ALT/2026/11/001",
+      docDate: "2026-11-01",
+      docTitle: "SURAT PERINTAH KERJA (PROJECT CHARTER)",
+      company: DEMO_COMPANY,
+      content: defaultSpk,
+    });
+    expect(spkPdfBytes.byteLength).toBeGreaterThan(2000);
+    const spkPdfHeader = new TextDecoder().decode(spkPdfBytes.slice(0, 7));
+    expect(spkPdfHeader).toBe("%PDF-1.");
+
+    const spkWordBlob = await generateSpkProjectCharterWord({
+      docNumber: "SPK/ALT/2026/11/001",
+      docDate: "2026-11-01",
+      docTitle: "SURAT PERINTAH KERJA (PROJECT CHARTER)",
+      company: DEMO_COMPANY,
+      content: defaultSpk,
+    });
+    expect(spkWordBlob.size).toBeGreaterThan(2000);
+    expect(spkWordBlob.type).toBe(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
   });
 });
 

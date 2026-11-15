@@ -1386,7 +1386,7 @@ export async function generateSpkProjectCharterWord(params: {
         new TableRow({
           children: [
             new TableCell({
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: 38, type: WidthType.PERCENTAGE },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
@@ -1433,7 +1433,41 @@ export async function generateSpkProjectCharterWord(params: {
               ],
             }),
             new TableCell({
-              width: { size: 50, type: WidthType.PERCENTAGE },
+              width: { size: 24, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                bottom: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                left: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                right: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+              },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 60, after: 40 },
+                  children: [
+                    new TextRun({
+                      text: "METERAI ELEKTRONIK\n",
+                      bold: true,
+                      size: 13,
+                      color: BRAND_HEX,
+                    }),
+                    new TextRun({
+                      text: "Rp 10.000\n",
+                      bold: true,
+                      size: 16,
+                      color: SLATE_900,
+                    }),
+                    new TextRun({
+                      text: "TEMPAT E-METERAI",
+                      size: 11,
+                      color: SLATE_600,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 38, type: WidthType.PERCENTAGE },
               children: [
                 new Paragraph({
                   alignment: AlignmentType.CENTER,

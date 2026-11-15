@@ -1623,6 +1623,52 @@ export async function generateSpkProjectCharterPdf(params: {
   const p1X = marginX + 20;
   const p2X = pageWidth - marginX - 185;
 
+  // Slot e-Meterai Rp10.000 di tengah antara kedua penandatangan SPK
+  const spkMeteraiW = 86;
+  const spkMeteraiH = 50;
+  const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
+  const spkMeteraiY = sigY - 60;
+
+  page.drawRectangle({
+    x: spkMeteraiX,
+    y: spkMeteraiY,
+    width: spkMeteraiW,
+    height: spkMeteraiH,
+    color: SURFACE_SUBTLE,
+    borderColor: BRAND_BLUE,
+    borderWidth: 0.8,
+  });
+
+  const spkMTitle = "METERAI ELEKTRONIK";
+  const spkMW1 = fontBold.widthOfTextAtSize(spkMTitle, 6.8);
+  page.drawText(spkMTitle, {
+    x: spkMeteraiX + (spkMeteraiW - spkMW1) / 2,
+    y: spkMeteraiY + spkMeteraiH - 14,
+    size: 6.8,
+    font: fontBold,
+    color: BRAND_BLUE,
+  });
+
+  const spkMNominal = "Rp 10.000";
+  const spkMW2 = fontBold.widthOfTextAtSize(spkMNominal, 8);
+  page.drawText(spkMNominal, {
+    x: spkMeteraiX + (spkMeteraiW - spkMW2) / 2,
+    y: spkMeteraiY + spkMeteraiH - 26,
+    size: 8,
+    font: fontBold,
+    color: SLATE_900,
+  });
+
+  const spkMSub = "TEMPAT E-METERAI";
+  const spkMW3 = fontRegular.widthOfTextAtSize(spkMSub, 5.8);
+  page.drawText(spkMSub, {
+    x: spkMeteraiX + (spkMeteraiW - spkMW3) / 2,
+    y: spkMeteraiY + 8,
+    size: 5.8,
+    font: fontRegular,
+    color: SLATE_500,
+  });
+
   page.drawText("PIHAK PERTAMA", {
     x: p1X,
     y: sigY,
