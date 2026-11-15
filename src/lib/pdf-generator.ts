@@ -191,9 +191,9 @@ export const PDF_LAYOUT_TOKENS = {
   marginX: 51.02, // 18 mm
   marginTop: 45.35, // 16 mm
   marginBottom: 56.69, // 20 mm (ruang khusus footer)
-  bottomSafeY: 60, // batas aman konten di atas garis footer (y = 54)
-  footerLineY: 54,
-  footerTextY: 42,
+  bottomSafeY: 50, // batas aman konten di atas garis footer (y = 44)
+  footerLineY: 44,
+  footerTextY: 32,
   socialBandHeight: 31.18, // ~11 mm
   fontSizes: {
     docTitle: 22,
@@ -226,6 +226,15 @@ const NAVY_DARK = rgb(9 / 255, 14 / 255, 25 / 255); // #090e19 token dark navy s
 export interface DocTitleConfig {
   headerTitle: string;
   fullTitleBar?: string;
+}
+
+/**
+ * Menghapus prefix simbol mata uang (e.g. "Rp", "Rp ", "-Rp") dari string nominal
+ * untuk tampilan tabel dan blok subtotal yang bersih tanpa simbol berulang.
+ */
+function stripCurrencySymbol(text: string): string {
+  if (!text) return "";
+  return text.replace(/^(-)?Rp\s*/i, "$1").trim();
 }
 
 /**
@@ -1063,7 +1072,7 @@ async function renderDocumentPdfInternal(
           y: addrLine1BaselineY,
           size: contactSize,
           font: fontRegular,
-          color: TEXT_LABEL,
+          color: TEXT_DARK,
         },
         "A-header-addr-1",
       );
@@ -1077,7 +1086,7 @@ async function renderDocumentPdfInternal(
           y: leftCursorY,
           size: contactSize,
           font: fontRegular,
-          color: TEXT_LABEL,
+          color: TEXT_DARK,
         },
         "A-header-contact",
       );
@@ -1095,7 +1104,7 @@ async function renderDocumentPdfInternal(
         y: leftCursorY,
         size: contactSize,
         font: fontRegular,
-        color: TEXT_LABEL,
+        color: TEXT_DARK,
       },
       "A-header-contact",
     );
@@ -1112,7 +1121,7 @@ async function renderDocumentPdfInternal(
         y: leftCursorY,
         size: contactSize,
         font: fontRegular,
-        color: TEXT_LABEL,
+        color: TEXT_DARK,
       },
       "A-header-contact",
     );
@@ -1130,7 +1139,7 @@ async function renderDocumentPdfInternal(
         y: npwpBaselineY,
         size: contactSize,
         font: fontRegular,
-        color: TEXT_LABEL,
+        color: TEXT_DARK,
       },
       "A-header-contact",
     );
@@ -1310,11 +1319,11 @@ async function renderDocumentPdfInternal(
     const rowGap = 4;
 
     if (hasRecipient && hasMeta) {
-      // Tata Letak 2 Kolom: Kiri = Penerima (182 pt), Gutter = 16 pt, Kanan = Grid Label : Nilai (295.24 pt)
-      const leftColW = 182;
+      // Tata Letak 2 Kolom: Kiri = Penerima, Kanan = Grid Label : Nilai (digeser & dipersempit ke kanan)
+      const rightColW = 245; // Blok kanan dipersempit dan menempel ke sisi kanan
+      const rightColX = pageWidth - marginX - rightColW; // Mulai di ~300.6 pt
       const colGutter = 16;
-      const rightColX = marginX + leftColW + colGutter;
-      const rightColW = contentWidth - leftColW - colGutter; // 295.24 pt
+      const leftColW = rightColX - marginX - colGutter; // ~233.6 pt
 
       // Siapkan baris kolom kiri
       const rawRecipientTitle = (spec.recipientTitle ?? "Kepada Yth.")
@@ -1351,13 +1360,13 @@ async function renderDocumentPdfInternal(
         });
       });
 
-      // Hitung lebar kolom label adaptif (34–40 mm = 96.4–113.4 pt)
+      // Hitung lebar kolom label adaptif (fontBold selaras dengan Ditagihkan Kepada)
       const minLabelW = 96.4; // 34 mm
-      const maxLabelW = 113.4; // 40 mm
-      const colonColW = 10; // ~3.5 mm
+      const maxLabelW = 110;
+      const colonColW = 8;
       const longestSingleLineLabel = Math.max(
         ...effectiveMetaRows.map((m) =>
-          fontRegular.widthOfTextAtSize(sanitizePdfText(m.label), labelFontSize),
+          fontBold.widthOfTextAtSize(sanitizePdfText(m.label), labelFontSize),
         ),
         minLabelW,
       );
@@ -1367,7 +1376,7 @@ async function renderDocumentPdfInternal(
       const rightPrepared = effectiveMetaRows.map((m) => {
         const labelLines = wrapTextByWidth(
           m.label,
-          fontRegular,
+          fontBold,
           labelFontSize,
           labelColW,
         );
@@ -1427,7 +1436,7 @@ async function renderDocumentPdfInternal(
               x: rightColX,
               y: curRightY - lIdx * rowLineH,
               size: labelFontSize,
-              font: fontRegular,
+              font: fontBold,
               color: TEXT_LABEL,
             },
             "B-meta-label",
@@ -1440,7 +1449,7 @@ async function renderDocumentPdfInternal(
             x: colonX,
             y: curRightY,
             size: labelFontSize,
-            font: fontRegular,
+            font: fontBold,
             color: TEXT_LABEL,
           },
           "B-meta-colon",
@@ -1703,14 +1712,16 @@ async function renderDocumentPdfInternal(
     drawTableHeader();
 
     for (const row of spec.tableRows) {
-      const wrappedCells = cols.map((_, idx) =>
-        wrapTextByWidth(
-          row[idx] ?? "",
+      const wrappedCells = cols.map((col, idx) => {
+        const rawCell = row[idx] ?? "";
+        const cleanCell = col.align === "right" ? stripCurrencySymbol(rawCell) : rawCell;
+        return wrapTextByWidth(
+          cleanCell,
           fontRegular,
           cellFontSize,
           colWidths[idx]! - 16,
-        ),
-      );
+        );
+      });
       const maxLines = Math.max(...wrappedCells.map((c) => c.length), 1);
       const rowContentH = (maxLines - 1) * cellLineH + cellFontSize;
       const totalRowH = rowContentH + cellPadY * 2;
@@ -1854,7 +1865,7 @@ async function renderDocumentPdfInternal(
       const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
 
       const cleanLabel = sanitizePdfText(row.label);
-      const cleanVal = sanitizePdfText(row.value);
+      const cleanVal = sanitizePdfText(stripCurrencySymbol(row.value));
       const valW = rowFont.widthOfTextAtSize(cleanVal, summaryFontSize);
 
       drawTrackedText(
@@ -1935,9 +1946,14 @@ async function renderDocumentPdfInternal(
         color: BORDER_GRAY,
       });
 
-      // Kolom Kiri: Terbilang
+      // Kolom Kanan Info Bank sejajar dengan posisi teks blok subtotal (totalBlockX)
+      const rightColX = totalBlockX;
+      const rightColTopY = pdDividerY - 11;
+      const bLabelW = 70;
+
+      // Kolom Kiri: Terbilang (lebar menyesuaikan hingga sebelum kolom bank)
       const leftColX = marginX + 10;
-      const leftColW = Math.round(pdBoxW * 0.42);
+      const leftColW = rightColX - leftColX - 16;
       const leftColTopY = pdDividerY - 11;
       drawTrackedText(
         "Terbilang",
@@ -1964,11 +1980,6 @@ async function renderDocumentPdfInternal(
           "E-pd-terbilang-val",
         );
       });
-
-      // Kolom Kanan: Info Bank & Transfer Grid (Label tebal, Nilai reguler selaras teks Terbilang)
-      const rightColX = marginX + Math.round(pdBoxW * 0.46);
-      const rightColTopY = pdDividerY - 11;
-      const bLabelW = 75;
 
       const bankItems: Array<{ label: string; value: string }> = [
         { label: "Nama Bank", value: pd.bankName },
@@ -2081,7 +2092,7 @@ async function renderDocumentPdfInternal(
       const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
 
       const cleanLabel = sanitizePdfText(row.label);
-      const cleanVal = sanitizePdfText(row.value);
+      const cleanVal = sanitizePdfText(stripCurrencySymbol(row.value));
       const valW = rowFont.widthOfTextAtSize(cleanVal, valSize);
 
       drawTrackedText(
@@ -2121,7 +2132,7 @@ async function renderDocumentPdfInternal(
       });
       for (const sRow of secondaryRows) {
         const cleanLabel = sanitizePdfText(sRow.label);
-        const cleanVal = sanitizePdfText(sRow.value);
+        const cleanVal = sanitizePdfText(stripCurrencySymbol(sRow.value));
         const valW = fontRegular.widthOfTextAtSize(cleanVal, 8.5);
         drawTrackedText(
           cleanLabel,

@@ -465,14 +465,37 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-29
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen PDF (`drawDocumentHeader`, `renderDocumentPdfInternal`, `PDF_LAYOUT_TOKENS`)
+- **Apa yang bertentangan:**
+  1. Teks kontak di sisi kiri header (alamat s.d. NPWP) sebelumnya memakai warna abu-abu `TEXT_LABEL`, sedangkan teks nomor dan referensi di kanan memakai warna hitam `TEXT_DARK`. Pengguna meminta seluruh teks kontak sisi kiri diseragamkan warnanya menjadi `TEXT_DARK`.
+  2. Blok metadata kanan (tanggal, ref, proyek) sebelumnya mulai di tengah (`~247 pt`) dengan label berbobot reguler. Pengguna meminta blok kanan digeser/dipersempit ke sisi kanan serta labelnya dibuat tebal (`fontBold`) dengan warna yang sama dengan teks *Ditagihkan Kepada* (`TEXT_LABEL`).
+  3. Standar lama dan fungsi format moneter menampilkan simbol mata uang (`Rp`). Pengguna meminta simbol mata uang dihapus pada semua angka nominal yang tertulis di dalam tabel dan blok subtotal.
+  4. Kolom informasi bank pada tabel Detail Pembayaran sebelumnya berada di posisi relatif lebar kotak. Pengguna meminta kolom info bank digeser ke kanan sejajar persis dengan posisi awal teks blok subtotal (`totalBlockX`) tanpa menabrak batas margin kanan tabel.
+  5. Pengguna meminta footer digeser sedikit lebih ke bawah namun tetap aman di atas batas margin bawah halaman dokumen.
+- **Yang kulakukan:**
+  1. Menyeragamkan warna teks kontak kiri header (alamat, email, telepon, NPWP) menjadi `TEXT_DARK`.
+  2. Menggeser blok kanan metadata ke x `~300.6 pt` (`rightColW = 245 pt`), mengubah font label menjadi `fontBold` dengan warna `TEXT_LABEL` selaras *Ditagihkan Kepada*, serta melebarkan kolom kiri penerima.
+  3. Mengimplementasikan fungsi `stripCurrencySymbol` pada render sel tabel dan baris blok subtotal sehingga angka nominal tampil murni dan bersih tanpa simbol `Rp`.
+  4. Menyelaraskan posisi awal kolom info bank Detail Pembayaran ke `totalBlockX` sejajar vertikal dengan teks blok subtotal di atasnya, dengan sisa padding aman ~54 pt ke tepi kanan tabel.
+  5. Menyesuaikan token layout footer (`footerLineY: 44`, `footerTextY: 32`, `bottomSafeY: 50`) sehingga footer bergeser turun 10 pt ke bawah secara proporsional.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan pembaruan warna header, pergeseran metadata, pembersihan simbol mata uang tabel/subtotal, penjajaran grid bank, dan penurunan posisi footer. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 13 | 11 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 14 | 12 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **28** | **21** | **7** | **1** |
+| **Total Temuan** | **29** | **22** | **7** | **1** |
