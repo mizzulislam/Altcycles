@@ -169,14 +169,14 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 ---
 
 ### ID: K-11
-- **Status:** Aktif (Diterapkan pada Komponen Bersama Langkah 1, Diverifikasi di Langkah 2)
+- **Status:** Selesai (Diverifikasi pada Langkah 2)
 - **Jenis:** `standar-vs-layout`
 - **Dokumen terdampak:** Kuitansi (`docs/standar-dokumen.md:237` vs Spesifikasi Layout)
 - **Apa yang bertentangan:**
   - `docs/standar-dokumen.md` baris 237 menyebutkan Kuitansi *"Setengah halaman A4; tanpa tabel; slot e-Meterai di dekat tanda tangan"*, sedangkan Spesifikasi Layout menetapkan ukuran halaman A4 portrait seragam dengan ruang bawah dibiarkan lega tanpa menggelembungkan jarak.
-- **Yang kulakukan:** Merender Kuitansi pada kertas A4 portrait standar menggunakan komponen bersama sehingga konten kuitansi secara alami menempati paruh atas halaman A4 dengan ruang bawah tetap lega.
+- **Yang kulakukan:** Merender Kuitansi pada kertas A4 portrait standar menggunakan komponen bersama (Header 2 kolom, Grid `Label : Nilai` 3 kolom dengan `Tanggal Terima` di atas, baris `Jumlah Diterima` di kanan atas `Terbilang: # ... #`, Catatan bullet *hanging indent*, dan Blok Pengesahan + Slot e-Meterai `25 × 35 mm` di atas nama penandatangan), sehingga konten kuitansi secara alami menempati paruh atas halaman A4 dengan ruang bawah tetap lega.
 - **Opsi penyelesaian permanen:**
-  - **Opsi A:** Kertas tetap A4 portrait dengan komponen bersama; isi kuitansi ringkas di paruh atas halaman.
+  - **Opsi A:** Kertas tetap A4 portrait dengan komponen bersama; isi kuitansi ringkas di paruh atas halaman. (Diterapkan).
 - **Rekomendasi:** **Opsi A**.
 - **Perlu keputusanku?** tidak
 
@@ -210,14 +210,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Akhir Langkah 1)
+### ID: K-14
+- **Status:** Selesai (Diterapkan pada Langkah 2)
+- **Jenis:** `standar-vs-sistem`
+- **Dokumen terdampak:** Quotation (`makeQuotationSpec` di `src/features/client-projects/project-detail-page.tsx:593-678`), PO Klien (`buildClientPoPdfSpec` di `src/lib/pdf-generator.ts:3099-3195`), dan PO Internal (`makePoDocSpec` di `src/features/purchase-orders/po-page.tsx:236-311`)
+- **Apa yang bertentangan:**
+  1. **Quotation:** `docs/standar-dokumen.md` (baris 29 & 36) mewajibkan **masa berlaku** di blok metadata dan **kolom persetujuan klien** di Zona G berdampingan dengan pengesahan Altvira. Sebelumnya di `makeQuotationSpec`, tanggal berlaku hanya ditaruh di `docSubtitle` / `balanceDueBox.dueDateText` dan hanya ada 1 kolom tanda tangan Altvira di kanan.
+  2. **PO Klien:** Sebelumnya `buildClientPoPdfSpec` belum menyertakan `statusBadge` di kanan header, belum menyertakan `footerDocNumber`, belum menampilkan kolom tanda tangan pengaju klien di kiri, dan masih memakai `formatRupiah` alih-alih `formatDocRupiah`.
+  3. **PO Internal (Vendor):** Baris kontak vendor di `makePoDocSpec` sebelumnya memakai karakter pemisah pipa `"|"` (`Kontak: ... | Telp: ...`).
+- **Yang kulakukan:**
+  1. Menambahkan `Tanggal Terbit` dan `Masa Berlaku s.d.` ke `metaRows` Quotation serta menambahkan kolom pengesahan kiri `Disetujui Oleh (Klien),`.
+  2. Menambahkan `statusBadge`, `Tanggal PO`, `formatDocRupiah` (dengan konsistensi dua desimal bila ada desimal), kolom tanda tangan kiri `Diajukan Oleh (Klien),`, dan `footerDocNumber` pada `buildClientPoPdfSpec`.
+  3. Mengganti pemisah `"|"` pada kontak vendor PO Internal menjadi titik tengah `"·"` serta menyeragamkan label total ke Proper Case (`Total Penawaran Harga`, `Total Nilai Purchase Order`, `Total Nilai PO`).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Lengkapi elemen wajib standar di fungsi builder Quotation, PO Klien, dan PO Internal. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Akhir Langkah 2)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
-| `standar-vs-standar` | 1 | 1 (K-08) | 0 | 0 |
-| `standar-vs-layout` | 3 | 2 (K-01, K-03) | 1 (K-11) | 0 |
-| `standar-vs-sistem` | 4 | 3 (K-02, K-06, K-13) | 1 (K-09) | 0 |
-| `sistem-menghalangi` | 1 | 1 (K-07) | 0 | 0 |
-| `data-janggal` | 4 | 2 (K-04, K-05) | 2 (K-10, K-12) | 0 |
+| `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
+| `standar-vs-layout` | 3 | 3 (`K-01`, `K-03`, `K-11`) | 0 | 0 |
+| `standar-vs-sistem` | 5 | 4 (`K-02`, `K-06`, `K-13`, `K-14`) | 1 (`K-09`) | 0 |
+| `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
+| `data-janggal` | 4 | 2 (`K-04`, `K-05`) | 2 (`K-10`, `K-12`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **13** | **9** | **4** | **0** |
+| **Total Temuan** | **14** | **11** | **3** | **0** |

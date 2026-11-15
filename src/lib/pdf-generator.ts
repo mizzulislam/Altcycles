@@ -894,6 +894,24 @@ async function renderDocumentPdfInternal(
     });
   }
 
+  // Jika docSubtitle memuat "Masa Berlaku s.d. ..." (misal pada Quotation) dan belum ada di metaRows, masukkan ke Zona B
+  if (spec.docSubtitle && /masa\s+berlaku|berlaku\s+s\.?d\.?/i.test(spec.docSubtitle)) {
+    const hasValidUntilMeta = effectiveMetaRows.some((m) =>
+      /masa\s+berlaku|berlaku\s+s\.?d\.?/i.test(m.label),
+    );
+    if (!hasValidUntilMeta) {
+      const cleanedValidUntil = spec.docSubtitle
+        .replace(/^(masa\s+berlaku\s*(s\.?d\.?)?|berlaku\s*s\.?d\.?)\s*:?\s*/i, "")
+        .trim();
+      if (cleanedValidUntil) {
+        effectiveMetaRows.splice(Math.min(1, effectiveMetaRows.length), 0, {
+          label: "Masa Berlaku s.d.",
+          value: cleanedValidUntil,
+        });
+      }
+    }
+  }
+
   const hasRecipient = Boolean(spec.recipientLines && spec.recipientLines.length > 0);
   const hasMeta = effectiveMetaRows.length > 0;
 
@@ -1840,9 +1858,9 @@ async function renderDocumentPdfInternal(
           const mLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
             { text: "METERAI", size: 7.5, bold: true, color: TEXT_LABEL, dy: 20 },
             { text: "ELEKTRONIK", size: 7.5, bold: true, color: TEXT_LABEL, dy: 32 },
-            { text: "Rp10.000", size: 9, bold: true, color: TEXT_DARK, dy: 52 },
+            { text: "Rp10.000", size: 9.5, bold: true, color: TEXT_DARK, dy: 52 },
             { text: "Tempat e-Meterai", size: 7.5, bold: false, color: TEXT_LABEL, dy: 72 },
-            { text: "Rp10.000", size: 7.5, bold: false, color: TEXT_LABEL, dy: 84 },
+            { text: "25 x 35 mm", size: 7.5, bold: false, color: TEXT_LABEL, dy: 84 },
           ];
 
           for (const ml of mLines) {
@@ -3029,6 +3047,12 @@ export function buildReceiptPdfSpec(params: {
       ? params.hasMeterai
       : params.amount > 5_000_000;
 
+  const forceTwoDecimals = hasAnyDecimalCurrency([params.amount]);
+  const fmtAmount = formatDocRupiah(params.amount, forceTwoDecimals);
+  const normalizedServicePeriod = params.servicePeriod
+    ? params.servicePeriod.replace(/^Termin:\s*(Termin\b)/i, "$1")
+    : null;
+
   return {
     docTitle: "KUITANSI",
     docSubtitle: "BUKTI PENERIMAAN PEMBAYARAN RESMI",
@@ -3040,11 +3064,12 @@ export function buildReceiptPdfSpec(params: {
     },
     balanceDueBox: {
       label: "STATUS PEMBAYARAN: LUNAS",
-      amountText: formatDocRupiah(params.amount),
+      amountText: fmtAmount,
       dueDateText: `Diterima Pada: ${formatDocDateLong(params.receiptDate)}`,
     },
     company: params.company,
     metaRows: [
+      { label: "Tanggal Terima", value: formatDocDateLong(params.receiptDate) },
       { label: "Telah Terima Dari", value: params.receivedFrom },
       {
         label: "Untuk Pembayaran",
@@ -3054,14 +3079,15 @@ export function buildReceiptPdfSpec(params: {
       ...(params.clientPoNumber
         ? [{ label: "Referensi PO Klien", value: params.clientPoNumber }]
         : []),
-      ...(params.servicePeriod
-        ? [{ label: "Periode Layanan", value: params.servicePeriod }]
+      ...(normalizedServicePeriod
+        ? [{ label: "Periode Layanan", value: normalizedServicePeriod }]
         : []),
       ...(params.paymentMethod
         ? [{ label: "Metode / Rekening", value: params.paymentMethod }]
         : []),
-      { label: "Jumlah Pembayaran", value: formatDocRupiah(params.amount) },
+      { label: "Jumlah Pembayaran", value: fmtAmount },
     ],
+    summaryRows: [{ label: "Jumlah Diterima", value: fmtAmount }],
     terbilangAmount: params.amount,
     hasMeterai: needsMeterai,
     meteraiLabel: "TEMPAT E-METERAI Rp10.000",
@@ -3101,14 +3127,31 @@ export function buildClientPoPdfSpec(params: {
       ? params.items
       : [{ item: "Paket Pekerjaan / Layanan Sesuai Pengajuan PO", qty: 1, price: params.poValue }];
 
+  const forceTwoDecimals = hasAnyDecimalCurrency([
+    params.poValue,
+    ...safeItems.flatMap((it) => [it.price, it.qty * it.price]),
+  ]);
+  const fmtRp = (val: number) => formatDocRupiah(val, forceTwoDecimals);
+
   const recipientLines = [
-    params.clientName,
-    params.clientCompany?.trim() || null,
+    params.clientCompany?.trim() || params.clientName,
+    ...(params.clientCompany?.trim() && params.clientCompany.trim() !== params.clientName
+      ? [params.clientName]
+      : []),
     params.clientEmail?.trim() || null,
     params.clientPhone?.trim() || null,
   ].filter((line): line is string => Boolean(line));
 
+  const statusUpper = params.statusLabel.toUpperCase();
+  const statusBadge: { text: string; variant: DocStatusVariant } =
+    /terverifikasi|disetujui|sah/i.test(statusUpper)
+      ? { text: "TERVERIFIKASI", variant: "success" }
+      : /tolak|batal/i.test(statusUpper)
+        ? { text: "DITOLAK", variant: "danger" }
+        : { text: statusUpper || "DIAJUKAN", variant: "info" };
+
   const metaRows: PdfKeyValue[] = [
+    { label: "Tanggal PO", value: formatDocDateLong(params.poDate) },
     { label: "Nomor PO Klien", value: params.poNumber },
     { label: "Status Verifikasi", value: params.statusLabel },
     ...(params.quotationReference?.trim()
@@ -3124,37 +3167,42 @@ export function buildClientPoPdfSpec(params: {
     docSubtitle: "Dokumen Pengajuan Pesanan Resmi Pelanggan",
     docNumber: params.poNumber,
     docDate: params.poDate,
+    statusBadge,
     company: params.company,
-    recipientTitle: "Diajukan Oleh Klien:",
+    recipientTitle: "Diajukan Oleh Klien",
     recipientLines,
     metaRows,
     paragraphsBefore: [
       "Dokumen Purchase Order (PO) Klien ini diterbitkan secara resmi melalui Portal Pelanggan Altvira Technology sebagai bukti pengajuan pesanan pekerjaan atau layanan.",
     ],
     tableColumns: [
-      { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Deskripsi Paket / Pekerjaan", widthRatio: 0.44 },
-      { header: "Qty", widthRatio: 0.1, align: "center" },
-      { header: "Harga Satuan", widthRatio: 0.18, align: "right" },
-      { header: "Subtotal", widthRatio: 0.2, align: "right" },
+      { header: "No", widthRatio: 0.07, align: "center" },
+      { header: "Deskripsi Paket / Pekerjaan", widthRatio: 0.43 },
+      { header: "Qty", widthRatio: 0.12, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
     ],
     tableRows: safeItems.map((it, idx) => [
       String(idx + 1),
       it.item,
       it.qty.toLocaleString("id-ID"),
-      formatRupiah(it.price),
-      formatRupiah(Math.round(it.qty * it.price)),
+      fmtRp(it.price),
+      fmtRp(it.qty * it.price),
     ]),
     summaryRows: [
-      { label: "TOTAL NILAI PURCHASE ORDER", value: formatRupiah(params.poValue) },
+      { label: "Total Nilai Purchase Order", value: fmtRp(params.poValue) },
     ],
     terbilangAmount: params.poValue,
     notes: [
       "Gunakan Kode Akses PO di atas pada Portal Pembeli untuk memantau progres pekerjaan dan mengunduh dokumen tagihan resmi.",
+      "Dokumen ini diterbitkan secara resmi melalui sistem komputerisasi Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
+    leftSignatureLabel: "Diajukan Oleh (Klien),",
+    leftSignatureName: `${params.clientName} - ${params.clientCompany?.trim() || "Pihak Klien"}`,
     rightSignatureLabel: `Diterima Oleh, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    footerDocNumber: params.poNumber,
   };
 }
 

@@ -612,6 +612,10 @@ export function ProjectDetailPage() {
             ? "danger"
             : "neutral";
 
+    const clientContactLine = customer?.contact_person
+      ? `${customer.contact_person}${customer.contact_title ? ` (${customer.contact_title})` : ""}`
+      : null;
+
     return {
       docTitle: "SURAT PENAWARAN HARGA (QUOTATION)",
       docSubtitle: `Masa Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
@@ -625,13 +629,15 @@ export function ProjectDetailPage() {
       },
       company,
       clientLogoUrl: customer?.logo_storage_path ?? null,
-      recipientTitle: "Kepada Yth.:",
+      recipientTitle: "Kepada Yth.",
       recipientLines: [
         customer?.company_name ?? customer?.name ?? "Klien Mitra",
-        ...(customer?.contact_person ? [customer.contact_person] : []),
+        ...(clientContactLine ? [clientContactLine] : []),
         customer?.address ?? "-",
       ],
       metaRows: [
+        { label: "Tanggal Terbit", value: formatDocDateLong(qt.quotation_date) },
+        { label: "Masa Berlaku s.d.", value: formatDocDateLong(qt.valid_until) },
         { label: "Judul Proyek", value: qt.project_title },
         { label: "Estimasi Durasi", value: `${qt.estimated_weeks} Minggu Kalender` },
         { label: "Batas Sesi Revisi", value: `${qt.revision_limit}x Sesi` },
@@ -650,10 +656,10 @@ export function ProjectDetailPage() {
         formatDocRupiah(it.cost_amount),
       ]),
       summaryRows: [
-        { label: "TOTAL PENAWARAN HARGA", value: formatDocRupiah(qt.total_amount) },
+        { label: "Total Penawaran Harga", value: formatDocRupiah(qt.total_amount) },
       ],
       terbilangAmount: qt.total_amount,
-      notesTitle: "Ketentuan Penawaran Harga:",
+      notesTitle: "Ketentuan Penawaran Harga",
       notes: [
         company.pkp_enabled
           ? `Harga belum termasuk PPN ${company.ppn_rate}%.`
@@ -661,6 +667,9 @@ export function ProjectDetailPage() {
         "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
         "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
       ],
+      leftSignatureLabel: "Disetujui Oleh (Klien),",
+      leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
+      leftSignatureImageUrl: customer?.signature_storage_path ?? null,
       rightSignatureLabel: `Hormat kami, ${company.company_name}`,
       rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
       rightSignatureImageUrl: company.signer_signature_path ?? null,

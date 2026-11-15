@@ -263,26 +263,26 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         dueDateText: "Syarat Pembayaran: Transfer Bank Resmi",
       },
       company,
-      recipientTitle: "Kepada Vendor / Pemasok:",
+      recipientTitle: "Kepada Vendor / Pemasok",
       recipientLines: [
         vendor?.name ?? "Vendor Mitra",
         vendor?.address ?? "-",
-        `Kontak: ${vendor?.contact_name ?? "-"} | Telp: ${vendor?.phone ?? "-"}`,
+        `Kontak: ${vendor?.contact_name ?? "-"} · Telp: ${vendor?.phone ?? "-"}`,
       ],
       metaRows: [
-        { label: "Nomor PO", value: po.po_number },
         { label: "Tanggal Terbit", value: formatDocDateLong(po.po_date) },
+        { label: "Nomor PO", value: po.po_number },
         { label: "Proyek Terkait", value: prj ? `${prj.code} - ${prj.name}` : "-" },
         { label: "Alamat Pengiriman", value: company.address },
         { label: "Kontak Penerima", value: `${company.signer_name} (${company.phone})` },
         { label: "Catatan Tambahan", value: po.notes ?? "-" },
       ],
       tableColumns: [
-        { header: "No", widthRatio: 0.08, align: "center" },
-        { header: "Deskripsi Barang / Jasa", widthRatio: 0.44 },
-        { header: "Qty", widthRatio: 0.14, align: "center" },
-        { header: "Harga Satuan", widthRatio: 0.17, align: "right" },
-        { header: "Subtotal (IDR)", widthRatio: 0.17, align: "right" },
+        { header: "No", widthRatio: 0.07, align: "center" },
+        { header: "Deskripsi Barang / Jasa", widthRatio: 0.43 },
+        { header: "Qty", widthRatio: 0.12, align: "center" },
+        { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+        { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
       ],
       tableRows: poLines.map((l) => [
         String(l.line_no),
@@ -292,7 +292,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         formatDocRupiah(l.line_total),
       ]),
       summaryRows: [
-        { label: "TOTAL NILAI PO", value: formatDocRupiah(po.total_amount) },
+        { label: "Total Nilai PO", value: formatDocRupiah(po.total_amount) },
       ],
       terbilangAmount: po.total_amount,
       notes: [

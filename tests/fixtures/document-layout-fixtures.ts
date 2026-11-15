@@ -191,6 +191,56 @@ export function buildFixtureReceiptNormal(): PdfDocumentSpec {
 }
 
 /**
+ * 4b. KUITANSI — Ekstrem (Nama proyek >120 karakter, URL panjang, angka miliaran dengan desimal, 6 bullet panjang)
+ */
+export function buildFixtureReceiptExtreme(): PdfDocumentSpec {
+  const spec = buildReceiptPdfSpec({
+    company: FIXTURE_COMPANY,
+    receiptNumber: "KW/ALT/2026/11/099",
+    receiptDate: "2026-11-18",
+    receivedFrom:
+      "PT Konsorsium Transformasi Digital Nusantara Internasional Tbk (Divisi Keuangan & Perbendaharaan Pusat)",
+    invoiceNumber: "INV/ALT/2026/11/099",
+    projectName:
+      "PRJ/ALT/2026/099 - Pembangunan Ekosistem Enterprise Resource Planning (ERP) Terpadu Lintas Entitas Anak Perusahaan, Integrasi Payment Gateway Nasional, dan Data Warehouse Analitik Real-Time",
+    clientPoNumber: "PO-202611-EXT99K",
+    servicePeriod: "Termin: Termin 1 (1 November 2026 – 31 Januari 2027)",
+    paymentMethod:
+      "Transfer RTGS Bank Jago · Rekening 103289122849 · Bukti: https://portal.altvira.id/verifikasi-pembayaran/kuitansi/2026/11/KW-ALT-2026-11-099?ref=rtgs8899001122334455",
+    amount: 1_234_567_890.5,
+    hasMeterai: true,
+  });
+
+  spec.notes = [
+    ...(spec.notes ?? []),
+    "Konfirmasi pelunasan ini telah tercatat secara otomatis pada Buku Besar dan Arus Kas sistem akuntansi Altcycles.",
+    "Apabila terdapat selisih biaya transfer antarbank atau potongan pajak PPh Pasal 23, bukti potong resmi wajib diunggah melalui portal klien.",
+    "Arsip digital kuitansi ini dapat diverifikasi keasliannya melalui tautan portal verifikasi resmi Altvira Technology.",
+  ];
+
+  return spec;
+}
+
+/**
+ * 4c. KUITANSI — Minimum (Di bawah Rp5 juta tanpa e-Meterai, tanpa field opsional)
+ */
+export function buildFixtureReceiptMinimum(): PdfDocumentSpec {
+  return buildReceiptPdfSpec({
+    company: {
+      ...FIXTURE_COMPANY,
+      tax_id_number: null,
+    },
+    receiptNumber: "KW/ALT/2026/11/002",
+    receiptDate: "2026-11-12",
+    receivedFrom: "CV Maju Bersama",
+    invoiceNumber: "INV/ALT/2026/11/002",
+    projectName: "Pemeliharaan Website",
+    amount: 1_500_000,
+    hasMeterai: false,
+  });
+}
+
+/**
  * 5. QUOTATION — Normal
  */
 export function buildFixtureQuotationNormal(): PdfDocumentSpec {
@@ -206,13 +256,15 @@ export function buildFixtureQuotationNormal(): PdfDocumentSpec {
       dueDateText: "Berlaku s.d. 15 November 2026",
     },
     company: FIXTURE_COMPANY,
-    recipientTitle: "Kepada Yth.:",
+    recipientTitle: "Kepada Yth.",
     recipientLines: [
       "PT Sinar Niaga Digital",
       "Hendra Wijaya (Direktur Operasional)",
       "Jl. Jend. Sudirman Kav. 45, Jakarta Selatan",
     ],
     metaRows: [
+      { label: "Tanggal Terbit", value: "1 November 2026" },
+      { label: "Masa Berlaku s.d.", value: "15 November 2026" },
       {
         label: "Judul Proyek",
         value: "Pengembangan Sistem Portal Distribusi Sinar Niaga",
@@ -241,18 +293,137 @@ export function buildFixtureQuotationNormal(): PdfDocumentSpec {
       ],
     ],
     summaryRows: [
-      { label: "TOTAL PENAWARAN HARGA", value: formatDocRupiah(120_000_000) },
+      { label: "Total Penawaran Harga", value: formatDocRupiah(120_000_000) },
     ],
     terbilangAmount: 120_000_000,
-    notesTitle: "Ketentuan Penawaran Harga:",
+    notesTitle: "Ketentuan Penawaran Harga",
     notes: [
       "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).",
       "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
       "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
     ],
+    leftSignatureLabel: "Disetujui Oleh (Klien),",
+    leftSignatureName: "Hendra Wijaya - Direktur Operasional",
     rightSignatureLabel: `Hormat kami, ${FIXTURE_COMPANY.company_name}`,
     rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
     footerDocNumber: "QT/ALT/2026/11/001",
+  };
+}
+
+/**
+ * 5b. QUOTATION — Ekstrem (25 item modul, nama proyek >120 karakter, URL >80 karakter, angka miliaran desimal, 6 bullet)
+ */
+export function buildFixtureQuotationExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 25 }, (_, i) => {
+    const cost = i === 0 ? 49_382_715.62 : 49_382_715;
+    return [
+      String(i + 1),
+      `Modul Enterprise Ke-${i + 1}: Pengembangan Arsitektur Layanan Terdistribusi, Integrasi API Gateway Keamanan Berlapis, serta Dashboard Pemantauan Transaksi Real-Time Lintas Wilayah`,
+      formatDocRupiah(cost, true),
+    ];
+  });
+
+  return {
+    docTitle: "SURAT PENAWARAN HARGA (QUOTATION)",
+    docSubtitle: "Masa Berlaku s.d. 15 Desember 2026",
+    docNumber: "QT/ALT/2026/11/099",
+    docDate: "2026-11-15",
+    statusBadge: { text: "TERKIRIM", variant: "info" },
+    company: FIXTURE_COMPANY,
+    recipientTitle: "Kepada Yth.",
+    recipientLines: [
+      "PT Konsorsium Transformasi Digital Nusantara Internasional Tbk",
+      "Prof. Dr. Ir. Hendrawan Suryaningrat, M.Sc., MBA (Chief Information & Digital Transformation Officer)",
+      "Kawasan Industri Jababeka Tahap VII Blok K-14 No. 22-25, Jl. Raya Industri Utama Cikarang Utara, Kabupaten Bekasi, Provinsi Jawa Barat 17530",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: "15 November 2026" },
+      { label: "Masa Berlaku s.d.", value: "15 Desember 2026" },
+      {
+        label: "Judul Proyek",
+        value:
+          "Pembangunan Ekosistem Enterprise Resource Planning (ERP) Terpadu Lintas Entitas Anak Perusahaan, Integrasi Payment Gateway Nasional, dan Data Warehouse Analitik Real-Time",
+      },
+      { label: "Estimasi Durasi", value: "36 Minggu Kalender" },
+      { label: "Batas Sesi Revisi", value: "5x Sesi Mayor" },
+      {
+        label: "Tautan Dokumen Kerangka Acuan Kerja (TOR)",
+        value:
+          "https://portal.altvira.id/dokumen-tor/quotation/2026/11/QT-ALT-2026-11-099/spesifikasi-teknis-lengkap?token=998877665544332211",
+      },
+    ],
+    paragraphsBefore: [
+      "Ringkasan Kebutuhan Proyek: Penawaran komprehensif untuk perancangan, pengembangan, pengujian beban tinggi, serta implementasi penuh sistem ERP korporasi multi-entitas beserta migrasi data historis.",
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.08, align: "center" },
+      { header: "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
+      { header: "Biaya (IDR)", widthRatio: 0.3, align: "right" },
+    ],
+    tableRows: rows,
+    summaryRows: [
+      {
+        label: "Total Penawaran Harga",
+        value: formatDocRupiah(1_234_567_890.5, true),
+      },
+    ],
+    terbilangAmount: 1_234_567_890.5,
+    notesTitle: "Ketentuan Penawaran Harga",
+    notes: [
+      "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).",
+      "Skema pembayaran dilakukan secara bertahap sesuai pencapaian milestone pada Surat Perintah Kerja (SPK) yang disepakati kedua belah pihak.",
+      "Penawaran harga ini berlaku selama 30 hari kalender sejak tanggal diterbitkan dan dapat diperpanjang melalui konfirmasi tertulis.",
+      "Biaya lisensi pihak ketiga, penyewaan cloud server produksi, dan sertifikat SSL korporasi mengikuti rincian pada lampiran spesifikasi.",
+      "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
+      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+    ],
+    leftSignatureLabel: "Disetujui Oleh (Klien),",
+    leftSignatureName:
+      "Prof. Dr. Ir. Hendrawan Suryaningrat - Chief Information Officer",
+    rightSignatureLabel: `Hormat kami, ${FIXTURE_COMPANY.company_name}`,
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+    footerDocNumber: "QT/ALT/2026/11/099",
+  };
+}
+
+/**
+ * 5c. QUOTATION — Minimum (1 item pendek, tanpa catatan/paragraf opsional)
+ */
+export function buildFixtureQuotationMinimum(): PdfDocumentSpec {
+  return {
+    docTitle: "SURAT PENAWARAN HARGA (QUOTATION)",
+    docSubtitle: "Masa Berlaku s.d. 24 November 2026",
+    docNumber: "QT/ALT/2026/11/002",
+    docDate: "2026-11-10",
+    statusBadge: { text: "DRAF", variant: "neutral" },
+    company: {
+      ...FIXTURE_COMPANY,
+      tax_id_number: null,
+    },
+    recipientTitle: "Kepada Yth.",
+    recipientLines: ["CV Maju Bersama", "-"],
+    metaRows: [
+      { label: "Tanggal Terbit", value: "10 November 2026" },
+      { label: "Masa Berlaku s.d.", value: "24 November 2026" },
+      { label: "Judul Proyek", value: "Pemeliharaan Website" },
+      { label: "Estimasi Durasi", value: "4 Minggu Kalender" },
+      { label: "Batas Sesi Revisi", value: "1x Sesi" },
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.08, align: "center" },
+      { header: "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
+      { header: "Biaya (IDR)", widthRatio: 0.3, align: "right" },
+    ],
+    tableRows: [["1", "Pemeliharaan Rutin Bulanan", formatDocRupiah(1_500_000)]],
+    summaryRows: [
+      { label: "Total Penawaran Harga", value: formatDocRupiah(1_500_000) },
+    ],
+    terbilangAmount: 1_500_000,
+    leftSignatureLabel: "Disetujui Oleh (Klien),",
+    leftSignatureName: "CV Maju Bersama - Pihak Klien",
+    rightSignatureLabel: `Hormat kami, ${FIXTURE_COMPANY.company_name}`,
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+    footerDocNumber: "QT/ALT/2026/11/002",
   };
 }
 
@@ -331,6 +502,76 @@ export function buildFixtureClientPoNormal(): PdfDocumentSpec {
 }
 
 /**
+ * 7b. PO KLIEN — Ekstrem (25 item, nama proyek >120 karakter, URL >80 karakter, angka miliaran desimal, 6 bullet)
+ */
+export function buildFixtureClientPoExtreme(): PdfDocumentSpec {
+  const items = Array.from({ length: 25 }, (_, i) => ({
+    item: `Paket Implementasi Modul Enterprise Ke-${i + 1}: Integrasi Layanan Microservices, Keamanan OAuth2/OIDC, dan Sinkronisasi Database Multi-Region`,
+    qty: 1,
+    price: i === 0 ? 49_382_715.62 : 49_382_715,
+  }));
+
+  const spec = buildClientPoPdfSpec({
+    company: FIXTURE_COMPANY,
+    poNumber: "PO-202611-EXT99K",
+    poDate: "2026-11-15",
+    clientName: "Prof. Dr. Ir. Hendrawan Suryaningrat, M.Sc., MBA",
+    clientCompany:
+      "PT Konsorsium Transformasi Digital Nusantara Internasional Tbk",
+    clientEmail: "hendrawan.suryaningrat@konsorsium-digital-nusantara.co.id",
+    clientPhone: "021-88997766 / 0811-2233-4455",
+    quotationReference: "QT/ALT/2026/11/099",
+    statusLabel: "Terverifikasi Sah",
+    projectLabel:
+      "PRJ/ALT/2026/099 - Pembangunan Ekosistem Enterprise Resource Planning (ERP) Terpadu Lintas Entitas Anak Perusahaan, Integrasi Payment Gateway Nasional, dan Data Warehouse Analitik Real-Time",
+    items,
+    poValue: 1_234_567_890.5,
+  });
+
+  spec.metaRows = [
+    ...(spec.metaRows ?? []),
+    {
+      label: "Tautan Portal Verifikasi PO Pelanggan",
+      value:
+        "https://portal.altvira.id/buyer-portal/po-verification/2026/11/PO-202611-EXT99K?verify_hash=a1b2c3d4e5f60718293a",
+    },
+  ];
+  spec.notes = [
+    ...(spec.notes ?? []),
+    "Penerbitan PO Klien ini mengikat secara komersial sesuai syarat dan ketentuan pada Quotation acuan.",
+    "Jadwal pelaksanaan pekerjaan dimulai setelah pembayaran Termin 1 (Down Payment) diverifikasi oleh bagian keuangan.",
+    "Perubahan spesifikasi di luar daftar item PO di atas wajib diajukan melalui adendum tertulis.",
+    "Arsip digital PO Klien ini disimpan secara terenkripsi pada basis data Altcycles.",
+  ];
+
+  return spec;
+}
+
+/**
+ * 7c. PO KLIEN — Minimum (1 item pendek, tanpa field opsional)
+ */
+export function buildFixtureClientPoMinimum(): PdfDocumentSpec {
+  return buildClientPoPdfSpec({
+    company: {
+      ...FIXTURE_COMPANY,
+      tax_id_number: null,
+    },
+    poNumber: "PO-202611-MIN01",
+    poDate: "2026-11-10",
+    clientName: "CV Maju Bersama",
+    statusLabel: "Diajukan",
+    items: [
+      {
+        item: "Pemeliharaan Rutin Website",
+        qty: 1,
+        price: 1_500_000,
+      },
+    ],
+    poValue: 1_500_000,
+  });
+}
+
+/**
  * 8. PO INTERNAL (Vendor) — Normal (3 kolom tanda tangan)
  */
 export function buildFixtureVendorPoNormal(): PdfDocumentSpec {
@@ -346,15 +587,15 @@ export function buildFixtureVendorPoNormal(): PdfDocumentSpec {
       dueDateText: "Syarat Pembayaran: Transfer Bank Resmi",
     },
     company: FIXTURE_COMPANY,
-    recipientTitle: "Kepada Vendor / Pemasok:",
+    recipientTitle: "Kepada Vendor / Pemasok",
     recipientLines: [
       "PT Awan Nusantara Cloud",
       "Jl. Gatot Subroto Kav. 32, Jakarta Selatan",
-      "Kontak: Rizky Pratama | Telp: 021-5550101",
+      "Kontak: Rizky Pratama · Telp: 021-5550101",
     ],
     metaRows: [
-      { label: "Nomor PO", value: "POP/ALT/2026/11/001" },
       { label: "Tanggal Terbit", value: "5 November 2026" },
+      { label: "Nomor PO", value: "POP/ALT/2026/11/001" },
       {
         label: "Proyek Terkait",
         value: "PRJ/ALT/2026/001 - Portal Distribusi Sinar Niaga",
@@ -370,11 +611,11 @@ export function buildFixtureVendorPoNormal(): PdfDocumentSpec {
       },
     ],
     tableColumns: [
-      { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Deskripsi Barang / Jasa", widthRatio: 0.44 },
-      { header: "Qty", widthRatio: 0.14, align: "center" },
-      { header: "Harga Satuan", widthRatio: 0.17, align: "right" },
-      { header: "Subtotal (IDR)", widthRatio: 0.17, align: "right" },
+      { header: "No", widthRatio: 0.07, align: "center" },
+      { header: "Deskripsi Barang / Jasa", widthRatio: 0.43 },
+      { header: "Qty", widthRatio: 0.12, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
     ],
     tableRows: [
       [
@@ -386,7 +627,7 @@ export function buildFixtureVendorPoNormal(): PdfDocumentSpec {
       ],
     ],
     summaryRows: [
-      { label: "TOTAL NILAI PO", value: formatDocRupiah(4_500_000) },
+      { label: "Total Nilai PO", value: formatDocRupiah(4_500_000) },
     ],
     terbilangAmount: 4_500_000,
     notes: [
@@ -401,6 +642,138 @@ export function buildFixtureVendorPoNormal(): PdfDocumentSpec {
     rightSignatureLabel: "Diterima & Dikonfirmasi Oleh, PT Awan Nusantara Cloud",
     rightSignatureName: "Rizky Pratama",
     footerDocNumber: "POP/ALT/2026/11/001",
+  };
+}
+
+/**
+ * 8b. PO INTERNAL (Vendor) — Ekstrem (25 item, nama proyek >120 karakter, URL >80 karakter, angka miliaran desimal, 6 bullet)
+ */
+export function buildFixtureVendorPoExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 25 }, (_, i) => {
+    const unitPrice = i === 0 ? 49_382_715.62 : 49_382_715;
+    return [
+      String(i + 1),
+      `Pengadaan Lisensi & Infrastruktur Klaster Server Ke-${i + 1}: Dedicated Bare-Metal Node 64-Core, Penyimpanan NVMe Enterprise RAID-10, dan Lisensi Dukungan Teknis 24/7`,
+      "1 Unit",
+      formatDocRupiah(unitPrice, true),
+      formatDocRupiah(unitPrice, true),
+    ];
+  });
+
+  return {
+    docTitle: "PURCHASE ORDER (PO PEMBELIAN VENDOR)",
+    docSubtitle: "PESANAN PENGADAAN BARANG / JASA INTERNAL",
+    docNumber: "POP/ALT/2026/11/099",
+    docDate: "2026-11-15",
+    statusBadge: { text: "DITERBITKAN", variant: "info" },
+    company: FIXTURE_COMPANY,
+    recipientTitle: "Kepada Vendor / Pemasok",
+    recipientLines: [
+      "PT Awan Nusantara Cloud Infrastruktur Internasional Tbk",
+      "Gedung Data Center Nusantara Tower B Lantai 12, Jl. Gatot Subroto Kav. 32-34, Kuningan Timur, Jakarta Selatan 12950",
+      "Kontak: Ir. Rizky Pratama, M.T. · Telp: 021-5550101 / 0811-9988-7766",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: "15 November 2026" },
+      { label: "Nomor PO", value: "POP/ALT/2026/11/099" },
+      {
+        label: "Proyek Terkait",
+        value:
+          "PRJ/ALT/2026/099 - Pembangunan Ekosistem Enterprise Resource Planning (ERP) Terpadu Lintas Entitas Anak Perusahaan, Integrasi Payment Gateway Nasional, dan Data Warehouse Analitik Real-Time",
+      },
+      { label: "Alamat Pengiriman", value: FIXTURE_COMPANY.address },
+      {
+        label: "Kontak Penerima",
+        value: `${FIXTURE_COMPANY.signer_name} (${FIXTURE_COMPANY.phone})`,
+      },
+      {
+        label: "Tautan Portal Konfirmasi Pengiriman Vendor",
+        value:
+          "https://portal.altvira.id/vendor-procurement/po/2026/11/POP-ALT-2026-11-099/delivery-confirmation?vendor_token=77665544332211",
+      },
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.07, align: "center" },
+      { header: "Deskripsi Barang / Jasa", widthRatio: 0.43 },
+      { header: "Qty", widthRatio: 0.12, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
+    ],
+    tableRows: rows,
+    summaryRows: [
+      {
+        label: "Total Nilai PO",
+        value: formatDocRupiah(1_234_567_890.5, true),
+      },
+    ],
+    terbilangAmount: 1_234_567_890.5,
+    notes: [
+      "Harap cantumkan Nomor PO ini pada setiap surat jalan, berita acara serah terima barang/jasa, dan tagihan/invoice vendor.",
+      "Barang atau lisensi layanan yang diserahkan wajib memenuhi standar spesifikasi teknis dan SLA 99,95% sesuai kesepakatan.",
+      "Pembayaran tagihan vendor diproses melalui mekanisme Form Payment Approval (PA) maksimal 14 hari kerja setelah BAST diverifikasi.",
+      "Keterlambatan aktivasi atau pengiriman perangkat melewati batas waktu yang ditentukan dapat dikenakan penyesuaian nilai tagihan.",
+      "Seluruh kredensial akses server produksi wajib dikirimkan melalui saluran terenkripsi kepada Kontak Penerima yang tertera.",
+      "Dokumen PO ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+    ],
+    leftSignatureLabel: "Dibuat Oleh (Staff Pengadaan),",
+    leftSignatureName: FIXTURE_COMPANY.signer_name,
+    thirdSignatureLabel: "Disetujui Oleh (Finance / Admin),",
+    thirdSignatureName: "Direktur Keuangan",
+    rightSignatureLabel:
+      "Diterima & Dikonfirmasi Oleh, PT Awan Nusantara Cloud Infrastruktur Internasional Tbk",
+    rightSignatureName: "Ir. Rizky Pratama, M.T.",
+    footerDocNumber: "POP/ALT/2026/11/099",
+  };
+}
+
+/**
+ * 8c. PO INTERNAL (Vendor) — Minimum (1 item pendek, tanpa catatan opsional)
+ */
+export function buildFixtureVendorPoMinimum(): PdfDocumentSpec {
+  return {
+    docTitle: "PURCHASE ORDER (PO PEMBELIAN VENDOR)",
+    docSubtitle: "PESANAN PENGADAAN BARANG / JASA INTERNAL",
+    docNumber: "POP/ALT/2026/11/002",
+    docDate: "2026-11-10",
+    statusBadge: { text: "DRAF", variant: "neutral" },
+    company: {
+      ...FIXTURE_COMPANY,
+      tax_id_number: null,
+    },
+    recipientTitle: "Kepada Vendor / Pemasok",
+    recipientLines: ["CV Mitra Hosting", "-"],
+    metaRows: [
+      { label: "Tanggal Terbit", value: "10 November 2026" },
+      { label: "Nomor PO", value: "POP/ALT/2026/11/002" },
+      { label: "Proyek Terkait", value: "-" },
+    ],
+    tableColumns: [
+      { header: "No", widthRatio: 0.07, align: "center" },
+      { header: "Deskripsi Barang / Jasa", widthRatio: 0.43 },
+      { header: "Qty", widthRatio: 0.12, align: "center" },
+      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
+    ],
+    tableRows: [
+      [
+        "1",
+        "Perpanjangan Domain .id (1 Tahun)",
+        "1 Tahun",
+        formatDocRupiah(250_000),
+        formatDocRupiah(250_000),
+      ],
+    ],
+    summaryRows: [
+      { label: "Total Nilai PO", value: formatDocRupiah(250_000) },
+    ],
+    terbilangAmount: 250_000,
+    leftSignatureLabel: "Dibuat Oleh (Staff Pengadaan),",
+    leftSignatureName: FIXTURE_COMPANY.signer_name,
+    thirdSignatureLabel: "Disetujui Oleh (Finance / Admin),",
+    thirdSignatureName: "Direktur Keuangan",
+    rightSignatureLabel: "Diterima Oleh, CV Mitra Hosting",
+    rightSignatureName: "Perwakilan Vendor",
+    footerDocNumber: "POP/ALT/2026/11/002",
   };
 }
 
@@ -681,13 +1054,33 @@ export const ALL_BASELINE_FIXTURES: Array<{
   },
   {
     slug: "02-kuitansi-normal",
-    title: "Kuitansi Pembayaran",
+    title: "Kuitansi Pembayaran (Normal)",
     buildSpec: buildFixtureReceiptNormal,
   },
   {
+    slug: "02b-kuitansi-extreme",
+    title: "Kuitansi Pembayaran (Ekstrem)",
+    buildSpec: buildFixtureReceiptExtreme,
+  },
+  {
+    slug: "02c-kuitansi-minimum",
+    title: "Kuitansi Pembayaran (Minimum)",
+    buildSpec: buildFixtureReceiptMinimum,
+  },
+  {
     slug: "03-quotation-normal",
-    title: "Quotation (Penawaran Harga)",
+    title: "Quotation (Normal)",
     buildSpec: buildFixtureQuotationNormal,
+  },
+  {
+    slug: "03b-quotation-extreme",
+    title: "Quotation (Ekstrem 25 Item)",
+    buildSpec: buildFixtureQuotationExtreme,
+  },
+  {
+    slug: "03c-quotation-minimum",
+    title: "Quotation (Minimum)",
+    buildSpec: buildFixtureQuotationMinimum,
   },
   {
     slug: "04-sow-normal",
@@ -696,13 +1089,33 @@ export const ALL_BASELINE_FIXTURES: Array<{
   },
   {
     slug: "05-po-klien-normal",
-    title: "PO Klien (Portal Pembeli)",
+    title: "PO Klien (Normal)",
     buildSpec: buildFixtureClientPoNormal,
   },
   {
+    slug: "05b-po-klien-extreme",
+    title: "PO Klien (Ekstrem 25 Item)",
+    buildSpec: buildFixtureClientPoExtreme,
+  },
+  {
+    slug: "05c-po-klien-minimum",
+    title: "PO Klien (Minimum)",
+    buildSpec: buildFixtureClientPoMinimum,
+  },
+  {
     slug: "06-po-vendor-normal",
-    title: "PO Pembelian Vendor Internal",
+    title: "PO Pembelian Vendor (Normal)",
     buildSpec: buildFixtureVendorPoNormal,
+  },
+  {
+    slug: "06b-po-vendor-extreme",
+    title: "PO Pembelian Vendor (Ekstrem 25 Item)",
+    buildSpec: buildFixtureVendorPoExtreme,
+  },
+  {
+    slug: "06c-po-vendor-minimum",
+    title: "PO Pembelian Vendor (Minimum)",
+    buildSpec: buildFixtureVendorPoMinimum,
   },
   {
     slug: "07-bakp-normal",

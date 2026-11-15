@@ -18,10 +18,20 @@ describe("Render Check Generator & Collision Detector", () => {
         `Margin violations on ${fixture.slug}`,
       ).toEqual([]);
 
-      if (
-        fixture.slug === "01-invoice-normal" ||
-        fixture.slug === "01c-invoice-minimum"
-      ) {
+      const singlePageSlugs = new Set([
+        "01-invoice-normal",
+        "01c-invoice-minimum",
+        "02-kuitansi-normal",
+        "02b-kuitansi-extreme",
+        "02c-kuitansi-minimum",
+        "03-quotation-normal",
+        "03c-quotation-minimum",
+        "05-po-klien-normal",
+        "05c-po-klien-minimum",
+        "06-po-vendor-normal",
+        "06c-po-vendor-minimum",
+      ]);
+      if (singlePageSlugs.has(fixture.slug)) {
         expect(layout.pageCount, `Page count for ${fixture.slug}`).toBe(1);
       }
     }
