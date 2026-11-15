@@ -775,6 +775,18 @@ function drawRoundedRect(
     color?: RGB;
   },
 ) {
+  if (radius <= 0) {
+    page.drawRectangle({
+      x,
+      y: topY - height,
+      width,
+      height,
+      borderColor: options?.borderColor,
+      borderWidth: options?.borderWidth,
+      color: options?.color,
+    });
+    return;
+  }
   const r = Math.min(radius, width / 2, height / 2);
   const w = width;
   const h = height;
@@ -1236,9 +1248,9 @@ async function renderDocumentPdfInternal(
         "A-header-fulltitle-bar",
       );
 
-      y = barY - 10;
+      y = barY - 15;
     } else {
-      y = separatorLineY - 10;
+      y = separatorLineY - 15;
     }
   };
 
@@ -1349,7 +1361,7 @@ async function renderDocumentPdfInternal(
         const isFirst = idx === 0;
         const rFont = isFirst ? fontBold : fontRegular;
         const rSize = isFirst ? 10 : 8.5;
-        const rColor = isFirst ? TEXT_DARK : TEXT_LABEL;
+        const rColor = TEXT_DARK; // Nama klien maupun alamat klien di blok kiri berseragam warna TEXT_DARK
         const wrapped = wrapTextByWidth(rLine, rFont, rSize, leftColW);
         leftPrepared.push({
           lines: wrapped,
@@ -1480,7 +1492,7 @@ async function renderDocumentPdfInternal(
       const colonColW = 12;
       const longestLabel = Math.max(
         ...effectiveMetaRows.map((m) =>
-          fontRegular.widthOfTextAtSize(sanitizePdfText(m.label), labelFontSize),
+          fontBold.widthOfTextAtSize(sanitizePdfText(m.label), labelFontSize),
         ),
         minLabelW,
       );
@@ -1492,7 +1504,7 @@ async function renderDocumentPdfInternal(
       const prepared = effectiveMetaRows.map((m) => {
         const labelLines = wrapTextByWidth(
           m.label,
-          fontRegular,
+          fontBold,
           labelFontSize,
           labelColW,
         );
@@ -1520,7 +1532,7 @@ async function renderDocumentPdfInternal(
               x: marginX,
               y: y - lIdx * rowLineH,
               size: labelFontSize,
-              font: fontRegular,
+              font: fontBold,
               color: TEXT_LABEL,
             },
             "B-meta-label",
@@ -1532,7 +1544,7 @@ async function renderDocumentPdfInternal(
             x: colonX,
             y,
             size: labelFontSize,
-            font: fontRegular,
+            font: fontBold,
             color: TEXT_LABEL,
           },
           "B-meta-colon",
@@ -1585,7 +1597,7 @@ async function renderDocumentPdfInternal(
               y,
               size: rSize,
               font: rFont,
-              color: isFirst ? TEXT_DARK : TEXT_LABEL,
+              color: TEXT_DARK,
             },
             "B-recipient",
           );
@@ -1602,7 +1614,7 @@ async function renderDocumentPdfInternal(
       thickness: 0.5,
       color: BORDER_GRAY,
     });
-    y -= 16;
+    y -= 12;
   }
 
   // ==========================================================================
@@ -1811,14 +1823,14 @@ async function renderDocumentPdfInternal(
     const blockTopY = y;
     const blockBottomY = blockTopY - summaryBlockH;
 
-    // 1. Kotak Keterangan di sebelah kiri blok total (tinggi sejajar dengan blok total)
+    // 1. Kotak Keterangan di sebelah kiri blok total (tinggi sejajar dengan blok total, sudut kaku/sharp 0)
     drawRoundedRect(
       page,
       keteranganX,
       blockTopY,
       keteranganW,
       summaryBlockH,
-      4,
+      0,
       { borderWidth: 0.5, borderColor: BORDER_GRAY },
     );
     drawTrackedText(
@@ -1920,7 +1932,7 @@ async function renderDocumentPdfInternal(
         pdBoxTopY,
         pdBoxW,
         pdBoxH,
-        4,
+        0,
         { borderWidth: 0.5, borderColor: BORDER_GRAY },
       );
 
@@ -2032,7 +2044,7 @@ async function renderDocumentPdfInternal(
         bCursorY -= 12.5;
       });
 
-      y = pdBoxBottomY - 10;
+      y = pdBoxBottomY - 7;
     }
   } else if (hasSummary || hasTerbilang) {
     const totalBlockW = Math.round(contentWidth * 0.45); // ~222 pt
@@ -2269,7 +2281,7 @@ async function renderDocumentPdfInternal(
       y -= itemGap;
     }
 
-    y -= 10;
+    y -= 8;
   }
 
   // ==========================================================================

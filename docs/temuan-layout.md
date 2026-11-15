@@ -488,14 +488,35 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-30
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen PDF (`renderDocumentPdfInternal`, `drawDocumentHeader`)
+- **Apa yang bertentangan:**
+  1. Teks alamat dan kontak klien di blok kiri body sebelumnya berwarna abu-abu `TEXT_LABEL`, sementara nama klien dan nilai metadata blok kanan (e.g. tanggal) berwarna hitam `TEXT_DARK`. Pengguna meminta warna teks seluruh isi blok kiri dan kanan diseragamkan dengan warna nama/alamat klien (`TEXT_DARK`).
+  2. Jarak antara garis pemisah header dan teks awal body dokumen (*Ditagihkan Kepada*, *Tanggal Terbit*, dst.) sebelumnya hanya 10 pt sehingga tampak rapat. Pengguna meminta penambahan spasi agar lebih lega.
+  3. Kotak Keterangan dan kotak Detail Pembayaran sebelumnya memiliki sudut membulat (*border radius* 4 pt). Pengguna meminta seluruh tabel dan kotak/kolom pada dokumen memiliki sudut tajam/kaku (*rounded* 0).
+  4. Pengguna menginstruksikan agar pembaruan ketebalan (`fontBold`) dan warna (`TEXT_LABEL`) pada label metadata body diterapkan ke seluruh dokumen administrasi yang ada (termasuk Kuitansi).
+- **Yang kulakukan:**
+  1. Mengubah warna seluruh baris penerima di blok kiri (nama klien, PIC, alamat) menjadi `TEXT_DARK` sehingga seragam sempurna dengan isi/nilai blok kanan (`TEXT_DARK`).
+  2. Menambah spasi vertikal awal body dokumen menjadi 15 pt di bawah garis pemisah header (`y = separatorLineY - 15`) dan menyeimbangkan padding antar seksi agar dokumen tetap pas pada 1 halaman.
+  3. Mengubah *border radius* kotak Keterangan dan Detail Pembayaran menjadi `0` (sudut tajam/kaku 90°) melalui `drawRoundedRect` (radius <= 0 merender `page.drawRectangle`).
+  4. Menerapkan label tebal `fontBold` dengan warna `TEXT_LABEL` pada seluruh dokumen administrasi lain (termasuk cabang `hasMeta` Kuitansi).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan penyeragaman warna isi blok penerima/metadata, penambahan jeda header-body, sudut kaku kotak, dan penyeragaman label tebal seluruh dokumen. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 14 | 12 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 15 | 13 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **29** | **22** | **7** | **1** |
+| **Total Temuan** | **30** | **23** | **7** | **1** |
