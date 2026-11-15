@@ -1,4 +1,5 @@
 import {
+  degrees,
   PDFDocument,
   StandardFonts,
   rgb,
@@ -10,6 +11,10 @@ import {
 import {
   decodeImageBytes,
 } from "@/lib/asset-utils";
+import {
+  getAltviraIconBytes,
+  getAltviraWordmarkBytes,
+} from "@/lib/brand-assets";
 import {
   formatDateID,
   formatDateTimeID,
@@ -86,6 +91,9 @@ export interface PdfDocumentSpec {
   thirdSignatureImageUrl?: string | null;
   footerDocNumber?: string;
   hideSystemFooter?: boolean;
+  refDocNumber?: string | null;
+  docStatus?: string | null;
+  watermarkText?: string | null;
 }
 
 export interface PdfTextBox {
@@ -129,12 +137,13 @@ export const PDF_LAYOUT_TOKENS = {
   marginX: 51.02, // 18 mm
   marginTop: 45.35, // 16 mm
   marginBottom: 56.69, // 20 mm (ruang khusus footer)
-  bottomSafeY: 60, // batas aman konten di atas garis footer (y = 40)
-  footerLineY: 40,
-  footerTextY: 27,
+  bottomSafeY: 60, // batas aman konten di atas garis footer (y = 54)
+  footerLineY: 54,
+  footerTextY: 42,
+  socialBandHeight: 31.18, // ~11 mm
   fontSizes: {
     docTitle: 22,
-    docNumber: 10,
+    docNumber: 8.5,
     companyName: 15.5,
     legalName: 9,
     body: 9.5,
@@ -152,12 +161,105 @@ export const PDF_LAYOUT_TOKENS = {
 } as const;
 
 // Warna resmi sesuai spesifikasi:
-// Aksen biru logo, teks #1f2937, label #6b7280, garis #e5e7eb, latar chip #f3f4f6
+// Aksen biru logo, teks #1f2937, label #6b7280, garis #e5e7eb, latar chip #f3f4f6, band media sosial navy gelap
 const BRAND_BLUE = rgb(11 / 255, 67 / 255, 200 / 255);
 const TEXT_DARK = rgb(31 / 255, 41 / 255, 55 / 255); // #1f2937
 const TEXT_LABEL = rgb(107 / 255, 114 / 255, 128 / 255); // #6b7280
 const BORDER_GRAY = rgb(229 / 255, 231 / 255, 235 / 255); // #e5e7eb
 const CHIP_BG = rgb(243 / 255, 244 / 255, 246 / 255); // #f3f4f6
+const NAVY_DARK = rgb(9 / 255, 14 / 255, 25 / 255); // #090e19 token dark navy sistem
+
+export interface DocTitleConfig {
+  headerTitle: string;
+  fullTitleBar?: string;
+}
+
+/**
+ * Memetakan judul dokumen menjadi singkatan di header kanan (jika judul panjang)
+ * dan judul lengkap untuk baris abu di bawah garis header.
+ * Judul pendek (INVOICE, KUITANSI, PURCHASE ORDER (PO)) tidak disingkat dan tidak mendapat baris abu.
+ */
+export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
+  const normalized = rawTitle.trim().toUpperCase();
+
+  // 1. JADWAL TERMIN PENAGIHAN PROYEK -> JTPP
+  if (normalized.includes("JADWAL TERMIN PENAGIHAN PROYEK") || normalized === "JTPP") {
+    return {
+      headerTitle: "JTPP",
+      fullTitleBar: normalized.includes("JADWAL") ? normalized : "JADWAL TERMIN PENAGIHAN PROYEK (JTPP)",
+    };
+  }
+
+  // 2. SURAT PENAWARAN HARGA (QUOTATION) -> QUOTATION
+  if (normalized.includes("SURAT PENAWARAN HARGA") || normalized.includes("PENAWARAN HARGA")) {
+    return {
+      headerTitle: "QUOTATION",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 3. USER ACCEPTANCE TEST (UAT) CHECKLIST -> UAT
+  if (normalized.includes("USER ACCEPTANCE TEST") || normalized.includes("UAT CHECKLIST")) {
+    return {
+      headerTitle: "UAT",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 4. BERITA ACARA SERAH TERIMA (BAST) -> BAST
+  if (normalized.includes("BERITA ACARA SERAH TERIMA") || normalized.includes("(BAST)")) {
+    return {
+      headerTitle: "BAST",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 5. BERITA ACARA KEMAJUAN PEKERJAAN (BAKP) -> BAKP
+  if (normalized.includes("BERITA ACARA KEMAJUAN PEKERJAAN") || normalized.includes("(BAKP)")) {
+    return {
+      headerTitle: "BAKP",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 6. STATEMENT OF WORK (SOW) -> SOW
+  if (normalized.includes("STATEMENT OF WORK") || normalized.includes("(SOW)")) {
+    return {
+      headerTitle: "SOW",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 7. FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL) -> PAYMENT APPROVAL
+  if (normalized.includes("FORM PERSETUJUAN PEMBAYARAN") || normalized.includes("PAYMENT APPROVAL")) {
+    return {
+      headerTitle: "PAYMENT APPROVAL",
+      fullTitleBar: normalized,
+    };
+  }
+
+  // 8. PURCHASE ORDER (PO) KLIEN -> PURCHASE ORDER (PO) (kata Klien dihapus hanya di judul)
+  if (normalized.includes("PURCHASE ORDER") && normalized.includes("KLIEN")) {
+    return {
+      headerTitle: "PURCHASE ORDER (PO)",
+    };
+  }
+  if (normalized.includes("PURCHASE ORDER") || normalized === "PURCHASE ORDER (PO)") {
+    return {
+      headerTitle: "PURCHASE ORDER (PO)",
+    };
+  }
+
+  // 9. Judul pendek lainnya: INVOICE, KUITANSI
+  if (normalized === "INVOICE" || normalized.includes("FAKTUR")) {
+    return { headerTitle: "INVOICE" };
+  }
+  if (normalized === "KUITANSI" || normalized.includes("RECEIPT")) {
+    return { headerTitle: "KUITANSI" };
+  }
+
+  return { headerTitle: normalized };
+}
 
 // Alias kompatibilitas untuk generator SPK 10 Pasal
 const SLATE_900 = TEXT_DARK;
@@ -426,7 +528,7 @@ async function drawSocialMediaFooters(params: {
   pages.forEach((p, idx) => {
     // Jika SPK menyertakan area paraf per halaman
     if (parafInfo) {
-      const parafY = 48;
+      const parafY = 64;
       p.drawText("Paraf Pihak Pertama:", {
         x: marginX,
         y: parafY,
@@ -526,6 +628,67 @@ async function drawSocialMediaFooters(params: {
         recordBox?.(idx, centerX, textY, centerW, 7.5, centerText, "I-footer");
       }
     }
+
+    // Band media sosial selebar halaman penuh sampai tepi bawah
+    const socials = (company.social_links_json || []).filter(
+      (s) => s && s.platform && s.username && s.username.trim(),
+    );
+    if (socials.length > 0) {
+      const bandH = PDF_LAYOUT_TOKENS.socialBandHeight;
+      p.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: bandH,
+        color: NAVY_DARK,
+      });
+
+      const socialText = socials
+        .map((s) => `${s.platform} ${s.username.trim()}`)
+        .join("   ·   ");
+      const socialFontSize = 8;
+      const whiteColor = rgb(1, 1, 1);
+      const textW = fontRegular.widthOfTextAtSize(socialText, socialFontSize);
+
+      if (textW <= pageWidth - 36) {
+        // Muat 1 baris rata tengah
+        const textX = (pageWidth - textW) / 2;
+        p.drawText(socialText, {
+          x: textX,
+          y: 11,
+          size: socialFontSize,
+          font: fontRegular,
+          color: whiteColor,
+        });
+      } else {
+        // Bagi menjadi 2 baris rata tengah
+        const midIdx = Math.ceil(socials.length / 2);
+        const line1 = socials
+          .slice(0, midIdx)
+          .map((s) => `${s.platform} ${s.username.trim()}`)
+          .join("   ·   ");
+        const line2 = socials
+          .slice(midIdx)
+          .map((s) => `${s.platform} ${s.username.trim()}`)
+          .join("   ·   ");
+        const w1 = fontRegular.widthOfTextAtSize(line1, socialFontSize);
+        const w2 = fontRegular.widthOfTextAtSize(line2, socialFontSize);
+        p.drawText(line1, {
+          x: (pageWidth - w1) / 2,
+          y: 17,
+          size: socialFontSize,
+          font: fontRegular,
+          color: whiteColor,
+        });
+        p.drawText(line2, {
+          x: (pageWidth - w2) / 2,
+          y: 7,
+          size: socialFontSize,
+          font: fontRegular,
+          color: whiteColor,
+        });
+      }
+    }
   });
 }
 
@@ -541,7 +704,14 @@ async function renderDocumentPdfInternal(
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const [companyLogo, rightSigImg, leftSigImg, thirdSigImg] = await Promise.all([
+  const [
+    companyLogo,
+    rightSigImg,
+    leftSigImg,
+    thirdSigImg,
+    altviraIconBytes,
+    altviraWordmarkBytes,
+  ] = await Promise.all([
     embedOptionalImage(pdfDoc, spec.company.logo_storage_path),
     embedOptionalImage(
       pdfDoc,
@@ -551,6 +721,13 @@ async function renderDocumentPdfInternal(
     ),
     embedOptionalImage(pdfDoc, spec.leftSignatureImageUrl),
     embedOptionalImage(pdfDoc, spec.thirdSignatureImageUrl),
+    getAltviraIconBytes(),
+    getAltviraWordmarkBytes(),
+  ]);
+
+  const [altviraIconImg, altviraWordmarkImg] = await Promise.all([
+    altviraIconBytes ? pdfDoc.embedPng(altviraIconBytes).catch(() => null) : Promise.resolve(null),
+    altviraWordmarkBytes ? pdfDoc.embedPng(altviraWordmarkBytes).catch(() => null) : Promise.resolve(null),
   ]);
 
   const { pageWidth, pageHeight, marginX, marginTop, bottomSafeY } =
@@ -560,7 +737,33 @@ async function renderDocumentPdfInternal(
   const pages: PDFPage[] = [];
   const textBoxes: PdfTextBox[] = [];
 
+  const drawWatermarkOnPage = (targetPage: PDFPage) => {
+    const statusStr = (spec.docStatus || spec.statusBadge?.text || "").toLowerCase();
+    const isDraft = statusStr.includes("draft");
+    const isCancelled = statusStr.includes("batal") || statusStr.includes("cancel");
+
+    if (!isDraft && !isCancelled && !spec.watermarkText) return;
+
+    const wmText = spec.watermarkText || (isDraft ? "DRAFT" : "BATAL");
+    const wmSize = 68;
+    const wmW = fontBold.widthOfTextAtSize(wmText, wmSize);
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+    const rad = 32 * (Math.PI / 180);
+
+    targetPage.drawText(wmText, {
+      x: centerX - (wmW / 2) * Math.cos(rad),
+      y: centerY - (wmW / 2) * Math.sin(rad),
+      size: wmSize,
+      font: fontBold,
+      color: rgb(0.5, 0.5, 0.5),
+      opacity: 0.11,
+      rotate: degrees(32),
+    });
+  };
+
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
+  drawWatermarkOnPage(page);
   pages.push(page);
   let pageIndex = 0;
   let y = pageHeight - marginTop; // 796.54 pt
@@ -605,70 +808,119 @@ async function renderDocumentPdfInternal(
   };
 
   // ==========================================================================
-  // KOMPONEN 1: HEADER (ZONA A) — Gaya Arental / Figma
-  // Dua kolom:
-  // - Kiri (lebar maks 268 pt): Logo (~14 mm) + Nama Usaha (15.5 pt biru tebal) + Badan Hukum (9 pt abu)
-  //   diikuti 3 grup baris pendek kontak (alamat maks 2 baris, email, telepon) 8.5 pt abu tanpa "|".
-  // - Kanan (rata kanan, lebar maks 209 pt): Judul Dokumen (22-24 pt), Nomor Dokumen (10 pt tebal),
-  //   dan SATU Chip Status.
+  // KOMPONEN 1: HEADER (ZONA A) — Format Global Standard
+  // - Kolom kiri (maks 235 pt): Ikon Altvira (~15 mm) + Wordmark Altvira (proporsional),
+  //   disusun 1 garis tengah horizontal dengan Judul Dokumen di kolom kanan.
+  //   Di bawahnya: Nama Badan Usaha (8.5 pt bold), Alamat (maks 2 baris),
+  //   Email : ..., Telp. : ..., dan NPWP : ...
+  // - Kolom kanan (maks 248 pt): Judul Dokumen (22 pt bold, disingkat bila panjang),
+  //   No : {nomor} sejajar baseline Telp., dan Ref : {induk} sejajar baseline NPWP.
+  //   SEMUA chip status di bawah nomor dokumen dihapus total.
+  // - Baris abu selebar penuh konten di bawah garis header jika judul panjang.
   // ==========================================================================
+  const docTitleConfig = resolveDocTitleConfig(spec.docTitle);
+
   const drawDocumentHeader = () => {
     const headerTopY = y;
-    const leftColMaxW = 268;
-    const rightColMaxW = 209;
+    const leftColMaxW = 235;
     const rightEdgeX = pageWidth - marginX;
 
-    // --- A1. Blok Kiri: Logo + Nama Usaha + Nama Badan Hukum ---
-    let brandTextX = marginX;
-    let brandBlockBottomY = headerTopY - 34;
+    // Common Center Y untuk ikon, wordmark, dan judul dokumen
+    const headerCenterY = headerTopY - 22;
 
-    if (companyLogo) {
-      const dims = fitDimensions(companyLogo, 52, 39.7); // tinggi ~14 mm
+    // 1. Ikon Altvira (tinggi ~15 mm / 42.5 pt, rasio 1:1)
+    const iconH = 42.5;
+    const iconW = 42.5;
+    const iconX = marginX;
+    const iconY = headerCenterY - iconH / 2;
+
+    if (altviraIconImg) {
+      page.drawImage(altviraIconImg, {
+        x: iconX,
+        y: iconY,
+        width: iconW,
+        height: iconH,
+      });
+    } else if (companyLogo) {
+      const dims = fitDimensions(companyLogo, 52, 42.5);
       page.drawImage(companyLogo, {
-        x: marginX,
-        y: headerTopY - dims.height + 10,
+        x: iconX,
+        y: headerCenterY - dims.height / 2,
         width: dims.width,
         height: dims.height,
       });
-      brandTextX = marginX + dims.width + 10;
-      brandBlockBottomY = Math.min(brandBlockBottomY, headerTopY - dims.height + 8);
     } else {
-      drawDefaultAltviraMark(page, marginX, headerTopY + 10);
-      brandTextX = marginX + 44;
+      drawDefaultAltviraMark(page, iconX, headerCenterY + 16);
     }
 
-    const companyNameClean = sanitizePdfText(spec.company.company_name);
+    // 2. Wordmark Altvira (rasio asli 1024x208 = 4.923, tinggi 21 pt, lebar 103.38 pt)
+    const wmH = 21;
+    const wmW = 103.38;
+    const wmX = iconX + iconW + 8;
+    const wmY = headerCenterY - wmH / 2;
+
+    if (altviraWordmarkImg) {
+      page.drawImage(altviraWordmarkImg, {
+        x: wmX,
+        y: wmY,
+        width: wmW,
+        height: wmH,
+      });
+    } else {
+      drawTrackedText(
+        "Altvira Technology",
+        {
+          x: wmX,
+          y: headerCenterY - 4,
+          size: 14,
+          font: fontBold,
+          color: BRAND_BLUE,
+        },
+        "A-header-left",
+      );
+    }
+
+    // 3. Judul Dokumen di kolom kanan (rata kanan, garis tengah sama di headerCenterY)
+    const titleText = sanitizePdfText(docTitleConfig.headerTitle.toUpperCase());
+    const titleSize = 22;
+    const titleCapCenterOffset = 7.5;
+    const titleBaselineY = headerCenterY - titleCapCenterOffset;
+    const titleW = fontBold.widthOfTextAtSize(titleText, titleSize);
+    const titleX = rightEdgeX - titleW;
+
     drawTrackedText(
-      companyNameClean,
+      titleText,
       {
-        x: brandTextX,
-        y: headerTopY - 3,
-        size: PDF_LAYOUT_TOKENS.fontSizes.companyName,
+        x: titleX,
+        y: titleBaselineY,
+        size: titleSize,
         font: fontBold,
-        color: BRAND_BLUE,
+        color: TEXT_DARK,
       },
-      "A-header-left",
+      "A-header-right",
     );
 
-    const legalNameClean = sanitizePdfText(spec.company.legal_entity_name);
+    // 4. Blok Kontak Kiri di bawah brand (diberi jarak 11 pt di bawah batas bawah ikon)
+    let leftCursorY = iconY - 11;
+    const contactSize = 8; // 8 pt sesuai instruksi
+    const contactLineH = 10;
+
+    // 4a. Nama Badan Usaha (8.5 pt fontBold)
+    const legalNameClean = sanitizePdfText(spec.company.legal_entity_name || "PT Representasi Mitra Mandiri");
     drawTrackedText(
       legalNameClean,
       {
-        x: brandTextX,
-        y: headerTopY - 17,
-        size: PDF_LAYOUT_TOKENS.fontSizes.legalName,
-        font: fontRegular,
-        color: TEXT_LABEL,
+        x: marginX,
+        y: leftCursorY,
+        size: 8.5,
+        font: fontBold,
+        color: TEXT_DARK,
       },
-      "A-header-left",
+      "A-header-contact",
     );
+    leftCursorY -= 11;
 
-    // Kontak 3 baris pendek di bawah blok kiri (tanpa pemisah "|")
-    let leftCursorY = Math.min(brandBlockBottomY, headerTopY - 24) - 8;
-    const contactSize = PDF_LAYOUT_TOKENS.fontSizes.label; // 8.5 pt
-    const contactLineH = 11.5;
-
-    // Baris 1 (maks 2 baris): Alamat
+    // 4b. Alamat (wrap maks 2 baris, 8 pt fontRegular)
     const rawAddrLines = wrapTextByWidth(
       spec.company.address,
       fontRegular,
@@ -691,164 +943,139 @@ async function renderDocumentPdfInternal(
       leftCursorY -= contactLineH;
     }
 
-    // Baris 2: Email
-    if (spec.company.email) {
-      drawTrackedText(
-        spec.company.email,
-        {
-          x: marginX,
-          y: leftCursorY,
-          size: contactSize,
-          font: fontRegular,
-          color: TEXT_LABEL,
-        },
-        "A-header-contact",
-      );
-      leftCursorY -= contactLineH;
-    }
+    // 4c. Email
+    const emailVal = spec.company.email ? `Email : ${spec.company.email}` : "Email : -";
+    drawTrackedText(
+      emailVal,
+      {
+        x: marginX,
+        y: leftCursorY,
+        size: contactSize,
+        font: fontRegular,
+        color: TEXT_LABEL,
+      },
+      "A-header-contact",
+    );
+    leftCursorY -= contactLineH;
 
-    // Baris 3: Telepon (+ NPWP bila ada, tanpa "|")
-    const phoneAndTax = spec.company.tax_id_number
-      ? `${spec.company.phone}  ·  NPWP ${spec.company.tax_id_number}`
-      : spec.company.phone;
-    if (phoneAndTax) {
-      const phoneLines = wrapTextByWidth(
-        phoneAndTax,
-        fontRegular,
-        contactSize,
-        leftColMaxW,
-      ).slice(0, 1);
-      for (const pLine of phoneLines) {
-        drawTrackedText(
-          pLine,
-          {
-            x: marginX,
-            y: leftCursorY,
-            size: contactSize,
-            font: fontRegular,
-            color: TEXT_LABEL,
-          },
-          "A-header-contact",
-        );
-        leftCursorY -= contactLineH;
-      }
-    }
+    // 4d. Telepon (baris kedua dari bawah)
+    const telpBaselineY = leftCursorY;
+    const phoneVal = spec.company.phone ? `Telp. : ${spec.company.phone}` : "Telp. : -";
+    drawTrackedText(
+      phoneVal,
+      {
+        x: marginX,
+        y: telpBaselineY,
+        size: contactSize,
+        font: fontRegular,
+        color: TEXT_LABEL,
+      },
+      "A-header-contact",
+    );
+    leftCursorY -= contactLineH;
 
-    // --- A2. Blok Kanan: Judul Dokumen (22-24 pt, atau adaptif maks 2 baris), Nomor Dokumen (10 pt tebal), 1 Chip Status ---
-    let rightCursorY = headerTopY - 5;
-    const rawTitle = sanitizePdfText(spec.docTitle.toUpperCase());
+    // 4e. NPWP (baris terakhir)
+    const npwpBaselineY = leftCursorY;
+    const npwpVal = spec.company.tax_id_number?.trim()
+      ? `NPWP : ${spec.company.tax_id_number.trim()}`
+      : "NPWP : -";
+    drawTrackedText(
+      npwpVal,
+      {
+        x: marginX,
+        y: npwpBaselineY,
+        size: contactSize,
+        font: fontRegular,
+        color: TEXT_LABEL,
+      },
+      "A-header-contact",
+    );
+    leftCursorY -= contactLineH;
 
-    // Pilih ukuran font judul: 22 pt jika muat 1 baris di rightColMaxW, atau adaptif agar muat maks 2 baris
-    let titleSize = 22;
-    let titleLines = wrapTextByWidth(rawTitle, fontBold, titleSize, rightColMaxW);
-    if (titleLines.length > 1) {
-      for (const candidateSize of [20, 18, 16, 14.5, 13.5, 12.5, 11.5]) {
-        const candidateLines = wrapTextByWidth(
-          rawTitle,
-          fontBold,
-          candidateSize,
-          rightColMaxW,
-        );
-        titleSize = candidateSize;
-        titleLines = candidateLines;
-        if (candidateLines.length <= 2) {
-          break;
-        }
-      }
-    }
+    // 5. Blok No & Ref di Kanan (sejajar Telp. & NPWP)
+    const verSuffix = spec.docVersion
+      ? ` · ${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion}`
+      : "";
+    const noClean = spec.docNumber?.trim() ? `${spec.docNumber.trim()}${verSuffix}` : "-";
+    const noStr = `No : ${noClean}`;
+    const refClean = spec.refDocNumber?.trim() ? spec.refDocNumber.trim() : "-";
+    const refStr = `Ref : ${refClean}`;
 
-    for (const tLine of titleLines) {
-      const tW = fontBold.widthOfTextAtSize(tLine, titleSize);
-      drawTrackedText(
-        tLine,
-        {
-          x: rightEdgeX - tW,
-          y: rightCursorY,
-          size: titleSize,
-          font: fontBold,
-          color: TEXT_DARK,
-        },
-        "A-header-right",
-      );
-      rightCursorY -= titleSize + 3;
-    }
+    const numSize = PDF_LAYOUT_TOKENS.fontSizes.docNumber; // 8.5 pt
+    const noW = fontRegular.widthOfTextAtSize(noStr, numSize);
+    const refW = fontRegular.widthOfTextAtSize(refStr, numSize);
+    const maxBlockW = Math.max(noW, refW);
+    const noRefStartX = rightEdgeX - maxBlockW;
 
-    // Nomor Dokumen (10 pt tebal, rata kanan)
-    if (spec.docNumber && spec.docNumber.trim()) {
-      rightCursorY -= 2;
-      const verSuffix = spec.docVersion
-        ? ` · ${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion}`
-        : "";
-      const numStr = sanitizePdfText(`${spec.docNumber.trim()}${verSuffix}`);
-      const numSize = PDF_LAYOUT_TOKENS.fontSizes.docNumber; // 10 pt
-      const numW = fontBold.widthOfTextAtSize(numStr, numSize);
-      drawTrackedText(
-        numStr,
-        {
-          x: rightEdgeX - numW,
-          y: rightCursorY,
-          size: numSize,
-          font: fontBold,
-          color: TEXT_DARK,
-        },
-        "A-header-right",
-      );
-      rightCursorY -= 15;
-    }
+    drawTrackedText(
+      noStr,
+      {
+        x: noRefStartX,
+        y: telpBaselineY,
+        size: numSize,
+        font: fontRegular,
+        color: TEXT_DARK,
+      },
+      "A-header-right",
+    );
 
-    // SATU Chip Status di Header Kanan
-    if (spec.statusBadge && spec.statusBadge.text.trim()) {
-      rightCursorY -= 2;
-      const cleanBadgeText = sanitizePdfText(
-        spec.statusBadge.text.replace(/^STATUS\s*:\s*/i, "").trim().toUpperCase(),
-      );
-      const badgeFontSize = 8;
-      const textW = fontBold.widthOfTextAtSize(cleanBadgeText, badgeFontSize);
-      const chipW = textW + 16;
-      const chipH = 17;
-      const chipX = rightEdgeX - chipW;
-      const chipY = rightCursorY - 4;
+    drawTrackedText(
+      refStr,
+      {
+        x: noRefStartX,
+        y: npwpBaselineY,
+        size: numSize,
+        font: fontRegular,
+        color: TEXT_DARK,
+      },
+      "A-header-right",
+    );
 
-      page.drawRectangle({
-        x: chipX,
-        y: chipY,
-        width: chipW,
-        height: chipH,
-        color: CHIP_BG,
-        borderColor: BORDER_GRAY,
-        borderWidth: 0.6,
-      });
-
-      drawTrackedText(
-        cleanBadgeText,
-        {
-          x: chipX + 8,
-          y: chipY + 5,
-          size: badgeFontSize,
-          font: fontBold,
-          color: TEXT_DARK,
-        },
-        "A-header-chip",
-      );
-      rightCursorY = chipY - 4;
-    }
-
-    const headerBottomY = Math.min(leftCursorY + contactLineH - 4, rightCursorY) - 10;
-
-    // Garis pemisah 0.75 pt di bawah header (#e5e7eb)
+    // 6. Garis pemisah horizontal di bawah header (0.75 pt #e5e7eb)
+    const separatorLineY = npwpBaselineY - 7;
     page.drawLine({
-      start: { x: marginX, y: headerBottomY },
-      end: { x: pageWidth - marginX, y: headerBottomY },
+      start: { x: marginX, y: separatorLineY },
+      end: { x: rightEdgeX, y: separatorLineY },
       thickness: 0.75,
       color: BORDER_GRAY,
     });
 
-    y = headerBottomY - 14;
+    // 7. Baris Abu Judul Lengkap (jika judul panjang)
+    if (docTitleConfig.fullTitleBar) {
+      const barTopMargin = 6;
+      const barHeight = 22;
+      const barY = separatorLineY - barTopMargin - barHeight;
+
+      page.drawRectangle({
+        x: marginX,
+        y: barY,
+        width: contentWidth,
+        height: barHeight,
+        color: CHIP_BG,
+      });
+
+      drawTrackedText(
+        docTitleConfig.fullTitleBar,
+        {
+          x: marginX + 10,
+          y: barY + 6,
+          size: 10,
+          font: fontBold,
+          color: TEXT_DARK,
+        },
+        "A-header-fulltitle-bar",
+      );
+
+      y = barY - 10;
+    } else {
+      y = separatorLineY - 10;
+    }
   };
 
   const ensureSpace = (needed: number) => {
     if (y - needed < bottomSafeY) {
       page = pdfDoc.addPage([pageWidth, pageHeight]);
+      drawWatermarkOnPage(page);
       pages.push(page);
       pageIndex = pages.length - 1;
       y = pageHeight - marginTop;
@@ -1569,8 +1796,8 @@ async function renderDocumentPdfInternal(
     const markerColW = 12;
     const noteTextMaxW = contentWidth - markerColW;
     const noteSize = PDF_LAYOUT_TOKENS.fontSizes.note; // 8.5 pt
-    const noteLineH = PDF_LAYOUT_TOKENS.lineHeights.note; // 12.4 pt
-    const itemGap = 3.5;
+    const noteLineH = 11.5; // proporsional untuk 8.5 pt
+    const itemGap = 2.5;
 
     ensureSpace(28);
     drawTrackedText(
@@ -1644,16 +1871,20 @@ async function renderDocumentPdfInternal(
   ) {
     const meteraiW = 71; // 25 mm
     const meteraiH = 99; // 35 mm
-    const sigSpaceH = spec.hasMeterai ? meteraiH + 8 : 60;
+    const sigSpaceH = spec.hasMeterai ? meteraiH + 8 : (spec.minSignatureSpace || 46);
+    // Blok Altvira (kanan) memiliki 2 baris teks judul (Baris 1: pembuka, Baris 2: "Altvira Technology"),
+    // sehingga membutuhkan alokasi 24 pt sebelum ruang tanda tangan.
     const totalSigBlockH =
-      12 + sigSpaceH + 26 + (spec.closingNote ? 24 : 0);
+      24 + sigSpaceH + 26 + (spec.closingNote ? 24 : 0);
 
     // Pastikan seluruh blok pengesahan utuh pada satu halaman
     ensureSpace(totalSigBlockH);
 
     y -= 4;
     const sigTopY = y;
-    const lineY = sigTopY - 12 - sigSpaceH;
+    // Baseline garis tanda tangan diturunkan 24 pt dari sigTopY agar sejajar sempurna
+    // antara kolom kiri (1 baris) dan kolom kanan (2 baris: pembuka + Altvira Technology).
+    const lineY = sigTopY - 24 - sigSpaceH;
     const nameY = lineY - 13;
     const titleY = nameY - 12;
 
@@ -1679,6 +1910,21 @@ async function renderDocumentPdfInternal(
         };
       }
       return { name: cleaned, title: "" };
+    };
+
+    const parseRightOpening = (raw?: string): string => {
+      if (!raw || !raw.trim()) return "Hormat kami,";
+      const trimmed = raw.trim();
+      if (trimmed.includes(",")) {
+        const first = trimmed.split(",")[0]?.trim();
+        if (first) return `${first},`;
+      }
+      if (/pelaksana/i.test(trimmed)) return "Pelaksana,";
+      if (/penerima/i.test(trimmed)) return "Penerima,";
+      if (/dikeluarkan\s+oleh/i.test(trimmed)) return "Dikeluarkan Oleh,";
+      if (/diterima\s+oleh/i.test(trimmed)) return "Diterima Oleh,";
+      if (/hormat\s+kami/i.test(trimmed)) return "Hormat kami,";
+      return trimmed.endsWith(",") ? trimmed : `${trimmed},`;
     };
 
     if (spec.thirdSignatureName) {
@@ -1848,8 +2094,11 @@ async function renderDocumentPdfInternal(
       // Kolom Kanan (Pihak Pertama / Altvira) + Slot e-Meterai 25x35 mm di atas nama penandatangan
       if (spec.rightSignatureName) {
         const rightSigner = splitSigner(spec.rightSignatureName);
+        const openingText = parseRightOpening(spec.rightSignatureLabel);
+
+        // Baris 1: Kata pembuka
         drawTrackedText(
-          spec.rightSignatureLabel ?? `Hormat kami, ${spec.company.company_name}`,
+          openingText,
           {
             x: colRightX,
             y: sigTopY,
@@ -1858,6 +2107,19 @@ async function renderDocumentPdfInternal(
             color: TEXT_LABEL,
           },
           "G-sig-right-label",
+        );
+
+        // Baris 2: "Altvira Technology" tebal (ukuran 9.5 pt sama dengan nama penandatangan)
+        drawTrackedText(
+          "Altvira Technology",
+          {
+            x: colRightX,
+            y: sigTopY - 12,
+            size: 9.5,
+            font: fontBold,
+            color: TEXT_DARK,
+          },
+          "G-sig-right-company",
         );
 
         let sigImgOffsetX = colRightX;
@@ -3116,6 +3378,12 @@ export function buildInvoicePdfSpec(params: {
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.invoiceNumber,
+    refDocNumber:
+      params.bakpNumber ||
+      params.clientPoNumber ||
+      params.spkNumber ||
+      "-",
+    docStatus: params.docStatus,
   };
 }
 
@@ -3195,6 +3463,8 @@ export function buildReceiptPdfSpec(params: {
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.receiptNumber,
+    refDocNumber: params.invoiceNumber || "-",
+    docStatus: "paid",
   };
 }
 
@@ -3296,6 +3566,8 @@ export function buildClientPoPdfSpec(params: {
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.poNumber,
+    refDocNumber: params.quotationReference || "-",
+    docStatus: params.statusLabel,
   };
 }
 
@@ -3416,5 +3688,7 @@ export function buildPaymentApprovalPdfSpec(params: {
       `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.requestNumber,
+    refDocNumber: "-",
+    docStatus: params.status,
   };
 }

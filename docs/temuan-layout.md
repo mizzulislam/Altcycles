@@ -252,14 +252,76 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
-## Ringkasan Jumlah Temuan per Jenis (Akhir Langkah 3 — Selesai Seluruh Dokumen)
+---
+
+### ID: K-16
+- **Status:** Selesai (Diterapkan pada Langkah 1 Putaran Penyempurnaan)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** JTPP, Quotation, UAT, BAST, BAKP, SoW, Payment Approval (`src/lib/pdf-generator.ts`)
+- **Apa yang bertentangan:**
+  - Standar sebelumnya menempatkan judul lengkap panjang di header kanan, yang sering kali harus diperkecil hingga 11–12 pt atau dibungkus 2–3 baris.
+  - Perintah baru pemilik produk mewajibkan: Judul jenis dokumen yang panjang ditulis **SINGKATANNYA** di header kanan (ukuran seragam 22 pt); judul lengkap ditulis di baris abu-abu tepat setelah garis pembatas header. Judul pendek (INVOICE, KUITANSI, PURCHASE ORDER (PO)) tidak disingkat dan tidak mendapat baris abu.
+- **Yang kulakukan:** Mengimplementasikan fungsi `resolveDocTitleConfig` di `src/lib/pdf-generator.ts` untuk memetakan singkatan (`JTPP`, `QUOTATION`, `UAT`, `BAST`, `BAKP`, `SOW`, `PAYMENT APPROVAL`) dan merender baris abu judul lengkap selebar halaman tepat di bawah garis pemisah header.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan singkatan di header kanan + baris abu judul lengkap untuk semua jenis dokumen ber-judul panjang. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-17
+- **Status:** Selesai (Diterapkan pada Langkah 1 Putaran Penyempurnaan)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen sistem yang berstatus Draft atau Batal/Cancelled (`src/lib/pdf-generator.ts`)
+- **Apa yang bertentangan:**
+  - Sebelumnya status dokumen ditampilkan dalam bentuk badge/chip lonjong di kanan atas header (Zona A).
+  - Perintah baru pemilik produk: Chip status di header dihapus sepenuhnya; status Draft atau Batal ditampilkan sebagai watermark besar diagonal di tengah halaman (teks DRAFT / BATAL, ukuran 68 pt bold, rotasi 32 derajat, opasitas 11%, warna abu-abu lembut transparan).
+- **Yang kulakukan:** Menghapus rendering chip status di header kanan, dan menambahkan `drawWatermarkOnPage` yang otomatis menggambar watermark diagonal berukuran 68 pt pada dokumen berstatus `draft`, `batal`, atau `cancelled`.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Watermark diagonal 68 pt semi-transparan di tengah halaman untuk status Draft/Batal, tanpa chip status header. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-18
+- **Status:** Selesai (Diterapkan pada Langkah 1 Putaran Penyempurnaan)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen sistem (`src/lib/pdf-generator.ts`)
+- **Apa yang bertentangan:**
+  - Sebelumnya bagian bawah dokumen hanya memiliki satu garis tipis abu-abu di `y = 40 pt` dengan teks nama perusahaan di kiri dan nomor halaman di kanan (`y = 27 pt`).
+  - Perintah baru pemilik produk: Tambahkan pita/band media sosial selebar halaman penuh (`0` s.d. `31.18 pt`) di bagian paling bawah berwarna navy gelap (`#090E19`, token sistem) dengan teks akun Instagram, LinkedIn, TikTok putih 8 pt dari data `company.social_links_json`; naikkan garis footer sistem ke atas pita (`lineY = 54 pt`, `textY = 42 pt`).
+- **Yang kulakukan:** Mengimplementasikan pita navy gelap selebar halaman dengan teks media sosial putih di `y = 0` s.d. `31.18 pt` serta menaikkan footer sistem lama ke `lineY = 54 pt` dan `textY = 42 pt`, dengan batas aman konten `bottomSafeY = 60 pt`.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Pita navy gelap penuh di dasar halaman + footer sistem di atas pita. (Diterapkan sesuai keputusan pengguna "navy gelap saja").
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+### ID: K-19
+- **Status:** Selesai (Diterapkan pada Langkah 1 Putaran Penyempurnaan)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen sistem dengan blok tanda tangan (`src/lib/pdf-generator.ts`)
+- **Apa yang bertentangan:**
+  - Sebelumnya teks pembuka pihak Altvira di kanan digabung satu baris dengan nama perusahaan: `Hormat kami, PT Representasi Mitra Mandiri`.
+  - Perintah baru pemilik produk: Teks pembuka dipecah menjadi dua baris: Baris 1 kata pembuka ("Hormat kami,", "Pelaksana,", "Penerima,", "Dikeluarkan Oleh,", atau "Diterima Oleh,"), Baris 2 teks `"Altvira Technology"` (tebal, ukuran sama dengan nama penandatangan yaitu 9.5 pt). Posisi garis tanda tangan dan nama penandatangan di kolom kiri dan kanan wajib tetap sejajar horizontal sempurna.
+- **Yang kulakukan:** Memecah label kanan menjadi Baris 1 (kata pembuka) dan Baris 2 ("Altvira Technology" tebal), serta menghitung `lineY` dari tinggi blok tertinggi sehingga garis tanda tangan, nama penandatangan, dan jabatan antara kolom kiri dan kanan tetap sejajar presisi.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Dua baris pembuka kanan + penyelarasan baseline garis TTD dan nama penandatangan. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
+## Ringkasan Jumlah Temuan per Jenis (Langkah 1 Putaran Penyempurnaan)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 3 | 3 (`K-01`, `K-03`, `K-11`) | 0 | 0 |
+| `standar-vs-layout` | 7 | 7 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`) | 0 | 0 |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 1 | 1 (`K-07`) | 0 | 0 |
 | `data-janggal` | 4 | 2 (`K-04`, `K-05`) | 2 (`K-10`, `K-12`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **15** | **12** | **3** | **0** |
+| **Total Temuan** | **19** | **16** | **3** | **0** |
