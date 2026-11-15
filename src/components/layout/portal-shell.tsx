@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/dialog";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { formatDateTimeID, ROLE_LABELS } from "@/lib/formatters";
+import { initSupabaseRealtimeSync } from "@/lib/realtime-cache";
+import { OverlayPageScrollbar } from "./overlay-page-scrollbar";
 import {
   listMyNotifications,
   markAllNotificationsRead,
@@ -408,6 +410,14 @@ export function PortalShell() {
     } catch {
       // Abaikan jika sesi beralih
     }
+  }, []);
+
+  React.useEffect(() => {
+    // Inisialisasi Supabase Realtime Synchronization secara global
+    const cleanupRealtime = initSupabaseRealtimeSync();
+    return () => {
+      cleanupRealtime();
+    };
   }, []);
 
   React.useEffect(() => {
@@ -1158,6 +1168,9 @@ export function PortalShell() {
           </div>
         </main>
       </div>
+
+      {/* Floating Scrollbar: Mengambang di atas header (z-[60]) tanpa memakan lebar dokumen */}
+      <OverlayPageScrollbar />
 
       {/* =========================================================================
           DIALOG NOTIFIKASI DALAM APLIKASI

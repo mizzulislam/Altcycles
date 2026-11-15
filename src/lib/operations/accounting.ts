@@ -4,6 +4,7 @@ import {
   getDemoActor,
 } from "@/lib/data-service";
 import { roundRupiah } from "@/lib/formatters";
+import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   JournalLineRow,
@@ -20,33 +21,35 @@ export async function listJournalsWithLines(): Promise<{
   journals: JournalRow[];
   lines: JournalLineRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role !== "admin") {
-      throw new Error("Hanya Admin yang dapat mengakses daftar jurnal akuntansi.");
+  return cachedQuery("journals:withLines", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role !== "admin") {
+        throw new Error("Hanya Admin yang dapat mengakses daftar jurnal akuntansi.");
+      }
+      return {
+        journals: structuredClone(demoStore.journals).sort((a, b) =>
+          b.journal_date.localeCompare(a.journal_date),
+        ),
+        lines: structuredClone(demoStore.journalLines),
+      };
     }
-    return {
-      journals: structuredClone(demoStore.journals).sort((a, b) =>
-        b.journal_date.localeCompare(a.journal_date),
-      ),
-      lines: structuredClone(demoStore.journalLines),
-    };
-  }
 
-  const [jRes, lRes] = await Promise.all([
-    supabase
-      .from("journals")
-      .select("*")
-      .order("journal_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("journal_lines").select("*").order("line_no", { ascending: true }),
-  ]);
-  if (jRes.error) throw new Error(jRes.error.message);
-  if (lRes.error) throw new Error(lRes.error.message);
-  return {
-    journals: jRes.data ?? [],
-    lines: lRes.data ?? [],
-  };
+    const [jRes, lRes] = await Promise.all([
+      supabase
+        .from("journals")
+        .select("*")
+        .order("journal_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase.from("journal_lines").select("*").order("line_no", { ascending: true }),
+    ]);
+    if (jRes.error) throw new Error(jRes.error.message);
+    if (lRes.error) throw new Error(lRes.error.message);
+    return {
+      journals: jRes.data ?? [],
+      lines: lRes.data ?? [],
+    };
+  });
 }
 
 export async function createManualOrAdjustmentJournal(input: {
@@ -75,6 +78,7 @@ export async function createManualOrAdjustmentJournal(input: {
       autoReverseNextPeriod: input.autoReverseNextPeriod,
       lines: input.lines,
     });
+    invalidateAndNotifyDataChange("journals");
     return;
   }
 
@@ -93,12 +97,13 @@ export async function createManualOrAdjustmentJournal(input: {
     p_auto_reverse_next_period: input.autoReverseNextPeriod,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("journals");
 }
 
 export async function updateJournal(input: {
   journalId: string;
   journalDate: string;
-  journalType: "general" | "adjustment";
+  journalType: "general" | "adjustment" | "closing";
   description: string;
   projectId: string | null;
   autoReverseNextPeriod: boolean;
@@ -139,6 +144,7 @@ export async function updateJournal(input: {
         credit: roundRupiah(l.credit),
       });
     });
+    invalidateAndNotifyDataChange("journals");
     return;
   }
 
@@ -172,6 +178,7 @@ export async function updateJournal(input: {
     })),
   );
   if (insErr) throw new Error(insErr.message);
+  invalidateAndNotifyDataChange("journals");
 }
 
 export async function deleteJournals(journalIds: string[]): Promise<void> {
@@ -219,6 +226,7 @@ export async function deleteJournals(journalIds: string[]): Promise<void> {
         );
       }
     });
+    invalidateAndNotifyDataChange("journals");
     return;
   }
 
@@ -252,6 +260,7 @@ export async function deleteJournals(journalIds: string[]): Promise<void> {
     .delete()
     .in("id", journalIds);
   if (journalsError) throw new Error(journalsError.message);
+  invalidateAndNotifyDataChange("journals");
 }
 
 export async function createCorrectionJournalEntry(input: {
@@ -288,6 +297,7 @@ export async function createCorrectionJournalEntry(input: {
         credit: l.debit,
       })),
     });
+    invalidateAndNotifyDataChange("journals");
     return;
   }
 
@@ -297,6 +307,7 @@ export async function createCorrectionJournalEntry(input: {
     p_reason: input.reason.trim(),
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("journals");
 }
 
 export async function runPeriodClosingBook(periodId: string): Promise<void> {
@@ -401,6 +412,7 @@ export async function runPeriodClosingBook(periodId: string): Promise<void> {
     period.closed_at = new Date().toISOString();
     period.closed_by = actor.id;
     appendDemoAudit(actor, "CLOSE_PERIOD", "periods", period.id, before, period);
+    invalidateAndNotifyDataChange("periods");
     return;
   }
 
@@ -408,6 +420,7 @@ export async function runPeriodClosingBook(periodId: string): Promise<void> {
     p_period_id: periodId,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("periods");
 }
 
 export async function runOptionalReversingEntries(
@@ -446,6 +459,7 @@ export async function runOptionalReversingEntries(
       });
       jrn.is_reversed = true;
     }
+    invalidateAndNotifyDataChange("journals");
     return candidates.length;
   }
 
@@ -454,5 +468,6 @@ export async function runOptionalReversingEntries(
     p_reversing_date: reversingDate,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("journals");
   return data ?? 0;
 }

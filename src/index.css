@@ -278,8 +278,27 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* =========================================================================
-   CUSTOM SLEEK SCROLLBAR (Menghilangkan scrollbar kaku bawaan browser)
+   CUSTOM SLEEK SCROLLBAR & OVERLAY ROOT SCROLLBAR
    ========================================================================= */
+html,
+body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

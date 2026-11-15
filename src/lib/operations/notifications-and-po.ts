@@ -5,6 +5,7 @@ import {
   nextDemoDocNumber,
 } from "@/lib/data-service";
 import { roundRupiah } from "@/lib/formatters";
+import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   NotificationRow,
@@ -75,33 +76,35 @@ export async function listPurchaseOrders(): Promise<{
   orders: PurchaseOrderRow[];
   items: PoItemRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    const orders =
-      actor.role === "admin"
-        ? structuredClone(demoStore.purchaseOrders)
-        : structuredClone(
-            demoStore.purchaseOrders.filter((po) => po.created_by === actor.id),
-          );
-    const ids = new Set(orders.map((o) => o.id));
+  return cachedQuery("purchase_orders:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      const orders =
+        actor.role === "admin"
+          ? structuredClone(demoStore.purchaseOrders)
+          : structuredClone(
+              demoStore.purchaseOrders.filter((po) => po.created_by === actor.id),
+            );
+      const ids = new Set(orders.map((o) => o.id));
+      return {
+        orders,
+        items: structuredClone(demoStore.poItems.filter((i) => ids.has(i.po_id))),
+      };
+    }
+    const [poRes, itemRes] = await Promise.all([
+      supabase
+        .from("purchase_orders")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase.from("po_items").select("*").order("line_no", { ascending: true }),
+    ]);
+    if (poRes.error) throw new Error(poRes.error.message);
+    if (itemRes.error) throw new Error(itemRes.error.message);
     return {
-      orders,
-      items: structuredClone(demoStore.poItems.filter((i) => ids.has(i.po_id))),
+      orders: poRes.data ?? [],
+      items: itemRes.data ?? [],
     };
-  }
-  const [poRes, itemRes] = await Promise.all([
-    supabase
-      .from("purchase_orders")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase.from("po_items").select("*").order("line_no", { ascending: true }),
-  ]);
-  if (poRes.error) throw new Error(poRes.error.message);
-  if (itemRes.error) throw new Error(itemRes.error.message);
-  return {
-    orders: poRes.data ?? [],
-    items: itemRes.data ?? [],
-  };
+  });
 }
 
 export async function createPurchaseOrder(input: {
@@ -162,6 +165,7 @@ export async function createPurchaseOrder(input: {
       });
     }
     appendDemoAudit(actor, "INSERT", "purchase_orders", po.id, null, po);
+    invalidateAndNotifyDataChange("purchase_orders");
     return structuredClone(po);
   }
 
@@ -211,9 +215,11 @@ export async function createPurchaseOrder(input: {
       .select("*")
       .single();
     if (issErr) throw new Error(issErr.message);
+    invalidateAndNotifyDataChange("purchase_orders");
     return issued;
   }
 
+  invalidateAndNotifyDataChange("purchase_orders");
   return draftPo;
 }
 
@@ -238,6 +244,7 @@ export async function updatePurchaseOrderStatus(
     }
     po.updated_at = new Date().toISOString();
     appendDemoAudit(actor, "UPDATE", "purchase_orders", po.id, before, po);
+    invalidateAndNotifyDataChange("purchase_orders");
     return;
   }
 
@@ -249,4 +256,5 @@ export async function updatePurchaseOrderStatus(
     })
     .eq("id", poId);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("purchase_orders");
 }

@@ -5,6 +5,7 @@ import {
   nextDemoDocNumber,
 } from "@/lib/data-service";
 import { roundRupiah } from "@/lib/formatters";
+import { cachedQuery } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   AttachmentRow,
@@ -25,37 +26,39 @@ export async function listPaymentRequests(): Promise<{
   requests: PaymentRequestRow[];
   attachments: AttachmentRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    const requests =
-      actor.role === "admin"
-        ? structuredClone(demoStore.paymentRequests)
-        : structuredClone(
-            demoStore.paymentRequests.filter((r) => r.requester_id === actor.id),
-          );
-    const ids = new Set(requests.map((r) => r.id));
-    const attachments = structuredClone(
-      demoStore.attachments.filter((a) => ids.has(a.entity_id)),
-    );
-    return { requests, attachments };
-  }
+  return cachedQuery("payment_requests:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      const requests =
+        actor.role === "admin"
+          ? structuredClone(demoStore.paymentRequests)
+          : structuredClone(
+              demoStore.paymentRequests.filter((r) => r.requester_id === actor.id),
+            );
+      const ids = new Set(requests.map((r) => r.id));
+      const attachments = structuredClone(
+        demoStore.attachments.filter((a) => ids.has(a.entity_id)),
+      );
+      return { requests, attachments };
+    }
 
-  const [reqRes, attRes] = await Promise.all([
-    supabase
-      .from("payment_requests")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("attachments")
-      .select("*")
-      .in("entity_type", ["payment_request_proof", "payment_transfer_proof"]),
-  ]);
-  if (reqRes.error) throw new Error(reqRes.error.message);
-  if (attRes.error) throw new Error(attRes.error.message);
-  return {
-    requests: reqRes.data ?? [],
-    attachments: attRes.data ?? [],
-  };
+    const [reqRes, attRes] = await Promise.all([
+      supabase
+        .from("payment_requests")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("attachments")
+        .select("*")
+        .in("entity_type", ["payment_request_proof", "payment_transfer_proof"]),
+    ]);
+    if (reqRes.error) throw new Error(reqRes.error.message);
+    if (attRes.error) throw new Error(attRes.error.message);
+    return {
+      requests: reqRes.data ?? [],
+      attachments: attRes.data ?? [],
+    };
+  });
 }
 
 export async function createAndSubmitPaymentRequest(input: {

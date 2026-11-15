@@ -62,6 +62,7 @@ import {
   listAccounts,
   listProjects,
 } from "@/lib/data-service";
+import { useRealtimeSync } from "@/lib/realtime-cache";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -229,6 +230,8 @@ export function JournalsPage({
   React.useEffect(() => {
     void reload();
   }, [reload]);
+
+  useRealtimeSync(reload);
 
   const postableAccounts = React.useMemo(
     () => accounts.filter((a) => a.is_active && a.is_postable),
@@ -978,19 +981,39 @@ export function JournalsPage({
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="w-[120px] text-center pl-6 pr-3 font-semibold text-xs sm:text-sm text-foreground/80">
+                <TableHead
+                  className={cn(
+                    "text-center pl-6 pr-3 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[120px]" : "w-[140px]",
+                  )}
+                >
                   Tanggal
                 </TableHead>
                 <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
                   Deskripsi
                 </TableHead>
-                <TableHead className="w-[82px] text-center font-semibold text-xs sm:text-sm text-foreground/80">
+                <TableHead
+                  className={cn(
+                    "text-center font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[82px]" : "w-[110px]",
+                  )}
+                >
                   Ref
                 </TableHead>
-                <TableHead className="w-[155px] text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
+                <TableHead
+                  className={cn(
+                    "text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[155px]" : "w-[195px]",
+                  )}
+                >
                   Debit
                 </TableHead>
-                <TableHead className="w-[155px] text-center pl-4 pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
+                <TableHead
+                  className={cn(
+                    "text-center pl-4 pr-6 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[155px]" : "w-[195px]",
+                  )}
+                >
                   Kredit
                 </TableHead>
                 {isEditMode && (

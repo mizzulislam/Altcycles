@@ -4,6 +4,7 @@ import {
   getDemoActor,
 } from "@/lib/data-service";
 import { roundRupiah } from "@/lib/formatters";
+import { cachedQuery } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   BuyerPortalLookupDto,
@@ -25,50 +26,52 @@ export async function getProfitSharingBundle(projectId?: string): Promise<{
   results: ProfitSharingResultRow[];
   lines: ProfitSharingLineRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      const myLines = demoStore.profitSharingLines.filter(
-        (l) => l.recipient_user_id === actor.id,
-      );
-      const resIds = new Set(myLines.map((l) => l.result_id));
+  return cachedQuery(`profit_sharing:${projectId ?? "all"}`, async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        const myLines = demoStore.profitSharingLines.filter(
+          (l) => l.recipient_user_id === actor.id,
+        );
+        const resIds = new Set(myLines.map((l) => l.result_id));
+        return {
+          schemes: [],
+          results: structuredClone(
+            demoStore.profitSharingResults.filter((r) => resIds.has(r.id)),
+          ),
+          lines: structuredClone(myLines),
+        };
+      }
       return {
-        schemes: [],
-        results: structuredClone(
-          demoStore.profitSharingResults.filter((r) => resIds.has(r.id)),
+        schemes: structuredClone(
+          projectId
+            ? demoStore.profitSharingSchemes.filter((s) => s.project_id === projectId)
+            : demoStore.profitSharingSchemes,
         ),
-        lines: structuredClone(myLines),
+        results: structuredClone(
+          projectId
+            ? demoStore.profitSharingResults.filter((r) => r.project_id === projectId)
+            : demoStore.profitSharingResults,
+        ),
+        lines: structuredClone(demoStore.profitSharingLines),
       };
     }
-    return {
-      schemes: structuredClone(
-        projectId
-          ? demoStore.profitSharingSchemes.filter((s) => s.project_id === projectId)
-          : demoStore.profitSharingSchemes,
-      ),
-      results: structuredClone(
-        projectId
-          ? demoStore.profitSharingResults.filter((r) => r.project_id === projectId)
-          : demoStore.profitSharingResults,
-      ),
-      lines: structuredClone(demoStore.profitSharingLines),
-    };
-  }
 
-  const [sRes, rRes, lRes] = await Promise.all([
-    projectId
-      ? supabase.from("profit_sharing_schemes").select("*").eq("project_id", projectId)
-      : supabase.from("profit_sharing_schemes").select("*"),
-    projectId
-      ? supabase.from("profit_sharing_results").select("*").eq("project_id", projectId)
-      : supabase.from("profit_sharing_results").select("*"),
-    supabase.from("profit_sharing_lines").select("*"),
-  ]);
-  return {
-    schemes: sRes.data ?? [],
-    results: rRes.data ?? [],
-    lines: lRes.data ?? [],
-  };
+    const [sRes, rRes, lRes] = await Promise.all([
+      projectId
+        ? supabase.from("profit_sharing_schemes").select("*").eq("project_id", projectId)
+        : supabase.from("profit_sharing_schemes").select("*"),
+      projectId
+        ? supabase.from("profit_sharing_results").select("*").eq("project_id", projectId)
+        : supabase.from("profit_sharing_results").select("*"),
+      supabase.from("profit_sharing_lines").select("*"),
+    ]);
+    return {
+      schemes: sRes.data ?? [],
+      results: rRes.data ?? [],
+      lines: lRes.data ?? [],
+    };
+  });
 }
 
 export async function saveProfitSharingScheme(

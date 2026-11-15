@@ -72,6 +72,7 @@ import {
   listCustomers,
   listProjects,
 } from "@/lib/data-service";
+import { useRealtimeSync } from "@/lib/realtime-cache";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
@@ -211,6 +212,8 @@ export function InvoicingPage() {
   React.useEffect(() => {
     void reload();
   }, [reload]);
+
+  useRealtimeSync(reload);
 
   const customerMap = React.useMemo(
     () => new Map(customers.map((c) => [c.id, c])),
@@ -1157,14 +1160,16 @@ export function InvoicingPage() {
                 Mengelompokkan sisa piutang berdasarkan keterlambatan hari terhadap tanggal acuan.
               </CardDescription>
             </div>
-            <div className="w-full sm:w-64 shrink-0 flex flex-col justify-between sm:-mb-1.5">
-              <span className="text-xs font-semibold text-foreground leading-[22px] block">
-                Tanggal Acuan Perhitungan
-              </span>
+            <div className="w-full sm:w-60 shrink-0 space-y-1">
+              <div className="h-6 flex items-center">
+                <span className="text-xs font-semibold text-foreground">
+                  Tanggal Acuan Perhitungan
+                </span>
+              </div>
               <DatePicker
                 value={agingRefDate}
                 onChange={setAgingRefDate}
-                className="mt-0.5 [&_[data-slot=input]]:h-[30px] [&_[data-inner-input=true]]:text-xs"
+                className="w-full [&_[data-slot=input]]:h-8 [&_[data-inner-input=true]]:text-xs"
               />
             </div>
           </CardHeader>

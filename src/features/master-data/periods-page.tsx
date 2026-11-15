@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { EmptyState, Spinner } from "@/components/ui/empty";
 import {
   Field,
   FieldGroup,
@@ -65,6 +65,7 @@ import {
   listPeriods,
   reopenPeriod,
 } from "@/lib/data-service";
+import { useRealtimeSync } from "@/lib/realtime-cache";
 import {
   formatDateID,
   formatDateTimeID,
@@ -76,6 +77,7 @@ import {
   listJournalsWithLines,
   runOptionalReversingEntries,
   runPeriodClosingBook,
+  updateJournal,
 } from "@/lib/operations-service";
 import { cn } from "@/lib/utils";
 import type {
@@ -85,6 +87,24 @@ import type {
   JournalRow,
   PeriodRow,
 } from "@/types/database.types";
+
+function formatJournalDate(val: string | null | undefined): string {
+  if (!val) return "-";
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+    "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+  ];
+  const parts = val.split("-");
+  const y = parts[0];
+  const mStr = parts[1];
+  const d = parts[2];
+  if (y && mStr && d) {
+    const monthIdx = parseInt(mStr, 10) - 1;
+    const m = months[monthIdx] ?? mStr;
+    return `${d}/${m}/${y}`;
+  }
+  return formatDateID(val);
+}
 
 export interface PeriodsPageProps {
   hideHeader?: boolean;
@@ -128,6 +148,9 @@ export function PeriodsPage({
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [selectedClosingIds, setSelectedClosingIds] = React.useState<string[]>([]);
   const [selectedDetailJournal, setSelectedDetailJournal] = React.useState<JournalRow | null>(null);
+  const [editingClosingJournal, setEditingClosingJournal] = React.useState<JournalRow | null>(null);
+  const [deleteTargetClosing, setDeleteTargetClosing] = React.useState<JournalRow | null>(null);
+  const [isBatchDeleteClosingOpen, setIsBatchDeleteClosingOpen] = React.useState(false);
 
   // Modal Catat Jurnal Penutup Manual
   const [manualClosingOpen, setManualClosingOpen] = React.useState(false);
@@ -175,8 +198,15 @@ export function PeriodsPage({
     void reload();
   }, [reload]);
 
+  useRealtimeSync(reload);
+
   const postableAccounts = React.useMemo(
     () => accounts.filter((a) => a.is_postable && a.is_active),
+    [accounts],
+  );
+
+  const accountMap = React.useMemo(
+    () => new Map(accounts.map((a) => [a.id, a])),
     [accounts],
   );
 
@@ -210,6 +240,43 @@ export function PeriodsPage({
   const totalDebit = debitLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
   const totalCredit = creditLines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
   const isBalanced = totalDebit > 0 && Math.abs(totalDebit - totalCredit) < 0.01;
+
+  function openNewManualClosing() {
+    setEditingClosingJournal(null);
+    setManualDate(externalEndDate || new Date().toISOString().slice(0, 10));
+    setManualDescription("Jurnal Penutup Manual Akhir Periode");
+    setDebitLines([{ accountId: "", amount: 0 }]);
+    setCreditLines([{ accountId: "", amount: 0 }]);
+    setManualClosingOpen(true);
+  }
+
+  function openEditClosingJournal(j: JournalRow) {
+    if (company?.journal_lock_enabled) {
+      toast.error(
+        "Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.",
+      );
+      return;
+    }
+    setEditingClosingJournal(j);
+    setManualDate(j.journal_date);
+    setManualDescription(j.description || "Jurnal Penutup Manual Akhir Periode");
+    const jLines = (linesByJournal.get(j.id) ?? []).sort(
+      (a, b) => a.line_no - b.line_no,
+    );
+    const debLines = jLines.filter((l) => l.debit > 0);
+    const credLines = jLines.filter((l) => l.credit > 0);
+    setDebitLines(
+      debLines.length > 0
+        ? debLines.map((l) => ({ accountId: l.account_id, amount: l.debit }))
+        : [{ accountId: "", amount: 0 }],
+    );
+    setCreditLines(
+      credLines.length > 0
+        ? credLines.map((l) => ({ accountId: l.account_id, amount: l.credit }))
+        : [{ accountId: "", amount: 0 }],
+    );
+    setManualClosingOpen(true);
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -305,10 +372,28 @@ export function PeriodsPage({
       await deleteJournals(selectedClosingIds);
       toast.success(`${selectedClosingIds.length} entri jurnal penutup berhasil dihapus.`);
       setSelectedClosingIds([]);
+      setIsBatchDeleteClosingOpen(false);
       setIsEditMode(false);
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menghapus entri jurnal penutup.");
+    }
+  }
+
+  async function handleDeleteSingleClosing(journal: JournalRow) {
+    if (company?.journal_lock_enabled) {
+      toast.error("Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.");
+      return;
+    }
+    try {
+      await deleteJournals([journal.id]);
+      toast.success(`Jurnal penutup ${journal.journal_number} berhasil dihapus.`);
+      setSelectedClosingIds((prev) => prev.filter((id) => id !== journal.id));
+      setDeleteTargetClosing(null);
+      setIsEditMode(false);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus jurnal penutup.");
     }
   }
 
@@ -342,17 +427,33 @@ export function PeriodsPage({
         })),
       ];
 
-      await createManualOrAdjustmentJournal({
-        journalDate: manualDate,
-        journalType: "closing",
-        description: manualDescription,
-        projectId: null,
-        autoReverseNextPeriod: false,
-        lines: linesInput,
-      });
+      if (editingClosingJournal) {
+        await updateJournal({
+          journalId: editingClosingJournal.id,
+          journalDate: manualDate,
+          journalType: "closing",
+          description: manualDescription,
+          projectId: editingClosingJournal.project_id,
+          autoReverseNextPeriod: false,
+          lines: linesInput,
+        });
+        toast.success(
+          `Jurnal penutup ${editingClosingJournal.journal_number} berhasil diperbarui.`,
+        );
+      } else {
+        await createManualOrAdjustmentJournal({
+          journalDate: manualDate,
+          journalType: "closing",
+          description: manualDescription,
+          projectId: null,
+          autoReverseNextPeriod: false,
+          lines: linesInput,
+        });
+        toast.success("Jurnal penutup manual berhasil dibukukan.");
+      }
 
-      toast.success("Jurnal penutup manual berhasil dibukukan.");
       setManualClosingOpen(false);
+      setEditingClosingJournal(null);
       setDebitLines([{ accountId: "", amount: 0 }]);
       setCreditLines([{ accountId: "", amount: 0 }]);
       await reload();
@@ -570,7 +671,7 @@ export function PeriodsPage({
             <Button
               type="button"
               size="sm"
-              onClick={() => setManualClosingOpen(true)}
+              onClick={openNewManualClosing}
               className="h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
             >
               <PlusIcon className="size-3.5" />
@@ -618,7 +719,7 @@ export function PeriodsPage({
                   variant="destructive"
                   size="sm"
                   disabled={selectedClosingIds.length === 0}
-                  onClick={handleDeleteClosingEntries}
+                  onClick={() => setIsBatchDeleteClosingOpen(true)}
                   className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer gap-1.5"
                 >
                   <Trash2Icon className="size-3.5" />
@@ -629,120 +730,294 @@ export function PeriodsPage({
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {isEditMode && (
-                    <TableHead className="w-12 text-center align-middle px-3">
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={
-                            closingJournals.length > 0 &&
-                            selectedClosingIds.length === closingJournals.length
+          <Table className="w-full min-w-[680px] table-fixed">
+            <TableHeader className="bg-muted/30">
+              <TableRow>
+                {isEditMode && (
+                  <TableHead className="w-12 text-center align-middle px-3">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={
+                          closingJournals.length > 0 &&
+                          selectedClosingIds.length === closingJournals.length
+                        }
+                        indeterminate={
+                          selectedClosingIds.length > 0 &&
+                          selectedClosingIds.length < closingJournals.length
+                        }
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedClosingIds(closingJournals.map((j) => j.id));
+                          } else {
+                            setSelectedClosingIds([]);
                           }
-                          indeterminate={
-                            selectedClosingIds.length > 0 &&
-                            selectedClosingIds.length < closingJournals.length
-                          }
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedClosingIds(closingJournals.map((j) => j.id));
-                            } else {
-                              setSelectedClosingIds([]);
-                            }
-                          }}
-                          aria-label="Pilih semua jurnal penutup"
-                        />
-                      </div>
-                    </TableHead>
+                        }}
+                        aria-label="Pilih semua jurnal penutup"
+                      />
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead
+                  className={cn(
+                    "text-center pl-6 pr-3 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[120px]" : "w-[140px]",
                   )}
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Tanggal</TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Deskripsi</TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Ref</TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Debit</TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Kredit</TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">Aksi</TableHead>
+                >
+                  Tanggal
+                </TableHead>
+                <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
+                  Deskripsi
+                </TableHead>
+                <TableHead
+                  className={cn(
+                    "text-center font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[82px]" : "w-[110px]",
+                  )}
+                >
+                  Ref
+                </TableHead>
+                <TableHead
+                  className={cn(
+                    "text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[155px]" : "w-[195px]",
+                  )}
+                >
+                  Debit
+                </TableHead>
+                <TableHead
+                  className={cn(
+                    "text-center pl-4 pr-6 font-semibold text-xs sm:text-sm text-foreground/80",
+                    isEditMode ? "w-[155px]" : "w-[195px]",
+                  )}
+                >
+                  Kredit
+                </TableHead>
+                {isEditMode && (
+                  <TableHead className="w-[112px] text-center pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
+                    Aksi
+                  </TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && closingJournals.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={isEditMode ? 7 : 5}
+                    className="h-32 text-center text-muted-foreground"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner />
+                      <span>Memuat jurnal penutup...</span>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {closingJournals.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={isEditMode ? 7 : 6}
-                      className="px-6 py-12 text-center text-muted-foreground text-xs sm:text-sm"
-                    >
-                      Belum ada jurnal penutup aktual pada periode ini.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  closingJournals.map((j) => {
-                    const jLines = linesByJournal.get(j.id) ?? [];
-                    const totalJDebit = jLines.reduce((s, l) => s + l.debit, 0);
-                    const totalJCredit = jLines.reduce((s, l) => s + l.credit, 0);
+              ) : closingJournals.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={isEditMode ? 7 : 5}
+                    className="h-36 text-center text-muted-foreground"
+                  >
+                    <EmptyState
+                      title="Belum ada jurnal penutup aktual pada periode ini"
+                      description="Gunakan tombol 'Catat Jurnal Penutup Manual' atau jalankan tutup buku otomatis saat menutup periode bulanan."
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                closingJournals.map((j) => {
+                  const jLines = (linesByJournal.get(j.id) ?? []).sort(
+                    (a, b) => a.line_no - b.line_no,
+                  );
+                  const rowDebitLines = jLines.filter((l) => l.debit > 0);
+                  const rowCreditLines = jLines.filter((l) => l.credit > 0);
+                  const journalRows = [...rowDebitLines, ...rowCreditLines];
 
-                    return (
-                      <TableRow key={j.id} className="hover:bg-muted/30">
-                        {isEditMode && (
-                          <TableCell className="align-top text-center px-3 py-3.5">
-                            <Checkbox
-                              checked={selectedClosingIds.includes(j.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedClosingIds((prev) =>
-                                    prev.includes(j.id) ? prev : [...prev, j.id],
-                                  );
-                                } else {
-                                  setSelectedClosingIds((prev) =>
-                                    prev.filter((id) => id !== j.id),
-                                  );
-                                }
-                              }}
-                              className="mt-0.5"
-                              aria-label={`Pilih jurnal penutup ${j.journal_number}`}
-                            />
-                          </TableCell>
-                        )}
-                        <TableCell className="font-mono text-xs text-center whitespace-nowrap">
-                          {formatDateID(j.journal_date)}
+                  return (
+                    <TableRow
+                      key={j.id}
+                      className="hover:bg-muted/20 border-b border-border/60 transition-colors"
+                    >
+                      {isEditMode && (
+                        <TableCell className="align-top py-4 text-center px-3">
+                          <Checkbox
+                            checked={selectedClosingIds.includes(j.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedClosingIds((prev) =>
+                                  prev.includes(j.id) ? prev : [...prev, j.id],
+                                );
+                              } else {
+                                setSelectedClosingIds((prev) =>
+                                  prev.filter((id) => id !== j.id),
+                                );
+                              }
+                            }}
+                            className="mt-0.5"
+                            aria-label={`Pilih jurnal penutup ${j.journal_number}`}
+                          />
                         </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="font-semibold text-foreground">{j.description}</div>
-                          <div className="font-mono text-[11px] text-muted-foreground mt-0.5">
-                            {j.journal_number}
+                      )}
+
+                      {/* TANGGAL */}
+                      <TableCell className="align-top py-4 pl-6 pr-3 text-left whitespace-nowrap">
+                        <span className="font-medium text-xs sm:text-sm text-foreground">
+                          {formatJournalDate(j.journal_date)}
+                        </span>
+                      </TableCell>
+
+                      {/* DESKRIPSI */}
+                      <TableCell className="align-top py-4 px-4 min-w-0">
+                        <div className="space-y-1.5 text-xs sm:text-sm leading-5">
+                          {rowDebitLines.map((row, idx) => {
+                            const acc = accountMap.get(row.account_id);
+                            return (
+                              <div
+                                key={`d-${idx}`}
+                                className="text-foreground font-medium min-h-5 flex items-center whitespace-normal break-words"
+                              >
+                                {acc?.name ?? "Akun Debit"}
+                              </div>
+                            );
+                          })}
+                          {rowCreditLines.map((row, idx) => {
+                            const acc = accountMap.get(row.account_id);
+                            return (
+                              <div
+                                key={`c-${idx}`}
+                                className="text-foreground font-medium min-h-5 flex items-center pl-6 whitespace-normal break-words"
+                              >
+                                {acc?.name ?? "Akun Kredit"}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-2 max-w-[54ch] text-xs leading-relaxed text-blue-600 dark:text-cyan-400 italic font-medium whitespace-normal break-words">
+                          ({j.description})
+                        </div>
+                      </TableCell>
+
+                      {/* REF */}
+                      <TableCell className="align-top py-4 text-center whitespace-nowrap">
+                        <div className="space-y-1.5 text-xs sm:text-sm leading-5">
+                          {journalRows.map((row, idx) => {
+                            const acc = accountMap.get(row.account_id);
+                            return (
+                              <div
+                                key={`ref-${idx}`}
+                                className="text-muted-foreground min-h-5 flex items-center justify-center text-xs tabular-nums"
+                              >
+                                {acc?.code ?? "-"}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
+
+                      {/* DEBIT */}
+                      <TableCell className="align-top py-4 px-4 text-right whitespace-nowrap">
+                        <div className="space-y-1.5 text-xs sm:text-sm leading-5">
+                          {journalRows.map((row, idx) => {
+                            if (row.debit > 0) {
+                              return (
+                                <div
+                                  key={`deb-${idx}`}
+                                  className="text-foreground font-medium flex justify-between w-full min-h-5 items-center text-xs tabular-nums"
+                                >
+                                  <span className="text-muted-foreground mr-2 font-normal">
+                                    Rp
+                                  </span>
+                                  <span>
+                                    {row.debit.toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div
+                                key={`deb-blank-${idx}`}
+                                className="text-transparent select-none flex justify-between w-full min-h-5 items-center text-xs"
+                              >
+                                <span>Rp</span>
+                                <span>-</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
+
+                      {/* KREDIT */}
+                      <TableCell className="align-top py-4 pl-4 pr-6 text-right whitespace-nowrap">
+                        <div className="space-y-1.5 text-xs sm:text-sm leading-5">
+                          {journalRows.map((row, idx) => {
+                            if (row.credit > 0) {
+                              return (
+                                <div
+                                  key={`cred-${idx}`}
+                                  className="text-foreground font-medium flex justify-between w-full min-h-5 items-center text-xs tabular-nums"
+                                >
+                                  <span className="text-muted-foreground mr-2 font-normal">
+                                    Rp
+                                  </span>
+                                  <span>
+                                    {row.credit.toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div
+                                key={`cred-blank-${idx}`}
+                                className="text-transparent select-none flex justify-between w-full h-5 items-center text-xs"
+                              >
+                                <span>Rp</span>
+                                <span>-</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
+
+                      {/* AKSI - Hanya muncul saat mode edit aktif */}
+                      {isEditMode && (
+                        <TableCell className="align-top py-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDetailJournal(j)}
+                              className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
+                              title="Lihat detail transaksi"
+                              aria-label="Lihat detail transaksi"
+                            >
+                              <EyeIcon className="size-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openEditClosingJournal(j)}
+                              className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
+                              title="Edit transaksi"
+                              aria-label="Edit transaksi"
+                            >
+                              <PencilIcon className="size-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTargetClosing(j)}
+                              className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
+                              title="Hapus transaksi"
+                              aria-label="Hapus transaksi"
+                            >
+                              <Trash2Icon className="size-4" />
+                            </button>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-center text-muted-foreground">
-                          {jLines[0]
-                            ? accounts.find((a) => a.id === jLines[0]?.account_id)?.code ?? "-"
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-xs text-right font-medium text-foreground pr-6">
-                          {formatRupiah(totalJDebit)}
-                        </TableCell>
-                        <TableCell className="text-xs text-right font-medium text-foreground pr-6">
-                          {formatRupiah(totalJCredit)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelectedDetailJournal(j)}
-                            className="size-8 rounded-lg hover:bg-muted cursor-pointer text-muted-foreground hover:text-foreground"
-                            title="Lihat Rincian Jurnal Penutup"
-                          >
-                            <EyeIcon className="size-4" />
-                            <span className="sr-only">Rincian</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                      )}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -965,10 +1240,20 @@ export function PeriodsPage({
       </Dialog>
 
       {/* Modal Catat Jurnal Penutup Manual */}
-      <Dialog open={manualClosingOpen} onOpenChange={setManualClosingOpen}>
+      <Dialog
+        open={manualClosingOpen}
+        onOpenChange={(open) => {
+          setManualClosingOpen(open);
+          if (!open) setEditingClosingJournal(null);
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Catat Jurnal Penutup Manual</DialogTitle>
+            <DialogTitle>
+              {editingClosingJournal
+                ? `Edit Jurnal Penutup (${editingClosingJournal.journal_number})`
+                : "Catat Jurnal Penutup Manual"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handlePostManualClosing} className="space-y-5">
             <FieldGroup>
@@ -1257,6 +1542,34 @@ export function PeriodsPage({
         confirmLabel="Ya, Hapus Periode"
         destructive
         onConfirm={handleConfirmDeletePeriod}
+      />
+
+      {/* Dialog Konfirmasi Hapus 1 Jurnal Penutup */}
+      <ConfirmActionDialog
+        open={Boolean(deleteTargetClosing)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetClosing(null);
+        }}
+        title={`Hapus Jurnal Penutup: ${deleteTargetClosing?.journal_number ?? ""}`}
+        description={`Apakah Anda yakin ingin menghapus jurnal penutup "${deleteTargetClosing?.description ?? ""}"?`}
+        confirmLabel="Ya, Hapus Jurnal"
+        destructive
+        onConfirm={() =>
+          deleteTargetClosing
+            ? handleDeleteSingleClosing(deleteTargetClosing)
+            : Promise.resolve()
+        }
+      />
+
+      {/* Dialog Konfirmasi Hapus Batch Jurnal Penutup */}
+      <ConfirmActionDialog
+        open={isBatchDeleteClosingOpen}
+        onOpenChange={setIsBatchDeleteClosingOpen}
+        title={`Hapus ${selectedClosingIds.length} Jurnal Penutup Pilihan`}
+        description={`Apakah Anda yakin ingin menghapus ${selectedClosingIds.length} entri jurnal penutup yang dipilih secara permanen?`}
+        confirmLabel={`Ya, Hapus (${selectedClosingIds.length})`}
+        destructive
+        onConfirm={handleDeleteClosingEntries}
       />
     </div>
   );

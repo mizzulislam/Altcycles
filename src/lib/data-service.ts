@@ -37,6 +37,7 @@ import {
   DEMO_VENDORS,
 } from "@/lib/demo-seed";
 import { inferRevenueMethodFromTerms } from "@/lib/formatters";
+import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
   AccountRow,
@@ -374,21 +375,23 @@ export async function uploadProfileAvatar(file: File): Promise<string> {
 }
 
 export async function listProfiles(): Promise<ProfileRow[]> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      return [actor];
+  return cachedQuery("profiles:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        return [actor];
+      }
+      return [...demoStore.profiles].sort((a, b) =>
+        a.full_name.localeCompare(b.full_name),
+      );
     }
-    return [...demoStore.profiles].sort((a, b) =>
-      a.full_name.localeCompare(b.full_name),
-    );
-  }
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("full_name", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("full_name", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function createInternalUser(input: {
@@ -679,51 +682,53 @@ function writeLocalJson(key: string, value: unknown): void {
 }
 
 export async function getCompanyProfile(): Promise<CompanyProfileRow> {
-  const localExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
-  if (isDemoMode || !supabase) {
-    const base = structuredClone(demoStore.company);
+  return cachedQuery("company:profile", async () => {
+    const localExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
+    if (isDemoMode || !supabase) {
+      const base = structuredClone(demoStore.company);
+      return {
+        ...base,
+        ...localExt,
+        bank_accounts_json: base.bank_accounts_json ?? localExt.bank_accounts_json ?? [
+          {
+            bank_name: base.bank_name,
+            account_number: base.bank_account_number,
+            account_holder: base.bank_account_holder,
+          },
+        ],
+      };
+    }
+    const { data, error } = await supabase
+      .from("company_profile")
+      .select("*")
+      .eq("id", 1)
+      .single();
+    if (error) throw new Error(error.message);
     return {
-      ...base,
       ...localExt,
-      bank_accounts_json: base.bank_accounts_json ?? localExt.bank_accounts_json ?? [
+      ...data,
+      signer_name: data.signer_name,
+      signer_title: data.signer_title,
+      tax_id_number: data.tax_id_number ?? localExt.tax_id_number ?? null,
+      logo_storage_path: data.logo_storage_path ?? localExt.logo_storage_path ?? null,
+      tagline: data.tagline ?? localExt.tagline ?? "ADAPT TODAY, INNOVATE TOMORROW",
+      signing_city: data.signing_city ?? localExt.signing_city ?? "Bogor",
+      signer_signature_path: data.signer_signature_path ?? localExt.signer_signature_path ?? null,
+      signer_paraf_path: data.signer_paraf_path ?? localExt.signer_paraf_path ?? null,
+      bank_accounts_json: localExt.bank_accounts_json ?? [
         {
-          bank_name: base.bank_name,
-          account_number: base.bank_account_number,
-          account_holder: base.bank_account_holder,
+          bank_name: data.bank_name,
+          account_number: data.bank_account_number,
+          account_holder: data.bank_account_holder,
         },
       ],
+      social_links_json: data.social_links_json ?? localExt.social_links_json ?? [
+        { platform: "Instagram", username: "@altvira.tech" },
+        { platform: "LinkedIn", username: "altvira-technology" },
+        { platform: "TikTok", username: "@altvira.tech" },
+      ],
     };
-  }
-  const { data, error } = await supabase
-    .from("company_profile")
-    .select("*")
-    .eq("id", 1)
-    .single();
-  if (error) throw new Error(error.message);
-  return {
-    ...localExt,
-    ...data,
-    signer_name: data.signer_name,
-    signer_title: data.signer_title,
-    tax_id_number: data.tax_id_number ?? localExt.tax_id_number ?? null,
-    logo_storage_path: data.logo_storage_path ?? localExt.logo_storage_path ?? null,
-    tagline: data.tagline ?? localExt.tagline ?? "ADAPT TODAY, INNOVATE TOMORROW",
-    signing_city: data.signing_city ?? localExt.signing_city ?? "Bogor",
-    signer_signature_path: data.signer_signature_path ?? localExt.signer_signature_path ?? null,
-    signer_paraf_path: data.signer_paraf_path ?? localExt.signer_paraf_path ?? null,
-    bank_accounts_json: localExt.bank_accounts_json ?? [
-      {
-        bank_name: data.bank_name,
-        account_number: data.bank_account_number,
-        account_holder: data.bank_account_holder,
-      },
-    ],
-    social_links_json: data.social_links_json ?? localExt.social_links_json ?? [
-      { platform: "Instagram", username: "@altvira.tech" },
-      { platform: "LinkedIn", username: "altvira-technology" },
-      { platform: "TikTok", username: "@altvira.tech" },
-    ],
-  };
+  });
 }
 
 export async function updateCompanyProfile(
@@ -762,6 +767,7 @@ export async function updateCompanyProfile(
       updated_at: new Date().toISOString(),
     };
     appendDemoAudit(actor, "UPDATE", "company_profile", "1", before, demoStore.company);
+    invalidateAndNotifyDataChange("company_profile");
     return { ...structuredClone(demoStore.company), ...nextExt };
   }
 
@@ -772,6 +778,7 @@ export async function updateCompanyProfile(
     .select("*")
     .single();
   if (!error) {
+    invalidateAndNotifyDataChange("company_profile");
     return { ...nextExt, ...data };
   }
 
@@ -793,8 +800,10 @@ export async function updateCompanyProfile(
         .select("*")
         .single();
       if (coreErr) throw new Error(coreErr.message);
+      invalidateAndNotifyDataChange("company_profile");
       return { ...coreData, ...nextExt };
     }
+    invalidateAndNotifyDataChange("company_profile");
     return getCompanyProfile();
   }
 
@@ -804,6 +813,7 @@ export async function updateCompanyProfile(
 export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
   demoStore.company.journal_lock_enabled = enabled;
   if (isDemoMode || !supabase) {
+    invalidateAndNotifyDataChange("company_profile");
     return enabled;
   }
 
@@ -813,6 +823,7 @@ export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
       p_enabled: enabled,
     });
     if (!error) {
+      invalidateAndNotifyDataChange("company_profile");
       return Boolean(data ?? enabled);
     }
   } catch {
@@ -824,12 +835,14 @@ export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
     .update({ journal_lock_enabled: enabled })
     .eq("id", 1);
   if (updErr) throw new Error(updErr.message);
+  invalidateAndNotifyDataChange("company_profile");
   return enabled;
 }
 
 export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
   demoStore.company.auto_closing_enabled = enabled;
   if (isDemoMode || !supabase) {
+    invalidateAndNotifyDataChange("company_profile");
     return enabled;
   }
 
@@ -838,16 +851,21 @@ export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
       .from("company_profile")
       .update({ auto_closing_enabled: enabled })
       .eq("id", 1);
-    if (!updErr) return enabled;
+    if (!updErr) {
+      invalidateAndNotifyDataChange("company_profile");
+      return enabled;
+    }
   } catch {
     // Abaikan jika kolom di Supabase belum dimigrasi
   }
+  invalidateAndNotifyDataChange("company_profile");
   return enabled;
 }
 
 export async function setPph23EstimateStatus(enabled: boolean): Promise<boolean> {
   demoStore.company.pph_enabled = enabled;
   if (isDemoMode || !supabase) {
+    invalidateAndNotifyDataChange("company_profile");
     return enabled;
   }
 
@@ -856,6 +874,7 @@ export async function setPph23EstimateStatus(enabled: boolean): Promise<boolean>
     .update({ pph_enabled: enabled })
     .eq("id", 1);
   if (updErr) throw new Error(updErr.message);
+  invalidateAndNotifyDataChange("company_profile");
   return enabled;
 }
 
@@ -1309,21 +1328,23 @@ export async function listAuditLogs(): Promise<AuditLogRow[]> {
 // 4. Bagan Akun / COA (Admin Kelola, Super Admin Baca)
 // =============================================================================
 export async function listAccounts(): Promise<AccountRow[]> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      return demoStore.accounts.filter(
-        (a) => a.is_active && a.account_type === "expense",
-      );
+  return cachedQuery("accounts:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        return demoStore.accounts.filter(
+          (a) => a.is_active && a.account_type === "expense",
+        );
+      }
+      return [...demoStore.accounts].sort((a, b) => a.code.localeCompare(b.code));
     }
-    return [...demoStore.accounts].sort((a, b) => a.code.localeCompare(b.code));
-  }
-  const { data, error } = await supabase
-    .from("accounts")
-    .select("*")
-    .order("code", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+    const { data, error } = await supabase
+      .from("accounts")
+      .select("*")
+      .order("code", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function saveAccount(
@@ -1361,6 +1382,7 @@ export async function saveAccount(
       demoStore.accounts.push(created);
       appendDemoAudit(actor, "INSERT", "accounts", created.id, null, created);
     }
+    invalidateAndNotifyDataChange("accounts");
     return;
   }
 
@@ -1375,6 +1397,7 @@ export async function saveAccount(
     });
     if (error) throw new Error(error.message);
   }
+  invalidateAndNotifyDataChange("accounts");
 }
 
 export async function deleteAccount(accountId: string): Promise<void> {
@@ -1393,11 +1416,13 @@ export async function deleteAccount(accountId: string): Promise<void> {
     }
     demoStore.accounts.splice(idx, 1);
     appendDemoAudit(actor, "DELETE", "accounts", target.id, target, null);
+    invalidateAndNotifyDataChange("accounts");
     return;
   }
 
   const { error } = await supabase.from("accounts").delete().eq("id", accountId);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("accounts");
 }
 
 // =============================================================================
@@ -1420,19 +1445,21 @@ const NAMA_BULAN = [
 ];
 
 export async function listPeriods(): Promise<PeriodRow[]> {
-  if (isDemoMode || !supabase) {
-    getDemoActor();
-    return [...demoStore.periods].sort(
-      (a, b) => b.year - a.year || b.month - a.month,
-    );
-  }
-  const { data, error } = await supabase
-    .from("periods")
-    .select("*")
-    .order("year", { ascending: false })
-    .order("month", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return cachedQuery("periods:list", async () => {
+    if (isDemoMode || !supabase) {
+      getDemoActor();
+      return [...demoStore.periods].sort(
+        (a, b) => b.year - a.year || b.month - a.month,
+      );
+    }
+    const { data, error } = await supabase
+      .from("periods")
+      .select("*")
+      .order("year", { ascending: false })
+      .order("month", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function createPeriod(year: number, month: number): Promise<void> {
@@ -1470,6 +1497,7 @@ export async function createPeriod(year: number, month: number): Promise<void> {
     };
     demoStore.periods.push(created);
     appendDemoAudit(actor, "INSERT", "periods", created.id, null, created);
+    invalidateAndNotifyDataChange("periods");
     return;
   }
 
@@ -1481,6 +1509,7 @@ export async function createPeriod(year: number, month: number): Promise<void> {
     end_date: endDate,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("periods");
 }
 
 export async function closePeriod(periodId: string): Promise<void> {
@@ -1496,6 +1525,7 @@ export async function closePeriod(periodId: string): Promise<void> {
     target.closed_at = new Date().toISOString();
     target.closed_by = actor.id;
     appendDemoAudit(actor, "CLOSE_PERIOD", "periods", target.id, before, target);
+    invalidateAndNotifyDataChange("periods");
     return;
   }
 
@@ -1503,6 +1533,7 @@ export async function closePeriod(periodId: string): Promise<void> {
     p_period_id: periodId,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("periods");
 }
 
 export async function reopenPeriod(
@@ -1525,6 +1556,7 @@ export async function reopenPeriod(
     target.reopened_by = actor.id;
     target.reopen_reason = reason.trim();
     appendDemoAudit(actor, "REOPEN_PERIOD", "periods", target.id, before, target);
+    invalidateAndNotifyDataChange("periods");
     return;
   }
 
@@ -1533,6 +1565,7 @@ export async function reopenPeriod(
     p_reason: reason.trim(),
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("periods");
 }
 
 export async function deletePeriod(periodId: string): Promise<void> {
@@ -1551,6 +1584,7 @@ export async function deletePeriod(periodId: string): Promise<void> {
     const before = structuredClone(target);
     demoStore.periods.splice(targetIdx, 1);
     appendDemoAudit(actor, "DELETE", "periods", target.id, before, null);
+    invalidateAndNotifyDataChange("periods");
     return;
   }
 
@@ -1565,25 +1599,28 @@ export async function deletePeriod(periodId: string): Promise<void> {
 
   const { error } = await supabase.from("periods").delete().eq("id", periodId);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("periods");
 }
 
 // =============================================================================
 // 6. Master Vendor, Pelanggan, & Proyek
 // =============================================================================
 export async function listVendors(): Promise<VendorRow[]> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      return demoStore.vendors.filter((v) => v.is_active);
+  return cachedQuery("vendors:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        return demoStore.vendors.filter((v) => v.is_active);
+      }
+      return [...demoStore.vendors].sort((a, b) => a.code.localeCompare(b.code));
     }
-    return [...demoStore.vendors].sort((a, b) => a.code.localeCompare(b.code));
-  }
-  const { data, error } = await supabase
-    .from("vendors")
-    .select("*")
-    .order("code", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+    const { data, error } = await supabase
+      .from("vendors")
+      .select("*")
+      .order("code", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function saveVendor(
@@ -1623,6 +1660,7 @@ export async function saveVendor(
       demoStore.vendors.push(created);
       appendDemoAudit(actor, "INSERT", "vendors", created.id, null, created);
     }
+    invalidateAndNotifyDataChange("vendors");
     return;
   }
 
@@ -1634,6 +1672,7 @@ export async function saveVendor(
     const { error } = await supabase.from("vendors").insert(input);
     if (error) throw new Error(error.message);
   }
+  invalidateAndNotifyDataChange("vendors");
 }
 
 export async function deleteVendor(id: string): Promise<void> {
@@ -1647,6 +1686,7 @@ export async function deleteVendor(id: string): Promise<void> {
     const before = structuredClone(demoStore.vendors[idx]);
     demoStore.vendors.splice(idx, 1);
     appendDemoAudit(actor, "DELETE", "vendors", id, before, null);
+    invalidateAndNotifyDataChange("vendors");
     return;
   }
   const { error } = await supabase.from("vendors").delete().eq("id", id);
@@ -1658,31 +1698,34 @@ export async function deleteVendor(id: string): Promise<void> {
     }
     throw new Error(error.message);
   }
+  invalidateAndNotifyDataChange("vendors");
 }
 
 export async function listCustomers(): Promise<CustomerRow[]> {
-  const extMap = readLocalJson<Record<string, Partial<CustomerRow>>>(CUSTOMER_EXT_STORAGE_KEY, {});
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      throw new Error("Akses ditolak: User tidak memiliki akses daftar pelanggan.");
+  return cachedQuery("customers:list", async () => {
+    const extMap = readLocalJson<Record<string, Partial<CustomerRow>>>(CUSTOMER_EXT_STORAGE_KEY, {});
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        throw new Error("Akses ditolak: User tidak memiliki akses daftar pelanggan.");
+      }
+      return [...demoStore.customers]
+        .sort((a, b) => a.code.localeCompare(b.code))
+        .map((c) => ({ ...c, ...(extMap[c.id] ?? {}) }));
     }
-    return [...demoStore.customers]
-      .sort((a, b) => a.code.localeCompare(b.code))
-      .map((c) => ({ ...c, ...(extMap[c.id] ?? {}) }));
-  }
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*")
-    .order("code", { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((c) => ({
-    ...(extMap[c.id] ?? {}),
-    ...c,
-    logo_storage_path: c.logo_storage_path ?? extMap[c.id]?.logo_storage_path ?? null,
-    signature_storage_path: c.signature_storage_path ?? extMap[c.id]?.signature_storage_path ?? null,
-    paraf_storage_path: c.paraf_storage_path ?? extMap[c.id]?.paraf_storage_path ?? null,
-  }));
+    const { data, error } = await supabase
+      .from("customers")
+      .select("*")
+      .order("code", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((c) => ({
+      ...(extMap[c.id] ?? {}),
+      ...c,
+      logo_storage_path: c.logo_storage_path ?? extMap[c.id]?.logo_storage_path ?? null,
+      signature_storage_path: c.signature_storage_path ?? extMap[c.id]?.signature_storage_path ?? null,
+      paraf_storage_path: c.paraf_storage_path ?? extMap[c.id]?.paraf_storage_path ?? null,
+    }));
+  });
 }
 
 export async function saveCustomer(
@@ -1738,6 +1781,7 @@ export async function saveCustomer(
       saveCustomerExt(created.id);
       appendDemoAudit(actor, "INSERT", "customers", created.id, null, created);
     }
+    invalidateAndNotifyDataChange("customers");
     return;
   }
 
@@ -1758,9 +1802,11 @@ export async function saveCustomer(
         .update(corePatch as Partial<CustomerRow>)
         .eq("id", id);
       if (coreErr) throw new Error(coreErr.message);
+      invalidateAndNotifyDataChange("customers");
       return;
     }
     if (error) throw new Error(error.message);
+    invalidateAndNotifyDataChange("customers");
   } else {
     const { data, error } = await supabase.from("customers").insert(input).select("id").single();
     if (error && (error.message.includes("column") || error.message.includes("schema cache"))) {
@@ -1775,10 +1821,12 @@ export async function saveCustomer(
         .single();
       if (coreErr) throw new Error(coreErr.message);
       if (coreCreated?.id) saveCustomerExt(String(coreCreated.id));
+      invalidateAndNotifyDataChange("customers");
       return;
     }
     if (error) throw new Error(error.message);
     if (data?.id) saveCustomerExt(String(data.id));
+    invalidateAndNotifyDataChange("customers");
   }
 }
 
@@ -1793,6 +1841,7 @@ export async function deleteCustomer(id: string): Promise<void> {
     const before = structuredClone(demoStore.customers[idx]);
     demoStore.customers.splice(idx, 1);
     appendDemoAudit(actor, "DELETE", "customers", id, before, null);
+    invalidateAndNotifyDataChange("customers");
     return;
   }
   const { error } = await supabase.from("customers").delete().eq("id", id);
@@ -1804,41 +1853,44 @@ export async function deleteCustomer(id: string): Promise<void> {
     }
     throw new Error(error.message);
   }
+  invalidateAndNotifyDataChange("customers");
 }
 
 export async function listProjects(): Promise<{
   projects: ProjectRow[];
   members: ProjectMemberRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role === "user") {
-      const assignedIds = new Set(
-        demoStore.projectMembers
-          .filter((m) => m.user_id === actor.id)
-          .map((m) => m.project_id),
-      );
+  return cachedQuery("projects:list", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role === "user") {
+        const assignedIds = new Set(
+          demoStore.projectMembers
+            .filter((m) => m.user_id === actor.id)
+            .map((m) => m.project_id),
+        );
+        return {
+          projects: demoStore.projects.filter((p) => assignedIds.has(p.id)),
+          members: demoStore.projectMembers.filter((m) => m.user_id === actor.id),
+        };
+      }
       return {
-        projects: demoStore.projects.filter((p) => assignedIds.has(p.id)),
-        members: demoStore.projectMembers.filter((m) => m.user_id === actor.id),
+        projects: structuredClone(demoStore.projects),
+        members: structuredClone(demoStore.projectMembers),
       };
     }
-    return {
-      projects: structuredClone(demoStore.projects),
-      members: structuredClone(demoStore.projectMembers),
-    };
-  }
 
-  const [prjRes, memRes] = await Promise.all([
-    supabase.from("projects").select("*").order("created_at", { ascending: false }),
-    supabase.from("project_members").select("*"),
-  ]);
-  if (prjRes.error) throw new Error(prjRes.error.message);
-  if (memRes.error) throw new Error(memRes.error.message);
-  return {
-    projects: prjRes.data ?? [],
-    members: memRes.data ?? [],
-  };
+    const [prjRes, memRes] = await Promise.all([
+      supabase.from("projects").select("*").order("created_at", { ascending: false }),
+      supabase.from("project_members").select("*"),
+    ]);
+    if (prjRes.error) throw new Error(prjRes.error.message);
+    if (memRes.error) throw new Error(memRes.error.message);
+    return {
+      projects: prjRes.data ?? [],
+      members: memRes.data ?? [],
+    };
+  });
 }
 
 export async function saveProject(
@@ -1919,6 +1971,7 @@ export async function saveProject(
         });
       }
     }
+    invalidateAndNotifyDataChange("projects");
     return;
   }
 
@@ -1959,6 +2012,7 @@ export async function saveProject(
       if (memErr) throw new Error(memErr.message);
     }
   }
+  invalidateAndNotifyDataChange("projects");
 }
 
 export async function deleteProjects(projectIds: string[]): Promise<void> {
@@ -1999,6 +2053,7 @@ export async function deleteProjects(projectIds: string[]): Promise<void> {
       (pp) => !idSet.has(pp.project_id),
     );
     demoStore.projects = demoStore.projects.filter((p) => !idSet.has(p.id));
+    invalidateAndNotifyDataChange("projects");
     return;
   }
 
@@ -2011,5 +2066,6 @@ export async function deleteProjects(projectIds: string[]): Promise<void> {
     }
     throw new Error(error.message);
   }
+  invalidateAndNotifyDataChange("projects");
 }
 
