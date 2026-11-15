@@ -52,6 +52,86 @@ export const SHORT_MONTHS_ID = [
   "Des",
 ] as const;
 
+export const FULL_MONTHS_ID = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+] as const;
+
+/**
+ * Karakter penanda sel kosong resmi standar dokumen Altvira: en-dash (–), bukan "0" atau "-".
+ */
+export const DOC_EMPTY_CELL = "–";
+
+/**
+ * Memformat sel kosong dokumen menjadi tanda en-dash resmi standar dokumen Altvira ("–").
+ */
+export function formatDocEmpty(value?: string | number | null | undefined): string {
+  if (value === null || value === undefined) return DOC_EMPTY_CELL;
+  if (typeof value === "string" && !value.trim()) return DOC_EMPTY_CELL;
+  return String(value);
+}
+
+/**
+ * Memformat angka moneter dokumen resmi Altvira:
+ * - Jika nilai bulat atau desimalnya ,00 maka ditulis dengan pembulatan (contoh: Rp1.234.567)
+ * - Jika memiliki nilai desimal pecahan (misal ,01 s/d ,99) maka ditulis lengkap dengan desimal (contoh: Rp1.234.567,50)
+ * - Format Indonesia: pemisah ribuan titik (.) dan pemisah desimal koma (,).
+ */
+export function formatDocRupiah(amount: number): string {
+  if (!Number.isFinite(amount)) return `${DOC_EMPTY_CELL}`;
+  const sign = amount < 0 ? "-Rp" : "Rp";
+  const abs = Math.abs(amount);
+  const roundedCent = Math.round(abs * 100);
+  const isWhole = roundedCent % 100 === 0;
+
+  if (isWhole) {
+    const wholeVal = Math.round(abs);
+    const absFormatted = wholeVal
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${sign}${absFormatted}`;
+  }
+
+  const fixed = (roundedCent / 100).toFixed(2);
+  const [wholePart, decPart] = fixed.split(".");
+  const wholeFormatted = wholePart!.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}${wholeFormatted},${decPart}`;
+}
+
+/**
+ * Memformat tanggal dokumen resmi Altvira dengan nama bulan lengkap bahasa Indonesia (contoh: 14 Oktober 2026).
+ */
+export function formatDocDateLong(value: string | Date | null | undefined): string {
+  if (!value) {
+    return DOC_EMPTY_CELL;
+  }
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-");
+    const monthIdx = parseInt(month!, 10) - 1;
+    const monthName = FULL_MONTHS_ID[monthIdx] ?? month;
+    const dayNum = parseInt(day!, 10);
+    return `${dayNum} ${monthName} ${year}`;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return DOC_EMPTY_CELL;
+  }
+  const dayNum = date.getDate();
+  const monthName = FULL_MONTHS_ID[date.getMonth()] ?? String(date.getMonth() + 1);
+  const year = date.getFullYear();
+  return `${dayNum} ${monthName} ${year}`;
+}
+
 /**
  * Memformat angka menjadi ringkasan Rupiah kompak (contoh: Rp 1,2 M, Rp 45,0 jt, Rp 500 rb).
  */

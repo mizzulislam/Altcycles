@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  DOC_EMPTY_CELL,
   formatDateID,
+  formatDocDateLong,
+  formatDocEmpty,
+  formatDocRupiah,
   formatRupiah,
   inferRevenueMethodFromTerms,
   roundRupiah,
@@ -40,6 +44,43 @@ describe("Utilitas Lokalisasi Indonesia & Rupiah (BR-11 & Lampiran A.0)", () => 
     expect(inferRevenueMethodFromTerms(2)).toBe("two_term_accrual");
     expect(inferRevenueMethodFromTerms(3)).toBe("progress_billing");
     expect(inferRevenueMethodFromTerms(5)).toBe("progress_billing");
+  });
+
+  describe("Standar Dokumen Altvira (docs/standar-dokumen.md & Keputusan Konflik 6)", () => {
+    it("formatDocDateLong: memformat tanggal dengan nama bulan lengkap bahasa Indonesia", () => {
+      expect(formatDocDateLong("2026-10-14")).toBe("14 Oktober 2026");
+      expect(formatDocDateLong("2026-11-01")).toBe("1 November 2026");
+      expect(formatDocDateLong("2026-12-31")).toBe("31 Desember 2026");
+      expect(formatDocDateLong(new Date(2026, 4, 20))).toBe("20 Mei 2026");
+      expect(formatDocDateLong(null)).toBe("–");
+      expect(formatDocDateLong("")).toBe("–");
+      expect(formatDocDateLong("invalid-date")).toBe("–");
+    });
+
+    it("formatDocRupiah: memformat nominal bulat tanpa desimal dan pecahan sen dengan desimal lengkap", () => {
+      // Nilai bulat / pecahan ,00 ditulis dengan pembulatan
+      expect(formatDocRupiah(1_234_567)).toBe("Rp1.234.567");
+      expect(formatDocRupiah(120_000_000)).toBe("Rp120.000.000");
+      expect(formatDocRupiah(0)).toBe("Rp0");
+      expect(formatDocRupiah(-500_000)).toBe("-Rp500.000");
+
+      // Nilai pecahan yang bernilai sen (,01 s/d ,99) ditulis lengkap dengan desimal koma
+      expect(formatDocRupiah(1_234_567.5)).toBe("Rp1.234.567,50");
+      expect(formatDocRupiah(1_234_567.25)).toBe("Rp1.234.567,25");
+      expect(formatDocRupiah(1_234_567.05)).toBe("Rp1.234.567,05");
+      expect(formatDocRupiah(1_065_987.39)).toBe("Rp1.065.987,39");
+      expect(formatDocRupiah(-25_000.75)).toBe("-Rp25.000,75");
+    });
+
+    it("formatDocEmpty & DOC_EMPTY_CELL: menghasilkan tanda en-dash resmi", () => {
+      expect(DOC_EMPTY_CELL).toBe("–");
+      expect(formatDocEmpty(null)).toBe("–");
+      expect(formatDocEmpty(undefined)).toBe("–");
+      expect(formatDocEmpty("")).toBe("–");
+      expect(formatDocEmpty("   ")).toBe("–");
+      expect(formatDocEmpty("Ada Isi")).toBe("Ada Isi");
+      expect(formatDocEmpty(123)).toBe("123");
+    });
   });
 });
 
