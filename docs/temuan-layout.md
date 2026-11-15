@@ -509,14 +509,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-31
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Invoice & Dokumen Administrasi (`renderDocumentPdfInternal`, `buildInvoicePdfSpec`)
+- **Apa yang bertentangan:**
+  1. Teks nilai pada blok Detail Pembayaran (*Nama Bank*, *Nomor Rekening*, *Atas Nama*, *Berita Transfer*, dan *Terbilang*) serta teks bullet pada *Ketentuan Pembayaran* sebelumnya berwarna abu-abu `TEXT_LABEL`, sementara teks isi/nilai di tabel dan metadata atas berwarna hitam `TEXT_DARK`. Pengguna meminta seluruh teks nilai/isi yang masih berbeda diseragamkan ketebalan dan warnanya menjadi hitam `TEXT_DARK`.
+  2. Judul dan baris pertama blok *Ketentuan Pembayaran* sebelumnya menempel dan menabrak garis batas bawah kotak *Detail Pembayaran* akibat jarak vertikal yang terlalu sempit (`y = pdBoxBottomY - 7`).
+  3. Nilai/isi teks label *Terbilang* pada tabel Detail Pembayaran sebelumnya ditulis dalam Title Case / Proper Case ("Dua juta enam ratus rupiah"). Pengguna menginstruksikan secara khusus agar teks isi Terbilang wajib UPPERCASE / KAPITAL semua ("DUA JUTA ENAM RATUS RUPIAH").
+- **Yang kulakukan:**
+  1. Menyeragamkan seluruh label grid (label metadata, label subtotal, dan label detail pembayaran) menjadi `fontBold` dengan warna `TEXT_LABEL`, serta seluruh nilai/isi (nilai bank, nilai terbilang, teks bullet ketentuan pembayaran, teks isi keterangan) menjadi `fontRegular` dengan warna hitam `TEXT_DARK`.
+  2. Memperbaiki jarak vertikal antara garis bawah kotak Detail Pembayaran dan judul Ketentuan Pembayaran menjadi lega dan proporsional (`y = pdBoxBottomY - 18`) serta menyesuaikan `bottomSafeY = 46` sehingga tidak saling menabrak dan dokumen tetap pas 1 halaman.
+  3. Mengonversi string nilai/isi Terbilang pada Detail Pembayaran menjadi huruf kapital semua (`pd.terbilangText.toUpperCase()`).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan penyeragaman warna/tebal font, jeda aman ketentuan pembayaran, dan teks terbilang uppercase. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 15 | 13 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 16 | 14 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **30** | **23** | **7** | **1** |
+| **Total Temuan** | **31** | **24** | **7** | **1** |

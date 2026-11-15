@@ -191,7 +191,7 @@ export const PDF_LAYOUT_TOKENS = {
   marginX: 51.02, // 18 mm
   marginTop: 45.35, // 16 mm
   marginBottom: 56.69, // 20 mm (ruang khusus footer)
-  bottomSafeY: 50, // batas aman konten di atas garis footer (y = 44)
+  bottomSafeY: 46, // batas aman konten di atas garis footer (y = 44)
   footerLineY: 44,
   footerTextY: 32,
   socialBandHeight: 31.18, // ~11 mm
@@ -1860,20 +1860,21 @@ async function renderDocumentPdfInternal(
             y: blockTopY - 26 - nIdx * 11,
             size: 8,
             font: fontRegular,
-            color: TEXT_LABEL,
+            color: TEXT_DARK,
           },
           "E-keterangan-content",
         );
       });
     }
 
-    // 2. Blok Subtotal dan Total di sebelah kanan (font size seragam, garis tipis di bawah tiap baris)
+    // 2. Blok Subtotal dan Total di sebelah kanan (label tebal seragam, nilai hitam seragam)
     let curSummaryY = blockTopY - 11;
     allSummaryRows.forEach((row) => {
       const isGrandTotal =
         /^total\s+tagihan\s+invoice/i.test(row.label.trim()) ||
         (/^total\b/i.test(row.label.trim()) && !/kontrak/i.test(row.label));
       const rowFont = isGrandTotal ? fontBold : fontRegular;
+      const labelFont = fontBold;
       const labelColor = isGrandTotal ? TEXT_DARK : TEXT_LABEL;
 
       const cleanLabel = sanitizePdfText(row.label);
@@ -1886,7 +1887,7 @@ async function renderDocumentPdfInternal(
           x: totalBlockX,
           y: curSummaryY,
           size: summaryFontSize,
-          font: rowFont,
+          font: labelFont,
           color: labelColor,
         },
         "E-total-label",
@@ -1963,7 +1964,7 @@ async function renderDocumentPdfInternal(
       const rightColTopY = pdDividerY - 11;
       const bLabelW = 70;
 
-      // Kolom Kiri: Terbilang (lebar menyesuaikan hingga sebelum kolom bank)
+      // Kolom Kiri: Terbilang (Nilai wajib UPPERCASE / KAPITAL semua, warna hitam TEXT_DARK)
       const leftColX = marginX + 10;
       const leftColW = rightColX - leftColX - 16;
       const leftColTopY = pdDividerY - 11;
@@ -1974,11 +1975,12 @@ async function renderDocumentPdfInternal(
           y: leftColTopY,
           size: 8,
           font: fontBold,
-          color: TEXT_DARK,
+          color: TEXT_LABEL,
         },
         "E-pd-terbilang-lbl",
       );
-      const tLines = wrapTextByWidth(pd.terbilangText, fontRegular, 8, leftColW);
+      const terbilangUpper = sanitizePdfText(pd.terbilangText.toUpperCase());
+      const tLines = wrapTextByWidth(terbilangUpper, fontRegular, 8, leftColW);
       tLines.slice(0, 3).forEach((tLine, tIdx) => {
         drawTrackedText(
           tLine,
@@ -1987,7 +1989,7 @@ async function renderDocumentPdfInternal(
             y: leftColTopY - 12 - tIdx * 11.5,
             size: 8,
             font: fontRegular,
-            color: TEXT_LABEL,
+            color: TEXT_DARK,
           },
           "E-pd-terbilang-val",
         );
@@ -2015,7 +2017,7 @@ async function renderDocumentPdfInternal(
             y: bCursorY,
             size: 8,
             font: fontBold,
-            color: TEXT_DARK,
+            color: TEXT_LABEL,
           },
           "E-pd-bank-lbl",
         );
@@ -2026,7 +2028,7 @@ async function renderDocumentPdfInternal(
             y: bCursorY,
             size: 8,
             font: fontBold,
-            color: TEXT_DARK,
+            color: TEXT_LABEL,
           },
           "E-pd-bank-colon",
         );
@@ -2037,14 +2039,15 @@ async function renderDocumentPdfInternal(
             y: bCursorY,
             size: 8,
             font: fontRegular,
-            color: TEXT_LABEL,
+            color: TEXT_DARK,
           },
           "E-pd-bank-val",
         );
         bCursorY -= 12.5;
       });
 
-      y = pdBoxBottomY - 7;
+      // Jarak lega ke blok seksi berikutnya agar tidak menabrak kotak
+      y = pdBoxBottomY - 18;
     }
   } else if (hasSummary || hasTerbilang) {
     const totalBlockW = Math.round(contentWidth * 0.45); // ~222 pt
@@ -2272,7 +2275,7 @@ async function renderDocumentPdfInternal(
             y,
             size: noteSize,
             font: fontRegular,
-            color: TEXT_LABEL,
+            color: TEXT_DARK,
           },
           "F-bullet-text",
         );
