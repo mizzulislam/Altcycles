@@ -33,8 +33,8 @@ import type {
 } from "@/types/database.types";
 
 const BRAND_HEX = "0B43C8";
-const BRAND_SOFT_HEX = "EFF5FF";
 const BORDER_HEX = "D1D9E6";
+const BORDER_SUBTLE_HEX = "E2E8F0";
 const SUBTLE_BG_HEX = "F8FAFC";
 const SLATE_900 = "0F172A";
 const SLATE_600 = "475569";
@@ -201,23 +201,23 @@ function styledTable(
           (h, idx) =>
             new TableCell({
               width: { size: widthsPct[idx] ?? 25, type: WidthType.PERCENTAGE },
-              shading: { fill: BRAND_SOFT_HEX, type: ShadingType.CLEAR },
+              shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
               borders: {
                 top: { style: BorderStyle.SINGLE, size: 6, color: BORDER_HEX },
-                bottom: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                bottom: { style: BorderStyle.SINGLE, size: 8, color: SLATE_600 },
+                left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
               },
               children: [
                 new Paragraph({
                   alignment: alignments?.[idx] ?? AlignmentType.LEFT,
-                  spacing: { before: 60, after: 60 },
+                  spacing: { before: 70, after: 70 },
                   children: [
                     new TextRun({
                       text: h,
                       bold: true,
-                      size: 18,
-                      color: BRAND_HEX,
+                      size: 17,
+                      color: SLATE_600,
                     }),
                   ],
                 }),
@@ -233,10 +233,10 @@ function styledTable(
                 new TableCell({
                   width: { size: widthsPct[idx] ?? 25, type: WidthType.PERCENTAGE },
                   borders: {
-                    top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                    bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                    left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                    right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                    top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_SUBTLE_HEX },
+                    left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                   },
                   children: [
                     new Paragraph({
@@ -245,7 +245,7 @@ function styledTable(
                       children: [
                         new TextRun({
                           text: r[idx] ?? "",
-                          size: 18,
+                          size: 17,
                           color: SLATE_900,
                         }),
                       ],
@@ -285,7 +285,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: {
       top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-      bottom: { style: BorderStyle.SINGLE, size: 12, color: BRAND_HEX },
+      bottom: { style: BorderStyle.SINGLE, size: 8, color: BORDER_HEX },
       left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
       right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
       insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
@@ -361,7 +361,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
   const verStr = spec.docVersion
     ? ` (${typeof spec.docVersion === "number" ? `v${spec.docVersion}` : spec.docVersion})`
     : "";
-  const badgeStr = spec.statusBadge ? `   •   [ ${spec.statusBadge.text.toUpperCase()} ]` : "";
+  const badgeStr = spec.statusBadge ? `   •   STATUS: ${spec.statusBadge.text.toUpperCase()}` : "";
 
   const bodyChildren: Array<Paragraph | Table> = [
     headerTable,
@@ -383,7 +383,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
           text: `Nomor Dokumen: ${spec.docNumber}${verStr}   •   Tanggal: ${formatDocDateLong(spec.docDate)}${badgeStr}`,
           bold: true,
           size: 19,
-          color: BRAND_HEX,
+          color: SLATE_900,
         }),
         ...(spec.docSubtitle
           ? [
@@ -406,12 +406,12 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
           new TableRow({
             children: [
               new TableCell({
-                shading: { fill: BRAND_SOFT_HEX, type: ShadingType.CLEAR },
+                shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
                 borders: {
-                  top: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
-                  left: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
-                  right: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
                 children: [
                   new Paragraph({
@@ -420,20 +420,20 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                       new TextRun({
                         text: `${spec.balanceDueBox.label.toUpperCase()}:  `,
                         bold: true,
-                        size: 19,
-                        color: BRAND_HEX,
+                        size: 17,
+                        color: SLATE_600,
                       }),
                       new TextRun({
                         text: spec.balanceDueBox.amountText,
                         bold: true,
                         size: 24,
-                        color: BRAND_HEX,
+                        color: SLATE_900,
                       }),
                       ...(spec.balanceDueBox.dueDateText
                         ? [
                             new TextRun({
                               text: `   (${spec.balanceDueBox.dueDateText})`,
-                              size: 17,
+                              size: 16,
                               color: SLATE_600,
                             }),
                           ]
@@ -461,7 +461,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                 borders: {
                   top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  left: { style: BorderStyle.SINGLE, size: 12, color: BRAND_HEX },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
                 children: [
@@ -471,8 +471,8 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                       new TextRun({
                         text: spec.recipientTitle ?? "Kepada Yth.:",
                         bold: true,
-                        size: 18,
-                        color: BRAND_HEX,
+                        size: 17,
+                        color: SLATE_600,
                       }),
                     ],
                   }),
@@ -549,13 +549,26 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
   }
 
   for (const s of spec.summaryRows ?? []) {
+    const isTotal =
+      s.label.toUpperCase().includes("TOTAL") ||
+      s.label.toUpperCase().includes("SISA");
     bodyChildren.push(
       new Paragraph({
         alignment: AlignmentType.RIGHT,
         spacing: { after: 50 },
         children: [
-          new TextRun({ text: `${s.label}: `, bold: true, size: 19, color: SLATE_600 }),
-          new TextRun({ text: s.value, bold: true, size: 20, color: BRAND_HEX }),
+          new TextRun({
+            text: `${s.label}: `,
+            bold: true,
+            size: isTotal ? 20 : 18,
+            color: isTotal ? SLATE_900 : SLATE_600,
+          }),
+          new TextRun({
+            text: s.value,
+            bold: true,
+            size: isTotal ? 21 : 19,
+            color: SLATE_900,
+          }),
         ],
       }),
     );
@@ -569,8 +582,8 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
           new TextRun({
             text: `Terbilang: # ${terbilangRupiah(spec.terbilangAmount)} #`,
             bold: true,
-            size: 18,
-            color: BRAND_HEX,
+            size: 17,
+            color: SLATE_600,
           }),
         ],
       }),
@@ -586,7 +599,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
             text: "Catatan & Ketentuan Pembayaran:",
             bold: true,
             size: 18,
-            color: SLATE_600,
+            color: SLATE_900,
           }),
         ],
       }),
@@ -595,7 +608,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
       bodyChildren.push(
         new Paragraph({
           spacing: { after: 40 },
-          children: [new TextRun({ text: `• ${n}`, size: 17, color: SLATE_600 })],
+          children: [new TextRun({ text: `• ${n}`, size: 16, color: SLATE_600 })],
         }),
       );
     }
@@ -723,7 +736,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
         }),
       );
     } else {
-      // 2 Kolom Tanda Tangan Standar + Slot e-Meterai Opsional
+      // 2 Kolom Tanda Tangan Standar + Slot e-Meterai Opsional (Dashed Netral)
       const meteraiCell = spec.hasMeterai
         ? [
             new TableCell({
@@ -732,10 +745,10 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                 new Paragraph({
                   alignment: AlignmentType.CENTER,
                   border: {
-                    top: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                    bottom: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                    left: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                    right: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                    top: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                    bottom: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                    left: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                    right: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
                   },
                   spacing: { before: 60, after: 60 },
                   children: [
@@ -743,7 +756,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
                       text: "METERAI ELEKTRONIK\n",
                       bold: true,
                       size: 13,
-                      color: BRAND_HEX,
+                      color: SLATE_600,
                     }),
                     new TextRun({
                       text: "Rp 10.000\n",
@@ -935,9 +948,9 @@ export async function generateSpkProjectCharterWord(params: {
                 width: { size: 24, type: WidthType.PERCENTAGE },
                 shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
                 borders: {
-                  top: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
-                  left: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
+                  top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
                 children: [
@@ -950,7 +963,7 @@ export async function generateSpkProjectCharterWord(params: {
                             text: company.company_name,
                             bold: true,
                             size: 18,
-                            color: BRAND_HEX,
+                            color: SLATE_900,
                           }),
                         ],
                   }),
@@ -960,8 +973,8 @@ export async function generateSpkProjectCharterWord(params: {
                 width: { size: 52, type: WidthType.PERCENTAGE },
                 shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
                 borders: {
-                  top: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
@@ -973,7 +986,7 @@ export async function generateSpkProjectCharterWord(params: {
                         text: company.company_name.toUpperCase(),
                         bold: true,
                         size: 18,
-                        color: BRAND_HEX,
+                        color: SLATE_900,
                       }),
                     ],
                   }),
@@ -996,10 +1009,10 @@ export async function generateSpkProjectCharterWord(params: {
                 width: { size: 24, type: WidthType.PERCENTAGE },
                 shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
                 borders: {
-                  top: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_HEX },
+                  top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                   left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  right: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
+                  right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
                 children: [
                   new Paragraph({
@@ -1023,12 +1036,12 @@ export async function generateSpkProjectCharterWord(params: {
             children: [
               new TableCell({
                 columnSpan: 3,
-                shading: { fill: BRAND_SOFT_HEX, type: ShadingType.CLEAR },
+                shading: { fill: SUBTLE_BG_HEX, type: ShadingType.CLEAR },
                 borders: {
                   top: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
-                  bottom: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                  left: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
-                  right: { style: BorderStyle.SINGLE, size: 8, color: BRAND_HEX },
+                  bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  left: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
+                  right: { style: BorderStyle.SINGLE, size: 4, color: BORDER_HEX },
                 },
                 children: [
                   new Paragraph({
@@ -1435,10 +1448,10 @@ export async function generateSpkProjectCharterWord(params: {
             new TableCell({
               width: { size: 24, type: WidthType.PERCENTAGE },
               borders: {
-                top: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                bottom: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                left: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
-                right: { style: BorderStyle.DASHED, size: 6, color: BRAND_HEX },
+                top: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                bottom: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                left: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
+                right: { style: BorderStyle.DASHED, size: 6, color: BORDER_HEX },
               },
               children: [
                 new Paragraph({
@@ -1449,7 +1462,7 @@ export async function generateSpkProjectCharterWord(params: {
                       text: "METERAI ELEKTRONIK\n",
                       bold: true,
                       size: 13,
-                      color: BRAND_HEX,
+                      color: SLATE_600,
                     }),
                     new TextRun({
                       text: "Rp 10.000\n",

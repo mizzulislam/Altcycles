@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { SpkCharterFields } from "@/components/shared/spk-charter-fields";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
@@ -81,6 +82,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { downloadCsvFile } from "@/lib/csv-exporter";
+import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
   getCompanyProfile,
   listCustomers,
@@ -1073,6 +1076,126 @@ export function ProjectDetailPage() {
     downloadWordBlob(blob, `${bast.bast_number.replace(/\//g, "_")}.docx`);
   }
 
+  async function handleExportMilestonesExcel() {
+    if (!project || !bundle || bundle.milestones.length === 0) {
+      toast.error("Belum ada data jadwal termin untuk diekspor.");
+      return;
+    }
+    await downloadExcelSheet({
+      sheetName: "Jadwal Termin Proyek",
+      fileName: `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      columns: [
+        { header: "Termin Ke", width: 14 },
+        { header: "Keterangan Termin", width: 36 },
+        { header: "Porsi (%)", width: 14 },
+        { header: "Nominal (IDR)", width: 22 },
+        { header: "Status Penagihan", width: 18 },
+      ],
+      rows: bundle.milestones.map((m) => {
+        const isBilled = bundle.invoices.some((inv) => inv.milestone_id === m.id);
+        const isPaid = bundle.invoices.some(
+          (inv) => inv.milestone_id === m.id && inv.payment_status === "paid",
+        );
+        return [
+          `Termin ${m.sequence_no}`,
+          m.name,
+          `${m.percentage}%`,
+          m.amount,
+          isPaid ? "LUNAS" : isBilled ? "DITAGIHKAN" : "DRAFT",
+        ];
+      }),
+    });
+    await recordExportLog("PROJECT_WORKSPACE", "EXCEL");
+    toast.success("Jadwal termin proyek berhasil diekspor ke Excel (.xlsx).");
+  }
+
+  async function handleExportMilestonesPdf() {
+    if (!company || !project || !bundle || bundle.milestones.length === 0) {
+      toast.error("Belum ada data jadwal termin untuk diekspor.");
+      return;
+    }
+    const spec: PdfDocumentSpec = {
+      docTitle: "JADWAL TERMIN PENAGIHAN PROYEK",
+      docSubtitle: `${project.code} - ${project.name}`,
+      docNumber: `SCH/${project.code}/${new Date().getFullYear()}`,
+      docDate: new Date().toISOString().slice(0, 10),
+      company,
+      recipientTitle: "Informasi Proyek & Klien:",
+      recipientLines: [
+        `Nama Proyek: ${project.name} (${project.code})`,
+        `Klien: ${customer?.name ?? "Proyek Internal"}`,
+        `Total Nilai Kontrak: ${formatRupiah(project.contract_value)}`,
+      ],
+      tableColumns: [
+        { header: "Termin", widthRatio: 0.16, align: "center" },
+        { header: "Keterangan Termin", widthRatio: 0.44 },
+        { header: "Porsi", widthRatio: 0.16, align: "center" },
+        { header: "Nominal (IDR)", widthRatio: 0.24, align: "right" },
+      ],
+      tableRows: bundle.milestones.map((m) => [
+        `Termin ${m.sequence_no}`,
+        m.name,
+        `${m.percentage}%`,
+        formatDocRupiah(m.amount),
+      ]),
+      summaryRows: [
+        {
+          label: "TOTAL NILAI TERMIN",
+          value: formatDocRupiah(
+            bundle.milestones.reduce((sum, m) => sum + m.amount, 0),
+          ),
+        },
+      ],
+      terbilangAmount: bundle.milestones.reduce((sum, m) => sum + m.amount, 0),
+      notes: [
+        "Jadwal termin penagihan ini menjadi dasar penerbitan Berita Acara Kemajuan Pekerjaan (BAKP) dan Invoice resmi termin proyek.",
+        "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira.",
+      ],
+      rightSignatureLabel: `Dikeluarkan Oleh, ${company.company_name}`,
+      rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
+      rightSignatureImageUrl: company.signer_signature_path ?? null,
+    };
+    const bytes = await generateDocumentPdf(spec);
+    downloadPdfBytes(
+      bytes,
+      `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.pdf`,
+    );
+    await recordExportLog("PROJECT_WORKSPACE", "PDF");
+    toast.success("Jadwal termin proyek berhasil diekspor ke PDF Dokumen (.pdf).");
+  }
+
+  async function handleExportMilestonesCsv() {
+    if (!project || !bundle || bundle.milestones.length === 0) {
+      toast.error("Belum ada data jadwal termin untuk diekspor.");
+      return;
+    }
+    downloadCsvFile(
+      `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Termin Ke",
+        "Keterangan Termin",
+        "Porsi (%)",
+        "Nominal (IDR)",
+        "Status Penagihan",
+      ],
+      bundle.milestones.map((m) => {
+        const isBilled = bundle.invoices.some((inv) => inv.milestone_id === m.id);
+        const isPaid = bundle.invoices.some(
+          (inv) => inv.milestone_id === m.id && inv.payment_status === "paid",
+        );
+        return [
+          `Termin ${m.sequence_no}`,
+          m.name,
+          m.percentage,
+          m.amount,
+          isPaid ? "LUNAS" : isBilled ? "DITAGIHKAN" : "DRAFT",
+        ];
+      }),
+    );
+    await recordExportLog("PROJECT_WORKSPACE", "CSV");
+    toast.success("Jadwal termin proyek berhasil diekspor ke CSV (.csv).");
+  }
+
   const isSectionEditing = (key: SectionKey) => Boolean(editModes[key]);
   const getSelectedIds = (key: SectionKey) => selectedIdsBySection[key] ?? [];
 
@@ -1486,6 +1609,14 @@ export function ProjectDetailPage() {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                {bundle.milestones.length > 0 && (
+                  <ExportDownloadMenu
+                    label="Unduh / Ekspor"
+                    onExportExcel={handleExportMilestonesExcel}
+                    onExportPdf={handleExportMilestonesPdf}
+                    onExportCsv={handleExportMilestonesCsv}
+                  />
+                )}
                 <SectionEditControls
                   hasItems={bundle.milestones.length > 0}
                   isEditing={isSectionEditing("milestones")}
@@ -2176,12 +2307,9 @@ export function ProjectDetailPage() {
                               </div>
                             ) : cpo.status === "verified" ? (
                               <div className="flex justify-center items-center -my-1.5">
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  title="Unduh Dokumen PO"
-                                  onClick={async () => {
+                                <DocumentDownloadMenu
+                                  title="Unduh Purchase Order Klien (PDF / Word)"
+                                  onDownloadPdf={async () => {
                                     if (!company) return;
                                     const spec = buildClientPoPdfSpec({
                                       company,
@@ -2208,11 +2336,34 @@ export function ProjectDetailPage() {
                                     );
                                     await recordExportLog("CLIENT_PO", "PDF");
                                   }}
-                                  className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 cursor-pointer"
-                                >
-                                  <DownloadIcon className="size-4" />
-                                  <span className="sr-only">Unduh Dokumen PO</span>
-                                </Button>
+                                  onDownloadWord={async () => {
+                                    if (!company) return;
+                                    const spec = buildClientPoPdfSpec({
+                                      company,
+                                      poNumber: cpo.po_number,
+                                      poDate: cpo.created_at.slice(0, 10),
+                                      clientName: cpo.client_name,
+                                      clientCompany: cpo.client_company,
+                                      clientEmail: cpo.client_email,
+                                      clientPhone: cpo.client_phone,
+                                      quotationReference: cpo.quotation_reference,
+                                      statusLabel: cpoStatus.label,
+                                      projectLabel: project
+                                        ? `${project.code} - ${project.name}`
+                                        : null,
+                                      items: Array.isArray(cpo.items_json)
+                                        ? cpo.items_json
+                                        : [],
+                                      poValue: cpo.po_value,
+                                    });
+                                    const blob = await generateDocumentWord(spec);
+                                    downloadWordBlob(
+                                      blob,
+                                      `PO_Klien_${cpo.po_number.replace(/[^A-Za-z0-9_-]/g, "_")}.docx`,
+                                    );
+                                    await recordExportLog("CLIENT_PO", "EXCEL");
+                                  }}
+                                />
                               </div>
                             ) : (
                               <span className="text-xs sm:text-sm leading-5 text-muted-foreground">
@@ -3870,36 +4021,33 @@ export function ProjectDetailPage() {
                   </div>
                 ))}
               </div>
-              <DialogFooter className="pt-1">
-                {viewModal.onDownloadWord ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={viewModal.onDownloadWord}
-                    className="cursor-pointer gap-1.5"
-                  >
-                    <DownloadIcon className="size-4" />
-                    <span>Unduh Word</span>
-                  </Button>
-                ) : null}
-                {viewModal.onDownloadPdf ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={viewModal.onDownloadPdf}
-                    className="cursor-pointer gap-1.5"
-                  >
-                    <DownloadIcon className="size-4" />
-                    <span>Unduh PDF</span>
-                  </Button>
-                ) : null}
+              <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
                 <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setViewModal(null)}
-                  className="cursor-pointer"
+                  className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
                 >
                   Tutup
                 </Button>
+                {viewModal.onDownloadPdf && viewModal.onDownloadWord ? (
+                  <DocumentDownloadMenu
+                    variant="button"
+                    label="Unduh / Ekspor"
+                    title={`Unduh ${viewModal.title} (PDF / Word)`}
+                    onDownloadPdf={viewModal.onDownloadPdf}
+                    onDownloadWord={viewModal.onDownloadWord}
+                  />
+                ) : viewModal.onDownloadPdf ? (
+                  <Button
+                    type="button"
+                    onClick={viewModal.onDownloadPdf}
+                    className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer gap-2"
+                  >
+                    <DownloadIcon className="size-4" />
+                    <span>PDF Dokumen (.pdf)</span>
+                  </Button>
+                ) : null}
               </DialogFooter>
             </div>
           ) : null}

@@ -87,20 +87,16 @@ export interface PdfDocumentSpec {
   hideSystemFooter?: boolean;
 }
 
-// Palet warna resmi Altcycles (senada dengan tema biru Altvira #0B43C8)
+// Palet warna resmi Altcycles (Clean Modern Corporate Standard - terinspirasi Figma & Atlassian)
 const BRAND_BLUE = rgb(0.043, 0.263, 0.784);
-const BRAND_BLUE_SOFT = rgb(0.937, 0.961, 1.0);
 const SLATE_900 = rgb(0.059, 0.09, 0.165);
 const SLATE_700 = rgb(0.2, 0.255, 0.333);
-const SLATE_500 = rgb(0.392, 0.455, 0.545);
+const SLATE_600 = rgb(0.28, 0.34, 0.42);
+const SLATE_500 = rgb(0.42, 0.48, 0.56);
 const BORDER_SLATE = rgb(0.82, 0.855, 0.902);
-const SURFACE_SUBTLE = rgb(0.973, 0.98, 0.988);
-const EMERALD_700 = rgb(0.016, 0.537, 0.345);
-const EMERALD_SOFT = rgb(0.925, 0.984, 0.953);
-const ROSE_700 = rgb(0.745, 0.118, 0.176);
-const ROSE_SOFT = rgb(1.0, 0.949, 0.957);
-const AMBER_700 = rgb(0.706, 0.447, 0.047);
-const AMBER_SOFT = rgb(1.0, 0.984, 0.922);
+const BORDER_SUBTLE = rgb(0.9, 0.925, 0.95);
+const SURFACE_SUBTLE = rgb(0.985, 0.988, 0.995);
+const SURFACE_CARD = rgb(0.995, 0.998, 1.0);
 
 export function sanitizePdfText(text: string): string {
   // StandardFonts Helvetica menggunakan WinAnsiEncoding; normalkan karakter Unicode non-WinAnsi
@@ -487,78 +483,59 @@ export async function generateDocumentPdf(
     addrY -= 10;
   }
 
-  y = Math.min(kopMinY, addrY) - 4;
+  y = Math.min(kopMinY, addrY) - 5;
+  // Garis pemisah kop surat resmi - hairline netral modern
   page.drawLine({
     start: { x: marginX, y },
     end: { x: pageWidth - marginX, y },
-    thickness: 1.5,
-    color: BRAND_BLUE,
+    thickness: 0.65,
+    color: BORDER_SLATE,
   });
   y -= 20;
 
-  // Zona A. Judul Dokumen, Versi, Status Badge, Nomor, & Tanggal
+  // Zona A. Judul Dokumen, Versi, Status Terstruktur (Monokrom), Nomor, & Tanggal
   page.drawText(sanitizePdfText(spec.docTitle.toUpperCase()), {
     x: marginX,
     y,
-    size: 12.5,
+    size: 13,
     font: fontBold,
     color: SLATE_900,
   });
 
   if (spec.statusBadge) {
-    const badgeText = sanitizePdfText(spec.statusBadge.text.toUpperCase());
-    const badgeW = fontBold.widthOfTextAtSize(badgeText, 7.5) + 14;
+    const rawBadge = sanitizePdfText(spec.statusBadge.text.toUpperCase());
+    const badgeText = rawBadge.startsWith("STATUS:") ? rawBadge : `STATUS: ${rawBadge}`;
+    const badgeW = fontBold.widthOfTextAtSize(badgeText, 7.2) + 14;
     const badgeH = 15;
     const badgeX = pageWidth - marginX - badgeW;
     const badgeY = y - 3;
 
-    let bg = BRAND_BLUE_SOFT;
-    let border = BRAND_BLUE;
-    let txtCol = BRAND_BLUE;
-
-    if (spec.statusBadge.variant === "success") {
-      bg = EMERALD_SOFT;
-      border = EMERALD_700;
-      txtCol = EMERALD_700;
-    } else if (spec.statusBadge.variant === "danger") {
-      bg = ROSE_SOFT;
-      border = ROSE_700;
-      txtCol = ROSE_700;
-    } else if (spec.statusBadge.variant === "warning") {
-      bg = AMBER_SOFT;
-      border = AMBER_700;
-      txtCol = AMBER_700;
-    } else if (spec.statusBadge.variant === "neutral") {
-      bg = SURFACE_SUBTLE;
-      border = BORDER_SLATE;
-      txtCol = SLATE_700;
-    }
-
+    // Desain status badge monokromatik netral & elegan (bebas dari tag warna-warni ala Figma / Atlassian)
     page.drawRectangle({
       x: badgeX,
       y: badgeY,
       width: badgeW,
       height: badgeH,
-      color: bg,
-      borderColor: border,
-      borderWidth: 0.7,
+      color: SURFACE_SUBTLE,
+      borderColor: BORDER_SLATE,
+      borderWidth: 0.5,
     });
     page.drawText(badgeText, {
       x: badgeX + 7,
       y: badgeY + 4,
-      size: 7.5,
+      size: 7.2,
       font: fontBold,
-      color: txtCol,
+      color: SLATE_700,
     });
   } else if (spec.docDate && spec.docDate.trim()) {
     const dateText = sanitizePdfText(`Tanggal: ${formatDocDateLong(spec.docDate)}`);
-    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
+    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 8.8);
     page.drawText(dateText, {
       x: pageWidth - marginX - dateWidth,
       y,
-      size: 9,
+      size: 8.8,
       font: fontRegular,
-      color: SLATE_700,
+      color: SLATE_600,
     });
   }
   y -= 14;
@@ -571,79 +548,79 @@ export async function generateDocumentPdf(
     page.drawText(sanitizePdfText(`Nomor Dokumen: ${spec.docNumber}${verText}`), {
       x: marginX,
       y,
-      size: 9,
+      size: 8.8,
       font: fontBold,
-      color: BRAND_BLUE,
+      color: SLATE_900,
     });
   }
 
   if (spec.statusBadge && spec.docDate && spec.docDate.trim()) {
     const dateText = sanitizePdfText(`Tanggal: ${formatDocDateLong(spec.docDate)}`);
-    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 9);
+    const dateWidth = fontRegular.widthOfTextAtSize(dateText, 8.8);
     page.drawText(dateText, {
       x: pageWidth - marginX - dateWidth,
       y,
-      size: 9,
+      size: 8.8,
       font: fontRegular,
-      color: SLATE_700,
+      color: SLATE_600,
     });
   } else if (spec.docSubtitle) {
     const subClean = sanitizePdfText(spec.docSubtitle);
-    const subW = fontRegular.widthOfTextAtSize(subClean, 9);
+    const subW = fontRegular.widthOfTextAtSize(subClean, 8.8);
     page.drawText(subClean, {
       x: hasDocNumber ? pageWidth - marginX - subW : marginX,
       y,
-      size: 9,
+      size: 8.8,
       font: fontRegular,
       color: SLATE_500,
     });
   }
   y -= 18;
 
-  // Zona C. Kotak Ringkasan Nilai Menonjol (Balance Due / Total Tagihan)
+  // Zona C. Hero Typography Statement (Balance Due / Total Tagihan Bersih ala Figma)
   if (spec.balanceDueBox) {
-    ensureSpace(42);
+    ensureSpace(44);
     const boxW = contentWidth;
-    const boxH = 34;
+    const boxH = 36;
     page.drawRectangle({
       x: marginX,
       y: y - boxH + 6,
       width: boxW,
       height: boxH,
-      color: BRAND_BLUE_SOFT,
-      borderColor: BRAND_BLUE,
-      borderWidth: 0.8,
+      color: SURFACE_CARD,
+      borderColor: BORDER_SLATE,
+      borderWidth: 0.55,
     });
 
     page.drawText(sanitizePdfText(spec.balanceDueBox.label.toUpperCase()), {
       x: marginX + 12,
-      y: y - 10,
-      size: 8,
+      y: y - 9,
+      size: 7.2,
       font: fontBold,
-      color: BRAND_BLUE,
+      color: SLATE_500,
     });
 
     if (spec.balanceDueBox.dueDateText) {
       page.drawText(sanitizePdfText(spec.balanceDueBox.dueDateText), {
         x: marginX + 12,
         y: y - 22,
-        size: 7.5,
+        size: 7.8,
         font: fontRegular,
-        color: SLATE_500,
+        color: SLATE_700,
       });
     }
 
     const amtClean = sanitizePdfText(spec.balanceDueBox.amountText);
-    const amtW = fontBold.widthOfTextAtSize(amtClean, 13);
+    const amtW = fontBold.widthOfTextAtSize(amtClean, 14);
     page.drawText(amtClean, {
       x: pageWidth - marginX - 12 - amtW,
-      y: y - 16,
-      size: 13,
+      y: y - 17,
+      size: 14,
       font: fontBold,
-      color: BRAND_BLUE,
+      color: SLATE_900,
     });
 
-    y -= boxH + 8;
+    y -= boxH + 10;
   }
 
   // 3. Tujuan / Identitas Pihak Kedua & Metadata
@@ -747,21 +724,32 @@ export async function generateDocumentPdf(
 
     const drawTableHeader = () => {
       ensureSpace(24);
+      // Latar halus & garis hairline ganda pembatas header tabel ala Figma/Zoom
       page.drawRectangle({
         x: marginX,
         y: y - 6,
         width: contentWidth,
-        height: 20,
-        color: BRAND_BLUE_SOFT,
-        borderColor: BORDER_SLATE,
-        borderWidth: 0.6,
+        height: 19,
+        color: SURFACE_SUBTLE,
+      });
+      page.drawLine({
+        start: { x: marginX, y: y + 13 },
+        end: { x: pageWidth - marginX, y: y + 13 },
+        thickness: 0.55,
+        color: BORDER_SLATE,
+      });
+      page.drawLine({
+        start: { x: marginX, y: y - 6 },
+        end: { x: pageWidth - marginX, y: y - 6 },
+        thickness: 0.75,
+        color: SLATE_700,
       });
 
       let colX = marginX;
       cols.forEach((col, idx) => {
         const w = colWidths[idx]!;
         const headerClean = sanitizePdfText(col.header);
-        const textW = fontBold.widthOfTextAtSize(headerClean, 8.5);
+        const textW = fontBold.widthOfTextAtSize(headerClean, 8.2);
         let drawX = colX + 6;
         if (col.align === "right") {
           drawX = colX + w - textW - 6;
@@ -770,10 +758,10 @@ export async function generateDocumentPdf(
         }
         page.drawText(headerClean, {
           x: drawX,
-          y,
-          size: 8.5,
+          y: y + 1,
+          size: 8.2,
           font: fontBold,
-          color: BRAND_BLUE,
+          color: SLATE_700,
         });
         colX += w;
       });
@@ -823,34 +811,47 @@ export async function generateDocumentPdf(
       page.drawLine({
         start: { x: marginX, y: lineY },
         end: { x: pageWidth - marginX, y: lineY },
-        thickness: 0.4,
-        color: BORDER_SLATE,
+        thickness: 0.35,
+        color: BORDER_SUBTLE,
       });
       y = lineY - 12;
     }
     y -= 4;
   }
 
-  // 6. Ringkasan Nilai & Terbilang
+  // 6. Ringkasan Nilai & Terbilang (Clean Monokrom)
   if (spec.summaryRows && spec.summaryRows.length > 0) {
     for (const sumRow of spec.summaryRows) {
       ensureSpace(16);
       const labelClean = sanitizePdfText(sumRow.label);
       const valClean = sanitizePdfText(sumRow.value);
-      const valW = fontBold.widthOfTextAtSize(valClean, 9.5);
+      const isTotalRow =
+        labelClean.toUpperCase().includes("TOTAL") ||
+        labelClean.toUpperCase().includes("SISA");
+      const valW = fontBold.widthOfTextAtSize(valClean, isTotalRow ? 9.8 : 9);
+
+      if (isTotalRow) {
+        page.drawLine({
+          start: { x: pageWidth - marginX - 230, y: y + 9 },
+          end: { x: pageWidth - marginX, y: y + 9 },
+          thickness: 0.45,
+          color: BORDER_SLATE,
+        });
+      }
+
       page.drawText(labelClean, {
         x: pageWidth - marginX - 230,
         y,
-        size: 9,
+        size: isTotalRow ? 9.2 : 8.6,
         font: fontBold,
-        color: SLATE_700,
+        color: isTotalRow ? SLATE_900 : SLATE_600,
       });
       page.drawText(valClean, {
         x: pageWidth - marginX - valW,
         y,
-        size: 9.5,
+        size: isTotalRow ? 9.8 : 9,
         font: fontBold,
-        color: BRAND_BLUE,
+        color: SLATE_900,
       });
       y -= 15;
     }
@@ -859,15 +860,15 @@ export async function generateDocumentPdf(
 
   if (typeof spec.terbilangAmount === "number") {
     const terbilangText = `Terbilang: # ${terbilangRupiah(spec.terbilangAmount)} #`;
-    const wrapped = wrapTextByWidth(terbilangText, fontBold, 8.8, contentWidth);
+    const wrapped = wrapTextByWidth(terbilangText, fontBold, 8.5, contentWidth);
     ensureSpace(wrapped.length * 13 + 8);
     for (const line of wrapped) {
       page.drawText(line, {
         x: marginX,
         y,
-        size: 8.8,
+        size: 8.5,
         font: fontBold,
-        color: BRAND_BLUE,
+        color: SLATE_700,
       });
       y -= 13;
     }
@@ -880,23 +881,23 @@ export async function generateDocumentPdf(
     page.drawText("Catatan & Ketentuan Pembayaran:", {
       x: marginX,
       y,
-      size: 8.8,
+      size: 8.5,
       font: fontBold,
       color: SLATE_700,
     });
     y -= 12;
     for (const note of spec.notes) {
-      const wrapped = wrapTextByWidth(`- ${note}`, fontRegular, 8.3, contentWidth);
+      const wrapped = wrapTextByWidth(`- ${note}`, fontRegular, 8, contentWidth);
       for (const l of wrapped) {
         ensureSpace(12);
         page.drawText(l, {
           x: marginX,
           y,
-          size: 8.3,
+          size: 8,
           font: fontRegular,
-          color: SLATE_500,
+          color: SLATE_600,
         });
-        y -= 11.5;
+        y -= 11;
       }
     }
     y -= 8;
@@ -999,9 +1000,9 @@ export async function generateDocumentPdf(
         page.drawText(sanitizePdfText(spec.leftSignatureLabel ?? "Pihak Klien,"), {
           x: marginX,
           y: sigTopY,
-          size: 8.8,
+          size: 8.5,
           font: fontRegular,
-          color: SLATE_700,
+          color: SLATE_600,
         });
         if (leftSigImg) {
           const dims = fitDimensions(leftSigImg, 110, 42);
@@ -1015,7 +1016,7 @@ export async function generateDocumentPdf(
         page.drawText(sanitizePdfText(`(${spec.leftSignatureName})`), {
           x: marginX,
           y: sigTopY - 60,
-          size: 8.8,
+          size: 8.5,
           font: fontBold,
           color: SLATE_900,
         });
@@ -1023,49 +1024,49 @@ export async function generateDocumentPdf(
 
       // Slot e-Meterai Rp10.000 jika dokumen memerlukan meterai (Kuitansi > 5jt / SPK)
       if (spec.hasMeterai) {
-        const meteraiW = 86;
-        const meteraiH = 50;
+        const meteraiW = 84;
+        const meteraiH = 48;
         const meteraiX = spec.leftSignatureName
           ? marginX + (contentWidth - meteraiW) / 2
           : pageWidth - marginX - 185 - meteraiW - 16;
-        const meteraiY = sigTopY - 50;
+        const meteraiY = sigTopY - 48;
 
         page.drawRectangle({
           x: meteraiX,
           y: meteraiY,
           width: meteraiW,
           height: meteraiH,
-          color: SURFACE_SUBTLE,
-          borderColor: BRAND_BLUE,
-          borderWidth: 0.8,
+          color: SURFACE_CARD,
+          borderColor: BORDER_SLATE,
+          borderWidth: 0.6,
         });
 
         const mTitle = "METERAI ELEKTRONIK";
-        const mW1 = fontBold.widthOfTextAtSize(mTitle, 6.8);
+        const mW1 = fontBold.widthOfTextAtSize(mTitle, 6.5);
         page.drawText(mTitle, {
           x: meteraiX + (meteraiW - mW1) / 2,
-          y: meteraiY + meteraiH - 14,
-          size: 6.8,
+          y: meteraiY + meteraiH - 13,
+          size: 6.5,
           font: fontBold,
-          color: BRAND_BLUE,
+          color: SLATE_600,
         });
 
         const mNominal = "Rp 10.000";
         const mW2 = fontBold.widthOfTextAtSize(mNominal, 8);
         page.drawText(mNominal, {
           x: meteraiX + (meteraiW - mW2) / 2,
-          y: meteraiY + meteraiH - 26,
+          y: meteraiY + meteraiH - 25,
           size: 8,
           font: fontBold,
           color: SLATE_900,
         });
 
         const mSub = sanitizePdfText(spec.meteraiLabel ?? "TEMPAT E-METERAI");
-        const mW3 = fontRegular.widthOfTextAtSize(mSub, 5.8);
+        const mW3 = fontRegular.widthOfTextAtSize(mSub, 5.5);
         page.drawText(mSub, {
           x: meteraiX + (meteraiW - mW3) / 2,
           y: meteraiY + 8,
-          size: 5.8,
+          size: 5.5,
           font: fontRegular,
           color: SLATE_500,
         });
@@ -1079,9 +1080,9 @@ export async function generateDocumentPdf(
         {
           x: rightX,
           y: sigTopY,
-          size: 8.8,
+          size: 8.5,
           font: fontRegular,
-          color: SLATE_700,
+          color: SLATE_600,
         },
       );
       if (rightSigImg) {
@@ -1100,7 +1101,7 @@ export async function generateDocumentPdf(
         {
           x: rightX,
           y: sigTopY - 60,
-          size: 8.8,
+          size: 8.5,
           font: fontBold,
           color: SLATE_900,
         },
@@ -1109,13 +1110,13 @@ export async function generateDocumentPdf(
 
     if (spec.closingNote) {
       const cClean = sanitizePdfText(spec.closingNote);
-      const cW = fontBold.widthOfTextAtSize(cClean, 8.8);
+      const cW = fontBold.widthOfTextAtSize(cClean, 8.5);
       page.drawText(cClean, {
         x: (pageWidth - cW) / 2,
         y: sigTopY - 82,
-        size: 8.8,
+        size: 8.5,
         font: fontBold,
-        color: BRAND_BLUE,
+        color: SLATE_600,
       });
     }
   }
@@ -1190,15 +1191,15 @@ export async function generateSpkProjectCharterPdf(params: {
     const boxH = 44;
     const subH = 18;
 
-    // Header Card Berbingkai Modern Senada Desain Altcycles
+    // Header Card Berbingkai Bersih & Proporsional Modern
     p.drawRectangle({
       x: marginX,
       y: topY - boxH,
       width: contentWidth,
       height: boxH,
       color: SURFACE_SUBTLE,
-      borderColor: BRAND_BLUE,
-      borderWidth: 1,
+      borderColor: BORDER_SLATE,
+      borderWidth: 0.6,
     });
 
     // Kiri: Logo Altvira
@@ -1216,30 +1217,30 @@ export async function generateSpkProjectCharterPdf(params: {
         y: topY - 25,
         size: 10,
         font: fontBold,
-        color: BRAND_BLUE,
+        color: SLATE_900,
       });
     }
 
     // Tengah: Judul Kop
     const topBrand = sanitizePdfText(company.company_name.toUpperCase());
-    const topBrandW = fontBold.widthOfTextAtSize(topBrand, 9);
+    const topBrandW = fontBold.widthOfTextAtSize(topBrand, 8.8);
     p.drawText(topBrand, {
       x: marginX + (contentWidth - topBrandW) / 2,
       y: topY - 17,
-      size: 9,
+      size: 8.8,
       font: fontBold,
-      color: BRAND_BLUE,
+      color: SLATE_900,
     });
     const subTitle = sanitizePdfText(
       content.headerSubtitle || "Project Charter / Surat Perjanjian Kerjasama",
     );
-    const subTitleW = fontBold.widthOfTextAtSize(subTitle, 11);
+    const subTitleW = fontBold.widthOfTextAtSize(subTitle, 10.5);
     p.drawText(subTitle, {
       x: marginX + (contentWidth - subTitleW) / 2,
       y: topY - 33,
-      size: 11,
+      size: 10.5,
       font: fontBold,
-      color: SLATE_900,
+      color: SLATE_700,
     });
 
     // Kanan: Logo Klien
@@ -1263,15 +1264,15 @@ export async function generateSpkProjectCharterPdf(params: {
       });
     }
 
-    // Sub-bar Metadata (No Dokumen | Versi | Tanggal)
+    // Sub-bar Metadata (No Dokumen | Versi | Tanggal) - Hairline Bersih
     p.drawRectangle({
       x: marginX,
       y: topY - boxH - subH,
       width: contentWidth,
       height: subH,
-      color: BRAND_BLUE_SOFT,
-      borderColor: BRAND_BLUE,
-      borderWidth: 0.8,
+      color: SURFACE_CARD,
+      borderColor: BORDER_SLATE,
+      borderWidth: 0.5,
     });
 
     const col3W = contentWidth / 3;
@@ -1287,7 +1288,7 @@ export async function generateSpkProjectCharterPdf(params: {
       y: topY - boxH - 12,
       size: 8,
       font: fontBold,
-      color: SLATE_900,
+      color: SLATE_700,
     });
     p.drawText(
       sanitizePdfText(`Tanggal: ${formatDateID(content.signingDate || docDate)}`),
@@ -1296,7 +1297,7 @@ export async function generateSpkProjectCharterPdf(params: {
         y: topY - boxH - 12,
         size: 8,
         font: fontBold,
-        color: SLATE_900,
+        color: SLATE_700,
       },
     );
 
@@ -1361,21 +1362,34 @@ export async function generateSpkProjectCharterPdf(params: {
 
     const drawHdr = () => {
       ensureSpace(22);
+      // Header tabel SPK clean dengan garis hairline horizontal
       page.drawRectangle({
         x: marginX,
         y: y - 5,
         width: contentWidth,
         height: 18,
-        color: BRAND_BLUE,
+        color: SURFACE_SUBTLE,
+      });
+      page.drawLine({
+        start: { x: marginX, y: y + 13 },
+        end: { x: pageWidth - marginX, y: y + 13 },
+        thickness: 0.55,
+        color: BORDER_SLATE,
+      });
+      page.drawLine({
+        start: { x: marginX, y: y - 5 },
+        end: { x: pageWidth - marginX, y: y - 5 },
+        thickness: 0.75,
+        color: SLATE_700,
       });
       let cx = marginX;
       headers.forEach((h, i) => {
         page.drawText(sanitizePdfText(h), {
           x: cx + 6,
-          y,
-          size: 8.3,
+          y: y + 1,
+          size: 8.2,
           font: fontBold,
-          color: rgb(1, 1, 1),
+          color: SLATE_700,
         });
         cx += widths[i]!;
       });
@@ -1414,8 +1428,8 @@ export async function generateSpkProjectCharterPdf(params: {
       page.drawLine({
         start: { x: marginX, y: bY },
         end: { x: pageWidth - marginX, y: bY },
-        thickness: 0.45,
-        color: BORDER_SLATE,
+        thickness: 0.35,
+        color: BORDER_SUBTLE,
       });
       y = bY - 12;
     }
@@ -1627,47 +1641,47 @@ export async function generateSpkProjectCharterPdf(params: {
   const p2X = pageWidth - marginX - 185;
 
   // Slot e-Meterai Rp10.000 di tengah antara kedua penandatangan SPK
-  const spkMeteraiW = 86;
-  const spkMeteraiH = 50;
+  const spkMeteraiW = 84;
+  const spkMeteraiH = 48;
   const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
-  const spkMeteraiY = sigY - 60;
+  const spkMeteraiY = sigY - 58;
 
   page.drawRectangle({
     x: spkMeteraiX,
     y: spkMeteraiY,
     width: spkMeteraiW,
     height: spkMeteraiH,
-    color: SURFACE_SUBTLE,
-    borderColor: BRAND_BLUE,
-    borderWidth: 0.8,
+    color: SURFACE_CARD,
+    borderColor: BORDER_SLATE,
+    borderWidth: 0.6,
   });
 
   const spkMTitle = "METERAI ELEKTRONIK";
-  const spkMW1 = fontBold.widthOfTextAtSize(spkMTitle, 6.8);
+  const spkMW1 = fontBold.widthOfTextAtSize(spkMTitle, 6.5);
   page.drawText(spkMTitle, {
     x: spkMeteraiX + (spkMeteraiW - spkMW1) / 2,
-    y: spkMeteraiY + spkMeteraiH - 14,
-    size: 6.8,
+    y: spkMeteraiY + spkMeteraiH - 13,
+    size: 6.5,
     font: fontBold,
-    color: BRAND_BLUE,
+    color: SLATE_600,
   });
 
   const spkMNominal = "Rp 10.000";
   const spkMW2 = fontBold.widthOfTextAtSize(spkMNominal, 8);
   page.drawText(spkMNominal, {
     x: spkMeteraiX + (spkMeteraiW - spkMW2) / 2,
-    y: spkMeteraiY + spkMeteraiH - 26,
+    y: spkMeteraiY + spkMeteraiH - 25,
     size: 8,
     font: fontBold,
     color: SLATE_900,
   });
 
   const spkMSub = "TEMPAT E-METERAI";
-  const spkMW3 = fontRegular.widthOfTextAtSize(spkMSub, 5.8);
+  const spkMW3 = fontRegular.widthOfTextAtSize(spkMSub, 5.5);
   page.drawText(spkMSub, {
     x: spkMeteraiX + (spkMeteraiW - spkMW3) / 2,
     y: spkMeteraiY + 8,
-    size: 5.8,
+    size: 5.5,
     font: fontRegular,
     color: SLATE_500,
   });

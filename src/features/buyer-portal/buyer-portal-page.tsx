@@ -4,7 +4,6 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   CopyIcon,
-  DownloadIcon,
   PlusIcon,
   SearchIcon,
   ShieldCheckIcon,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -60,6 +60,7 @@ import {
   downloadPdfBytes,
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
+import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import { isDemoMode } from "@/lib/supabase";
 import type { BuyerPortalLookupDto } from "@/types/database.types";
 
@@ -119,7 +120,6 @@ export function BuyerPortalPage() {
   const [submittedPoModal, setSubmittedPoModal] =
     React.useState<SubmittedPoDialogState | null>(null);
   const [copiedModalPo, setCopiedModalPo] = React.useState(false);
-  const [downloadingPoPdf, setDownloadingPoPdf] = React.useState(false);
 
   const turnstileContainerRef = React.useRef<HTMLDivElement | null>(null);
   const turnstileWidgetIdRef = React.useRef<string | null>(null);
@@ -249,7 +249,6 @@ export function BuyerPortalPage() {
 
   async function handleDownloadSubmittedPoPdf() {
     if (!submittedPoModal) return;
-    setDownloadingPoPdf(true);
     try {
       const spec = buildClientPoPdfSpec({
         company: DEMO_COMPANY,
@@ -273,16 +272,40 @@ export function BuyerPortalPage() {
       toast.error(
         err instanceof Error ? err.message : "Gagal mengunduh dokumen PO.",
       );
-    } finally {
-      setDownloadingPoPdf(false);
     }
   }
 
-  async function handleDownloadBuyerDoc(
-    doc: BuyerPortalLookupDto["documents"][number],
-  ) {
-    if (!lookupResult) return;
-    const bytes = await generateDocumentPdf({
+  async function handleDownloadSubmittedPoWord() {
+    if (!submittedPoModal) return;
+    try {
+      const spec = buildClientPoPdfSpec({
+        company: DEMO_COMPANY,
+        poNumber: submittedPoModal.poNumber,
+        poDate: submittedPoModal.submittedAt,
+        clientName: submittedPoModal.clientName,
+        clientCompany: submittedPoModal.clientCompany,
+        clientEmail: submittedPoModal.clientEmail,
+        clientPhone: submittedPoModal.clientPhone,
+        quotationReference: submittedPoModal.quotationReference,
+        statusLabel: "Menunggu Verifikasi Admin",
+        items: submittedPoModal.items,
+        poValue: submittedPoModal.totalAmount,
+      });
+      const blob = await generateDocumentWord(spec);
+      downloadWordBlob(
+        blob,
+        `PO_Klien_${submittedPoModal.poNumber.replace(/[^A-Za-z0-9_-]/g, "_")}.docx`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mengunduh dokumen PO Word.",
+      );
+    }
+  }
+
+  function makeBuyerDocSpec(doc: BuyerPortalLookupDto["documents"][number]) {
+    if (!lookupResult) return null;
+    return {
       docTitle: `DOKUMEN PROYEK — ${doc.category.toUpperCase()}`,
       docSubtitle: `Referensi PO: ${lookupResult.po_number}`,
       docNumber: doc.doc_number,
@@ -307,10 +330,30 @@ export function BuyerPortalPage() {
         "Salinan dokumen resmi ini diunduh melalui Portal Pembeli Altcycles menggunakan verifikasi Nomor PO unik klien tanpa menampilkan data biaya internal perusahaan.",
       ],
       rightSignatureName: `${DEMO_COMPANY.signer_name} - ${DEMO_COMPANY.signer_title}`,
-    });
+    };
+  }
+
+  async function handleDownloadBuyerDoc(
+    doc: BuyerPortalLookupDto["documents"][number],
+  ) {
+    const spec = makeBuyerDocSpec(doc);
+    if (!spec) return;
+    const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(
       bytes,
       `${doc.category}_${doc.doc_number.replace(/\//g, "_")}.pdf`,
+    );
+  }
+
+  async function handleDownloadBuyerDocWord(
+    doc: BuyerPortalLookupDto["documents"][number],
+  ) {
+    const spec = makeBuyerDocSpec(doc);
+    if (!spec) return;
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(
+      blob,
+      `${doc.category}_${doc.doc_number.replace(/\//g, "_")}.docx`,
     );
   }
 
@@ -662,19 +705,15 @@ export function BuyerPortalPage() {
                               </TableCell>
                               <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                                 <div className="-my-1.5 inline-flex justify-center">
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="ghost"
-                                    title="Unduh Dokumen PDF"
-                                    className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 cursor-pointer"
-                                    onClick={() =>
+                                  <DocumentDownloadMenu
+                                    title="Unduh Dokumen (PDF / Word)"
+                                    onDownloadPdf={() =>
                                       void handleDownloadBuyerDoc(doc)
                                     }
-                                  >
-                                    <DownloadIcon className="size-4" />
-                                    <span className="sr-only">Unduh PDF</span>
-                                  </Button>
+                                    onDownloadWord={() =>
+                                      void handleDownloadBuyerDocWord(doc)
+                                    }
+                                  />
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -1226,20 +1265,13 @@ export function BuyerPortalPage() {
           ) : null}
 
           <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={downloadingPoPdf}
-              className="border-primary/25 bg-primary/10 text-primary dark:text-sky-400 hover:bg-primary/15"
-              onClick={() => void handleDownloadSubmittedPoPdf()}
-            >
-              {downloadingPoPdf ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <DownloadIcon className="size-4" />
-              )}
-              <span>Unduh Dokumen PO</span>
-            </Button>
+            <DocumentDownloadMenu
+              variant="button"
+              label="Unduh / Ekspor"
+              title="Unduh Salinan Dokumen PO"
+              onDownloadPdf={() => void handleDownloadSubmittedPoPdf()}
+              onDownloadWord={() => void handleDownloadSubmittedPoWord()}
+            />
             <Button type="button" onClick={handleCloseSuccessModal}>
               <CheckCircle2Icon className="size-4" />
               <span>Tutup &amp; Reset Formulir</span>

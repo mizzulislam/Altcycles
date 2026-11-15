@@ -16,6 +16,8 @@ import {
 } from "@/components/shared/google-drive-picker-dialog";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +60,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listAccounts, listProjects } from "@/lib/data-service";
+import {
+  getCompanyProfile,
+  listAccounts,
+  listProjects,
+} from "@/lib/data-service";
+import { downloadCsvFile } from "@/lib/csv-exporter";
+import { downloadExcelSheet } from "@/lib/excel-exporter";
+import {
+  buildPaymentApprovalPdfSpec,
+  downloadPdfBytes,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
+import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import { formatDateID, formatRupiah } from "@/lib/formatters";
 import {
   createAndSubmitPaymentRequest,
@@ -66,6 +80,7 @@ import {
   getProjectBudgetComparison,
   listPaymentRequests,
   listPurchaseOrders,
+  recordExportLog,
   resubmitRejectedPaymentRequest,
 } from "@/lib/operations-service";
 import type {
@@ -317,6 +332,170 @@ export function UserPaymentsPage() {
     }
   }
 
+  const projectMap = React.useMemo(
+    () => new Map(projects.map((p) => [p.id, `${p.code} - ${p.name}`])),
+    [projects],
+  );
+  const accountMap = React.useMemo(
+    () => new Map(expenseAccounts.map((a) => [a.id, `${a.code} - ${a.name}`])),
+    [expenseAccounts],
+  );
+
+  async function makePaDocSpec(req: PaymentRequestRow) {
+    const comp = await getCompanyProfile();
+    const reqAttachments = attachments.filter((a) => a.entity_id === req.id);
+    return buildPaymentApprovalPdfSpec({
+      company: comp,
+      requestNumber: req.request_number,
+      revisionNo: req.revision_no,
+      requestDate: (req.submitted_at ?? req.created_at).slice(0, 10),
+      requesterName: "Pengaju",
+      projectName: req.project_id
+        ? projectMap.get(req.project_id) ?? "Operasional Proyek"
+        : "Operasional Umum",
+      expenseAccountName: req.expense_account_id
+        ? accountMap.get(req.expense_account_id) ?? "-"
+        : "-",
+      recipientName: req.recipient_name,
+      recipientBankInfo: req.recipient_bank_info ?? null,
+      purpose: req.purpose,
+      amount: req.amount,
+      status: req.status,
+      statusLabel: PA_STATUS_META[req.status].label,
+      approverName: req.approver_id ? "Admin Keuangan" : null,
+      approvedAt: req.decided_at ?? null,
+      paidDate: req.paid_date ?? null,
+      rejectionReason: req.rejection_reason ?? null,
+      attachmentNames: reqAttachments.map((a) => a.file_name),
+    });
+  }
+
+  async function handleDownloadPaPdf(req: PaymentRequestRow) {
+    const spec = await makePaDocSpec(req);
+    const bytes = await generateDocumentPdf(spec);
+    downloadPdfBytes(bytes, `PA_${req.request_number.replace(/\//g, "-")}.pdf`);
+    await recordExportLog("PAYMENT_APPROVALS", "PDF");
+    toast.success(`Form PA ${req.request_number} (PDF) berhasil diunduh.`);
+  }
+
+  async function handleDownloadPaWord(req: PaymentRequestRow) {
+    const spec = await makePaDocSpec(req);
+    const blob = await generateDocumentWord(spec);
+    downloadWordBlob(blob, `PA_${req.request_number.replace(/\//g, "-")}.docx`);
+    await recordExportLog("PAYMENT_APPROVALS", "PDF");
+    toast.success(`Form PA ${req.request_number} (Word) berhasil diunduh.`);
+  }
+
+  async function handleExportExcel() {
+    if (requests.length === 0) {
+      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      return;
+    }
+    await downloadExcelSheet({
+      sheetName: "Pengajuan Pembayaran",
+      fileName: "Pengajuan_Pembayaran_Saya.xlsx",
+      columns: [
+        { header: "Nomor PA", width: 22 },
+        { header: "Tanggal", width: 14 },
+        { header: "Proyek", width: 28 },
+        { header: "Pos Beban", width: 28 },
+        { header: "Penerima", width: 24 },
+        { header: "Keperluan", width: 34 },
+        { header: "Nominal", width: 18 },
+        { header: "Status", width: 24 },
+        { header: "Tanggal Bayar", width: 16 },
+      ],
+      rows: requests.map((r) => [
+        r.request_number,
+        (r.submitted_at ?? r.created_at).slice(0, 10),
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : "Operasional Umum",
+        r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
+        r.recipient_name,
+        r.purpose,
+        r.amount,
+        PA_STATUS_META[r.status].label,
+        r.paid_date ?? "-",
+      ]),
+    });
+    await recordExportLog("PAYMENT_APPROVALS", "EXCEL");
+    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).");
+  }
+
+  async function handleExportPdf() {
+    if (requests.length === 0) {
+      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      return;
+    }
+    const comp = await getCompanyProfile();
+    const bytes = await generateDocumentPdf({
+      docTitle: "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
+      docSubtitle: "Rekapitulasi Histori Pengajuan Payment Approval (PA) Pengguna",
+      docNumber: `REKAP-PA-${new Date().toISOString().slice(0, 10)}`,
+      docDate: new Date().toISOString().slice(0, 10),
+      company: comp,
+      metaRows: [
+        { label: "Total Pengajuan", value: `${requests.length} pengajuan` },
+        {
+          label: "Total Nilai Diajukan",
+          value: formatRupiah(requests.reduce((s, r) => s + r.amount, 0)),
+        },
+      ],
+      tableColumns: [
+        { header: "Nomor PA", widthRatio: 2 },
+        { header: "Tanggal", widthRatio: 1.2 },
+        { header: "Penerima / Vendor", widthRatio: 2.2 },
+        { header: "Keperluan", widthRatio: 3 },
+        { header: "Status", widthRatio: 1.8 },
+        { header: "Nominal", widthRatio: 1.8, align: "right" },
+      ],
+      tableRows: requests.map((r) => [
+        r.request_number,
+        (r.submitted_at ?? r.created_at).slice(0, 10),
+        r.recipient_name,
+        r.purpose,
+        PA_STATUS_META[r.status].label,
+        formatRupiah(r.amount),
+      ]),
+    });
+    downloadPdfBytes(bytes, "Pengajuan_Pembayaran_Saya.pdf");
+    await recordExportLog("PAYMENT_APPROVALS", "PDF");
+    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke PDF (.pdf).");
+  }
+
+  async function handleExportCsv() {
+    if (requests.length === 0) {
+      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      return;
+    }
+    downloadCsvFile(
+      "Pengajuan_Pembayaran_Saya.csv",
+      [
+        "Nomor PA",
+        "Tanggal",
+        "Proyek",
+        "Pos Beban",
+        "Penerima",
+        "Keperluan",
+        "Nominal",
+        "Status",
+        "Tanggal Bayar",
+      ],
+      requests.map((r) => [
+        r.request_number,
+        (r.submitted_at ?? r.created_at).slice(0, 10),
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : "Operasional Umum",
+        r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
+        r.recipient_name,
+        r.purpose,
+        r.amount,
+        PA_STATUS_META[r.status].label,
+        r.paid_date ?? "-",
+      ]),
+    );
+    await recordExportLog("PAYMENT_APPROVALS", "CSV");
+    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).");
+  }
+
   const pendingCount = requests.filter((r) => r.status === "submitted").length;
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const totalPaidAmount = requests
@@ -334,7 +513,13 @@ export function UserPaymentsPage() {
             Ajukan permohonan dana operasional dan pantau status verifikasi secara transparan.
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          <ExportDownloadMenu
+            label="Unduh / Ekspor"
+            onExportExcel={handleExportExcel}
+            onExportPdf={handleExportPdf}
+            onExportCsv={handleExportCsv}
+          />
           <Button
             type="button"
             size="sm"
@@ -428,7 +613,7 @@ export function UserPaymentsPage() {
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nominal</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Lampiran</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status &amp; Catatan Admin</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-24">Aksi</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -540,8 +725,13 @@ export function UserPaymentsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                        {req.status === "rejected" ? (
-                          <div className="flex justify-center items-center -my-1.5">
+                        <div className="flex items-center justify-center gap-1 -my-1.5">
+                          <DocumentDownloadMenu
+                            title="Unduh Form Pengajuan (PDF / Word)"
+                            onDownloadPdf={() => void handleDownloadPaPdf(req)}
+                            onDownloadWord={() => void handleDownloadPaWord(req)}
+                          />
+                          {req.status === "rejected" ? (
                             <Button
                               type="button"
                               size="icon"
@@ -558,10 +748,8 @@ export function UserPaymentsPage() {
                               <RotateCcwIcon className="size-4" />
                               <span className="sr-only">Perbaiki &amp; Ajukan Ulang</span>
                             </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs sm:text-sm leading-5 text-muted-foreground">-</span>
-                        )}
+                          ) : null}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

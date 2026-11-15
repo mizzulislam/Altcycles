@@ -3,6 +3,7 @@ import { Building2Icon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from "luci
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -37,11 +38,16 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   deleteCustomer,
   deleteVendor,
+  getCompanyProfile,
   listCustomers,
   listVendors,
   saveCustomer,
   saveVendor,
 } from "@/lib/data-service";
+import { recordExportLog } from "@/lib/operations-service";
+import { downloadCsvFile } from "@/lib/csv-exporter";
+import { downloadExcelSheet } from "@/lib/excel-exporter";
+import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
 import type { CustomerRow, VendorRow } from "@/types/database.types";
 
 export function PartiesMasterPage() {
@@ -136,6 +142,226 @@ export function PartiesMasterPage() {
         err instanceof Error ? err.message : "Gagal menyimpan pelanggan.",
       );
     }
+  }
+
+  async function handleExportVendorsExcel() {
+    if (vendors.length === 0) {
+      toast.error("Tidak ada data vendor untuk diekspor.");
+      return;
+    }
+    await downloadExcelSheet({
+      sheetName: "Daftar Vendor",
+      fileName: "Master_Vendor_Altcycles.xlsx",
+      columns: [
+        { header: "Kode", width: 14 },
+        { header: "Nama Vendor", width: 28 },
+        { header: "PIC", width: 22 },
+        { header: "Email", width: 24 },
+        { header: "Telepon", width: 18 },
+        { header: "Bank", width: 20 },
+        { header: "No Rekening", width: 20 },
+        { header: "Alamat", width: 36 },
+        { header: "Status", width: 14 },
+      ],
+      rows: vendors.map((v) => [
+        v.code,
+        v.name,
+        v.contact_name ?? "-",
+        v.email ?? "-",
+        v.phone ?? "-",
+        v.bank_name ?? "-",
+        v.bank_account_number ?? "-",
+        v.address ?? "-",
+        v.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    });
+    await recordExportLog("SYSTEM_CONFIG", "EXCEL");
+    toast.success("Daftar vendor berhasil diekspor ke Excel (.xlsx).");
+  }
+
+  async function handleExportVendorsPdf() {
+    if (vendors.length === 0) {
+      toast.error("Tidak ada data vendor untuk diekspor.");
+      return;
+    }
+    const comp = await getCompanyProfile();
+    const bytes = await generateDocumentPdf({
+      docTitle: "DAFTAR MASTER VENDOR PEMASOK",
+      docSubtitle: "Rekapitulasi Data Rekanan & Mitra Vendor Terdaftar",
+      docNumber: `REKAP-VND-${new Date().toISOString().slice(0, 10)}`,
+      docDate: new Date().toISOString().slice(0, 10),
+      company: comp,
+      metaRows: [
+        { label: "Total Vendor", value: `${vendors.length} vendor` },
+        {
+          label: "Status Vendor",
+          value: `${vendors.filter((v) => v.is_active).length} Aktif, ${vendors.filter((v) => !v.is_active).length} Nonaktif`,
+        },
+      ],
+      tableColumns: [
+        { header: "Kode", widthRatio: 1.5 },
+        { header: "Nama Vendor", widthRatio: 3 },
+        { header: "PIC / Kontak", widthRatio: 3 },
+        { header: "Bank & Rekening", widthRatio: 3 },
+        { header: "Status", widthRatio: 1.5 },
+      ],
+      tableRows: vendors.map((v) => [
+        v.code,
+        v.name,
+        v.contact_name
+          ? `${v.contact_name} (${v.phone || v.email || "-"})`
+          : "-",
+        v.bank_name ? `${v.bank_name} - ${v.bank_account_number}` : "-",
+        v.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    });
+    downloadPdfBytes(bytes, "Master_Vendor_Altcycles.pdf");
+    await recordExportLog("SYSTEM_CONFIG", "PDF");
+    toast.success("Daftar vendor berhasil diekspor ke PDF (.pdf).");
+  }
+
+  async function handleExportVendorsCsv() {
+    if (vendors.length === 0) {
+      toast.error("Tidak ada data vendor untuk diekspor.");
+      return;
+    }
+    downloadCsvFile(
+      "Master_Vendor_Altcycles.csv",
+      [
+        "Kode",
+        "Nama Vendor",
+        "PIC",
+        "Email",
+        "Telepon",
+        "Bank",
+        "No Rekening",
+        "Alamat",
+        "Status",
+      ],
+      vendors.map((v) => [
+        v.code,
+        v.name,
+        v.contact_name ?? "-",
+        v.email ?? "-",
+        v.phone ?? "-",
+        v.bank_name ?? "-",
+        v.bank_account_number ?? "-",
+        v.address ?? "-",
+        v.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    );
+    await recordExportLog("SYSTEM_CONFIG", "CSV");
+    toast.success("Daftar vendor berhasil diekspor ke CSV (.csv).");
+  }
+
+  async function handleExportCustomersExcel() {
+    if (customers.length === 0) {
+      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      return;
+    }
+    await downloadExcelSheet({
+      sheetName: "Daftar Pelanggan",
+      fileName: "Master_Pelanggan_Altcycles.xlsx",
+      columns: [
+        { header: "Kode", width: 14 },
+        { header: "Nama Klien", width: 28 },
+        { header: "Badan Usaha / Perusahaan", width: 28 },
+        { header: "PIC", width: 22 },
+        { header: "Jabatan PIC", width: 20 },
+        { header: "Email", width: 24 },
+        { header: "Telepon", width: 18 },
+        { header: "Alamat", width: 36 },
+        { header: "Status", width: 14 },
+      ],
+      rows: customers.map((c) => [
+        c.code,
+        c.name,
+        c.company_name ?? "-",
+        c.contact_person ?? "-",
+        c.contact_title ?? "-",
+        c.email ?? "-",
+        c.phone ?? "-",
+        c.address ?? "-",
+        c.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    });
+    await recordExportLog("SYSTEM_CONFIG", "EXCEL");
+    toast.success("Daftar pelanggan berhasil diekspor ke Excel (.xlsx).");
+  }
+
+  async function handleExportCustomersPdf() {
+    if (customers.length === 0) {
+      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      return;
+    }
+    const comp = await getCompanyProfile();
+    const bytes = await generateDocumentPdf({
+      docTitle: "DAFTAR MASTER PELANGGAN / KLIEN",
+      docSubtitle: "Rekapitulasi Klien & Pemegang Akun Portal Pembeli",
+      docNumber: `REKAP-CST-${new Date().toISOString().slice(0, 10)}`,
+      docDate: new Date().toISOString().slice(0, 10),
+      company: comp,
+      metaRows: [
+        { label: "Total Pelanggan", value: `${customers.length} klien` },
+        {
+          label: "Status Klien",
+          value: `${customers.filter((c) => c.is_active).length} Aktif, ${customers.filter((c) => !c.is_active).length} Nonaktif`,
+        },
+      ],
+      tableColumns: [
+        { header: "Kode", widthRatio: 1.5 },
+        { header: "Nama Klien / Perusahaan", widthRatio: 3.5 },
+        { header: "PIC & Jabatan", widthRatio: 3 },
+        { header: "Kontak", widthRatio: 2.5 },
+        { header: "Status", widthRatio: 1.5 },
+      ],
+      tableRows: customers.map((c) => [
+        c.code,
+        c.company_name ? `${c.name} (${c.company_name})` : c.name,
+        c.contact_person
+          ? `${c.contact_person}${c.contact_title ? ` - ${c.contact_title}` : ""}`
+          : "-",
+        c.phone || c.email || "-",
+        c.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    });
+    downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");
+    await recordExportLog("SYSTEM_CONFIG", "PDF");
+    toast.success("Daftar pelanggan berhasil diekspor ke PDF (.pdf).");
+  }
+
+  async function handleExportCustomersCsv() {
+    if (customers.length === 0) {
+      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      return;
+    }
+    downloadCsvFile(
+      "Master_Pelanggan_Altcycles.csv",
+      [
+        "Kode",
+        "Nama Klien",
+        "Badan Usaha / Perusahaan",
+        "PIC",
+        "Jabatan PIC",
+        "Email",
+        "Telepon",
+        "Alamat",
+        "Status",
+      ],
+      customers.map((c) => [
+        c.code,
+        c.name,
+        c.company_name ?? "-",
+        c.contact_person ?? "-",
+        c.contact_title ?? "-",
+        c.email ?? "-",
+        c.phone ?? "-",
+        c.address ?? "-",
+        c.is_active ? "Aktif" : "Nonaktif",
+      ]),
+    );
+    await recordExportLog("SYSTEM_CONFIG", "CSV");
+    toast.success("Daftar pelanggan berhasil diekspor ke CSV (.csv).");
   }
 
   async function confirmDelete() {
@@ -235,29 +461,37 @@ export function PartiesMasterPage() {
                   Vendor bukan pengguna sistem dan tidak memiliki akun login.
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 cursor-pointer"
-                onClick={() => {
-                  setVndForm({
-                    id: undefined,
-                    code: `VND-00${vendors.length + 1}`,
-                    name: "",
-                    contact_name: "",
-                    email: "",
-                    phone: "",
-                    bank_name: "",
-                    bank_account_number: "",
-                    address: "",
-                    is_active: true,
-                  });
-                  setVndOpen(true);
-                }}
-              >
-                <PlusIcon data-icon="inline-start" />
-                Tambah Vendor
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <ExportDownloadMenu
+                  label="Unduh / Ekspor"
+                  onExportExcel={handleExportVendorsExcel}
+                  onExportPdf={handleExportVendorsPdf}
+                  onExportCsv={handleExportVendorsCsv}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="shrink-0 cursor-pointer"
+                  onClick={() => {
+                    setVndForm({
+                      id: undefined,
+                      code: `VND-00${vendors.length + 1}`,
+                      name: "",
+                      contact_name: "",
+                      email: "",
+                      phone: "",
+                      bank_name: "",
+                      bank_account_number: "",
+                      address: "",
+                      is_active: true,
+                    });
+                    setVndOpen(true);
+                  }}
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  Tambah Vendor
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -380,32 +614,40 @@ export function PartiesMasterPage() {
                   tanpa login memakai Nomor PO.
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 cursor-pointer"
-                onClick={() => {
-                  setCstForm({
-                    id: undefined,
-                    code: `CST-00${customers.length + 1}`,
-                    name: "",
-                    company_name: "",
-                    contact_person: "",
-                    contact_title: "",
-                    email: "",
-                    phone: "",
-                    address: "",
-                    logo_storage_path: null,
-                    signature_storage_path: null,
-                    paraf_storage_path: null,
-                    is_active: true,
-                  });
-                  setCstOpen(true);
-                }}
-              >
-                <PlusIcon data-icon="inline-start" />
-                Tambah Pelanggan
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <ExportDownloadMenu
+                  label="Unduh / Ekspor"
+                  onExportExcel={handleExportCustomersExcel}
+                  onExportPdf={handleExportCustomersPdf}
+                  onExportCsv={handleExportCustomersCsv}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="shrink-0 cursor-pointer"
+                  onClick={() => {
+                    setCstForm({
+                      id: undefined,
+                      code: `CST-00${customers.length + 1}`,
+                      name: "",
+                      company_name: "",
+                      contact_person: "",
+                      contact_title: "",
+                      email: "",
+                      phone: "",
+                      address: "",
+                      logo_storage_path: null,
+                      signature_storage_path: null,
+                      paraf_storage_path: null,
+                      is_active: true,
+                    });
+                    setCstOpen(true);
+                  }}
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  Tambah Pelanggan
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
