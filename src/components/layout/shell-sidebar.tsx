@@ -300,8 +300,15 @@ export function ShellSidebar({
                   />
                 </button>
 
-                {isGroupOpen && (
-                  <div className="relative mt-1 ml-4 pl-3.5 space-y-1">
+                <div
+                  className={cn(
+                    "grid transition-all duration-200 ease-in-out overflow-hidden motion-reduce:transition-none",
+                    isGroupOpen
+                      ? "grid-rows-[1fr] opacity-100 mt-1"
+                      : "grid-rows-[0fr] opacity-0 mt-0",
+                  )}
+                >
+                  <div className="min-h-0 relative ml-4 pl-3.5 space-y-1">
                     {/* Track garis vertikal sejajar persis dengan indikator bulat aktif */}
                     <span
                       aria-hidden="true"
@@ -356,7 +363,7 @@ export function ShellSidebar({
                       );
                     })}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
