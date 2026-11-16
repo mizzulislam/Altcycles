@@ -66,6 +66,11 @@ import { useRealtimeSync } from "@/lib/realtime-cache";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import {
+  buildJournalsPdfSpec,
+  downloadPdfBytes,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
 import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -571,11 +576,61 @@ export function JournalsPage({
       ? "Jurnal Penyesuaian & Koreksi"
       : "Jurnal Umum";
 
-  function handleExportPdf() {
-    setTimeout(() => {
-      window.print();
-    }, 60);
-    void recordExportLog("JOURNALS", "PDF", periodFilter);
+  async function handleExportPdf() {
+    try {
+      const comp = company ?? (await getCompanyProfile());
+      const isAdj = filterMode === "adjusting";
+
+      const rows: Array<{
+        date: string;
+        number: string;
+        account: string;
+        description: string;
+        ref: string;
+        debit: number;
+        credit: number;
+      }> = [];
+
+      for (const j of sortedJournals) {
+        const jLines = lines
+          .filter((l) => l.journal_id === j.id)
+          .sort((a, b) => a.line_no - b.line_no);
+        for (const l of jLines) {
+          const acc = accountMap.get(l.account_id);
+          rows.push({
+            date: formatDateID(j.journal_date),
+            number: j.journal_number,
+            account: acc ? `${acc.code} - ${acc.name}` : "-",
+            description: l.description || j.description,
+            ref: (j as any).reference_number ?? j.reference_journal_id ?? j.source_id ?? "-",
+            debit: l.debit,
+            credit: l.credit,
+          });
+        }
+      }
+
+      const spec = buildJournalsPdfSpec({
+        company: comp,
+        isAdjusting: isAdj,
+        periodLabel: printPeriodLabel,
+        rows,
+      });
+
+      const bytes = await generateDocumentPdf(spec);
+      downloadPdfBytes(
+        bytes,
+        isAdj ? "Jurnal_Penyesuaian_Altcycles.pdf" : "Jurnal_Umum_Altcycles.pdf",
+      );
+      void recordExportLog("JOURNALS", "PDF", periodFilter);
+      toast.success(
+        isAdj
+          ? "Jurnal Penyesuaian berhasil diunduh dalam format PDF (.pdf)."
+          : "Jurnal Umum berhasil diunduh dalam format PDF (.pdf).",
+      );
+    } catch (err) {
+      console.error("Gagal mengunduh PDF jurnal:", err);
+      toast.error("Gagal membuat berkas PDF jurnal akuntansi.");
+    }
   }
 
   async function handleExportExcel() {

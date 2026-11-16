@@ -2,6 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import type { CompanyProfileRow } from "@/types/database.types";
 import { formatDateID } from "@/lib/formatters";
+import { resolveDocTitleConfig } from "@/lib/pdf-generator";
 
 export interface AccountingPrintLayoutProps {
   printAreaId: string;
@@ -35,14 +36,18 @@ export function AccountingPrintLayout({
   const phone = company?.phone || "0895-4173-11976";
   const currentDate = formatDateID(new Date().toISOString().slice(0, 10));
 
+  const titleConfig = resolveDocTitleConfig(docTitle);
+  const headerShortTitle = titleConfig.headerTitle;
+  const fullTitleBar = titleConfig.fullTitleBar || docTitle;
+
   const content = (
     <div data-accounting-print-area={printAreaId} aria-hidden="true">
-      {/* 1. KOP RESMI ALTVIRA (Standar Sistem Altcycles) */}
+      {/* 1. KOP RESMI ALTVIRA (Standar Dokumen Administrasi Altcycles) */}
       <div className="print-kop-wrapper">
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: "space-between",
             paddingBottom: "10px",
           }}
@@ -52,103 +57,126 @@ export function AccountingPrintLayout({
               src="/brand/altvira-icon-dark.png"
               alt="Logo"
               style={{
-                height: "40px",
+                height: "36px",
                 width: "auto",
                 objectFit: "contain",
                 flexShrink: 0,
               }}
             />
-            <div>
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "800",
-                  color: "#0B43C8",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.02em",
-                  lineHeight: 1.1,
-                }}
-              >
-                {companyName}
-              </div>
-              <div
-                style={{
-                  fontSize: "10.5px",
-                  fontWeight: "700",
-                  color: "#334155",
-                  marginTop: "3px",
-                  lineHeight: 1.2,
-                }}
-              >
-                {legalEntity}
-              </div>
-              <div
-                style={{
-                  fontSize: "8px",
-                  color: "#64748b",
-                  marginTop: "3px",
-                  lineHeight: 1.3,
-                }}
-              >
-                {address} | Email: {email} | Telp: {phone}
-              </div>
-            </div>
+            <img
+              src="/brand/altvira-wordmark-pdf.png"
+              alt="Altvira"
+              style={{
+                height: "22px",
+                width: "auto",
+                objectFit: "contain",
+                flexShrink: 0,
+              }}
+            />
+          </div>
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "800",
+              color: "#0f172a",
+              textTransform: "uppercase",
+              letterSpacing: "0.02em",
+              textAlign: "right",
+            }}
+          >
+            {headerShortTitle}
           </div>
         </div>
 
-        {/* Garis Tebal Biru Standar Altvira */}
-        <div
-          style={{
-            height: "2px",
-            backgroundColor: "#0B43C8",
-            width: "100%",
-            marginBottom: "12px",
-          }}
-        />
-
-        {/* Judul Dokumen & Periode */}
+        {/* Info Badan Usaha & Kontak */}
         <div
           style={{
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
-            marginBottom: "14px",
+            paddingBottom: "8px",
+            borderBottom: "0.5px solid #e2e8f0",
+            marginBottom: "8px",
           }}
         >
           <div>
-            <h1
+            <div
               style={{
-                fontSize: "14px",
-                fontWeight: "800",
-                color: "#0f172a",
-                textTransform: "uppercase",
-                margin: 0,
+                fontSize: "10px",
+                fontWeight: "700",
+                color: "#1e293b",
                 lineHeight: 1.2,
               }}
             >
-              {docTitle}
-            </h1>
-            {docSubtitle && (
-              <div
-                style={{
-                  fontSize: "9.5px",
-                  color: "#475569",
-                  marginTop: "2px",
-                }}
-              >
-                {docSubtitle}
-              </div>
-            )}
+              {legalEntity}
+            </div>
+            <div
+              style={{
+                fontSize: "8px",
+                color: "#64748b",
+                marginTop: "2px",
+                lineHeight: 1.3,
+              }}
+            >
+              {address} | Email: {email} | Telp: {phone}
+            </div>
+          </div>
+          <div
+            style={{
+              fontSize: "8.5px",
+              color: "#64748b",
+              textAlign: "right",
+            }}
+          >
+            Ref: {docTitle.replace(/[^A-Z]/gi, "").slice(0, 3).toUpperCase()}/{new Date().toISOString().slice(0, 10).replace(/-/g, "")}
+          </div>
+        </div>
+
+        {/* Baris Biru Judul Lengkap Dokumen (Standar Patokan UAT) */}
+        <div
+          style={{
+            backgroundColor: "#0B43C8",
+            color: "#ffffff",
+            padding: "5px 12px",
+            borderRadius: "4px",
+            fontSize: "10px",
+            fontWeight: "700",
+            letterSpacing: "0.03em",
+            textTransform: "uppercase",
+            marginBottom: "10px",
+          }}
+        >
+          {fullTitleBar}
+        </div>
+
+        {/* Blok Info 2 Kolom di Bawah Baris Biru */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            paddingBottom: "8px",
+            marginBottom: "12px",
+            borderBottom: "0.5px solid #e2e8f0",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: "700", color: "#334155" }}>
+              Dasar Penyusunan / Ruang Lingkup:
+            </div>
+            <div style={{ fontSize: "8.5px", color: "#64748b", marginTop: "2px" }}>
+              {docSubtitle || "Seluruh Akun & Transaksi Terverifikasi"}
+            </div>
           </div>
           <div
             style={{
               textAlign: "right",
-              fontSize: "9.5px",
+              fontSize: "8.5px",
               color: "#475569",
               lineHeight: 1.3,
             }}
           >
-            <div>Tanggal: {currentDate}</div>
+            <div>Tanggal Terbit: {currentDate}</div>
             <div style={{ fontWeight: "600", color: "#1e293b" }}>
               Periode: {periodLabel}
             </div>
@@ -172,7 +200,7 @@ export function AccountingPrintLayout({
           <span>Website: altvira.tech</span>
         </div>
         <div style={{ color: "#94a3b8" }}>
-          Dokumen Resmi Pembukuan Keuangan
+          Dokumen ini dibuat otomatis oleh Altcycles
         </div>
       </div>
 
@@ -290,14 +318,24 @@ export function AccountingPrintLayout({
             visibility: hidden !important;
           }
 
+          [data-accounting-print-area="${printAreaId}"] tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
           [data-accounting-print-area="${printAreaId}"] .print-footer-wrapper {
-            margin-top: 24px !important;
-            padding-top: 10px !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin-top: 0 !important;
+            padding-top: 8px !important;
             border-top: 0.6px solid #cbd5e1 !important;
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
             font-size: 8px !important;
+            background: #ffffff !important;
           }
         }
       `}</style>

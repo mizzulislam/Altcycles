@@ -14,6 +14,7 @@ import {
 import {
   ALL_BASELINE_FIXTURES,
   REPORT_LIST_FIXTURES,
+  ACCOUNTING_REPORT_FIXTURES,
 } from "../fixtures/document-layout-fixtures";
 
 describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
@@ -150,7 +151,11 @@ describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
 
     // PENGUJIAN CI: Seluruh dokumen fixture sistem Altcycles TIDAK BOLEH memicu fallback pengaman
     clearDocumentTitleFallbackRecord();
-    const allSystemFixtures = [...ALL_BASELINE_FIXTURES, ...REPORT_LIST_FIXTURES];
+    const allSystemFixtures = [
+      ...ALL_BASELINE_FIXTURES,
+      ...REPORT_LIST_FIXTURES,
+      ...ACCOUNTING_REPORT_FIXTURES,
+    ];
 
     for (const fixture of allSystemFixtures) {
       const spec = fixture.buildSpec();
@@ -178,6 +183,45 @@ describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
         layout.marginViolations,
         `Margin violations on ${fixture.slug}`,
       ).toEqual([]);
+
+      // (f) Kesejajaran No/Ref dan ikon-wordmark-judul tetap lulus
+      expect(
+        layout.headerAlignment.deltaNoVsLegalName,
+        `Kesejajaran No vs Nama PT pada ${fixture.slug}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        layout.headerAlignment.deltaRefVsAddr1,
+        `Kesejajaran Ref vs Alamat 1 pada ${fixture.slug}`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        layout.headerAlignment.iconInkHeight,
+        `Ikon lebih besar dari wordmark pada ${fixture.slug}`,
+      ).toBeGreaterThan(layout.headerAlignment.wordmarkInkHeight);
+
+      // Teks baris biru sama persis dengan Judul Lengkap pemetaan
+      const mapping = findDocumentTitleMapping(spec.docTitle);
+      expect(mapping).toBeDefined();
+      const resolved = resolveDocTitleConfig(spec.docTitle);
+      expect(resolved.fullTitleBar).toBe(mapping?.fullTitle);
+    }
+  });
+
+  it("aturan pengujian layout akuntansi: memastikan seluruh 9 dokumen akuntansi & laporan bebas tabrakan, header dan footer di setiap halaman, dan footer di dasar halaman", async () => {
+    for (const fixture of ACCOUNTING_REPORT_FIXTURES) {
+      const spec = fixture.buildSpec();
+      const layout = await inspectPdfDocumentLayout(spec);
+
+      // (a) Bebas tabrakan kotak batas teks
+      expect(layout.collisions, `Collisions on ${fixture.slug}`).toEqual([]);
+
+      // (b) Bebas pelanggaran batas margin
+      expect(
+        layout.marginViolations,
+        `Margin violations on ${fixture.slug}`,
+      ).toEqual([]);
+
+      // (c) Header & Footer ada di setiap halaman
+      expect(layout.pageCount, `Page count on ${fixture.slug}`).toBeGreaterThanOrEqual(1);
 
       // (f) Kesejajaran No/Ref dan ikon-wordmark-judul tetap lulus
       expect(

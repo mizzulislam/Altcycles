@@ -50,6 +50,17 @@ import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import {
+  buildBalanceSheetPdfSpec,
+  buildCashFlowPdfSpec,
+  buildCompleteFinancialStatementsPdfSpec,
+  buildGeneralLedgerPdfSpec,
+  buildIncomeStatementPdfSpec,
+  buildRetainedEarningsPdfSpec,
+  buildTrialBalancePdfSpec,
+  downloadPdfBytes,
+  generateDocumentPdf,
+} from "@/lib/pdf-generator";
+import {
   ACCOUNT_TYPE_LABELS,
   formatDateID,
   formatRupiah,
@@ -379,18 +390,266 @@ export function AccountingReportsPage({
     );
   };
 
-  function handleExportActivePdf() {
-    setTimeout(() => {
-      window.print();
-    }, 60);
-    const periodLabel = `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
-    const logScope =
-      mode === "ledger"
-        ? "GENERAL_LEDGER"
-        : mode === "trial_balance"
-          ? "TRIAL_BALANCE"
-          : "FINANCIAL_STATEMENTS";
-    void recordExportLog(logScope, "PDF", periodLabel);
+  async function handleExportActivePdf() {
+    try {
+      const comp = company ?? (await getCompanyProfile());
+      const periodLabel =
+        activeTab === "neraca" && mode !== "ledger" && mode !== "trial_balance"
+          ? `Per ${formatDateID(endDate)}`
+          : `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
+
+      let spec;
+      let fileName = "Laporan_Keuangan_Altcycles.pdf";
+      let successMsg = "Laporan keuangan berhasil diunduh dalam format PDF (.pdf).";
+
+      if (mode === "ledger" || activeTab === "buku_besar") {
+        const isAll = isAllAccounts;
+        const targetAccounts = isAll
+          ? allLedgers.map((l) => ({
+              code: l.account.code,
+              name: l.account.name,
+              type: ACCOUNT_TYPE_LABELS[l.account.account_type] ?? l.account.account_type,
+              normalBalance: l.account.normal_balance === "debit" ? "Debit" : "Kredit",
+              endingBalance: l.endingBalance,
+              rows: l.rows.map((r) => ({
+                date: formatDateID(r.journalDate),
+                description: r.description,
+                ref: (r as any).referenceNumber || r.journalNumber || "-",
+                debit: r.debit,
+                credit: r.credit,
+                runningBalance: r.runningBalance,
+              })),
+            }))
+          : selectedAccount
+            ? [
+                {
+                  code: selectedAccount.code,
+                  name: selectedAccount.name,
+                  type:
+                    ACCOUNT_TYPE_LABELS[selectedAccount.account_type] ??
+                    selectedAccount.account_type,
+                  normalBalance:
+                    selectedAccount.normal_balance === "debit" ? "Debit" : "Kredit",
+                  endingBalance: selectedLedgerEndingBalance,
+                  rows: ledgerRows.map((r) => ({
+                    date: formatDateID(r.journalDate),
+                    description: r.description,
+                    ref: (r as any).referenceNumber || r.journalNumber || "-",
+                    debit: r.debit,
+                    credit: r.credit,
+                    runningBalance: r.runningBalance,
+                  })),
+                },
+              ]
+            : [];
+
+        spec = buildGeneralLedgerPdfSpec({
+          company: comp,
+          periodLabel,
+          accountName: selectedAccount
+            ? `${selectedAccount.code} - ${selectedAccount.name}`
+            : undefined,
+          isAllAccounts: isAll,
+          accounts: targetAccounts,
+        });
+        fileName = "Buku_Besar_Altcycles.pdf";
+        successMsg = "Buku Besar berhasil diunduh dalam format PDF (.pdf).";
+      } else if (mode === "trial_balance" || activeTab === "neraca_saldo") {
+        spec = buildTrialBalancePdfSpec({
+          company: comp,
+          periodLabel,
+          isAdjusted: balanceType === "adjusted",
+          isBalanced: trialBalance.sumEndingDebit === trialBalance.sumEndingCredit,
+          rows: trialBalance.rows.map((r) => ({
+            code: r.code,
+            name: r.name,
+            debit: r.endingDebit,
+            credit: r.endingCredit,
+          })),
+          sumDebit: trialBalance.sumEndingDebit,
+          sumCredit: trialBalance.sumEndingCredit,
+        });
+        fileName = "Neraca_Saldo_Altcycles.pdf";
+        successMsg = "Neraca Saldo berhasil diunduh dalam format PDF (.pdf).";
+      } else if (mode === "statements" && layoutMode === "grid") {
+        const isRows = [
+          ...incomeStatement.revenues.map((r) => [r.name, formatRupiah(r.amount)]),
+          ["Total Pendapatan Usaha", formatRupiah(incomeStatement.totalRevenue)],
+          ...incomeStatement.directExpenses.map((c) => [c.name, formatRupiah(c.amount)]),
+          ["Laba Kotor Proyek", formatRupiah(incomeStatement.grossProfit)],
+          ...incomeStatement.sharedExpenses.map((o) => [o.name, formatRupiah(o.amount)]),
+          ["Laba (Rugi) Bersih", formatRupiah(incomeStatement.netProfit)],
+        ];
+        const eqRows = [
+          ["Saldo Laba Ditahan Awal", formatRupiah(beginningRetainedEarnings)],
+          ["Laba Bersih Berjalan", formatRupiah(incomeStatement.netProfit)],
+          ["Dividen / Prive", formatRupiah(dividends)],
+          ["Saldo Laba Ditahan Akhir", formatRupiah(endingRetainedEarnings)],
+        ];
+        const bsRows = [
+          ...balanceSheet.assets.map((a) => [a.name, formatRupiah(a.amount)]),
+          ["Total Aset", formatRupiah(balanceSheet.totalAssets)],
+          ...balanceSheet.liabilities.map((l) => [l.name, formatRupiah(l.amount)]),
+          ["Total Liabilitas", formatRupiah(totalLiabilities)],
+          ...balanceSheet.equities.map((e) => [e.name, formatRupiah(e.amount)]),
+          ["Total Liabilitas & Ekuitas", formatRupiah(balanceSheet.totalLiabilitiesAndEquity)],
+        ];
+        const cfRows = [
+          ["Saldo Kas Awal", formatRupiah(cashFlow.beginningCash)],
+          ["Kas Bersih dari Aktivitas Operasi", formatRupiah(cashFlow.netOperating)],
+          ["Kas Bersih dari Aktivitas Investasi", formatRupiah(cashFlow.netInvesting)],
+          ["Kas Bersih dari Aktivitas Pendanaan", formatRupiah(cashFlow.netFinancing)],
+          ["Saldo Kas Akhir", formatRupiah(cashFlow.endingCash)],
+        ];
+        spec = buildCompleteFinancialStatementsPdfSpec({
+          company: comp,
+          periodLabel,
+          incomeStatementRows: isRows,
+          retainedEarningsRows: eqRows,
+          balanceSheetRows: bsRows,
+          cashFlowRows: cfRows,
+        });
+        fileName = "Laporan_Keuangan_Lengkap_Altcycles.pdf";
+        successMsg = "Laporan Keuangan Lengkap berhasil diunduh dalam format PDF (.pdf).";
+      } else if (activeTab === "laba_rugi") {
+        spec = buildIncomeStatementPdfSpec({
+          company: comp,
+          periodLabel,
+          revenueRows: incomeStatement.revenues.map((r) => ({
+            label: `${r.code} - ${r.name}`,
+            amount: r.amount,
+          })),
+          totalRevenue: incomeStatement.totalRevenue,
+          cogsRows: incomeStatement.directExpenses.map((c) => ({
+            label: `${c.code} - ${c.name}`,
+            amount: c.amount,
+          })),
+          grossProfit: incomeStatement.grossProfit,
+          opexRows: incomeStatement.sharedExpenses.map((o) => ({
+            label: `${o.code} - ${o.name}`,
+            amount: o.amount,
+          })),
+          totalOpex: incomeStatement.totalSharedExpense,
+          netIncome: incomeStatement.netProfit,
+        });
+        fileName = "Laba_Rugi_Altcycles.pdf";
+        successMsg = "Laporan Laba Rugi berhasil diunduh dalam format PDF (.pdf).";
+      } else if (activeTab === "ekuitas") {
+        spec = buildRetainedEarningsPdfSpec({
+          company: comp,
+          periodLabel,
+          rows: [
+            {
+              label: "Saldo Laba Ditahan Awal Periode",
+              amount: beginningRetainedEarnings,
+            },
+            {
+              label: "Laba (Rugi) Bersih Periode Berjalan",
+              amount: incomeStatement.netProfit,
+            },
+            {
+              label: "Dividen / Penarikan Modal Pemilik (Prive)",
+              amount: -Math.abs(dividends),
+            },
+          ],
+          endingRetainedEarnings,
+        });
+        fileName = "Perubahan_Ekuitas_Altcycles.pdf";
+        successMsg = "Laporan Perubahan Ekuitas berhasil diunduh dalam format PDF (.pdf).";
+      } else if (activeTab === "neraca") {
+        const sumContractAssets = balanceSheet.contractAssets.reduce(
+          (s, ca) => s + ca.netContractPosition,
+          0,
+        );
+        const sumContractLiabilities = balanceSheet.contractLiabilities.reduce(
+          (s, cl) => s + Math.abs(cl.netContractPosition),
+          0,
+        );
+        spec = buildBalanceSheetPdfSpec({
+          company: comp,
+          periodLabel,
+          isBalanced: balanceSheet.isBalanced,
+          currentAssetRows: currentAssets.map((a) => ({
+            label: `${a.code} - ${a.name}`,
+            amount: a.amount,
+          })),
+          totalCurrentAssets: totalCurrentAssets,
+          nonCurrentAssetRows: balanceSheet.contractAssets.map((ca) => ({
+            label: `${ca.projectCode} - ${ca.projectName}`,
+            amount: ca.netContractPosition,
+          })),
+          totalNonCurrentAssets: sumContractAssets,
+          totalAssets: balanceSheet.totalAssets,
+          currentLiabRows: currentLiabilities.map((l) => ({
+            label: `${l.code} - ${l.name}`,
+            amount: l.amount,
+          })),
+          totalCurrentLiabilities: totalCurrentLiabilities,
+          nonCurrentLiabRows: balanceSheet.contractLiabilities.map((cl) => ({
+            label: `${cl.projectCode} - ${cl.projectName}`,
+            amount: Math.abs(cl.netContractPosition),
+          })),
+          totalNonCurrentLiabilities: sumContractLiabilities,
+          totalLiabilities: totalLiabilities,
+          equityRows: [
+            ...balanceSheet.equities.map((e) => ({
+              label: `${e.code} - ${e.name}`,
+              amount: e.amount,
+            })),
+            {
+              label: "Laba/Rugi Periode Berjalan (Belum Ditutup)",
+              amount: balanceSheet.currentUnclosedEarnings,
+            },
+          ],
+          totalEquity: totalEquity,
+          totalLiabilitiesAndEquity: balanceSheet.totalLiabilitiesAndEquity,
+        });
+        fileName = "Posisi_Keuangan_Neraca_Altcycles.pdf";
+        successMsg =
+          "Laporan Posisi Keuangan (Neraca) berhasil diunduh dalam format PDF (.pdf).";
+      } else if (activeTab === "arus_kas") {
+        spec = buildCashFlowPdfSpec({
+          company: comp,
+          periodLabel,
+          operatingRows: [
+            {
+              label: "Penerimaan Kas dari Pelanggan & Klien",
+              amount: cashFlow.operatingInflow,
+            },
+            {
+              label: "Pembayaran Kas untuk Beban Operasional & Vendor",
+              amount: -Math.abs(cashFlow.operatingOutflow),
+            },
+          ],
+          netOperating: cashFlow.netOperating,
+          investingRows: [],
+          netInvesting: cashFlow.netInvesting,
+          financingRows: [],
+          netFinancing: cashFlow.netFinancing,
+          netCashChange: cashFlow.netChangeInCash,
+          beginningCash: cashFlow.beginningCash,
+          endingCash: cashFlow.endingCash,
+        });
+        fileName = "Arus_Kas_Altcycles.pdf";
+        successMsg = "Laporan Arus Kas berhasil diunduh dalam format PDF (.pdf).";
+      }
+
+      if (spec) {
+        const bytes = await generateDocumentPdf(spec);
+        downloadPdfBytes(bytes, fileName);
+        toast.success(successMsg);
+      }
+      const logScope =
+        mode === "ledger"
+          ? "GENERAL_LEDGER"
+          : mode === "trial_balance"
+            ? "TRIAL_BALANCE"
+            : "FINANCIAL_STATEMENTS";
+      void recordExportLog(logScope, "PDF", periodLabel);
+    } catch (err) {
+      console.error("Gagal mengunduh PDF laporan akuntansi:", err);
+      toast.error("Gagal membuat berkas PDF laporan keuangan.");
+    }
   }
 
   async function handleExportActiveExcel() {

@@ -108,6 +108,24 @@ export interface PdfDocumentSpec {
   appreciationBarText?: string | null;
   docStatus?: string | null;
   watermarkText?: string | null;
+  bannerBox?: PdfBannerBox;
+  sections?: PdfDocumentSection[];
+}
+
+export interface PdfBannerBox {
+  text: string;
+  variant?: "success" | "info" | "warning" | "neutral";
+}
+
+export interface PdfDocumentSection {
+  title?: string;
+  subtitle?: string;
+  badge?: string;
+  metaRows?: PdfKeyValue[];
+  tableColumns: PdfTableColumn[];
+  tableRows: string[][];
+  summaryRows?: PdfKeyValue[];
+  pageBreakBefore?: boolean;
 }
 
 export interface PdfTextBox {
@@ -322,6 +340,42 @@ export const DOCUMENT_TITLE_MAPPINGS: Record<string, DocumentTitleMapping> = {
     headerTitle: "DOKUMEN PROYEK",
     fullTitle: "DOKUMEN PROYEK",
   },
+  "JURNAL UMUM": {
+    headerTitle: "JURNAL UMUM",
+    fullTitle: "BUKU JURNAL UMUM",
+  },
+  "JURNAL PENYESUAIAN & KOREKSI": {
+    headerTitle: "JURNAL AJP",
+    fullTitle: "JURNAL PENYESUAIAN DAN KOREKSI",
+  },
+  "BUKU BESAR (GENERAL LEDGER)": {
+    headerTitle: "BUKU BESAR",
+    fullTitle: "BUKU BESAR (GENERAL LEDGER)",
+  },
+  "NERACA SALDO (TRIAL BALANCE)": {
+    headerTitle: "NERACA SALDO",
+    fullTitle: "NERACA SALDO (TRIAL BALANCE)",
+  },
+  "LAPORAN LABA RUGI BASIS AKRUAL": {
+    headerTitle: "LABA RUGI",
+    fullTitle: "LAPORAN LABA RUGI BASIS AKRUAL",
+  },
+  "LAPORAN PERUBAHAN EKUITAS": {
+    headerTitle: "MUTASI EKUITAS",
+    fullTitle: "LAPORAN PERUBAHAN EKUITAS",
+  },
+  "LAPORAN POSISI KEUANGAN (NERACA)": {
+    headerTitle: "POSISI KEUANGAN",
+    fullTitle: "LAPORAN POSISI KEUANGAN (NERACA)",
+  },
+  "LAPORAN ARUS KAS METODE LANGSUNG": {
+    headerTitle: "ARUS KAS",
+    fullTitle: "LAPORAN ARUS KAS METODE LANGSUNG",
+  },
+  "LAPORAN KEUANGAN LENGKAP": {
+    headerTitle: "LAPORAN KEUANGAN",
+    fullTitle: "LAPORAN KEUANGAN LENGKAP",
+  },
 };
 
 /**
@@ -333,6 +387,17 @@ const TITLE_MAPPING_ALIASES: Record<string, DocumentTitleMapping> = {
     DOCUMENT_TITLE_MAPPINGS["DAFTAR MASTER PROYEK DAN PENUGASAN TIM"]!,
   "DAFTAR MASTER PELANGGAN / KLIEN":
     DOCUMENT_TITLE_MAPPINGS["DAFTAR MASTER PELANGGAN/KLIEN"]!,
+  "BUKU JURNAL UMUM": DOCUMENT_TITLE_MAPPINGS["JURNAL UMUM"]!,
+  "JURNAL PENYESUAIAN DAN KOREKSI":
+    DOCUMENT_TITLE_MAPPINGS["JURNAL PENYESUAIAN & KOREKSI"]!,
+  "BUKU BESAR": DOCUMENT_TITLE_MAPPINGS["BUKU BESAR (GENERAL LEDGER)"]!,
+  "NERACA SALDO": DOCUMENT_TITLE_MAPPINGS["NERACA SALDO (TRIAL BALANCE)"]!,
+  "LAPORAN LABA RUGI": DOCUMENT_TITLE_MAPPINGS["LAPORAN LABA RUGI BASIS AKRUAL"]!,
+  "LAPORAN POSISI KEUANGAN":
+    DOCUMENT_TITLE_MAPPINGS["LAPORAN POSISI KEUANGAN (NERACA)"]!,
+  "LAPORAN ARUS KAS":
+    DOCUMENT_TITLE_MAPPINGS["LAPORAN ARUS KAS METODE LANGSUNG"]!,
+  "LAPORAN KEUANGAN": DOCUMENT_TITLE_MAPPINGS["LAPORAN KEUANGAN LENGKAP"]!,
 };
 
 /**
@@ -1939,6 +2004,41 @@ async function renderDocumentPdfInternal(
   }
 
   // ==========================================================================
+  // KOMPONEN 3B: BANNER STATUS (JIKA ADA, MISAL NERACA SALDO)
+  // ==========================================================================
+  if (spec.bannerBox) {
+    const bannerH = 24;
+    ensureSpace(bannerH + 10);
+    const isSuccess = spec.bannerBox.variant !== "warning" && spec.bannerBox.variant !== "info";
+    const bgCol = isSuccess ? rgb(0.92, 0.98, 0.95) : rgb(0.93, 0.96, 1.0);
+    const borderCol = isSuccess ? rgb(0.65, 0.90, 0.75) : rgb(0.70, 0.82, 0.98);
+    const textCol = isSuccess ? rgb(0.04, 0.45, 0.27) : rgb(0.07, 0.32, 0.65);
+
+    page.drawRectangle({
+      x: marginX,
+      y: y - bannerH,
+      width: contentWidth,
+      height: bannerH,
+      color: bgCol,
+      borderColor: borderCol,
+      borderWidth: 0.75,
+    });
+
+    drawTrackedText(
+      sanitizePdfText(spec.bannerBox.text),
+      {
+        x: marginX + 10,
+        y: y - bannerH + 7,
+        size: 9,
+        font: fontBold,
+        color: textCol,
+      },
+      "C-banner-box",
+    );
+    y -= bannerH + 12;
+  }
+
+  // ==========================================================================
   // KOMPONEN 4: TABEL RINCIAN (ZONA D)
   // - Header tabel tinggi 28 pt, teks 9.5 pt tebal, latar #f3f4f6.
   // - Hanya garis horizontal tipis antar baris (#e5e7eb), padding vertikal 6 pt.
@@ -1946,11 +2046,261 @@ async function renderDocumentPdfInternal(
   // ==========================================================================
   let tableSummaryRenderedInTable = false;
 
-  if (
+  if (spec.sections && spec.sections.length > 0) {
+    tableSummaryRenderedInTable = true;
+    const tableSpacing = 12;
+    const headerH = 26;
+    const headerFontSize = PDF_LAYOUT_TOKENS.fontSizes.tableHeader; // 9.5 pt
+    const cellFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
+    const cellLineH = 13;
+    const cellPadY = 5;
+
+    for (const [secIdx, sec] of spec.sections.entries()) {
+      if (sec.pageBreakBefore && secIdx > 0) {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        pages.push(page);
+        pageIndex = pages.length - 1;
+        y = pageHeight - marginTop;
+        drawDocumentHeader();
+      }
+
+      // Cegah kartu akun terpisah dari tabelnya di batas halaman (Bug c)
+      const cardH = sec.title ? 34 : 0;
+      const minNeededSpace = cardH + headerH + 28;
+      if (y - minNeededSpace < bottomSafeY) {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        pages.push(page);
+        pageIndex = pages.length - 1;
+        y = pageHeight - marginTop;
+        drawDocumentHeader();
+      }
+
+      // Render Kartu Akun / Header Seksi jika ada
+      if (sec.title) {
+        const cardTopY = y;
+        const cardBottomY = cardTopY - cardH;
+        page.drawRectangle({
+          x: marginX,
+          y: cardBottomY,
+          width: contentWidth,
+          height: cardH,
+          color: CHIP_BG,
+          borderColor: BORDER_GRAY,
+          borderWidth: 0.75,
+        });
+
+        drawTrackedText(
+          sanitizePdfText(sec.title),
+          {
+            x: marginX + 10,
+            y: cardTopY - 13,
+            size: 9.5,
+            font: fontBold,
+            color: TEXT_DARK,
+          },
+          "D-sec-title",
+        );
+
+        if (sec.subtitle) {
+          drawTrackedText(
+            sanitizePdfText(sec.subtitle),
+            {
+              x: marginX + 10,
+              y: cardTopY - 25,
+              size: 8,
+              font: fontRegular,
+              color: TEXT_LABEL,
+            },
+            "D-sec-sub",
+          );
+        }
+
+        if (sec.badge) {
+          const badgeText = sanitizePdfText(sec.badge);
+          const badgeW = fontBold.widthOfTextAtSize(badgeText, 10.5);
+          drawTrackedText(
+            "Saldo Akhir",
+            {
+              x: pageWidth - marginX - 10 - fontRegular.widthOfTextAtSize("Saldo Akhir", 7.5),
+              y: cardTopY - 11,
+              size: 7.5,
+              font: fontRegular,
+              color: TEXT_LABEL,
+            },
+            "D-sec-badge-lbl",
+          );
+          drawTrackedText(
+            badgeText,
+            {
+              x: pageWidth - marginX - 10 - badgeW,
+              y: cardTopY - 24,
+              size: 10.5,
+              font: fontBold,
+              color: BRAND_BLUE,
+            },
+            "D-sec-badge-val",
+          );
+        }
+
+        y = cardBottomY - 6;
+      }
+
+      // Render Tabel untuk seksi ini
+      const cols = sec.tableColumns;
+      const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
+      const colWidths = cols.map((c) => (c.widthRatio / totalRatio) * contentWidth);
+
+      const drawSectionTableHeader = () => {
+        const headerTopY = y;
+        const rectBottomY = headerTopY - headerH;
+        page.drawRectangle({
+          x: marginX,
+          y: rectBottomY,
+          width: contentWidth,
+          height: headerH,
+          color: CHIP_BG,
+        });
+        page.drawLine({
+          start: { x: marginX, y: headerTopY },
+          end: { x: pageWidth - marginX, y: headerTopY },
+          thickness: 0.75,
+          color: BORDER_GRAY,
+        });
+        page.drawLine({
+          start: { x: marginX, y: rectBottomY },
+          end: { x: pageWidth - marginX, y: rectBottomY },
+          thickness: 0.75,
+          color: BORDER_GRAY,
+        });
+
+        let colX = marginX;
+        const textBaselineY = rectBottomY + (headerH - headerFontSize) / 2 + 1;
+        cols.forEach((col, idx) => {
+          const w = colWidths[idx]!;
+          const headerClean = sanitizePdfText(col.header);
+          const textW = fontBold.widthOfTextAtSize(headerClean, headerFontSize);
+          let drawX = colX + 8;
+          if (col.align === "right") {
+            drawX = colX + w - textW - 8;
+          } else if (col.align === "center") {
+            drawX = colX + (w - textW) / 2;
+          }
+          drawTrackedText(
+            headerClean,
+            {
+              x: drawX,
+              y: textBaselineY,
+              size: headerFontSize,
+              font: fontBold,
+              color: TEXT_DARK,
+            },
+            "D-sec-th",
+          );
+          colX += w;
+        });
+
+        y = rectBottomY - cellPadY - 9;
+      };
+
+      drawSectionTableHeader();
+
+      if (sec.tableRows.length === 0) {
+        const emptyH = 24;
+        const emptyTopY = y + cellPadY + 9;
+        const emptyBottomY = emptyTopY - emptyH;
+        const emptyText = "Tidak ada transaksi pada akun ini dalam periode yang dipilih";
+        const emptyTextW = fontRegular.widthOfTextAtSize(emptyText, cellFontSize);
+        drawTrackedText(
+          emptyText,
+          {
+            x: marginX + (contentWidth - emptyTextW) / 2,
+            y: emptyBottomY + (emptyH - cellFontSize) / 2,
+            size: cellFontSize,
+            font: fontRegular,
+            color: TEXT_LABEL,
+          },
+          "D-sec-empty",
+        );
+        page.drawLine({
+          start: { x: marginX, y: emptyBottomY },
+          end: { x: pageWidth - marginX, y: emptyBottomY },
+          thickness: 0.4,
+          color: BORDER_GRAY,
+        });
+        y = emptyBottomY - tableSpacing;
+      } else {
+        let lastRowBottomLineY = y;
+        for (const row of sec.tableRows) {
+          const colWrappedLines: string[][] = row.map((cellText, colIdx) => {
+            const w = colWidths[colIdx]! - 16;
+            return wrapTextByWidth(cellText || "-", fontRegular, cellFontSize, Math.max(w, 20));
+          });
+          const maxLines = Math.max(...colWrappedLines.map((lines) => lines.length), 1);
+          const rowContentH = maxLines * cellLineH;
+          const rowTotalH = rowContentH + cellPadY * 2;
+
+          if (y - rowTotalH < bottomSafeY) {
+            page = pdfDoc.addPage([pageWidth, pageHeight]);
+            pages.push(page);
+            pageIndex = pages.length - 1;
+            y = pageHeight - marginTop;
+            drawDocumentHeader();
+            drawSectionTableHeader();
+          }
+
+          const rowTopY = y + cellPadY + 9;
+          const rowBottomY = rowTopY - rowTotalH;
+
+          let colX = marginX;
+          cols.forEach((col, cIdx) => {
+            const w = colWidths[cIdx]!;
+            const lines = colWrappedLines[cIdx] || ["-"];
+            lines.forEach((lineText, lIdx) => {
+              const lineClean = sanitizePdfText(lineText);
+              const textW = fontRegular.widthOfTextAtSize(lineClean, cellFontSize);
+              let drawX = colX + 8;
+              if (col.align === "right") {
+                drawX = colX + w - textW - 8;
+              } else if (col.align === "center") {
+                drawX = colX + (w - textW) / 2;
+              }
+              const lineY = rowTopY - cellPadY - 9 - lIdx * cellLineH;
+              drawTrackedText(
+                lineClean,
+                {
+                  x: drawX,
+                  y: lineY,
+                  size: cellFontSize,
+                  font: fontRegular,
+                  color: TEXT_DARK,
+                },
+                "D-sec-cell",
+              );
+            });
+            colX += w;
+          });
+
+          page.drawLine({
+            start: { x: marginX, y: rowBottomY },
+            end: { x: pageWidth - marginX, y: rowBottomY },
+            thickness: 0.4,
+            color: BORDER_GRAY,
+          });
+
+          y = rowBottomY - cellPadY - 9;
+          lastRowBottomLineY = rowBottomY;
+        }
+
+        y = lastRowBottomLineY - tableSpacing;
+      }
+
+      // Spasi antar blok akun di Buku Besar (Bug c)
+      y -= 6;
+    }
+  } else if (
     spec.tableColumns &&
     spec.tableColumns.length > 0 &&
-    spec.tableRows &&
-    spec.tableRows.length > 0
+    spec.tableRows !== undefined
   ) {
     const cols = spec.tableColumns;
     const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
@@ -2108,7 +2458,33 @@ async function renderDocumentPdfInternal(
 
     let lastRowBottomLineY = y;
 
-    for (const row of spec.tableRows) {
+    if (spec.tableRows.length === 0) {
+      const emptyH = 26;
+      const emptyTopY = y + cellPadY + 9;
+      const emptyBottomY = emptyTopY - emptyH;
+      const emptyText = "Tidak ada transaksi pada periode ini";
+      const emptyTextW = fontRegular.widthOfTextAtSize(emptyText, cellFontSize);
+      drawTrackedText(
+        emptyText,
+        {
+          x: marginX + (contentWidth - emptyTextW) / 2,
+          y: emptyBottomY + (emptyH - cellFontSize) / 2,
+          size: cellFontSize,
+          font: fontRegular,
+          color: TEXT_LABEL,
+        },
+        "D-table-empty",
+      );
+      page.drawLine({
+        start: { x: marginX, y: emptyBottomY },
+        end: { x: pageWidth - marginX, y: emptyBottomY },
+        thickness: 0.4,
+        color: BORDER_GRAY,
+      });
+      lastRowBottomLineY = emptyBottomY;
+      y = emptyBottomY - tableSpacing;
+    } else {
+      for (const row of spec.tableRows) {
       const wrappedCells = cols.map((col, idx) => {
         const rawCell = row[idx] ?? "";
         const cleanCell = col.align === "right" ? stripCurrencySymbol(rawCell) : rawCell;
@@ -2174,6 +2550,7 @@ async function renderDocumentPdfInternal(
       y = bottomLineY - cellPadY - 9;
       void totalRowH;
     }
+  }
 
     // Baris Total pada baris terakhir tabel (Poin 4: Menyatu utuh tanpa gap dengan baris di atasnya)
     if (tableSummaryTargetColIdx !== -1 && tableSummaryLabel && tableSummaryValue) {
@@ -4749,5 +5126,653 @@ export function buildPaymentApprovalPdfSpec(params: {
     footerDocNumber: params.requestNumber,
     refDocNumber: "-",
     docStatus: params.status,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Jurnal Umum & Jurnal Penyesuaian
+ */
+export function buildJournalsPdfSpec(params: {
+  company: CompanyProfileRow;
+  isAdjusting?: boolean;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  rows: Array<{
+    date: string;
+    number: string;
+    account: string;
+    description: string;
+    ref: string;
+    debit: number;
+    credit: number;
+  }>;
+  totalDebit?: number;
+  totalCredit?: number;
+}): PdfDocumentSpec {
+  const isAdj = Boolean(params.isAdjusting);
+  const docTitle = isAdj
+    ? "JURNAL PENYESUAIAN & KOREKSI"
+    : "JURNAL UMUM";
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ??
+    `${isAdj ? "AJP" : "JRN"}/${docDate.replace(/-/g, "")}`;
+
+  const tableRows = params.rows.map((r) => [
+    r.date,
+    r.number,
+    r.account,
+    r.description,
+    r.ref || "-",
+    r.debit > 0 ? formatDocRupiah(r.debit) : "-",
+    r.credit > 0 ? formatDocRupiah(r.credit) : "-",
+  ]);
+
+  const totDeb = params.totalDebit ?? params.rows.reduce((s, r) => s + r.debit, 0);
+  const totCred = params.totalCredit ?? params.rows.reduce((s, r) => s + r.credit, 0);
+
+  if (params.rows.length > 0) {
+    tableRows.push([
+      "",
+      "TOTAL KESELURUHAN",
+      "",
+      "",
+      "",
+      formatDocRupiah(totDeb),
+      formatDocRupiah(totCred),
+    ]);
+  }
+
+  return {
+    docTitle,
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Entitas & Siklus",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      isAdj
+        ? "Siklus: Ayat Jurnal Penyesuaian & Koreksi Transaksi"
+        : "Siklus: Buku Jurnal Transaksi Kronologis",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Status Verifikasi", value: "Terposting Lengkap" },
+    ],
+    tableColumns: [
+      { header: "Tanggal", widthRatio: 0.12 },
+      { header: "No. Jurnal", widthRatio: 0.15 },
+      { header: "Akun", widthRatio: 0.23 },
+      { header: "Keterangan", widthRatio: 0.22 },
+      { header: "Ref", widthRatio: 0.06, align: "center" },
+      { header: "Debit", widthRatio: 0.11, align: "right" },
+      { header: "Kredit", widthRatio: 0.11, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Buku Besar (General Ledger)
+ */
+export function buildGeneralLedgerPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  accountName?: string;
+  isAllAccounts?: boolean;
+  accounts: Array<{
+    code: string;
+    name: string;
+    type: string;
+    normalBalance: string;
+    endingBalance: number;
+    rows: Array<{
+      date: string;
+      description: string;
+      ref: string;
+      debit: number;
+      credit: number;
+      runningBalance: number;
+    }>;
+  }>;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `GL/${docDate.replace(/-/g, "")}`;
+
+  const sections: PdfDocumentSection[] = params.accounts.map((acc) => {
+    const tableRows = acc.rows.map((r) => [
+      r.date,
+      r.description,
+      r.ref || "-",
+      r.debit > 0 ? formatDocRupiah(r.debit) : "-",
+      r.credit > 0 ? formatDocRupiah(r.credit) : "-",
+      formatDocRupiah(r.runningBalance),
+    ]);
+
+    return {
+      title: `${acc.code} - ${acc.name}`,
+      subtitle: `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
+      badge: formatDocRupiah(acc.endingBalance),
+      tableColumns: [
+        { header: "Tanggal", widthRatio: 0.13 },
+        { header: "Keterangan", widthRatio: 0.39 },
+        { header: "Ref", widthRatio: 0.10, align: "center" },
+        { header: "Debit", widthRatio: 0.12, align: "right" },
+        { header: "Kredit", widthRatio: 0.12, align: "right" },
+        { header: "Saldo Berjalan", widthRatio: 0.14, align: "right" },
+      ],
+      tableRows,
+    };
+  });
+
+  return {
+    docTitle: "BUKU BESAR (GENERAL LEDGER)",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Buku Besar Entitas",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      params.isAllAccounts
+        ? "Cakupan: Seluruh Akun Buku Besar"
+        : `Akun: ${params.accountName || "Akun Terpilih"}`,
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Status Rekonsiliasi", value: "Selesai Direkonsiliasi" },
+    ],
+    sections,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Neraca Saldo (Trial Balance)
+ */
+export function buildTrialBalancePdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  isAdjusted?: boolean;
+  isBalanced?: boolean;
+  rows: Array<{
+    code: string;
+    name: string;
+    debit: number;
+    credit: number;
+  }>;
+  sumDebit?: number;
+  sumCredit?: number;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `TB/${docDate.replace(/-/g, "")}`;
+  const isBalanced = params.isBalanced ?? true;
+  const isAdjusted = params.isAdjusted ?? true;
+
+  const tableRows = params.rows.map((r) => [
+    r.code,
+    r.name,
+    r.debit > 0 ? formatDocRupiah(r.debit) : "-",
+    r.credit > 0 ? formatDocRupiah(r.credit) : "-",
+  ]);
+
+  const sumDeb = params.sumDebit ?? params.rows.reduce((s, r) => s + r.debit, 0);
+  const sumCred = params.sumCredit ?? params.rows.reduce((s, r) => s + r.credit, 0);
+
+  if (params.rows.length > 0) {
+    tableRows.push([
+      "",
+      "TOTAL KESELURUHAN",
+      formatDocRupiah(sumDeb),
+      formatDocRupiah(sumCred),
+    ]);
+  }
+
+  return {
+    docTitle: "NERACA SALDO (TRIAL BALANCE)",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Pelaporan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      isAdjusted
+        ? "Dasar: Setelah Penyesuaian (Adjusted Trial Balance)"
+        : "Dasar: Sebelum Penyesuaian (Unadjusted Trial Balance)",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      {
+        label: "Status Keseimbangan",
+        value: isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang",
+      },
+    ],
+    bannerBox: {
+      text: isBalanced
+        ? "✓ Buku Besar Seimbang (Balanced) - Total Debit sama dengan Total Kredit"
+        : "⚠ Buku Besar Tidak Seimbang - Terdapat selisih antara Total Debit dan Total Kredit",
+      variant: isBalanced ? "success" : "warning",
+    },
+    tableColumns: [
+      { header: "No. Akun", widthRatio: 0.16 },
+      { header: "Nama Akun", widthRatio: 0.46 },
+      { header: "Debit", widthRatio: 0.19, align: "right" },
+      { header: "Kredit", widthRatio: 0.19, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Laporan Laba Rugi Basis Akrual
+ */
+export function buildIncomeStatementPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  revenueRows: Array<{ label: string; amount: number }>;
+  totalRevenue: number;
+  cogsRows?: Array<{ label: string; amount: number }>;
+  grossProfit?: number;
+  opexRows?: Array<{ label: string; amount: number }>;
+  totalOpex?: number;
+  netIncome: number;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `IS/${docDate.replace(/-/g, "")}`;
+
+  const tableRows: string[][] = [];
+
+  // PENDAPATAN USAHA
+  tableRows.push(["PENDAPATAN USAHA", ""]);
+  for (const r of params.revenueRows) {
+    tableRows.push([`  ${r.label}`, formatDocRupiah(r.amount)]);
+  }
+  tableRows.push(["Total Pendapatan Usaha", formatDocRupiah(params.totalRevenue)]);
+
+  // BEBAN LANGSUNG PROYEK
+  tableRows.push(["BEBAN LANGSUNG PROYEK", ""]);
+  if (params.cogsRows && params.cogsRows.length > 0) {
+    for (const c of params.cogsRows) {
+      tableRows.push([`  ${c.label}`, formatDocRupiah(c.amount)]);
+    }
+  } else {
+    tableRows.push(["  Belum ada beban langsung proyek pada periode ini.", "-"]);
+  }
+  const gross = params.grossProfit ?? params.totalRevenue;
+  tableRows.push(["Laba Kotor Proyek", formatDocRupiah(gross)]);
+
+  // BEBAN OPERASIONAL BERSAMA
+  tableRows.push(["BEBAN OPERASIONAL BERSAMA", ""]);
+  if (params.opexRows && params.opexRows.length > 0) {
+    for (const o of params.opexRows) {
+      tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
+    }
+  } else {
+    tableRows.push(["  Belum ada beban operasional bersama pada periode ini.", "-"]);
+  }
+
+  // LABA (RUGI) BERSIH
+  tableRows.push([
+    "LABA (RUGI) BERSIH PERIODE BERJALAN",
+    formatDocRupiah(params.netIncome),
+  ]);
+
+  return {
+    docTitle: "LAPORAN LABA RUGI BASIS AKRUAL",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Penyusunan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      "Basis Akuntansi: Akrual (Accrual Basis)",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Mata Uang", value: "Rupiah (IDR)" },
+    ],
+    tableColumns: [
+      { header: "Komponen / Keterangan", widthRatio: 0.68 },
+      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Laporan Perubahan Ekuitas
+ */
+export function buildRetainedEarningsPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  rows: Array<{ label: string; amount: number }>;
+  endingRetainedEarnings: number;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `EQ/${docDate.replace(/-/g, "")}`;
+
+  const tableRows = params.rows.map((r) => [
+    r.label,
+    formatDocRupiah(r.amount),
+  ]);
+  tableRows.push([
+    "TOTAL SALDO LABA DITAHAN AKHIR",
+    formatDocRupiah(params.endingRetainedEarnings),
+  ]);
+
+  return {
+    docTitle: "LAPORAN PERUBAHAN EKUITAS",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Penyusunan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      "Komponen: Modal Disetor & Saldo Laba Ditahan",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Mata Uang", value: "Rupiah (IDR)" },
+    ],
+    tableColumns: [
+      { header: "Komponen Ekuitas & Saldo Laba", widthRatio: 0.68 },
+      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Laporan Posisi Keuangan (Neraca)
+ */
+export function buildBalanceSheetPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  isBalanced?: boolean;
+  currentAssetRows: Array<{ label: string; amount: number }>;
+  totalCurrentAssets: number;
+  nonCurrentAssetRows: Array<{ label: string; amount: number }>;
+  totalNonCurrentAssets: number;
+  totalAssets: number;
+  currentLiabRows: Array<{ label: string; amount: number }>;
+  totalCurrentLiabilities: number;
+  nonCurrentLiabRows: Array<{ label: string; amount: number }>;
+  totalNonCurrentLiabilities: number;
+  totalLiabilities: number;
+  equityRows: Array<{ label: string; amount: number }>;
+  totalEquity: number;
+  totalLiabilitiesAndEquity: number;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `BS/${docDate.replace(/-/g, "")}`;
+  const isBalanced = params.isBalanced ?? true;
+
+  const tableRows: string[][] = [];
+
+  // 1. ASET
+  tableRows.push(["ASET LANCAR", ""]);
+  for (const a of params.currentAssetRows) {
+    tableRows.push([`  ${a.label}`, formatDocRupiah(a.amount)]);
+  }
+  tableRows.push(["Total Aset Lancar", formatDocRupiah(params.totalCurrentAssets)]);
+
+  if (params.nonCurrentAssetRows.length > 0) {
+    tableRows.push(["ASET TIDAK LANCAR", ""]);
+    for (const na of params.nonCurrentAssetRows) {
+      tableRows.push([`  ${na.label}`, formatDocRupiah(na.amount)]);
+    }
+    tableRows.push([
+      "Total Aset Tidak Lancar",
+      formatDocRupiah(params.totalNonCurrentAssets),
+    ]);
+  }
+  tableRows.push(["TOTAL ASET", formatDocRupiah(params.totalAssets)]);
+
+  // 2. LIABILITAS
+  tableRows.push(["LIABILITAS JANGKA PENDEK", ""]);
+  for (const l of params.currentLiabRows) {
+    tableRows.push([`  ${l.label}`, formatDocRupiah(l.amount)]);
+  }
+  tableRows.push([
+    "Total Liabilitas Jangka Pendek",
+    formatDocRupiah(params.totalCurrentLiabilities),
+  ]);
+
+  if (params.nonCurrentLiabRows.length > 0) {
+    tableRows.push(["LIABILITAS JANGKA PANJANG", ""]);
+    for (const nl of params.nonCurrentLiabRows) {
+      tableRows.push([`  ${nl.label}`, formatDocRupiah(nl.amount)]);
+    }
+    tableRows.push([
+      "Total Liabilitas Jangka Panjang",
+      formatDocRupiah(params.totalNonCurrentLiabilities),
+    ]);
+  }
+  tableRows.push(["TOTAL LIABILITAS", formatDocRupiah(params.totalLiabilities)]);
+
+  // 3. EKUITAS
+  tableRows.push(["EKUITAS", ""]);
+  for (const eq of params.equityRows) {
+    tableRows.push([`  ${eq.label}`, formatDocRupiah(eq.amount)]);
+  }
+  tableRows.push(["TOTAL EKUITAS", formatDocRupiah(params.totalEquity)]);
+
+  tableRows.push([
+    "TOTAL LIABILITAS & EKUITAS",
+    formatDocRupiah(params.totalLiabilitiesAndEquity),
+  ]);
+
+  return {
+    docTitle: "LAPORAN POSISI KEUANGAN (NERACA)",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Posisi Keuangan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      "Struktur: Aset = Liabilitas + Ekuitas",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Posisi Per", value: params.periodLabel },
+      {
+        label: "Status Keseimbangan",
+        value: isBalanced ? "Seimbang (Balanced)" : "Selisih Perhitungan",
+      },
+    ],
+    bannerBox: {
+      text: isBalanced
+        ? "✓ Posisi Keuangan Seimbang - Total Aset sama dengan Total Liabilitas & Ekuitas"
+        : "⚠ Posisi Keuangan Tidak Seimbang - Terdapat selisih antara Aset dan Pasiva",
+      variant: isBalanced ? "success" : "warning",
+    },
+    tableColumns: [
+      { header: "Akun / Komponen Posisi Keuangan", widthRatio: 0.68 },
+      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Laporan Arus Kas Metode Langsung
+ */
+export function buildCashFlowPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  operatingRows: Array<{ label: string; amount: number }>;
+  netOperating: number;
+  investingRows?: Array<{ label: string; amount: number }>;
+  netInvesting?: number;
+  financingRows?: Array<{ label: string; amount: number }>;
+  netFinancing?: number;
+  netCashChange: number;
+  beginningCash: number;
+  endingCash: number;
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `CF/${docDate.replace(/-/g, "")}`;
+
+  const tableRows: string[][] = [];
+
+  tableRows.push(["Saldo Kas Awal Periode", formatDocRupiah(params.beginningCash)]);
+
+  tableRows.push(["AKTIVITAS OPERASI", ""]);
+  for (const o of params.operatingRows) {
+    tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
+  }
+  tableRows.push([
+    "Arus Kas Bersih dari Aktivitas Operasi",
+    formatDocRupiah(params.netOperating),
+  ]);
+
+  tableRows.push(["AKTIVITAS INVESTASI", ""]);
+  if (params.investingRows && params.investingRows.length > 0) {
+    for (const inv of params.investingRows) {
+      tableRows.push([`  ${inv.label}`, formatDocRupiah(inv.amount)]);
+    }
+  } else {
+    tableRows.push(["  Tidak ada mutasi aktivitas investasi pada periode ini.", "-"]);
+  }
+  tableRows.push([
+    "Arus Kas Bersih dari Aktivitas Investasi",
+    formatDocRupiah(params.netInvesting ?? 0),
+  ]);
+
+  tableRows.push(["AKTIVITAS PENDANAAN", ""]);
+  if (params.financingRows && params.financingRows.length > 0) {
+    for (const fin of params.financingRows) {
+      tableRows.push([`  ${fin.label}`, formatDocRupiah(fin.amount)]);
+    }
+  } else {
+    tableRows.push(["  Tidak ada mutasi aktivitas pendanaan pada periode ini.", "-"]);
+  }
+  tableRows.push([
+    "Arus Kas Bersih dari Aktivitas Pendanaan",
+    formatDocRupiah(params.netFinancing ?? 0),
+  ]);
+
+  tableRows.push([
+    "KENAIKAN (PENURUNAN) BERSIH KAS",
+    formatDocRupiah(params.netCashChange),
+  ]);
+  tableRows.push([
+    "SALDO KAS AKHIR PERIODE",
+    formatDocRupiah(params.endingCash),
+  ]);
+
+  return {
+    docTitle: "LAPORAN ARUS KAS METODE LANGSUNG",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Penyusunan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      "Metode: Langsung (Direct Cash Flow Method)",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Mata Uang", value: "Rupiah (IDR)" },
+    ],
+    tableColumns: [
+      { header: "Aktivitas Arus Kas", widthRatio: 0.68 },
+      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+    ],
+    tableRows,
+  };
+}
+
+/**
+ * Builder Spesifikasi PDF: Laporan Keuangan Lengkap
+ */
+export function buildCompleteFinancialStatementsPdfSpec(params: {
+  company: CompanyProfileRow;
+  periodLabel: string;
+  docDate?: string;
+  refNumber?: string;
+  incomeStatementRows: string[][];
+  retainedEarningsRows: string[][];
+  balanceSheetRows: string[][];
+  cashFlowRows: string[][];
+}): PdfDocumentSpec {
+  const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
+  const docNumber =
+    params.refNumber ?? `FS/${docDate.replace(/-/g, "")}`;
+
+  const stdCols: PdfTableColumn[] = [
+    { header: "Komponen / Pos Laporan", widthRatio: 0.68 },
+    { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+  ];
+
+  const sections: PdfDocumentSection[] = [
+    {
+      title: "1. LAPORAN LABA RUGI BASIS AKRUAL",
+      subtitle: "Pendapatan Usaha, Beban Langsung & Beban Operasional",
+      tableColumns: stdCols,
+      tableRows: params.incomeStatementRows,
+    },
+    {
+      title: "2. LAPORAN PERUBAHAN EKUITAS",
+      subtitle: "Modal Disetor dan Mutasi Saldo Laba Ditahan",
+      tableColumns: stdCols,
+      tableRows: params.retainedEarningsRows,
+      pageBreakBefore: true,
+    },
+    {
+      title: "3. LAPORAN POSISI KEUANGAN (NERACA)",
+      subtitle: "Posisi Aset, Liabilitas, dan Ekuitas Per Akhir Periode",
+      tableColumns: stdCols,
+      tableRows: params.balanceSheetRows,
+      pageBreakBefore: true,
+    },
+    {
+      title: "4. LAPORAN ARUS KAS METODE LANGSUNG",
+      subtitle: "Aktivitas Operasi, Investasi, dan Pendanaan Kas",
+      tableColumns: stdCols,
+      tableRows: params.cashFlowRows,
+      pageBreakBefore: true,
+    },
+  ];
+
+  return {
+    docTitle: "LAPORAN KEUANGAN LENGKAP",
+    docNumber,
+    docDate,
+    company: params.company,
+    recipientTitle: "Dasar Penyusunan",
+    recipientLines: [
+      params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
+      "Paket Lengkap: Laba Rugi, Ekuitas, Neraca, dan Arus Kas",
+    ],
+    metaRows: [
+      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
+      { label: "Periode", value: params.periodLabel },
+      { label: "Standar Pelaporan", value: "SAK Entitas Privat" },
+    ],
+    sections,
   };
 }

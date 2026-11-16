@@ -11,6 +11,7 @@ import {
   ALL_BASELINE_FIXTURES,
   FIXTURE_COMPANY,
   REPORT_LIST_FIXTURES,
+  ACCOUNTING_REPORT_FIXTURES,
 } from "../fixtures/document-layout-fixtures";
 
 describe("Render Check Generator & Collision Detector", () => {
@@ -82,7 +83,11 @@ describe("Render Check Generator & Collision Detector", () => {
     const outDir = path.resolve(process.cwd(), "docs", "render-check", stage);
     fs.mkdirSync(outDir, { recursive: true });
 
-    const allToRender = [...ALL_BASELINE_FIXTURES, ...REPORT_LIST_FIXTURES];
+    const allToRender = [
+      ...ALL_BASELINE_FIXTURES,
+      ...REPORT_LIST_FIXTURES,
+      ...ACCOUNTING_REPORT_FIXTURES,
+    ];
     for (const fixture of allToRender) {
       const spec = fixture.buildSpec();
       const pdfBytes = await generateDocumentPdf(spec);

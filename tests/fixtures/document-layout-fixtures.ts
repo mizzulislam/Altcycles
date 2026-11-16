@@ -4,10 +4,18 @@ import {
   formatDocRupiah,
 } from "@/lib/formatters";
 import {
+  buildBalanceSheetPdfSpec,
+  buildCashFlowPdfSpec,
   buildClientPoPdfSpec,
+  buildCompleteFinancialStatementsPdfSpec,
+  buildGeneralLedgerPdfSpec,
+  buildIncomeStatementPdfSpec,
   buildInvoicePdfSpec,
+  buildJournalsPdfSpec,
   buildPaymentApprovalPdfSpec,
   buildReceiptPdfSpec,
+  buildRetainedEarningsPdfSpec,
+  buildTrialBalancePdfSpec,
   type PdfDocumentSpec,
 } from "@/lib/pdf-generator";
 import type { CompanyProfileRow } from "@/types/database.types";
@@ -2596,5 +2604,657 @@ export const SEVEN_REPORT_NORMAL_FIXTURES: BaselineFixtureEntry[] = [
   REPORT_LIST_FIXTURES[12]!,
   REPORT_LIST_FIXTURES[15]!,
   REPORT_LIST_FIXTURES[18]!,
+];
+
+/**
+ * 19. JURNAL UMUM — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureJurnalUmumNormal(): PdfDocumentSpec {
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: false,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    docDate: "2026-11-16",
+    rows: [
+      {
+        date: "01/11/2026",
+        number: "JRN/ALT/2026/11/001",
+        account: "1-1101 - Kas Kecil",
+        description: "Penerimaan pembayaran Invoice INV/ALT/2026/11/002",
+        ref: "INV/002",
+        debit: 2_000_600,
+        credit: 0,
+      },
+      {
+        date: "01/11/2026",
+        number: "JRN/ALT/2026/11/001",
+        account: "1-1202 - Piutang Usaha - TIM Travel RMM",
+        description: "Pelunasan piutang termin DP 40%",
+        ref: "INV/002",
+        debit: 0,
+        credit: 2_000_600,
+      },
+      {
+        date: "12/11/2026",
+        number: "JRN/ALT/2026/11/006",
+        account: "1-1102 - Kas di Bank - Bank Jago",
+        description: "Penerimaan termin 1 dari PT RMM berupa uang muka development 40%",
+        ref: "TRF-889",
+        debit: 2_000_000,
+        credit: 0,
+      },
+      {
+        date: "12/11/2026",
+        number: "JRN/ALT/2026/11/006",
+        account: "2-1402 - Pendapatan Diterima di Muka - Dev",
+        description: "Uang muka development belum diakui pendapatan",
+        ref: "TRF-889",
+        debit: 0,
+        credit: 2_000_000,
+      },
+    ],
+    totalDebit: 4_000_600,
+    totalCredit: 4_000_600,
+  });
+}
+
+export function buildFixtureJurnalUmumExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 32 }, (_, i) => ({
+    date: "15/11/2026",
+    number: `JRN/ALT/2026/11/${String(i + 1).padStart(3, "0")}`,
+    account: i % 2 === 0 ? "1-1102 - Kas di Bank - Bank Jago" : "4-1101 - Pendapatan Jasa Web",
+    description: `Transaksi operasional sistem modul ke-${i + 1} dengan rincian biaya komprehensif berulang`,
+    ref: `REF-${String(i + 1).padStart(4, "0")}`,
+    debit: i % 2 === 0 ? 15_500_000 : 0,
+    credit: i % 2 === 1 ? 15_500_000 : 0,
+  }));
+
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: false,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    rows,
+    totalDebit: 16 * 15_500_000,
+    totalCredit: 16 * 15_500_000,
+  });
+}
+
+export function buildFixtureJurnalUmumMinimum(): PdfDocumentSpec {
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: false,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    rows: [],
+    totalDebit: 0,
+    totalCredit: 0,
+  });
+}
+
+/**
+ * 20. JURNAL PENYESUAIAN & KOREKSI — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureJurnalAjpNormal(): PdfDocumentSpec {
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: true,
+    periodLabel: "Semua Periode s.d. 16/11/2026",
+    docDate: "2026-11-16",
+    rows: [
+      {
+        date: "15/11/2026",
+        number: "AJP/ALT/2026/11/010",
+        account: "2-1401 - Pendapatan Diterima di Muka",
+        description: "Pengakuan pendapatan progres 100% — Dev cost TIMTravel",
+        ref: "AJP-001",
+        debit: 2_000_600,
+        credit: 0,
+      },
+      {
+        date: "15/11/2026",
+        number: "AJP/ALT/2026/11/010",
+        account: "1-1210 - Piutang Belum Ditagih",
+        description: "Akrual piutang termin sisa 60%",
+        ref: "AJP-001",
+        debit: 4_999_400,
+        credit: 0,
+      },
+      {
+        date: "15/11/2026",
+        number: "AJP/ALT/2026/11/010",
+        account: "4-1101 - Pendapatan Jasa Web",
+        description: "Pengakuan penuh pendapatan proyek selesai",
+        ref: "AJP-001",
+        debit: 0,
+        credit: 7_000_000,
+      },
+    ],
+    totalDebit: 7_000_000,
+    totalCredit: 7_000_000,
+  });
+}
+
+export function buildFixtureJurnalAjpExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 30 }, (_, i) => ({
+    date: "31/12/2026",
+    number: `AJP/ALT/2026/12/${String(i + 1).padStart(3, "0")}`,
+    account: i % 2 === 0 ? "5-1101 - Beban Cloud & Server" : "1-1402 - Beban Dibayar di Muka",
+    description: `Amortisasi beban server hosting cloud multi-tenant periode bulan ke-${i + 1}`,
+    ref: `AJP-${String(i + 1).padStart(3, "0")}`,
+    debit: i % 2 === 0 ? 5_250_000 : 0,
+    credit: i % 2 === 1 ? 5_250_000 : 0,
+  }));
+
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: true,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    rows,
+    totalDebit: 15 * 5_250_000,
+    totalCredit: 15 * 5_250_000,
+  });
+}
+
+export function buildFixtureJurnalAjpMinimum(): PdfDocumentSpec {
+  return buildJournalsPdfSpec({
+    company: FIXTURE_COMPANY,
+    isAdjusting: true,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    rows: [],
+    totalDebit: 0,
+    totalCredit: 0,
+  });
+}
+
+/**
+ * 21. BUKU BESAR (GENERAL LEDGER) — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureBukuBesarNormal(): PdfDocumentSpec {
+  return buildGeneralLedgerPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    isAllAccounts: true,
+    accounts: [
+      {
+        code: "1-1101",
+        name: "Kas Kecil",
+        type: "Aset",
+        normalBalance: "Debit",
+        endingBalance: 2_000_600,
+        rows: [
+          {
+            date: "01/11/2026",
+            description: "Dana masuk Invoice INV/ALT/2026/11/002",
+            ref: "JRN/012",
+            debit: 2_000_600,
+            credit: 0,
+            runningBalance: 2_000_600,
+          },
+        ],
+      },
+      {
+        code: "1-1102",
+        name: "Kas di Bank - Bank Jago",
+        type: "Aset",
+        normalBalance: "Debit",
+        endingBalance: 2_000_000,
+        rows: [
+          {
+            date: "12/11/2026",
+            description: "Penerimaan termin 1 dari PT RMM berupa uang muka development 40%",
+            ref: "JRN/006",
+            debit: 2_000_000,
+            credit: 0,
+            runningBalance: 2_000_000,
+          },
+        ],
+      },
+      {
+        code: "4-1101",
+        name: "Pendapatan Jasa Pengembangan Website",
+        type: "Pendapatan",
+        normalBalance: "Kredit",
+        endingBalance: 7_000_000,
+        rows: [
+          {
+            date: "15/11/2026",
+            description: "Pendapatan jasa akrual proyek PRJ/ALT/2026/001",
+            ref: "JRN/010",
+            debit: 0,
+            credit: 7_000_000,
+            runningBalance: 7_000_000,
+          },
+        ],
+      },
+    ],
+  });
+}
+
+export function buildFixtureBukuBesarExtreme(): PdfDocumentSpec {
+  const accounts = Array.from({ length: 6 }, (_, accIdx) => {
+    const accRows = Array.from({ length: 8 }, (_, rIdx) => ({
+      date: "15/11/2026",
+      description: `Rincian mutasi transaksi akun ke-${accIdx + 1} entri baris ke-${rIdx + 1}`,
+      ref: `JRN/${String(accIdx * 10 + rIdx + 1).padStart(3, "0")}`,
+      debit: rIdx % 2 === 0 ? 5_000_000 : 0,
+      credit: rIdx % 2 === 1 ? 2_000_000 : 0,
+      runningBalance: (rIdx + 1) * 3_000_000,
+    }));
+    return {
+      code: `1-120${accIdx + 1}`,
+      name: `Akun Mutasi Operasional Portofolio ${accIdx + 1}`,
+      type: "Aset",
+      normalBalance: "Debit",
+      endingBalance: 24_000_000,
+      rows: accRows,
+    };
+  });
+
+  return buildGeneralLedgerPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    isAllAccounts: true,
+    accounts,
+  });
+}
+
+export function buildFixtureBukuBesarMinimum(): PdfDocumentSpec {
+  return buildGeneralLedgerPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    isAllAccounts: true,
+    accounts: [
+      {
+        code: "1-1101",
+        name: "Kas Kecil",
+        type: "Aset",
+        normalBalance: "Debit",
+        endingBalance: 0,
+        rows: [],
+      },
+    ],
+  });
+}
+
+/**
+ * 22. NERACA SALDO (TRIAL BALANCE) — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureNeracaSaldoNormal(): PdfDocumentSpec {
+  return buildTrialBalancePdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    isAdjusted: true,
+    isBalanced: true,
+    rows: [
+      { code: "1-1101", name: "Kas Kecil", debit: 2_000_600, credit: 0 },
+      { code: "1-1102", name: "Kas di Bank - Bank Jago", debit: 6_369_589, credit: 0 },
+      { code: "1-1210", name: "Piutang Belum Ditagih", debit: 4_999_400, credit: 0 },
+      { code: "1-1402", name: "Beban Dibayar di Muka - Server", debit: 2_001_623, credit: 0 },
+      { code: "2-1402", name: "Pendapatan Diterima di Muka - Development", debit: 0, credit: 2_000_000 },
+      { code: "2-1403", name: "Pendapatan Diterima di Muka - Hosting", debit: 0, credit: 1_769_864 },
+      { code: "4-1101", name: "Pendapatan Jasa Pengembangan Website", debit: 0, credit: 12_000_000 },
+      { code: "4-1201", name: "Pendapatan Pemeliharaan & Dukungan Teknis", debit: 0, credit: 230_136 },
+      { code: "5-1101", name: "Beban Cloud, Hosting, & Domain Proyek", debit: 644_097, credit: 0 },
+      { code: "7-1101", name: "Pendapatan Bunga Bank", debit: 0, credit: 19_135 },
+      { code: "7-2101", name: "Beban Pajak Final atas Bunga", debit: 3_826, credit: 0 },
+    ],
+    sumDebit: 16_019_135,
+    sumCredit: 16_019_135,
+  });
+}
+
+export function buildFixtureNeracaSaldoExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 35 }, (_, i) => ({
+    code: `${1 + Math.floor(i / 10)}-${1100 + i}`,
+    name: `Akun Pembukuan Terintegrasi Ke-${i + 1}`,
+    debit: i % 2 === 0 ? 50_000_000 : 0,
+    credit: i % 2 === 1 ? 50_000_000 : 0,
+  }));
+
+  return buildTrialBalancePdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    rows,
+    sumDebit: 18 * 50_000_000,
+    sumCredit: 17 * 50_000_000,
+    isBalanced: false,
+  });
+}
+
+export function buildFixtureNeracaSaldoMinimum(): PdfDocumentSpec {
+  return buildTrialBalancePdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    rows: [],
+    sumDebit: 0,
+    sumCredit: 0,
+  });
+}
+
+/**
+ * 23. LAPORAN LABA RUGI BASIS AKRUAL — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureLabaRugiNormal(): PdfDocumentSpec {
+  return buildIncomeStatementPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    revenueRows: [
+      { label: "Pendapatan Jasa Pengembangan Website", amount: 7_000_000 },
+    ],
+    totalRevenue: 7_000_000,
+    grossProfit: 7_000_000,
+    netIncome: 7_000_000,
+  });
+}
+
+export function buildFixtureLabaRugiExtreme(): PdfDocumentSpec {
+  const rev = Array.from({ length: 12 }, (_, i) => ({
+    label: `Pendapatan Kontrak Pengembangan Modul ${i + 1}`,
+    amount: 100_000_000,
+  }));
+  const opex = Array.from({ length: 14 }, (_, i) => ({
+    label: `Beban Operasional & Infrastruktur Server ${i + 1}`,
+    amount: 25_000_000,
+  }));
+  return buildIncomeStatementPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    revenueRows: rev,
+    totalRevenue: 1_200_000_000,
+    opexRows: opex,
+    totalOpex: 350_000_000,
+    grossProfit: 1_200_000_000,
+    netIncome: 850_000_000,
+  });
+}
+
+export function buildFixtureLabaRugiMinimum(): PdfDocumentSpec {
+  return buildIncomeStatementPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    revenueRows: [],
+    totalRevenue: 0,
+    grossProfit: 0,
+    netIncome: 0,
+  });
+}
+
+/**
+ * 24. LAPORAN PERUBAHAN EKUITAS — Normal, Ekstrem, Minimum
+ */
+export function buildFixturePerubahanEkuitasNormal(): PdfDocumentSpec {
+  return buildRetainedEarningsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    rows: [
+      { label: "Saldo Laba Ditahan Awal Periode", amount: 50_000_000 },
+      { label: "Laba (Rugi) Bersih Periode Berjalan", amount: 7_000_000 },
+      { label: "Dividen / Penarikan Modal Pemilik (Prive)", amount: 0 },
+    ],
+    endingRetainedEarnings: 57_000_000,
+  });
+}
+
+export function buildFixturePerubahanEkuitasExtreme(): PdfDocumentSpec {
+  return buildRetainedEarningsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    rows: [
+      { label: "Modal Saham Ditempatkan dan Disetor Penuh", amount: 500_000_000 },
+      { label: "Tambahan Modal Disetor (Agio Saham)", amount: 150_000_000 },
+      { label: "Saldo Laba Ditahan Awal Tahun Buku", amount: 250_000_000 },
+      { label: "Laba Bersih Komprehensif Berjalan", amount: 850_000_000 },
+      { label: "Distribusi Dividen Tunai Pemegang Saham", amount: -200_000_000 },
+    ],
+    endingRetainedEarnings: 1_550_000_000,
+  });
+}
+
+export function buildFixturePerubahanEkuitasMinimum(): PdfDocumentSpec {
+  return buildRetainedEarningsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    rows: [],
+    endingRetainedEarnings: 0,
+  });
+}
+
+/**
+ * 25. LAPORAN POSISI KEUANGAN (NERACA) — Normal, Ekstrem, Minimum
+ */
+export function buildFixturePosisiKeuanganNormal(): PdfDocumentSpec {
+  return buildBalanceSheetPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "Per 31 Januari 2027",
+    docDate: "2026-11-16",
+    isBalanced: true,
+    currentAssetRows: [
+      { label: "Kas dan Setara Kas", amount: 8_370_189 },
+      { label: "Piutang Usaha", amount: 4_999_400 },
+    ],
+    totalCurrentAssets: 13_369_589,
+    nonCurrentAssetRows: [
+      { label: "Beban Server Dibayar di Muka", amount: 2_001_623 },
+    ],
+    totalNonCurrentAssets: 2_001_623,
+    totalAssets: 15_371_212,
+    currentLiabRows: [
+      { label: "Pendapatan Diterima di Muka", amount: 3_769_864 },
+    ],
+    totalCurrentLiabilities: 3_769_864,
+    nonCurrentLiabRows: [],
+    totalNonCurrentLiabilities: 0,
+    totalLiabilities: 3_769_864,
+    equityRows: [
+      { label: "Modal Pemilik / Disetor", amount: 4_601_348 },
+      { label: "Laba Bersih Berjalan", amount: 7_000_000 },
+    ],
+    totalEquity: 11_601_348,
+    totalLiabilitiesAndEquity: 15_371_212,
+  });
+}
+
+export function buildFixturePosisiKeuanganExtreme(): PdfDocumentSpec {
+  const assets = Array.from({ length: 15 }, (_, i) => ({
+    label: `Aset Lancar Operasional Cabang ${i + 1}`,
+    amount: 50_000_000,
+  }));
+  const liabs = Array.from({ length: 10 }, (_, i) => ({
+    label: `Kewajiban Jangka Pendek Vendor ${i + 1}`,
+    amount: 35_000_000,
+  }));
+  return buildBalanceSheetPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "Per 31 Desember 2026",
+    currentAssetRows: assets,
+    totalCurrentAssets: 750_000_000,
+    nonCurrentAssetRows: [{ label: "Aset Tetap & Peralatan IT", amount: 250_000_000 }],
+    totalNonCurrentAssets: 250_000_000,
+    totalAssets: 1_000_000_000,
+    currentLiabRows: liabs,
+    totalCurrentLiabilities: 350_000_000,
+    nonCurrentLiabRows: [],
+    totalNonCurrentLiabilities: 0,
+    totalLiabilities: 350_000_000,
+    equityRows: [{ label: "Modal Saham & Saldo Laba", amount: 650_000_000 }],
+    totalEquity: 650_000_000,
+    totalLiabilitiesAndEquity: 1_000_000_000,
+  });
+}
+
+export function buildFixturePosisiKeuanganMinimum(): PdfDocumentSpec {
+  return buildBalanceSheetPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "Per 30 November 2026",
+    currentAssetRows: [],
+    totalCurrentAssets: 0,
+    nonCurrentAssetRows: [],
+    totalNonCurrentAssets: 0,
+    totalAssets: 0,
+    currentLiabRows: [],
+    totalCurrentLiabilities: 0,
+    nonCurrentLiabRows: [],
+    totalNonCurrentLiabilities: 0,
+    totalLiabilities: 0,
+    equityRows: [],
+    totalEquity: 0,
+    totalLiabilitiesAndEquity: 0,
+  });
+}
+
+/**
+ * 26. LAPORAN ARUS KAS METODE LANGSUNG — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureArusKasNormal(): PdfDocumentSpec {
+  return buildCashFlowPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    operatingRows: [
+      { label: "Penerimaan Kas dari Pelanggan", amount: 4_000_600 },
+      { label: "Pembayaran Kas untuk Beban Cloud & Server", amount: -644_097 },
+    ],
+    netOperating: 3_356_503,
+    netCashChange: 3_356_503,
+    beginningCash: 5_013_686,
+    endingCash: 8_370_189,
+  });
+}
+
+export function buildFixtureArusKasExtreme(): PdfDocumentSpec {
+  const ops = Array.from({ length: 12 }, (_, i) => ({
+    label: `Penerimaan Pembayaran Termin Proyek Kontrak ${i + 1}`,
+    amount: 85_000_000,
+  }));
+  return buildCashFlowPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    operatingRows: ops,
+    netOperating: 1_020_000_000,
+    investingRows: [{ label: "Pembelian Server & Perangkat Komputasi", amount: -150_000_000 }],
+    netInvesting: -150_000_000,
+    netCashChange: 870_000_000,
+    beginningCash: 130_000_000,
+    endingCash: 1_000_000_000,
+  });
+}
+
+export function buildFixtureArusKasMinimum(): PdfDocumentSpec {
+  return buildCashFlowPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    operatingRows: [],
+    netOperating: 0,
+    netCashChange: 0,
+    beginningCash: 0,
+    endingCash: 0,
+  });
+}
+
+/**
+ * 27. LAPORAN KEUANGAN LENGKAP — Normal, Ekstrem, Minimum
+ */
+export function buildFixtureLaporanLengkapNormal(): PdfDocumentSpec {
+  return buildCompleteFinancialStatementsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 31/01/2027",
+    docDate: "2026-11-16",
+    incomeStatementRows: [
+      ["Pendapatan Jasa Web", formatDocRupiah(7_000_000)],
+      ["Total Pendapatan", formatDocRupiah(7_000_000)],
+      ["Laba Bersih Periode", formatDocRupiah(7_000_000)],
+    ],
+    retainedEarningsRows: [
+      ["Saldo Laba Awal", formatDocRupiah(50_000_000)],
+      ["Laba Bersih", formatDocRupiah(7_000_000)],
+      ["Saldo Laba Akhir", formatDocRupiah(57_000_000)],
+    ],
+    balanceSheetRows: [
+      ["Total Aset Lancar", formatDocRupiah(13_369_589)],
+      ["Total Liabilitas", formatDocRupiah(3_769_864)],
+      ["Total Ekuitas", formatDocRupiah(11_601_348)],
+    ],
+    cashFlowRows: [
+      ["Arus Kas Bersih Operasi", formatDocRupiah(3_356_503)],
+      ["Saldo Kas Akhir", formatDocRupiah(8_370_189)],
+    ],
+  });
+}
+
+export function buildFixtureLaporanLengkapExtreme(): PdfDocumentSpec {
+  const rows10 = Array.from({ length: 10 }, (_, i) => [
+    `Rincian Pos Komponen Laporan Ke-${i + 1}`,
+    formatDocRupiah((i + 1) * 25_000_000),
+  ]);
+  return buildCompleteFinancialStatementsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/01/2026 s.d. 31/12/2026",
+    incomeStatementRows: rows10,
+    retainedEarningsRows: rows10,
+    balanceSheetRows: rows10,
+    cashFlowRows: rows10,
+  });
+}
+
+export function buildFixtureLaporanLengkapMinimum(): PdfDocumentSpec {
+  return buildCompleteFinancialStatementsPdfSpec({
+    company: FIXTURE_COMPANY,
+    periodLabel: "01/11/2026 s.d. 30/11/2026",
+    incomeStatementRows: [["-", "-"]],
+    retainedEarningsRows: [["-", "-"]],
+    balanceSheetRows: [["-", "-"]],
+    cashFlowRows: [["-", "-"]],
+  });
+}
+
+/**
+ * Daftar Seluruh Fixture Dokumen Akuntansi & Laporan (Normal, Ekstrem, Minimum)
+ */
+export const ACCOUNTING_REPORT_FIXTURES: BaselineFixtureEntry[] = [
+  { slug: "19-jurnal-umum", title: "Buku Jurnal Umum (Normal)", buildSpec: buildFixtureJurnalUmumNormal },
+  { slug: "19b-jurnal-umum-extreme", title: "Buku Jurnal Umum (Ekstrem)", buildSpec: buildFixtureJurnalUmumExtreme },
+  { slug: "19c-jurnal-umum-minimum", title: "Buku Jurnal Umum (Minimum)", buildSpec: buildFixtureJurnalUmumMinimum },
+  { slug: "20-jurnal-penyesuaian", title: "Jurnal Penyesuaian & Koreksi (Normal)", buildSpec: buildFixtureJurnalAjpNormal },
+  { slug: "20b-jurnal-penyesuaian-extreme", title: "Jurnal Penyesuaian & Koreksi (Ekstrem)", buildSpec: buildFixtureJurnalAjpExtreme },
+  { slug: "20c-jurnal-penyesuaian-minimum", title: "Jurnal Penyesuaian & Koreksi (Minimum)", buildSpec: buildFixtureJurnalAjpMinimum },
+  { slug: "21-buku-besar", title: "Buku Besar / General Ledger (Normal)", buildSpec: buildFixtureBukuBesarNormal },
+  { slug: "21b-buku-besar-extreme", title: "Buku Besar / General Ledger (Ekstrem)", buildSpec: buildFixtureBukuBesarExtreme },
+  { slug: "21c-buku-besar-minimum", title: "Buku Besar / General Ledger (Minimum)", buildSpec: buildFixtureBukuBesarMinimum },
+  { slug: "22-neraca-saldo", title: "Neraca Saldo / Trial Balance (Normal)", buildSpec: buildFixtureNeracaSaldoNormal },
+  { slug: "22b-neraca-saldo-extreme", title: "Neraca Saldo / Trial Balance (Ekstrem)", buildSpec: buildFixtureNeracaSaldoExtreme },
+  { slug: "22c-neraca-saldo-minimum", title: "Neraca Saldo / Trial Balance (Minimum)", buildSpec: buildFixtureNeracaSaldoMinimum },
+  { slug: "23-laporan-laba-rugi", title: "Laporan Laba Rugi Basis Akrual (Normal)", buildSpec: buildFixtureLabaRugiNormal },
+  { slug: "23b-laporan-laba-rugi-extreme", title: "Laporan Laba Rugi Basis Akrual (Ekstrem)", buildSpec: buildFixtureLabaRugiExtreme },
+  { slug: "23c-laporan-laba-rugi-minimum", title: "Laporan Laba Rugi Basis Akrual (Minimum)", buildSpec: buildFixtureLabaRugiMinimum },
+  { slug: "24-laporan-perubahan-ekuitas", title: "Laporan Perubahan Ekuitas (Normal)", buildSpec: buildFixturePerubahanEkuitasNormal },
+  { slug: "24b-laporan-perubahan-ekuitas-extreme", title: "Laporan Perubahan Ekuitas (Ekstrem)", buildSpec: buildFixturePerubahanEkuitasExtreme },
+  { slug: "24c-laporan-perubahan-ekuitas-minimum", title: "Laporan Perubahan Ekuitas (Minimum)", buildSpec: buildFixturePerubahanEkuitasMinimum },
+  { slug: "25-laporan-posisi-keuangan", title: "Laporan Posisi Keuangan / Neraca (Normal)", buildSpec: buildFixturePosisiKeuanganNormal },
+  { slug: "25b-laporan-posisi-keuangan-extreme", title: "Laporan Posisi Keuangan / Neraca (Ekstrem)", buildSpec: buildFixturePosisiKeuanganExtreme },
+  { slug: "25c-laporan-posisi-keuangan-minimum", title: "Laporan Posisi Keuangan / Neraca (Minimum)", buildSpec: buildFixturePosisiKeuanganMinimum },
+  { slug: "26-laporan-arus-kas", title: "Laporan Arus Kas Metode Langsung (Normal)", buildSpec: buildFixtureArusKasNormal },
+  { slug: "26b-laporan-arus-kas-extreme", title: "Laporan Arus Kas Metode Langsung (Ekstrem)", buildSpec: buildFixtureArusKasExtreme },
+  { slug: "26c-laporan-arus-kas-minimum", title: "Laporan Arus Kas Metode Langsung (Minimum)", buildSpec: buildFixtureArusKasMinimum },
+  { slug: "27-laporan-keuangan-lengkap", title: "Laporan Keuangan Lengkap (Normal)", buildSpec: buildFixtureLaporanLengkapNormal },
+  { slug: "27b-laporan-keuangan-lengkap-extreme", title: "Laporan Keuangan Lengkap (Ekstrem)", buildSpec: buildFixtureLaporanLengkapExtreme },
+  { slug: "27c-laporan-keuangan-lengkap-minimum", title: "Laporan Keuangan Lengkap (Minimum)", buildSpec: buildFixtureLaporanLengkapMinimum },
+];
+
+/**
+ * 9 Fixture Dokumen Akuntansi Versi Normal (untuk render-check 9 dokumen utama)
+ */
+export const NINE_ACCOUNTING_NORMAL_FIXTURES: BaselineFixtureEntry[] = [
+  ACCOUNTING_REPORT_FIXTURES[0]!,
+  ACCOUNTING_REPORT_FIXTURES[3]!,
+  ACCOUNTING_REPORT_FIXTURES[6]!,
+  ACCOUNTING_REPORT_FIXTURES[9]!,
+  ACCOUNTING_REPORT_FIXTURES[12]!,
+  ACCOUNTING_REPORT_FIXTURES[15]!,
+  ACCOUNTING_REPORT_FIXTURES[18]!,
+  ACCOUNTING_REPORT_FIXTURES[21]!,
+  ACCOUNTING_REPORT_FIXTURES[24]!,
 ];
 
