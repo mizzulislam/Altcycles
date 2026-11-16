@@ -112,6 +112,78 @@ export function formatDocRupiah(
 }
 
 /**
+ * Memformat angka nominal tanpa simbol mata uang (contoh: 1.234.567 atau -400.000).
+ * Format Indonesia: pemisah ribuan titik (.) dan pemisah desimal koma (,).
+ */
+export function formatDocNumber(
+  amount: number,
+  forceTwoDecimals = false,
+): string {
+  if (!Number.isFinite(amount)) return `${DOC_EMPTY_CELL}`;
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+  const roundedCent = Math.round(abs * 100);
+  const isWhole = roundedCent % 100 === 0;
+
+  if (isWhole && !forceTwoDecimals) {
+    const wholeVal = Math.round(abs);
+    const absFormatted = wholeVal
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${sign}${absFormatted}`;
+  }
+
+  const fixed = (roundedCent / 100).toFixed(2);
+  const [wholePart, decPart] = fixed.split(".");
+  const wholeFormatted = wholePart!.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}${wholeFormatted},${decPart}`;
+}
+
+/**
+ * Meringkas teks deskripsi/keterangan buku besar agar padat dan informatif.
+ * Contoh:
+ * - "Dana masuk Invoice INV/ALT/2026/11/002" -> "Dana masuk"
+ * - "Penerimaan termin 1 dari PT RMM berupa uang muka development 40%" -> "Penerimaan termin 1 PT RMM"
+ */
+export function simplifyLedgerDescription(desc: string): string {
+  if (!desc) return "-";
+  let s = desc.trim();
+
+  // Pola: "Dana masuk Invoice ..." -> "Dana masuk"
+  if (/^Dana masuk\s+(?:Invoice|Tagihan|INV).*/i.test(s)) {
+    return "Dana masuk";
+  }
+
+  // Pola: "Penerimaan termin X dari PT Y berupa ..." -> "Penerimaan termin X PT Y"
+  const mTermin = s.match(
+    /^Penerimaan termin\s+(\d+)\s+dari\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})(?:\s+berupa.*|\s+—.*|\..*)?$/i,
+  );
+  if (mTermin) {
+    return `Penerimaan termin ${mTermin[1]} ${mTermin[2]}`.trim();
+  }
+
+  // Pola: "Penerimaan pembayaran Invoice ... dari PT Y" -> "Penerimaan pembayaran PT Y"
+  const mPenerimaan = s.match(
+    /^Penerimaan\s+(?:pembayaran\s+)?(?:Invoice\s+[^\s]+\s+)?dari\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})/i,
+  );
+  if (mPenerimaan) {
+    return `Penerimaan ${mPenerimaan[1]}`.trim();
+  }
+
+  // Pola umum: potong klausa penjelasan panjang seperti "berupa uang muka...", "— Development cost...", ". Belum diakui..."
+  s = s.replace(/\s+berupa\s+uang\s+muka.*$/i, "");
+  s = s.replace(/\s+berupa\s+.*$/i, "");
+  s = s.replace(/\s*—\s*.*$/, "");
+  s = s.replace(/\.\s+[A-Z].*$/, ""); // potong kalimat kedua
+  s = s.replace(/\s+Invoice\s+INV\/[^\s]+/gi, ""); // hapus nomor invoice panjang karena sudah ada di kolom Ref
+
+  // Rapikan "termin X dari PT Y" -> "termin X PT Y"
+  s = s.replace(/termin\s+(\d+)\s+dari\s+/i, "termin $1 ");
+
+  return s.trim() || desc.trim();
+}
+
+/**
  * Mengecek apakah di antara daftar angka terdapat minimal satu angka yang memiliki desimal non-nol.
  */
 export function hasAnyDecimalCurrency(

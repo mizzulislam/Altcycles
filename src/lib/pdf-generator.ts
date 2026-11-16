@@ -22,9 +22,11 @@ import {
   formatDateTimeID,
   formatDocDateLong,
   formatDocEmpty,
+  formatDocNumber,
   formatDocRupiah,
   formatRupiah,
   hasAnyDecimalCurrency,
+  simplifyLedgerDescription,
   terbilangRupiah,
 } from "@/lib/formatters";
 import type {
@@ -2261,8 +2263,9 @@ async function renderDocumentPdfInternal(
         y = emptyBottomY - tableSpacing;
       } else {
         let lastRowBottomLineY = y;
+        const isLedgerDoc = spec.docTitle?.toUpperCase().includes("BUKU BESAR") ?? false;
         for (const row of sec.tableRows) {
-          const isBoldRow = isRowUppercase(row);
+          const isBoldRow = !isLedgerDoc && isRowUppercase(row);
           const rowFont = isBoldRow ? fontBold : fontRegular;
           const colWrappedLines: string[][] = row.map((cellText, colIdx) => {
             const w = colWidths[colIdx]! - 16;
@@ -5246,8 +5249,8 @@ export function buildJournalsPdfSpec(params: {
     ],
     tableColumns: [
       { header: "Tanggal", widthRatio: 0.13 },
-      { header: "Deskripsi", widthRatio: 0.47 },
-      { header: "Ref", widthRatio: 0.08, align: "center" },
+      { header: "Deskripsi", widthRatio: 0.39 },
+      { header: "Ref", widthRatio: 0.16, align: "center" },
       { header: "Debit", widthRatio: 0.16, align: "right" },
       { header: "Kredit", widthRatio: 0.16, align: "right" },
     ],
@@ -5288,11 +5291,11 @@ export function buildGeneralLedgerPdfSpec(params: {
   const sections: PdfDocumentSection[] = params.accounts.map((acc) => {
     const tableRows = acc.rows.map((r) => [
       r.date,
-      r.description,
+      simplifyLedgerDescription(r.description),
       r.ref || "-",
-      r.debit > 0 ? formatDocRupiah(r.debit) : "-",
-      r.credit > 0 ? formatDocRupiah(r.credit) : "-",
-      formatDocRupiah(r.runningBalance),
+      r.debit > 0 ? formatDocNumber(r.debit) : "-",
+      r.credit > 0 ? formatDocNumber(r.credit) : "-",
+      formatDocNumber(r.runningBalance),
     ]);
 
     return {
@@ -5300,12 +5303,12 @@ export function buildGeneralLedgerPdfSpec(params: {
       subtitle: `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
       badge: formatDocRupiah(acc.endingBalance),
       tableColumns: [
-        { header: "Tanggal", widthRatio: 0.11 },
-        { header: "Keterangan", widthRatio: 0.29 },
-        { header: "Ref", widthRatio: 0.08, align: "center" },
-        { header: "Debit", widthRatio: 0.17, align: "right" },
-        { header: "Kredit", widthRatio: 0.17, align: "right" },
-        { header: "Saldo Berjalan", widthRatio: 0.18, align: "right" },
+        { header: "Tanggal", widthRatio: 0.15 },
+        { header: "Keterangan", widthRatio: 0.28 },
+        { header: "Ref", widthRatio: 0.14, align: "center" },
+        { header: "Debit", widthRatio: 0.14, align: "right" },
+        { header: "Kredit", widthRatio: 0.14, align: "right" },
+        { header: "Balance", widthRatio: 0.15, align: "right" },
       ],
       tableRows,
     };
@@ -5396,12 +5399,12 @@ export function buildTrialBalancePdfSpec(params: {
         value: isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang",
       },
     ],
-    bannerBox: {
-      text: isBalanced
-        ? "✓ Buku Besar Seimbang (Balanced) - Total Debit sama dengan Total Kredit"
-        : "⚠ Buku Besar Tidak Seimbang - Terdapat selisih antara Total Debit dan Total Kredit",
-      variant: isBalanced ? "success" : "warning",
-    },
+    bannerBox: !isBalanced
+      ? {
+          text: "⚠ Buku Besar Tidak Seimbang - Terdapat selisih antara Total Debit dan Total Kredit",
+          variant: "warning",
+        }
+      : undefined,
     tableColumns: [
       { header: "No. Akun", widthRatio: 0.11 },
       { header: "Nama Akun", widthRatio: 0.43 },
@@ -5643,12 +5646,12 @@ export function buildBalanceSheetPdfSpec(params: {
         value: isBalanced ? "Seimbang (Balanced)" : "Selisih Perhitungan",
       },
     ],
-    bannerBox: {
-      text: isBalanced
-        ? "✓ Posisi Keuangan Seimbang - Total Aset sama dengan Total Liabilitas & Ekuitas"
-        : "⚠ Posisi Keuangan Tidak Seimbang - Terdapat selisih antara Aset dan Pasiva",
-      variant: isBalanced ? "success" : "warning",
-    },
+    bannerBox: !isBalanced
+      ? {
+          text: "⚠ Posisi Keuangan Tidak Seimbang - Terdapat selisih antara Aset dan Pasiva",
+          variant: "warning",
+        }
+      : undefined,
     tableColumns: [
       { header: "Akun / Komponen Posisi Keuangan", widthRatio: 0.68 },
       { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
