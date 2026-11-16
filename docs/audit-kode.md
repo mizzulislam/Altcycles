@@ -42,7 +42,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
 | **C-01** | `export-download-menu.tsx` & Termin / Dokumen Proyek | Dropdown Aksi Unduh Terpotong (*Clipping*) | Menu dropdown `ExportDownloadMenu` menggunakan `position: absolute` inline sehingga terpotong oleh kontainer kartu (`overflow-hidden`) atau tabel | Migrasikan ke React Portal (`createPortal(..., document.body)`) dengan posisi `fixed z-[99999]` dan deteksi batas viewport otomatis (*smart flip & clamp*) | Dropdown utuh sempurna di semua kontainer tabel, tidak pernah terpotong | Kritis | **Selesai Diperbaiki** |
 | **C-02** | `login-page.tsx` & `theme-toggle.tsx` | Palet Warna & Tema | 20+ nilai hex warna ditulis langsung (`#0B43C8`, `#F0F1F3`, `#C9C9C9`, `#121A2B`, `#1A253C`) | Gunakan token semantik Tailwind (`bg-background`, `text-foreground`, `bg-primary`, `border-border`) | Tema dark/light mode seragam & mudah dipelihara | Tinggi | **Ya** |
-| **C-03** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail | `TableHead` rata kiri (`text-left`) dan tebal `font-bold` | Seluruh `TableHead` wajib rata tengah (`text-center`) dan `font-semibold` sesuai `AGENTS.md` | Menghilangkan inkonsistensi visual header tabel | Tinggi | **Ya** |
+| **C-03** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail | `TableHead` rata kiri (`text-left`) dan tebal `font-bold` | Seluruh `TableHead` wajib rata tengah (`text-center`) dan `font-semibold` sesuai `AGENTS.md` | Menghilangkan inkonsistensi visual header tabel | Tinggi | **Selesai Diperbaiki** |
 | **C-04** | `journals-page.tsx` & Dokumen Buku Besar | Format Ref & Nominal Buku Besar | Kode akun Ref ada yang menggunakan spasi (`1 1202`) alih-alih tanda hubung (`1-1202`). Pada buku besar, simbol mata uang berulang di tiap sel transaksi | Normalisasi kode akun Ref dengan tanda hubung (`1-1202`). Pada tabel buku besar, tampilkan nominal murni tanpa simbol mata uang di tiap sel (simbol mata uang hanya di headline/ringkasan) | Data tabel lebih lega, presisi, dan sesuai standar akuntansi resmi | Sedang | **Ya** |
 | **C-05** | Kartu Dashboard & Modal Proyek | Spasi Header Kartu & Radius Modal | Jarak `CardTitle` ke `CardDescription` bervariasi (`mt-1` vs `gap-1`). Di `project-detail-page.tsx:3271` modal memakai `rounded-xl` | Standarkan jarak judul-deskripsi kartu tepat 4px (`gap-1`). Seluruh modal dialog wajib `rounded-2xl` | Keselarasan ritme vertikal kartu dan bentuk modal | Sedang | **Ya** |
 
@@ -199,7 +199,7 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-06 — `src/features/accounting/journals-page.tsx`
-- **Jumlah Baris:** 1.834 baris
+- **Jumlah Baris Asal:** 1.925 baris (kini 1.254 baris, terpangkas 671 baris)
 - **Prioritas:** Tinggi
 - **Tanggung Jawab yang Tercampur:**
   1. Tabel Riwayat Jurnal Harian (Buku Jurnal Umum & Jurnal Penyesuaian AJP).
@@ -208,12 +208,13 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
   4. Dialog Hapus Jurnal Massal & Pemeriksaan Kunci Jurnal (*journal lock*).
   5. Ekspor PDF Buku Jurnal, Excel, dan CSV.
 - **Rekomendasi Pemecahan Konkret:**
-  1. `journals-page.tsx` (~400 baris): Toolbar, filter jenis/tanggal, tabel riwayat jurnal, dan pagination.
-  2. `components/journal-entry-modal.tsx` (~500 baris): Modal form catat transaksi baru & edit jurnal.
-  3. `components/journal-correction-dialog.tsx` (~250 baris): Modal pembuatan ayat jurnal koreksi.
-  4. `components/journal-table-row.tsx` (~200 baris): Komponen baris jurnal debit-kredit terindentasi.
+  1. `journals-page.tsx` (~1.254 baris): Toolbar, filter jenis/tanggal, tabel riwayat jurnal, dan pagination.
+  2. `components/journal-entry-dialog.tsx` (~360 baris): Modal form catat transaksi baru & edit jurnal.
+  3. `components/journal-correction-dialog.tsx` (~90 baris): Modal pembuatan ayat jurnal koreksi.
+  4. `components/journal-detail-dialog.tsx` (~200 baris): Modal detail transaksi jurnal (sekaligus menuntaskan temuan C-02/C-03 header tabel modal rata tengah).
+  5. `components/journals-export-handlers.ts` (~200 baris): Kumpulan fungsi unduh PDF, Excel (.xlsx), dan CSV.
 - **Risiko Pemecahan:** Rendah.
-- **Perlu Keputusanku?** Ya
+- **Status Eksekusi (Langkah 3):** **SELESAI DIPERBAIKI & TERVALIDASI** (Commit tersendiri). Berhasil diekstrak ke 4 modul mandiri di `src/features/accounting/components/`. Ukuran file utama terpangkas dari 1.925 baris menjadi 1.254 baris. 67 tes unit & integrasi serta typecheck lulus 100%.
 
 ---
 
@@ -386,7 +387,7 @@ Audit terhadap antarmuka pengguna Altcycles dilakukan dengan meneliti implementa
 | ID | Halaman / Komponen | Elemen | Kondisi Saat Ini | Standar Direkomendasikan (`AGENTS.md`) | Dampak | Prioritas | Perlu Keputusanku? |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
 | **C-01** | `login-page.tsx`, `theme-toggle.tsx`, `json-code-view.tsx` | Warna Hex Hardcoded | 25+ deklarasi warna menggunakan kode hex manual (seperti `#0B43C8`, `#083296`, `#F0F1F3`, `#C9C9C9`, `#121A2B`, `#1A253C`, `#25324E`, `#1FB1F2`) | Ganti seluruh warna hex dengan token semantik Tailwind (`bg-primary`, `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`) | Warna tidak adaptif jika tema dasar diubah; dark mode berisiko bocor warna | Tinggi | **Ya** |
-| **C-02** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail Jurnal | Judul kolom tabel di dalam modal detail jurnal menggunakan `text-left` dan bobot `font-bold` | Seluruh `<TableHead>` wajib `text-center` dan `font-semibold` sesuai aturan baku tabel Altcycles | Inkonsistensi visual antara tabel halaman utama dan tabel modal | Tinggi | **Ya** |
+| **C-02** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail Jurnal | Judul kolom tabel di dalam modal detail jurnal menggunakan `text-left` dan bobot `font-bold` | Seluruh `<TableHead>` wajib `text-center` dan `font-semibold` sesuai aturan baku tabel Altcycles | Inkonsistensi visual antara tabel halaman utama dan tabel modal | Tinggi | **Selesai Diperbaiki** |
 | **C-03** | `journals-page.tsx` & Dokumen Buku Besar | Format Ref & Penyajian Tabel Buku Besar | Di kolom Ref jurnal, ditemukan variasi pemisah nomor akun (misal `1-1102` vs `1 1202`). Di Buku Besar (PDF/layar), simbol mata uang berulang di tiap sel transaksi | Normalisasi nomor akun Ref dengan tanda hubung (`1-1202`). Pada tabel buku besar cetak/layar, terapkan pola standar akuntansi: simbol mata uang hanya di headline akun/ringkasan, sedangkan isi sel berupa nominal murni yang lebih lega | Kolom angka lebih luas, mencegah pembungkusan teks (*wrapping*), dan sesuai standar akuntansi resmi | Sedang | **Ya** |
 | **C-04** | Kartu Dashboard & Modal Proyek | Spasi Header Kartu & Radius Modal Dialog | Di beberapa kartu dashboard (`admin-dashboard.tsx`), jarak `CardTitle` ke `CardDescription` menggunakan margin tambahan `mt-1`. Di `project-detail-page.tsx:3271`, modal memakai radius `rounded-xl` | Standarkan spasi judul-deskripsi kartu tepat 4px (`gap-1` tanpa margin tambahan). Seluruh modal dialog wajib konsisten `rounded-2xl` | Ritme vertikal kartu lebih rapat dan rapi; keseragaman bentuk dialog | Sedang | **Ya** |
 | **C-05** | Sel Tabel Transaksi (Mobile Viewport) | Area Sentuh (*Touch Target*) Aksi | Tombol aksi tabel berbentuk icon button `size-8` (32x32px). Di layar sentuh ponsel (<640px), ukuran ini di bawah rekomendasi aksesibilitas WCAG (44x44px) | Tambahkan pseudoelemen sentuh transparan (`relative after:absolute after:-inset-1.5`) pada tombol aksi mobile tanpa mengubah ukuran visual | Tombol aksi jauh lebih mudah ditekan jari di ponsel tanpa memakan tempat di desktop | Sedang | **Ya** |

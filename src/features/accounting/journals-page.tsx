@@ -1,18 +1,14 @@
 import * as React from "react";
 import {
-  AlertTriangleIcon,
   ArrowUpDownIcon,
-  CheckCircle2Icon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
-  ScaleIcon,
   SlidersHorizontalIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { type SemanticTone } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,32 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { DatePicker } from "@/components/ui/date-picker";
 import { EmptyState, Spinner } from "@/components/ui/empty";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -56,30 +27,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import {
   getCompanyProfile,
   listAccounts,
   listProjects,
 } from "@/lib/data-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
-import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { downloadCsvFile } from "@/lib/csv-exporter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
-import {
-  buildJournalsPdfSpec,
-  downloadPdfBytes,
-  generateDocumentPdf,
-} from "@/lib/pdf-generator";
 import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
-import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { formatDateID, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   createCorrectionJournalEntry,
   createManualOrAdjustmentJournal,
   deleteJournals,
   listJournalsWithLines,
-  recordExportLog,
   updateJournal,
 } from "@/lib/operations-service";
 import type {
@@ -90,6 +52,17 @@ import type {
   JournalType,
   ProjectRow,
 } from "@/types/database.types";
+import {
+  JournalEntryDialog,
+  type DraftLineEntry,
+} from "./components/journal-entry-dialog";
+import { JournalCorrectionDialog } from "./components/journal-correction-dialog";
+import { JournalDetailDialog } from "./components/journal-detail-dialog";
+import {
+  exportJournalsToCsv,
+  exportJournalsToExcel,
+  exportJournalsToPdf,
+} from "./components/journals-export-handlers";
 
 export const JOURNAL_TYPE_LABELS: Record<
   JournalType,
@@ -108,11 +81,6 @@ export const JOURNAL_TYPE_LABELS: Record<
   elimination: { label: "Eliminasi Selesai 100%", tone: "success" },
   profit_sharing: { label: "Bagi Hasil Proyek", tone: "info" },
 };
-
-interface DraftLineEntry {
-  accountId: string;
-  amount: string;
-}
 
 function formatJournalDate(val: string | null | undefined): string {
   if (!val) return "-";
@@ -577,180 +545,35 @@ export function JournalsPage({
       : "Jurnal Umum";
 
   async function handleExportPdf() {
-    try {
-      const comp = company ?? (await getCompanyProfile());
-      const isAdj = filterMode === "adjusting";
-
-      const rows: Array<{
-        date: string;
-        description: string;
-        ref: string;
-        debit: number;
-        credit: number;
-      }> = [];
-
-      for (const j of sortedJournals) {
-        const jLines = lines
-          .filter((l) => l.journal_id === j.id)
-          .sort((a, b) => a.line_no - b.line_no);
-        const debitLines = jLines.filter((l) => l.debit > 0);
-        const creditLines = jLines.filter((l) => l.credit > 0);
-
-        debitLines.forEach((l, idx) => {
-          const acc = accountMap.get(l.account_id);
-          rows.push({
-            date: idx === 0 ? formatDateID(j.journal_date) : "",
-            description: acc ? acc.name : "Akun Debit",
-            ref: acc?.code ?? "-",
-            debit: l.debit,
-            credit: 0,
-          });
-        });
-
-        creditLines.forEach((l) => {
-          const acc = accountMap.get(l.account_id);
-          rows.push({
-            date: "",
-            description: `   ${acc ? acc.name : "Akun Kredit"}`,
-            ref: acc?.code ?? "-",
-            debit: 0,
-            credit: l.credit,
-          });
-        });
-
-        const memo = j.description || "";
-        if (memo) {
-          rows.push({
-            date: "",
-            description: `   (${memo})`,
-            ref: "",
-            debit: 0,
-            credit: 0,
-          });
-        }
-      }
-
-      const spec = buildJournalsPdfSpec({
-        company: comp,
-        isAdjusting: isAdj,
-        periodLabel: printPeriodLabel,
-        rows,
-      });
-
-      const bytes = await generateDocumentPdf(spec);
-      downloadPdfBytes(
-        bytes,
-        isAdj ? "Jurnal_Penyesuaian_Altcycles.pdf" : "Jurnal_Umum_Altcycles.pdf",
-      );
-      void recordExportLog("JOURNALS", "PDF", periodFilter);
-      toast.success(
-        isAdj
-          ? "Jurnal Penyesuaian berhasil diunduh dalam format PDF (.pdf)."
-          : "Jurnal Umum berhasil diunduh dalam format PDF (.pdf).",
-      );
-    } catch (err) {
-      console.error("Gagal mengunduh PDF jurnal:", err);
-      toast.error("Gagal membuat berkas PDF jurnal akuntansi.");
-    }
+    await exportJournalsToPdf({
+      company,
+      filterMode,
+      sortedJournals,
+      lines,
+      accountMap,
+      periodFilter,
+      printPeriodLabel,
+    });
   }
 
   async function handleExportExcel() {
-    const exportRows: Array<Array<string | number>> = [];
-    for (const j of filteredJournals) {
-      const jLines = lines
-        .filter((l) => l.journal_id === j.id)
-        .sort((a, b) => a.line_no - b.line_no);
-      const prj = j.project_id ? projectMap.get(j.project_id) : undefined;
-      for (const l of jLines) {
-        const acc = accountMap.get(l.account_id);
-        exportRows.push([
-          j.journal_number,
-          formatDateID(j.journal_date),
-          JOURNAL_TYPE_LABELS[j.journal_type].label,
-          prj ? prj.code : "-",
-          acc ? `${acc.code}: ${acc.name}` : "-",
-          l.description || j.description,
-          l.debit,
-          l.credit,
-        ]);
-      }
-    }
-
-    await downloadExcelSheet({
-      fileName: "Jurnal_Akuntansi_Altcycles.xlsx",
-      sheetName: "Jurnal Akuntansi",
-      columns: [
-        { header: "No. Jurnal", width: 20 },
-        { header: "Tanggal", width: 14 },
-        { header: "Jenis Jurnal", width: 24 },
-        { header: "Proyek", width: 16 },
-        { header: "Akun", width: 32 },
-        { header: "Uraian", width: 36 },
-        { header: "Debit (Rp)", width: 18 },
-        { header: "Kredit (Rp)", width: 18 },
-      ],
-      rows: exportRows,
+    await exportJournalsToExcel({
+      filteredJournals,
+      lines,
+      accountMap,
+      projectMap,
+      periodFilter,
     });
-    await recordExportLog("JOURNALS", "EXCEL", periodFilter);
-    toast.success("Jurnal akuntansi berhasil diekspor ke Excel (.xlsx).");
   }
 
   async function handleExportCsv() {
-    const exportRows: Array<Array<string | number>> = [];
-    for (const j of sortedJournals) {
-      const jLines = lines
-        .filter((l) => l.journal_id === j.id)
-        .sort((a, b) => a.line_no - b.line_no);
-      const debitLines = jLines.filter((l) => l.debit > 0);
-      const creditLines = jLines.filter((l) => l.credit > 0);
-
-      debitLines.forEach((l, idx) => {
-        const acc = accountMap.get(l.account_id);
-        exportRows.push([
-          idx === 0 ? formatDateID(j.journal_date) : "",
-          acc?.name ?? "Akun Debit",
-          acc?.code ?? "-",
-          l.debit,
-          "",
-        ]);
-      });
-
-      creditLines.forEach((l) => {
-        const acc = accountMap.get(l.account_id);
-        exportRows.push([
-          "",
-          `    ${acc?.name ?? "Akun Kredit"}`,
-          acc?.code ?? "-",
-          "",
-          Math.abs(l.credit),
-        ]);
-      });
-
-      if (j.description) {
-        exportRows.push([
-          "",
-          `(${j.description})`,
-          "",
-          "",
-          "",
-        ]);
-      }
-    }
-    downloadCsvFile(
-      filterMode === "adjusting"
-        ? "Jurnal_Penyesuaian_Altcycles.csv"
-        : "Jurnal_Umum_Altcycles.csv",
-      [
-        "Tanggal",
-        "Deskripsi",
-        "Ref",
-        "Debit",
-        "Kredit",
-      ],
-      exportRows,
-    );
-    await recordExportLog("JOURNALS", "CSV", periodFilter);
-    toast.success("Jurnal akuntansi berhasil diekspor ke CSV (.csv).");
+    await exportJournalsToCsv({
+      sortedJournals,
+      lines,
+      accountMap,
+      filterMode,
+      periodFilter,
+    });
   }
 
   const journalPrintContent = (
@@ -1335,561 +1158,67 @@ export function JournalsPage({
       </Card>
 
       {/* Dialog Entri Jurnal Umum / Penyesuaian */}
-      <Dialog
+      <JournalEntryDialog
         open={createOpen}
         onOpenChange={(open) => {
           setCreateOpen(open);
           if (!open) setEditingJournal(null);
         }}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingJournal
-                ? `Edit Transaksi Jurnal (${editingJournal.journal_number})`
-                : filterMode === "adjusting"
-                  ? "Buat & Posting Jurnal Penyesuaian (AJP)"
-                  : "Buat & Posting Jurnal Baru"}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handlePostJournal}>
-            <FieldGroup>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="j-date" required>Tanggal Jurnal</FieldLabel>
-                  <DatePicker
-                    id="j-date"
-                    value={journalDate}
-                    onChange={setJournalDate}
-                    required
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel required>Jenis Jurnal</FieldLabel>
-                  <Select
-                    value={journalType}
-                    onValueChange={(v) =>
-                      setJournalType(v as "general" | "adjustment")
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="general">Jurnal Umum</SelectItem>
-                        <SelectItem value="adjustment">
-                          Jurnal Penyesuaian (AJP)
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <Field>
-                <FieldLabel htmlFor="j-desc" required>Keterangan</FieldLabel>
-                <Input
-                  id="j-desc"
-                  required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Contoh: Penyesuaian beban sewa kantor bersama bulan berjalan"
-                />
-              </Field>
-
-              {journalType === "adjustment" ? (
-                <Field orientation="horizontal">
-                  <div className="flex flex-col gap-0.5">
-                    <FieldLabel htmlFor="j-rev">
-                      Tandai untuk Jurnal Pembalik Awal Periode Berikutnya (Opsional)
-                    </FieldLabel>
-                    <FieldDescription>
-                      Diterapkan otomatis pada saat proses Tutup Buku periode berjalan.
-                    </FieldDescription>
-                  </div>
-                  <Switch
-                    id="j-rev"
-                    checked={autoReverse}
-                    onCheckedChange={setAutoReverse}
-                  />
-                </Field>
-              ) : null}
-
-              {/* Container Baris Ayat Jurnal (DEBIT & KREDIT side by side - Proporsional & Terstruktur) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* DEBIT Container */}
-                <div className="rounded-xl border border-border/70 dark:border-white/10 bg-muted/20 dark:bg-white/[0.02] p-4 flex flex-col justify-between space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-border/50 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <span className="size-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
-                      <span className="text-xs font-bold text-foreground tracking-wide">
-                        Sisi Debit
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={addDebitRow}
-                      className="text-xs h-7 px-2.5 rounded-lg text-cyan-600 dark:text-cyan-300 hover:text-cyan-500 dark:hover:text-cyan-200 border-cyan-500/30 dark:border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 font-medium transition-colors cursor-pointer"
-                    >
-                      <PlusIcon data-icon="inline-start" className="size-3.5 mr-1" />
-                      Tambah Akun
-                    </Button>
-                  </div>
-
-                  <div className="space-y-3 max-h-64 overflow-y-auto pr-0.5 no-scrollbar">
-                    {draftDebits.map((d, idx) => (
-                      <div
-                        key={`deb-${idx}`}
-                        className="rounded-lg border border-border/60 dark:border-white/5 bg-background/70 dark:bg-[#0c1424] p-3 space-y-2 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                            Akun {draftDebits.length > 1 ? `#${idx + 1}` : "Debit"}
-                          </span>
-                          {draftDebits.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Hapus baris debit"
-                              onClick={() => removeDebitRow(idx)}
-                              className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            >
-                              <Trash2Icon className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Select
-                            value={d.accountId}
-                            onValueChange={(val) =>
-                              updateDebitRow(idx, { accountId: val })
-                            }
-                          >
-                            <SelectTrigger className="w-full text-xs sm:text-sm">
-                              <SelectValue placeholder="-- Pilih Akun Debit --" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                {postableAccounts.map((a) => (
-                                  <SelectItem key={a.id} value={a.id}>
-                                    {a.code}: {a.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/70 font-medium pointer-events-none select-none">
-                              Rp
-                            </span>
-                            <NumberInput
-                              allowDecimal={false}
-                              min={0}
-                              placeholder="0"
-                              value={Number(d.amount || 0)}
-                              onValueChange={(val) =>
-                                updateDebitRow(idx, {
-                                  amount: val > 0 ? String(val) : "",
-                                })
-                              }
-                              className="pl-8 text-xs sm:text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-2.5 mt-auto border-t border-border/50 dark:border-white/5 flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground text-[11px] font-medium">
-                      Total Debit
-                    </span>
-                    <span className="font-bold text-cyan-600 dark:text-cyan-400 text-sm">
-                      {formatRupiah(totalDraftDebit)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* KREDIT Container */}
-                <div className="rounded-xl border border-border/70 dark:border-white/10 bg-muted/20 dark:bg-white/[0.02] p-4 flex flex-col justify-between space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between pb-2 border-b border-border/50 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <span className="size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                      <span className="text-xs font-bold text-foreground tracking-wide">
-                        Sisi Kredit
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={addCreditRow}
-                      className="text-xs h-7 px-2.5 rounded-lg text-blue-600 dark:text-blue-300 hover:text-blue-500 dark:hover:text-blue-200 border-blue-500/30 dark:border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 font-medium transition-colors cursor-pointer"
-                    >
-                      <PlusIcon data-icon="inline-start" className="size-3.5 mr-1" />
-                      Tambah Akun
-                    </Button>
-                  </div>
-
-                  <div className="space-y-3 max-h-64 overflow-y-auto pr-0.5 no-scrollbar">
-                    {draftCredits.map((c, idx) => (
-                      <div
-                        key={`cred-${idx}`}
-                        className="rounded-lg border border-border/60 dark:border-white/5 bg-background/70 dark:bg-[#0c1424] p-3 space-y-2 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                            Akun {draftCredits.length > 1 ? `#${idx + 1}` : "Kredit"}
-                          </span>
-                          {draftCredits.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Hapus baris kredit"
-                              onClick={() => removeCreditRow(idx)}
-                              className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                            >
-                              <Trash2Icon className="size-3.5" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Select
-                            value={c.accountId}
-                            onValueChange={(val) =>
-                              updateCreditRow(idx, { accountId: val })
-                            }
-                          >
-                            <SelectTrigger className="w-full text-xs sm:text-sm">
-                              <SelectValue placeholder="-- Pilih Akun Kredit --" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                {postableAccounts.map((a) => (
-                                  <SelectItem key={a.id} value={a.id}>
-                                    {a.code}: {a.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/70 font-medium pointer-events-none select-none">
-                              Rp
-                            </span>
-                            <NumberInput
-                              allowDecimal={false}
-                              min={0}
-                              placeholder="0"
-                              value={Number(c.amount || 0)}
-                              onValueChange={(val) =>
-                                updateCreditRow(idx, {
-                                  amount: val > 0 ? String(val) : "",
-                                })
-                              }
-                              className="pl-8 text-xs sm:text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-2.5 mt-auto border-t border-border/50 dark:border-white/5 flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground text-[11px] font-medium">
-                      Total Kredit
-                    </span>
-                    <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">
-                      {formatRupiah(totalDraftCredit)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modern Balance Indicator Bar (Skema Desain Altcycles) */}
-              <div
-                className={cn(
-                  "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all duration-200",
-                  isDraftBalanced
-                    ? "bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-transparent border-cyan-500/40 dark:border-cyan-500/50 shadow-xs"
-                    : "bg-muted/40 dark:bg-[#0c1322] border-border/80"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "p-1.5 rounded-lg shrink-0",
-                      isDraftBalanced
-                        ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    <ScaleIcon className="size-4" />
-                  </div>
-                  <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold">
-                    <span className="text-cyan-600 dark:text-cyan-400">
-                      D: {formatRupiah(totalDraftDebit)}
-                    </span>
-                    <div className="w-px h-3.5 bg-border" />
-                    <span className="text-blue-600 dark:text-blue-400">
-                      K: {formatRupiah(totalDraftCredit)}
-                    </span>
-                  </div>
-                </div>
-
-                {isDraftBalanced ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30">
-                    <CheckCircle2Icon className="size-3.5" />
-                    SEIMBANG
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                    <AlertTriangleIcon className="size-3.5" />
-                    {totalDraftDebit === 0 && totalDraftCredit === 0
-                      ? "NOMINAL KOSONG"
-                      : `SELISIH: ${formatRupiah(balanceDiff)}`}
-                  </span>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setCreateOpen(false);
-                    setEditingJournal(null);
-                  }}
-                >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={posting || !isDraftBalanced}>
-                  {posting ? <Spinner data-icon="inline-start" /> : null}
-                  {editingJournal ? "Simpan Perubahan" : "Rekam Transaksi"}
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+        editingJournal={editingJournal}
+        filterMode={filterMode}
+        journalDate={journalDate}
+        setJournalDate={setJournalDate}
+        journalType={journalType}
+        setJournalType={setJournalType}
+        description={description}
+        setDescription={setDescription}
+        autoReverse={autoReverse}
+        setAutoReverse={setAutoReverse}
+        draftDebits={draftDebits}
+        addDebitRow={addDebitRow}
+        removeDebitRow={removeDebitRow}
+        updateDebitRow={updateDebitRow}
+        draftCredits={draftCredits}
+        addCreditRow={addCreditRow}
+        removeCreditRow={removeCreditRow}
+        updateCreditRow={updateCreditRow}
+        postableAccounts={postableAccounts}
+        totalDraftDebit={totalDraftDebit}
+        totalDraftCredit={totalDraftCredit}
+        isDraftBalanced={isDraftBalanced}
+        balanceDiff={balanceDiff}
+        posting={posting}
+        onSubmit={handlePostJournal}
+        onCancel={() => {
+          setCreateOpen(false);
+          setEditingJournal(null);
+        }}
+      />
 
       {/* Dialog Jurnal Koreksi Resmi (BR-2) */}
-      <Dialog
+      <JournalCorrectionDialog
         open={Boolean(correctTarget)}
         onOpenChange={(open) => {
           if (!open) setCorrectTarget(null);
         }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Buat Jurnal Koreksi atas {correctTarget?.journal_number}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateCorrection}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="corr-date" required>Tanggal Jurnal Koreksi</FieldLabel>
-                <DatePicker
-                  id="corr-date"
-                  value={correctionDate}
-                  onChange={setCorrectionDate}
-                  required
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="corr-reason" required>
-                  Alasan Koreksi (Minimal 5 Karakter)
-                </FieldLabel>
-                <Textarea
-                  id="corr-reason"
-                  required
-                  value={correctionReason}
-                  onChange={(e) => setCorrectionReason(e.target.value)}
-                  placeholder="Contoh: Koreksi salah pilih akun beban pada pencatatan sebelumnya..."
-                />
-              </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCorrectTarget(null)}
-                >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={correcting}>
-                  {correcting ? <Spinner data-icon="inline-start" /> : null}
-                  Posting Jurnal Koreksi
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+        correctTarget={correctTarget}
+        correctionDate={correctionDate}
+        setCorrectionDate={setCorrectionDate}
+        correctionReason={correctionReason}
+        setCorrectionReason={setCorrectionReason}
+        correcting={correcting}
+        onSubmit={handleCreateCorrection}
+        onCancel={() => setCorrectTarget(null)}
+      />
 
       {/* Dialog Detail Jurnal (Icon Lihat) */}
-      <Dialog
-        open={Boolean(detailJournal)}
-        onOpenChange={(open) => {
-          if (!open) setDetailJournal(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detail Transaksi Jurnal</DialogTitle>
-          </DialogHeader>
-
-          {detailJournal && (
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs">
-                <div>
-                  <span className="text-muted-foreground block text-[11px]">
-                    Nomor Jurnal
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {detailJournal.journal_number}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block text-[11px]">
-                    Tanggal
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {formatDateID(detailJournal.journal_date)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block text-[11px]">
-                    Jenis Jurnal
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {JOURNAL_TYPE_LABELS[detailJournal.journal_type]?.label ??
-                      detailJournal.journal_type}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block text-[11px]">
-                    Status
-                  </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                    {detailJournal.status.toUpperCase()}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-xs font-medium text-muted-foreground">
-                  Keterangan:
-                </span>
-                <p className="text-sm text-foreground mt-1 p-3 rounded-xl bg-muted/30 border border-border/50">
-                  {detailJournal.description || "-"}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-foreground">
-                  Daftar Akun &amp; Mutasi:
-                </span>
-                <div className="rounded-xl border border-border/60 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/40">
-                      <TableRow>
-                        <TableHead className="text-xs font-bold text-left py-2.5">
-                          Akun
-                        </TableHead>
-                        <TableHead className="text-xs font-bold text-center w-20 py-2.5">
-                          Ref
-                        </TableHead>
-                        <TableHead className="text-xs font-bold text-right w-32 py-2.5 pr-4">
-                          Debit
-                        </TableHead>
-                        <TableHead className="text-xs font-bold text-right w-32 py-2.5 pr-4">
-                          Kredit
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lines
-                        .filter((l) => l.journal_id === detailJournal.id)
-                        .sort((a, b) => a.line_no - b.line_no)
-                        .map((line, idx) => {
-                          const acc = accountMap.get(line.account_id);
-                          return (
-                            <TableRow key={line.id ?? idx} className="text-xs">
-                              <TableCell className="py-2.5">
-                                <span
-                                  className={cn(
-                                    "font-medium",
-                                    line.credit > 0 && "pl-5 text-muted-foreground",
-                                  )}
-                                >
-                                  {acc
-                                    ? `${acc.code} - ${acc.name}`
-                                    : line.account_id}
-                                </span>
-                              </TableCell>
-                              <TableCell className="py-2.5 text-center text-muted-foreground">
-                                {acc?.code ?? "-"}
-                              </TableCell>
-                              <TableCell className="py-2.5 pr-4 font-medium">
-                                {line.debit > 0 ? (
-                                  <MonetaryCell amount={line.debit} />
-                                ) : (
-                                  <span className="block text-right text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="py-2.5 pr-4 font-medium">
-                                {line.credit > 0 ? (
-                                  <MonetaryCell amount={line.credit} />
-                                ) : (
-                                  <span className="block text-right text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDetailJournal(null)}
-              className="rounded-xl"
-            >
-              Tutup
-            </Button>
-            {detailJournal && (
-              <Button
-                type="button"
-                onClick={() => {
-                  const target = detailJournal;
-                  setDetailJournal(null);
-                  openEditJournal(target);
-                }}
-                className="rounded-xl gap-1.5"
-              >
-                <PencilIcon className="size-3.5" />
-                <span>Edit Transaksi</span>
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <JournalDetailDialog
+        detailJournal={detailJournal}
+        onClose={() => setDetailJournal(null)}
+        lines={lines}
+        accountMap={accountMap}
+        onEdit={(target) => openEditJournal(target)}
+      />
 
       {/* Konfirmasi Hapus Single (Icon Hapus) */}
       <ConfirmActionDialog
