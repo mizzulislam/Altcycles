@@ -1691,8 +1691,8 @@ async function renderDocumentPdfInternal(
       thickness: 0.5,
       color: BORDER_GRAY,
     });
-    // Spasi before tabel disamakan dengan spasi after tabel (10 pt)
-    y -= 10;
+    // Spasi before tabel disamakan dengan spasi before tabel invoice (12 pt)
+    y -= 12;
   }
 
   // ==========================================================================
@@ -1720,10 +1720,10 @@ async function renderDocumentPdfInternal(
         );
         y -= bodyLineH;
       }
-      y -= 6;
+      y -= 4;
     }
-    // Spasi after paragraf sebelum tabel disamakan 10 pt (6 pt + 4 pt)
-    y -= 4;
+    // Jeda after paragraf sebelum tabel disamakan dengan spasi before tabel invoice (12 pt visual)
+    y -= 2;
   }
 
   // ==========================================================================
@@ -1743,8 +1743,8 @@ async function renderDocumentPdfInternal(
     const cols = spec.tableColumns;
     const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
     const colWidths = cols.map((c) => (c.widthRatio / totalRatio) * contentWidth);
-    // Spasi before tabel disamakan dengan spasi after tabel (Poin 3: 10 pt)
-    const tableSpacing = 10;
+    // Spasi before & after tabel disamakan dengan tabel invoice (12 pt)
+    const tableSpacing = 12;
     const headerH = 28;
     const headerFontSize = PDF_LAYOUT_TOKENS.fontSizes.tableHeader; // 9.5 pt
     const cellFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
@@ -2392,8 +2392,9 @@ async function renderDocumentPdfInternal(
         : [];
 
       if (terbilangLines.length > 0) {
-        ensureSpace(terbilangLines.length * 13 + 12);
-        y -= 2;
+        ensureSpace(terbilangLines.length * 13 + 16);
+        // Teks Terbilang tidak lagi mepet dengan tabel (spasi after tabel sama dengan invoice: visual 12.5 pt)
+        y -= 8;
         for (const tLine of terbilangLines) {
           drawTrackedText(
             tLine,
@@ -2408,7 +2409,7 @@ async function renderDocumentPdfInternal(
           );
           y -= 13;
         }
-        y -= 8;
+        y -= 10;
       }
     } else {
       const terbilangStr = hasTerbilang
@@ -2576,6 +2577,10 @@ async function renderDocumentPdfInternal(
     const itemGap = 2;
 
     ensureSpace(28);
+    // Jika langsung mengikuti tabel (seperti BAKP, UAT, BAST), sesuaikan spasi after tabel agar judul catatan tidak mepet tabel
+    if (!isInvoiceDoc && !hasSummary && !hasTerbilang) {
+      y -= 8;
+    }
     drawTrackedText(
       notesHeading,
       {
@@ -2902,9 +2907,10 @@ async function renderDocumentPdfInternal(
 
         if (spec.hasMeterai) {
           // Kotak e-Meterai 20x20 mm (56.7 x 56.7 pt)
-          // Poin 6: Ujung kanan kotak sejajar ujung kiri garis tipis tanda tangan (colRightX), align center area tanda tangan
+          // Ujung kanan kotak sejajar ujung kiri garis tipis tanda tangan (colRightX)
+          // Geser sedikit ke atas (lineY + 9.5 pt) agar posisinya align center dari area kosong tempat menaruh tanda tangan
           const mBoxX = colRightX - meteraiW;
-          const mBoxY = lineY + 6;
+          const mBoxY = lineY + 9.5;
           page.drawRectangle({
             x: mBoxX,
             y: mBoxY,
@@ -2915,14 +2921,19 @@ async function renderDocumentPdfInternal(
             borderWidth: 0.75,
           });
 
-          // Poin 7: Hapus 20x20 mm, Rp10.000 -> 10000 (font lebih besar), align bottom right
           const mPadR = 5;
           const mPadB = 5;
           const mRightX = mBoxX + meteraiW - mPadR;
 
-          // 1. Teks "10000" paling bawah (font lebih besar: 9.5 pt bold)
+          // 2. Teks "ELEKTRONIK" di atas 10000 (size 6.5 pt bold)
+          const mElText = "ELEKTRONIK";
+          const mElSize = 6.5;
+          const mElW = fontBold.widthOfTextAtSize(mElText, mElSize);
+
+          // 1. Teks "10000" paling bawah: besarin font hingga lebarnya sama persis sepanjang teks ELEKTRONIK di atasnya
+          const valUnitW = fontBold.widthOfTextAtSize("10000", 1);
+          const mValSize = mElW / valUnitW;
           const mValText = "10000";
-          const mValSize = 9.5;
           const mValW = fontBold.widthOfTextAtSize(mValText, mValSize);
           const mValY = mBoxY + mPadB;
           drawTrackedText(
@@ -2937,11 +2948,8 @@ async function renderDocumentPdfInternal(
             "G-meterai-val",
           );
 
-          // 2. Teks "ELEKTRONIK" di atas 10000 (size 6 pt bold)
-          const mElText = "ELEKTRONIK";
-          const mElSize = 6;
-          const mElW = fontBold.widthOfTextAtSize(mElText, mElSize);
-          const mElY = mValY + 11;
+          // Render teks "ELEKTRONIK" di atas teks 10000
+          const mElY = mValY + mValSize + 1.5;
           drawTrackedText(
             mElText,
             {
@@ -2954,11 +2962,11 @@ async function renderDocumentPdfInternal(
             "G-meterai-el",
           );
 
-          // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6 pt bold)
+          // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6.5 pt bold, align bottom right)
           const mMatText = "MATERAI";
-          const mMatSize = 6;
+          const mMatSize = 6.5;
           const mMatW = fontBold.widthOfTextAtSize(mMatText, mMatSize);
-          const mMatY = mElY + 8;
+          const mMatY = mElY + mElSize + 1.5;
           drawTrackedText(
             mMatText,
             {
@@ -3673,7 +3681,7 @@ export async function generateSpkProjectCharterPdf(params: {
   const spkMeteraiW = 56.7;
   const spkMeteraiH = 56.7;
   const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
-  const spkMeteraiY = lineY + 6;
+  const spkMeteraiY = lineY + 9.5;
 
   page.drawRectangle({
     x: spkMeteraiX,
@@ -3689,9 +3697,15 @@ export async function generateSpkProjectCharterPdf(params: {
   const spkPadB = 5;
   const spkRightX = spkMeteraiX + spkMeteraiW - spkPadR;
 
-  // 1. Teks "10000" paling bawah (font lebih besar: 9.5 pt bold)
+  // 2. Teks "ELEKTRONIK" di atas 10000 (size 6.5 pt bold)
+  const spkElText = "ELEKTRONIK";
+  const spkElSize = 6.5;
+  const spkElW = fontBold.widthOfTextAtSize(spkElText, spkElSize);
+
+  // 1. Teks "10000" paling bawah: besarin font hingga lebarnya sama persis sepanjang teks ELEKTRONIK di atasnya
+  const spkValUnitW = fontBold.widthOfTextAtSize("10000", 1);
+  const spkValSize = spkElW / spkValUnitW;
   const spkValText = "10000";
-  const spkValSize = 9.5;
   const spkValW = fontBold.widthOfTextAtSize(spkValText, spkValSize);
   const spkValY = spkMeteraiY + spkPadB;
   page.drawText(spkValText, {
@@ -3702,11 +3716,8 @@ export async function generateSpkProjectCharterPdf(params: {
     color: SLATE_900,
   });
 
-  // 2. Teks "ELEKTRONIK" di atas 10000 (size 6 pt bold)
-  const spkElText = "ELEKTRONIK";
-  const spkElSize = 6;
-  const spkElW = fontBold.widthOfTextAtSize(spkElText, spkElSize);
-  const spkElY = spkValY + 11;
+  // Render teks "ELEKTRONIK" di atas 10000
+  const spkElY = spkValY + spkValSize + 1.5;
   page.drawText(spkElText, {
     x: spkRightX - spkElW,
     y: spkElY,
@@ -3715,11 +3726,11 @@ export async function generateSpkProjectCharterPdf(params: {
     color: SLATE_600,
   });
 
-  // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6 pt bold)
+  // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6.5 pt bold, align bottom right)
   const spkMatText = "MATERAI";
-  const spkMatSize = 6;
+  const spkMatSize = 6.5;
   const spkMatW = fontBold.widthOfTextAtSize(spkMatText, spkMatSize);
-  const spkMatY = spkElY + 8;
+  const spkMatY = spkElY + spkElSize + 1.5;
   page.drawText(spkMatText, {
     x: spkRightX - spkMatW,
     y: spkMatY,

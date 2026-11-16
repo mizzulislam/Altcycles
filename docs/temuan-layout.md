@@ -599,14 +599,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-35
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen PDF (`renderDocumentPdfInternal`, `generateSpkProjectCharterPdf`, `PDF_LAYOUT_TOKENS`)
+- **Apa yang bertentangan:**
+  1. Pada kotak placeholder e-meterai: teks `"10000"` sebelumnya berukuran lebih pendek dibanding teks `"ELEKTRONIK"` di atasnya. Pengguna meminta teks `"10000"` diperbesar hingga lebarnya sama persis sepanjang teks `"ELEKTRONIK"`. Selain itu, posisi kotak placeholder sebelumnya sedikit terlalu rendah (`lineY + 6 pt`) dan diminta digeser sedikit ke atas hingga tepat *align center* terhadap area kosong tanda tangan.
+  2. Pada dokumen Quotation, PO Klien, BAKP, UAT, dan BAST, spasi *before* dan *after* tabel sebelumnya berbeda dengan yang ada di invoice sehingga teks *Terbilang* (pada Quotation & PO Klien) maupun judul catatan (pada BAKP, UAT, BAST) menempel mepet ke garis penutup bawah tabel.
+  3. Pada dokumen PO Vendor, Payment Approval, dan JTPP, spasi *before* dan *after* tabel sebelumnya juga berbeda dengan invoice sehingga teks *Terbilang* mepet dengan baris total tabel.
+- **Yang kulakukan:**
+  1. Menyesuaikan ukuran font nominal `"10000"` secara presisi (`valFontSize = elW / valUnitW`) sehingga panjang teks `"10000"` tepat sama sepanjang teks `"ELEKTRONIK"` di atasnya dan sejajar tegak lurus sempurna di sisi kiri dan kanan. Menggeser posisi vertikal kotak ke `lineY + 9.5 pt` sehingga simetris sempurna di tengah area tanda tangan (jarak ke garis bawah 9.5 pt, jarak ke teks atas 8.5 pt). Format yang sama diselaraskan pada SPK Project Charter.
+  2. Menstandarkan spasi *before* tabel menjadi 12 pt (visual dari paragraf narasi maupun garis pemisah Zona B) dan spasi *after* tabel menjadi 12 pt (seperti kotak pada invoice).
+  3. Menurunkan baseline teks *Terbilang* dan judul catatan pertama setelah tabel sebesar 8 pt (`y = tableBottomY - 20 pt`), sehingga jarak visual dari garis penutup bawah tabel ke bagian atas huruf teks adalah tepat 12.5 pt (lega, seimbang, dan tidak lagi mepet dengan tabel).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan teks 10000 sepanjang ELEKTRONIK, posisi kotak meterai align center vertikal, serta penyeragaman spasi before & after tabel invoice pada seluruh dokumen. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 19 | 17 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 20 | 18 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **34** | **27** | **7** | **1** |
+| **Total Temuan** | **35** | **28** | **7** | **1** |
