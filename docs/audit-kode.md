@@ -22,7 +22,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
 | **A-01** | `src/lib/pdf-generator.ts` | 5.399 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Ya** |
 | **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.766 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Ya** |
-| **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Ya** |
+| **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 $\rightarrow$ 725 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 $\rightarrow$ 1.352 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-05** | `src/lib/data-service.ts` | 1.939 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Ya** |
 
@@ -130,8 +130,9 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-03 — `src/features/accounting/reports-page.tsx`
-- **Jumlah Baris:** 3.161 baris
+- **Jumlah Baris:** 3.161 $\rightarrow$ 725 baris (Pengurangan ~77%)
 - **Prioritas:** Sangat Tinggi
+- **Status:** **Selesai Dipecah & Tervalidasi**
 - **Tanggung Jawab yang Tercampur:**
   1. State filter periode (bulanan, kuartalan, tahunan, kustom) dan orkestrasi 7 tab laporan.
   2. Perhitungan & rendering Laporan Laba Rugi Komprehensif.
@@ -141,20 +142,21 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
   6. Perhitungan & rendering Buku Besar (GL) akun tunggal & seluruh akun.
   7. Perhitungan & rendering Neraca Saldo (Trial Balance) sebelum & setelah penyesuaian.
   8. Orkestrasi ekspor PDF, Excel (.xlsx), dan CSV untuk ketujuh laporan.
-- **Rekomendasi Pemecahan Konkret:**
-  Pecah menjadi sub-komponen per tab di `src/features/accounting/reports/`:
-  1. `reports-page.tsx` (~300 baris): Shell laporan, filter toolbar terpadu, `ExportDownloadMenu`, navigasi tab.
-  2. `reports/income-statement-view.tsx` (~350 baris): Komponen tampilan Laporan Laba Rugi.
-  3. `reports/balance-sheet-view.tsx` (~350 baris): Komponen tampilan Laporan Posisi Keuangan.
-  4. `reports/equity-statement-view.tsx` (~250 baris): Komponen tampilan Laporan Perubahan Ekuitas.
-  5. `reports/cash-flow-view.tsx` (~300 baris): Komponen tampilan Laporan Arus Kas.
-  6. `reports/general-ledger-view.tsx` (~450 baris): Komponen tampilan Buku Besar & kartu akun.
-  7. `reports/trial-balance-view.tsx` (~350 baris): Komponen tampilan Neraca Saldo & saldo penyesuaian.
-  8. `reports/reports-export-handlers.ts` (~400 baris): Kumpulan fungsi unduh PDF, Excel, dan CSV.
-- **Risiko Pemecahan:** Rendah (Logika murni presentasi data yang sudah dihitung oleh `accounting-engine.ts`).
+- **Hasil Pemecahan Konkret:**
+  Telah dipecah ke 9 modul terisolasi di `src/features/accounting/reports/`:
+  1. `reports-page.tsx` (725 baris): Shell laporan, state hook terpadu, kalkulasi useMemo, layout selector, dan orkestrasi tab.
+  2. `reports/reports-common.tsx`: Helper pemformatan moneter (`formatCurrency`, `formatBalanceAmount`, `formatSplitzCurrency`, `formatDateSplitz`).
+  3. `reports/reports-export-handlers.ts`: Kumpulan handler ekspor laporan ke PDF, Excel (.xlsx), dan CSV.
+  4. `reports/income-statement-view.tsx`: Komponen tampilan ringkas & detail Laporan Laba Rugi.
+  5. `reports/equity-statement-view.tsx`: Komponen tampilan ringkas & detail Laporan Perubahan Ekuitas.
+  6. `reports/balance-sheet-view.tsx`: Komponen tampilan ringkas & detail Laporan Posisi Keuangan (Neraca).
+  7. `reports/cash-flow-view.tsx`: Komponen tampilan ringkas & detail Laporan Arus Kas.
+  8. `reports/trial-balance-view.tsx`: Komponen tampilan Neraca Saldo (Trial Balance).
+  9. `reports/general-ledger-view.tsx`: Komponen tampilan Buku Besar (General Ledger).
+  10. `reports/reports-print-content.tsx`: Komponen render tata letak cetak dokumen A4.
+- **Risiko Pemecahan:** Rendah (Logika akuntansi tetap utuh 100%).
 - **Dependensi Terpengaruh:** `accounting-engine.ts`, `pdf-generator.ts`, `excel-exporter.ts`, `csv-exporter.ts`.
-- **Tes yang Harus Dijalankan:** `npm run typecheck`, `npx vitest run tests/unit/accounting-pdf-excel.test.ts`.
-- **Perlu Keputusanku?** Ya
+- **Hasil Pengujian:** `npm run typecheck` lolos 100%, 13 file pengujian Vitest (67 tests) lulus 100%.
 
 ---
 
@@ -392,7 +394,7 @@ Audit terhadap antarmuka pengguna Altcycles dilakukan dengan meneliti implementa
 | **C-04** | Kartu Dashboard & Modal Proyek | Spasi Header Kartu & Radius Modal Dialog | Di beberapa kartu dashboard (`admin-dashboard.tsx`), jarak `CardTitle` ke `CardDescription` menggunakan margin tambahan `mt-1`. Di `project-detail-page.tsx:3271`, modal memakai radius `rounded-xl` | Standarkan spasi judul-deskripsi kartu tepat 4px (`gap-1` tanpa margin tambahan). Seluruh modal dialog wajib konsisten `rounded-2xl` | Ritme vertikal kartu lebih rapat dan rapi; keseragaman bentuk dialog | Sedang | **Ya** |
 | **C-05** | Sel Tabel Transaksi (Mobile Viewport) | Area Sentuh (*Touch Target*) Aksi | Tombol aksi tabel berbentuk icon button `size-8` (32x32px). Di layar sentuh ponsel (<640px), ukuran ini di bawah rekomendasi aksesibilitas WCAG (44x44px) | Tambahkan pseudoelemen sentuh transparan (`relative after:absolute after:-inset-1.5`) pada tombol aksi mobile tanpa mengubah ukuran visual | Tombol aksi jauh lebih mudah ditekan jari di ponsel tanpa memakan tempat di desktop | Sedang | **Ya** |
 | **C-06** | `system-config-page.tsx:660` | Kontainer Kartu Tabel | Kartu tabel dibungkus kontainer ber-border ganda (`rounded-xl border`) di dalam `CardContent` dengan padding besar | Terapkan pola *edge-to-edge* standar Altcycles: `Card` dengan `CardContent className="p-0"` dan `overflow-hidden` | Menghilangkan ruang kosong ganda dan menyelaraskan dengan halaman master lainnya | Sedang | **Ya** |
-| **C-07** | `reports-page.tsx:2343-2431` | Inline Styles pada Tabel Laporan Keuangan | Baris ringkasan laba rugi dan neraca menggunakan `style={{ color: "#0B43C8", backgroundColor: "#f8fafc" }}` | Pindahkan ke utility classes Tailwind berbasis token semantik (`text-primary`, `bg-muted/30`) | Memudahkan pemeliharaan CSS dan mendukung penuh tema dark mode | Rendah | **Ya** |
+| **C-07** | `reports-page.tsx:2343-2431` | Inline Styles pada Tabel Laporan Keuangan | Baris ringkasan laba rugi dan neraca menggunakan `style={{ color: "#0B43C8", backgroundColor: "#f8fafc" }}` | Pindahkan ke utility classes Tailwind berbasis token semantik (`text-primary`, `bg-muted/30`) | Memudahkan pemeliharaan CSS dan mendukung penuh tema dark mode | Rendah | **Selesai Diperbaiki** |
 | **C-08** | Seluruh Portal | Standarisasi Huruf Kapital (Proper Case vs UPPERCASE) | Mayoritas UI sudah patuh pada Proper Case, namun beberapa label badge dan tombol aksi di modul operasional masih sesekali menggunakan UPPERCASE | Tegaskan aturan `AGENTS.md`: Proper Case untuk seluruh antarmuka portal; UPPERCASE hanya diizinkan untuk klasifikasi akun resmi di modul Akuntansi & Laporan | Tampilan antarmuka profesional, tenang, dan tidak terkesan membentak pengguna | Rendah | **Ya** |
 | **C-09** | `export-download-menu.tsx` & Halaman Dokumen / Termin Proyek | Dropdown Aksi Unduh Terpotong (*Clipping*) | Menu dropdown `ExportDownloadMenu` dirender dengan `position: absolute` inline di dalam kontainer `Card` ber-`overflow-hidden` atau tabel ber-`overflow-x-auto`. Akibatnya saat jadwal termin sedikit atau kontainer sempit, kartu menu dropdown (tinggi ~175px) terpotong (*clipped*) secara visual dan tidak keluar secara penuh | Migrasikan `ExportDownloadMenu` ke React Portal (`createPortal(..., document.body)`) dengan posisi `fixed z-[99999]`, perhitungan batas viewport otomatis (*smart flip upward & clamp*), serta perkuat `DocumentDownloadMenu` ke `z-[99999]`. Dokumentasikan sebagai aturan baku di `AGENTS.md` | Menu dropdown selalu utuh, mengambang di lapisan terdepan tanpa pernah terpotong oleh overflow kontainer tabel | Kritis | **Selesai Diperbaiki** |
 
