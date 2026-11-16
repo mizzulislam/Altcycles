@@ -1462,7 +1462,18 @@ async function renderDocumentPdfInternal(
       const labelColW = Math.min(maxLabelW, Math.ceil(longestSingleLineLabel) + 4);
       const valColW = rightColW - labelColW - colonColW;
 
+      const isBoldMetaValue = (label: string): boolean => {
+        const norm = label.trim().toLowerCase();
+        return (
+          norm.includes("status pengesahan") ||
+          norm.includes("status verifikasi") ||
+          norm.includes("hasil pengujian") ||
+          norm.includes("disetujui pada")
+        );
+      };
+
       const rightPrepared = effectiveMetaRows.map((m) => {
+        const valFont = isBoldMetaValue(m.label) ? fontBold : fontRegular;
         const labelLines = wrapTextByWidth(
           m.label,
           fontBold,
@@ -1471,12 +1482,12 @@ async function renderDocumentPdfInternal(
         );
         const valueLines = wrapTextByWidth(
           m.value || formatDocEmpty(),
-          fontRegular,
+          valFont,
           valFontSize,
           valColW,
         );
         const lineCount = Math.max(labelLines.length, valueLines.length, 1);
-        return { labelLines, valueLines, lineCount };
+        return { labelLines, valueLines, lineCount, valFont };
       });
 
       const leftTotalH = leftPrepared.reduce(
@@ -1551,7 +1562,7 @@ async function renderDocumentPdfInternal(
               x: valX,
               y: curRightY - vIdx * rowLineH,
               size: valFontSize,
-              font: fontRegular,
+              font: row.valFont,
               color: TEXT_DARK,
             },
             "B-meta-value",
@@ -1578,7 +1589,18 @@ async function renderDocumentPdfInternal(
       const colonX = marginX + labelColW + 2;
       const valX = marginX + labelColW + colonColW;
 
+      const isBoldMetaValue = (label: string): boolean => {
+        const norm = label.trim().toLowerCase();
+        return (
+          norm.includes("status pengesahan") ||
+          norm.includes("status verifikasi") ||
+          norm.includes("hasil pengujian") ||
+          norm.includes("disetujui pada")
+        );
+      };
+
       const prepared = effectiveMetaRows.map((m) => {
+        const valFont = isBoldMetaValue(m.label) ? fontBold : fontRegular;
         const labelLines = wrapTextByWidth(
           m.label,
           fontBold,
@@ -1587,12 +1609,12 @@ async function renderDocumentPdfInternal(
         );
         const valueLines = wrapTextByWidth(
           m.value || formatDocEmpty(),
-          fontRegular,
+          valFont,
           valFontSize,
           valColW,
         );
         const lineCount = Math.max(labelLines.length, valueLines.length, 1);
-        return { labelLines, valueLines, lineCount };
+        return { labelLines, valueLines, lineCount, valFont };
       });
 
       const totalH = prepared.reduce(
@@ -1633,7 +1655,7 @@ async function renderDocumentPdfInternal(
               x: valX,
               y: y - vIdx * rowLineH,
               size: valFontSize,
-              font: fontRegular,
+              font: row.valFont,
               color: TEXT_DARK,
             },
             "B-meta-value",
@@ -1702,8 +1724,14 @@ async function renderDocumentPdfInternal(
   if (spec.paragraphsBefore && spec.paragraphsBefore.length > 0) {
     const bodySize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
     const bodyLineH = PDF_LAYOUT_TOKENS.lineHeights.body; // 13.8 pt
+    const hasTableBelow = Boolean(
+      spec.tableColumns &&
+      spec.tableColumns.length > 0 &&
+      spec.tableRows &&
+      spec.tableRows.length > 0,
+    );
 
-    for (const para of spec.paragraphsBefore) {
+    spec.paragraphsBefore.forEach((para, pIdx) => {
       const wrapped = wrapTextByWidth(para, fontRegular, bodySize, contentWidth);
       ensureSpace(wrapped.length * bodyLineH + 8);
       for (const line of wrapped) {
@@ -1720,10 +1748,14 @@ async function renderDocumentPdfInternal(
         );
         y -= bodyLineH;
       }
-      y -= 4;
-    }
-    // Jeda after paragraf sebelum tabel disamakan dengan spasi before tabel invoice (12 pt visual)
-    y -= 2;
+      const isLastPara = pIdx === spec.paragraphsBefore!.length - 1;
+      // Jika di bawahnya ada tabel, spasi after paragraf terakhir adalah 0 sesuai arahan pengguna
+      if (!isLastPara) {
+        y -= 4;
+      } else if (!hasTableBelow) {
+        y -= 6;
+      }
+    });
   }
 
   // ==========================================================================
@@ -4367,13 +4399,13 @@ export function buildClientPoPdfSpec(params: {
   const metaRows: PdfKeyValue[] = [
     { label: "Tanggal PO", value: formatDocDateLong(params.poDate) },
     { label: "Nomor PO Klien", value: params.poNumber },
-    { label: "Status Verifikasi", value: params.statusLabel },
     ...(params.quotationReference?.trim()
       ? [{ label: "Referensi Quotation", value: params.quotationReference.trim() }]
       : []),
     ...(params.projectLabel?.trim()
       ? [{ label: "Proyek Terkait", value: params.projectLabel.trim() }]
       : []),
+    { label: "Status Verifikasi", value: params.statusLabel },
   ];
 
   return {

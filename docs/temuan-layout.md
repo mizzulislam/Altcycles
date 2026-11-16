@@ -618,14 +618,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-36
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen PDF (`renderDocumentPdfInternal`, `buildClientPoPdfSpec`)
+- **Apa yang bertentangan:**
+  1. Pada dokumen Quotation, PO Klien, BAKP, UAT, dan BAST, spasi *before* tabel terlihat lebih besar dibanding spasi *after* tabel karena spasi *after* paragraf narasi di atasnya bercampur dengan spasi *before* tabel. Pengguna meminta spasi *after* paragraf untuk tiap teks yang di bawahnya terdapat tabel dibuat menjadi 0.
+  2. Seluruh nilai/isi dari label *Status Pengesahan*, *Status Verifikasi*, *Hasil Pengujian*, dan *Disetujui Pada* sebelumnya ditulis reguler `fontRegular`. Pengguna meminta nilai/isi ke-4 label ini ditulis dengan font tebal (`fontBold`).
+  3. Pada dokumen PO Klien, posisi label *Status Verifikasi* sebelumnya berada di tengah kolom kanan (di atas *Referensi Quotation* dan *Proyek Terkait*). Pengguna meminta label *Status Verifikasi* dipindahkan ke bawah *Proyek Terkait* (menjadi urutan terakhir pada label sebelah kanan).
+- **Yang kulakukan:**
+  1. Menghilangkan spasi *after* paragraf (`space-after = 0`) untuk paragraf yang tepat di bawahnya memiliki tabel (`hasTableBelow`), sehingga jarak visual dari teks paragraf ke garis atas header tabel (~11.3 pt) kini simetris dan seimbang sempurna dengan jarak visual spasi *after* tabel (~12.5 pt).
+  2. Menambahkan logika deteksi `isBoldMetaValue` untuk label *Status Pengesahan*, *Status Verifikasi*, *Hasil Pengujian*, dan *Disetujui Pada* di seluruh cabang metadata Zona B (baik 2-kolom maupun 1-kolom) sehingga nilai/isinya di-wrap dan di-render menggunakan `fontBold` dengan warna `TEXT_DARK`.
+  3. Memindahkan posisi *Status Verifikasi* pada `buildClientPoPdfSpec` menjadi urutan terakhir setelah *Proyek Terkait*.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan spasi after paragraf 0 sebelum tabel, font tebal nilai 4 label status, dan pemindahan Status Verifikasi PO Klien ke posisi paling bawah. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 20 | 18 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 21 | 19 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **35** | **28** | **7** | **1** |
+| **Total Temuan** | **36** | **29** | **7** | **1** |
