@@ -21,7 +21,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | ID | File Sumber | Baris | Tanggung Jawab Utama yang Bercampur | Estimasi Usaha | Estimasi Manfaat | Perlu Keputusanku? |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
 | **A-01** | `src/lib/pdf-generator.ts` | 5.399 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Ya** |
-| **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.766 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Ya** |
+| **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.861 $\rightarrow$ 1.306 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 $\rightarrow$ 725 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 $\rightarrow$ 1.352 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-05** | `src/lib/data-service.ts` | 1.939 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Ya** |
@@ -102,30 +102,31 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-02 — `src/features/client-projects/project-detail-page.tsx`
-- **Jumlah Baris:** 4.766 baris
+- **Jumlah Baris:** 4.861 $\rightarrow$ 1.306 baris (Pengurangan ~73%)
 - **Prioritas:** Kritis / Sangat Tinggi
-- **Tanggung Jawab yang Tercampur:**
-  1. Root controller halaman detail proyek, header status, aksi cepat, dan fetch data Supabase.
-  2. Tab 1: Ringkasan Proyek & Finansial (KPI, margin, realisasi biaya).
-  3. Tab 2: Termin Penagihan (daftar termin, form tambah/edit termin, modal penagihan invoice).
-  4. Tab 3: Purchase Order Klien (verifikasi PO, upload berkas PO, dialog persetujuan).
-  5. Tab 4: Kontrak & SPK 10 Pasal (editor klausul, pengesahan, unduh PDF/DOCX SPK).
-  6. Tab 5: Dokumen Serah Terima (Quotation, SOW, BAKP, UAT, BAST beserta checklist dan tanda tangan).
-  7. Tab 6: Log & Riwayat Audit Proyek.
-  8. Logika pembuatan dokumen transaksi lokal (`makeQuotationSpec`, `makeSowSpec`, `makeBastSpec`, dll.).
-- **Rekomendasi Pemecahan Konkret:**
-  Pecah menjadi folder modul komponen per tab di `src/features/client-projects/components/`:
-  1. `project-detail-page.tsx` (~350 baris): Root shell, header proyek, tabs controller, dan data fetching orchestration.
-  2. `components/project-summary-tab.tsx` (~300 baris): Tab ringkasan metrik laba rugi proyek & kartu status.
-  3. `components/project-milestones-tab.tsx` (~450 baris): Tabel termin penagihan & modal dialog termin.
-  4. `components/project-client-po-tab.tsx` (~350 baris): Tabel PO klien & dialog verifikasi PO.
-  5. `components/project-spk-tab.tsx` (~400 baris): Tab SPK / Project Charter & tombol generate dokumen.
-  6. `components/project-acceptance-docs-tab.tsx` (~500 baris): Tab UAT, BAST, BAKP, SOW dan modal persetujuannya.
-  7. `components/project-specs-builder.ts` (~350 baris): Logika konversi data proyek ke `PdfDocumentSpec` (memisahkan logika presentasi dokumen dari UI React).
-- **Risiko Pemecahan:** Sedang (Memerlukan props interface yang rapi antar tab).
-- **Dependensi Terpengaruh:** `App.tsx`, `client-projects.ts`, `pdf-generator.ts`.
-- **Tes yang Harus Dijalankan:** `npm run typecheck`, `npx vitest run tests/db/phase4-progress-billing-and-buyer.test.ts`.
-- **Perlu Keputusanku?** Ya
+- **Status:** **Selesai Dipecah & Tervalidasi**
+- **Hasil Refaktorisasi:**
+  Telah diekstrak ke dalam 14 sub-modul terstruktur tanpa mengubah alur logika bisnis atau rumus akuntansi:
+  1. `project-specs-builder.ts` (579 baris): Spesifikasi unduh PDF & Word untuk Quotation, SOW, BAKP, UAT, dan BAST.
+  2. `components/project-milestones-export.ts` (158 baris): Ekspor jadwal termin ke Excel, PDF, dan CSV.
+  3. Folder `dialogs/` (9 modal dialog mandiri):
+     - `milestone-schedule-dialog.tsx`: Penyusunan jadwal termin 100%.
+     - `record-progress-dialog.tsx`: Pencatatan progres akrual pekerjaan.
+     - `create-quotation-dialog.tsx`: Penerbitan quotation proyek.
+     - `create-project-doc-dialog.tsx`: Perekaman dokumen SoW / SPK Project Charter.
+     - `create-bakp-dialog.tsx`: Pembuatan Berita Acara Kemajuan Pekerjaan.
+     - `create-uat-dialog.tsx`: Pencatatan checklist UAT.
+     - `create-bast-dialog.tsx`: Penerbitan Berita Acara Serah Terima.
+     - `view-detail-dialog.tsx`: Modal inspeksi rincian data transaksi.
+     - `edit-record-dialog.tsx`: Modal universal editor baris data (8 seksi entitas).
+  4. Folder `tabs/` (4 tab views terstruktur):
+     - `milestones-tab.tsx`: Tab jadwal termin penagihan & progres akrual.
+     - `quotation-po-tab.tsx`: Tab penawaran harga & purchase order klien.
+     - `sow-spk-tab.tsx`: Tab Scope of Work & SPK Project Charter.
+     - `acceptance-docs-tab.tsx`: Tab dokumen serah terima (BAKP, UAT, BAST).
+- **Verifikasi:**
+  - `npm run typecheck` (`tsc --noEmit`): Lulus 100% tanpa error.
+  - `npx vitest run`: 13 test files / 67 tests lulus 100% (termasuk `tests/db/phase4-progress-billing-and-buyer.test.ts`).
 
 ---
 

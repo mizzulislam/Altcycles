@@ -1,0 +1,635 @@
+import { CheckCircle2Icon, PlusIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { EmptyState } from "@/components/ui/empty";
+import { MonetaryCell } from "@/components/shared/monetary-cell";
+import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatDateID, formatRupiah } from "@/lib/formatters";
+import {
+  BAKP_STATUS_META,
+  BAST_STATUS_META,
+  RowEditActionButtons,
+  SectionEditControls,
+  UAT_CONCLUSION_META,
+  type EditableRecord,
+  type SectionKey,
+  type ViewDetailState,
+} from "../components/project-detail-shared";
+import type {
+  HandoverReportRow,
+  ProgressReportRow,
+  UatChecklistRow,
+} from "@/types/database.types";
+import type { ProjectWorkspaceBundle } from "@/lib/operations/client-projects";
+
+interface AcceptanceDocsTabProps {
+  bundle: ProjectWorkspaceBundle;
+  isSectionEditing: (key: SectionKey) => boolean;
+  getSelectedIds: (key: SectionKey) => string[];
+  setSectionEditing: (key: SectionKey, enabled: boolean) => void;
+  toggleSelectAllRows: (
+    key: SectionKey,
+    allIds: string[],
+    checked: boolean | "indeterminate",
+  ) => void;
+  toggleRowSelection: (
+    key: SectionKey,
+    id: string,
+    checked: boolean | "indeterminate",
+  ) => void;
+  setDeleteConfirm: (
+    confirm: { section: SectionKey; ids: string[]; label: string } | null,
+  ) => void;
+  setViewModal: (modal: ViewDetailState | null) => void;
+  setEditRecord: (record: EditableRecord | null) => void;
+  openBakpDialog: () => void;
+  openUatDialog: () => void;
+  openBastDialog: () => void;
+  onApproveBakpByClient: (id: string) => Promise<void>;
+  onDownloadBakpPdf: (b: ProgressReportRow) => Promise<void>;
+  onDownloadBakpWord: (b: ProgressReportRow) => Promise<void>;
+  onDownloadUatPdf: (u: UatChecklistRow) => Promise<void>;
+  onDownloadUatWord: (u: UatChecklistRow) => Promise<void>;
+  onDownloadBastPdf: (h: HandoverReportRow) => Promise<void>;
+  onDownloadBastWord: (h: HandoverReportRow) => Promise<void>;
+}
+
+export function AcceptanceDocsTab({
+  bundle,
+  isSectionEditing,
+  getSelectedIds,
+  setSectionEditing,
+  toggleSelectAllRows,
+  toggleRowSelection,
+  setDeleteConfirm,
+  setViewModal,
+  setEditRecord,
+  openBakpDialog,
+  openUatDialog,
+  openBastDialog,
+  onApproveBakpByClient,
+  onDownloadBakpPdf,
+  onDownloadBakpWord,
+  onDownloadUatPdf,
+  onDownloadUatWord,
+  onDownloadBastPdf,
+  onDownloadBastWord,
+}: AcceptanceDocsTabProps) {
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Card 4A: BAKP */}
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Berita Acara Kemajuan Pekerjaan / BAKP (Lampiran A.4)
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+              Syarat wajib sebelum menerbitkan Invoice Termin Progres.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <SectionEditControls
+              hasItems={bundle.bakpList.length > 0}
+              isEditing={isSectionEditing("bakp")}
+              selectedCount={getSelectedIds("bakp").length}
+              onStartEdit={() => setSectionEditing("bakp", true)}
+              onCancelEdit={() => setSectionEditing("bakp", false)}
+              onDeleteSelected={() =>
+                setDeleteConfirm({
+                  section: "bakp",
+                  ids: getSelectedIds("bakp"),
+                  label: "dokumen BAKP terpilih",
+                })
+              }
+            />
+            <Button
+              type="button"
+              disabled={bundle.milestones.length === 0}
+              title={
+                bundle.milestones.length === 0
+                  ? "Susun jadwal termin 100% pada tab Termin & Progres terlebih dahulu sebelum membuat BAKP"
+                  : "Buat Berita Acara Kemajuan Pekerjaan (Lampiran A.4)"
+              }
+              onClick={openBakpDialog}
+              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <PlusIcon data-icon="inline-start" />
+              Buat BAKP
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                {isSectionEditing("bakp") && (
+                  <TableHead className="w-12 text-center align-middle px-3">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={
+                          bundle.bakpList.length > 0 &&
+                          getSelectedIds("bakp").length === bundle.bakpList.length
+                        }
+                        indeterminate={
+                          getSelectedIds("bakp").length > 0 &&
+                          getSelectedIds("bakp").length < bundle.bakpList.length
+                        }
+                        onCheckedChange={(checked) =>
+                          toggleSelectAllRows(
+                            "bakp",
+                            bundle.bakpList.map((b) => b.id),
+                            checked,
+                          )
+                        }
+                        aria-label="Pilih semua BAKP"
+                      />
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. BAKP</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Capaian</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nilai Tagih</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bundle.bakpList.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6 + (isSectionEditing("bakp") ? 1 : 0)} className="p-0">
+                    <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
+                      <EmptyState
+                        title="Belum ada BAKP"
+                        description="Terbitkan BAKP saat capaian termin siap ditagihkan."
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bundle.bakpList.map((b) => {
+                  const bakpStatus = BAKP_STATUS_META[b.status] ?? {
+                    label: b.status,
+                    tone: "warning" as SemanticTone,
+                  };
+                  const isChecked = getSelectedIds("bakp").includes(b.id);
+                  return (
+                    <TableRow key={b.id}>
+                      {isSectionEditing("bakp") && (
+                        <TableCell className="align-top text-center px-3 py-3.5">
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={(checked) =>
+                              toggleRowSelection("bakp", b.id, checked)
+                            }
+                            className="mt-0.5"
+                            aria-label={`Pilih ${b.bakp_number}`}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
+                        {b.bakp_number}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
+                        {formatDateID(b.bakp_date)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-medium whitespace-nowrap tabular-nums">
+                        {b.cumulative_percentage}%
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                        <MonetaryCell amount={b.billable_amount} />
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
+                          <StatusBadge
+                            tone={bakpStatus.tone}
+                            label={bakpStatus.label}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                        {isSectionEditing("bakp") ? (
+                          <RowEditActionButtons
+                            onView={() =>
+                              setViewModal({
+                                title: `Rincian ${b.bakp_number}`,
+                                rows: [
+                                  { label: "Nomor BAKP", value: b.bakp_number },
+                                  { label: "Tanggal BAKP", value: formatDateID(b.bakp_date) },
+                                  { label: "Capaian Kumulatif", value: `${b.cumulative_percentage}%` },
+                                  { label: "Nilai Tagih Termin", value: formatRupiah(b.billable_amount) },
+                                  { label: "Catatan Pemeriksaan", value: b.findings_notes ?? "-" },
+                                  { label: "Status", value: bakpStatus.label },
+                                ],
+                                onDownloadPdf: () => void onDownloadBakpPdf(b),
+                                onDownloadWord: () => void onDownloadBakpWord(b),
+                              })
+                            }
+                            onEdit={() => setEditRecord({ section: "bakp", item: { ...b } })}
+                            onDelete={() =>
+                              setDeleteConfirm({
+                                section: "bakp",
+                                ids: [b.id],
+                                label: b.bakp_number,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center gap-1 -my-1.5">
+                            {b.status !== "approved_by_client" ? (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                title="Setujui BAKP oleh Klien"
+                                onClick={() => void onApproveBakpByClient(b.id)}
+                                className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                              >
+                                <CheckCircle2Icon className="size-4" />
+                                <span className="sr-only">Setujui Klien</span>
+                              </Button>
+                            ) : null}
+                            <DocumentDownloadMenu
+                              title="Unduh BAKP (PDF / Word)"
+                              onDownloadPdf={() => onDownloadBakpPdf(b)}
+                              onDownloadWord={() => onDownloadBakpWord(b)}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Card 4B: UAT */}
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Checklist Pengujian UAT (Lampiran A.7)
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+              UAT wajib dinyatakan Diterima sebelum BAST dapat diterbitkan.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <SectionEditControls
+              hasItems={bundle.uatList.length > 0}
+              isEditing={isSectionEditing("uat")}
+              selectedCount={getSelectedIds("uat").length}
+              onStartEdit={() => setSectionEditing("uat", true)}
+              onCancelEdit={() => setSectionEditing("uat", false)}
+              onDeleteSelected={() =>
+                setDeleteConfirm({
+                  section: "uat",
+                  ids: getSelectedIds("uat"),
+                  label: "dokumen UAT terpilih",
+                })
+              }
+            />
+            <Button
+              type="button"
+              onClick={openUatDialog}
+              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <PlusIcon data-icon="inline-start" />
+              Catat UAT
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                {isSectionEditing("uat") && (
+                  <TableHead className="w-12 text-center align-middle px-3">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={
+                          bundle.uatList.length > 0 &&
+                          getSelectedIds("uat").length === bundle.uatList.length
+                        }
+                        indeterminate={
+                          getSelectedIds("uat").length > 0 &&
+                          getSelectedIds("uat").length < bundle.uatList.length
+                        }
+                        onCheckedChange={(checked) =>
+                          toggleSelectAllRows(
+                            "uat",
+                            bundle.uatList.map((u) => u.id),
+                            checked,
+                          )
+                        }
+                        aria-label="Pilih semua UAT"
+                      />
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. UAT</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Uji</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Penguji Klien</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Kesimpulan</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bundle.uatList.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5 + (isSectionEditing("uat") ? 1 : 0)} className="p-0">
+                    <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
+                      <EmptyState
+                        title="Belum ada pengujian UAT"
+                        description="Rekam hasil skenario uji bersama klien sebelum serah terima akhir."
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bundle.uatList.map((u) => {
+                  const uatMeta = UAT_CONCLUSION_META[u.conclusion] ?? {
+                    label: u.conclusion,
+                    tone: "info" as SemanticTone,
+                  };
+                  const isChecked = getSelectedIds("uat").includes(u.id);
+                  return (
+                    <TableRow key={u.id}>
+                      {isSectionEditing("uat") && (
+                        <TableCell className="align-top text-center px-3 py-3.5">
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={(checked) =>
+                              toggleRowSelection("uat", u.id, checked)
+                            }
+                            className="mt-0.5"
+                            aria-label={`Pilih ${u.uat_number}`}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
+                        {u.uat_number}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
+                        {formatDateID(u.test_date)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
+                        {u.client_tester_name}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
+                          <StatusBadge
+                            tone={uatMeta.tone}
+                            label={uatMeta.label}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                        {isSectionEditing("uat") ? (
+                          <RowEditActionButtons
+                            onView={() =>
+                              setViewModal({
+                                title: `Rincian ${u.uat_number}`,
+                                rows: [
+                                  { label: "Nomor UAT", value: u.uat_number },
+                                  { label: "Tanggal Uji", value: formatDateID(u.test_date) },
+                                  { label: "Lingkungan Uji", value: u.staging_url ?? "-" },
+                                  { label: "Penguji Klien", value: u.client_tester_name },
+                                  { label: "Pendamping Altvira", value: u.altvira_companion_name },
+                                  { label: "Kesimpulan", value: uatMeta.label },
+                                ],
+                                onDownloadPdf: () => void onDownloadUatPdf(u),
+                                onDownloadWord: () => void onDownloadUatWord(u),
+                              })
+                            }
+                            onEdit={() => setEditRecord({ section: "uat", item: { ...u } })}
+                            onDelete={() =>
+                              setDeleteConfirm({
+                                section: "uat",
+                                ids: [u.id],
+                                label: u.uat_number,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center -my-1.5">
+                            <DocumentDownloadMenu
+                              title="Unduh UAT (PDF / Word)"
+                              onDownloadPdf={() => onDownloadUatPdf(u)}
+                              onDownloadWord={() => onDownloadUatWord(u)}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Card 4C: BAST */}
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="text-base sm:text-lg font-bold">
+              Berita Acara Serah Terima / BAST (Lampiran A.8)
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+              Syarat wajib penerbitan Invoice Pelunasan Akhir.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <SectionEditControls
+              hasItems={bundle.bastList.length > 0}
+              isEditing={isSectionEditing("bast")}
+              selectedCount={getSelectedIds("bast").length}
+              onStartEdit={() => setSectionEditing("bast", true)}
+              onCancelEdit={() => setSectionEditing("bast", false)}
+              onDeleteSelected={() =>
+                setDeleteConfirm({
+                  section: "bast",
+                  ids: getSelectedIds("bast"),
+                  label: "dokumen BAST terpilih",
+                })
+              }
+            />
+            <Button
+              type="button"
+              disabled={
+                !bundle.uatList.some(
+                  (u) =>
+                    u.conclusion === "accepted" ||
+                    u.conclusion === "accepted_with_notes",
+                )
+              }
+              title={
+                !bundle.uatList.some(
+                  (u) =>
+                    u.conclusion === "accepted" ||
+                    u.conclusion === "accepted_with_notes",
+                )
+                  ? "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)"
+                  : "Terbitkan BAST (Lampiran A.8)"
+              }
+              onClick={openBastDialog}
+              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <PlusIcon data-icon="inline-start" />
+              Terbitkan BAST
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                {isSectionEditing("bast") && (
+                  <TableHead className="w-12 text-center align-middle px-3">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={
+                          bundle.bastList.length > 0 &&
+                          getSelectedIds("bast").length === bundle.bastList.length
+                        }
+                        indeterminate={
+                          getSelectedIds("bast").length > 0 &&
+                          getSelectedIds("bast").length < bundle.bastList.length
+                        }
+                        onCheckedChange={(checked) =>
+                          toggleSelectAllRows(
+                            "bast",
+                            bundle.bastList.map((h) => h.id),
+                            checked,
+                          )
+                        }
+                        aria-label="Pilih semua BAST"
+                      />
+                    </div>
+                  </TableHead>
+                )}
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. BAST</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Serah Terima</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Garansi Pemeliharaan</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bundle.bastList.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5 + (isSectionEditing("bast") ? 1 : 0)} className="p-0">
+                    <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
+                      <EmptyState
+                        title="Belum ada BAST"
+                        description="Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST."
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                bundle.bastList.map((h) => {
+                  const bastStatus = BAST_STATUS_META[h.status] ?? {
+                    label: h.status,
+                    tone: "warning" as SemanticTone,
+                  };
+                  const isChecked = getSelectedIds("bast").includes(h.id);
+                  return (
+                    <TableRow key={h.id}>
+                      {isSectionEditing("bast") && (
+                        <TableCell className="align-top text-center px-3 py-3.5">
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={(checked) =>
+                              toggleRowSelection("bast", h.id, checked)
+                            }
+                            className="mt-0.5"
+                            aria-label={`Pilih ${h.bast_number}`}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
+                        {h.bast_number}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
+                        {formatDateID(h.bast_date)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap tabular-nums">
+                        {h.warranty_days} Hari
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
+                          <StatusBadge
+                            tone={bastStatus.tone}
+                            label={bastStatus.label}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                        {isSectionEditing("bast") ? (
+                          <RowEditActionButtons
+                            onView={() =>
+                              setViewModal({
+                                title: `Rincian ${h.bast_number}`,
+                                rows: [
+                                  { label: "Nomor BAST", value: h.bast_number },
+                                  { label: "Tanggal Serah Terima", value: formatDateID(h.bast_date) },
+                                  { label: "Garansi Pemeliharaan", value: `${h.warranty_days} Hari` },
+                                  { label: "Status", value: bastStatus.label },
+                                ],
+                                onDownloadPdf: () => void onDownloadBastPdf(h),
+                                onDownloadWord: () => void onDownloadBastWord(h),
+                              })
+                            }
+                            onEdit={() => setEditRecord({ section: "bast", item: { ...h } })}
+                            onDelete={() =>
+                              setDeleteConfirm({
+                                section: "bast",
+                                ids: [h.id],
+                                label: h.bast_number,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center -my-1.5">
+                            <DocumentDownloadMenu
+                              title="Unduh BAST (PDF / Word)"
+                              onDownloadPdf={() => onDownloadBastPdf(h)}
+                              onDownloadWord={() => onDownloadBastWord(h)}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
