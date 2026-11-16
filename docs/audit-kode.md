@@ -257,20 +257,20 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-09 — `src/features/master-data/periods-page.tsx`
-- **Jumlah Baris:** 1.515 baris
+- **Jumlah Baris Asal:** 1.515 baris (kini 524 baris, terpangkas >65%)
 - **Prioritas:** Tinggi
-- **Tanggung Jawab yang Tercampur:**
-  1. Tabel daftar periode akuntansi kalender & status buka/tutup.
-  2. Wizard Tutup Buku Bulanan (Pengecekan selisih debit/kredit, verifikasi jurnal belum diposting).
-  3. Wizard Tutup Buku Akhir Tahun (Penutupan akun pendapatan dan beban ke ikhtisar laba rugi dan saldo laba ditahan).
-  4. Dialog Buka Kunci Periode & Audit Trail Pembukaan Kunci.
-- **Rekomendasi Pemecahan Konkret:**
-  1. `periods-page.tsx` (~400 baris): Tabel periode & ringkasan status.
-  2. `components/period-monthly-closing-wizard.tsx` (~450 baris): Dialog wizard tutup buku bulanan.
-  3. `components/period-annual-closing-wizard.tsx` (~400 baris): Dialog wizard tutup buku tahunan.
-  4. `components/period-unlock-dialog.tsx` (~200 baris): Dialog buka kunci dengan validasi Super Admin.
-- **Risiko Pemecahan:** Rendah.
-- **Perlu Keputusanku?** Ya
+- **Status:** **Selesai Dipecah & Tervalidasi**
+- **Hasil Refaktorisasi:**
+  Telah dipecah menjadi 5 sub-komponen terisolasi di `src/features/master-data/components/`:
+  1. `src/features/master-data/components/period-create-dialog.tsx` (115 baris): Dialog modal pembukaan periode kalender baru.
+  2. `src/features/master-data/components/period-reversing-dialog.tsx` (105 baris): Dialog modal penerbitan jurnal pembalik otomatis awal periode.
+  3. `src/features/master-data/components/period-manual-closing-dialog.tsx` (310 baris): Dialog modal catat & edit jurnal penutup manual dengan kalkulasi keseimbangan debit/kredit real-time.
+  4. `src/features/master-data/components/period-closing-detail-dialog.tsx` (95 baris): Dialog modal peninjauan detail jurnal penutup.
+  5. `src/features/master-data/components/period-closing-table.tsx` (385 baris): Tabel riwayat jurnal penutup dengan kontrol penyortiran tanggal, pemilihan checkbox massal, dan aksi baris.
+  6. `src/features/master-data/components/period-list-table.tsx` (145 baris): Tabel daftar periode bulanan dengan tombol kunci/buka kembali dan penghapusan periode.
+  7. `src/features/master-data/periods-page.tsx` (524 baris): Shell utama yang mengorkestrasikan sinkronisasi data, dialog konfirmasi tutup/buka kembali/hapus, serta panduan GAAP/IFRS.
+- **Risiko Pemecahan:** Rendah (100% logika tutup buku, rekonsiliasi, dan kompatibilitas props tetap utuh).
+- **Hasil Pengujian:** `npm run typecheck` lulus 100%, 13 file pengujian Vitest (68 tests) lulus 100%.
 
 ---
 
