@@ -229,6 +229,131 @@ export interface DocTitleConfig {
   fullTitleBar?: string;
 }
 
+export interface DocumentTitleMapping {
+  headerTitle: string;
+  fullTitle: string;
+}
+
+/**
+ * Batas lebar maksimum teks judul header kanan (setara lebar 'PURCHASE ORDER (PO)' pada Helvetica-Bold 22 pt = 261.558 pt)
+ */
+export const MAX_HEADER_TITLE_WIDTH = 261.558;
+
+/**
+ * Nilai lebar glyph StandardFonts Helvetica-Bold per 1000 unit em (PostScript AFM standard)
+ */
+const HELVETICA_BOLD_GLYPH_WIDTHS: Record<string, number> = {
+  " ": 278, "!": 333, '"': 556, "#": 556, "$": 556, "%": 889, "&": 722, "'": 278,
+  "(": 333, ")": 333, "*": 556, "+": 556, ",": 278, "-": 333, ".": 278, "/": 278,
+  "0": 556, "1": 556, "2": 556, "3": 556, "4": 556, "5": 556, "6": 556, "7": 556,
+  "8": 556, "9": 556, ":": 333, ";": 333, "<": 556, "=": 556, ">": 556, "?": 556,
+  "@": 1000,
+  "A": 722, "B": 722, "C": 722, "D": 722, "E": 667, "F": 611, "G": 778, "H": 722,
+  "I": 278, "J": 556, "K": 722, "L": 611, "M": 833, "N": 722, "O": 778, "P": 667,
+  "Q": 778, "R": 722, "S": 667, "T": 611, "U": 722, "V": 667, "W": 944, "X": 667,
+  "Y": 667, "Z": 611,
+  "[": 333, "\\": 278, "]": 333, "^": 556, "_": 556, "`": 278,
+  "a": 556, "b": 611, "c": 556, "d": 611, "e": 556, "f": 333, "g": 611, "h": 611,
+  "i": 278, "j": 278, "k": 556, "l": 278, "m": 889, "n": 611, "o": 611, "p": 611,
+  "q": 611, "r": 389, "s": 556, "t": 333, "u": 611, "v": 556, "w": 778, "x": 556,
+  "y": 556, "z": 500,
+  "{": 333, "|": 278, "}": 333, "~": 556,
+};
+
+/**
+ * Mengukur lebar teks pada font Helvetica-Bold tanpa dependensi instance PDFDocument
+ */
+export function measureHelveticaBoldWidth(text: string, size = 22): number {
+  let units = 0;
+  for (const char of text) {
+    units += HELVETICA_BOLD_GLYPH_WIDTHS[char] ?? 600;
+  }
+  return (units * size) / 1000;
+}
+
+/**
+ * Tabel Pemetaan Tunggal Judul Dokumen Sistem Altcycles ke Dokumen Cetak PDF.
+ * Kunci: Judul sumber dokumen persis (huruf kapital).
+ * headerTitle: Judul di kanan header (maksimal 2 kata, 16 karakter, lebar <= 261.56 pt).
+ * fullTitle: Judul lengkap untuk baris biru di bawah header (kata MASTER dihilangkan).
+ */
+export const DOCUMENT_TITLE_MAPPINGS: Record<string, DocumentTitleMapping> = {
+  "DAFTAR MASTER PROYEK DAN PENUGASAN TIM": {
+    headerTitle: "PROYEK TIM",
+    fullTitle: "DAFTAR PROYEK DAN PENUGASAN TIM",
+  },
+  "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA": {
+    headerTitle: "PAYMENT APPROVAL",
+    fullTitle: "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA",
+  },
+  "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES": {
+    headerTitle: "BACKUP JURNAL",
+    fullTitle: "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES",
+  },
+  "LAPORAN ANGGARAN VS REALISASI PROYEK": {
+    headerTitle: "BUDGETING",
+    fullTitle: "LAPORAN ANGGARAN VS REALISASI PROYEK",
+  },
+  "DAFTAR INVOICE PENAGIHAN & PIUTANG": {
+    headerTitle: "DAFTAR INVOICE",
+    fullTitle: "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+  },
+  "DAFTAR MASTER PELANGGAN/KLIEN": {
+    headerTitle: "DAFTAR KLIEN",
+    fullTitle: "DAFTAR PELANGGAN/KLIEN",
+  },
+  "DAFTAR MASTER VENDOR PEMASOK": {
+    headerTitle: "DAFTAR VENDOR",
+    fullTitle: "DAFTAR VENDOR PEMASOK",
+  },
+};
+
+/**
+ * Variasi judul sumber di kode pemanggil aplikasi (seperti penggunaan '&' atau spasi garis miring)
+ * yang dipetakan secara identik ke entri resmi.
+ */
+const TITLE_MAPPING_ALIASES: Record<string, DocumentTitleMapping> = {
+  "DAFTAR MASTER PROYEK & PENUGASAN TIM":
+    DOCUMENT_TITLE_MAPPINGS["DAFTAR MASTER PROYEK DAN PENUGASAN TIM"]!,
+  "DAFTAR MASTER PELANGGAN / KLIEN":
+    DOCUMENT_TITLE_MAPPINGS["DAFTAR MASTER PELANGGAN/KLIEN"]!,
+};
+
+/**
+ * Mencari pemetaan judul berdasarkan kecocokan persis atau setelah normalisasi simbol.
+ */
+export function findDocumentTitleMapping(rawTitle: string): DocumentTitleMapping | undefined {
+  const trimmed = rawTitle.trim().toUpperCase();
+  if (DOCUMENT_TITLE_MAPPINGS[trimmed]) {
+    return DOCUMENT_TITLE_MAPPINGS[trimmed];
+  }
+  if (TITLE_MAPPING_ALIASES[trimmed]) {
+    return TITLE_MAPPING_ALIASES[trimmed];
+  }
+  const normalized = trimmed
+    .replace(/\s*&\s*/g, " DAN ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ");
+  if (DOCUMENT_TITLE_MAPPINGS[normalized]) {
+    return DOCUMENT_TITLE_MAPPINGS[normalized];
+  }
+  return undefined;
+}
+
+/**
+ * Pencatat dokumen yang memicu fallback cadangan karena tidak terdaftar di pemetaan
+ * dan lebarnya melebihi batas 'PURCHASE ORDER (PO)'.
+ */
+export const DOCUMENT_TITLE_FALLBACK_RECORD: Array<{
+  rawTitle: string;
+  fallbackHeader: string;
+  measuredWidth: number;
+}> = [];
+
+export function clearDocumentTitleFallbackRecord(): void {
+  DOCUMENT_TITLE_FALLBACK_RECORD.length = 0;
+}
+
 /**
  * Menghapus prefix simbol mata uang (e.g. "Rp", "Rp ", "-Rp") dari string nominal
  * untuk tampilan tabel dan blok subtotal yang bersih tanpa simbol berulang.
@@ -240,13 +365,22 @@ function stripCurrencySymbol(text: string): string {
 
 /**
  * Memetakan judul dokumen menjadi singkatan di header kanan (jika judul panjang)
- * dan judul lengkap untuk baris abu di bawah garis header.
- * Judul pendek (INVOICE, KUITANSI, PURCHASE ORDER (PO)) tidak disingkat dan tidak mendapat baris abu.
+ * dan judul lengkap untuk baris biru di bawah garis header.
+ * Judul pendek (INVOICE, KUITANSI, PURCHASE ORDER) tidak disingkat dan tidak mendapat baris biru.
  */
 export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
   const normalized = rawTitle.trim().toUpperCase();
 
-  // 1. JADWAL TERMIN PENAGIHAN PROYEK -> JTPP
+  // 1. Cek tabel pemetaan tunggal terlebih dahulu
+  const mapped = findDocumentTitleMapping(rawTitle);
+  if (mapped) {
+    return {
+      headerTitle: mapped.headerTitle,
+      fullTitleBar: mapped.headerTitle !== mapped.fullTitle ? mapped.fullTitle : undefined,
+    };
+  }
+
+  // 2. JADWAL TERMIN PENAGIHAN PROYEK -> JTPP
   if (normalized.includes("JADWAL TERMIN PENAGIHAN PROYEK") || normalized === "JTPP") {
     return {
       headerTitle: "JTPP",
@@ -254,7 +388,7 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 2. SURAT PENAWARAN HARGA (QUOTATION) -> QUOTATION
+  // 3. SURAT PENAWARAN HARGA (QUOTATION) -> QUOTATION
   if (normalized.includes("SURAT PENAWARAN HARGA") || normalized.includes("PENAWARAN HARGA")) {
     return {
       headerTitle: "QUOTATION",
@@ -262,7 +396,7 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 3. USER ACCEPTANCE TEST (UAT) CHECKLIST -> UAT
+  // 4. USER ACCEPTANCE TEST (UAT) CHECKLIST -> UAT
   if (normalized.includes("USER ACCEPTANCE TEST") || normalized.includes("UAT CHECKLIST")) {
     return {
       headerTitle: "UAT",
@@ -270,7 +404,7 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 4. BERITA ACARA SERAH TERIMA (BAST) -> BAST
+  // 5. BERITA ACARA SERAH TERIMA (BAST) -> BAST
   if (normalized.includes("BERITA ACARA SERAH TERIMA") || normalized.includes("(BAST)")) {
     return {
       headerTitle: "BAST",
@@ -278,7 +412,7 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 5. BERITA ACARA KEMAJUAN PEKERJAAN (BAKP) -> BAKP
+  // 6. BERITA ACARA KEMAJUAN PEKERJAAN (BAKP) -> BAKP
   if (normalized.includes("BERITA ACARA KEMAJUAN PEKERJAAN") || normalized.includes("(BAKP)")) {
     return {
       headerTitle: "BAKP",
@@ -286,7 +420,7 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 6. STATEMENT OF WORK (SOW) -> SOW
+  // 7. STATEMENT OF WORK (SOW) -> SOW
   if (normalized.includes("STATEMENT OF WORK") || normalized.includes("(SOW)")) {
     return {
       headerTitle: "SOW",
@@ -294,15 +428,15 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 7. FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL) -> PAYMENT APPROVAL
-  if (normalized.includes("FORM PERSETUJUAN PEMBAYARAN") || normalized.includes("PAYMENT APPROVAL")) {
+  // 8. FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL) -> PAYMENT APPROVAL
+  if (normalized.includes("FORM PERSETUJUAN PEMBAYARAN")) {
     return {
       headerTitle: "PAYMENT APPROVAL",
       fullTitleBar: normalized,
     };
   }
 
-  // 8. PURCHASE ORDER KLIEN & VENDOR (kata (PO) dihapus di header title, fullTitleBar ditambahkan)
+  // 9. PURCHASE ORDER KLIEN & VENDOR (kata (PO) dihapus di header title, fullTitleBar ditambahkan)
   if (normalized.includes("PURCHASE ORDER") && (normalized.includes("VENDOR") || normalized.includes("PEMASOK"))) {
     return {
       headerTitle: "PURCHASE ORDER",
@@ -322,12 +456,31 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 9. Judul pendek lainnya: INVOICE, KUITANSI
+  // 10. Judul pendek lainnya: INVOICE, KUITANSI
   if (normalized === "INVOICE" || normalized.includes("FAKTUR")) {
     return { headerTitle: "INVOICE" };
   }
   if (normalized === "KUITANSI" || normalized.includes("RECEIPT")) {
     return { headerTitle: "KUITANSI" };
+  }
+
+  // 11. Pengaman: bila dokumen tidak ada di pemetaan dan lebarnya melebihi batas 'PURCHASE ORDER (PO)'
+  const measuredWidth = measureHelveticaBoldWidth(normalized, 22);
+  if (measuredWidth > MAX_HEADER_TITLE_WIDTH) {
+    const words = normalized.split(/\s+/).slice(0, 2).join(" ");
+    const fallbackHeader = words.slice(0, 16).trim();
+    console.warn(
+      `[PDF Generator Warning] Judul dokumen "${rawTitle}" (lebar ${measuredWidth.toFixed(1)} pt) melebihi batas lebar header (${MAX_HEADER_TITLE_WIDTH.toFixed(1)} pt) dan tidak terdaftar di DOCUMENT_TITLE_MAPPINGS. Menggunakan fallback cadangan: "${fallbackHeader}".`,
+    );
+    DOCUMENT_TITLE_FALLBACK_RECORD.push({
+      rawTitle,
+      fallbackHeader,
+      measuredWidth,
+    });
+    return {
+      headerTitle: fallbackHeader,
+      fullTitleBar: normalized,
+    };
   }
 
   return { headerTitle: normalized };

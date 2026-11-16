@@ -62,6 +62,8 @@ export async function getAltviraWordmarkBytes(): Promise<Uint8Array | null> {
         const path = await import("path");
         const cwd = process.cwd();
         const candidatePaths = [
+          path.resolve(cwd, "assets/brand/altvira-wordmark-pdf.png"),
+          path.resolve(cwd, "public/brand/altvira-wordmark-pdf.png"),
           path.resolve(cwd, "assets/brand/altvira-wordmark-dark.png"),
           path.resolve(cwd, "public/brand/altvira-wordmark-dark.png"),
           path.resolve(cwd, "assets/brand/altvira-wordmark.png"),
@@ -81,7 +83,9 @@ export async function getAltviraWordmarkBytes(): Promise<Uint8Array | null> {
 
     // 2. Browser environment
     if (typeof window !== "undefined" && typeof fetch === "function") {
-      const res = await fetch("/brand/altvira-wordmark-dark.png").catch(() => fetch("/brand/altvira-wordmark.png"));
+      const res = await fetch("/brand/altvira-wordmark-pdf.png")
+        .catch(() => fetch("/brand/altvira-wordmark-dark.png"))
+        .catch(() => fetch("/brand/altvira-wordmark.png"));
       if (res && res.ok) {
         const buf = await res.arrayBuffer();
         cachedWordmarkBytes = new Uint8Array(buf);

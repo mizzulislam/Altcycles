@@ -637,14 +637,115 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-37
+- **Status:** Aktif (Dicatat sesuai Temuan Tambahan Instruksi Pengguna Langkah 1)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen PDF yang memuat tanda tangan digital (Dokumen Daftar/Laporan Master, UAT, Invoice, Kuitansi, Quotation, PO, BAKP, BAST, Payment Approval) di `renderDocumentPdfInternal` (`src/lib/pdf-generator.ts:2580-2640`)
+- **Apa yang bertentangan:**
+  - Pada blok tanda tangan sebelah kanan, teks label penandatangan ("Hormat kami, Altvira Technology" / "Diterima oleh, Altvira Technology") digambar di atas area tanda tangan.
+  - Saat gambar tanda tangan digital (`rightSigImg` / `company.signer_signature_path`) dimuat dengan dimensi tinggi ~40–48 pt, gambar tersebut ditempatkan pada koordinat `y: lineY + 6` (tepat di atas garis nama penandatangan). Jika jarak vertikal antara teks "Altvira Technology" dan garis nama (`lineY`) hanya ~42 pt, bagian atas gambar tanda tangan menimpa (*overlap*) teks "Altvira Technology".
+  - Pemeriksaan pada dokumen UAT dan dokumen transaksi lainnya menunjukkan gejala serupa apabila gambar tanda tangan memiliki tinggi aktual melebihi 38 pt tanpa penambahan ruang vertikal (*signature height allowance*).
+- **Yang kulakukan:** Hanya mencatat temuan di dokumen ini tanpa mengubah kode implementasi tata letak tanda tangan sesuai batasan langkah kerja.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A (Rekomendasi):** Tingkatkan tinggi ruang bebas (*vertical gap*) blok tanda tangan dari 42 pt menjadi 54 pt khusus saat terdapat gambar tanda tangan digital (`Boolean(rightSigImg)`), sehingga teks "Altvira Technology" tetap berada di atas gambar tanda tangan dengan jarak bersih 8 pt tanpa menimpa teks.
+  - **Opsi B:** Skala maksimum tinggi gambar tanda tangan dibatasi menjadi 32 pt (menyesuaikan ruang yang ada tanpa menggeser garis penandatangan).
+- **Rekomendasi:** **Opsi A** — menambah ruang vertikal 12 pt agar gambar tanda tangan tidak terdistorsi dan tetap proporsional tanpa menimpa teks di atasnya.
+- **Perlu keputusanku?** ya
+
+---
+
+### ID: K-38
+- **Status:** Aktif (Dicatat sesuai Temuan Tambahan Instruksi Pengguna Langkah 1)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Ekspor PDF Daftar Invoice Penagihan & Piutang (`src/features/invoicing/invoicing-page.tsx:699-707`)
+- **Apa yang bertentangan:**
+  - Pada header tabel dokumen PDF ekspor daftar invoice, teks judul kolom "Jatuh Tempo" terpotong menjadi "Jatuh T..." (atau menabrak kolom sebelahnya) pada pembaca PDF tertentu.
+  - **Penyebab:** Pada konfigurasi kolom `invoicing-page.tsx:702`, rasio lebar kolom `Jatuh Tempo` disetel `widthRatio: 0.12` (setara 59.18 pt dari lebar konten 493.24 pt). Teks "Jatuh Tempo" pada ukuran font 9.5 pt bold memiliki lebar aktual 60.12 pt + padding sel (8 pt) = ~68.12 pt, sehingga kolom 59 pt tidak cukup menampung teks tanpa pembungkusan (*wrapping*) atau pemotongan.
+- **Yang kulakukan:** Hanya mencatat temuan di dokumen ini tanpa mengubah kode aplikasi `invoicing-page.tsx` sesuai batasan langkah kerja.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A (Rekomendasi):** Sesuaikan proporsi `widthRatio` kolom daftar invoice di `invoicing-page.tsx`:
+    - No. Invoice: 0.15 (dari 0.16)
+    - Tanggal: 0.11 (dari 0.12)
+    - Jatuh Tempo: 0.14 (dari 0.12 -> 69 pt, muat utuh)
+    - Proyek / Klien: 0.23 (dari 0.24)
+    - Total: 0.14 (dari 0.13)
+    - Sisa: 0.13 (tetap)
+    - Status: 0.10 (tetap)
+  - **Opsi B:** Bungkus teks header kolom menjadi 2 baris ("Jatuh" dan "Tempo") secara otomatis.
+- **Rekomendasi:** **Opsi A** — menyeimbangkan rasio kolom sehingga teks "Jatuh Tempo" muat utuh dalam satu baris.
+- **Perlu keputusanku?** ya
+
+---
+
+### ID: K-39
+- **Status:** Menunggu Keputusan Pengguna
+- **Jenis:** `standar-vs-sistem`
+- **Dokumen terdampak:** Seluruh pemanggil pembuat PDF di sistem (`src/`)
+- **Apa yang bertentangan:**
+  - Sesuai Aturan 5, seluruh judul dokumen di sistem telah ditelusuri. Ditemukan 4 judul dokumen panjang di sistem yang **belum terdaftar** di tabel pemetaan tunggal dan memiliki lebar melebihi batas "PURCHASE ORDER (PO)" (261.56 pt).
+  - Judul-judul ini saat ini dilindungi oleh pengaman fallback cadangan (Aturan 4), namun memerlukan pemetaan resmi dari pemilik produk.
+- **Tabel Audit Judul Dokumen Seluruh Sistem:**
+
+| No | Judul Sumber Dokumen | Lokasi Pemanggil | Lebar 22 pt (pt) | Relatif thd Batas (261.56 pt) | Status Pemetaan | Usulan Judul Header Pendek (Maks 2 Kata, 16 Karakter) |
+| :-: | :--- | :--- | :-: | :-: | :-: | :--- |
+| 1 | `DAFTAR MASTER PROYEK DAN PENUGASAN TIM` | `projects-page.tsx` | 506.18 | 193.5% | Terdaftar (`PROYEK TIM`) | - |
+| 2 | `DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA` | `admin-approvals-page.tsx` | 557.74 | 213.2% | Terdaftar (`PAYMENT APPROVAL`) | - |
+| 3 | `CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES` | `admin-dashboard.tsx` | 499.71 | 191.1% | Terdaftar (`BACKUP JURNAL`) | - |
+| 4 | `LAPORAN ANGGARAN VS REALISASI PROYEK` | `budget-page.tsx` | 468.27 | 179.0% | Terdaftar (`BUDGETING`) | - |
+| 5 | `DAFTAR INVOICE PENAGIHAN & PIUTANG` | `invoicing-page.tsx` | 436.41 | 166.8% | Terdaftar (`DAFTAR INVOICE`) | - |
+| 6 | `DAFTAR MASTER PELANGGAN/KLIEN` | `parties-master-page.tsx` | 363.92 | 139.1% | Terdaftar (`DAFTAR KLIEN`) | - |
+| 7 | `DAFTAR MASTER VENDOR PEMASOK` | `parties-master-page.tsx` | 362.58 | 138.6% | Terdaftar (`DAFTAR VENDOR`) | - |
+| 8 | `DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL` | `user-payments-page.tsx:430` | 556.42 | 212.7% | **Belum Terdaftar** | Usulan: **`PENGAJUAN PA`** (12 char, 148.5 pt) |
+| 9 | `DAFTAR PURCHASE ORDER PEMBELIAN VENDOR` | `po-page.tsx:362` | 536.82 | 205.2% | **Belum Terdaftar** | Usulan: **`REKAP PO`** (8 char, 108.2 pt) |
+| 10 | `PERHITUNGAN BAGI HASIL PROYEK {KODE}` | `profit-sharing-page.tsx:271` | ~450–580 | > 170% | **Belum Terdaftar** | Usulan: **`BAGI HASIL`** (10 char, 126.9 pt) |
+| 11 | `DOKUMEN PROYEK — {KATEGORI}` | `buyer-portal-page.tsx:309` | ~390–420 | > 150% | **Belum Terdaftar** | Usulan: **`DOKUMEN PROYEK`** (14 char, 196.4 pt) |
+| 12 | `SURAT PENAWARAN HARGA (QUOTATION)` | `project-detail-page.tsx` | 126.94 | 48.5% | Transaksi (`QUOTATION`) | - |
+| 13 | `USER ACCEPTANCE TEST (UAT) CHECKLIST` | `project-detail-page.tsx` | 42.13 | 16.1% | Transaksi (`UAT`) | - |
+| 14 | `BERITA ACARA SERAH TERIMA (BAST)` | `project-detail-page.tsx` | 59.22 | 22.6% | Transaksi (`BAST`) | - |
+| 15 | `BERITA ACARA KEMAJUAN PEKERJAAN (BAKP)` | `project-detail-page.tsx` | 61.67 | 23.6% | Transaksi (`BAKP`) | - |
+| 16 | `STATEMENT OF WORK (SOW)` | `project-detail-page.tsx` | 51.46 | 19.7% | Transaksi (`SOW`) | - |
+| 17 | `JADWAL TERMIN PENAGIHAN PROYEK` | `project-detail-page.tsx` | 55.02 | 21.0% | Transaksi (`JTPP`) | - |
+| 18 | `FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)` | `pdf-generator.ts:4500` | 227.99 | 87.2% | Transaksi (`PAYMENT APPROVAL`) | - |
+| 19 | `PURCHASE ORDER (PO) KLIEN` | `pdf-generator.ts:4406` | 209.00 | 79.9% | Transaksi (`PURCHASE ORDER`) | - |
+| 20 | `PURCHASE ORDER (PO PEMBELIAN VENDOR)` | `po-page.tsx:252` | 209.00 | 79.9% | Transaksi (`PURCHASE ORDER`) | - |
+| 21 | `INVOICE` | `pdf-generator.ts:4184` | 89.36 | 34.2% | Transaksi (`INVOICE`) | - |
+| 22 | `KUITANSI` | `pdf-generator.ts:4295` | 101.90 | 39.0% | Transaksi (`KUITANSI`) | - |
+
+- **Opsi penyelesaian permanen:**
+  - Mohon keputusan pemilik produk untuk 4 dokumen belum terdaftar (No 8 s.d 11) apakah menyetujui usulan judul header pendek di atas atau memiliki nama resmi tersendiri.
+- **Perlu keputusanku?** ya
+
+---
+
+### ID: K-40
+- **Status:** Selesai (Diverifikasi Bebas Tabrakan pada Langkah 1)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Dokumen dengan Judul Header `PAYMENT APPROVAL` (`DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA` & `FORM PERSETUJUAN PEMBAYARAN`)
+- **Apa yang diperiksa:**
+  - Sesuai Aturan 7: Pemeriksaan khusus teks `"PAYMENT APPROVAL"` (judul terpanjang pada 7 entri pemetaan, 16 karakter).
+  - Lebar teks `"PAYMENT APPROVAL"` pada font Helvetica-Bold ukuran 22 pt dihitung:
+    - Dengan kerning AFM aktif: **227.99 pt** (87.2% dari batas maksimal 261.56 pt).
+    - Tanpa kerning: **235.91 pt** (90.2% dari batas maksimal 261.56 pt).
+  - Koordinat posisi judul rata kanan pada halaman:
+    - `titleX` = `pageWidth - marginX - titleW` = `595.28 - 51.02 - 227.99` = **316.27 pt**.
+  - Batas ujung kanan tinta wordmark logo Altvira:
+    - `wmRightX` = `marginX + iconW + gap + wmW` = `51.02 + 50.53 + 8 + 110.87` = **220.42 pt**.
+  - Ruang bebas (*clearance gap*) antara wordmark dan judul:
+    - Jarak bersih = `316.27 - 220.42` = **95.85 pt** (~3.38 cm ruang kosong).
+  - **Kesimpulan:** Judul `"PAYMENT APPROVAL"` **TIDAK MENABRAK** ikon maupun wordmark Altvira. Tersedia jarak bebas 95.85 pt yang aman dan estetis, sehingga teks tidak perlu diubah dan ukuran font 22 pt tidak perlu diperkecil.
+- **Rekomendasi:** Pertahankan teks `"PAYMENT APPROVAL"` dan ukuran font 22 pt saat ini.
+- **Perlu keputusanku?** tidak (Telah diverifikasi lulus & aman)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 21 | 19 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
-| `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
+| `standar-vs-layout` | 24 | 20 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-40`) | 4 (`K-20`, `K-27`, `K-37`, `K-38`) | 3 (`K-20`, `K-37`, `K-38`) |
+| `standar-vs-sistem` | 7 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 2 (`K-09`, `K-39`) | 1 (`K-39`) |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **36** | **29** | **7** | **1** |
+| **Total Temuan** | **40** | **30** | **10** | **4** |

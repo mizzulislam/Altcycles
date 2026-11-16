@@ -1684,11 +1684,13 @@ export function buildFixtureScheduleMinimum(): PdfDocumentSpec {
   };
 }
 
-export const ALL_BASELINE_FIXTURES: Array<{
+export interface BaselineFixtureEntry {
   slug: string;
   title: string;
   buildSpec: () => PdfDocumentSpec;
-}> = [
+}
+
+export const ALL_BASELINE_FIXTURES: BaselineFixtureEntry[] = [
   {
     slug: "01-invoice-normal",
     title: "Invoice (Normal)",
@@ -1855,3 +1857,744 @@ export const ALL_BASELINE_FIXTURES: Array<{
     buildSpec: buildFixtureScheduleMinimum,
   },
 ];
+
+/**
+ * 12a. DAFTAR MASTER PROYEK DAN PENUGASAN TIM — Normal
+ */
+export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "DAFTAR MASTER PROYEK DAN PENUGASAN TIM",
+    docSubtitle: "Total Proyek Ditampilkan: 5 proyek",
+    docNumber: "PRJ-RPT/20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    tableColumns: [
+      { header: "Kode", widthRatio: 0.16 },
+      { header: "Nama Proyek", widthRatio: 0.30 },
+      { header: "Periode", widthRatio: 0.20 },
+      { header: "Nilai Kontrak", widthRatio: 0.16, align: "right" },
+      { header: "Termin", widthRatio: 0.08, align: "center" },
+      { header: "Status", widthRatio: 0.10 },
+    ],
+    tableRows: [
+      [
+        "PRJ/ALT/2026/001",
+        "Website Enhancement & Optimization TIMTravel RMM",
+        "01/11/2026 - 15/12/2026",
+        "Rp2.000.600",
+        "3",
+        "Aktif",
+      ],
+      [
+        "PRJ/ALT/2026/002",
+        "ERP Keuangan Internal Altcycles Phase 2",
+        "15/10/2026 - 31/01/2027",
+        "Rp85.000.000",
+        "4",
+        "Aktif",
+      ],
+      [
+        "PRJ/ALT/2026/003",
+        "Aplikasi Point of Sale Cloud Multi-Cabang",
+        "01/09/2026 - 30/11/2026",
+        "Rp45.000.000",
+        "2",
+        "Selesai",
+      ],
+      [
+        "PRJ/ALT/2026/004",
+        "Infrastruktur Cloud CI/CD & Security Hardening",
+        "01/11/2026 - 30/04/2027",
+        "Rp120.000.000",
+        "6",
+        "Aktif",
+      ],
+      [
+        "PRJ/ALT/2026/005",
+        "Mobile App E-Commerce iOS & Android",
+        "10/11/2026 - 28/02/2027",
+        "Rp60.000.000",
+        "3",
+        "Perencanaan",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureProjectsMasterExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 30 }, (_, i) => [
+    `PRJ/ALT/2026/${String(i + 1).padStart(3, "0")}`,
+    `Proyek Transformasi Digital Enterprise Entitas ${i + 1}`,
+    "01/11/2026 - 31/12/2027",
+    formatDocRupiah((i + 1) * 15_000_000),
+    String((i % 4) + 1),
+    i % 2 === 0 ? "Aktif" : "Selesai",
+  ]);
+  return {
+    ...buildFixtureProjectsMasterNormal(),
+    tableRows: rows,
+    docSubtitle: `Total Proyek Ditampilkan: ${rows.length} proyek`,
+  };
+}
+
+export function buildFixtureProjectsMasterMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureProjectsMasterNormal(),
+    tableRows: [],
+    docSubtitle: "Total Proyek Ditampilkan: 0 proyek",
+  };
+}
+
+/**
+ * 13a. DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA — Normal
+ */
+export function buildFixturePaymentApprovalListNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA",
+    docSubtitle: "Total Pengajuan Ditampilkan: 5 dokumen",
+    docNumber: "PA-RPT/20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    tableColumns: [
+      { header: "Nomor PA", widthRatio: 0.16 },
+      { header: "Pengaju", widthRatio: 0.14 },
+      { header: "Penerima & Keperluan", widthRatio: 0.34 },
+      { header: "Nominal", widthRatio: 0.15, align: "right" },
+      { header: "Status", widthRatio: 0.11 },
+      { header: "Tgl Bayar", widthRatio: 0.10, align: "center" },
+    ],
+    tableRows: [
+      [
+        "PA/ALT/2026/11/001",
+        "Anni Nuraini",
+        "PT Cipta Solusi - Server Hosting",
+        "Rp7.500.000",
+        "Disetujui",
+        "10/11/2026",
+      ],
+      [
+        "PA/ALT/2026/11/002",
+        "Izzul Islam",
+        "Mitra Mandiri - Pengadaan Lisensi Dev",
+        "Rp3.200.000",
+        "Disetujui",
+        "12/11/2026",
+      ],
+      [
+        "PA/ALT/2026/11/003",
+        "Budi Santoso",
+        "Operasional Kantor - Internet Fiber",
+        "Rp1.500.000",
+        "Pending",
+        "-",
+      ],
+      [
+        "PA/ALT/2026/11/004",
+        "Siti Rahma",
+        "Konsultan Hukum - Review Kontrak SPK",
+        "Rp5.000.000",
+        "Disetujui",
+        "15/11/2026",
+      ],
+      [
+        "PA/ALT/2026/11/005",
+        "Ahmad Fauzi",
+        "Reimbursement Transport & Akomodasi Klien",
+        "Rp850.000",
+        "Selesai",
+        "16/11/2026",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixturePaymentApprovalListExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 30 }, (_, i) => [
+    `PA/ALT/2026/11/${String(i + 1).padStart(3, "0")}`,
+    `Pengaju Operasional ${i + 1}`,
+    `Penerima Vendor Rekanan ${i + 1} - Keperluan Pekerjaan Teknis`,
+    formatDocRupiah((i + 1) * 2_500_000),
+    i % 3 === 0 ? "Disetujui" : i % 3 === 1 ? "Pending" : "Selesai",
+    i % 2 === 0 ? "15/11/2026" : "-",
+  ]);
+  return {
+    ...buildFixturePaymentApprovalListNormal(),
+    tableRows: rows,
+    docSubtitle: `Total Pengajuan Ditampilkan: ${rows.length} dokumen`,
+  };
+}
+
+export function buildFixturePaymentApprovalListMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixturePaymentApprovalListNormal(),
+    tableRows: [],
+    docSubtitle: "Total Pengajuan Ditampilkan: 0 dokumen",
+  };
+}
+
+/**
+ * 14a. CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES — Normal
+ */
+export function buildFixtureBackupJurnalNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES",
+    docSubtitle: "Total Entri Jurnal: 6 transaksi",
+    docNumber: "BKP/20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    tableColumns: [
+      { header: "Tanggal", widthRatio: 0.14 },
+      { header: "No. Jurnal", widthRatio: 0.18 },
+      { header: "Akun", widthRatio: 0.28 },
+      { header: "Keterangan", widthRatio: 0.20 },
+      { header: "Debit", widthRatio: 0.10, align: "right" },
+      { header: "Kredit", widthRatio: 0.10, align: "right" },
+    ],
+    tableRows: [
+      [
+        "01/11/2026",
+        "JV/2026/11/001",
+        "1101 - Kas & Setara Kas",
+        "Penerimaan DP Klien Termin 1",
+        "Rp2.000.600",
+        "-",
+      ],
+      [
+        "01/11/2026",
+        "JV/2026/11/001",
+        "4101 - Pendapatan Jasa Web",
+        "Penerimaan DP Klien Termin 1",
+        "-",
+        "Rp2.000.600",
+      ],
+      [
+        "05/11/2026",
+        "JV/2026/11/002",
+        "5102 - Beban Hosting & Cloud",
+        "Pembayaran Cloud Server AWS",
+        "Rp1.450.000",
+        "-",
+      ],
+      [
+        "05/11/2026",
+        "JV/2026/11/002",
+        "1101 - Kas & Setara Kas",
+        "Pembayaran Cloud Server AWS",
+        "-",
+        "Rp1.450.000",
+      ],
+      [
+        "10/11/2026",
+        "JV/2026/11/003",
+        "1102 - Piutang Usaha",
+        "Penagihan Invoice Termin 2",
+        "Rp5.000.000",
+        "-",
+      ],
+      [
+        "10/11/2026",
+        "JV/2026/11/003",
+        "4101 - Pendapatan Jasa Web",
+        "Penagihan Invoice Termin 2",
+        "-",
+        "Rp5.000.000",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureBackupJurnalExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 30 }, (_, i) => [
+    "01/11/2026",
+    `JV/2026/11/${String(i + 1).padStart(3, "0")}`,
+    i % 2 === 0 ? "1101 - Kas & Setara Kas" : "4101 - Pendapatan Usaha",
+    `Pencatatan Transaksi Operasional Ke-${i + 1}`,
+    i % 2 === 0 ? formatDocRupiah((i + 1) * 1_000_000) : "-",
+    i % 2 === 1 ? formatDocRupiah(i * 1_000_000) : "-",
+  ]);
+  return {
+    ...buildFixtureBackupJurnalNormal(),
+    tableRows: rows,
+    docSubtitle: `Total Entri Jurnal: ${rows.length} transaksi`,
+  };
+}
+
+export function buildFixtureBackupJurnalMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureBackupJurnalNormal(),
+    tableRows: [],
+    docSubtitle: "Total Entri Jurnal: 0 transaksi",
+  };
+}
+
+/**
+ * 15a. LAPORAN ANGGARAN VS REALISASI PROYEK — Normal
+ */
+export function buildFixtureBudgetingReportNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "LAPORAN ANGGARAN VS REALISASI PROYEK",
+    docSubtitle:
+      "Proyek: PRJ/ALT/2026/001 - Development cost of Enhancement & Optimization Website TIMTravel RMM",
+    docNumber: "BDG-PRJ-001/20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    metaRows: [
+      { label: "Total Pagu Anggaran", value: "Rp120.000.000" },
+      { label: "Realisasi Terposting", value: "Rp45.000.000" },
+      { label: "Sisa Anggaran", value: "Rp75.000.000" },
+    ],
+    tableColumns: [
+      { header: "Akun Beban", widthRatio: 0.34 },
+      { header: "Pagu", widthRatio: 0.16, align: "right" },
+      { header: "Realisasi", widthRatio: 0.16, align: "right" },
+      { header: "Sisa", widthRatio: 0.16, align: "right" },
+      { header: "Serapan", widthRatio: 0.08, align: "right" },
+      { header: "Status", widthRatio: 0.10 },
+    ],
+    tableRows: [
+      [
+        "5101 - Biaya Tenaga Kerja Ahli Frontend",
+        "Rp40.000.000",
+        "Rp18.000.000",
+        "Rp22.000.000",
+        "45%",
+        "Aman",
+      ],
+      [
+        "5102 - Biaya Tenaga Kerja Ahli Backend",
+        "Rp45.000.000",
+        "Rp20.000.000",
+        "Rp25.000.000",
+        "44%",
+        "Aman",
+      ],
+      [
+        "5103 - Infrastruktur Cloud Server & DB",
+        "Rp15.000.000",
+        "Rp5.000.000",
+        "Rp10.000.000",
+        "33%",
+        "Aman",
+      ],
+      [
+        "5104 - Lisensi Software & API Provider",
+        "Rp10.000.000",
+        "Rp1.500.000",
+        "Rp8.500.000",
+        "15%",
+        "Aman",
+      ],
+      [
+        "5105 - Biaya QA Testing & Security Audit",
+        "Rp10.000.000",
+        "Rp500.000",
+        "Rp9.500.000",
+        "5%",
+        "Aman",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureBudgetingReportExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 25 }, (_, i) => [
+    `510${(i % 9) + 1} - Pos Anggaran Belanja Beban Proyek Ke-${i + 1}`,
+    formatDocRupiah((i + 1) * 10_000_000),
+    formatDocRupiah((i + 1) * 4_000_000),
+    formatDocRupiah((i + 1) * 6_000_000),
+    "40%",
+    "Aman",
+  ]);
+  return {
+    ...buildFixtureBudgetingReportNormal(),
+    tableRows: rows,
+  };
+}
+
+export function buildFixtureBudgetingReportMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureBudgetingReportNormal(),
+    tableRows: [],
+  };
+}
+
+/**
+ * 16a. DAFTAR INVOICE PENAGIHAN & PIUTANG — Normal
+ */
+export function buildFixtureInvoicesListNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+    docSubtitle: "Total Nilai Invoice: Rp25.000.000 | Sisa Piutang: Rp7.500.000",
+    docNumber: "INV-RPT/20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    tableColumns: [
+      { header: "No. Invoice", widthRatio: 0.16 },
+      { header: "Tanggal", widthRatio: 0.12 },
+      { header: "Jatuh Tempo", widthRatio: 0.12 },
+      { header: "Proyek / Klien", widthRatio: 0.24 },
+      { header: "Total", widthRatio: 0.13, align: "right" },
+      { header: "Sisa", widthRatio: 0.13, align: "right" },
+      { header: "Status", widthRatio: 0.10 },
+    ],
+    tableRows: [
+      [
+        "INV/ALT/2026/11/001",
+        "01/11/2026",
+        "15/11/2026",
+        "PRJ/ALT/2026/001 - TIMTravel RMM",
+        "Rp2.000.600",
+        "Rp0",
+        "Lunas",
+      ],
+      [
+        "INV/ALT/2026/11/002",
+        "05/11/2026",
+        "19/11/2026",
+        "PRJ/ALT/2026/002 - PT Sinar Niaga",
+        "Rp10.000.000",
+        "Rp2.500.000",
+        "Sebagian",
+      ],
+      [
+        "INV/ALT/2026/11/003",
+        "10/11/2026",
+        "24/11/2026",
+        "PRJ/ALT/2026/003 - CV Mitra Abadi",
+        "Rp5.000.000",
+        "Rp5.000.000",
+        "Belum Lunas",
+      ],
+      [
+        "INV/ALT/2026/11/004",
+        "12/11/2026",
+        "26/11/2026",
+        "PRJ/ALT/2026/004 - PT Global Nusa",
+        "Rp8.000.000",
+        "Rp0",
+        "Lunas",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureInvoicesListExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 30 }, (_, i) => [
+    `INV/ALT/2026/11/${String(i + 1).padStart(3, "0")}`,
+    "01/11/2026",
+    "15/11/2026",
+    `PRJ/ALT/2026/001 - Mitra Korporasi ${i + 1}`,
+    formatDocRupiah((i + 1) * 3_000_000),
+    i % 2 === 0 ? "Rp0" : formatDocRupiah((i + 1) * 1_000_000),
+    i % 2 === 0 ? "Lunas" : "Belum Lunas",
+  ]);
+  return {
+    ...buildFixtureInvoicesListNormal(),
+    tableRows: rows,
+  };
+}
+
+export function buildFixtureInvoicesListMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureInvoicesListNormal(),
+    tableRows: [],
+  };
+}
+
+/**
+ * 17a. DAFTAR MASTER PELANGGAN/KLIEN — Normal
+ */
+export function buildFixtureCustomersMasterNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "DAFTAR MASTER PELANGGAN/KLIEN",
+    docSubtitle: "Rekapitulasi Klien & Pemegang Akun Portal Pembeli",
+    docNumber: "REKAP-CST-20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    metaRows: [
+      { label: "Total Pelanggan", value: "4 klien" },
+      { label: "Status Klien", value: "4 Aktif, 0 Nonaktif" },
+    ],
+    tableColumns: [
+      { header: "Kode", widthRatio: 0.15 },
+      { header: "Nama Klien / Perusahaan", widthRatio: 0.35 },
+      { header: "PIC & Jabatan", widthRatio: 0.25 },
+      { header: "Kontak", widthRatio: 0.15 },
+      { header: "Status", widthRatio: 0.10 },
+    ],
+    tableRows: [
+      [
+        "CST-001",
+        "PT Satu Dental Indonesia (TIMTravel RMM)",
+        "Anni Nuraini, M.T. (Direktur)",
+        "0812-8889-0011",
+        "Aktif",
+      ],
+      [
+        "CST-002",
+        "PT Sinar Niaga Digital",
+        "Hendra Wijaya (Operasional)",
+        "0813-7778-9900",
+        "Aktif",
+      ],
+      [
+        "CST-003",
+        "CV Mitra Abadi Makmur",
+        "Siti Fatimah (Finance)",
+        "0815-4433-2211",
+        "Aktif",
+      ],
+      [
+        "CST-004",
+        "PT Global Prima Solusindo",
+        "Bambang Hermanto (Direktur Utama)",
+        "0811-9988-7766",
+        "Aktif",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureCustomersMasterExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 25 }, (_, i) => [
+    `CST-${String(i + 1).padStart(3, "0")}`,
+    `PT Korporasi Mitra Strategis Nusantara ${i + 1}`,
+    `Bpk. Pimpinan Eksekutif ${i + 1}`,
+    `0812-${String(1000 + i)}-${String(5000 + i)}`,
+    "Aktif",
+  ]);
+  return {
+    ...buildFixtureCustomersMasterNormal(),
+    tableRows: rows,
+    metaRows: [
+      { label: "Total Pelanggan", value: `${rows.length} klien` },
+      { label: "Status Klien", value: `${rows.length} Aktif, 0 Nonaktif` },
+    ],
+  };
+}
+
+export function buildFixtureCustomersMasterMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureCustomersMasterNormal(),
+    tableRows: [],
+    metaRows: [
+      { label: "Total Pelanggan", value: "0 klien" },
+      { label: "Status Klien", value: "0 Aktif, 0 Nonaktif" },
+    ],
+  };
+}
+
+/**
+ * 18a. DAFTAR MASTER VENDOR PEMASOK — Normal
+ */
+export function buildFixtureVendorsMasterNormal(): PdfDocumentSpec {
+  return {
+    docTitle: "DAFTAR MASTER VENDOR PEMASOK",
+    docSubtitle: "Rekapitulasi Data Rekanan & Mitra Vendor Terdaftar",
+    docNumber: "REKAP-VND-20261116",
+    docDate: "2026-11-16",
+    company: FIXTURE_COMPANY,
+    metaRows: [
+      { label: "Total Vendor", value: "4 vendor" },
+      { label: "Status Vendor", value: "4 Aktif, 0 Nonaktif" },
+    ],
+    tableColumns: [
+      { header: "Kode", widthRatio: 0.15 },
+      { header: "Nama Vendor", widthRatio: 0.30 },
+      { header: "PIC / Kontak", widthRatio: 0.25 },
+      { header: "Bank & Rekening", widthRatio: 0.20 },
+      { header: "Status", widthRatio: 0.10 },
+    ],
+    tableRows: [
+      [
+        "VND-001",
+        "PT Cipta Solusi Hosting",
+        "Reza Permana (0812-1111-2222)",
+        "BCA - 8820192831",
+        "Aktif",
+      ],
+      [
+        "VND-002",
+        "CV Digital Kreasi Mandiri",
+        "Diana Lestari (0813-3333-4444)",
+        "Mandiri - 133001928311",
+        "Aktif",
+      ],
+      [
+        "VND-003",
+        "PT Net Solusi Indonesia",
+        "Farhan Aziz (0815-5555-6666)",
+        "BNI - 0982319201",
+        "Aktif",
+      ],
+      [
+        "VND-004",
+        "Mitra Legal Prima",
+        "Dewi Sartika (0818-7777-8888)",
+        "Bank Jago - 103289122849",
+        "Aktif",
+      ],
+    ],
+    rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
+  };
+}
+
+export function buildFixtureVendorsMasterExtreme(): PdfDocumentSpec {
+  const rows = Array.from({ length: 25 }, (_, i) => [
+    `VND-${String(i + 1).padStart(3, "0")}`,
+    `PT Rekanan Vendor Pemasok Layanan ${i + 1}`,
+    `Kontak PIC Vendor ${i + 1}`,
+    `Bank Mandiri - 144000${String(i + 1).padStart(4, "0")}`,
+    "Aktif",
+  ]);
+  return {
+    ...buildFixtureVendorsMasterNormal(),
+    tableRows: rows,
+    metaRows: [
+      { label: "Total Vendor", value: `${rows.length} vendor` },
+      { label: "Status Vendor", value: `${rows.length} Aktif, 0 Nonaktif` },
+    ],
+  };
+}
+
+export function buildFixtureVendorsMasterMinimum(): PdfDocumentSpec {
+  return {
+    ...buildFixtureVendorsMasterNormal(),
+    tableRows: [],
+    metaRows: [
+      { label: "Total Vendor", value: "0 vendor" },
+      { label: "Status Vendor", value: "0 Aktif, 0 Nonaktif" },
+    ],
+  };
+}
+
+/**
+ * 7 Fixture Dokumen Daftar & Laporan Master
+ */
+export const REPORT_LIST_FIXTURES: BaselineFixtureEntry[] = [
+  {
+    slug: "12-daftar-proyek-tim",
+    title: "Daftar Proyek dan Penugasan Tim (Normal)",
+    buildSpec: buildFixtureProjectsMasterNormal,
+  },
+  {
+    slug: "12b-daftar-proyek-tim-extreme",
+    title: "Daftar Proyek dan Penugasan Tim (Ekstrem)",
+    buildSpec: buildFixtureProjectsMasterExtreme,
+  },
+  {
+    slug: "12c-daftar-proyek-tim-minimum",
+    title: "Daftar Proyek dan Penugasan Tim (Minimum)",
+    buildSpec: buildFixtureProjectsMasterMinimum,
+  },
+  {
+    slug: "13-daftar-payment-approval",
+    title: "Daftar Persetujuan Pembayaran & Pencairan Dana (Normal)",
+    buildSpec: buildFixturePaymentApprovalListNormal,
+  },
+  {
+    slug: "13b-daftar-payment-approval-extreme",
+    title: "Daftar Persetujuan Pembayaran & Pencairan Dana (Ekstrem)",
+    buildSpec: buildFixturePaymentApprovalListExtreme,
+  },
+  {
+    slug: "13c-daftar-payment-approval-minimum",
+    title: "Daftar Persetujuan Pembayaran & Pencairan Dana (Minimum)",
+    buildSpec: buildFixturePaymentApprovalListMinimum,
+  },
+  {
+    slug: "14-backup-jurnal",
+    title: "Cadangan Buku Jurnal Akuntansi Altcycles (Normal)",
+    buildSpec: buildFixtureBackupJurnalNormal,
+  },
+  {
+    slug: "14b-backup-jurnal-extreme",
+    title: "Cadangan Buku Jurnal Akuntansi Altcycles (Ekstrem)",
+    buildSpec: buildFixtureBackupJurnalExtreme,
+  },
+  {
+    slug: "14c-backup-jurnal-minimum",
+    title: "Cadangan Buku Jurnal Akuntansi Altcycles (Minimum)",
+    buildSpec: buildFixtureBackupJurnalMinimum,
+  },
+  {
+    slug: "15-laporan-budgeting",
+    title: "Laporan Anggaran vs Realisasi Proyek (Normal)",
+    buildSpec: buildFixtureBudgetingReportNormal,
+  },
+  {
+    slug: "15b-laporan-budgeting-extreme",
+    title: "Laporan Anggaran vs Realisasi Proyek (Ekstrem)",
+    buildSpec: buildFixtureBudgetingReportExtreme,
+  },
+  {
+    slug: "15c-laporan-budgeting-minimum",
+    title: "Laporan Anggaran vs Realisasi Proyek (Minimum)",
+    buildSpec: buildFixtureBudgetingReportMinimum,
+  },
+  {
+    slug: "16-daftar-invoice",
+    title: "Daftar Invoice Penagihan & Piutang (Normal)",
+    buildSpec: buildFixtureInvoicesListNormal,
+  },
+  {
+    slug: "16b-daftar-invoice-extreme",
+    title: "Daftar Invoice Penagihan & Piutang (Ekstrem)",
+    buildSpec: buildFixtureInvoicesListExtreme,
+  },
+  {
+    slug: "16c-daftar-invoice-minimum",
+    title: "Daftar Invoice Penagihan & Piutang (Minimum)",
+    buildSpec: buildFixtureInvoicesListMinimum,
+  },
+  {
+    slug: "17-daftar-klien",
+    title: "Daftar Master Pelanggan/Klien (Normal)",
+    buildSpec: buildFixtureCustomersMasterNormal,
+  },
+  {
+    slug: "17b-daftar-klien-extreme",
+    title: "Daftar Master Pelanggan/Klien (Ekstrem)",
+    buildSpec: buildFixtureCustomersMasterExtreme,
+  },
+  {
+    slug: "17c-daftar-klien-minimum",
+    title: "Daftar Master Pelanggan/Klien (Minimum)",
+    buildSpec: buildFixtureCustomersMasterMinimum,
+  },
+  {
+    slug: "18-daftar-vendor",
+    title: "Daftar Master Vendor Pemasok (Normal)",
+    buildSpec: buildFixtureVendorsMasterNormal,
+  },
+  {
+    slug: "18b-daftar-vendor-extreme",
+    title: "Daftar Master Vendor Pemasok (Ekstrem)",
+    buildSpec: buildFixtureVendorsMasterExtreme,
+  },
+  {
+    slug: "18c-daftar-vendor-minimum",
+    title: "Daftar Master Vendor Pemasok (Minimum)",
+    buildSpec: buildFixtureVendorsMasterMinimum,
+  },
+];
+
+/**
+ * 7 Fixture Dokumen Daftar & Laporan Master Versi Normal (untuk render-check 7 dokumen utama)
+ */
+export const SEVEN_REPORT_NORMAL_FIXTURES: BaselineFixtureEntry[] = [
+  REPORT_LIST_FIXTURES[0]!,
+  REPORT_LIST_FIXTURES[3]!,
+  REPORT_LIST_FIXTURES[6]!,
+  REPORT_LIST_FIXTURES[9]!,
+  REPORT_LIST_FIXTURES[12]!,
+  REPORT_LIST_FIXTURES[15]!,
+  REPORT_LIST_FIXTURES[18]!,
+];
+
