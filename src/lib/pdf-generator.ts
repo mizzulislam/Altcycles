@@ -92,6 +92,7 @@ export interface PdfDocumentSpec {
   closingNote?: string;
   hasMeterai?: boolean;
   meteraiLabel?: string;
+  minSignatureSpace?: number;
   leftSignatureLabel?: string;
   leftSignatureName?: string;
   leftSignatureImageUrl?: string | null;
@@ -222,7 +223,6 @@ const TEXT_DARK = rgb(31 / 255, 41 / 255, 55 / 255); // #1f2937
 const TEXT_LABEL = rgb(107 / 255, 114 / 255, 128 / 255); // #6b7280
 const BORDER_GRAY = rgb(229 / 255, 231 / 255, 235 / 255); // #e5e7eb
 const CHIP_BG = rgb(238 / 255, 243 / 255, 253 / 255); // warna biru brand altvira lembut (opacity diturunkan) agar teks hitam terbaca jelas
-const NAVY_DARK = rgb(9 / 255, 14 / 255, 25 / 255); // #090e19 token dark navy sistem
 
 export interface DocTitleConfig {
   headerTitle: string;
@@ -586,7 +586,6 @@ async function drawSocialMediaFooters(params: {
     fontRegular,
     marginX,
     pageWidth,
-    docNumber,
     hideSystemFooter,
     parafInfo,
     recordBox,
@@ -1310,7 +1309,6 @@ async function renderDocumentPdfInternal(
     const barHeight = Math.max(22, appLines.length * 12 + 10);
     // Spasi before baris apresiasi kuitansi sama besar dengan spasi judul lengkap dokumen (Poin 1: 6 pt dari garis header)
     const barTopMargin = 6;
-    const barY = (headerAlignment.legalNameBaselineY !== 0 ? (headerAlignment as any).separatorLineY : (pageHeight - marginTop - 110)) ?? (y + 15 - barTopMargin - barHeight);
     const safeBarY = y + 15 - barTopMargin - barHeight;
 
     page.drawRectangle({
@@ -4047,10 +4045,6 @@ export function buildInvoicePdfSpec(params: {
   ]);
 
   const fmtRp = (val: number) => formatDocRupiah(val, forceTwoDecimals);
-
-  const nonPkpNote = params.company.pkp_enabled
-    ? `PPN (${params.company.ppn_rate}%) telah diperhitungkan sebesar ${fmtRp(params.ppnAmount)}.`
-    : "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).";
 
   const picDisplay = params.customerPic
     ? `${params.customerPic}${params.customerTitle ? ` (${params.customerTitle})` : ""}`
