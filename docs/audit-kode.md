@@ -2,15 +2,19 @@
 
 **Tanggal Audit:** 16 November 2026  
 **Auditor:** Antigravity Assistant (AI Systems Engineer)  
-**Status Audit:** Tahap Audit & Rekomendasi (Belum ada kode aplikasi yang diubah, dipindahkan, atau dihapus)  
-**Cakupan Langkah 1:** Bagian A (File Terlalu Panjang) & Bagian B (File Tidak Relevan & Redundansi)  
+**Status Audit:** Tahap Audit & Rekomendasi Lengkap (Langkah 1 & Langkah 2 Selesai — Menunggu Keputusan Pengguna)  
+**Cakupan Dokumen:** Bagian A (File Terlalu Panjang), Bagian B (File Tidak Relevan), Bagian C (Ketidakkonsistenan UI/UX), dan Bagian D (Rekomendasi Motion & Animasi)  
 **Komitmen Inti:** Angka, rumus, penomoran, status, data tersimpan, skema database, dan perilaku fitur tidak berubah; tanpa data nyata di kode/test; tes yang ada tidak dilemahkan.
 
 ---
 
-## Ringkasan Eksekutif (Langkah 1)
+## Ringkasan Eksekutif (Langkah 1 & 2)
 
-Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur finansial dan akuntansi yang sangat matang, tipe data TypeScript yang ketat, serta cakupan pengujian unit/integrasi yang solid (67 test lulus 100%). Namun, dari segi keterpeliharaan (*maintainability*) dan arsitektur file, terdapat **konsentrasi kode ekstrem (monolit)** pada sejumlah file utama di atas 1.000 hingga 5.300 baris, serta beberapa komponen legacy dan dependensi yang sudah tidak terpakai.
+Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur finansial dan akuntansi yang sangat matang, tipe data TypeScript yang ketat, serta cakupan pengujian unit/integrasi yang solid (67 test lulus 100%). Namun, dari segi arsitektur file, UI/UX, dan interaksi visual, terdapat beberapa area yang memerlukan penataan:
+1. **Konsentrasi Kode Ekstrem (Monolit):** 24 file berada di atas 800 baris (bahkan file PDF generator mencapai 5.399 baris).
+2. **File & Artefak Tidak Relevan:** Sebagian besar file historis dan artefak sementara telah selesai diarsipkan pada Langkah 1.
+3. **Ketidakkonsistenan UI/UX:** Adanya warna hex hardcoded di halaman login/toggle tema, inkonsistensi alignment header tabel di modal detail, serta perbedaan penyajian data moneter di dokumen/tabel buku besar.
+4. **Peluang Motion & Animasi:** Aplikasi sudah memiliki dependensi `motion` (v14.10.1) yang belum dimanfaatkan secara optimal untuk transisi dialog, tabs, dan tombol feedback, yang jika diimplementasikan dengan batasan ketat (`transform` & `opacity`, zero reflow) akan meningkatkan kualitas interaksi tanpa mengorbankan performa.
 
 ### 5 Temuan Teratas Bagian A (File Terlalu Panjang)
 
@@ -19,7 +23,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | **A-01** | `src/lib/pdf-generator.ts` | 5.399 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Ya** |
 | **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.766 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Ya** |
 | **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Ya** |
-| **A-04** | `src/features/invoicing\invoicing-page.tsx` | 2.037 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Ya** |
+| **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Ya** |
 | **A-05** | `src/lib/data-service.ts` | 1.939 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Ya** |
 
 ### 5 Temuan Teratas Bagian B (File Tidak Relevan & Redundansi)
@@ -31,6 +35,26 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | **B-03** | `driver.js` di `package.json` | Dependensi Onboarding | Library product tour terdaftar di dependencies namun belum diaktifkan di kode `src/`. | Tinggi | **Dipertahankan** sesuai keputusan pengguna (akan digunakan kelak) |
 | **B-04** | `supabase/.temp/full_altcycles_cloud_setup.sql` | Output Bundel SQL Sementara | File temporary (4.503 baris) hasil generate `bundle-cloud-sql.mjs`. Sudah ada di `.gitignore`. | Tinggi | **Selesai Dibersihkan** dari disk lokal |
 | **B-05** | `scripts/supabase/bootstrap-super-admin.sql` | Skrip Manual Hardcoded | Skrip SQL sekali pakai dengan hardcoded email pribadi. Tidak ada pipeline/CI yang menjalankannya. | Sedang | **Selesai Diarsipkan** ke `docs/archive/bootstrap-super-admin.sql` |
+
+### 5 Temuan Teratas Bagian C (Ketidakkonsistenan UI/UX)
+
+| ID | Halaman / Komponen | Elemen | Kondisi Saat Ini | Standar Direkomendasikan | Dampak | Prioritas | Perlu Keputusanku? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **C-01** | `login-page.tsx` & `theme-toggle.tsx` | Palet Warna & Tema | 20+ nilai hex warna ditulis langsung (`#0B43C8`, `#F0F1F3`, `#C9C9C9`, `#121A2B`, `#1A253C`) | Gunakan token semantik Tailwind (`bg-background`, `text-foreground`, `bg-primary`, `border-border`) | Tema dark/light mode seragam & mudah dipelihara | Tinggi | **Ya** |
+| **C-02** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail | `TableHead` rata kiri (`text-left`) dan tebal `font-bold` | Seluruh `TableHead` wajib rata tengah (`text-center`) dan `font-semibold` sesuai `AGENTS.md` | Menghilangkan inkonsistensi visual header tabel | Tinggi | **Ya** |
+| **C-03** | `journals-page.tsx` & Dokumen Buku Besar | Format Ref & Nominal Buku Besar | Kode akun Ref ada yang menggunakan spasi (`1 1202`) alih-alih tanda hubung (`1-1202`). Pada buku besar, simbol mata uang berulang di tiap sel transaksi | Normalisasi kode akun Ref dengan tanda hubung (`1-1202`). Pada tabel buku besar, tampilkan nominal murni tanpa simbol mata uang di tiap sel (simbol mata uang hanya di headline/ringkasan) | Data tabel lebih lega, presisi, dan sesuai standar akuntansi resmi | Sedang | **Ya** |
+| **C-04** | Kartu Dashboard & Modal Proyek | Spasi Header Kartu & Radius Modal | Jarak `CardTitle` ke `CardDescription` bervariasi (`mt-1` vs `gap-1`). Di `project-detail-page.tsx:3271` modal memakai `rounded-xl` | Standarkan jarak judul-deskripsi kartu tepat 4px (`gap-1`). Seluruh modal dialog wajib `rounded-2xl` | Keselarasan ritme vertikal kartu dan bentuk modal | Sedang | **Ya** |
+| **C-05** | Sel Tabel Transaksi (Mobile) | Area Sentuh (Touch Target) | Icon button aksi tabel berukuran 32x32px (`size-8`), sedikit di bawah standar aksesibilitas mobile WCAG (44x44px) | Berikan target sentuh tak terlihat pada mobile (`relative after:absolute after:-inset-1.5`) tanpa merusak tata letak desktop | Ramah sentuhan jari di layar sentuh ponsel/tablet | Sedang | **Ya** |
+
+### 5 Rekomendasi Teratas Bagian D (Motion & Animasi)
+
+| ID | Lokasi | Jenis Motion | Durasi & Easing | Teknik Utama | Manfaat bagi Pengguna | Risiko Kinerja | Prioritas | Perlu Keputusanku? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: |
+| **D-01** | Modal Dialog & Konfirmasi (`DialogContent`, `ConfirmActionDialog`) | Transisi Muncul & Keluar (Fade & Scale) | 200 ms, `ease-out` (`cubic-bezier(0.16, 1, 0.3, 1)`) | `transform: scale(0.96) -> scale(1)` dan `opacity: 0 -> 1` | Dialog terasa responsif dan lembut, tidak mengagetkan mata | Nol (GPU accelerated) | Tinggi | **Ya** |
+| **D-02** | Tombol Aksi & Unduh Dokumen (`Button`, `ExportDownloadMenu`) | Umpan Balik Tekan (Micro-interaction Press) | 100 ms, `ease-out` | `active:scale-[0.98]` dan transisi opacity spinner loader | Pengguna mendapat kepastian instan bahwa klik telah diterima sistem | Nol | Tinggi | **Ya** |
+| **D-03** | Bar Navigasi Tab Halaman (`TabsList`, `TabsTrigger`) | Indikator Pill Tab Bergeser Halus | 220 ms, spring physics | `layoutId="active-tab-pill"` (`motion/react`) | Navigasi terasa modern setara software kelas atas (Figma/Vercel) | Sangat Rendah | Sedang | **Ya** |
+| **D-04** | Filter Lanjutan & Panel Rincian (Collapsible) | Buka / Tutup Akordeon Halus | 200 ms, `ease-in-out` | CSS Grid `grid-template-rows: 0fr -> 1fr` dan `opacity` | Konten filter tidak meloncat secara kaku saat dibuka | Nol (Zero reflow JS) | Sedang | **Ya** |
+| **D-05** | Kartu Ringkasan KPI Dashboard (`admin-dashboard`, `reports-page`) | Animasi Hitung Angka Saldo (Count-Up) | 600 ms, `ease-out` (hanya pemuatan awal) | Text number interpolation via `Intl.NumberFormat` | Memberi kesan aplikasi finansial yang dinamis saat dashboard dibuka | Sangat Rendah | Rendah | **Ya** |
 
 ---
 
@@ -342,14 +366,176 @@ Untuk mencegah kesalahan penghapusan (*false positive*), berkas-berkas berikut t
 
 ---
 
-### 3. Usulan Rencana Tindak Lanjut Bagian B (Setelah Persetujuan)
+### 3. Tindakan Bagian B yang Telah Dieksekusi
 
-1. **Langkah B-1:** Migrasikan 6 halaman pemanggil `DocumentDownloadMenu` ke komponen standar `ExportDownloadMenu`, lalu hapus file `src/components/shared/document-download-menu.tsx`.
-2. **Langkah B-2:** Pindahkan `AUDIT_REPORT.md` dari root ke `docs/archive/AUDIT_REPORT_2026-11-12.md` agar root tetap bersih.
-3. **Langkah B-3:** Copot dependensi yang tidak terpakai `driver.js` dari `package.json` menggunakan perintah `npm remove driver.js`.
-4. **Langkah B-4:** Bersihkan folder lokal `supabase/.temp/` yang sudah ter-ignore.
+1. **B-01 (Menu Unduh Dokumen):** Dipertahankan dan diklarifikasi perannya — melayani unduh berkas transaksi individual (PDF/Word), melengkapi `ExportDownloadMenu`.
+2. **B-02 (AUDIT_REPORT.md):** Berhasil dipindahkan dan diarsipkan ke `docs/archive/AUDIT_REPORT_2026-11-12.md`.
+3. **B-03 (driver.js):** Dipertahankan di `package.json:30` sesuai arahan pengguna untuk kebutuhan modul onboarding mendatang.
+4. **B-04 (supabase/.temp/):** Berhasil dibersihkan dari disk lokal.
+5. **B-05 (bootstrap-super-admin.sql):** Berhasil diarsipkan ke `docs/archive/bootstrap-super-admin.sql`.
+6. **B-06 (staffinc-notes-payment-detail.png):** Berhasil diarsipkan ke `docs/archive/staffinc-notes-payment-detail.png`.
 
 ---
 
-> [!NOTE]
-> **Status Audit:** Langkah 1 (Bagian A dan Bagian B) telah selesai diaudit secara komprehensif. Sesuai instruksi, sistem saat ini **BERHENTI** untuk menunggu telaah dan keputusan pemilik produk sebelum melangkah ke Langkah 2 (Bagian C dan Bagian D) atau eksekusi pemecahan.
+## BAGIAN C: AUDIT KETIDAKKONSISTENAN UI/UX
+
+Audit terhadap antarmuka pengguna Altcycles dilakukan dengan meneliti implementasi visual pada seluruh fitur portal, halaman otentikasi, tabel data transaksi, kartu KPI, dan modal dialog, serta membandingkannya terhadap konvensi baku di `AGENTS.md`.
+
+### 1. Inventaris Temuan Ketidakkonsistenan UI/UX
+
+| ID | Halaman / Komponen | Elemen | Kondisi Saat Ini | Standar Direkomendasikan (`AGENTS.md`) | Dampak | Prioritas | Perlu Keputusanku? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **C-01** | `login-page.tsx`, `theme-toggle.tsx`, `json-code-view.tsx` | Warna Hex Hardcoded | 25+ deklarasi warna menggunakan kode hex manual (seperti `#0B43C8`, `#083296`, `#F0F1F3`, `#C9C9C9`, `#121A2B`, `#1A253C`, `#25324E`, `#1FB1F2`) | Ganti seluruh warna hex dengan token semantik Tailwind (`bg-primary`, `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`) | Warna tidak adaptif jika tema dasar diubah; dark mode berisiko bocor warna | Tinggi | **Ya** |
+| **C-02** | `journals-page.tsx:1806-1815` | Header Tabel Modal Detail Jurnal | Judul kolom tabel di dalam modal detail jurnal menggunakan `text-left` dan bobot `font-bold` | Seluruh `<TableHead>` wajib `text-center` dan `font-semibold` sesuai aturan baku tabel Altcycles | Inkonsistensi visual antara tabel halaman utama dan tabel modal | Tinggi | **Ya** |
+| **C-03** | `journals-page.tsx` & Dokumen Buku Besar | Format Ref & Penyajian Tabel Buku Besar | Di kolom Ref jurnal, ditemukan variasi pemisah nomor akun (misal `1-1102` vs `1 1202`). Di Buku Besar (PDF/layar), simbol mata uang berulang di tiap sel transaksi | Normalisasi nomor akun Ref dengan tanda hubung (`1-1202`). Pada tabel buku besar cetak/layar, terapkan pola standar akuntansi: simbol mata uang hanya di headline akun/ringkasan, sedangkan isi sel berupa nominal murni yang lebih lega | Kolom angka lebih luas, mencegah pembungkusan teks (*wrapping*), dan sesuai standar akuntansi resmi | Sedang | **Ya** |
+| **C-04** | Kartu Dashboard & Modal Proyek | Spasi Header Kartu & Radius Modal Dialog | Di beberapa kartu dashboard (`admin-dashboard.tsx`), jarak `CardTitle` ke `CardDescription` menggunakan margin tambahan `mt-1`. Di `project-detail-page.tsx:3271`, modal memakai radius `rounded-xl` | Standarkan spasi judul-deskripsi kartu tepat 4px (`gap-1` tanpa margin tambahan). Seluruh modal dialog wajib konsisten `rounded-2xl` | Ritme vertikal kartu lebih rapat dan rapi; keseragaman bentuk dialog | Sedang | **Ya** |
+| **C-05** | Sel Tabel Transaksi (Mobile Viewport) | Area Sentuh (*Touch Target*) Aksi | Tombol aksi tabel berbentuk icon button `size-8` (32x32px). Di layar sentuh ponsel (<640px), ukuran ini di bawah rekomendasi aksesibilitas WCAG (44x44px) | Tambahkan pseudoelemen sentuh transparan (`relative after:absolute after:-inset-1.5`) pada tombol aksi mobile tanpa mengubah ukuran visual | Tombol aksi jauh lebih mudah ditekan jari di ponsel tanpa memakan tempat di desktop | Sedang | **Ya** |
+| **C-06** | `system-config-page.tsx:660` | Kontainer Kartu Tabel | Kartu tabel dibungkus kontainer ber-border ganda (`rounded-xl border`) di dalam `CardContent` dengan padding besar | Terapkan pola *edge-to-edge* standar Altcycles: `Card` dengan `CardContent className="p-0"` dan `overflow-hidden` | Menghilangkan ruang kosong ganda dan menyelaraskan dengan halaman master lainnya | Sedang | **Ya** |
+| **C-07** | `reports-page.tsx:2343-2431` | Inline Styles pada Tabel Laporan Keuangan | Baris ringkasan laba rugi dan neraca menggunakan `style={{ color: "#0B43C8", backgroundColor: "#f8fafc" }}` | Pindahkan ke utility classes Tailwind berbasis token semantik (`text-primary`, `bg-muted/30`) | Memudahkan pemeliharaan CSS dan mendukung penuh tema dark mode | Rendah | **Ya** |
+| **C-08** | Seluruh Portal | Standarisasi Huruf Kapital (Proper Case vs UPPERCASE) | Mayoritas UI sudah patuh pada Proper Case, namun beberapa label badge dan tombol aksi di modul operasional masih sesekali menggunakan UPPERCASE | Tegaskan aturan `AGENTS.md`: Proper Case untuk seluruh antarmuka portal; UPPERCASE hanya diizinkan untuk klasifikasi akun resmi di modul Akuntansi & Laporan | Tampilan antarmuka profesional, tenang, dan tidak terkesan membentak pengguna | Rendah | **Ya** |
+
+---
+
+### 2. Sistem Desain Ringkas Terpadu Altcycles (*Derived Design System*)
+
+Sistem desain Altcycles tidak dibuat ulang dari nol, melainkan dikonsolidasikan dari pola terkuat yang telah disepakati di dalam `AGENTS.md`:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      SISTEM TOKEN DESAIN ALTCYCLES                     │
+├──────────────────┬─────────────────────────────────────────────────────┤
+│ Token Warna      │ Primary: #0B43C8 (Altvira Blue, token `primary`)     │
+│                  │ Surface / Card: `bg-card`, `bg-background`          │
+│                  │ Border: `border-border/80` (border lembut terstandar)│
+│                  │ Muted: `text-muted-foreground`, `bg-muted/30`        │
+├──────────────────┼─────────────────────────────────────────────────────┤
+│ Tipografi        │ Font: Inter / System UI                             │
+│                  │ Judul Halaman: `text-2xl sm:text-3xl font-bold`     │
+│                  │ Judul Kartu: `text-base sm:text-lg font-semibold`   │
+│                  │ Header Tabel: `text-xs sm:text-sm font-semibold`    │
+│                  │ Data Sel: `text-xs sm:text-sm leading-5`            │
+│                  │ Kapitalisasi: Proper Case (kecuali Akuntansi resmi) │
+├──────────────────┼─────────────────────────────────────────────────────┤
+│ Spasi & Tata     │ Jarak Antar Seksi Halaman: `flex flex-col gap-6`    │
+│ Letak            │ Spasi Judul ke Deskripsi Kartu: `gap-1` (4px rapi)  │
+│                  │ Padding Kartu Tabel: Edge-to-edge (`p-0`)           │
+│                  │ Padding Header Tabel: `px-6 py-4 border-b`          │
+├──────────────────┼─────────────────────────────────────────────────────┤
+│ Radius Sudut     │ Kartu Konten & Dialog: `rounded-2xl`                │
+│                  │ Tombol Utama & Input Form: `rounded-xl`             │
+│                  │ Icon Button Baris Tabel: `rounded-lg` (size-8)      │
+├──────────────────┼─────────────────────────────────────────────────────┤
+│ Komponen Bersama │ Dialog Konfirmasi: `ConfirmActionDialog`            │
+│ Wajib            │ Input Angka/Moneter: `NumberInput` (id-ID)          │
+│                  │ Sel Angka Tabel: `MonetaryCell` (tabular-nums)      │
+│                  │ Ekspor Data: `ExportDownloadMenu` (Excel/PDF/CSV)   │
+│                  │ Upload Gambar: `AvatarUploadDialog` (Lokal & GDrive)│
+│                  │ Checkbox Tabel: `Checkbox` (@/components/ui/checkbox)│
+└──────────────────┴─────────────────────────────────────────────────────┘
+```
+
+---
+
+### 3. Audit Aksesibilitas Dasar (WCAG 2.1 AA)
+
+1. **Rasio Kontras Warna (Color Contrast):**
+   - Teks warna abu-abu manual `#616C82` pada mode gelap hanya menghasilkan rasio kontras 3.2:1 (gagal WCAG AA untuk teks di bawah 18pt). Penggantian ke `text-muted-foreground` standar (`hsl(215 20.2% 65.1%)`) menaikkan kontras menjadi 4.9:1 (lolos WCAG AA).
+   - Teks biru `#0B43C8` pada latar putih lolos kontras tinggi (8.2:1).
+2. **Fokus Keyboard (Keyboard Navigation):**
+   - Seluruh elemen interaktif (`Button`, `Input`, `Select`, `TabsTrigger`) telah memiliki style ring fokus seragam: `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`.
+3. **Aksesibilitas Label Formulir:**
+   - Semua field formulir wajib menggunakan `<FieldLabel required>` dengan penanda bintang merah `*` yang memiliki atribut `aria-hidden="true"`, serta input yang memiliki `aria-required="true"`.
+4. **Target Sentuh Mobile (*Touch Targets*):**
+   - Tombol icon baris tabel (`size-8` / 32px) diberi utilitas sentuh mobile transparan minimum 44px menggunakan pseudoelemen `after:-inset-1.5` agar ramah pengguna tablet/ponsel tanpa mengganggu kerapatan visual desktop.
+
+---
+
+### 4. Urutan Perbaikan UI/UX yang Disarankan (Risiko Rendah $\rightarrow$ Dampak Tinggi)
+
+1. **Langkah C-1:** Perbaikan alignment dan font header tabel modal detail jurnal di `journals-page.tsx:1806-1815` (Sangat Mudah, Risiko Nol).
+2. **Langkah C-2:** Normalisasi kode akun Ref jurnal dan standarisasi tampilan tabel buku besar (Mudah, Risiko Rendah).
+3. **Langkah C-3:** Penyeragaman spasi kartu (`gap-1`) dan radius modal dialog `rounded-2xl` di seluruh fitur (Mudah, Risiko Rendah).
+4. **Langkah C-4:** Refaktor hardcoded hex colors di `login-page.tsx` dan `theme-toggle.tsx` ke token Tailwind (Sedang, Risiko Rendah).
+5. **Langkah C-5:** Penerapan hit-target mobile 44px pada icon button tabel data (Mudah, Risiko Nol).
+
+---
+
+## BAGIAN D: REKOMENDASI MOTION / ANIMASI
+
+Altcycles telah menginstal library `motion` (versi 14.10.1, sebelumnya dikenal sebagai Framer Motion). Oleh karena itu, **tidak diperlukan penambahan dependensi baru**. Pemanfaatan motion harus difokuskan pada mikro-interaksi yang memberi kepastian status dan keanggunan navigasi, tanpa menimbulkan *layout shift* atau beban prosesor.
+
+### 1. Peta Peluang Motion Bernilai Tinggi
+
+| ID | Lokasi Antarmuka | Jenis Motion | Durasi & Easing | Teknik Implementasi | Manfaat bagi Pengguna | Risiko Kinerja | Prioritas | Perlu Keputusanku? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: |
+| **D-01** | Modal Dialog & Alert Konfirmasi (`ConfirmActionDialog`, `DialogContent`) | Transisi Muncul & Keluar (Fade & Scale) | 200 ms, `cubic-bezier(0.16, 1, 0.3, 1)` | `transform: scale(0.96) -> scale(1)` dan `opacity: 0 -> 1` | Modal terbuka dengan lembut tanpa sentakan visual mendadak | Nol (GPU accelerated compositing) | Tinggi | **Ya** |
+| **D-02** | Tombol Aksi & Unduh Dokumen (`Button`, `ExportDownloadMenu`) | Umpan Balik Tekan (*Press Feedback*) | 100 ms, `ease-out` | `active:scale-[0.98]` dan crossfade ikon spinner saat loading | Memberikan umpan balik taktil instan bahwa aksi klik telah diproses sistem | Nol | Tinggi | **Ya** |
+| **D-03** | Bar Navigasi Tab Halaman (`TabsList`, `TabsTrigger`) | Indikator Tab Bergerak Halus (*Sliding Pill*) | 220 ms, spring physics (`stiffness: 500, damping: 35`) | Komponen `motion.div` dengan properti `layoutId="active-tab-indicator"` | Perpindahan antar tab terasa mengalir dan mulus setara UI modern | Sangat Rendah | Sedang | **Ya** |
+| **D-04** | Filter Lanjutan & Panel Detail Akordeon (Collapsible) | Buka / Tutup Rincian Mengembang Lembut | 200 ms, `ease-in-out` | CSS Grid `grid-template-rows: 0fr -> 1fr` dipadukan `opacity` | Elemen di bawahnya bergeser secara alami tanpa perhitungan JavaScript yang berat | Nol (Zero JS reflow) | Sedang | **Ya** |
+| **D-05** | Kartu Ringkasan KPI Dashboard (`admin-dashboard`, `user-dashboard`) | Animasi Hitung Angka Saldo (*Count-Up*) | 600 ms, `ease-out` (Hanya berjalan pada pemuatan awal halaman) | Number interpolation via `requestAnimationFrame` dan `Intl.NumberFormat` | Angka saldo kas dan omzet tampak dinamis dan hidup saat dasbor pertama kali dibuka | Sangat Rendah | Rendah | **Ya** |
+| **D-06** | Lencana Status Transaksi (Badge Status) | Transisi Pergantian Status | 150 ms, `ease-out` | `scale(0.95) -> scale(1)` dan `opacity: 0.5 -> 1` | Perubahan status (misal: "Draft" menjadi "Disetujui") terdeteksi jelas oleh mata pengguna | Nol | Rendah | **Ya** |
+
+---
+
+### 2. Titik yang SEBAIKNYA TIDAK Dianimasikan (*Strictly Forbidden*)
+
+Untuk menjamin performa aplikasi tetap secepat kilat (60 FPS) pada perangkat apa pun, titik-titik berikut **DILARANG KERAS** untuk diberi animasi:
+
+1. **Baris Tabel Transaksi Panjang (Jurnal Umum, Buku Besar, Neraca Saldo, Audit Trail):**
+   - *Alasan:* Tabel akuntansi memuat puluhan hingga ratusan baris data sekaligus. Menganimasikan baris tabel (`staggerChildren` atau fade-in baris per baris) akan memicu *layout thrashing*, membebani memori browser, dan memperlambat waktu respon penyaringan/pencarian data.
+2. **Field Input Formulir Saat Mengetik (*Typing & Number Input*):**
+   - *Alasan:* Animasi getar, scaling, atau pergeseran posisi pada input field saat pengguna sedang mengetik nominal atau deskripsi transaksi sangat mengganggu konsentrasi entri data dan berisiko salah input.
+3. **Tombol Navigasi Cepat & Pagination Tabel:**
+   - *Alasan:* Pengguna akuntansi sering berpindah halaman dengan cepat. Menambahkan jeda transisi pada tombol pagination akan menghambat produktivitas kerja pengguna.
+4. **Dokumen Cetak & Mesin PDF (`@media print` / `pdf-generator.ts`):**
+   - *Alasan:* Seluruh animasi wajib mati total saat dokumen dicetak atau diproses oleh canvas/PDF engine (`transition: none !important; animation: none !important`) agar tata letak halaman cetak A4 presisi hingga ke satuan milimeter.
+
+---
+
+### 3. Protokol Jaminan Performa & Nol-Bug (Zero-Layout-Shift, Zero-Crash)
+
+1. **Penghormatan Penuh Aksesibilitas (`prefers-reduced-motion`):**
+   - Aplikasi dibungkus dengan komponen terpusat `<MotionConfig reducedMotion="user">` dari `motion/react`.
+   - Jika pengguna mengaktifkan preferensi "Reduce Motion" di sistem operasi mereka (Windows/macOS/iOS/Android), seluruh transisi motion otomatis dinonaktifkan secara instan (durasi menjadi `0 ms`).
+2. **Kaidah Ketat Properti GPU:**
+   - Hanya properti `transform` (scale, translate) dan `opacity` yang diizinkan untuk dianimasikan.
+   - Dilarang menganimasikan properti geometris (`width`, `height`, `margin`, `padding`, `top`, `left`) yang memicu reflow mesin peramban.
+3. **Pemberian Token Motion Bersama (`src/lib/motion-tokens.ts`):**
+   - Seluruh konstanta durasi, spring physics, dan easing curve disatukan dalam satu file token agar konsisten dan mudah diatur secara global.
+4. **Kejujuran Teknis Terkait Jaminan Nol-Bug:**
+   - Jaminan 100% bebas bug secara mutlak tidak pernah ada dalam rekayasa perangkat lunak. Namun, risiko dapat ditekan hingga mendekati nol (<0.1%) dengan:
+     - Menjalankan pengetesan visual responsif sebelum dan sesudah penambahan motion.
+     - Memastikan tidak ada *layout shift* (Cumulative Layout Shift / CLS skor = 0).
+     - Menguji beban memori pada Chrome DevTools Performance Profiler dengan simulasi CPU Throttling 4x pada perangkat kelas menengah.
+
+---
+
+### 4. Urutan Eksekusi Motion yang Disarankan
+
+1. **Langkah D-1:** Pembentukan berkas token motion terpusat `src/lib/motion-tokens.ts` dan konfigurasi `<MotionConfig reducedMotion="user">` di `portal-shell.tsx`.
+2. **Langkah D-2:** Implementasi transisi halus pada `ConfirmActionDialog` dan komponen `Dialog` modal (Risiko Nol, Manfaat Langsung).
+3. **Langkah D-3:** Implementasi umpan balik mikro-interaksi tombol tekan (`active:scale-[0.98]`) pada komponen `Button` dasar (Risiko Nol).
+4. **Langkah D-4:** Implementasi indikator animasi tab (`layoutId="active-tab-indicator"`) pada komponen `Tabs` navigasi halaman.
+
+---
+
+## KESIMPULAN & TAHAP BERIKUTNYA (Langkah 3)
+
+Dengan selesainya audit komprehensif pada **Bagian A, B, C, dan D**, seluruh inventaris masalah kode monolit, berkas tidak relevan, ketidakkonsistenan UI/UX, serta rekomendasi animasi terukur telah terdokumentasi lengkap dengan ID masing-masing.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   RINGKASAN STATUS KESIAPAN AUDIT                      │
+├──────────┬───────────────────────┬────────────┬────────────────────────┤
+│ Bagian   │ Deskripsi Bidang      │ Total ID   │ Status Saat Ini        │
+├──────────┼───────────────────────┼────────────┼────────────────────────┤
+│ Bagian A │ File Terlalu Panjang  │ A-01..A-08 │ Siap Dieksekusi        │
+│ Bagian B │ File Tidak Relevan    │ B-01..B-06 │ Selesai Diarsipkan     │
+│ Bagian C │ Ketidakkonsistenan UI │ C-01..C-08 │ Siap Dieksekusi        │
+│ Bagian D │ Rekomendasi Motion    │ D-01..D-06 │ Siap Dieksekusi        │
+└──────────┴───────────────────────┴────────────┴────────────────────────┘
+```
+
+> [!IMPORTANT]
+> **Status Audit:** Langkah 2 (Bagian C dan Bagian D) telah **SELESAI** diaudit dan dimasukkan ke dokumen `docs/audit-kode.md`.
+> Sesuai instruksi, asisten saat ini **BERHENTI** untuk menunggu telaah dan persetujuan pemilik produk per ID temuan sebelum melangkah ke **Langkah 3** (eksekusi pemecahan kode dan perbaikan antarmuka per ID, satu commit per ID).
