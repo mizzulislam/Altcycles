@@ -24,13 +24,13 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 
 ### 5 Temuan Teratas Bagian B (File Tidak Relevan & Redundansi)
 
-| ID | File / Entitas | Kategori | Alasan & Bukti | Tingkat Keyakinan | Risiko Penghapusan | Perlu Keputusanku? |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: |
-| **B-01** | `src/components/shared/document-download-menu.tsx` | Komponen Legacy Duplikat | Sudah digantikan oleh `ExportDownloadMenu` (sesuai aturan `AGENTS.md`). Masih tertinggal di 6 file pemanggil. | Tinggi | Rendah (setelah migrasi ke `ExportDownloadMenu`) | **Ya** |
-| **B-02** | `AUDIT_REPORT.md` (di root) | Dokumen Audit Lama | Laporan audit per 12 November 2026 di root directory. Isinya sudah usang & dipusatkan di folder `docs/`. | Tinggi | Sangat Rendah | **Ya** |
-| **B-03** | `driver.js` di `package.json` | Dependensi Tak Terpakai | Library seberat 172 kB terdaftar di dependencies namun 0 pemakaian (`import`) di seluruh `src/`. | Tinggi | Rendah | **Ya** |
-| **B-04** | `supabase/.temp/full_altcycles_cloud_setup.sql` | Output Bundel SQL Sementara | File temporary (4.503 baris) hasil generate `bundle-cloud-sql.mjs`. Sudah ada di `.gitignore`. | Tinggi | Nol | **Ya** |
-| **B-05** | `scripts/supabase/bootstrap-super-admin.sql` | Skrip Manual Hardcoded | Skrip SQL sekali pakai dengan hardcoded email pribadi. Tidak ada pipeline/CI yang menjalankannya. | Sedang | Rendah (bisa diarsipkan) | **Ya** |
+| ID | File / Entitas | Kategori | Alasan & Bukti | Tingkat Keyakinan | Keputusan Pengguna & Tindakan |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **B-01** | `src/components/shared/document-download-menu.tsx` | Menu Unduh Transaksi | Bukan dead code. Melayani unduhan dokumen transaksi individual (PDF & Word per baris), sedangkan `ExportDownloadMenu` melayani ekspor dataset laporan (Excel/PDF/CSV). | Tinggi | **Dipertahankan & Distandarkan** (Memenuhi peran unduh dokumen individual) |
+| **B-02** | `AUDIT_REPORT.md` (di root) | Dokumen Audit Lama | Laporan audit per 12 November 2026 di root directory. Isinya sudah usang & dipusatkan di folder `docs/`. | Tinggi | **Selesai Diarsipkan** ke `docs/archive/AUDIT_REPORT_2026-11-12.md` |
+| **B-03** | `driver.js` di `package.json` | Dependensi Onboarding | Library product tour terdaftar di dependencies namun belum diaktifkan di kode `src/`. | Tinggi | **Dipertahankan** sesuai keputusan pengguna (akan digunakan kelak) |
+| **B-04** | `supabase/.temp/full_altcycles_cloud_setup.sql` | Output Bundel SQL Sementara | File temporary (4.503 baris) hasil generate `bundle-cloud-sql.mjs`. Sudah ada di `.gitignore`. | Tinggi | **Selesai Dibersihkan** dari disk lokal |
+| **B-05** | `scripts/supabase/bootstrap-super-admin.sql` | Skrip Manual Hardcoded | Skrip SQL sekali pakai dengan hardcoded email pribadi. Tidak ada pipeline/CI yang menjalankannya. | Sedang | **Selesai Diarsipkan** ke `docs/archive/bootstrap-super-admin.sql` |
 
 ---
 
@@ -318,14 +318,14 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 
 Berikut hasil audit menyeluruh terhadap file tidak terpakai, duplikat, skrip sekali pakai, dan artefak di repositori:
 
-| ID | Path File | Kategori Temuan | Alasan & Bukti Verifikasi | Tingkat Keyakinan | Risiko Penghapusan | Perlu Keputusanku? |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: |
-| **B-01** | `src/components/shared/document-download-menu.tsx` | Komponen Legacy Duplikat | **Sudah digantikan oleh `ExportDownloadMenu`.** Komponen ini hanya menyediakan format Excel/Word terbatas tanpa label standar `Unduh / Ekspor` (aturan `AGENTS.md`). Masih diimpor di 6 file pemanggil: `buyer-portal-page.tsx`, `project-detail-page.tsx`, `invoicing-page.tsx`, `admin-approvals-page.tsx`, `user-payments-page.tsx`, `po-page.tsx`. | **Tinggi** | **Rendah** (Migrasikan 6 file tersebut ke `ExportDownloadMenu` lalu hapus file ini) | **Ya** |
-| **B-02** | `AUDIT_REPORT.md` (di root) | Dokumen Historis Usang | Laporan audit tanggal 12 November 2026 yang tersimpan di direktori root. Masalah yang dicatat di dalamnya sudah diselesaikan di commit-commit berikutnya, dan sistem audit baru telah dipusatkan di `docs/`. | **Tinggi** | **Sangat Rendah** (Bisa dipindahkan ke `docs/archive/AUDIT_REPORT_2026-11-12.md` atau dihapus) | **Ya** |
-| **B-03** | `driver.js` di `package.json:30` | Dependensi Tak Terpakai | Library `driver.js` (^1.10.2) terpasang di `dependencies`, namun hasil pencarian di seluruh `src/` menunjukkan **0 impor/pemakaian**. | **Tinggi** | **Rendah** (Bisa di-uninstall via `npm remove driver.js` untuk menghemat ukuran bundle) | **Ya** |
-| **B-04** | `supabase/.temp/full_altcycles_cloud_setup.sql` | Output Generate Temporary | Berkas berukuran 4.503 baris di direktori `supabase/.temp/`. Merupakan hasil generate sekali jalan dari `bundle-cloud-sql.mjs`. Sudah ada di `.gitignore` dan untracked di git. | **Tinggi** | **Nol** (Dapat digenerate ulang kapan saja) | **Ya** |
-| **B-05** | `scripts/supabase/bootstrap-super-admin.sql` | Skrip Manual Hardcoded | Skrip SQL 18 baris untuk inisialisasi akun Super Admin pertama. Memuat alamat email pribadi hardcoded dan tidak terhubung ke pipeline build, CI, atau runtime. | **Sedang** | **Rendah** (Arsipkan ke dokumentasi deployment) | **Ya** |
-| **B-06** | `docs/referensi-layout/staffinc-notes-payment-detail.png` | Aset Gambar Tidak Terhubung | Gambar tangkapan layar 26 kB di `docs/referensi-layout/` yang tidak pernah diacu atau disematkan di file dokumentasi markdown mana pun. | **Sedang** | **Rendah** (Bisa dipertahankan sebagai referensi atau dihapus bila tidak diperlukan) | **Ya** |
+| ID | Path File | Kategori Temuan | Alasan & Bukti Verifikasi | Tingkat Keyakinan | Status & Keputusan Pengguna |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **B-01** | `src/components/shared/document-download-menu.tsx` | Menu Unduh Transaksi Individual | Melayani unduhan dokumen individual transaksi per baris (PDF & Word), melengkapi peran `ExportDownloadMenu` yang melayani ekspor dataset laporan (Excel/PDF/CSV). | **Tinggi** | **Dipertahankan & Distandarkan** (Memenuhi peran unduh dokumen transaksi) |
+| **B-02** | `AUDIT_REPORT.md` (di root) | Dokumen Historis Usang | Laporan audit tanggal 12 November 2026 yang tersimpan di direktori root. Telah dipindahkan ke `docs/archive/AUDIT_REPORT_2026-11-12.md`. | **Tinggi** | **Selesai Diarsipkan** ke `docs/archive/` |
+| **B-03** | `driver.js` di `package.json:30` | Dependensi Onboarding | Library `driver.js` (^1.10.2) terpasang di dependencies untuk fitur product tour yang akan diaktifkan kelak. | **Tinggi** | **Dipertahankan** sesuai keputusan pengguna |
+| **B-04** | `supabase/.temp/full_altcycles_cloud_setup.sql` | Output Generate Temporary | Berkas 4.503 baris di direktori `supabase/.temp/` hasil generate `bundle-cloud-sql.mjs`. | **Tinggi** | **Selesai Dibersihkan** dari disk lokal |
+| **B-05** | `scripts/supabase/bootstrap-super-admin.sql` | Skrip Manual Hardcoded | Skrip SQL 18 baris untuk inisialisasi akun Super Admin pertama. | **Sedang** | **Selesai Diarsipkan** ke `docs/archive/bootstrap-super-admin.sql` |
+| **B-06** | `docs/referensi-layout/staffinc-notes-payment-detail.png` | Aset Gambar Referensi | Gambar tangkapan layar 26 kB di `docs/referensi-layout/`. | **Sedang** | **Selesai Diarsipkan** ke `docs/archive/staffinc-notes-payment-detail.png` |
 
 ---
 
