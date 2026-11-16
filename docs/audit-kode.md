@@ -478,9 +478,9 @@ Altcycles telah menginstal library `motion` (versi 14.10.1, sebelumnya dikenal s
 
 ### 1. Peta Peluang Motion Bernilai Tinggi
 
-| ID | Lokasi Antarmuka | Jenis Motion | Durasi & Easing | Teknik Implementasi | Manfaat bagi Pengguna | Risiko Kinerja | Prioritas | Perlu Keputusanku? |
-| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: |
-| **D-01** | Modal Dialog & Alert Konfirmasi (`ConfirmActionDialog`, `DialogContent`) | Transisi Muncul & Keluar (Fade & Scale) | 200 ms, `cubic-bezier(0.16, 1, 0.3, 1)` | `transform: scale(0.96) -> scale(1)` dan `opacity: 0 -> 1` | Modal terbuka dengan lembut tanpa sentakan visual mendadak | Nol (GPU accelerated compositing) | Tinggi | **Ya** |
+| ID | Lokasi Antarmuka | Jenis Motion | Durasi & Easing | Teknik Implementasi | Manfaat bagi Pengguna | Risiko Kinerja | Prioritas | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :--- |
+| **D-01** | Modal Dialog & Alert Konfirmasi (`ConfirmActionDialog`, `DialogContent`, `AlertDialogContent`) | Transisi Muncul & Keluar (Fade & Scale) | 200 ms, `cubic-bezier(0.16, 1, 0.3, 1)` | `transform: scale(0.95) -> scale(1)` dan `opacity: 0 -> 1` terstandar di `src/lib/motion-tokens.ts` | Modal terbuka dengan lembut tanpa sentakan visual mendadak | Nol (GPU accelerated compositing) | Tinggi | **Selesai Diimplementasi & Tervalidasi** |
 | **D-02** | Tombol Aksi & Unduh Dokumen (`Button`, `ExportDownloadMenu`) | Umpan Balik Tekan (*Press Feedback*) | 100 ms, `ease-out` | `active:scale-[0.98]` dan crossfade ikon spinner saat loading | Memberikan umpan balik taktil instan bahwa aksi klik telah diproses sistem | Nol | Tinggi | **Ya** |
 | **D-03** | Bar Navigasi Tab Halaman (`TabsList`, `TabsTrigger`) | Indikator Tab Bergerak Halus (*Sliding Pill*) | 220 ms, spring physics (`stiffness: 500, damping: 35`) | Komponen `motion.div` dengan properti `layoutId="active-tab-indicator"` | Perpindahan antar tab terasa mengalir dan mulus setara UI modern | Sangat Rendah | Sedang | **Ya** |
 | **D-04** | Filter Lanjutan & Panel Detail Akordeon (Collapsible) | Buka / Tutup Rincian Mengembang Lembut | 200 ms, `ease-in-out` | CSS Grid `grid-template-rows: 0fr -> 1fr` dipadukan `opacity` | Elemen di bawahnya bergeser secara alami tanpa perhitungan JavaScript yang berat | Nol (Zero JS reflow) | Sedang | **Ya** |

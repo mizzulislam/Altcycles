@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
+import { MOTION_CLASSES } from "@/lib/motion-tokens";
 import { cn } from "@/lib/utils";
 
 const AlertDialog = AlertDialogPrimitive.Root;
@@ -13,7 +14,8 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-[100] bg-black/60 dark:bg-white/10 dark:backdrop-blur-sm duration-200 animate-in fade-in-0",
+      "fixed inset-0 z-[100] bg-black/60 dark:bg-white/10 dark:backdrop-blur-sm",
+      MOTION_CLASSES.dialogOverlay,
       className,
     )}
     {...props}
@@ -31,7 +33,8 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-[101] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] duration-200 animate-in fade-in-0 zoom-in-95",
+        "fixed left-1/2 top-1/2 z-[101] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)]",
+        MOTION_CLASSES.dialogContent,
         className,
       )}
       {...props}
