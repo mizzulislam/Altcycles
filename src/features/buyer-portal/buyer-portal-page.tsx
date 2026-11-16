@@ -467,7 +467,7 @@ export function BuyerPortalPage() {
                     <p className="text-[11px] font-medium text-muted-foreground">
                       Nomor Purchase Order
                     </p>
-                    <CardTitle className="font-mono text-lg sm:text-xl font-bold mt-0.5">
+                    <CardTitle className="font-mono text-lg sm:text-xl font-bold">
                       {lookupResult.po_number}
                     </CardTitle>
                   </CardHeader>
