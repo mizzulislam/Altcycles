@@ -216,12 +216,12 @@ export const PDF_LAYOUT_TOKENS = {
 } as const;
 
 // Warna resmi sesuai spesifikasi:
-// Aksen biru logo, teks #1f2937, label #6b7280, garis #e5e7eb, latar chip #f3f4f6, band media sosial navy gelap
+// Aksen biru logo, teks #1f2937, label #6b7280, garis #e5e7eb, latar highlight biru brand lembut (turunan icon sosmed altvira)
 const BRAND_BLUE = rgb(11 / 255, 67 / 255, 200 / 255);
 const TEXT_DARK = rgb(31 / 255, 41 / 255, 55 / 255); // #1f2937
 const TEXT_LABEL = rgb(107 / 255, 114 / 255, 128 / 255); // #6b7280
 const BORDER_GRAY = rgb(229 / 255, 231 / 255, 235 / 255); // #e5e7eb
-const CHIP_BG = rgb(243 / 255, 244 / 255, 246 / 255); // #f3f4f6
+const CHIP_BG = rgb(238 / 255, 243 / 255, 253 / 255); // warna biru brand altvira lembut (opacity diturunkan) agar teks hitam terbaca jelas
 const NAVY_DARK = rgb(9 / 255, 14 / 255, 25 / 255); // #090e19 token dark navy sistem
 
 export interface DocTitleConfig {
@@ -302,15 +302,23 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 8. PURCHASE ORDER (PO) KLIEN -> PURCHASE ORDER (PO) (kata Klien dihapus hanya di judul)
-  if (normalized.includes("PURCHASE ORDER") && normalized.includes("KLIEN")) {
+  // 8. PURCHASE ORDER KLIEN & VENDOR (kata (PO) dihapus di header title, fullTitleBar ditambahkan)
+  if (normalized.includes("PURCHASE ORDER") && (normalized.includes("VENDOR") || normalized.includes("PEMASOK"))) {
     return {
-      headerTitle: "PURCHASE ORDER (PO)",
+      headerTitle: "PURCHASE ORDER",
+      fullTitleBar: "PURCHASE ORDER (PO) VENDOR",
+    };
+  }
+  if (normalized.includes("PURCHASE ORDER") && (normalized.includes("KLIEN") || normalized.includes("CLIENT"))) {
+    return {
+      headerTitle: "PURCHASE ORDER",
+      fullTitleBar: "PURCHASE ORDER (PO) KLIEN",
     };
   }
   if (normalized.includes("PURCHASE ORDER") || normalized === "PURCHASE ORDER (PO)") {
     return {
-      headerTitle: "PURCHASE ORDER (PO)",
+      headerTitle: "PURCHASE ORDER",
+      fullTitleBar: "PURCHASE ORDER (PO) KLIEN",
     };
   }
 
@@ -1297,32 +1305,36 @@ async function renderDocumentPdfInternal(
   if (appreciationText) {
     const cleanAppText = sanitizePdfText(appreciationText);
     const maxBarW = contentWidth - 24;
-    const appLines = wrapTextByWidth(cleanAppText, fontBold, 9, maxBarW);
+    const appFontSize = 9.5;
+    const appLines = wrapTextByWidth(cleanAppText, fontBold, appFontSize, maxBarW);
     const barHeight = Math.max(22, appLines.length * 12 + 10);
-    const barY = y - barHeight;
+    // Spasi before baris apresiasi kuitansi sama besar dengan spasi judul lengkap dokumen (Poin 1: 6 pt dari garis header)
+    const barTopMargin = 6;
+    const barY = (headerAlignment.legalNameBaselineY !== 0 ? (headerAlignment as any).separatorLineY : (pageHeight - marginTop - 110)) ?? (y + 15 - barTopMargin - barHeight);
+    const safeBarY = y + 15 - barTopMargin - barHeight;
 
     page.drawRectangle({
       x: marginX,
-      y: barY,
+      y: safeBarY,
       width: contentWidth,
       height: barHeight,
       color: CHIP_BG,
     });
 
     appLines.forEach((line, lIdx) => {
-      const textW = fontBold.widthOfTextAtSize(line, 9);
+      const textW = fontBold.widthOfTextAtSize(line, appFontSize);
       const textX = marginX + (contentWidth - textW) / 2;
       const lineBaselineY =
         appLines.length === 1
-          ? barY + (barHeight - 9) / 2
-          : barY + barHeight - 13 - lIdx * 12;
+          ? safeBarY + (barHeight - appFontSize) / 2 + 1
+          : safeBarY + barHeight - 13 - lIdx * 12;
 
       drawTrackedText(
         line,
         {
           x: textX,
           y: lineBaselineY,
-          size: 9,
+          size: appFontSize,
           font: fontBold,
           color: TEXT_DARK,
         },
@@ -1330,7 +1342,7 @@ async function renderDocumentPdfInternal(
       );
     });
 
-    y = barY - 15;
+    y = safeBarY - 15;
   }
 
   // ==========================================================================
@@ -1679,7 +1691,8 @@ async function renderDocumentPdfInternal(
       thickness: 0.5,
       color: BORDER_GRAY,
     });
-    y -= 12;
+    // Spasi before tabel disamakan dengan spasi after tabel (10 pt)
+    y -= 10;
   }
 
   // ==========================================================================
@@ -1709,7 +1722,8 @@ async function renderDocumentPdfInternal(
       }
       y -= 6;
     }
-    y -= 6;
+    // Spasi after paragraf sebelum tabel disamakan 10 pt (6 pt + 4 pt)
+    y -= 4;
   }
 
   // ==========================================================================
@@ -1729,6 +1743,8 @@ async function renderDocumentPdfInternal(
     const cols = spec.tableColumns;
     const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
     const colWidths = cols.map((c) => (c.widthRatio / totalRatio) * contentWidth);
+    // Spasi before tabel disamakan dengan spasi after tabel (Poin 3: 10 pt)
+    const tableSpacing = 10;
     const headerH = 28;
     const headerFontSize = PDF_LAYOUT_TOKENS.fontSizes.tableHeader; // 9.5 pt
     const cellFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
@@ -1736,7 +1752,8 @@ async function renderDocumentPdfInternal(
     const cellPadY = 6;
 
     const drawTableHeader = () => {
-      const rectBottomY = y - headerH + 8;
+      const headerTopY = y;
+      const rectBottomY = headerTopY - headerH;
       page.drawRectangle({
         x: marginX,
         y: rectBottomY,
@@ -1745,8 +1762,8 @@ async function renderDocumentPdfInternal(
         color: CHIP_BG,
       });
       page.drawLine({
-        start: { x: marginX, y: rectBottomY + headerH },
-        end: { x: pageWidth - marginX, y: rectBottomY + headerH },
+        start: { x: marginX, y: headerTopY },
+        end: { x: pageWidth - marginX, y: headerTopY },
         thickness: 0.75,
         color: BORDER_GRAY,
       });
@@ -1877,6 +1894,8 @@ async function renderDocumentPdfInternal(
     ensureSpace(headerH + 36);
     drawTableHeader();
 
+    let lastRowBottomLineY = y;
+
     for (const row of spec.tableRows) {
       const wrappedCells = cols.map((col, idx) => {
         const rawCell = row[idx] ?? "";
@@ -1938,12 +1957,13 @@ async function renderDocumentPdfInternal(
         color: BORDER_GRAY,
       });
 
+      lastRowBottomLineY = bottomLineY;
       // Siapkan y untuk baris berikutnya (jika masih ada)
       y = bottomLineY - cellPadY - 9;
       void totalRowH;
     }
 
-    // Baris Total pada baris terakhir tabel (Poin 2 - 7)
+    // Baris Total pada baris terakhir tabel (Poin 4: Menyatu utuh tanpa gap dengan baris di atasnya)
     if (tableSummaryTargetColIdx !== -1 && tableSummaryLabel && tableSummaryValue) {
       tableSummaryRenderedInTable = true;
       const summaryRowH = 22;
@@ -1954,9 +1974,12 @@ async function renderDocumentPdfInternal(
         y = pageHeight - marginTop;
         drawDocumentHeader();
         drawTableHeader();
+        lastRowBottomLineY = y + cellPadY + 9;
       }
 
-      const rectBottomY = y - summaryRowH + 4;
+      // Baris total menyatu tepat di bawah baris data terakhir tanpa gap pemisah
+      const rectTopY = lastRowBottomLineY;
+      const rectBottomY = rectTopY - summaryRowH;
       page.drawRectangle({
         x: marginX,
         y: rectBottomY,
@@ -1965,7 +1988,15 @@ async function renderDocumentPdfInternal(
         color: CHIP_BG,
       });
 
-      // Kolom 0: Label
+      // Garis penutup bawah tabel
+      page.drawLine({
+        start: { x: marginX, y: rectBottomY },
+        end: { x: pageWidth - marginX, y: rectBottomY },
+        thickness: 0.75,
+        color: BORDER_GRAY,
+      });
+
+      // Kolom 0: Label (align center vertikal terhadap baris total)
       const cleanSummLbl = sanitizePdfText(tableSummaryLabel);
       drawTrackedText(
         cleanSummLbl,
@@ -1979,7 +2010,7 @@ async function renderDocumentPdfInternal(
         "D-table-total-label",
       );
 
-      // Kolom target: Nilai (tanpa simbol Rp)
+      // Kolom target: Nilai (tanpa simbol Rp, align center vertikal terhadap baris total)
       let targetColX = marginX;
       for (let i = 0; i < tableSummaryTargetColIdx; i++) {
         targetColX += colWidths[i]!;
@@ -1999,18 +2030,11 @@ async function renderDocumentPdfInternal(
         "D-table-total-value",
       );
 
-      // Garis penutup bawah tabel
-      page.drawLine({
-        start: { x: marginX, y: rectBottomY },
-        end: { x: pageWidth - marginX, y: rectBottomY },
-        thickness: 0.75,
-        color: BORDER_GRAY,
-      });
-
-      y = rectBottomY - 10;
+      // Spasi after tabel sama dengan spasi before tabel (Poin 3: 10 pt)
+      y = rectBottomY - tableSpacing;
     } else {
-      y += cellPadY; // sesuaikan offset setelah baris terakhir
-      y -= 8;
+      // Spasi after tabel sama dengan spasi before tabel (Poin 3: 10 pt)
+      y = lastRowBottomLineY - tableSpacing;
     }
   }
 
@@ -2305,7 +2329,11 @@ async function renderDocumentPdfInternal(
       const terbSize = 8.5;
       const maxTerbW = boxW - 24;
       const terbLines = wrapTextByWidth(terbStr, fontBold, terbSize, maxTerbW);
-      const boxH = Math.max(52, 26 + terbLines.length * 12 + 8);
+      const amtStr = `Jumlah Diterima : ${receiptAmountVal}`;
+      const amtSize = 11;
+      const interLineGap = 6;
+      const contentH = amtSize + interLineGap + terbLines.length * 12;
+      const boxH = Math.max(50, contentH + 16);
       ensureSpace(boxH + 20);
 
       const boxTopY = y;
@@ -2319,16 +2347,16 @@ async function renderDocumentPdfInternal(
         color: CHIP_BG,
       });
 
-      // Baris 1: "Jumlah Diterima : {nominal}" (rata tengah, tetap tebal)
-      const amtStr = `Jumlah Diterima : ${receiptAmountVal}`;
-      const amtSize = 11;
+      // Baris 1: "Jumlah Diterima : {nominal}" (align center vertikal & horizontal terhadap box)
+      const topPad = (boxH - contentH) / 2;
+      const amtY = boxTopY - topPad - amtSize + 1;
       const amtW = fontBold.widthOfTextAtSize(amtStr, amtSize);
       const amtX = marginX + (boxW - amtW) / 2;
       drawTrackedText(
         amtStr,
         {
           x: amtX,
-          y: boxTopY - 18,
+          y: amtY,
           size: amtSize,
           font: fontBold,
           color: TEXT_DARK,
@@ -2336,7 +2364,7 @@ async function renderDocumentPdfInternal(
         "E-receipt-amount",
       );
 
-      // Baris Terbilang (rata tengah, tanpa "# ... #", di-wrap agar tidak lewat margin)
+      // Baris Terbilang (align center horizontal di bawah Jumlah Diterima)
       terbLines.forEach((tLine, tIdx) => {
         const tw = fontBold.widthOfTextAtSize(tLine, terbSize);
         const tx = marginX + (boxW - tw) / 2;
@@ -2344,7 +2372,7 @@ async function renderDocumentPdfInternal(
           tLine,
           {
             x: tx,
-            y: boxTopY - 35 - tIdx * 12,
+            y: amtY - 14 - tIdx * 12,
             size: terbSize,
             font: fontBold,
             color: TEXT_DARK,
@@ -2873,9 +2901,10 @@ async function renderDocumentPdfInternal(
         let sigImgOffsetX = colRightX;
 
         if (spec.hasMeterai) {
-          // Kotak e-Meterai 20x20 mm (56.7 x 56.7 pt) di atas nama penandatangan kanan
-          const mBoxX = colRightX;
-          const mBoxY = lineY + 4;
+          // Kotak e-Meterai 20x20 mm (56.7 x 56.7 pt)
+          // Poin 6: Ujung kanan kotak sejajar ujung kiri garis tipis tanda tangan (colRightX), align center area tanda tangan
+          const mBoxX = colRightX - meteraiW;
+          const mBoxY = lineY + 6;
           page.drawRectangle({
             x: mBoxX,
             y: mBoxY,
@@ -2886,30 +2915,63 @@ async function renderDocumentPdfInternal(
             borderWidth: 0.75,
           });
 
-          const mLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
-            { text: "METERAI", size: 6.5, bold: true, color: TEXT_LABEL, dy: 13 },
-            { text: "ELEKTRONIK", size: 6.5, bold: true, color: TEXT_LABEL, dy: 22 },
-            { text: "Rp10.000", size: 7.5, bold: true, color: TEXT_DARK, dy: 34 },
-            { text: "20 x 20 mm", size: 6, bold: false, color: TEXT_LABEL, dy: 46 },
-          ];
+          // Poin 7: Hapus 20x20 mm, Rp10.000 -> 10000 (font lebih besar), align bottom right
+          const mPadR = 5;
+          const mPadB = 5;
+          const mRightX = mBoxX + meteraiW - mPadR;
 
-          for (const ml of mLines) {
-            const mFont = ml.bold ? fontBold : fontRegular;
-            const tw = mFont.widthOfTextAtSize(ml.text, ml.size);
-            drawTrackedText(
-              ml.text,
-              {
-                x: mBoxX + (meteraiW - tw) / 2,
-                y: mBoxY + meteraiH - ml.dy,
-                size: ml.size,
-                font: mFont,
-                color: ml.color,
-              },
-              "G-meterai",
-            );
-          }
+          // 1. Teks "10000" paling bawah (font lebih besar: 9.5 pt bold)
+          const mValText = "10000";
+          const mValSize = 9.5;
+          const mValW = fontBold.widthOfTextAtSize(mValText, mValSize);
+          const mValY = mBoxY + mPadB;
+          drawTrackedText(
+            mValText,
+            {
+              x: mRightX - mValW,
+              y: mValY,
+              size: mValSize,
+              font: fontBold,
+              color: TEXT_DARK,
+            },
+            "G-meterai-val",
+          );
 
-          sigImgOffsetX = colRightX + meteraiW + 10;
+          // 2. Teks "ELEKTRONIK" di atas 10000 (size 6 pt bold)
+          const mElText = "ELEKTRONIK";
+          const mElSize = 6;
+          const mElW = fontBold.widthOfTextAtSize(mElText, mElSize);
+          const mElY = mValY + 11;
+          drawTrackedText(
+            mElText,
+            {
+              x: mRightX - mElW,
+              y: mElY,
+              size: mElSize,
+              font: fontBold,
+              color: TEXT_LABEL,
+            },
+            "G-meterai-el",
+          );
+
+          // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6 pt bold)
+          const mMatText = "MATERAI";
+          const mMatSize = 6;
+          const mMatW = fontBold.widthOfTextAtSize(mMatText, mMatSize);
+          const mMatY = mElY + 8;
+          drawTrackedText(
+            mMatText,
+            {
+              x: mRightX - mMatW,
+              y: mMatY,
+              size: mMatSize,
+              font: fontBold,
+              color: TEXT_LABEL,
+            },
+            "G-meterai-mat",
+          );
+
+          sigImgOffsetX = colRightX;
         }
 
         if (rightSigImg) {
@@ -3611,7 +3673,7 @@ export async function generateSpkProjectCharterPdf(params: {
   const spkMeteraiW = 56.7;
   const spkMeteraiH = 56.7;
   const spkMeteraiX = (pageWidth - spkMeteraiW) / 2;
-  const spkMeteraiY = lineY + 4;
+  const spkMeteraiY = lineY + 6;
 
   page.drawRectangle({
     x: spkMeteraiX,
@@ -3623,24 +3685,48 @@ export async function generateSpkProjectCharterPdf(params: {
     borderWidth: 0.75,
   });
 
-  const spkMLines: Array<{ text: string; size: number; bold: boolean; color: RGB; dy: number }> = [
-    { text: "METERAI", size: 6.5, bold: true, color: SLATE_600, dy: 13 },
-    { text: "ELEKTRONIK", size: 6.5, bold: true, color: SLATE_600, dy: 22 },
-    { text: "Rp10.000", size: 7.5, bold: true, color: SLATE_900, dy: 34 },
-    { text: "20 x 20 mm", size: 6, bold: false, color: SLATE_500, dy: 46 },
-  ];
+  const spkPadR = 5;
+  const spkPadB = 5;
+  const spkRightX = spkMeteraiX + spkMeteraiW - spkPadR;
 
-  for (const ml of spkMLines) {
-    const mFont = ml.bold ? fontBold : fontRegular;
-    const tw = mFont.widthOfTextAtSize(ml.text, ml.size);
-    page.drawText(ml.text, {
-      x: spkMeteraiX + (spkMeteraiW - tw) / 2,
-      y: spkMeteraiY + spkMeteraiH - ml.dy,
-      size: ml.size,
-      font: mFont,
-      color: ml.color,
-    });
-  }
+  // 1. Teks "10000" paling bawah (font lebih besar: 9.5 pt bold)
+  const spkValText = "10000";
+  const spkValSize = 9.5;
+  const spkValW = fontBold.widthOfTextAtSize(spkValText, spkValSize);
+  const spkValY = spkMeteraiY + spkPadB;
+  page.drawText(spkValText, {
+    x: spkRightX - spkValW,
+    y: spkValY,
+    size: spkValSize,
+    font: fontBold,
+    color: SLATE_900,
+  });
+
+  // 2. Teks "ELEKTRONIK" di atas 10000 (size 6 pt bold)
+  const spkElText = "ELEKTRONIK";
+  const spkElSize = 6;
+  const spkElW = fontBold.widthOfTextAtSize(spkElText, spkElSize);
+  const spkElY = spkValY + 11;
+  page.drawText(spkElText, {
+    x: spkRightX - spkElW,
+    y: spkElY,
+    size: spkElSize,
+    font: fontBold,
+    color: SLATE_600,
+  });
+
+  // 3. Teks "MATERAI" di atas ELEKTRONIK (size 6 pt bold)
+  const spkMatText = "MATERAI";
+  const spkMatSize = 6;
+  const spkMatW = fontBold.widthOfTextAtSize(spkMatText, spkMatSize);
+  const spkMatY = spkElY + 8;
+  page.drawText(spkMatText, {
+    x: spkRightX - spkMatW,
+    y: spkMatY,
+    size: spkMatSize,
+    font: fontBold,
+    color: SLATE_600,
+  });
 
   page.drawText("PIHAK PERTAMA", {
     x: p1X,

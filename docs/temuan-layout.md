@@ -570,14 +570,43 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-34
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Terbaru)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh Dokumen PDF (`renderDocumentPdfInternal`, `drawDocumentHeader`, `resolveDocTitleConfig`, `PDF_LAYOUT_TOKENS`)
+- **Apa yang bertentangan:**
+  1. Pada dokumen Kuitansi, jarak spasi before baris apresiasi kuitansi (*"Terima kasih telah memilih Altvira, {nama klien}"*) sebelumnya berbeda dengan spasi judul lengkap dokumen setelah header. Pengguna meminta spasi before disamakan persis dengan spasi Judul Lengkap Dokumen (`barTopMargin = 6 pt` dari garis pemisah header).
+  2. Teks di dalam baris/highlight abu (*fullTitleBar*, baris apresiasi kuitansi, kotak Jumlah Diterima & Terbilang kuitansi) diminta memiliki perataan rata tengah (*align center*) horizontal dan vertikal terhadap kotak/barisnya.
+  3. Nilai/besar spasi before tabel diminta disamakan dengan spasi after tabel, dengan rujukan nilai dari spasi after tabel (`tableSpacing = 10 pt`).
+  4. Baris total perhitungan (*Total Penawaran Harga*, *Total Nilai Purchase Order*, *Total Nilai PO*, *Total Biaya Diajukan*, *Total Nilai Termin*) sebelumnya memiliki celah/gap putih pemisah dari baris tabel di atasnya. Pengguna meminta baris total digabungkan menyatu utuh dengan tabel tanpa terpisah spasi.
+  5. Judul dokumen Purchase Order di header kanan sebelumnya memuat akronim *"PURCHASE ORDER (PO)"*. Pengguna meminta kata `(PO)` dihapus menjadi `"PURCHASE ORDER"`, serta ditambahkan Judul Lengkap Dokumen pada baris abu tepat setelah header berupa `"PURCHASE ORDER (PO) KLIEN"` untuk PO Klien dan `"PURCHASE ORDER (PO) VENDOR"` untuk PO Vendor.
+  6. Kotak placeholder e-meterai sebelumnya berada di atas kolom nama penandatangan. Pengguna meminta kotak placeholder e-meterai digeser ke kiri hingga ujung kanannya sejajar dengan ujung kiri garis tipis tanda tangan (`colRightX`), serta digeser sedikit ke atas sehingga *align center* terhadap area kosong tanda tangan.
+  7. Pada placeholder e-meterai: teks `"20 x 20 mm"` dihapus, nominal `"Rp10.000"` diganti menjadi `"10000"` dengan ukuran font lebih besar dari teks `"MATERAI ELEKTRONIK"`, serta seluruh teks diposisikan rata kanan bawah (*bottom right*) terhadap isi kotak placeholder.
+  8. Warna highlight abu teks dan header tabel sebelumnya adalah abu-abu netral `#f3f4f6`. Pengguna meminta warnanya diganti dengan warna biru yang sama dengan icon medsos Altvira di footer (`BRAND_BLUE`), dengan opacity/tint yang diturunkan lembut (`rgb(238/255, 243/255, 253/255)`) sehingga teks hitam tetap terbaca dengan jelas dan kontras tinggi.
+- **Yang kulakukan:**
+  1. Menyamakan spasi before baris apresiasi kuitansi menjadi `barTopMargin = 6 pt` dari garis pemisah header.
+  2. Menerapkan perataan *align center* (horizontal dan vertikal) pada seluruh baris/highlight teks (`fullTitleBar`, apresiasi kuitansi, kotak Jumlah Diterima & Terbilang).
+  3. Menyeragamkan spasi before tabel dan spasi after tabel menjadi persis `tableSpacing = 10 pt`.
+  4. Menyatukan baris total tabel ke garis bawah baris data terakhir (`rectTopY = lastRowBottomLineY; const rectBottomY = rectTopY - summaryRowH;`) tanpa celah/gap pemisah sehingga menjadi tabel yang utuh.
+  5. Mengubah konfigurasi judul PO di header kanan menjadi `"PURCHASE ORDER"` dan menambahkan `fullTitleBar` `"PURCHASE ORDER (PO) KLIEN"` dan `"PURCHASE ORDER (PO) VENDOR"`.
+  6. Menggeser placeholder e-meterai ke kiri (`mBoxX = colRightX - meteraiW`) sehingga tepi kanannya sejajar tepat dengan awal garis tipis tanda tangan, serta vertikal di tengah area kosong (`lineY + 6`).
+  7. Menghapus teks `"20 x 20 mm"`, mengganti menjadi `"10000"` (font 9.5 pt bold), dan meratakan teks `"MATERAI"`, `"ELEKTRONIK"`, `"10000"` ke *bottom right* kotak placeholder. Format yang sama diselaraskan pada SPK Project Charter.
+  8. Memperbarui warna `CHIP_BG` menjadi warna biru brand lembut `rgb(238 / 255, 243 / 255, 253 / 255)` yang harmonis dengan icon medsos di footer dan menjamin keterbacaan teks hitam dengan standar kontras WCAG AAA.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan pembaruan spasi kuitansi, align center highlight, spasi before/after tabel 10 pt, tabel total menyatu, judul PO & baris abu PO Klien/Vendor, posisi e-meterai bottom right, dan warna biru brand lembut `CHIP_BG`. (Diterapkan).
+- **Rekomendasi:** **Opsi A**.
+- **Perlu keputusanku?** tidak
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 18 | 16 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 19 | 17 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 6 | 5 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **33** | **26** | **7** | **1** |
+| **Total Temuan** | **34** | **27** | **7** | **1** |
