@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronDownIcon,
   DownloadIcon,
@@ -30,11 +31,50 @@ export function ExportDownloadMenu({
 }: ExportDownloadMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [loadingType, setLoadingType] = React.useState<"excel" | "pdf" | "csv" | null>(null);
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
 
+  // Hitung perkiraan tinggi menu berdasarkan jumlah opsi aktif (tiap item ~52px + padding ~12px)
+  const activeItemCount =
+    (onExportExcel ? 1 : 0) + (onExportPdf ? 1 : 0) + (onExportCsv ? 1 : 0);
+  const estimatedMenuHeight = Math.max(64, activeItemCount * 54 + 12);
+  const menuWidth = 240; // w-60
+
+  const updatePosition = React.useCallback(() => {
+    const btn = triggerRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward =
+      spaceBelow < estimatedMenuHeight + 12 && rect.top > estimatedMenuHeight + 12;
+
+    const top = openUpward
+      ? rect.top - estimatedMenuHeight - 6
+      : rect.bottom + 6;
+
+    const rawLeft = align === "end" ? rect.right - menuWidth : rect.left;
+    const left = Math.max(
+      12,
+      Math.min(rawLeft, window.innerWidth - menuWidth - 12),
+    );
+    setCoords({ top, left });
+  }, [align, estimatedMenuHeight, menuWidth]);
+
   React.useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+
     function handleClickOutside(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        !triggerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
@@ -43,16 +83,21 @@ export function ExportDownloadMenu({
         setIsOpen(false);
       }
     }
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
+    function handleReposition() {
+      updatePosition();
     }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   async function handleTrigger(
     type: "excel" | "pdf" | "csv",
@@ -71,8 +116,9 @@ export function ExportDownloadMenu({
   const isLoading = loadingType !== null;
 
   return (
-    <div ref={menuRef} className={cn("relative inline-block text-left", className)}>
+    <div className={cn("inline-block text-left", className)}>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled || isLoading}
         onClick={() => setIsOpen((prev) => !prev)}
@@ -83,7 +129,7 @@ export function ExportDownloadMenu({
           "disabled:pointer-events-none disabled:opacity-50",
           isOpen && "border-primary/60 ring-2 ring-primary/20",
         )}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
       >
         <span className="flex items-center gap-2">
@@ -102,93 +148,95 @@ export function ExportDownloadMenu({
         />
       </button>
 
-      {isOpen && (
-        <div
-          className={cn(
-            "absolute z-50 mt-1.5 w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left transition-all",
-            align === "end" ? "right-0" : "left-0",
-          )}
-          role="menu"
-        >
-          {onExportExcel && (
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => void handleTrigger("excel", onExportExcel)}
-              className={cn(
-                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
-                "hover:bg-muted/80 text-foreground",
-                loadingType === "excel" && "opacity-70",
-              )}
-              role="menuitem"
-            >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                {loadingType === "excel" ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-                ) : (
-                  <FileSpreadsheetIcon className="size-4" />
+      {isOpen &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{ top: coords.top, left: coords.left }}
+            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-100"
+          >
+            {onExportExcel && (
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => void handleTrigger("excel", onExportExcel)}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "hover:bg-muted/80 text-foreground",
+                  loadingType === "excel" && "opacity-70",
                 )}
-              </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground">Excel (.xlsx)</span>
-                <span className="text-[11px] text-muted-foreground">Buku kerja spreadsheet lengkap</span>
-              </div>
-            </button>
-          )}
+                role="menuitem"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  {loadingType === "excel" ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <FileSpreadsheetIcon className="size-4" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 text-left">
+                  <span className="font-semibold text-foreground">Excel (.xlsx)</span>
+                  <span className="text-[11px] text-muted-foreground">Buku kerja spreadsheet lengkap</span>
+                </div>
+              </button>
+            )}
 
-          {onExportPdf && (
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => void handleTrigger("pdf", onExportPdf)}
-              className={cn(
-                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
-                "hover:bg-muted/80 text-foreground",
-                loadingType === "pdf" && "opacity-70",
-              )}
-              role="menuitem"
-            >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
-                {loadingType === "pdf" ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-                ) : (
-                  <FileTextIcon className="size-4" />
+            {onExportPdf && (
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => void handleTrigger("pdf", onExportPdf)}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "hover:bg-muted/80 text-foreground",
+                  loadingType === "pdf" && "opacity-70",
                 )}
-              </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
-                <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
-              </div>
-            </button>
-          )}
+                role="menuitem"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                  {loadingType === "pdf" ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <FileTextIcon className="size-4" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 text-left">
+                  <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
+                  <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
+                </div>
+              </button>
+            )}
 
-          {onExportCsv && (
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => void handleTrigger("csv", onExportCsv)}
-              className={cn(
-                "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
-                "hover:bg-muted/80 text-foreground",
-                loadingType === "csv" && "opacity-70",
-              )}
-              role="menuitem"
-            >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                {loadingType === "csv" ? (
-                  <Loader2Icon className="size-4 animate-spin" />
-                ) : (
-                  <TableIcon className="size-4" />
+            {onExportCsv && (
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => void handleTrigger("csv", onExportCsv)}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "hover:bg-muted/80 text-foreground",
+                  loadingType === "csv" && "opacity-70",
                 )}
-              </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground">Format CSV (.csv)</span>
-                <span className="text-[11px] text-muted-foreground">Tabel data pemisah koma</span>
-              </div>
-            </button>
-          )}
-        </div>
-      )}
+                role="menuitem"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  {loadingType === "csv" ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <TableIcon className="size-4" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 text-left">
+                  <span className="font-semibold text-foreground">Format CSV (.csv)</span>
+                  <span className="text-[11px] text-muted-foreground">Tabel data pemisah koma</span>
+                </div>
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

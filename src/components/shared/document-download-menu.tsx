@@ -162,7 +162,7 @@ export function DocumentDownloadMenu({
             ref={menuRef}
             role="menu"
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-50 w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-100"
+            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-100"
           >
             <button
               type="button"
