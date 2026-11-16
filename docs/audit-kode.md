@@ -24,7 +24,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.861 $\rightarrow$ 1.306 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 $\rightarrow$ 725 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 $\rightarrow$ 1.352 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Selesai Dipecah & Tervalidasi** |
-| **A-05** | `src/lib/data-service.ts` | 1.939 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Ya** |
+| **A-05** | `src/lib/data-service.ts` | 2.071 $\rightarrow$ 17 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 
 ### 5 Temuan Teratas Bagian B (File Tidak Relevan & Redundansi)
 
@@ -184,20 +184,21 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-05 — `src/lib/data-service.ts`
-- **Jumlah Baris:** 1.939 baris
+- **Jumlah Baris:** 2.071 $\rightarrow$ 17 baris (Pengurangan **>99%**)
 - **Prioritas:** Tinggi
-- **Tanggung Jawab yang Tercampur:**
-  God object untuk seluruh operasi pembacaan dan penulisan Supabase + fallback demo mode lokal (Profiles, Invoices, Receipts, Projects, Milestones, Payment Requests, Journals, Chart of Accounts, Periods, Company, Vendor PO, Client PO, dll.).
-- **Rekomendasi Pemecahan Konkret:**
-  Pecah menjadi domain services di `src/lib/services/`:
-  1. `src/lib/services/auth-profile-service.ts` (~250 baris)
-  2. `src/lib/services/project-service.ts` (~400 baris)
-  3. `src/lib/services/invoicing-service.ts` (~350 baris)
-  4. `src/lib/services/accounting-service.ts` (~450 baris)
-  5. `src/lib/services/payment-request-service.ts` (~300 baris)
-  6. `src/lib/data-service.ts` (~100 baris): Re-export facade agar modul lain tetap kompatibel.
-- **Risiko Pemecahan:** Sedang (Banyak modul bergantung pada `data-service.ts`).
-- **Perlu Keputusanku?** Ya
+- **Status:** **Selesai Dipecah & Tervalidasi**
+- **Hasil Refaktorisasi:**
+  Telah diekstrak ke dalam modul-modul domain terisolasi di `src/lib/services/` dengan pattern *Facade Aggregator*:
+  1. `src/lib/services/demo-store.ts` (248 baris): Store lokal in-memory, seed state, dan generator sequence & audit trail demo.
+  2. `src/lib/services/storage-helpers.ts` (24 baris): Helper persistensi localStorage seragam (`readLocalJson`, `writeLocalJson`).
+  3. `src/lib/services/auth-profile-service.ts` (409 baris): Manajemen profil akun, avatar storage, multi-role assignment, dan user management internal.
+  4. `src/lib/services/system-settings-service.ts` (547 baris): Profil perusahaan, penomoran sequence dokumen, template dinamis, audit log, dan media login portal.
+  5. `src/lib/services/accounting-master-service.ts` (272 baris): Master bagan akun (COA) dan siklus pembukaan/penutupan periode akuntansi.
+  6. `src/lib/services/master-data-service.ts` (461 baris): Master entitas vendor, data pelanggan (beserta logo/TTD/paraf), dan proyek klien.
+  7. `src/lib/data-service.ts` (17 baris): Facade aggregator murni yang me-re-export seluruh domain service di atas sehingga **100% backward compatible** tanpa mengubah satupun baris import di seluruh komponen aplikasi.
+- **Verifikasi:**
+  - `npm run typecheck` (`tsc --noEmit`): Lulus 100% tanpa error.
+  - `npx vitest run`: 13 test files / 67 tests lulus 100%.
 
 ---
 
