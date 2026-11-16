@@ -2,13 +2,10 @@ import * as React from "react";
 import {
   ArrowUpDownIcon,
   BanknoteIcon,
-  ClockAlertIcon,
   ClockIcon,
   FileTextIcon,
   PlusIcon,
   ReceiptIcon,
-  ReceiptTextIcon,
-  WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -20,7 +17,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/empty";
 import {
   Card,
   CardContent,
@@ -29,29 +26,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { NumberInput } from "@/components/ui/number-input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -59,7 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import {
   RowEditActionButtons,
   SectionEditControls,
@@ -88,12 +61,9 @@ import {
   updateSalesInvoice,
 } from "@/lib/operations-service";
 import {
-  buildInvoicePdfSpec,
-  buildReceiptPdfSpec,
   downloadPdfBytes,
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
-import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
 import { validateInvoiceChecklist } from "@/lib/document-checklist";
 import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
 import type {
@@ -101,17 +71,26 @@ import type {
   CompanyProfileRow,
   CustomerRow,
   InvoiceKind,
-  InvoicePaymentStatus,
   ProjectRow,
   ReceiptRow,
   SalesInvoiceRow,
 } from "@/types/database.types";
-
-const INVOICE_KIND_LABELS: Record<InvoiceKind, string> = {
-  down_payment: "Uang Muka (DP)",
-  milestone: "Termin Progres (Wajib BAKP)",
-  final_settlement: "Pelunasan Akhir (Wajib BAST)",
-};
+import { InvoiceKpiSummary } from "./components/invoice-kpi-summary";
+import {
+  InvoiceCreateDialog,
+  INVOICE_KIND_LABELS,
+} from "./components/invoice-create-dialog";
+import { InvoicePaymentDialog } from "./components/invoice-payment-dialog";
+import { InvoiceViewDetailDialog } from "./components/invoice-view-detail-dialog";
+import {
+  InvoiceEditDialog,
+  type EditableInvoiceRecord,
+} from "./components/invoice-edit-dialog";
+import {
+  makeInvoiceSpec as buildInvoiceSpecHelper,
+  makeReceiptSpec as buildReceiptSpecHelper,
+  type InvoiceSpecBuilderContext,
+} from "./components/invoice-spec-builder";
 
 export function InvoicingPage() {
   const [bundle, setBundle] = React.useState<ProjectWorkspaceBundle | null>(
@@ -133,11 +112,7 @@ export function InvoicingPage() {
   const [isEditingReceipts, setIsEditingReceipts] = React.useState(false);
   const [selectedReceiptIds, setSelectedReceiptIds] = React.useState<string[]>([]);
   const [viewModal, setViewModal] = React.useState<ViewDetailState | null>(null);
-  const [editRecord, setEditRecord] = React.useState<
-    | { section: "invoices"; item: SalesInvoiceRow }
-    | { section: "receipts"; item: ReceiptRow }
-    | null
-  >(null);
+  const [editRecord, setEditRecord] = React.useState<EditableInvoiceRecord | null>(null);
   const [savingEditRecord, setSavingEditRecord] = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState<{
     section: "invoices" | "receipts";
@@ -421,81 +396,13 @@ export function InvoicingPage() {
     }
   }
 
+  const specContext = React.useMemo<InvoiceSpecBuilderContext>(
+    () => ({ company, bundle, customerMap, projectMap }),
+    [company, bundle, customerMap, projectMap],
+  );
+
   function makeInvoiceSpec(inv: SalesInvoiceRow) {
-    if (!company || !bundle) return null;
-    const cust = customerMap.get(inv.customer_id);
-    const prj = projectMap.get(inv.project_id);
-    const cpo = bundle.clientPos.find((c) => c.id === inv.client_po_id);
-    const ms = bundle.milestones.find((m) => m.id === inv.milestone_id);
-    const bakp = bundle.bakpList.find((b) => b.id === inv.bakp_id);
-    const bast = bundle.bastList.find((h) => h.id === inv.bast_id);
-    const spk = bundle.documents.find(
-      (d) => d.project_id === inv.project_id && d.doc_type === "SPK",
-    );
-
-    const projectMilestones = bundle.milestones.filter(
-      (m) => m.project_id === inv.project_id,
-    );
-    const totalContractValue =
-      projectMilestones.reduce((s, m) => s + m.amount, 0) ||
-      prj?.contract_value ||
-      cpo?.po_value ||
-      inv.subtotal_amount;
-
-    const projectInvoices = bundle.invoices.filter(
-      (i) => i.project_id === inv.project_id,
-    );
-    const previousInvoices = projectInvoices.filter(
-      (i) =>
-        i.invoice_date < inv.invoice_date ||
-        (i.invoice_date === inv.invoice_date &&
-          i.invoice_number < inv.invoice_number),
-    );
-    const prevBilled = previousInvoices.reduce(
-      (s, i) => s + i.subtotal_amount,
-      0,
-    );
-    const remainingContract = Math.max(
-      0,
-      totalContractValue - (prevBilled + inv.subtotal_amount),
-    );
-
-    return buildInvoicePdfSpec({
-      company,
-      invoiceNumber: inv.invoice_number,
-      invoiceDate: inv.invoice_date,
-      dueDate: inv.due_date,
-      customerName: cust?.company_name ?? cust?.name ?? "Klien",
-      customerPic: cust?.contact_person,
-      customerTitle: cust?.contact_title,
-      customerAddress: cust?.address ?? "-",
-      customerLogoUrl: cust?.logo_storage_path ?? null,
-      projectName: prj ? `${prj.code} - ${prj.name}` : "Proyek",
-      clientPoNumber: cpo?.po_number ?? "-",
-      spkNumber: spk?.doc_number ?? null,
-      bakpNumber: bakp?.bakp_number ?? null,
-      bastNumber: bast?.bast_number ?? null,
-      servicePeriod: ms
-        ? /^termin\b/i.test(ms.name.trim())
-          ? ms.name.trim()
-          : `Termin: ${ms.name.trim()}`
-        : undefined,
-      description: ms
-        ? `${ms.name} — Proyek ${prj?.name ?? ""}`
-        : `Penagihan Proyek ${prj?.name ?? ""}`,
-      qty: 1,
-      unit: "Paket",
-      subtotal: inv.subtotal_amount,
-      ppnAmount: inv.ppn_amount,
-      totalAmount: inv.total_amount,
-      contractValue: totalContractValue,
-      previousBilledAmount: prevBilled,
-      remainingContractAmount: remainingContract,
-      includePph23Estimate: Boolean(company.pph_enabled),
-      docStatus: inv.doc_status,
-      paymentStatus: inv.payment_status,
-      balanceDue: inv.total_amount - inv.paid_amount,
-    });
+    return buildInvoiceSpecHelper(inv, specContext);
   }
 
   const sortedInvoices = React.useMemo(() => {
@@ -610,33 +517,7 @@ export function InvoicingPage() {
   }
 
   function makeReceiptSpec(kw: ReceiptRow) {
-    if (!company || !bundle) return null;
-    const inv = bundle.invoices.find((i) => i.id === kw.invoice_id);
-    const prj = inv ? projectMap.get(inv.project_id) : undefined;
-    const cpo = inv
-      ? bundle.clientPos.find((c) => c.id === inv.client_po_id)
-      : undefined;
-    const ms = inv
-      ? bundle.milestones.find((m) => m.id === inv.milestone_id)
-      : undefined;
-
-    return buildReceiptPdfSpec({
-      company,
-      receiptNumber: kw.receipt_number,
-      receiptDate: kw.receipt_date,
-      receivedFrom: kw.received_from,
-      invoiceNumber: inv?.invoice_number ?? "-",
-      projectName: prj ? `${prj.code} - ${prj.name}` : "Proyek Klien",
-      clientPoNumber: cpo?.po_number ?? null,
-      servicePeriod: ms
-        ? /^termin\b/i.test(ms.name.trim())
-          ? ms.name.trim()
-          : `Termin: ${ms.name.trim()}`
-        : null,
-      paymentMethod: "Transfer Bank Resmi Altvira",
-      amount: kw.amount,
-      hasMeterai: kw.amount > 5_000_000,
-    });
+    return buildReceiptSpecHelper(kw, specContext);
   }
 
   async function handleDownloadReceiptPdf(kw: ReceiptRow) {
@@ -795,58 +676,14 @@ export function InvoicingPage() {
       </div>
 
       {/* Ringkasan KPI Penagihan & Piutang */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              Total Nilai Invoice Diterbitkan
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalInvoiced)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {bundle?.invoices.length ?? 0} dokumen invoice terbit
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
-            <ReceiptTextIcon className="size-5" />
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              Total Penerimaan Pembayaran
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalCollected)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {bundle?.receipts.length ?? 0} kuitansi pembayaran resmi
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
-
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              Saldo Piutang Usaha Belum Tertagih
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalOutstanding)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {arAgingRows.length} tagihan menunggu pelunasan
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ClockAlertIcon className="size-5" />
-          </div>
-        </Card>
-      </div>
+      <InvoiceKpiSummary
+        totalInvoiced={totalInvoiced}
+        totalCollected={totalCollected}
+        totalOutstanding={totalOutstanding}
+        invoiceCount={bundle?.invoices.length ?? 0}
+        receiptCount={bundle?.receipts.length ?? 0}
+        arPendingCount={arAgingRows.length}
+      />
 
       {/* Bar Navigasi Tab Penagihan & Piutang */}
       <div className="bg-card rounded-2xl p-2 flex items-center gap-1.5 shadow-2xs border border-border/80 w-full overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -1423,653 +1260,71 @@ export function InvoicingPage() {
       )}
 
       {/* Dialog Terbitkan Invoice */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Terbitkan Invoice Penagihan Klien</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleIssueInvoice} className="min-w-0">
-            <FieldGroup className="gap-3.5">
-              <Field>
-                <FieldLabel required>Proyek Klien</FieldLabel>
-                <Select
-                  value={selectedProjectId}
-                  onValueChange={setSelectedProjectId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih proyek klien" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {projects.length === 0 ? (
-                        <SelectItem value="__empty" disabled>
-                          Belum ada proyek klien aktif
-                        </SelectItem>
-                      ) : (
-                        projects.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.code} — {p.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <div className="grid gap-3.5 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="inv-date" required>Tanggal Invoice</FieldLabel>
-                  <DatePicker
-                    id="inv-date"
-                    required
-                    value={invDate}
-                    onChange={(v) => {
-                      setInvDate(v);
-                      try {
-                        const d = new Date(v);
-                        if (!isNaN(d.getTime())) {
-                          d.setDate(d.getDate() + 14);
-                          setDueDate(d.toISOString().split("T")[0]!);
-                        }
-                      } catch {}
-                    }}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="inv-due" required>Tanggal Jatuh Tempo</FieldLabel>
-                  <DatePicker
-                    id="inv-due"
-                    required
-                    minDate={invDate}
-                    value={dueDate}
-                    onChange={setDueDate}
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-3.5 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel required>Jenis Tagihan</FieldLabel>
-                  <Select
-                    value={invoiceKind}
-                    onValueChange={(v) => setInvoiceKind(v as InvoiceKind)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih jenis tagihan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {Object.entries(INVOICE_KIND_LABELS).map(([k, v]) => (
-                          <SelectItem key={k} value={k}>
-                            {v}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Referensi PO Klien Terverifikasi</FieldLabel>
-                  <Select value={clientPoId} onValueChange={setClientPoId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih PO Klien" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {projectVerifiedPos.length === 0 ? (
-                          <SelectItem value="__empty" disabled>
-                            Belum ada PO Klien terverifikasi untuk proyek ini
-                          </SelectItem>
-                        ) : (
-                          projectVerifiedPos.map((cpo) => (
-                            <SelectItem key={cpo.id} value={cpo.id}>
-                              {cpo.po_number} ({formatRupiah(cpo.po_value)})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {projectVerifiedPos.length === 0 ? (
-                    <FieldDescription className="text-amber-600 dark:text-amber-400">
-                      Verifikasi PO klien di menu Dokumen &amp; Termin Proyek terlebih dahulu.
-                    </FieldDescription>
-                  ) : null}
-                </Field>
-              </div>
-
-              <div
-                className={cn(
-                  "grid gap-3.5",
-                  invoiceKind === "milestone" || invoiceKind === "final_settlement"
-                    ? "sm:grid-cols-2"
-                    : "grid-cols-1",
-                )}
-              >
-                <Field>
-                  <FieldLabel>Termin Proyek</FieldLabel>
-                  <Select
-                    value={milestoneId}
-                    onValueChange={(id) => {
-                      setMilestoneId(id);
-                      const ms = projectMilestones.find((m) => m.id === id);
-                      if (ms) setSubtotalAmount(ms.amount);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih termin proyek" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Tanpa Termin Spesifik</SelectItem>
-                        {projectMilestones.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.name}: {formatRupiah(m.amount)}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                {invoiceKind === "milestone" ? (
-                  <Field>
-                    <FieldLabel>Dokumen BAKP Disetujui Klien</FieldLabel>
-                    <Select value={bakpId} onValueChange={setBakpId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih BAKP" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="none">
-                            {projectApprovedBakps.length === 0
-                              ? "Belum ada BAKP disetujui klien"
-                              : "Pilih Dokumen BAKP"}
-                          </SelectItem>
-                          {projectApprovedBakps.map((b) => (
-                            <SelectItem key={b.id} value={b.id}>
-                              {b.bakp_number} ({b.cumulative_percentage}%)
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                ) : null}
-
-                {invoiceKind === "final_settlement" ? (
-                  <Field>
-                    <FieldLabel>Dokumen BAST Ditandatangani</FieldLabel>
-                    <Select value={bastId} onValueChange={setBastId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih BAST" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="none">
-                            {projectSignedBasts.length === 0
-                              ? "Belum ada BAST ditandatangani"
-                              : "Pilih Dokumen BAST"}
-                          </SelectItem>
-                          {projectSignedBasts.map((h) => (
-                            <SelectItem key={h.id} value={h.id}>
-                              {h.bast_number} ({formatDateID(h.bast_date)})
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                ) : null}
-              </div>
-
-              <div className="grid gap-3.5 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="inv-amt" required>
-                    Nominal Subtotal Tagihan (Rp Bulat)
-                  </FieldLabel>
-                  <NumberInput
-                    id="inv-amt"
-                    allowDecimal={false}
-                    min={1}
-                    required
-                    value={subtotalAmount}
-                    onValueChange={setSubtotalAmount}
-                  />
-                  {company?.pkp_enabled && subtotalAmount > 0 ? (
-                    <FieldDescription>
-                      PPN {company.ppn_rate}%:{" "}
-                      <span className="font-medium text-foreground tabular-nums">
-                        {formatRupiah(
-                          roundRupiah((roundRupiah(subtotalAmount) * company.ppn_rate) / 100),
-                        )}
-                      </span>{" "}
-                      • Total:{" "}
-                      <span className="font-semibold text-foreground tabular-nums">
-                        {formatRupiah(
-                          roundRupiah(subtotalAmount) +
-                            roundRupiah((roundRupiah(subtotalAmount) * company.ppn_rate) / 100),
-                        )}
-                      </span>
-                    </FieldDescription>
-                  ) : null}
-                </Field>
-                <Field>
-                  <FieldLabel>Mode Pencatatan Saat Terbit</FieldLabel>
-                  <Select
-                    value={directCashAccountId}
-                    onValueChange={setDirectCashAccountId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">
-                          Catat ke Piutang Usaha terlebih dahulu
-                        </SelectItem>
-                        {cashAccounts.map((ca) => (
-                          <SelectItem key={ca.id} value={ca.id}>
-                            Dibayar Tunai/Transfer Langsung ke {ca.code} —{" "}
-                            {ca.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>
-                    Mendukung pencatatan lewat Piutang Usaha maupun kas langsung.
-                  </FieldDescription>
-                </Field>
-              </div>
-
-              <Field>
-                <FieldLabel htmlFor="inv-notes">Catatan Invoice</FieldLabel>
-                <Textarea
-                  id="inv-notes"
-                  rows={2}
-                  className="min-h-[64px]"
-                  placeholder="Opsional: keterangan penagihan, referensi kontrak, atau instruksi pembayaran..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </Field>
-
-              <DocumentIssueChecklistCard items={invoiceChecklist.items} />
-
-              <DialogFooter className="pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCreateOpen(false)}
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={issuing || !invoiceChecklist.isValid}
-                >
-                  {issuing ? <Spinner data-icon="inline-start" /> : null}
-                  Terbitkan Invoice &amp; Posting Jurnal
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <InvoiceCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        setSelectedProjectId={setSelectedProjectId}
+        invDate={invDate}
+        setInvDate={setInvDate}
+        dueDate={dueDate}
+        setDueDate={setDueDate}
+        invoiceKind={invoiceKind}
+        setInvoiceKind={setInvoiceKind}
+        clientPoId={clientPoId}
+        setClientPoId={setClientPoId}
+        projectVerifiedPos={projectVerifiedPos}
+        milestoneId={milestoneId}
+        setMilestoneId={setMilestoneId}
+        projectMilestones={projectMilestones}
+        bakpId={bakpId}
+        setBakpId={setBakpId}
+        projectApprovedBakps={projectApprovedBakps}
+        bastId={bastId}
+        setBastId={setBastId}
+        projectSignedBasts={projectSignedBasts}
+        subtotalAmount={subtotalAmount}
+        setSubtotalAmount={setSubtotalAmount}
+        company={company}
+        directCashAccountId={directCashAccountId}
+        setDirectCashAccountId={setDirectCashAccountId}
+        cashAccounts={cashAccounts}
+        notes={notes}
+        setNotes={setNotes}
+        invoiceChecklist={invoiceChecklist}
+        issuing={issuing}
+        onSubmit={handleIssueInvoice}
+      />
 
       {/* Dialog Terima Pembayaran Invoice */}
-      <Dialog
-        open={Boolean(payTarget)}
-        onOpenChange={(open) => {
-          if (!open) setPayTarget(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Catat Penerimaan Pembayaran {payTarget?.invoice_number}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleRecordPayment} className="space-y-4">
-            {payTarget ? (
-              <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs">
-                <div>
-                  <span className="text-muted-foreground block text-[11px]">
-                    Total Tagihan
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {formatRupiah(payTarget.total_amount)}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-muted-foreground block text-[11px]">
-                    Sisa Belum Terbayar
-                  </span>
-                  <span className="font-bold text-primary dark:text-sky-400">
-                    {formatRupiah(payTarget.total_amount - payTarget.paid_amount)}
-                  </span>
-                </div>
-              </div>
-            ) : null}
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="pay-date" required>Tanggal Dana Masuk</FieldLabel>
-                <DatePicker
-                  id="pay-date"
-                  required
-                  value={payDate}
-                  onChange={setPayDate}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="pay-amt" required>
-                  Nominal Pembayaran Diterima (Rp)
-                </FieldLabel>
-                <NumberInput
-                  id="pay-amt"
-                  allowDecimal={false}
-                  min={1}
-                  max={
-                    payTarget
-                      ? payTarget.total_amount - payTarget.paid_amount
-                      : undefined
-                  }
-                  required
-                  value={payAmount}
-                  onValueChange={setPayAmount}
-                />
-              </Field>
-              <Field>
-                <FieldLabel required>Rekening Tujuan Kas / Bank Perusahaan</FieldLabel>
-                <Select
-                  value={destCashAccountId}
-                  onValueChange={setDestCashAccountId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih akun kas/bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {cashAccounts.length === 0 ? (
-                        <SelectItem value="__empty" disabled>
-                          Belum ada akun kas/bank aktif
-                        </SelectItem>
-                      ) : (
-                        cashAccounts.map((ca) => (
-                          <SelectItem key={ca.id} value={ca.id}>
-                            {ca.code} — {ca.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setPayTarget(null)}
-                >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={paying}>
-                  {paying ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Pembayaran &amp; Buat Kuitansi
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <InvoicePaymentDialog
+        payTarget={payTarget}
+        onClose={() => setPayTarget(null)}
+        payDate={payDate}
+        setPayDate={setPayDate}
+        payAmount={payAmount}
+        setPayAmount={setPayAmount}
+        destCashAccountId={destCashAccountId}
+        setDestCashAccountId={setDestCashAccountId}
+        cashAccounts={cashAccounts}
+        paying={paying}
+        onSubmit={handleRecordPayment}
+      />
 
-      {/* Modal Lihat Rincian (Aksi Mode Edit) */}
-      <Dialog
-        open={Boolean(viewModal)}
-        onOpenChange={(open) => {
-          if (!open) setViewModal(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{viewModal?.title ?? "Rincian Data"}</DialogTitle>
-          </DialogHeader>
-          {viewModal ? (
-            <div className="space-y-4">
-              {viewModal.subtitle ? (
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  {viewModal.subtitle}
-                </p>
-              ) : null}
-              <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-muted/15">
-                {viewModal.rows.map((r, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
-                  >
-                    <span className="text-xs font-medium text-muted-foreground shrink-0">
-                      {r.label}
-                    </span>
-                    <span className="text-xs sm:text-sm font-semibold text-foreground sm:text-right break-words">
-                      {r.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setViewModal(null)}
-                  className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-                >
-                  Tutup
-                </Button>
-                {viewModal.onDownloadPdf && viewModal.onDownloadWord ? (
-                  <DocumentDownloadMenu
-                    variant="button"
-                    label="Unduh / Ekspor"
-                    title={`Unduh ${viewModal.title} (PDF / Word)`}
-                    onDownloadPdf={viewModal.onDownloadPdf}
-                    onDownloadWord={viewModal.onDownloadWord}
-                  />
-                ) : null}
-              </DialogFooter>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      {/* Modal Lihat Rincian Data */}
+      <InvoiceViewDetailDialog
+        viewModal={viewModal}
+        onClose={() => setViewModal(null)}
+      />
 
-      {/* Modal Edit Data Baris (Aksi Mode Edit) */}
-      <Dialog
-        open={Boolean(editRecord)}
-        onOpenChange={(open) => {
-          if (!open) setEditRecord(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editRecord?.section === "invoices"
-                ? `Edit Invoice ${editRecord.item.invoice_number}`
-                : editRecord?.section === "receipts"
-                  ? `Edit Kuitansi ${editRecord.item.receipt_number}`
-                  : "Edit Data"}
-            </DialogTitle>
-          </DialogHeader>
-          {editRecord ? (
-            <form onSubmit={handleSaveEditRecord}>
-              <FieldGroup>
-                {editRecord.section === "invoices" && (
-                  <>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field>
-                        <FieldLabel required>Tanggal Invoice</FieldLabel>
-                        <DatePicker
-                          required
-                          value={editRecord.item.invoice_date}
-                          onChange={(v) =>
-                            setEditRecord({
-                              section: "invoices",
-                              item: { ...editRecord.item, invoice_date: v },
-                            })
-                          }
-                        />
-                      </Field>
-                      <Field>
-                        <FieldLabel required>Tanggal Jatuh Tempo</FieldLabel>
-                        <DatePicker
-                          required
-                          minDate={editRecord.item.invoice_date}
-                          value={editRecord.item.due_date}
-                          onChange={(v) =>
-                            setEditRecord({
-                              section: "invoices",
-                              item: { ...editRecord.item, due_date: v },
-                            })
-                          }
-                        />
-                      </Field>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field>
-                        <FieldLabel required>Nominal Subtotal (Rp)</FieldLabel>
-                        <NumberInput
-                          allowDecimal={false}
-                          min={1}
-                          required
-                          value={editRecord.item.subtotal_amount}
-                          onValueChange={(subtotal_amount) =>
-                            setEditRecord({
-                              section: "invoices",
-                              item: {
-                                ...editRecord.item,
-                                subtotal_amount,
-                              },
-                            })
-                          }
-                        />
-                      </Field>
-                      <Field>
-                        <FieldLabel required>Status Pembayaran</FieldLabel>
-                        <Select
-                          value={editRecord.item.payment_status}
-                          onValueChange={(v) =>
-                            setEditRecord({
-                              section: "invoices",
-                              item: {
-                                ...editRecord.item,
-                                payment_status: v as InvoicePaymentStatus,
-                              },
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectItem value="unpaid">Belum Dibayar</SelectItem>
-                              <SelectItem value="partial">Dibayar Sebagian</SelectItem>
-                              <SelectItem value="paid">Lunas</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                    </div>
-                    <Field>
-                      <FieldLabel>Catatan Invoice</FieldLabel>
-                      <Textarea
-                        value={editRecord.item.notes ?? ""}
-                        onChange={(e) =>
-                          setEditRecord({
-                            section: "invoices",
-                            item: {
-                              ...editRecord.item,
-                              notes: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                    </Field>
-                  </>
-                )}
-
-                {editRecord.section === "receipts" && (
-                  <>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field>
-                        <FieldLabel required>Tanggal Terima</FieldLabel>
-                        <DatePicker
-                          required
-                          value={editRecord.item.receipt_date}
-                          onChange={(v) =>
-                            setEditRecord({
-                              section: "receipts",
-                              item: { ...editRecord.item, receipt_date: v },
-                            })
-                          }
-                        />
-                      </Field>
-                      <Field>
-                        <FieldLabel required>Jumlah Diterima (Rp)</FieldLabel>
-                        <NumberInput
-                          allowDecimal={false}
-                          min={1}
-                          required
-                          value={editRecord.item.amount}
-                          onValueChange={(amount) =>
-                            setEditRecord({
-                              section: "receipts",
-                              item: {
-                                ...editRecord.item,
-                                amount,
-                              },
-                            })
-                          }
-                        />
-                      </Field>
-                    </div>
-                    <Field>
-                      <FieldLabel required>Diterima Dari</FieldLabel>
-                      <Input
-                        required
-                        value={editRecord.item.received_from}
-                        onChange={(e) =>
-                          setEditRecord({
-                            section: "receipts",
-                            item: {
-                              ...editRecord.item,
-                              received_from: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                    </Field>
-                  </>
-                )}
-
-                <DialogFooter className="pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditRecord(null)}
-                    className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
-                  >
-                    Batal
-                  </Button>
-                  <Button type="submit" disabled={savingEditRecord} className="cursor-pointer">
-                    {savingEditRecord ? <Spinner data-icon="inline-start" /> : null}
-                    Simpan Perubahan
-                  </Button>
-                </DialogFooter>
-              </FieldGroup>
-            </form>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      {/* Modal Edit Data Baris */}
+      <InvoiceEditDialog
+        editRecord={editRecord}
+        setEditRecord={setEditRecord}
+        savingEditRecord={savingEditRecord}
+        onSubmit={handleSaveEditRecord}
+      />
 
       {/* Konfirmasi Hapus Data / Hapus Pilihan (Aksi Mode Edit) */}
       <ConfirmActionDialog

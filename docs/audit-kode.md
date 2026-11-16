@@ -23,7 +23,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 | **A-01** | `src/lib/pdf-generator.ts` | 5.399 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Ya** |
 | **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.766 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Ya** |
 | **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Ya** |
-| **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Ya** |
+| **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 $\rightarrow$ 1.352 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-05** | `src/lib/data-service.ts` | 1.939 | God object akses Supabase + demo mode lokal untuk 20+ entitas transaksi dan master | Sedang | Sangat Tinggi | **Ya** |
 
 ### 5 Temuan Teratas Bagian B (File Tidak Relevan & Redundansi)
@@ -176,7 +176,7 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
   5. `components/invoice-kpi-summary.tsx` (~150 baris): 4 kartu KPI piutang.
 - **Risiko Pemecahan:** Rendah.
 - **Tes yang Harus Dijalankan:** `npm run typecheck`, `npx vitest run tests/unit/document-title-mapping.test.ts`.
-- **Perlu Keputusanku?** Ya
+- **Status Eksekusi (Langkah 3):** **SELESAI DIPERBAIKI & TERVALIDASI** (Commit tersendiri). Berhasil diekstrak ke 5 modul mandiri di `src/features/invoicing/components/` (`invoice-kpi-summary.tsx`, `invoice-create-dialog.tsx`, `invoice-payment-dialog.tsx`, `invoice-view-detail-dialog.tsx`, `invoice-edit-dialog.tsx`, `invoice-spec-builder.ts`). Ukuran file utama terpangkas dari 2.097 menjadi 1.352 baris. 67 tes unit & integrasi serta typecheck lulus 100%.
 
 ---
 
