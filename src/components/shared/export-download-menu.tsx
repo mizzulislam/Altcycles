@@ -123,10 +123,10 @@ export function ExportDownloadMenu({
         disabled={disabled || isLoading}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-150 cursor-pointer select-none",
+          "inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
           "hover:bg-muted/70 hover:border-primary/40",
           "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-          "disabled:pointer-events-none disabled:opacity-50",
+          "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
           isOpen && "border-primary/60 ring-2 ring-primary/20",
         )}
         aria-haspopup="menu"
@@ -155,7 +155,7 @@ export function ExportDownloadMenu({
             ref={menuRef}
             role="menu"
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-100"
+            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none"
           >
             {onExportExcel && (
               <button
@@ -163,7 +163,7 @@ export function ExportDownloadMenu({
                 disabled={isLoading}
                 onClick={() => void handleTrigger("excel", onExportExcel)}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none",
                   "hover:bg-muted/80 text-foreground",
                   loadingType === "excel" && "opacity-70",
                 )}
@@ -189,7 +189,7 @@ export function ExportDownloadMenu({
                 disabled={isLoading}
                 onClick={() => void handleTrigger("pdf", onExportPdf)}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none",
                   "hover:bg-muted/80 text-foreground",
                   loadingType === "pdf" && "opacity-70",
                 )}
@@ -215,7 +215,7 @@ export function ExportDownloadMenu({
                 disabled={isLoading}
                 onClick={() => void handleTrigger("csv", onExportCsv)}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-colors cursor-pointer",
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs sm:text-sm transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none",
                   "hover:bg-muted/80 text-foreground",
                   loadingType === "csv" && "opacity-70",
                 )}
