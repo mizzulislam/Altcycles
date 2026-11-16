@@ -226,18 +226,17 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-07 — `src/lib/operations/client-projects.ts`
-- **Jumlah Baris:** 1.620 baris
+- **Jumlah Baris Asal:** 1.620 baris (kini 165 baris, terpangkas >89%)
 - **Prioritas:** Tinggi
-- **Tanggung Jawab yang Tercampur:**
-  Orkestrasi logika transaksi proyek klien: sinkronisasi termin, pembuatan PO klien, verifikasi portal pembeli, kalkulasi persentase kemajuan, dan posting otomatis jurnal akrual termin.
-- **Rekomendasi Pemecahan Konkret:**
-  Pecah menjadi:
-  1. `client-projects-termin.ts` (~500 baris): Logika termin penagihan & posting jurnal termin.
-  2. `client-projects-po.ts` (~400 baris): Logika verifikasi dan upload PO klien.
-  3. `client-projects-docs.ts` (~400 baris): Logika penerbitan dokumen serah terima proyek.
-  4. `client-projects.ts` (~200 baris): Facade utama.
-- **Risiko Pemecahan:** Sedang.
-- **Perlu Keputusanku?** Ya
+- **Status:** **Selesai Dipecah & Tervalidasi**
+- **Hasil Refaktorisasi:**
+  Telah dipecah menjadi 3 sub-modul domain terisolasi dengan pattern *Facade Aggregator* di `src/lib/operations/`:
+  1. `src/lib/operations/client-projects-po.ts` (90 baris): Logika verifikasi, pembaruan, dan penghapusan PO Klien (`verifyClientPurchaseOrder`, `updateClientPurchaseOrder`, `deleteClientPurchaseOrders`).
+  2. `src/lib/operations/client-projects-docs.ts` (567 baris): Logika dokumen proyek & QC: Quotation (`createQuotation`, `updateQuotation`, `deleteQuotations`), Lampiran A SOW/SPK (`createProjectDocument`, `updateProjectDocument`, `deleteProjectDocuments`), Berita Acara BAKP (`createBakpReport`, `approveBakpByClient`, `updateBakpReport`, `deleteBakpReports`), UAT Checklist (`createUatChecklist`, `updateUatChecklist`, `deleteUatChecklists`), dan Serah Terima BAST (`createBastHandover`, `updateBastHandover`, `deleteBastHandovers`).
+  3. `src/lib/operations/client-projects-termin.ts` (644 baris): Logika termin, progres, penagihan & kuitansi: Jadwal termin (`saveProjectMilestonesSchedule`, `updateProjectMilestone`, `deleteProjectMilestones`), Progres penyelesaian (`recordPeriodProjectCompletion`, `updateProjectProgressEntry`, `deleteProjectProgressEntries`), Sales Invoice & PPN (`createAndIssueSalesInvoice`, `updateSalesInvoice`, `deleteSalesInvoices`), serta Kuitansi Pelunasan (`recordClientInvoicePayment`, `updateReceipt`, `deleteReceipts`).
+  4. `src/lib/operations/client-projects.ts` (165 baris): Facade aggregator murni yang me-re-export seluruh sub-modul dan menyediakan `ProjectWorkspaceBundle` serta `getProjectWorkspace` sehingga **100% backward compatible**.
+- **Risiko Pemecahan:** Rendah (100% logika domain & RPC Supabase tetap utuh).
+- **Hasil Pengujian:** `npm run typecheck` lulus 100%, 13 file pengujian Vitest (68 tests) lulus 100%.
 
 ---
 
