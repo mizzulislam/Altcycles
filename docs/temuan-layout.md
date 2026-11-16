@@ -744,14 +744,61 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-41
+- **Status:** Selesai (Diterapkan pada Langkah 2)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh 9 dokumen Siklus Akuntansi & Laporan (`Jurnal Umum`, `Jurnal Penyesuaian & Koreksi`, `Buku Besar`, `Neraca Saldo`, `Laporan Laba Rugi`, `Laporan Perubahan Ekuitas`, `Laporan Posisi Keuangan / Neraca`, `Laporan Arus Kas`, `Laporan Keuangan Lengkap`) di `src/lib/pdf-generator.ts` & `src/features/accounting/`
+- **Apa yang bertentangan:**
+  - Sebelumnya, dokumen di halaman Siklus Akuntansi & Laporan memakai komponen header dan footer mandiri yang terpisah dari dokumen administrasi (Invoice, JTPP, Kuitansi, UAT, PO).
+  - Footer menempel mengambang di bawah isi tabel dan tidak berada di dasar halaman; halaman 2 dan seterusnya tidak memiliki header; footer hanya muncul di halaman terakhir.
+  - Antar-blok akun di Buku Besar tidak berjarak dan tabel akun sebelumnya menempel ke kartu akun berikutnya; kartu akun terpisah dari tabelnya di batas halaman.
+  - Subjudul dan periode diulang-ulang di beberapa tempat (misalnya Laba Rugi menampilkan judul yang sama dua kali).
+  - Terdapat perbedaan warna, ukuran font, padding, dan perataan nominal Debit/Kredit antara dokumen akuntansi dan dokumen administrasi.
+- **Yang kulakukan:**
+  - Mengharmonisasikan seluruh 9 dokumen akuntansi ke mesin generator dokumen administrasi (`generateDocumentPdf` dan `buildDocumentPdfSpec`).
+  - Mengintegrasikan penentuan judul dokumen melalui tabel pemetaan tunggal `DOCUMENT_TITLE_MAPPINGS`.
+  - Memindahkan subjudul dan periode ke blok metadata info (Zona B) bergaya UAT dan baris biru Judul Lengkap, menghilangkan duplikasi judul kedua.
+  - Menempatkan footer administrasi resmi di dasar setiap halaman pada dokumen multi-halaman (`Hal. x / y`, ikon sosial, legal, dan cap waktu otomatis).
+  - Memperbaiki layout Buku Besar dengan pemisah antar akun yang proporsional, pencegahan pemotongan kartu dari tabelnya di batas halaman, serta perataan vertikal sel yang rapi.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Satukan semua dokumen akuntansi ke mesin kerangka dokumen administrasi resmi Altcycles. (Diterapkan).
+  - **Opsi B:** Pertahankan generator terpisah dan perbaiki bug satu per satu. (Rentan regresi & duplikasi kode).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
+### ID: K-42
+- **Status:** Selesai (Diterapkan pada Langkah 2 Polish)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** `Jurnal Umum`, `Jurnal Penyesuaian`, `Buku Besar`, `Neraca Saldo`, dan seluruh Laporan Keuangan di `src/lib/pdf-generator.ts` & `src/features/accounting/journals-page.tsx`
+- **Apa yang bertentangan:**
+  - Kolom PDF Jurnal Umum & Penyesuaian sebelumnya mencantumkan `No. Jurnal`, tidak sesuai dengan format tabel jurnal umum standar akuntansi di aplikasi (Tanggal, Deskripsi, Ref, Debit, Kredit) dan memo/keterangan transaksi tidak muncul di tiap baris.
+  - Kolom Debit, Kredit, dan Saldo Berjalan di Buku Besar terpotong/terbungkus ke dua baris pada nominal bernilai puluhan/ratusan juta rupiah.
+  - Headline nama akun dan saldo akhir di atas tabel Buku Besar memiliki spasi vertikal tidak seimbang terhadap baris highlight biru.
+  - Kolom No. Akun dan Nama Akun pada Neraca Saldo terlalu lebar sehingga kolom Debit dan Kredit terasa sempit.
+  - Judul klasifikasi akun dan ringkasan berhuruf kapital (UPPERCASE) pada Laporan Laba Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas dicetak dengan font reguler, bukan font tebal (bold).
+- **Yang kulakukan:**
+  - Menghapus kolom `No. Jurnal` pada PDF Jurnal Umum & Penyesuaian; menyusun kolom menjadi: `Tanggal` (0.13), `Deskripsi` (0.47, memuat akun debit, akun kredit indent, dan keterangan memo), `Ref` (0.08), `Debit` (0.16), dan `Kredit` (0.16); menghilangkan garis horizontal intra-transaksi sehingga tampilan bersih seperti buku harian jurnal standar.
+  - Memperlebar kolom moneter Buku Besar (`Debit` 0.17, `Kredit` 0.17, `Saldo Berjalan` 0.18) sehingga nominal panjang muat utuh satu baris tanpa terpotong.
+  - Menyeimbangkan spasi before dan after vertikal headline kartu akun/baris biru di atas tabel secara global (`align center` vertikal).
+  - Menyempitkan kolom `No. Akun` (0.11) dan `Nama Akun` (0.43) pada Neraca Saldo, melenggangkan kolom `Debit` (0.23) dan `Kredit` (0.23).
+  - Mengimplementasikan `isRowUppercase` pada mesin render tabel agar seluruh baris teks dan nilai moneter ber-style UPPERCASE dicetak tebal (`fontBold`).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan susunan kolom jurnal akuntansi standar, pelebaran kolom moneter, vertikal alignment seimbang, dan font tebal baris UPPERCASE. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 24 | 22 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 26 | 24 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 7 | 6 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`, `K-39`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **40** | **33** | **7** | **1** |
+| **Total Temuan** | **42** | **35** | **7** | **1** |
