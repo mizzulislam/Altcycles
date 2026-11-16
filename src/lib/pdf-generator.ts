@@ -306,6 +306,22 @@ export const DOCUMENT_TITLE_MAPPINGS: Record<string, DocumentTitleMapping> = {
     headerTitle: "DAFTAR VENDOR",
     fullTitle: "DAFTAR VENDOR PEMASOK",
   },
+  "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL": {
+    headerTitle: "PENGAJUAN PA",
+    fullTitle: "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
+  },
+  "DAFTAR PURCHASE ORDER PEMBELIAN VENDOR": {
+    headerTitle: "REKAP PO",
+    fullTitle: "DAFTAR PURCHASE ORDER PEMBELIAN VENDOR",
+  },
+  "PERHITUNGAN BAGI HASIL PROYEK": {
+    headerTitle: "BAGI HASIL",
+    fullTitle: "PERHITUNGAN BAGI HASIL PROYEK",
+  },
+  "DOKUMEN PROYEK": {
+    headerTitle: "DOKUMEN PROYEK",
+    fullTitle: "DOKUMEN PROYEK",
+  },
 };
 
 /**
@@ -336,6 +352,19 @@ export function findDocumentTitleMapping(rawTitle: string): DocumentTitleMapping
     .replace(/\s+/g, " ");
   if (DOCUMENT_TITLE_MAPPINGS[normalized]) {
     return DOCUMENT_TITLE_MAPPINGS[normalized];
+  }
+  // Dukungan judul dinamis yang memuat kode proyek atau kategori dokumen
+  if (normalized.startsWith("PERHITUNGAN BAGI HASIL PROYEK")) {
+    return {
+      headerTitle: "BAGI HASIL",
+      fullTitle: trimmed,
+    };
+  }
+  if (normalized.startsWith("DOKUMEN PROYEK")) {
+    return {
+      headerTitle: "DOKUMEN PROYEK",
+      fullTitle: trimmed,
+    };
   }
   return undefined;
 }
@@ -2835,7 +2864,9 @@ async function renderDocumentPdfInternal(
   ) {
     const meteraiW = 56.7; // 20 mm
     const meteraiH = 56.7; // 20 mm
-    const sigSpaceH = spec.hasMeterai ? meteraiH + 8 : (spec.minSignatureSpace || 46);
+    const hasSigImg = Boolean(rightSigImg || leftSigImg || thirdSigImg);
+    const defaultSigSpace = hasSigImg ? 58 : 46;
+    const sigSpaceH = spec.hasMeterai ? meteraiH + 8 : (spec.minSignatureSpace || defaultSigSpace);
     // Blok Altvira (kanan) memiliki 2 baris teks judul (Baris 1: pembuka, Baris 2: "Altvira Technology"),
     // sehingga membutuhkan alokasi 24 pt sebelum ruang tanda tangan.
     const totalSigBlockH =

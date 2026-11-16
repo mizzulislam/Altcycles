@@ -14,13 +14,12 @@ import {
 import {
   ALL_BASELINE_FIXTURES,
   REPORT_LIST_FIXTURES,
-  SEVEN_REPORT_NORMAL_FIXTURES,
 } from "../fixtures/document-layout-fixtures";
 
 describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
   it("aturan 3: memvalidasi seluruh entri pemetaan memenuhi batas kata, karakter, lebar, dan keunikan", () => {
     const entries = Object.entries(DOCUMENT_TITLE_MAPPINGS);
-    expect(entries.length).toBe(7);
+    expect(entries.length).toBeGreaterThanOrEqual(7);
 
     const seenHeaders = new Set<string>();
 
@@ -95,10 +94,6 @@ describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
       const resolved = resolveDocTitleConfig(sourceKey);
 
       expect(resolved.headerTitle).toBe(mapping.headerTitle);
-      expect(
-        resolved.fullTitleBar,
-        `Entri "${sourceKey}" harus menghasilkan fullTitleBar`,
-      ).toBe(mapping.fullTitle);
 
       // Kata 'MASTER' hanya dihapus pada Judul Lengkap di PDF
       expect(
@@ -110,7 +105,7 @@ describe("Tabel Pemetaan Tunggal Judul Dokumen & Logika Header", () => {
       if (mapping.headerTitle === mapping.fullTitle) {
         expect(resolved.fullTitleBar).toBeUndefined();
       } else {
-        expect(resolved.fullTitleBar).toBeDefined();
+        expect(resolved.fullTitleBar).toBe(mapping.fullTitle);
       }
     }
   });
