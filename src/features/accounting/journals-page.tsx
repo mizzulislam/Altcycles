@@ -583,8 +583,6 @@ export function JournalsPage({
 
       const rows: Array<{
         date: string;
-        number: string;
-        account: string;
         description: string;
         ref: string;
         debit: number;
@@ -595,16 +593,39 @@ export function JournalsPage({
         const jLines = lines
           .filter((l) => l.journal_id === j.id)
           .sort((a, b) => a.line_no - b.line_no);
-        for (const l of jLines) {
+        const debitLines = jLines.filter((l) => l.debit > 0);
+        const creditLines = jLines.filter((l) => l.credit > 0);
+
+        debitLines.forEach((l, idx) => {
           const acc = accountMap.get(l.account_id);
           rows.push({
-            date: formatDateID(j.journal_date),
-            number: j.journal_number,
-            account: acc ? `${acc.code} - ${acc.name}` : "-",
-            description: l.description || j.description,
-            ref: (j as any).reference_number ?? j.reference_journal_id ?? j.source_id ?? "-",
+            date: idx === 0 ? formatDateID(j.journal_date) : "",
+            description: acc ? acc.name : "Akun Debit",
+            ref: acc?.code ?? "-",
             debit: l.debit,
+            credit: 0,
+          });
+        });
+
+        creditLines.forEach((l) => {
+          const acc = accountMap.get(l.account_id);
+          rows.push({
+            date: "",
+            description: `   ${acc ? acc.name : "Akun Kredit"}`,
+            ref: acc?.code ?? "-",
+            debit: 0,
             credit: l.credit,
+          });
+        });
+
+        const memo = j.description || "";
+        if (memo) {
+          rows.push({
+            date: "",
+            description: `   (${memo})`,
+            ref: "",
+            debit: 0,
+            credit: 0,
           });
         }
       }

@@ -697,6 +697,22 @@ function wrapTextByWidth(
 }
 
 /**
+ * Mendeteksi apakah suatu baris tabel merupakan baris klasifikasi/rekapitulasi UPPERCASE
+ * sehingga seluruh sel di baris tersebut dicetak tebal (bold).
+ */
+function isRowUppercase(row: string[]): boolean {
+  for (const cell of row) {
+    if (!cell) continue;
+    const trimmed = cell.trim().replace(/^(\d+\.|\-|\*)\s*/, "").trim();
+    const lettersOnly = trimmed.replace(/[^A-Za-z]/g, "");
+    if (lettersOnly.length >= 3 && lettersOnly === lettersOnly.toUpperCase()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Aturan konsistensi desimal per dokumen (Keputusan K-06):
  * Bila ada SATU angka uang berdesimal (mis. Rp1.234.567,50) di sebuah dokumen,
  * semua angka uang Rp di dokumen tersebut ditampilkan dua desimal (,00) agar kolom sejajar.
@@ -2065,7 +2081,8 @@ async function renderDocumentPdfInternal(
       }
 
       // Cegah kartu akun terpisah dari tabelnya di batas halaman (Bug c)
-      const cardH = sec.title ? 34 : 0;
+      const hasSub = Boolean(sec.subtitle);
+      const cardH = sec.title ? (hasSub ? 36 : 24) : 0;
       const minNeededSpace = cardH + headerH + 28;
       if (y - minNeededSpace < bottomSafeY) {
         page = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -2089,29 +2106,43 @@ async function renderDocumentPdfInternal(
           borderWidth: 0.75,
         });
 
-        drawTrackedText(
-          sanitizePdfText(sec.title),
-          {
-            x: marginX + 10,
-            y: cardTopY - 13,
-            size: 9.5,
-            font: fontBold,
-            color: TEXT_DARK,
-          },
-          "D-sec-title",
-        );
-
-        if (sec.subtitle) {
+        if (hasSub) {
+          // Dua baris (Judul Akun & Subtitle): posisi vertikal seimbang sempurna (align center)
           drawTrackedText(
-            sanitizePdfText(sec.subtitle),
+            sanitizePdfText(sec.title),
             {
               x: marginX + 10,
-              y: cardTopY - 25,
+              y: cardTopY - 14,
+              size: 9.5,
+              font: fontBold,
+              color: TEXT_DARK,
+            },
+            "D-sec-title",
+          );
+
+          drawTrackedText(
+            sanitizePdfText(sec.subtitle!),
+            {
+              x: marginX + 10,
+              y: cardTopY - 26,
               size: 8,
               font: fontRegular,
               color: TEXT_LABEL,
             },
             "D-sec-sub",
+          );
+        } else {
+          // Satu baris: teks di tengah vertikal kotak (align center)
+          drawTrackedText(
+            sanitizePdfText(sec.title),
+            {
+              x: marginX + 10,
+              y: cardBottomY + (cardH - 9.5) / 2 + 1,
+              size: 9.5,
+              font: fontBold,
+              color: TEXT_DARK,
+            },
+            "D-sec-title",
           );
         }
 
@@ -2122,7 +2153,7 @@ async function renderDocumentPdfInternal(
             "Saldo Akhir",
             {
               x: pageWidth - marginX - 10 - fontRegular.widthOfTextAtSize("Saldo Akhir", 7.5),
-              y: cardTopY - 11,
+              y: cardTopY - 14,
               size: 7.5,
               font: fontRegular,
               color: TEXT_LABEL,
@@ -2133,7 +2164,7 @@ async function renderDocumentPdfInternal(
             badgeText,
             {
               x: pageWidth - marginX - 10 - badgeW,
-              y: cardTopY - 24,
+              y: cardTopY - 26,
               size: 10.5,
               font: fontBold,
               color: BRAND_BLUE,
@@ -2231,9 +2262,11 @@ async function renderDocumentPdfInternal(
       } else {
         let lastRowBottomLineY = y;
         for (const row of sec.tableRows) {
+          const isBoldRow = isRowUppercase(row);
+          const rowFont = isBoldRow ? fontBold : fontRegular;
           const colWrappedLines: string[][] = row.map((cellText, colIdx) => {
             const w = colWidths[colIdx]! - 16;
-            return wrapTextByWidth(cellText || "-", fontRegular, cellFontSize, Math.max(w, 20));
+            return wrapTextByWidth(cellText || "-", rowFont, cellFontSize, Math.max(w, 20));
           });
           const maxLines = Math.max(...colWrappedLines.map((lines) => lines.length), 1);
           const rowContentH = maxLines * cellLineH;
@@ -2257,7 +2290,7 @@ async function renderDocumentPdfInternal(
             const lines = colWrappedLines[cIdx] || ["-"];
             lines.forEach((lineText, lIdx) => {
               const lineClean = sanitizePdfText(lineText);
-              const textW = fontRegular.widthOfTextAtSize(lineClean, cellFontSize);
+              const textW = rowFont.widthOfTextAtSize(lineClean, cellFontSize);
               let drawX = colX + 8;
               if (col.align === "right") {
                 drawX = colX + w - textW - 8;
@@ -2271,7 +2304,7 @@ async function renderDocumentPdfInternal(
                   x: drawX,
                   y: lineY,
                   size: cellFontSize,
-                  font: fontRegular,
+                  font: rowFont,
                   color: TEXT_DARK,
                 },
                 "D-sec-cell",
@@ -2484,73 +2517,89 @@ async function renderDocumentPdfInternal(
       lastRowBottomLineY = emptyBottomY;
       y = emptyBottomY - tableSpacing;
     } else {
-      for (const row of spec.tableRows) {
-      const wrappedCells = cols.map((col, idx) => {
-        const rawCell = row[idx] ?? "";
-        const cleanCell = col.align === "right" ? stripCurrencySymbol(rawCell) : rawCell;
-        return wrapTextByWidth(
-          cleanCell,
-          fontRegular,
-          cellFontSize,
-          colWidths[idx]! - 16,
-        );
-      });
-      const maxLines = Math.max(...wrappedCells.map((c) => c.length), 1);
-      const rowContentH = (maxLines - 1) * cellLineH + cellFontSize;
-      const totalRowH = rowContentH + cellPadY * 2;
+      const isJournal = docUpper.includes("JURNAL");
+      for (let rIdx = 0; rIdx < spec.tableRows.length; rIdx++) {
+        const row = spec.tableRows[rIdx]!;
+        const isBoldRow = isRowUppercase(row);
+        const rowFont = isBoldRow ? fontBold : fontRegular;
 
-      // Jika baris tidak muat di halaman ini, buat halaman baru dan ulangi Header Dokumen + Header Tabel
-      if (y - rowContentH - cellPadY < bottomSafeY) {
-        page = pdfDoc.addPage([pageWidth, pageHeight]);
-        pages.push(page);
-        pageIndex = pages.length - 1;
-        y = pageHeight - marginTop;
-        drawDocumentHeader();
-        drawTableHeader();
-      }
-
-      let cellX = marginX;
-      cols.forEach((col, idx) => {
-        const w = colWidths[idx]!;
-        const lines = wrappedCells[idx] ?? [""];
-        lines.forEach((l, lIdx) => {
-          const cleanL = sanitizePdfText(l);
-          const textW = fontRegular.widthOfTextAtSize(cleanL, cellFontSize);
-          let drawX = cellX + 8;
-          if (col.align === "right") {
-            drawX = cellX + w - textW - 8;
-          } else if (col.align === "center") {
-            drawX = cellX + (w - textW) / 2;
-          }
-          drawTrackedText(
-            cleanL,
-            {
-              x: drawX,
-              y: y - lIdx * cellLineH,
-              size: cellFontSize,
-              font: fontRegular,
-              color: TEXT_DARK,
-            },
-            "D-table-cell",
+        const wrappedCells = cols.map((col, idx) => {
+          const rawCell = row[idx] ?? "";
+          const cleanCell = col.align === "right" ? stripCurrencySymbol(rawCell) : rawCell;
+          return wrapTextByWidth(
+            cleanCell,
+            rowFont,
+            cellFontSize,
+            colWidths[idx]! - 16,
           );
         });
-        cellX += w;
-      });
+        const maxLines = Math.max(...wrappedCells.map((c) => c.length), 1);
+        const rowContentH = (maxLines - 1) * cellLineH + cellFontSize;
+        const totalRowH = rowContentH + cellPadY * 2;
 
-      const bottomLineY = y - (maxLines - 1) * cellLineH - cellPadY;
-      page.drawLine({
-        start: { x: marginX, y: bottomLineY },
-        end: { x: pageWidth - marginX, y: bottomLineY },
-        thickness: 0.5,
-        color: BORDER_GRAY,
-      });
+        // Jika baris tidak muat di halaman ini, buat halaman baru dan ulangi Header Dokumen + Header Tabel
+        if (y - rowContentH - cellPadY < bottomSafeY) {
+          page = pdfDoc.addPage([pageWidth, pageHeight]);
+          pages.push(page);
+          pageIndex = pages.length - 1;
+          y = pageHeight - marginTop;
+          drawDocumentHeader();
+          drawTableHeader();
+        }
 
-      lastRowBottomLineY = bottomLineY;
-      // Siapkan y untuk baris berikutnya (jika masih ada)
-      y = bottomLineY - cellPadY - 9;
-      void totalRowH;
+        let cellX = marginX;
+        cols.forEach((col, idx) => {
+          const w = colWidths[idx]!;
+          const lines = wrappedCells[idx] ?? [""];
+          lines.forEach((l, lIdx) => {
+            const cleanL = sanitizePdfText(l);
+            const textW = rowFont.widthOfTextAtSize(cleanL, cellFontSize);
+            let drawX = cellX + 8;
+            if (col.align === "right") {
+              drawX = cellX + w - textW - 8;
+            } else if (col.align === "center") {
+              drawX = cellX + (w - textW) / 2;
+            }
+            drawTrackedText(
+              cleanL,
+              {
+                x: drawX,
+                y: y - lIdx * cellLineH,
+                size: cellFontSize,
+                font: rowFont,
+                color: TEXT_DARK,
+              },
+              "D-table-cell",
+            );
+          });
+          cellX += w;
+        });
+
+        const nextRow = spec.tableRows[rIdx + 1];
+        const isInsideJournalTx =
+          isJournal &&
+          nextRow &&
+          nextRow[0] === "" &&
+          !nextRow[1]?.toUpperCase().includes("TOTAL");
+
+        if (!isInsideJournalTx) {
+          const bottomLineY = y - (maxLines - 1) * cellLineH - cellPadY;
+          page.drawLine({
+            start: { x: marginX, y: bottomLineY },
+            end: { x: pageWidth - marginX, y: bottomLineY },
+            thickness: 0.5,
+            color: BORDER_GRAY,
+          });
+
+          lastRowBottomLineY = bottomLineY;
+          y = bottomLineY - cellPadY - 9;
+        } else {
+          // Di dalam transaksi jurnal yang sama: jarak antar-baris rapat tanpa garis pemisah
+          y = y - (maxLines - 1) * cellLineH - cellLineH - 1;
+        }
+        void totalRowH;
+      }
     }
-  }
 
     // Baris Total pada baris terakhir tabel (Poin 4: Menyatu utuh tanpa gap dengan baris di atasnya)
     if (tableSummaryTargetColIdx !== -1 && tableSummaryLabel && tableSummaryValue) {
@@ -5140,10 +5189,8 @@ export function buildJournalsPdfSpec(params: {
   refNumber?: string;
   rows: Array<{
     date: string;
-    number: string;
-    account: string;
     description: string;
-    ref: string;
+    ref?: string;
     debit: number;
     credit: number;
   }>;
@@ -5161,8 +5208,6 @@ export function buildJournalsPdfSpec(params: {
 
   const tableRows = params.rows.map((r) => [
     r.date,
-    r.number,
-    r.account,
     r.description,
     r.ref || "-",
     r.debit > 0 ? formatDocRupiah(r.debit) : "-",
@@ -5176,8 +5221,6 @@ export function buildJournalsPdfSpec(params: {
     tableRows.push([
       "",
       "TOTAL KESELURUHAN",
-      "",
-      "",
       "",
       formatDocRupiah(totDeb),
       formatDocRupiah(totCred),
@@ -5202,13 +5245,11 @@ export function buildJournalsPdfSpec(params: {
       { label: "Status Verifikasi", value: "Terposting Lengkap" },
     ],
     tableColumns: [
-      { header: "Tanggal", widthRatio: 0.12 },
-      { header: "No. Jurnal", widthRatio: 0.15 },
-      { header: "Akun", widthRatio: 0.23 },
-      { header: "Keterangan", widthRatio: 0.22 },
-      { header: "Ref", widthRatio: 0.06, align: "center" },
-      { header: "Debit", widthRatio: 0.11, align: "right" },
-      { header: "Kredit", widthRatio: 0.11, align: "right" },
+      { header: "Tanggal", widthRatio: 0.13 },
+      { header: "Deskripsi", widthRatio: 0.47 },
+      { header: "Ref", widthRatio: 0.08, align: "center" },
+      { header: "Debit", widthRatio: 0.16, align: "right" },
+      { header: "Kredit", widthRatio: 0.16, align: "right" },
     ],
     tableRows,
   };
@@ -5259,12 +5300,12 @@ export function buildGeneralLedgerPdfSpec(params: {
       subtitle: `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
       badge: formatDocRupiah(acc.endingBalance),
       tableColumns: [
-        { header: "Tanggal", widthRatio: 0.13 },
-        { header: "Keterangan", widthRatio: 0.39 },
-        { header: "Ref", widthRatio: 0.10, align: "center" },
-        { header: "Debit", widthRatio: 0.12, align: "right" },
-        { header: "Kredit", widthRatio: 0.12, align: "right" },
-        { header: "Saldo Berjalan", widthRatio: 0.14, align: "right" },
+        { header: "Tanggal", widthRatio: 0.11 },
+        { header: "Keterangan", widthRatio: 0.29 },
+        { header: "Ref", widthRatio: 0.08, align: "center" },
+        { header: "Debit", widthRatio: 0.17, align: "right" },
+        { header: "Kredit", widthRatio: 0.17, align: "right" },
+        { header: "Saldo Berjalan", widthRatio: 0.18, align: "right" },
       ],
       tableRows,
     };
@@ -5362,10 +5403,10 @@ export function buildTrialBalancePdfSpec(params: {
       variant: isBalanced ? "success" : "warning",
     },
     tableColumns: [
-      { header: "No. Akun", widthRatio: 0.16 },
-      { header: "Nama Akun", widthRatio: 0.46 },
-      { header: "Debit", widthRatio: 0.19, align: "right" },
-      { header: "Kredit", widthRatio: 0.19, align: "right" },
+      { header: "No. Akun", widthRatio: 0.11 },
+      { header: "Nama Akun", widthRatio: 0.43 },
+      { header: "Debit", widthRatio: 0.23, align: "right" },
+      { header: "Kredit", widthRatio: 0.23, align: "right" },
     ],
     tableRows,
   };
@@ -5398,7 +5439,7 @@ export function buildIncomeStatementPdfSpec(params: {
   for (const r of params.revenueRows) {
     tableRows.push([`  ${r.label}`, formatDocRupiah(r.amount)]);
   }
-  tableRows.push(["Total Pendapatan Usaha", formatDocRupiah(params.totalRevenue)]);
+  tableRows.push(["TOTAL PENDAPATAN USAHA", formatDocRupiah(params.totalRevenue)]);
 
   // BEBAN LANGSUNG PROYEK
   tableRows.push(["BEBAN LANGSUNG PROYEK", ""]);
@@ -5410,13 +5451,16 @@ export function buildIncomeStatementPdfSpec(params: {
     tableRows.push(["  Belum ada beban langsung proyek pada periode ini.", "-"]);
   }
   const gross = params.grossProfit ?? params.totalRevenue;
-  tableRows.push(["Laba Kotor Proyek", formatDocRupiah(gross)]);
+  tableRows.push(["LABA KOTOR PROYEK", formatDocRupiah(gross)]);
 
   // BEBAN OPERASIONAL BERSAMA
   tableRows.push(["BEBAN OPERASIONAL BERSAMA", ""]);
   if (params.opexRows && params.opexRows.length > 0) {
     for (const o of params.opexRows) {
       tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
+    }
+    if (params.totalOpex !== undefined) {
+      tableRows.push(["TOTAL BEBAN OPERASIONAL BERSAMA", formatDocRupiah(params.totalOpex)]);
     }
   } else {
     tableRows.push(["  Belum ada beban operasional bersama pada periode ini.", "-"]);
@@ -5467,7 +5511,7 @@ export function buildRetainedEarningsPdfSpec(params: {
     params.refNumber ?? `EQ/${docDate.replace(/-/g, "")}`;
 
   const tableRows = params.rows.map((r) => [
-    r.label,
+    r.label.toUpperCase(),
     formatDocRupiah(r.amount),
   ]);
   tableRows.push([
@@ -5533,7 +5577,7 @@ export function buildBalanceSheetPdfSpec(params: {
   for (const a of params.currentAssetRows) {
     tableRows.push([`  ${a.label}`, formatDocRupiah(a.amount)]);
   }
-  tableRows.push(["Total Aset Lancar", formatDocRupiah(params.totalCurrentAssets)]);
+  tableRows.push(["TOTAL ASET LANCAR", formatDocRupiah(params.totalCurrentAssets)]);
 
   if (params.nonCurrentAssetRows.length > 0) {
     tableRows.push(["ASET TIDAK LANCAR", ""]);
@@ -5541,7 +5585,7 @@ export function buildBalanceSheetPdfSpec(params: {
       tableRows.push([`  ${na.label}`, formatDocRupiah(na.amount)]);
     }
     tableRows.push([
-      "Total Aset Tidak Lancar",
+      "TOTAL ASET TIDAK LANCAR",
       formatDocRupiah(params.totalNonCurrentAssets),
     ]);
   }
@@ -5553,7 +5597,7 @@ export function buildBalanceSheetPdfSpec(params: {
     tableRows.push([`  ${l.label}`, formatDocRupiah(l.amount)]);
   }
   tableRows.push([
-    "Total Liabilitas Jangka Pendek",
+    "TOTAL LIABILITAS JANGKA PENDEK",
     formatDocRupiah(params.totalCurrentLiabilities),
   ]);
 
@@ -5563,7 +5607,7 @@ export function buildBalanceSheetPdfSpec(params: {
       tableRows.push([`  ${nl.label}`, formatDocRupiah(nl.amount)]);
     }
     tableRows.push([
-      "Total Liabilitas Jangka Panjang",
+      "TOTAL LIABILITAS JANGKA PANJANG",
       formatDocRupiah(params.totalNonCurrentLiabilities),
     ]);
   }
@@ -5637,14 +5681,14 @@ export function buildCashFlowPdfSpec(params: {
 
   const tableRows: string[][] = [];
 
-  tableRows.push(["Saldo Kas Awal Periode", formatDocRupiah(params.beginningCash)]);
+  tableRows.push(["SALDO KAS AWAL PERIODE", formatDocRupiah(params.beginningCash)]);
 
   tableRows.push(["AKTIVITAS OPERASI", ""]);
   for (const o of params.operatingRows) {
     tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
   }
   tableRows.push([
-    "Arus Kas Bersih dari Aktivitas Operasi",
+    "ARUS KAS BERSIH DARI AKTIVITAS OPERASI",
     formatDocRupiah(params.netOperating),
   ]);
 
@@ -5657,7 +5701,7 @@ export function buildCashFlowPdfSpec(params: {
     tableRows.push(["  Tidak ada mutasi aktivitas investasi pada periode ini.", "-"]);
   }
   tableRows.push([
-    "Arus Kas Bersih dari Aktivitas Investasi",
+    "ARUS KAS BERSIH DARI AKTIVITAS INVESTASI",
     formatDocRupiah(params.netInvesting ?? 0),
   ]);
 
@@ -5670,7 +5714,7 @@ export function buildCashFlowPdfSpec(params: {
     tableRows.push(["  Tidak ada mutasi aktivitas pendanaan pada periode ini.", "-"]);
   }
   tableRows.push([
-    "Arus Kas Bersih dari Aktivitas Pendanaan",
+    "ARUS KAS BERSIH DARI AKTIVITAS PENDANAAN",
     formatDocRupiah(params.netFinancing ?? 0),
   ]);
 

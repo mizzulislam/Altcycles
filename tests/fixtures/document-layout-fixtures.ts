@@ -2618,39 +2618,45 @@ export function buildFixtureJurnalUmumNormal(): PdfDocumentSpec {
     rows: [
       {
         date: "01/11/2026",
-        number: "JRN/ALT/2026/11/001",
-        account: "1-1101 - Kas Kecil",
-        description: "Penerimaan pembayaran Invoice INV/ALT/2026/11/002",
-        ref: "INV/002",
+        description: "Kas Kecil",
+        ref: "1-1101",
         debit: 2_000_600,
         credit: 0,
       },
       {
-        date: "01/11/2026",
-        number: "JRN/ALT/2026/11/001",
-        account: "1-1202 - Piutang Usaha - TIM Travel RMM",
-        description: "Pelunasan piutang termin DP 40%",
-        ref: "INV/002",
+        date: "",
+        description: "   Piutang Usaha - TIM Travel RMM",
+        ref: "1-1202",
         debit: 0,
         credit: 2_000_600,
       },
       {
-        date: "12/11/2026",
-        number: "JRN/ALT/2026/11/006",
-        account: "1-1102 - Kas di Bank - Bank Jago",
-        description: "Penerimaan termin 1 dari PT RMM berupa uang muka development 40%",
-        ref: "TRF-889",
-        debit: 2_000_000,
+        date: "",
+        description: "   (Penerimaan pembayaran Invoice INV/ALT/2026/11/002)",
+        ref: "",
+        debit: 0,
         credit: 0,
       },
       {
         date: "12/11/2026",
-        number: "JRN/ALT/2026/11/006",
-        account: "2-1402 - Pendapatan Diterima di Muka - Dev",
-        description: "Uang muka development belum diakui pendapatan",
-        ref: "TRF-889",
+        description: "Kas di Bank - Bank Jago",
+        ref: "1-1102",
+        debit: 2_000_000,
+        credit: 0,
+      },
+      {
+        date: "",
+        description: "   Pendapatan Diterima di Muka - Development",
+        ref: "2-1402",
         debit: 0,
         credit: 2_000_000,
+      },
+      {
+        date: "",
+        description: "   (Penerimaan termin 1 dari PT RMM berupa uang muka development 40%. Belum diakui pendapatan karena pekerjaan belum selesai.)",
+        ref: "",
+        debit: 0,
+        credit: 0,
       },
     ],
     totalDebit: 4_000_600,
@@ -2659,23 +2665,38 @@ export function buildFixtureJurnalUmumNormal(): PdfDocumentSpec {
 }
 
 export function buildFixtureJurnalUmumExtreme(): PdfDocumentSpec {
-  const rows = Array.from({ length: 32 }, (_, i) => ({
-    date: "15/11/2026",
-    number: `JRN/ALT/2026/11/${String(i + 1).padStart(3, "0")}`,
-    account: i % 2 === 0 ? "1-1102 - Kas di Bank - Bank Jago" : "4-1101 - Pendapatan Jasa Web",
-    description: `Transaksi operasional sistem modul ke-${i + 1} dengan rincian biaya komprehensif berulang`,
-    ref: `REF-${String(i + 1).padStart(4, "0")}`,
-    debit: i % 2 === 0 ? 15_500_000 : 0,
-    credit: i % 2 === 1 ? 15_500_000 : 0,
-  }));
+  const rows: Array<{ date: string; description: string; ref: string; debit: number; credit: number }> = [];
+  for (let i = 0; i < 15; i++) {
+    rows.push({
+      date: "15/11/2026",
+      description: "Kas di Bank - Bank Jago",
+      ref: "1-1102",
+      debit: 15_500_000,
+      credit: 0,
+    });
+    rows.push({
+      date: "",
+      description: "   Pendapatan Jasa Web & Optimasi",
+      ref: "4-1101",
+      debit: 0,
+      credit: 15_500_000,
+    });
+    rows.push({
+      date: "",
+      description: `   (Transaksi operasional sistem modul ke-${i + 1} dengan rincian biaya komprehensif berulang)`,
+      ref: "",
+      debit: 0,
+      credit: 0,
+    });
+  }
 
   return buildJournalsPdfSpec({
     company: FIXTURE_COMPANY,
     isAdjusting: false,
     periodLabel: "01/11/2026 s.d. 30/11/2026",
     rows,
-    totalDebit: 16 * 15_500_000,
-    totalCredit: 16 * 15_500_000,
+    totalDebit: 15 * 15_500_000,
+    totalCredit: 15 * 15_500_000,
   });
 }
 
@@ -2702,30 +2723,31 @@ export function buildFixtureJurnalAjpNormal(): PdfDocumentSpec {
     rows: [
       {
         date: "15/11/2026",
-        number: "AJP/ALT/2026/11/010",
-        account: "2-1401 - Pendapatan Diterima di Muka",
-        description: "Pengakuan pendapatan progres 100% — Dev cost TIMTravel",
-        ref: "AJP-001",
+        description: "Pendapatan Diterima di Muka",
+        ref: "2-1401",
         debit: 2_000_600,
         credit: 0,
       },
       {
-        date: "15/11/2026",
-        number: "AJP/ALT/2026/11/010",
-        account: "1-1210 - Piutang Belum Ditagih",
-        description: "Akrual piutang termin sisa 60%",
-        ref: "AJP-001",
+        date: "",
+        description: "Piutang Belum Ditagih",
+        ref: "1-1210",
         debit: 4_999_400,
         credit: 0,
       },
       {
-        date: "15/11/2026",
-        number: "AJP/ALT/2026/11/010",
-        account: "4-1101 - Pendapatan Jasa Web",
-        description: "Pengakuan penuh pendapatan proyek selesai",
-        ref: "AJP-001",
+        date: "",
+        description: "   Pendapatan Jasa Web",
+        ref: "4-1101",
         debit: 0,
         credit: 7_000_000,
+      },
+      {
+        date: "",
+        description: "   (Pengakuan pendapatan progres 100% dan akrual sisa termin proyek TIMTravel)",
+        ref: "",
+        debit: 0,
+        credit: 0,
       },
     ],
     totalDebit: 7_000_000,
@@ -2734,15 +2756,30 @@ export function buildFixtureJurnalAjpNormal(): PdfDocumentSpec {
 }
 
 export function buildFixtureJurnalAjpExtreme(): PdfDocumentSpec {
-  const rows = Array.from({ length: 30 }, (_, i) => ({
-    date: "31/12/2026",
-    number: `AJP/ALT/2026/12/${String(i + 1).padStart(3, "0")}`,
-    account: i % 2 === 0 ? "5-1101 - Beban Cloud & Server" : "1-1402 - Beban Dibayar di Muka",
-    description: `Amortisasi beban server hosting cloud multi-tenant periode bulan ke-${i + 1}`,
-    ref: `AJP-${String(i + 1).padStart(3, "0")}`,
-    debit: i % 2 === 0 ? 5_250_000 : 0,
-    credit: i % 2 === 1 ? 5_250_000 : 0,
-  }));
+  const rows: Array<{ date: string; description: string; ref: string; debit: number; credit: number }> = [];
+  for (let i = 0; i < 15; i++) {
+    rows.push({
+      date: "31/12/2026",
+      description: "Beban Cloud & Server",
+      ref: "5-1101",
+      debit: 5_250_000,
+      credit: 0,
+    });
+    rows.push({
+      date: "",
+      description: "   Beban Dibayar di Muka",
+      ref: "1-1402",
+      debit: 0,
+      credit: 5_250_000,
+    });
+    rows.push({
+      date: "",
+      description: `   (Amortisasi beban server hosting cloud multi-tenant periode bulan ke-${i + 1})`,
+      ref: "",
+      debit: 0,
+      credit: 0,
+    });
+  }
 
   return buildJournalsPdfSpec({
     company: FIXTURE_COMPANY,
