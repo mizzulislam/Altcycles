@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DOC_EMPTY_CELL,
+  formatAccountRef,
   formatDateID,
   formatDocDateLong,
   formatDocEmpty,
@@ -25,6 +26,17 @@ describe("Utilitas Lokalisasi Indonesia & Rupiah (BR-11 & Lampiran A.0)", () => 
     expect(formatDateID("2026-11-07")).toBe("07/11/2026");
     expect(formatDateID("2026-12-31")).toBe("31/12/2026");
     expect(formatDateID(null)).toBe("-");
+  });
+
+  it("formatAccountRef: menormalisasi kode akun dengan tanda hubung standar (C-04)", () => {
+    expect(formatAccountRef("1-1101")).toBe("1-1101");
+    expect(formatAccountRef("1 1202")).toBe("1-1202");
+    expect(formatAccountRef("1.1202")).toBe("1-1202");
+    expect(formatAccountRef("11202")).toBe("1-1202");
+    expect(formatAccountRef(" 2 1101 ")).toBe("2-1101");
+    expect(formatAccountRef(null)).toBe("-");
+    expect(formatAccountRef(undefined)).toBe("-");
+    expect(formatAccountRef("")).toBe("-");
   });
 
   it("mengubah nominal Rupiah menjadi kalimat terbilang Bahasa Indonesia", () => {

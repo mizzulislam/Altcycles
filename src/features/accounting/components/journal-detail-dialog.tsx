@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID } from "@/lib/formatters";
+import { formatAccountRef, formatDateID } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type {
   AccountRow,
@@ -142,7 +142,7 @@ export function JournalDetailDialog({
                               </span>
                             </TableCell>
                             <TableCell className="py-2.5 text-center text-muted-foreground">
-                              {acc?.code ?? "-"}
+                              {formatAccountRef(acc?.code)}
                             </TableCell>
                             <TableCell className="py-2.5 pr-4 font-medium">
                               {line.debit > 0 ? (

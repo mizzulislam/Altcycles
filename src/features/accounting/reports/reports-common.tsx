@@ -68,6 +68,30 @@ export function formatSplitzCurrency(val: number): React.ReactNode {
   );
 }
 
+/**
+ * Memformat nominal untuk sel tabel Buku Besar (tanpa pengulangan simbol "Rp" di setiap baris).
+ * Sesuai kaidah akuntansi resmi, simbol mata uang cukup dicantumkan di header kolom (Rp)
+ * dan headline akun, sehingga baris tabel mutasi tampil lega, bersih, dan bebas pembungkusan teks.
+ */
+export function formatLedgerCellAmount(val: number): React.ReactNode {
+  if (val === 0) return <span className="text-muted-foreground">-</span>;
+  const absFormatted = new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 0,
+  }).format(Math.abs(val));
+  if (val < 0) {
+    return (
+      <span className="tabular-nums font-medium text-foreground">
+        ({absFormatted})
+      </span>
+    );
+  }
+  return (
+    <span className="tabular-nums font-medium text-foreground">
+      {absFormatted}
+    </span>
+  );
+}
+
 export function formatDateSplitz(dateStr: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;

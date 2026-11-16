@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { ACCOUNT_TYPE_LABELS } from "@/lib/formatters";
 import type { AccountRow } from "@/types/database.types";
-import { formatDateSplitz, formatSplitzCurrency } from "./reports-common";
+import { formatDateSplitz, formatLedgerCellAmount } from "./reports-common";
 
 export interface LedgerRowData {
   journalDate: string;
@@ -144,9 +144,9 @@ export function GeneralLedgerView({
                       <tr>
                         <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">Tanggal</th>
                         <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">Keterangan</th>
-                        <th className="px-6 py-4 font-semibold text-center w-48 sm:w-56">Debit</th>
-                        <th className="px-6 py-4 font-semibold text-center w-48 sm:w-56">Kredit</th>
-                        <th className="px-6 py-4 font-semibold text-center w-52 sm:w-60">Saldo Berjalan</th>
+                        <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Debit (Rp)</th>
+                        <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Kredit (Rp)</th>
+                        <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">Saldo Berjalan (Rp)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60 text-foreground">
@@ -166,13 +166,13 @@ export function GeneralLedgerView({
                               {entry.description}
                             </td>
                             <td className="px-6 py-3.5 text-right text-xs">
-                              {formatSplitzCurrency(entry.debit)}
+                              {formatLedgerCellAmount(entry.debit)}
                             </td>
                             <td className="px-6 py-3.5 text-right text-xs">
-                              {formatSplitzCurrency(entry.credit)}
+                              {formatLedgerCellAmount(entry.credit)}
                             </td>
                             <td className="px-6 py-3.5 text-right text-xs font-semibold text-foreground">
-                              {formatSplitzCurrency(entry.runningBalance)}
+                              {formatLedgerCellAmount(entry.runningBalance)}
                             </td>
                           </tr>
                         ))
@@ -214,9 +214,9 @@ export function GeneralLedgerView({
                     <tr>
                       <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">Tanggal</th>
                       <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">Keterangan</th>
-                      <th className="px-6 py-4 font-semibold text-center w-48 sm:w-56">Debit</th>
-                      <th className="px-6 py-4 font-semibold text-center w-48 sm:w-56">Kredit</th>
-                      <th className="px-6 py-4 font-semibold text-center w-52 sm:w-60">Saldo Berjalan</th>
+                      <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Debit (Rp)</th>
+                      <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Kredit (Rp)</th>
+                      <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">Saldo Berjalan (Rp)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60 text-foreground">
@@ -236,13 +236,13 @@ export function GeneralLedgerView({
                             {entry.description}
                           </td>
                           <td className="px-6 py-3.5 text-right text-xs">
-                            {formatSplitzCurrency(entry.debit)}
+                            {formatLedgerCellAmount(entry.debit)}
                           </td>
                           <td className="px-6 py-3.5 text-right text-xs">
-                            {formatSplitzCurrency(entry.credit)}
+                            {formatLedgerCellAmount(entry.credit)}
                           </td>
                           <td className="px-6 py-3.5 text-right text-xs font-semibold text-foreground">
-                            {formatSplitzCurrency(entry.runningBalance)}
+                            {formatLedgerCellAmount(entry.runningBalance)}
                           </td>
                         </tr>
                       ))

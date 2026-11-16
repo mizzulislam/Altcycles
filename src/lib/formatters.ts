@@ -68,6 +68,24 @@ export const FULL_MONTHS_ID = [
 ] as const;
 
 /**
+ * Menormalisasi dan memformat kode akun Ref akuntansi menjadi format baku tanda hubung (misal: "1-1101", "1-1202").
+ * Menangani variasi input dengan spasi (misal "1 1202" -> "1-1202"), titik (misal "1.1202" -> "1-1202"),
+ * atau angka 5 digit tanpa pemisah (misal "11202" -> "1-1202").
+ */
+export function formatAccountRef(code?: string | null): string {
+  if (!code) return "-";
+  const trimmed = code.trim();
+  if (!trimmed) return "-";
+  // Ganti spasi, titik, atau underscore dengan tanda hubung
+  const normalized = trimmed.replace(/[\s._]+/g, "-");
+  // Jika 5 digit angka tanpa pemisah (misal "11202" -> "1-1202")
+  if (/^\d{5}$/.test(normalized)) {
+    return `${normalized[0]}-${normalized.slice(1)}`;
+  }
+  return normalized;
+}
+
+/**
  * Karakter penanda sel kosong resmi standar dokumen Altvira: en-dash (–), bukan "0" atau "-".
  */
 export const DOC_EMPTY_CELL = "–";

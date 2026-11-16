@@ -1,4 +1,5 @@
 import {
+  formatAccountRef,
   formatDocDateLong,
   formatDocNumber,
   formatDocRupiah,
@@ -42,7 +43,7 @@ export function buildJournalsPdfSpec(params: {
   const tableRows = params.rows.map((r) => [
     r.date,
     r.description,
-    r.ref || "-",
+    r.ref ? formatAccountRef(r.ref) : "-",
     r.debit > 0 ? formatDocRupiah(r.debit) : "-",
     r.credit > 0 ? formatDocRupiah(r.credit) : "-",
   ]);
@@ -122,14 +123,14 @@ export function buildGeneralLedgerPdfSpec(params: {
     const tableRows = acc.rows.map((r) => [
       r.date,
       simplifyLedgerDescription(r.description),
-      r.ref || "-",
+      r.ref ? formatAccountRef(r.ref) : "-",
       r.debit > 0 ? formatDocNumber(r.debit) : "-",
       r.credit > 0 ? formatDocNumber(r.credit) : "-",
       formatDocNumber(r.runningBalance),
     ]);
 
     return {
-      title: `${acc.code} - ${acc.name}`,
+      title: `${formatAccountRef(acc.code)} - ${acc.name}`,
       subtitle: `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
       badge: formatDocRupiah(acc.endingBalance),
       tableColumns: [

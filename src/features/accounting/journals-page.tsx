@@ -35,7 +35,7 @@ import {
 import { useRealtimeSync } from "@/lib/realtime-cache";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
-import { formatDateID, roundRupiah } from "@/lib/formatters";
+import { formatAccountRef, formatDateID, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import {
   createCorrectionJournalEntry,
@@ -652,7 +652,7 @@ export function JournalsPage({
                         const acc = accountMap.get(row.account_id);
                         return (
                           <div key={`r-${idx}`} className="print-ref-item">
-                            {acc?.code ?? "-"}
+                            {formatAccountRef(acc?.code)}
                           </div>
                         );
                       })}
@@ -1043,7 +1043,7 @@ export function JournalsPage({
                                   key={`ref-${idx}`}
                                   className="text-muted-foreground min-h-5 flex items-center justify-center text-xs tabular-nums"
                                 >
-                                  {acc?.code ?? "-"}
+                                  {formatAccountRef(acc?.code)}
                                 </div>
                               );
                             })}
