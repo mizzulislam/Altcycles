@@ -414,7 +414,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-[#F0F1F3] dark:bg-[#090E19] transition-colors duration-300">
+    <div className="relative min-h-screen w-full bg-muted/30 dark:bg-background transition-colors duration-300">
       {/* Tombol Pengalih Mode Gelap & Terang di Ujung Kanan Atas Halaman */}
       <ThemeToggle variant="floating" />
 
@@ -431,7 +431,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
              fade yang menyatu dengan banner di belakangnya.
           ===================================================================== */}
       <div
-        className="group relative hidden lg:block w-full h-full min-h-screen bg-[#090E19] overflow-hidden select-none"
+        className="group relative hidden lg:block w-full h-full min-h-screen bg-slate-950 overflow-hidden select-none"
         onMouseEnter={() => setIsBannerHovered(true)}
         onMouseLeave={() => setIsBannerHovered(false)}
       >
@@ -461,7 +461,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="relative w-full h-full flex items-center justify-center p-10 bg-[#090E19]">
+                      <div className="relative w-full h-full flex items-center justify-center p-10 bg-slate-950">
                         <img
                           src={slide.image_url}
                           alt=""
@@ -486,9 +486,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             </div>
           ) : mediaLoading ? (
             /* Shimmer halus saat kunjungan awal (sebelum cache tersedia) */
-            <div className="w-full h-full relative overflow-hidden bg-[#090E19]">
+            <div className="w-full h-full relative overflow-hidden bg-slate-950">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:44px_44px]" />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0B43C8]/25 via-[#1FB1F2]/10 to-[#090E19] animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-sky-400/10 to-slate-950 animate-pulse" />
             </div>
           ) : bannerSrc ? (
             <img
@@ -501,7 +501,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             />
           ) : (
             /* Visual Canvas Bersih untuk Slot Banner CMS */
-            <div className="w-full h-full relative overflow-hidden bg-[#090E19]">
+            <div className="w-full h-full relative overflow-hidden bg-slate-950">
               {/* Struktur Grid Halus untuk penempatan banner informasi */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0f_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0f_1px,transparent_1px)] bg-[size:44px_44px]" />
             </div>
@@ -510,7 +510,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
         {/* LAYER 2 (Highlight Gradien Altvira Lembut) */}
         <div
-          className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-[#0B43C8] via-[#1FB1F2] to-[#0B43C8] opacity-15"
+          className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-primary via-sky-400 to-primary opacity-15"
           aria-hidden="true"
         />
 
@@ -618,20 +618,20 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
           {isDemoMode && (
             <Alert
               variant="info"
-              className="border-[#1FB1F2]/40 bg-[#1FB1F2]/10 text-[#090E19] dark:text-white"
+              className="border-sky-500/30 bg-sky-500/10 text-foreground"
             >
-              <ShieldCheckIcon className="text-[#0B43C8] dark:text-[#1FB1F2]" />
-              <AlertTitle className="text-[#0B43C8] dark:text-[#1FB1F2] font-bold">
+              <ShieldCheckIcon className="text-primary dark:text-sky-400" />
+              <AlertTitle className="text-primary dark:text-sky-400 font-bold">
                 Mode Pratinjau Lokal Aktif
               </AlertTitle>
-              <AlertDescription className="text-xs text-[#616C82] dark:text-[#C9C9C9]">
+              <AlertDescription className="text-xs text-muted-foreground">
                 Pilih akun contoh untuk menguji masing-masing portal peran:
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-white dark:bg-[#1A253C] text-[#2A2A2A] dark:text-white border-[#C9C9C9] dark:border-white/15 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E]"
+                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
                     onClick={() => fillDemoAccount("superadmin@altvira.id")}
                   >
                     Super Admin
@@ -640,7 +640,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-white dark:bg-[#1A253C] text-[#2A2A2A] dark:text-white border-[#C9C9C9] dark:border-white/15 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E]"
+                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
                     onClick={() => fillDemoAccount("admin@altvira.id")}
                   >
                     Admin
@@ -649,7 +649,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-white dark:bg-[#1A253C] text-[#2A2A2A] dark:text-white border-[#C9C9C9] dark:border-white/15 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E]"
+                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
                     onClick={() => fillDemoAccount("user@altvira.id")}
                   >
                     User
@@ -660,9 +660,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
           )}
 
           {/* Main Card */}
-          <Card className="border border-[#C9C9C9]/60 dark:border-white/10 shadow-lg shadow-black/[0.04] dark:shadow-black/50 rounded-2xl bg-white dark:bg-[#121A2B] overflow-hidden transition-colors">
+          <Card className="border border-border/80 shadow-lg shadow-black/5 dark:shadow-black/40 rounded-2xl bg-card overflow-hidden transition-colors">
             {/* Tab Switcher: Masuk vs Buat Akun */}
-            <div className="grid grid-cols-2 p-1.5 bg-[#F0F1F3]/80 dark:bg-[#0F1626] border-b border-[#C9C9C9]/50 dark:border-white/10">
+            <div className="grid grid-cols-2 p-1.5 bg-muted/50 border-b border-border/70">
               <button
                 type="button"
                 onClick={() => {
@@ -671,8 +671,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                 }}
                 className={`flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold rounded-xl transition-all ${
                   mode === "signin"
-                    ? "bg-white dark:bg-[#1A253C] text-[#0B43C8] dark:text-[#1FB1F2] shadow-sm"
-                    : "text-[#616C82] dark:text-[#9AA5B8] hover:text-[#2A2A2A] dark:hover:text-white"
+                    ? "bg-card text-primary shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <LogInIcon className="size-4" />
@@ -686,8 +686,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                 }}
                 className={`flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold rounded-xl transition-all ${
                   mode === "signup"
-                    ? "bg-white dark:bg-[#1A253C] text-[#0B43C8] dark:text-[#1FB1F2] shadow-sm"
-                    : "text-[#616C82] dark:text-[#9AA5B8] hover:text-[#2A2A2A] dark:hover:text-white"
+                    ? "bg-card text-primary shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <UserPlusIcon className="size-4" />
@@ -698,10 +698,10 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             <CardContent className="p-6 sm:p-8 space-y-6">
               {/* Form Title & Subtitle (Mengikuti Referensi Splitz) */}
               <div className="space-y-1.5">
-                <h2 className="text-2xl font-bold tracking-tight text-[#2A2A2A] dark:text-white">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
                   {mode === "signin" ? "Masuk ke Sistem" : "Buat Akun Baru"}
                 </h2>
-                <p className="text-xs text-[#616C82] dark:text-[#9AA5B8]">
+                <p className="text-xs text-muted-foreground">
                   {mode === "signin"
                     ? "Silakan masukkan username dan kata sandi Anda"
                     : "Daftarkan akun internal Altvira untuk mengakses portal kerja"}
@@ -721,12 +721,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       <FieldLabel
                         htmlFor="auth-fullname"
                         required
-                        className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
+                        className="text-xs font-semibold text-foreground"
                       >
                         Nama Lengkap
                       </FieldLabel>
                       <div className="relative">
-                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#616C82] dark:text-[#9AA5B8]" />
+                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
                           id="auth-fullname"
                           type="text"
@@ -735,7 +735,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           placeholder="Nama lengkap Anda"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10 h-11 border-[#C9C9C9] dark:border-white/15 dark:bg-[#1A253C] dark:text-white dark:placeholder:text-[#9AA5B8]/50 focus-visible:ring-[#0B43C8] dark:focus-visible:ring-[#1FB1F2] text-[#2A2A2A]"
+                          className="pl-10 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
                         />
                       </div>
                     </Field>
@@ -746,12 +746,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     <FieldLabel
                       htmlFor="auth-username"
                       required
-                      className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
+                      className="text-xs font-semibold text-foreground"
                     >
                       Username
                     </FieldLabel>
                     <div className="relative">
-                      <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#616C82] dark:text-[#9AA5B8]" />
+                      <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                       <Input
                         id="auth-username"
                         type="text"
@@ -764,7 +764,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         }
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="pl-10 h-11 border-[#C9C9C9] dark:border-white/15 dark:bg-[#1A253C] dark:text-white dark:placeholder:text-[#9AA5B8]/50 focus-visible:ring-[#0B43C8] dark:focus-visible:ring-[#1FB1F2] text-[#2A2A2A]"
+                        className="pl-10 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
                         aria-invalid={Boolean(error)}
                       />
                     </div>
@@ -776,21 +776,21 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       <FieldLabel
                         htmlFor="auth-password"
                         required
-                        className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
+                        className="text-xs font-semibold text-foreground"
                       >
                         Kata Sandi
                       </FieldLabel>
                       {mode === "signin" && (
                         <Link
                           to="/lupa-kata-sandi"
-                          className="text-xs font-medium text-[#0B43C8] dark:text-[#1FB1F2] hover:underline transition-colors"
+                          className="text-xs font-medium text-primary hover:underline transition-colors"
                         >
                           Lupa kata sandi?
                         </Link>
                       )}
                     </div>
                     <div className="relative">
-                      <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#616C82] dark:text-[#9AA5B8]" />
+                      <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                       <Input
                         id="auth-password"
                         type={showPassword ? "text" : "password"}
@@ -807,13 +807,13 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         }
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-11 h-11 border-[#C9C9C9] dark:border-white/15 dark:bg-[#1A253C] dark:text-white dark:placeholder:text-[#9AA5B8]/50 focus-visible:ring-[#0B43C8] dark:focus-visible:ring-[#1FB1F2] text-[#2A2A2A]"
+                        className="pl-10 pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
                         aria-invalid={Boolean(error)}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#616C82] hover:text-[#2A2A2A] dark:text-[#9AA5B8] dark:hover:text-white rounded-md transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
                         aria-label={
                           showPassword
                             ? "Sembunyikan kata sandi"
@@ -834,7 +834,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         {/* Progress Bar Kekuatan Sandi */}
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-[#616C82] dark:text-[#9AA5B8] font-medium">
+                            <span className="text-muted-foreground font-medium">
                               Kekuatan Kata Sandi:
                             </span>
                             <span
@@ -853,7 +853,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                   : "Lemah"}
                             </span>
                           </div>
-                          <div className="grid grid-cols-5 gap-1.5 h-1.5 w-full bg-[#E5E7EB] dark:bg-white/10 rounded-full overflow-hidden">
+                          <div className="grid grid-cols-5 gap-1.5 h-1.5 w-full bg-muted rounded-full overflow-hidden">
                             {[1, 2, 3, 4, 5].map((lvl) => (
                               <div
                                 key={lvl}
@@ -873,9 +873,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
                         {/* Checklist Ketentuan Kata Sandi (Hanya tampil pada tab Buat Akun) */}
                         {mode === "signup" && (
-                          <div className="p-2.5 rounded-xl bg-[#F0F1F3]/80 dark:bg-[#1A253C]/70 border border-[#C9C9C9]/60 dark:border-white/10 space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2A2A2A] dark:text-white">
-                              <ShieldCheckIcon className="size-3.5 text-[#0B43C8] dark:text-[#1FB1F2]" />
+                          <div className="p-2.5 rounded-xl bg-muted/40 border border-border/80 space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                              <ShieldCheckIcon className="size-3.5 text-primary" />
                               <span>Ketentuan Kata Sandi:</span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
@@ -883,7 +883,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 className={`flex items-center gap-1.5 transition-colors ${
                                   pwdCriteria.minLength
                                     ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {pwdCriteria.minLength ? (
@@ -898,7 +898,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 className={`flex items-center gap-1.5 transition-colors ${
                                   pwdCriteria.hasUpper
                                     ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {pwdCriteria.hasUpper ? (
@@ -913,7 +913,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 className={`flex items-center gap-1.5 transition-colors ${
                                   pwdCriteria.hasLower
                                     ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {pwdCriteria.hasLower ? (
@@ -928,7 +928,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 className={`flex items-center gap-1.5 transition-colors ${
                                   pwdCriteria.hasNumber
                                     ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {pwdCriteria.hasNumber ? (
@@ -943,7 +943,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 className={`flex items-center gap-1.5 sm:col-span-2 transition-colors ${
                                   pwdCriteria.hasSymbol
                                     ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                    : "text-[#616C82] dark:text-[#9AA5B8]"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {pwdCriteria.hasSymbol ? (
@@ -966,12 +966,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       <FieldLabel
                         htmlFor="auth-confirm-password"
                         required
-                        className="text-xs font-semibold text-[#2A2A2A] dark:text-white"
+                        className="text-xs font-semibold text-foreground"
                       >
                         Konfirmasi Kata Sandi
                       </FieldLabel>
                       <div className="relative">
-                        <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#616C82] dark:text-[#9AA5B8]" />
+                        <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
                           id="auth-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
@@ -980,7 +980,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           placeholder="Ulangi kata sandi"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-10 pr-11 h-11 border-[#C9C9C9] dark:border-white/15 dark:bg-[#1A253C] dark:text-white dark:placeholder:text-[#9AA5B8]/50 focus-visible:ring-[#0B43C8] dark:focus-visible:ring-[#1FB1F2] text-[#2A2A2A]"
+                          className="pl-10 pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
                           aria-invalid={Boolean(error)}
                         />
                         <button
@@ -988,7 +988,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#616C82] hover:text-[#2A2A2A] dark:text-[#9AA5B8] dark:hover:text-white rounded-md transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
                           aria-label={
                             showConfirmPassword
                               ? "Sembunyikan konfirmasi kata sandi"
@@ -1007,7 +1007,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
                   {/* Error Message */}
                   {error && (
-                    <FieldDescription className="text-xs text-[#DC2626] font-medium bg-[#DC2626]/5 p-2 rounded-lg border border-[#DC2626]/20">
+                    <FieldDescription className="text-xs text-destructive font-medium bg-destructive/10 p-2 rounded-lg border border-destructive/20">
                       {error}
                     </FieldDescription>
                   )}
@@ -1016,7 +1016,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                   <Button
                     type="submit"
                     disabled={submitting || googleSubmitting}
-                    className="w-full h-11 text-sm font-semibold rounded-xl bg-[#0B43C8] hover:bg-[#083296] text-white shadow-md shadow-[#0B43C8]/20 transition-all active:scale-[0.99]"
+                    className="w-full h-11 text-sm font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 transition-all active:scale-[0.99]"
                   >
                     {submitting ? (
                       <Spinner className="mr-2" />
@@ -1033,10 +1033,10 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                   {/* Pembatas "atau lanjutkan dengan" */}
                   <div className="relative my-2 pt-1">
                     <div className="absolute inset-0 flex items-center">
-                      <Separator className="bg-[#C9C9C9]/60 dark:bg-white/10" />
+                      <Separator className="bg-border" />
                     </div>
                     <div className="relative flex justify-center text-[11px] uppercase">
-                      <span className="bg-white dark:bg-[#121A2B] px-3 text-[#616C82] dark:text-[#9AA5B8] font-medium tracking-wider">
+                      <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
                         atau lanjutkan dengan
                       </span>
                     </div>
@@ -1048,7 +1048,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     variant="outline"
                     disabled={submitting || googleSubmitting}
                     onClick={handleGoogleSignIn}
-                    className="w-full h-11 text-sm font-semibold rounded-xl border-[#C9C9C9] dark:border-white/15 bg-white dark:bg-[#1A253C]/60 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E] text-[#2A2A2A] dark:text-white transition-all shadow-sm active:scale-[0.99] flex items-center justify-center gap-2.5"
+                    className="w-full h-11 text-sm font-semibold rounded-xl border-border bg-card hover:bg-muted text-foreground transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2.5"
                   >
                     {googleSubmitting ? (
                       <Spinner className="size-4" />
@@ -1061,7 +1061,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
               </form>
 
               {/* Mode Toggle Link */}
-              <div className="text-center text-xs text-[#616C82] dark:text-[#9AA5B8]">
+              <div className="text-center text-xs text-muted-foreground">
                 {mode === "signin" ? (
                   <>
                     Belum memiliki akun internal?{" "}
@@ -1071,7 +1071,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         setMode("signup");
                         setError(null);
                       }}
-                      className="font-bold text-[#0B43C8] dark:text-[#1FB1F2] hover:underline transition-colors"
+                      className="font-bold text-primary hover:underline transition-colors"
                     >
                       Buat Akun di sini
                     </button>
@@ -1085,7 +1085,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         setMode("signin");
                         setError(null);
                       }}
-                      className="font-bold text-[#0B43C8] dark:text-[#1FB1F2] hover:underline transition-colors"
+                      className="font-bold text-primary hover:underline transition-colors"
                     >
                       Masuk ke Sistem
                     </button>
@@ -1094,22 +1094,22 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
               </div>
             </CardContent>
 
-            <Separator className="bg-[#C9C9C9]/50 dark:bg-white/10" />
+            <Separator className="bg-border/70" />
 
             {/* Buyer Portal Client Quick Access */}
-            <div className="p-4 sm:p-5 bg-[#F0F1F3]/50 dark:bg-[#0F1626]/60 flex flex-col gap-2">
-              <span className="text-[11px] text-[#616C82] dark:text-[#9AA5B8]">
+            <div className="p-4 sm:p-5 bg-muted/30 flex flex-col gap-2">
+              <span className="text-[11px] text-muted-foreground">
                 Klien / Pembeli Proyek Altvira tidak memerlukan akun login:
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 asChild
-                className="w-full h-9 text-xs border-[#C9C9C9] dark:border-white/15 text-[#2A2A2A] dark:text-white bg-white dark:bg-[#1A253C]/60 hover:bg-[#F0F1F3] dark:hover:bg-[#25324E] hover:text-[#0B43C8] dark:hover:text-[#1FB1F2] rounded-xl transition-all"
+                className="w-full h-9 text-xs border-border text-foreground bg-card hover:bg-muted hover:text-primary rounded-xl transition-all"
               >
                 <Link to="/portal-pembeli">
                   <span>Buka Portal Pembeli (Akses via Nomor PO)</span>
-                  <ExternalLinkIcon className="ml-1.5 size-3.5 text-[#616C82] dark:text-[#9AA5B8]" />
+                  <ExternalLinkIcon className="ml-1.5 size-3.5 text-muted-foreground" />
                 </Link>
               </Button>
             </div>

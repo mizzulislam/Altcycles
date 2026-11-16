@@ -56,9 +56,9 @@ export function ThemeToggle({
       style={floatingStyle}
       className={`inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border ${
         isDark
-          ? "bg-[#121A2B]/95 border-white/20 text-amber-300 hover:text-amber-200 hover:bg-[#1A253C] hover:border-white/35 shadow-xl shadow-black/50"
-          : "bg-white/95 border-[#C9C9C9] text-[#0B43C8] hover:text-[#083296] hover:bg-[#F0F1F3] hover:border-[#0B43C8]/40 shadow-xl shadow-black/[0.1]"
-      } backdrop-blur-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1FB1F2] ${sizeClasses} ${className}`}
+          ? "bg-card/95 border-border/80 text-amber-400 hover:text-amber-300 hover:bg-accent hover:border-border shadow-xl shadow-black/40"
+          : "bg-card/95 border-border text-primary hover:text-primary/90 hover:bg-accent hover:border-primary/40 shadow-lg shadow-black/5"
+      } backdrop-blur-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${sizeClasses} ${className}`}
       {...props}
     >
       <span className="sr-only">
@@ -73,7 +73,7 @@ export function ThemeToggle({
           />
         ) : (
           <MoonIcon
-            className={`${iconSizes} transition-transform duration-300 rotate-0 scale-100 text-[#0B43C8]`}
+            className={`${iconSizes} transition-transform duration-300 rotate-0 scale-100 text-primary`}
           />
         )}
       </div>

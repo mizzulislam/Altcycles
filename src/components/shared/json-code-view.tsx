@@ -214,7 +214,7 @@ export function JsonCodeView({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border border-border/80 bg-slate-50/90 dark:bg-[#090F1E] overflow-hidden",
+        "group relative rounded-xl border border-border/80 bg-muted/40 dark:bg-muted/20 overflow-hidden",
         className,
       )}
     >
