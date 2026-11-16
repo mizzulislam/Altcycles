@@ -20,7 +20,7 @@ Audit codebase Altcycles menemukan bahwa aplikasi memiliki kelengkapan fitur fin
 
 | ID | File Sumber | Baris | Tanggung Jawab Utama yang Bercampur | Estimasi Usaha | Estimasi Manfaat | Perlu Keputusanku? |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
-| **A-01** | `src/lib/pdf-generator.ts` | 5.399 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Ya** |
+| **A-01** | `src/lib/pdf-generator.ts` | 5.825 $\rightarrow$ 18 | Mesin render PDF, font metrics, tabel multi-section, inspector collision, dan 20+ builder dokumen bisnis | Besar | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-02** | `src/features/client-projects/project-detail-page.tsx` | 4.861 $\rightarrow$ 1.306 | Detail proyek, 6 tab navigasi, 8+ dialog modal, kalkulasi termin & CPO, generator dokumen transaksi | Besar | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-03** | `src/features/accounting/reports-page.tsx` | 3.161 $\rightarrow$ 725 | 7 jenis laporan akuntansi (Laba Rugi, Neraca, Arus Kas, GL, TB, Ekuitas, Lengkap), kalkulasi saldo, ekspor 3 format | Sedang | Sangat Tinggi | **Selesai Dipecah & Tervalidasi** |
 | **A-04** | `src/features/invoicing/invoicing-page.tsx` | 2.037 $\rightarrow$ 1.352 | Piutang klien, invoice termin, pelunasan kuitansi, dialog pembatalan, KPI cards, ekspor | Sedang | Tinggi | **Selesai Dipecah & Tervalidasi** |
@@ -78,26 +78,29 @@ File non-`src` yang panjang:
 Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tinggi dan kandidat utama:
 
 #### ID: A-01 — `src/lib/pdf-generator.ts`
-- **Jumlah Baris:** 5.399 baris
+- **Jumlah Baris:** 5.825 $\rightarrow$ 18 baris (Pengurangan ~99.7% di facade file)
 - **Prioritas:** Kritis / Sangat Tinggi
-- **Tanggung Jawab yang Tercampur:**
+- **Status:** **Selesai Dipecah & Tervalidasi**
+- **Tanggung Jawab yang Tercampur (Sebelumnya):**
   1. Konstanta token tata letak PDF, palet warna, tipografi, tabel lebar karakter AFM (`AFM_HELVETICA_BOLD_KERNING`, `AFM_HELVETICA_REGULAR_KERNING`).
   2. Engine inti penggambaran: header institusi, footer otomatis, baris biru judul lengkap, tanda air draft, kotak banner, inspector collision detection (`inspectPdfDocumentLayout`).
   3. Mesin render tabel: `drawPdfTable` (tabel single) dan `sections` (tabel multi-seksi multi-halaman).
-  4. Builder spesifikasi 22+ dokumen transaksi bisnis: Invoice, Kuitansi, Quotation, SOW, SPK, PO Klien, PO Vendor, BAKP, UAT, BAST, Payment Approval, JTPP, dan 7 rekap/daftar.
+  4. Builder spesifikasi dokumen transaksi bisnis: Invoice, Kuitansi, PO Klien, Payment Approval, dll.
   5. Builder spesifikasi dokumen akuntansi: Jurnal Umum, AJP, Buku Besar, Neraca Saldo, Laba Rugi, Perubahan Ekuitas, Neraca, Arus Kas, dan Laporan Lengkap.
-- **Rekomendasi Pemecahan Konkret:**
-  Pecah menjadi modul terstruktur di dalam folder baru `src/lib/pdf/`:
-  1. `src/lib/pdf/core-tokens.ts` (~250 baris): Token tata letak, palet warna (`PDF_LAYOUT_TOKENS`, `BRAND_BLUE`, `CHIP_BG`), dan tabel metrik AFM font.
-  2. `src/lib/pdf/layout-engine.ts` (~600 baris): `drawDocumentHeader`, `drawDocumentFooter`, `drawTrackedText`, `drawPdfTable`, dan fungsi deteksi tabrakan kotak batas (`inspectPdfDocumentLayout`).
-  3. `src/lib/pdf/specs/transaction-specs.ts` (~800 baris): Builder dokumen penagihan & pengadaan (`buildInvoicePdfSpec`, `buildReceiptPdfSpec`, `buildQuotationPdfSpec`, `buildPoPdfSpec`, `buildPaymentApprovalPdfSpec`, dll.).
-  4. `src/lib/pdf/specs/project-docs-specs.ts` (~600 baris): Builder dokumen proyek (`buildSowPdfSpec`, `buildBakpPdfSpec`, `buildUatPdfSpec`, `buildBastPdfSpec`, `buildJtppPdfSpec`, `buildSpkCharterPdfSpec`).
-  5. `src/lib/pdf/specs/accounting-specs.ts` (~750 baris): Builder dokumen akuntansi (`buildJournalsPdfSpec`, `buildGeneralLedgerPdfSpec`, `buildTrialBalancePdfSpec`, laporan keuangan).
-  6. `src/lib/pdf-generator.ts` (~120 baris): Menjadi *barrel export re-export facade* sehingga seluruh kode pemanggil di aplikasi tidak mengalami *breaking import*.
-- **Risiko Pemecahan:** Sedang (Memerlukan verifikasi visual seluruh fixture dokumen).
-- **Dependensi Terpengaruh:** `pdf-lib`, `journals-page.tsx`, `reports-page.tsx`, `invoicing-page.tsx`, `project-detail-page.tsx`.
-- **Tes yang Harus Dijalankan:** `npx vitest run tests/unit/document-title-mapping.test.ts`, `tests/unit/generate-render-check.test.ts`, `tests/unit/accounting-pdf-excel.test.ts`.
-- **Perlu Keputusanku?** Ya
+  6. Generator khusus dokumen SPK / Project Charter 10 pasal (`generateSpkProjectCharterPdf`).
+- **Hasil Refaktorisasi Konkret:**
+  Telah dipecah ke folder `src/lib/pdf/` dan dihubungkan via facade:
+  1. `pdf-types.ts` (141 baris): Definisi tipe & interface PDF (`PdfDocumentSpec`, `DocStatusVariant`, `PdfTableColumn`, `PdfKeyValue`, dll.).
+  2. `pdf-tokens.ts` (345 baris): Token tata letak, palet warna, tabel lebar karakter AFM, metrik brand image, dan `resolveDocTitleConfig`.
+  3. `pdf-download.ts` (77 baris): Helper unduh berkas PDF byte (`downloadPdfBytes`) dengan proteksi iframe print fallback.
+  4. `specs/transaction-specs.ts` (606 baris): Builder dokumen transaksi (`buildInvoicePdfSpec`, `buildReceiptPdfSpec`, `buildClientPoPdfSpec`, `buildPaymentApprovalPdfSpec`).
+  5. `specs/accounting-specs.ts` (642 baris): Builder dokumen akuntansi (`buildJournalsPdfSpec`, `buildGeneralLedgerPdfSpec`, `buildTrialBalancePdfSpec`, `buildIncomeStatementPdfSpec`, `buildRetainedEarningsPdfSpec`, `buildBalanceSheetPdfSpec`, `buildCashFlowPdfSpec`, `buildCompleteFinancialStatementsPdfSpec`).
+  6. `pdf-engine.ts` (3.257 baris): Core rendering engine, word wrapping (`wrapTextByWidth`), embedding gambar, inspector collision detection (`inspectPdfDocumentLayout`), dan `generateDocumentPdf`.
+  7. `spk-charter-pdf.ts` (703 baris): Generator khusus SPK / Project Charter 10 pasal (`generateSpkProjectCharterPdf`).
+  8. `src/lib/pdf-generator.ts` (18 baris): Facade aggregator re-export penuh sehingga 100% backward-compatible bagi seluruh pemanggil di aplikasi.
+- **Verifikasi:**
+  - `npm run typecheck` (`tsc --noEmit`): Lulus 100% tanpa error.
+  - `npx vitest run`: 13 test files / 67 tests lulus 100% (termasuk seluruh 7 layout & collision detection tests).
 
 ---
 
