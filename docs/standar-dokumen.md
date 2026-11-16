@@ -240,8 +240,44 @@ Urutan di bawah memakai zona A sampai I dari bagian sebelumnya, dari atas ke baw
 | BAKP dan UAT | A, B, tabel kemajuan atau skenario, ringkasan hasil, G, I | Status memakai teks (Lulus, Gagal, Selesai), bukan hanya warna |
 | Form pengajuan dan payment approval | A ringkas, identitas form, D, dokumen pendukung (tautan), jalur persetujuan, I | Satu halaman; footer otomatis wajib |
 | Receipt otomatis | A, status, ringkasan bayar, rincian di halaman 2 | Gaya Atlassian: ringkasan di halaman pertama, rincian setelahnya |
+| Jurnal Umum & Jurnal Penyesuaian | A, B (periode), baris biru Judul Lengkap, D (Tanggal, Deskripsi, Ref, Debit, Kredit), E (Total Seimbang), I | Menghilangkan border intra-transaksi; memo/keterangan ditulis rapi di bawah baris akun; footer di dasar tiap halaman |
+| Buku Besar (General Ledger) | A, B (periode, mata uang), baris biru Judul Lengkap, D (blok kartu akun berjarak aman, Tanggal, Keterangan, Ref, Debit, Kredit, Saldo Berjalan), I | Headline nama akun & saldo akhir rata tengah pada highlight biru; nominal lebar satu baris tanpa wrapping |
+| Neraca Saldo (Trial Balance) | A, B (periode, status balance), baris biru Judul Lengkap, D (No. Akun, Nama Akun, Debit, Kredit), E (Total Debit & Kredit Seimbang), I | Kolom nomor & nama akun dirapatkan; kolom nominal Debit & Kredit lenggang |
+| Laporan Laba Rugi, Perubahan Ekuitas, Neraca, Arus Kas | A, B (periode/per tanggal), baris biru Judul Lengkap, D (tabel klasifikasi dan akun), E (Saldo Akhir/Laba Bersih), I | Seluruh teks klasifikasi/judul seksi UPPERCASE beserta isinya dicetak tebal (bold); baris total ganda di akhir |
+| Laporan Keuangan Lengkap | A, B (periode, entitas), baris biru Judul Lengkap, D (multi-seksi laporan berkesinambungan), I | Bundel komprehensif seluruh komponen laporan keuangan berkala |
 
 Urutan zona B sampai E sama persis di invoice dan PO, dan kuitansi memakai versi ringkasnya. Kesamaan ini membuat finance klien bisa membaca dokumen Altvira tanpa belajar format baru.
+
+### Tabel Pemetaan Tunggal Judul Header Dokumen (DOCUMENT_TITLE_MAPPINGS)
+
+Seluruh dokumen di Altcycles dikendalikan oleh satu tabel pemetaan tunggal di `src/lib/pdf-generator.ts` untuk menjaga konsistensi tampilan dan mencegah benturan teks pada header:
+1. **Aturan Judul Header:** Maksimal 2 kata, maksimal 16 karakter, seluruhnya huruf kapital (UPPERCASE), dan lebar tidak boleh melebihi teks patokan `"PURCHASE ORDER (PO)"` (261.56 pt).
+2. **Baris Biru Judul Lengkap:** Ditampilkan tepat di bawah header dengan gaya UAT hanya jika Judul Header berbeda dari Judul Lengkap. Dokumen transaksi inti (INVOICE, KUITANSI, PURCHASE ORDER) tidak menampilkan baris biru tambahan.
+3. **Pemberlakuan Kata "MASTER":** Kata "MASTER" hanya dieliminasi pada Judul Lengkap di dokumen cetak PDF (misalnya `DAFTAR PELANGGAN/KLIEN`), tanpa mengubah nama menu, judul halaman web, atau nama file unduhan di sistem.
+4. **Pengaman Cadangan (Fallback CI):** Jika dokumen tidak terdaftar dan lebarnya melampaui batas, sistem menggunakan fallback 2 kata pertama (maks 16 karakter) dengan warning log dan proteksi gagal otomatis di CI agar entri resmi selalu didaftarkan secara sengaja.
+
+| Kunci Sumber Dokumen | Judul Header (Kanan Atas) | Judul Lengkap (Baris Biru) | Modul Asal |
+| :--- | :--- | :--- | :--- |
+| `DAFTAR MASTER PROYEK DAN PENUGASAN TIM` | `PROYEK TIM` | `DAFTAR PROYEK DAN PENUGASAN TIM` | Manajemen Proyek |
+| `DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA` | `PAYMENT APPROVAL` | `DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA` | Pembayaran Operasional |
+| `CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES` | `BACKUP JURNAL` | `CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES` | Pengaturan Cadangan |
+| `LAPORAN ANGGARAN VS REALISASI PROYEK` | `BUDGETING` | `LAPORAN ANGGARAN VS REALISASI PROYEK` | Anggaran & Biaya |
+| `DAFTAR INVOICE PENAGIHAN & PIUTANG` | `DAFTAR INVOICE` | `DAFTAR INVOICE PENAGIHAN & PIUTANG` | Penagihan & Piutang |
+| `DAFTAR MASTER PELANGGAN/KLIEN` | `DAFTAR KLIEN` | `DAFTAR PELANGGAN/KLIEN` | Master Kontak |
+| `DAFTAR MASTER VENDOR PEMASOK` | `DAFTAR VENDOR` | `DAFTAR VENDOR PEMASOK` | Master Kontak |
+| `DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL` | `PENGAJUAN PA` | `DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL` | Pembayaran Pengguna |
+| `DAFTAR PURCHASE ORDER PEMBELIAN VENDOR` | `REKAP PO` | `DAFTAR PURCHASE ORDER PEMBELIAN VENDOR` | Pengadaan Vendor |
+| `PERHITUNGAN BAGI HASIL PROYEK` | `BAGI HASIL` | `PERHITUNGAN BAGI HASIL PROYEK` | Bagi Hasil Mitra |
+| `DOKUMEN PROYEK` | `DOKUMEN PROYEK` | `DOKUMEN PROYEK` | Portal Pembeli |
+| `BUKU JURNAL UMUM ALTCYCLES` | `JURNAL UMUM` | `BUKU JURNAL UMUM ALTCYCLES` | Akuntansi |
+| `JURNAL PENYESUAIAN & KOREKSI ALTCYCLES` | `JURNAL AJP` | `JURNAL PENYESUAIAN & KOREKSI ALTCYCLES` | Akuntansi |
+| `BUKU BESAR (GENERAL LEDGER) ALTCYCLES` | `BUKU BESAR` | `BUKU BESAR (GENERAL LEDGER) ALTCYCLES` | Akuntansi |
+| `NERACA SALDO (TRIAL BALANCE) ALTCYCLES` | `NERACA SALDO` | `NERACA SALDO (TRIAL BALANCE) ALTCYCLES` | Akuntansi |
+| `LAPORAN LABA RUGI KOMPREHENSIF` | `LABA RUGI` | `LAPORAN LABA RUGI KOMPREHENSIF` | Laporan Keuangan |
+| `LAPORAN PERUBAHAN EKUITAS` | `EKUITAS` | `LAPORAN PERUBAHAN EKUITAS` | Laporan Keuangan |
+| `LAPORAN POSISI KEUANGAN (NERACA)` | `NERACA` | `LAPORAN POSISI KEUANGAN (NERACA)` | Laporan Keuangan |
+| `LAPORAN ARUS KAS METODE TIDAK LANGSUNG` | `ARUS KAS` | `LAPORAN ARUS KAS METODE TIDAK LANGSUNG` | Laporan Keuangan |
+| `LAPORAN KEUANGAN LENGKAP PERIODIK` | `LAPORAN LENGKAP` | `LAPORAN KEUANGAN LENGKAP PERIODIK` | Laporan Keuangan |
 
 ## Penomoran dan metadata
 
