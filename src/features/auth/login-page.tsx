@@ -103,7 +103,22 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [submitting, setSubmitting] = React.useState(false);
   const [googleSubmitting, setGoogleSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [oauthChecking, setOauthChecking] = React.useState(false);
+  const [oauthChecking, setOauthChecking] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashString = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(hashString);
+    const hasCode = searchParams.has("code");
+    const hasToken = hashParams.has("access_token");
+    const hasFlag =
+      window.sessionStorage.getItem("altcycles_oauth_in_progress") === "1";
+    return hasCode || hasToken || hasFlag;
+  });
+
+  const profileRef = React.useRef(profile);
+  profileRef.current = profile;
 
   // Media Banner / Flyer / Konten Medsos sisi kiri (hidrasi instan dari cache agar bebas kedip saat refresh)
   const [mediaSlides, setMediaSlides] = React.useState<LoginMediaItemRow[]>(() =>
@@ -202,6 +217,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       hashParams.get("error");
 
     if (errCode || errDesc) {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("altcycles_oauth_in_progress");
+      }
       if (
         errCode === "signup_disabled" ||
         errDesc?.toLowerCase().includes("signup")
@@ -223,11 +241,17 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
     const hasCode = searchParams.has("code");
     const hasToken = hashParams.has("access_token");
+    const hasFlag =
+      typeof window !== "undefined" &&
+      window.sessionStorage.getItem("altcycles_oauth_in_progress") === "1";
 
-    if (hasCode || hasToken) {
+    if (hasCode || hasToken || hasFlag) {
       setOauthChecking(true);
       // Timeout pengaman 15 detik jika sesi tidak berhasil diverifikasi (memberi ruang tombol Batalkan pada 8 detik)
       const timer = window.setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.removeItem("altcycles_oauth_in_progress");
+        }
         setOauthChecking(false);
         setError(
           "Waktu verifikasi akun Google habis. Silakan coba masuk kembali.",
@@ -244,7 +268,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
   React.useEffect(() => {
     // Jika tidak sedang dalam transisi visual OAuth, arahkan langsung
-    if (profile && !oauthChecking) {
+    const isOauthPending =
+      oauthChecking ||
+      (typeof window !== "undefined" &&
+        window.sessionStorage.getItem("altcycles_oauth_in_progress") === "1");
+
+    if (profile && !isOauthPending) {
       toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
       navigate(portalHomeForRole(profile.role), { replace: true });
     }
@@ -253,9 +282,17 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   async function handleGoogleSignIn() {
     setGoogleSubmitting(true);
     setError(null);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("altcycles_oauth_in_progress", "1");
+    }
+    setOauthChecking(true);
     try {
       await signInWithGoogle();
     } catch (err) {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("altcycles_oauth_in_progress");
+      }
+      setOauthChecking(false);
       setError(
         err instanceof Error ? err.message : "Gagal masuk menggunakan Google.",
       );
@@ -339,7 +376,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     setError(null);
   }
 
-  // Tampilan transisi saat kembali dari otorisasi Google OAuth
+  // Tampilan transisi saat masuk / kembali dari otorisasi Google OAuth
   if (oauthChecking) {
     return (
       <OAuthLoadingCard
@@ -347,12 +384,24 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
         userName={profile?.full_name}
         isProfileReady={Boolean(profile)}
         onComplete={() => {
-          if (profile) {
-            toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
-            navigate(portalHomeForRole(profile.role), { replace: true });
+          if (typeof window !== "undefined") {
+            window.sessionStorage.removeItem("altcycles_oauth_in_progress");
+          }
+          setOauthChecking(false);
+          const targetProfile = profileRef.current || profile;
+          if (targetProfile) {
+            toast.success(
+              `Berhasil masuk! Selamat datang, ${targetProfile.full_name}`,
+            );
+            navigate(portalHomeForRole(targetProfile.role), { replace: true });
+          } else {
+            navigate("/portal/super-admin", { replace: true });
           }
         }}
         onCancel={() => {
+          if (typeof window !== "undefined") {
+            window.sessionStorage.removeItem("altcycles_oauth_in_progress");
+          }
           setOauthChecking(false);
           window.history.replaceState(
             {},
