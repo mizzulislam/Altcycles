@@ -275,22 +275,24 @@ Berikut adalah analisis dan rencana pemecahan untuk file monolit prioritas tingg
 ---
 
 #### ID: A-10 — `src/components/layout/portal-shell.tsx`
-- **Jumlah Baris:** 1.274 baris
+- **Jumlah Baris Asal:** 1.351 baris (kini 461 baris, terpangkas >65%)
 - **Prioritas:** Tinggi
+- **Status:** **Selesai Dipecah & Tervalidasi**
 - **Tanggung Jawab yang Tercampur:**
   1. Layout shell: Sidebar kiri (expand/collapse), navbar atas, container konten utama.
   2. Navigasi peran: Matriks menu `NAV_STRUCTURE_BY_ROLE` untuk 3 peran (Super Admin, Admin, User).
   3. Peta breadcrumbs 40+ rute URL.
   4. Dialog notifikasi sistem & badge unread count.
   5. Menu profil pengguna & switch peran kilat (*quick role switcher*).
-- **Rekomendasi Pemecahan Konkret:**
-  1. `nav-structure.ts` (~300 baris): Ekstraksi konstanta `NAV_STRUCTURE_BY_ROLE`, rute, ikon, dan filter izin.
-  2. `breadcrumb-map.ts` (~150 baris): Ekstraksi peta path URL ke label breadcrumbs.
-  3. `components/shell-notifications-dialog.tsx` (~250 baris): Dialog notifikasi.
-  4. `components/shell-sidebar.tsx` (~350 baris): Komponen sidebar desktop & mobile drawer.
-  5. `portal-shell.tsx` (~300 baris): Shell wrapper utama yang ramping.
-- **Risiko Pemecahan:** Sedang (Mempengaruhi navigasi seluruh portal).
-- **Perlu Keputusanku?** Ya
+- **Hasil Pemecahan Konkret:**
+  Telah dipecah menjadi 4 modul terisolasi di `src/components/layout/`:
+  1. `src/components/layout/nav-structure.ts` (195 baris): Ekstraksi tipe navigasi (`NavItem`, `NavGroup`, `NavEntry`), konstanta matriks `NAV_STRUCTURE_BY_ROLE`, `getRoleShortName`, dan kunci storage sidebar.
+  2. `src/components/layout/breadcrumb-map.ts` (54 baris): Ekstraksi interface `HeaderBreadcrumbItem` dan fungsi pemetaan breadcrumb URL dinamis `getHeaderBreadcrumbs`.
+  3. `src/components/layout/shell-notifications-dialog.tsx` (264 baris): Komponen dialog notifikasi modal terpadu beserta filter status baca, tombol tandai semua dibaca, format moneter, dan visual icon mapper.
+  4. `src/components/layout/shell-sidebar.tsx` (485 baris): Komponen sidebar navigasi desktop (collapsible w-16 / w-64) & mobile drawer, hover logo toggle, submenu accordion dengan animasi spring dot indicator, serta user profile popover menu.
+  5. `src/components/layout/portal-shell.tsx` (461 baris): Shell wrapper utama yang ramping yang mengorkestrasikan layout desktop/mobile, context sidebar collapsed, header bar atas, switcher peran kilat, dan outlet halaman.
+- **Risiko Pemecahan:** Rendah (100% kontrak tipe, hook `useSidebarCollapsed`, dan fungsionalitas navigasi tetap utuh).
+- **Hasil Pengujian:** `npm run typecheck` lulus 100%, 13 file pengujian Vitest (68 tests) lulus 100%.
 
 ---
 
