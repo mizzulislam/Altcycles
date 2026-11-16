@@ -34,6 +34,7 @@ import {
   type MultiSeriesChartKind,
 } from "@/components/shared/dashboard-charts";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { AnimatedNumber } from "@/components/shared/animated-number";
 import {
   Card,
   CardContent,
@@ -654,7 +655,7 @@ export function AdminDashboardPage() {
               Kas &amp; Bank Terkini
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(cashPosition.endingCash)}
+              <AnimatedNumber value={cashPosition.endingCash} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {openPeriods > 0
@@ -673,7 +674,7 @@ export function AdminDashboardPage() {
               Antrean Pembayaran
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pendingApprovals} Pengajuan
+              <AnimatedNumber value={pendingApprovals} suffix=" Pengajuan" />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {readyDisbursements > 0
@@ -694,7 +695,7 @@ export function AdminDashboardPage() {
               Piutang Belum Tertagih
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(outstandingReceivable)}
+              <AnimatedNumber value={outstandingReceivable} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {unpaidInvoiceCount > 0
@@ -715,7 +716,7 @@ export function AdminDashboardPage() {
               Komitmen Kontrak
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalContract)}
+              <AnimatedNumber value={totalContract} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               Akumulasi dari {projects.length} proyek klien
