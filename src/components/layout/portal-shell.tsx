@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
@@ -253,7 +254,6 @@ export function PortalShell() {
           <span className="font-bold text-sm tracking-tight">Altcycles</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <ThemeToggle size="sm" />
           <Button
             type="button"
             variant="ghost"
@@ -267,6 +267,8 @@ export function PortalShell() {
               <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full" />
             )}
           </Button>
+          <LanguageToggle size="sm" className="size-9 rounded-xl border border-border/80" />
+          <ThemeToggle size="sm" className="size-9 rounded-xl" />
           <Button
             type="button"
             variant="ghost"
@@ -423,6 +425,13 @@ export function PortalShell() {
                   <span className="absolute top-1.5 right-1.5 size-2 bg-destructive rounded-full" />
                 )}
               </Button>
+            </ActionTooltip>
+
+            {/* Tombol Pengalih Bahasa (Dual/Multi Bahasa) */}
+            <ActionTooltip content="Pilihan Bahasa (Language)" side="bottom">
+              <div>
+                <LanguageToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
+              </div>
             </ActionTooltip>
 
             {/* Tombol Mode Tema */}

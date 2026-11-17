@@ -6,6 +6,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { Spinner } from "@/components/ui/empty";
 import { AuthProvider, portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { LanguageProvider } from "@/lib/i18n";
 
 const lazyPage = <P extends object = Record<string, never>>(
   loader: () => Promise<Record<string, unknown>>,
@@ -139,8 +140,9 @@ function AuthenticatedIndexRedirect() {
 export function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
+      <LanguageProvider>
+        <BrowserRouter>
+          <AuthProvider>
           <React.Suspense fallback={<RouteFallback />}>
             <Routes>
             <Route path="/" element={<AuthenticatedIndexRedirect />} />
@@ -265,6 +267,7 @@ export function App() {
           <Toaster richColors position="bottom-right" />
         </AuthProvider>
       </BrowserRouter>
-    </ThemeProvider>
-  );
+    </LanguageProvider>
+  </ThemeProvider>
+);
 }
