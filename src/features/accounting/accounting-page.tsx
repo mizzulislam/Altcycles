@@ -91,9 +91,9 @@ const ACCOUNTING_TABS: AccountingTabDef[] = [
   },
   {
     id: "coa",
-    label: "Bagan Akun (CoA)",
+    label: "Setup Akuntansi",
     icon: FolderTreeIcon,
-    description: "Daftar bagan akun (Chart of Accounts)",
+    description: "Setup bagan akun (CoA) & pembukaan periode pembukuan",
   },
 ];
 

@@ -42,9 +42,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   deleteAccount,
+  deletePeriod,
   listAccounts,
+  listPeriods,
+  reopenPeriod,
   saveAccount,
 } from "@/lib/data-service";
+import { runPeriodClosingBook } from "@/lib/operations-service";
+import { useRealtimeSync } from "@/lib/realtime-cache";
 import { ACCOUNT_TYPE_LABELS } from "@/lib/formatters";
 import type {
   AccountRow,
@@ -52,7 +57,10 @@ import type {
   AccountType,
   CashFlowCategory,
   NormalBalance,
+  PeriodRow,
 } from "@/types/database.types";
+import { PeriodListTable } from "@/features/master-data/components/period-list-table";
+import { PeriodCreateDialog } from "@/features/master-data/components/period-create-dialog";
 
 export interface CoaAccountsPageProps {
   hideHeader?: boolean;
@@ -60,11 +68,18 @@ export interface CoaAccountsPageProps {
 
 export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {}) {
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
+  const [periods, setPeriods] = React.useState<PeriodRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<string>("all");
 
-  // Dialog Form Tambah / Ubah
+  // State Dialog Periode
+  const [createPeriodOpen, setCreatePeriodOpen] = React.useState(false);
+  const [closePeriodTarget, setClosePeriodTarget] = React.useState<PeriodRow | null>(null);
+  const [reopenPeriodTarget, setReopenPeriodTarget] = React.useState<PeriodRow | null>(null);
+  const [deletePeriodTarget, setDeletePeriodTarget] = React.useState<PeriodRow | null>(null);
+
+  // Dialog Form Tambah / Ubah Akun
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | undefined>();
   const [code, setCode] = React.useState("");
@@ -80,21 +95,21 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
   const [description, setDescription] = React.useState("");
   const [saving, setSaving] = React.useState(false);
 
-  // Dialog Konfirmasi Nonaktifkan / Hapus
-  const [toggleTarget, setToggleTarget] = React.useState<AccountRow | null>(
-    null,
-  );
-  const [deleteTarget, setDeleteTarget] = React.useState<AccountRow | null>(
-    null,
-  );
+  // Dialog Konfirmasi Nonaktifkan / Hapus Akun
+  const [toggleTarget, setToggleTarget] = React.useState<AccountRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<AccountRow | null>(null);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listAccounts();
-      setAccounts(data);
+      const [accData, perData] = await Promise.all([
+        listAccounts(),
+        listPeriods(),
+      ]);
+      setAccounts(accData);
+      setPeriods(perData);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memuat akun.");
+      toast.error(err instanceof Error ? err.message : "Gagal memuat data.");
     } finally {
       setLoading(false);
     }
@@ -103,6 +118,8 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
   React.useEffect(() => {
     void reload();
   }, [reload]);
+
+  useRealtimeSync(reload);
 
   function openNewDialog() {
     setEditingId(undefined);
@@ -141,7 +158,49 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleToggleActive() {
+    if (!toggleTarget) return;
+    try {
+      await saveAccount({
+        id: toggleTarget.id,
+        code: toggleTarget.code,
+        name: toggleTarget.name,
+        account_type: toggleTarget.account_type,
+        normal_balance: toggleTarget.normal_balance,
+        parent_id: toggleTarget.parent_id,
+        system_tag: toggleTarget.system_tag,
+        cash_flow_category: toggleTarget.cash_flow_category,
+        is_postable: toggleTarget.is_postable,
+        is_active: !toggleTarget.is_active,
+        description: toggleTarget.description,
+      });
+      toast.success(
+        toggleTarget.is_active
+          ? `Akun ${toggleTarget.code} dinonaktifkan.`
+          : `Akun ${toggleTarget.code} diaktifkan kembali.`,
+      );
+      setToggleTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mengubah status akun.",
+      );
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!deleteTarget) return;
+    try {
+      await deleteAccount(deleteTarget.id);
+      toast.success(`Akun ${deleteTarget.code} berhasil dihapus.`);
+      setDeleteTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus akun.");
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
@@ -172,6 +231,43 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     }
   }
 
+  // Aksi Periode
+  async function handleClosePeriod() {
+    if (!closePeriodTarget) return;
+    try {
+      await runPeriodClosingBook(closePeriodTarget.id);
+      toast.success(`Periode ${closePeriodTarget.name} berhasil ditutup.`);
+      setClosePeriodTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menutup periode.");
+    }
+  }
+
+  async function handleReopenPeriod(reason?: string) {
+    if (!reopenPeriodTarget) return;
+    try {
+      await reopenPeriod(reopenPeriodTarget.id, reason || "Pembukaan kembali periode akuntansi.");
+      toast.success(`Periode ${reopenPeriodTarget.name} dibuka kembali.`);
+      setReopenPeriodTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuka kembali periode.");
+    }
+  }
+
+  async function handleDeletePeriod() {
+    if (!deletePeriodTarget) return;
+    try {
+      await deletePeriod(deletePeriodTarget.id);
+      toast.success(`Periode ${deletePeriodTarget.name} berhasil dihapus.`);
+      setDeletePeriodTarget(null);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus periode.");
+    }
+  }
+
   const filtered = accounts.filter((a) => {
     const matchText =
       a.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -186,16 +282,29 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Bagan Akun (Chart of Accounts)
+              Setup Akuntansi
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun untuk pencatatan dan pengelompokan transaksi keuangan.
+              Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button type="button" onClick={openNewDialog} className="cursor-pointer shadow-xs">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreatePeriodOpen(true)}
+              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+            >
               <PlusIcon className="size-4" />
-              Tambah Akun Baru
+              <span>Buka Periode Baru</span>
+            </Button>
+            <Button
+              type="button"
+              onClick={openNewDialog}
+              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+            >
+              <PlusIcon className="size-4" />
+              <span>Tambah Akun Baru</span>
             </Button>
           </div>
         </div>
@@ -203,17 +312,26 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Bagan Akun (Chart of Accounts)
+              Setup Akuntansi
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun untuk pencatatan dan pengelompokan transaksi keuangan.
+              Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreatePeriodOpen(true)}
+              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+            >
+              <PlusIcon className="size-4" />
+              <span>Buka Periode Baru</span>
+            </Button>
             <Button
               type="button"
               onClick={openNewDialog}
-              className="cursor-pointer shadow-xs"
+              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
             >
               <PlusIcon className="size-4" />
               <span>Tambah Akun Baru</span>
@@ -222,7 +340,17 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         </div>
       )}
 
-      <Card className="overflow-hidden">
+      {/* 1. Card Daftar Periode Bulanan (Dipindahkan dari Tab Tutup Buku) */}
+      <PeriodListTable
+        periods={periods}
+        loading={loading}
+        onClosePeriod={setClosePeriodTarget}
+        onReopenPeriod={setReopenPeriodTarget}
+        onDeletePeriod={setDeletePeriodTarget}
+      />
+
+      {/* 2. Card Daftar Bagan Akun (Chart of Accounts) */}
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle>Daftar Bagan Akun</CardTitle>
@@ -256,297 +384,367 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>Memuat bagan akun...</span>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-border/80 bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="text-center w-32 pl-6">Kode</TableHead>
-                  <TableHead className="text-center">Nama Akun</TableHead>
-                  <TableHead className="text-center w-36">Tipe</TableHead>
-                  <TableHead className="text-center w-36">Saldo Normal</TableHead>
-                  <TableHead className="text-center w-32">Status</TableHead>
-                  <TableHead className="text-center w-36 pr-6">Aksi</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-32 pl-6">Kode</TableHead>
+                <TableHead>Nama Akun</TableHead>
+                <TableHead className="w-36">Tipe Akun</TableHead>
+                <TableHead className="w-28 text-center">Saldo Normal</TableHead>
+                <TableHead className="w-28 text-center">Kategori Arus Kas</TableHead>
+                <TableHead className="w-24 text-center">Postable</TableHead>
+                <TableHead className="w-28 text-center">Status</TableHead>
+                <TableHead className="w-24 text-center pr-6">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner />
+                      <span>Memuat bagan akun...</span>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={6} className="p-0">
-                      <div className="flex flex-col items-center justify-center gap-1.5 py-12 px-6 text-center bg-muted/10 border-t border-dashed border-border/70">
-                        <p className="text-sm font-semibold text-foreground">
-                          Tidak ada akun yang cocok
-                        </p>
-                        <p className="text-xs text-muted-foreground max-w-sm">
-                          Sesuaikan kata kunci pencarian atau filter tipe akun di kanan atas.
-                        </p>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    Tidak ada akun yang sesuai dengan filter.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((acc) => (
+                  <TableRow key={acc.id}>
+                    <TableCell className="font-mono text-xs font-semibold pl-6 align-top">
+                      {acc.code}
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <div className="font-medium text-foreground">{acc.name}</div>
+                      {acc.description && (
+                        <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                          {acc.description}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground align-top">
+                      {ACCOUNT_TYPE_LABELS[acc.account_type] ?? acc.account_type}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium capitalize align-top">
+                      {acc.normal_balance}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium capitalize align-top">
+                      {acc.cash_flow_category}
+                    </TableCell>
+                    <TableCell className="text-center align-top">
+                      {acc.is_postable ? (
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          Ya
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Header</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center align-top">
+                      <StatusBadge
+                        tone={acc.is_active ? "success" : "secondary"}
+                        label={acc.is_active ? "Aktif" : "Nonaktif"}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center pr-6 align-top">
+                      <div className="flex items-center justify-center gap-1 -my-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDialog(acc)}
+                          title="Ubah Akun"
+                          className="size-8 rounded-lg cursor-pointer"
+                        >
+                          <PencilIcon className="size-3.5" />
+                          <span className="sr-only">Ubah</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setToggleTarget(acc)}
+                          title={
+                            acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"
+                          }
+                          className={cn(
+                            "size-8 rounded-lg cursor-pointer",
+                            acc.is_active
+                              ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+                              : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
+                          )}
+                        >
+                          <PowerIcon className="size-3.5" />
+                          <span className="sr-only">
+                            {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
+                          </span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget(acc)}
+                          title="Hapus Akun"
+                          className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                        >
+                          <Trash2Icon className="size-3.5" />
+                          <span className="sr-only">Hapus</span>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filtered.map((acc) => {
-                    const isHeader = !acc.is_postable;
-                    return (
-                      <TableRow
-                        key={acc.id}
-                        className={cn(
-                          "transition-colors",
-                          isHeader
-                            ? "bg-muted/40 hover:bg-muted/50 font-bold border-y border-border/80"
-                            : "hover:bg-muted/20",
-                        )}
-                      >
-                        <TableCell className={cn("pl-6 font-mono", isHeader ? "font-bold text-foreground" : "font-semibold")}>
-                          {acc.code}
-                        </TableCell>
-                        <TableCell>
-                          <span className={cn(isHeader ? "font-bold text-foreground tracking-wide" : "font-medium text-foreground")}>
-                            {acc.name}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {!isHeader ? ACCOUNT_TYPE_LABELS[acc.account_type] : null}
-                        </TableCell>
-                        <TableCell className="text-center capitalize">
-                          {!isHeader ? acc.normal_balance : null}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {!isHeader ? (
-                            <div className="-my-px inline-flex justify-center">
-                              <StatusBadge
-                                tone={acc.is_active ? "success" : "secondary"}
-                                label={acc.is_active ? "Aktif" : "Nonaktif"}
-                              />
-                            </div>
-                          ) : null}
-                        </TableCell>
-                        <TableCell className="text-center pr-6">
-                          {!isHeader ? (
-                            <div className="flex justify-center items-center gap-1.5 -my-1.5">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                title="Ubah Akun"
-                                className="size-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-                                onClick={() => openEditDialog(acc)}
-                              >
-                                <PencilIcon className="size-4" />
-                                <span className="sr-only">Ubah</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                title={acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
-                                className={cn(
-                                  "size-8 rounded-lg cursor-pointer",
-                                  acc.is_active
-                                    ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
-                                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
-                                )}
-                                onClick={() => setToggleTarget(acc)}
-                              >
-                                <PowerIcon className="size-4" />
-                                <span className="sr-only">
-                                  {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
-                                </span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                disabled={acc.used_in_journal_count > 0}
-                                title={
-                                  acc.used_in_journal_count > 0
-                                    ? "Tidak dapat dihapus karena sudah memiliki riwayat mutasi jurnal"
-                                    : "Hapus Akun"
-                                }
-                                className="size-8 rounded-lg text-destructive/80 hover:text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-40"
-                                onClick={() => setDeleteTarget(acc)}
-                              >
-                                <Trash2Icon className="size-4" />
-                                <span className="sr-only">Hapus</span>
-                              </Button>
-                            </div>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          )}
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Dialog Tambah / Ubah Akun */}
+      {/* Dialog Buka Periode Baru */}
+      <PeriodCreateDialog
+        open={createPeriodOpen}
+        onOpenChange={setCreatePeriodOpen}
+        onSuccess={reload}
+      />
+
+      {/* Dialog Konfirmasi Tutup Periode */}
+      <ConfirmActionDialog
+        open={Boolean(closePeriodTarget)}
+        onOpenChange={(open) => {
+          if (!open) setClosePeriodTarget(null);
+        }}
+        title={`Tutup Periode ${closePeriodTarget?.name ?? ""}?`}
+        description={`Anda akan menutup periode buku ${closePeriodTarget?.name ?? ""}. Seluruh transaksi jurnal pada periode ini akan dikunci dan jurnal penutup dapat diposting otomatis atau manual.`}
+        confirmLabel="Ya, Tutup Periode"
+        destructive
+        onConfirm={handleClosePeriod}
+      />
+
+      {/* Dialog Konfirmasi Buka Kembali Periode */}
+      <ConfirmActionDialog
+        open={Boolean(reopenPeriodTarget)}
+        onOpenChange={(open) => {
+          if (!open) setReopenPeriodTarget(null);
+        }}
+        title={`Buka Kembali Periode ${reopenPeriodTarget?.name ?? ""}?`}
+        description={`Membuka kembali periode yang sudah ditutup memerlukan alasan audit trail resmi. Pastikan Anda telah mengonfirmasi dengan Super Admin/Auditor.`}
+        confirmLabel="Ya, Buka Kembali"
+        requireReason
+        reasonLabel="Alasan Pembukaan Kembali (Audit Trail)"
+        reasonPlaceholder="Tuliskan alasan pembukaan kembali periode secara jelas (minimal 5 karakter)..."
+        onConfirm={handleReopenPeriod}
+      />
+
+      {/* Dialog Konfirmasi Hapus Periode */}
+      <ConfirmActionDialog
+        open={Boolean(deletePeriodTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeletePeriodTarget(null);
+        }}
+        title={`Hapus Periode ${deletePeriodTarget?.name ?? ""}?`}
+        description={`Periode ${deletePeriodTarget?.name ?? ""} yang belum memiliki transaksi dapat dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`}
+        confirmLabel="Hapus Periode"
+        destructive
+        onConfirm={handleDeletePeriod}
+      />
+
+      {/* Dialog Form Tambah / Ubah Akun */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Ubah Akun Buku Besar" : "Tambah Akun Baru"}
+              {editingId ? "Ubah Bagan Akun" : "Tambah Bagan Akun Baru"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="acc-code" required>Kode Akun</FieldLabel>
-                  <Input
-                    id="acc-code"
-                    required
-                    placeholder="Contoh: 5-1501"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel required>Tipe Akun</FieldLabel>
-                  <Select
-                    value={accountType}
-                    onValueChange={(v) =>
-                      handleAccountTypeChange(v as AccountType)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="asset">Aset</SelectItem>
-                        <SelectItem value="contra_asset">Kontra-Aset</SelectItem>
-                        <SelectItem value="liability">Liabilitas</SelectItem>
-                        <SelectItem value="equity">Ekuitas</SelectItem>
-                        <SelectItem value="revenue">Pendapatan</SelectItem>
-                        <SelectItem value="expense">Beban</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
+          <form onSubmit={handleSave} className="space-y-4">
+            <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field>
-                <FieldLabel htmlFor="acc-name" required>Nama Akun</FieldLabel>
+                <FieldLabel htmlFor="acc-code" required>
+                  Kode Akun
+                </FieldLabel>
+                <Input
+                  id="acc-code"
+                  required
+                  placeholder="Contoh: 1101 atau 5201"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="acc-name" required>
+                  Nama Akun
+                </FieldLabel>
                 <Input
                   id="acc-name"
                   required
-                  placeholder="Contoh: Beban Pengujian Keamanan Proyek"
+                  placeholder="Contoh: Kas Operasional"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </Field>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel required>Saldo Normal</FieldLabel>
-                  <Select
-                    value={normalBalance}
-                    onValueChange={(v) => setNormalBalance(v as NormalBalance)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="debit">Debit</SelectItem>
-                        <SelectItem value="credit">Credit</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel>Penanda Otomasi Sistem</FieldLabel>
-                  <Select
-                    value={systemTag}
-                    onValueChange={(v) => setSystemTag(v as AccountSystemTag)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Umum (Tanpa Tag)</SelectItem>
-                        <SelectItem value="cash_bank">Kas / Bank</SelectItem>
-                        <SelectItem value="accounts_receivable">
-                          Piutang Usaha
-                        </SelectItem>
-                        <SelectItem value="unbilled_receivable">
-                          Piutang Belum Ditagih
-                        </SelectItem>
-                        <SelectItem value="work_in_progress">
-                          Jasa dalam Proses (Progress Billing)
-                        </SelectItem>
-                        <SelectItem value="contract_billings">
-                          Penagihan atas Kontrak (Progress Billing)
-                        </SelectItem>
-                        <SelectItem value="accounts_payable">
-                          Utang Usaha
-                        </SelectItem>
-                        <SelectItem value="unearned_revenue">
-                          Pendapatan Diterima di Muka
-                        </SelectItem>
-                        <SelectItem value="service_revenue">
-                          Pendapatan Jasa Utama
-                        </SelectItem>
-                        <SelectItem value="retained_earnings">
-                          Laba Ditahan
-                        </SelectItem>
-                        <SelectItem value="shared_expense">
-                          Beban Operasional Bersama
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <Field orientation="horizontal">
-                <FieldLabel htmlFor="acc-postable">
-                  Dapat Diposting Langsung ke Jurnal
-                </FieldLabel>
-                <Switch
-                  id="acc-postable"
-                  checked={isPostable}
-                  onCheckedChange={setIsPostable}
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="acc-desc">Keterangan</FieldLabel>
-                <Textarea
-                  id="acc-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </Field>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditorOpen(false)}
-                  className="hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10 transition-colors"
-                >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Akun
-                </Button>
-              </DialogFooter>
             </FieldGroup>
+
+            <FieldGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field>
+                <FieldLabel htmlFor="acc-type" required>
+                  Tipe Akun
+                </FieldLabel>
+                <Select
+                  value={accountType}
+                  onValueChange={(val) =>
+                    handleAccountTypeChange(val as AccountType)
+                  }
+                >
+                  <SelectTrigger id="acc-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="asset">Aset</SelectItem>
+                      <SelectItem value="contra_asset">Kontra-Aset</SelectItem>
+                      <SelectItem value="liability">Liabilitas</SelectItem>
+                      <SelectItem value="equity">Ekuitas</SelectItem>
+                      <SelectItem value="revenue">Pendapatan</SelectItem>
+                      <SelectItem value="expense">Beban</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="acc-balance" required>
+                  Saldo Normal
+                </FieldLabel>
+                <Select
+                  value={normalBalance}
+                  onValueChange={(val) =>
+                    setNormalBalance(val as NormalBalance)
+                  }
+                >
+                  <SelectTrigger id="acc-balance">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="debit">Debit</SelectItem>
+                      <SelectItem value="credit">Kredit</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="acc-cf" required>
+                  Arus Kas
+                </FieldLabel>
+                <Select
+                  value={cashFlowCategory}
+                  onValueChange={(val) =>
+                    setCashFlowCategory(val as CashFlowCategory)
+                  }
+                >
+                  <SelectTrigger id="acc-cf">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="operating">Operasional</SelectItem>
+                      <SelectItem value="investing">Investasi</SelectItem>
+                      <SelectItem value="financing">Pendanaan</SelectItem>
+                      <SelectItem value="none">Bukan Kas (None)</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGroup>
+
+            <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="acc-tag">Tag Sistem Khusus</FieldLabel>
+                <Select
+                  value={systemTag}
+                  onValueChange={(val) =>
+                    setSystemTag(val as AccountSystemTag)
+                  }
+                >
+                  <SelectTrigger id="acc-tag">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="none">Tidak Ada (Reguler)</SelectItem>
+                      <SelectItem value="cash">Kas &amp; Bank</SelectItem>
+                      <SelectItem value="ar">Piutang Usaha (AR)</SelectItem>
+                      <SelectItem value="ap">Utang Usaha (AP)</SelectItem>
+                      <SelectItem value="retained_earnings">
+                        Laba Ditahan
+                      </SelectItem>
+                      <SelectItem value="current_earnings">
+                        Laba Tahun Berjalan
+                      </SelectItem>
+                      <SelectItem value="tax_vat_in">PPN Masukan</SelectItem>
+                      <SelectItem value="tax_vat_out">PPN Keluaran</SelectItem>
+                      <SelectItem value="tax_wht23_payable">
+                        Utang PPh 23
+                      </SelectItem>
+                      <SelectItem value="tax_wht23_prepaid">
+                        Uang Muka PPh 23
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <div className="flex items-center gap-6 pt-6">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Switch
+                    checked={isPostable}
+                    onCheckedChange={setIsPostable}
+                  />
+                  <span className="text-xs font-medium">Bisa Diposting</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <Switch checked={isActive} onCheckedChange={setIsActive} />
+                  <span className="text-xs font-medium">Status Aktif</span>
+                </label>
+              </div>
+            </FieldGroup>
+
+            <Field>
+              <FieldLabel htmlFor="acc-desc">Keterangan / Fungsi Akun</FieldLabel>
+              <Textarea
+                id="acc-desc"
+                placeholder="Deskripsi singkat fungsi dan peruntukan akun ini..."
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditorOpen(false)}
+                disabled={saving}
+              >
+                Batal
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Menyimpan..." : "Simpan Akun"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Konfirmasi Aktif / Nonaktif */}
+      {/* Dialog Konfirmasi Ubah Status Aktif Akun */}
       <ConfirmActionDialog
         open={Boolean(toggleTarget)}
         onOpenChange={(open) => {
@@ -554,48 +752,32 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         }}
         title={
           toggleTarget?.is_active
-            ? `Nonaktifkan akun ${toggleTarget.code} — ${toggleTarget.name}?`
-            : `Aktifkan kembali akun ${toggleTarget?.code ?? ""}?`
+            ? `Nonaktifkan Akun ${toggleTarget?.code ?? ""}?`
+            : `Aktifkan Akun ${toggleTarget?.code ?? ""}?`
         }
-        description="Akun nonaktif tidak dapat dipilih pada jurnal atau pengajuan baru, namun seluruh histori laporan keuangan tetap terjaga."
-        onConfirm={async () => {
-          if (!toggleTarget) return;
-          await saveAccount({
-            id: toggleTarget.id,
-            code: toggleTarget.code,
-            name: toggleTarget.name,
-            account_type: toggleTarget.account_type,
-            normal_balance: toggleTarget.normal_balance,
-            parent_id: toggleTarget.parent_id,
-            system_tag: toggleTarget.system_tag,
-            cash_flow_category: toggleTarget.cash_flow_category,
-            is_postable: toggleTarget.is_postable,
-            is_active: !toggleTarget.is_active,
-            description: toggleTarget.description,
-          });
-          toast.success("Status akun berhasil diperbarui.");
-          await reload();
-        }}
+        description={
+          toggleTarget?.is_active
+            ? `Akun ${toggleTarget?.name} tidak akan muncul lagi di daftar pilihan akun saat penjurnalan baru.`
+            : `Akun ${toggleTarget?.name} akan diaktifkan kembali dan dapat dipilih saat penjurnalan.`
+        }
+        confirmLabel={
+          toggleTarget?.is_active ? "Ya, Nonaktifkan" : "Ya, Aktifkan"
+        }
+        onConfirm={handleToggleActive}
       />
 
-      {/* Konfirmasi Hapus Akun yang Belum Terpakai */}
+      {/* Dialog Konfirmasi Hapus Akun */}
       <ConfirmActionDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title={`Hapus akun ${deleteTarget?.code ?? ""}?`}
-        description="Hanya akun yang belum pernah digunakan pada jurnal maupun anggaran yang dapat dihapus."
-        destructive
+        title={`Hapus Akun ${deleteTarget?.code ?? ""}?`}
+        description={`Akun ${deleteTarget?.name} akan dihapus secara permanen dari sistem. Tindakan ini hanya berhasil jika akun belum memiliki riwayat transaksi jurnal.`}
         confirmLabel="Ya, Hapus Akun"
-        onConfirm={async () => {
-          if (!deleteTarget) return;
-          await deleteAccount(deleteTarget.id);
-          toast.success("Akun berhasil dihapus.");
-          await reload();
-        }}
+        destructive
+        onConfirm={handleDeleteAccount}
       />
     </div>
   );
 }
-

@@ -1,7 +1,6 @@
 import * as React from "react";
 import {
   ListTodoIcon,
-  PlusIcon,
   RotateCcwIcon,
   ShieldAlertIcon,
   ShieldCheckIcon,
@@ -11,16 +10,13 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
-  deletePeriod,
   getCompanyProfile,
   listAccounts,
   listPeriods,
-  reopenPeriod,
 } from "@/lib/data-service";
 import {
   deleteJournals,
   listJournalsWithLines,
-  runPeriodClosingBook,
 } from "@/lib/operations-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
 import type {
@@ -32,8 +28,6 @@ import type {
 } from "@/types/database.types";
 import { PeriodClosingDetailDialog } from "@/features/master-data/components/period-closing-detail-dialog";
 import { PeriodClosingTable } from "@/features/master-data/components/period-closing-table";
-import { PeriodCreateDialog } from "@/features/master-data/components/period-create-dialog";
-import { PeriodListTable } from "@/features/master-data/components/period-list-table";
 import { PeriodManualClosingDialog } from "@/features/master-data/components/period-manual-closing-dialog";
 import { PeriodReversingDialog } from "@/features/master-data/components/period-reversing-dialog";
 
@@ -67,10 +61,6 @@ export function PeriodsPage({
   const [loading, setLoading] = React.useState(true);
 
   // Dialog state
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [closeTarget, setCloseTarget] = React.useState<PeriodRow | null>(null);
-  const [reopenTarget, setReopenTarget] = React.useState<PeriodRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<PeriodRow | null>(null);
   const [reverseOpen, setReverseOpen] = React.useState(false);
 
   // Closing journal table state
@@ -164,46 +154,6 @@ export function PeriodsPage({
     setManualClosingOpen(true);
   }
 
-  async function handleConfirmClosePeriod() {
-    if (!closeTarget) return;
-    try {
-      await runPeriodClosingBook(closeTarget.id);
-      toast.success(
-        company?.auto_closing_enabled
-          ? `Periode ${closeTarget.name} berhasil ditutup dan jurnal penutup otomatis berhasil diposting.`
-          : `Periode ${closeTarget.name} berhasil ditutup.`,
-      );
-      setCloseTarget(null);
-      await reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menutup periode.");
-    }
-  }
-
-  async function handleConfirmReopenPeriod(reason?: string) {
-    if (!reopenTarget || !reason) return;
-    try {
-      await reopenPeriod(reopenTarget.id, reason);
-      toast.success(`Periode ${reopenTarget.name} berhasil dibuka kembali.`);
-      setReopenTarget(null);
-      await reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuka kembali periode.");
-    }
-  }
-
-  async function handleConfirmDeletePeriod() {
-    if (!deleteTarget) return;
-    try {
-      await deletePeriod(deleteTarget.id);
-      toast.success(`Periode ${deleteTarget.name} berhasil dihapus.`);
-      setDeleteTarget(null);
-      await reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus periode.");
-    }
-  }
-
   async function handleDeleteClosingEntries() {
     if (selectedClosingIds.length === 0) return;
     if (company?.journal_lock_enabled) {
@@ -257,18 +207,10 @@ export function PeriodsPage({
               type="button"
               variant="outline"
               onClick={() => setReverseOpen(true)}
-              className="shrink-0 cursor-pointer"
+              className="shrink-0 cursor-pointer shadow-xs gap-1.5"
             >
               <RotateCcwIcon className="size-4" />
-              Jurnal Pembalik Opsional
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="shrink-0 cursor-pointer shadow-xs"
-            >
-              <PlusIcon className="size-4" />
-              Buka Periode Baru
+              <span>Jurnal Pembalik Opsional</span>
             </Button>
           </div>
         </div>
@@ -292,15 +234,6 @@ export function PeriodsPage({
             >
               <RotateCcwIcon className="size-3.5" />
               <span>Jurnal Pembalik Opsional</span>
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-              className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-1.5"
-            >
-              <PlusIcon className="size-4" />
-              <span>Buka Periode Baru</span>
             </Button>
           </div>
         </div>
@@ -450,22 +383,6 @@ export function PeriodsPage({
         onOpenBatchDelete={() => setIsBatchDeleteClosingOpen(true)}
       />
 
-      {/* 4. Card Daftar Periode Bulanan */}
-      <PeriodListTable
-        periods={periods}
-        loading={loading}
-        onClosePeriod={setCloseTarget}
-        onReopenPeriod={setReopenTarget}
-        onDeletePeriod={setDeleteTarget}
-      />
-
-      {/* Modal Buka Periode Baru */}
-      <PeriodCreateDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSuccess={reload}
-      />
-
       {/* Modal Jurnal Pembalik Opsional */}
       <PeriodReversingDialog
         open={reverseOpen}
@@ -491,49 +408,6 @@ export function PeriodsPage({
         onClose={() => setSelectedDetailJournal(null)}
         accounts={accounts}
         linesByJournal={linesByJournal}
-      />
-
-      {/* Dialog Konfirmasi Tutup Periode */}
-      <ConfirmActionDialog
-        open={Boolean(closeTarget)}
-        onOpenChange={(open) => {
-          if (!open) setCloseTarget(null);
-        }}
-        title={`Konfirmasi Tutup Periode: ${closeTarget?.name ?? ""}`}
-        description={
-          company?.auto_closing_enabled
-            ? `Apakah Anda yakin ingin menutup periode pembukuan ${closeTarget?.name}? Karena Tutup Buku Otomatis aktif, sistem akan menghitung saldo nominal dan memposting 4 langkah jurnal penutup GAAP/IFRS secara otomatis.`
-            : `Apakah Anda yakin ingin menutup periode pembukuan ${closeTarget?.name}? Tindakan ini akan mengunci pencatatan transaksi pada periode terkait.`
-        }
-        confirmLabel="Ya, Tutup Buku & Periode"
-        onConfirm={handleConfirmClosePeriod}
-      />
-
-      {/* Dialog Konfirmasi Buka Kembali Periode */}
-      <ConfirmActionDialog
-        open={Boolean(reopenTarget)}
-        onOpenChange={(open) => {
-          if (!open) setReopenTarget(null);
-        }}
-        title={`Buka Kembali Periode: ${reopenTarget?.name ?? ""}`}
-        description={`Masukkan alasan pembukaan kembali periode ${reopenTarget?.name}. Tindakan ini akan dicatat dalam jejak audit kepatuhan.`}
-        confirmLabel="Buka Kembali Periode"
-        requireReason
-        reasonPlaceholder="Contoh: Perbaikan jurnal penyesuaian..."
-        onConfirm={handleConfirmReopenPeriod}
-      />
-
-      {/* Dialog Konfirmasi Hapus Periode */}
-      <ConfirmActionDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-        title={`Hapus Periode: ${deleteTarget?.name ?? ""}`}
-        description={`Apakah Anda yakin ingin menghapus periode "${deleteTarget?.name}"? Periode yang sudah memiliki transaksi jurnal pembukuan tidak dapat dihapus.`}
-        confirmLabel="Ya, Hapus Periode"
-        destructive
-        onConfirm={handleConfirmDeletePeriod}
       />
 
       {/* Dialog Konfirmasi Hapus 1 Jurnal Penutup */}
