@@ -23,6 +23,7 @@ import {
   WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 import {
   buildRupiahHistogramBins,
   ChartCardFooter,
@@ -167,6 +168,7 @@ function buildMonthlySeries(
 }
 
 export function AdminDashboardPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [periods, setPeriods] = React.useState<PeriodRow[]>([]);
@@ -557,8 +559,8 @@ export function AdminDashboardPage() {
   const quickShortcuts = [
     {
       to: "/admin/persetujuan",
-      label: "Persetujuan Dana",
-      desc: "Verifikasi & cairkan",
+      label: t("dashboard.shortcuts.fund_approval", "Persetujuan Dana"),
+      desc: t("dashboard.shortcuts.fund_approval_desc", "Verifikasi & cairkan"),
       icon: HandCoinsIcon,
       tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
       badge:
@@ -568,8 +570,8 @@ export function AdminDashboardPage() {
     },
     {
       to: "/admin/proyek",
-      label: "Proyek & Termin",
-      desc: "SPK, BAKP, & UAT",
+      label: t("dashboard.shortcuts.projects_milestones", "Proyek & Termin"),
+      desc: t("dashboard.shortcuts.projects_milestones_desc", "SPK, BAKP, & UAT"),
       icon: FolderKanbanIcon,
       tone: "text-primary dark:text-cyan-400 bg-primary/10 border-primary/20",
       badge:
@@ -577,48 +579,48 @@ export function AdminDashboardPage() {
     },
     {
       to: "/admin/penagihan",
-      label: "Invoice & Piutang",
-      desc: "Tagihan & kuitansi",
+      label: t("dashboard.shortcuts.invoices_receivables", "Invoice & Piutang"),
+      desc: t("dashboard.shortcuts.invoices_receivables_desc", "Tagihan & kuitansi"),
       icon: ReceiptTextIcon,
       tone: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20",
       badge: unpaidInvoiceCount > 0 ? `${unpaidInvoiceCount} Belum Lunas` : null,
     },
     {
       to: "/admin/akuntansi",
-      label: "Jurnal & Buku Besar",
-      desc: "Catat transaksi keuangan",
+      label: t("dashboard.shortcuts.journals_gl", "Jurnal & Buku Besar"),
+      desc: t("dashboard.shortcuts.journals_gl_desc", "Catat transaksi keuangan"),
       icon: ScaleIcon,
       tone: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
       badge: null,
     },
     {
       to: "/admin/akuntansi/laporan",
-      label: "Laporan Keuangan",
-      desc: "Laba Rugi & Neraca",
+      label: t("dashboard.shortcuts.financial_reports", "Laporan Keuangan"),
+      desc: t("dashboard.shortcuts.financial_reports_desc", "Laba Rugi & Neraca"),
       icon: BarChart3Icon,
       tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
       badge: null,
     },
     {
       to: "/admin/po-internal",
-      label: "PO Vendor",
-      desc: "Pengadaan internal",
+      label: t("dashboard.shortcuts.vendor_po", "PO Vendor"),
+      desc: t("dashboard.shortcuts.vendor_po_desc", "Pengadaan internal"),
       icon: ShoppingCartIcon,
       tone: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
       badge: activePoCount > 0 ? `${activePoCount} Aktif` : null,
     },
     {
       to: "/admin/anggaran",
-      label: "Budgeting Proyek",
-      desc: "Pagu & realisasi",
+      label: t("dashboard.shortcuts.project_budget", "Budgeting Proyek"),
+      desc: t("dashboard.shortcuts.project_budget_desc", "Pagu & realisasi"),
       icon: PiggyBankIcon,
       tone: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20",
       badge: null,
     },
     {
       to: "/admin/bagi-hasil",
-      label: "Bagi Hasil & Master",
-      desc: "Distribusi tim",
+      label: t("dashboard.shortcuts.profit_sharing", "Bagi Hasil & Master"),
+      desc: t("dashboard.shortcuts.profit_sharing_desc", "Distribusi tim"),
       icon: CoinsIcon,
       tone: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
       badge: null,
@@ -631,15 +633,18 @@ export function AdminDashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Dasbor Keuangan &amp; Akuntansi
+            {t("dashboard.title", "Dasbor Keuangan & Akuntansi")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Pantau likuiditas kas, kinerja laba rugi, piutang, dan aktivitas jurnal perusahaan.
+            {t(
+              "dashboard.subtitle",
+              "Pantau likuiditas kas, kinerja laba rugi, piutang, dan aktivitas jurnal perusahaan.",
+            )}
           </p>
         </div>
         <div className="shrink-0">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.download", "Unduh / Ekspor")}
             onExportExcel={handleBackupExport}
             onExportPdf={handleBackupExportPdf}
             onExportCsv={handleBackupExportCsv}
@@ -652,15 +657,15 @@ export function AdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Kas &amp; Bank Terkini
+              {t("dashboard.kpi.ending_cash", "Kas & Bank Terkini")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               <AnimatedNumber value={cashPosition.endingCash} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {openPeriods > 0
-                ? `${openPeriods} periode buku aktif terbuka`
-                : "Seluruh periode buku ditutup"}
+                ? `${openPeriods} ${t("dashboard.kpi.open_periods", "periode buku aktif terbuka")}`
+                : t("dashboard.kpi.all_periods_closed", "Seluruh periode buku ditutup")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
@@ -671,17 +676,20 @@ export function AdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Antrean Pembayaran
+              {t("dashboard.kpi.pending_approvals", "Antrean Pembayaran")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              <AnimatedNumber value={pendingApprovals} suffix=" Pengajuan" />
+              <AnimatedNumber
+                value={pendingApprovals}
+                suffix={` ${t("dashboard.kpi.submissions", "Pengajuan")}`}
+              />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {readyDisbursements > 0
-                ? `${readyDisbursements} siap dicairkan ke rekening`
+                ? `${readyDisbursements} ${t("dashboard.kpi.ready_disbursements", "siap dicairkan ke rekening")}`
                 : pendingApprovals > 0
-                  ? `${pendingApprovals} menunggu verifikasi Anda`
-                  : "Semua pengajuan telah diproses"}
+                  ? `${pendingApprovals} ${t("dashboard.kpi.awaiting_verification", "menunggu verifikasi Anda")}`
+                  : t("dashboard.kpi.all_processed", "Semua pengajuan telah diproses")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -692,17 +700,17 @@ export function AdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Piutang Belum Tertagih
+              {t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               <AnimatedNumber value={outstandingReceivable} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {unpaidInvoiceCount > 0
-                ? `${unpaidInvoiceCount} invoice menunggu pelunasan`
+                ? `${unpaidInvoiceCount} ${t("dashboard.kpi.invoices_awaiting_payment", "invoice menunggu pelunasan")}`
                 : pendingClientPos > 0
-                  ? `${pendingClientPos} PO klien perlu verifikasi`
-                  : "Seluruh tagihan klien terkelola"}
+                  ? `${pendingClientPos} ${t("dashboard.kpi.client_pos_need_verification", "PO klien perlu verifikasi")}`
+                  : t("dashboard.kpi.all_receivables_managed", "Seluruh tagihan klien terkelola")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
@@ -713,13 +721,14 @@ export function AdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Komitmen Kontrak
+              {t("dashboard.kpi.contract_commitments", "Komitmen Kontrak")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               <AnimatedNumber value={totalContract} formatter={formatRupiah} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Akumulasi dari {projects.length} proyek klien
+              {t("dashboard.kpi.accumulated_from", "Akumulasi dari")} {projects.length}{" "}
+              {t("dashboard.kpi.client_projects", "proyek klien")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -733,10 +742,13 @@ export function AdminDashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm sm:text-base font-bold text-foreground">
-              Pintasan Cepat Modul Keuangan
+              {t("dashboard.shortcuts.title", "Pintasan Cepat Modul Keuangan")}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Akses langsung ke menu operasional, penagihan, dan pelaporan utama.
+              {t(
+                "dashboard.shortcuts.subtitle",
+                "Akses langsung ke menu operasional, penagihan, dan pelaporan utama.",
+              )}
             </p>
           </div>
           <Link
@@ -744,7 +756,9 @@ export function AdminDashboardPage() {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-cyan-400 hover:underline shrink-0"
           >
             <ClipboardListIcon className="size-3.5" />
-            <span>Master Vendor &amp; Klien</span>
+            <span>
+              {t("dashboard.shortcuts.master_link", "Master Vendor & Klien")}
+            </span>
             <ArrowRightIcon className="size-3" />
           </Link>
         </div>
@@ -796,10 +810,13 @@ export function AdminDashboardPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1 min-w-0">
               <CardTitle>
-                Tren Pendapatan, Beban, &amp; Arus Kas
+                {t("dashboard.charts.trends_title", "Tren Pendapatan, Beban, & Arus Kas")}
               </CardTitle>
               <CardDescription>
-                Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.
+                {t(
+                  "dashboard.charts.trends_subtitle",
+                  "Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.",
+                )}
               </CardDescription>
             </div>
             {trendChartType !== "bubble" ? (
@@ -916,10 +933,13 @@ export function AdminDashboardPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
               <CardTitle>
-                Komposisi Keuangan
+                {t("dashboard.charts.composition_title", "Komposisi Keuangan")}
               </CardTitle>
               <CardDescription>
-                Proporsi struktur {donutMode === "profit" ? "laba rugi" : "arus kas"}.
+                {t(
+                  "dashboard.charts.composition_subtitle",
+                  "Proporsi struktur keuangan dan likuiditas kas.",
+                )}
               </CardDescription>
             </div>
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">

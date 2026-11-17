@@ -15,6 +15,7 @@ import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 import { initSupabaseRealtimeSync } from "@/lib/realtime-cache";
 import { OverlayPageScrollbar } from "./overlay-page-scrollbar";
 import {
@@ -47,6 +48,7 @@ export function useSidebarCollapsed(): boolean {
 
 export function PortalShell() {
   const { profile, activeRole, availableRoles, switchRole, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -351,7 +353,7 @@ export function PortalShell() {
           <div className="flex items-center space-x-3">
             {availableRoles.length >= 2 && (
               <div className="relative" ref={roleDropdownRef}>
-                <ActionTooltip content="Ganti peran aktif sistem" side="bottom">
+                <ActionTooltip content={t("header.role_switch", "Ganti peran aktif sistem")} side="bottom">
                   <button
                     type="button"
                     onClick={() => setIsRoleDropdownOpen((prev) => !prev)}
@@ -362,7 +364,7 @@ export function PortalShell() {
                     </div>
                     <div className="text-left hidden sm:block mr-2.5">
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider leading-none mb-1">
-                        Mode Aktif
+                        {t("header.active_mode", "Mode Aktif")}
                       </p>
                       <p className="text-xs font-bold text-foreground leading-none">
                         {getRoleShortName(currentRole)}
@@ -381,7 +383,7 @@ export function PortalShell() {
                   <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">
                     <div className="px-3.5 py-1.5 border-b border-border/60 mb-1">
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Pilih Mode Peran
+                        {t("header.role_switch", "Pilih Mode Peran")}
                       </p>
                     </div>
                     {availableRoles.map((role) => {
@@ -411,7 +413,7 @@ export function PortalShell() {
             )}
 
             {/* Tombol Lonceng Notifikasi */}
-            <ActionTooltip content="Notifikasi sistem" side="bottom">
+            <ActionTooltip content={t("header.notifications", "Notifikasi sistem")} side="bottom">
               <Button
                 type="button"
                 variant="outline"
@@ -428,14 +430,12 @@ export function PortalShell() {
             </ActionTooltip>
 
             {/* Tombol Pengalih Bahasa (Dual/Multi Bahasa) */}
-            <ActionTooltip content="Pilihan Bahasa (Language)" side="bottom">
-              <div>
-                <LanguageToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
-              </div>
-            </ActionTooltip>
+            <div>
+              <LanguageToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
+            </div>
 
             {/* Tombol Mode Tema */}
-            <ActionTooltip content="Ganti mode tema" side="bottom">
+            <ActionTooltip content={t("header.theme", "Ganti mode tema")} side="bottom">
               <div>
                 <ThemeToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
               </div>
