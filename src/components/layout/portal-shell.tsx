@@ -27,6 +27,7 @@ import type { NotificationRow, UserRole } from "@/types/database.types";
 import {
   NAV_STRUCTURE_BY_ROLE,
   SIDEBAR_STORAGE_KEY,
+  getNavStructureForRole,
   getRoleShortName,
   type NavEntry,
   type NavGroup,
@@ -197,7 +198,10 @@ export function PortalShell() {
   }
 
   const currentRole = activeRole || profile.role;
-  const navStructure = NAV_STRUCTURE_BY_ROLE[currentRole] || [];
+  const navStructure = React.useMemo(
+    () => getNavStructureForRole(currentRole, t),
+    [currentRole, t],
+  );
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   async function handleLogout() {
@@ -325,7 +329,7 @@ export function PortalShell() {
             aria-label="Breadcrumb"
             className="flex items-center gap-2 text-xs text-muted-foreground min-w-0"
           >
-            {getHeaderBreadcrumbs(location.pathname).map((crumb, idx, arr) => {
+            {getHeaderBreadcrumbs(location.pathname, t).map((crumb, idx, arr) => {
               const isLast = idx === arr.length - 1;
               return (
                 <React.Fragment key={`${crumb.label}-${idx}`}>
@@ -367,7 +371,7 @@ export function PortalShell() {
                         {t("header.active_mode", "Mode Aktif")}
                       </p>
                       <p className="text-xs font-bold text-foreground leading-none">
-                        {getRoleShortName(currentRole)}
+                        {getRoleShortName(currentRole, t)}
                       </p>
                     </div>
                     <ChevronDownIcon
@@ -401,7 +405,7 @@ export function PortalShell() {
                           )}
                         >
                           <span className="capitalize">
-                            Mode {getRoleShortName(role)}
+                            {getRoleShortName(role, t)}
                           </span>
                           {isSelected && <CheckIcon className="size-3.5 text-primary" />}
                         </button>

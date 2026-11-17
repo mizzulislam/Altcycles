@@ -46,6 +46,7 @@ import {
   listProjects,
 } from "@/lib/data-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
+import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
@@ -93,6 +94,7 @@ import {
 } from "./components/invoice-spec-builder";
 
 export function InvoicingPage() {
+  const { t } = useLanguage();
   const [bundle, setBundle] = React.useState<ProjectWorkspaceBundle | null>(
     null,
   );
@@ -651,15 +653,15 @@ export function InvoicingPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Invoice Penagihan, Umur Piutang, &amp; Kuitansi
+            {t("invoicing.page_title", "Invoice Penagihan, Umur Piutang, & Kuitansi")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.
+            {t("invoicing.page_desc", "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportInvoicesExcel}
             onExportPdf={handleExportInvoicesPdf}
             onExportCsv={handleExportInvoicesCsv}
@@ -670,7 +672,7 @@ export function InvoicingPage() {
             className="shrink-0"
           >
             <PlusIcon className="size-4" />
-            <span>Terbitkan Invoice</span>
+            <span>{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
           </Button>
         </div>
       </div>
@@ -690,19 +692,19 @@ export function InvoicingPage() {
         {[
           {
             id: "invoices" as const,
-            label: "Daftar Invoice",
+            label: t("invoicing.tab_invoices", "Daftar Invoice"),
             count: bundle?.invoices.length ?? 0,
             icon: FileTextIcon,
           },
           {
             id: "aging" as const,
-            label: "Umur Piutang / Jatuh Tempo",
+            label: t("invoicing.tab_aging", "Umur Piutang / Jatuh Tempo"),
             count: arAgingRows.length,
             icon: ClockIcon,
           },
           {
             id: "receipts" as const,
-            label: "Kuitansi Pembayaran",
+            label: t("invoicing.tab_receipts", "Kuitansi Pembayaran"),
             count: bundle?.receipts.length ?? 0,
             icon: ReceiptIcon,
           },

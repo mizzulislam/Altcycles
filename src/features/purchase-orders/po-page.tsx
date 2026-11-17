@@ -60,6 +60,7 @@ import {
   listProjects,
   listVendors,
 } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
@@ -103,6 +104,7 @@ const PO_STATUS_META: Record<
 };
 
 export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
+  const { t } = useLanguage();
   const [orders, setOrders] = React.useState<PurchaseOrderRow[]>([]);
   const [items, setItems] = React.useState<PoItemRow[]>([]);
   const [vendors, setVendors] = React.useState<VendorRow[]>([]);
@@ -415,19 +417,19 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {mode === "admin"
-              ? "Seluruh Purchase Order Pembelian Vendor"
-              : "Purchase Order Pembelian Saya"}
+              ? t("procurement.title", "Seluruh Purchase Order Pembelian Vendor")
+              : t("procurement.my_title", "Purchase Order Pembelian Saya")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {mode === "admin"
-              ? "Kelola penerbitan, persetujuan status, dan dokumen purchase order vendor."
-              : "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek."}
+              ? t("procurement.subtitle", "Kelola penerbitan, persetujuan status, dan dokumen purchase order vendor.")
+              : t("procurement.my_subtitle", "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           {mode === "admin" ? (
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
@@ -440,7 +442,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
             className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
           >
             <PlusIcon className="size-4" />
-            <span>Buat PO Vendor</span>
+            <span>{t("procurement.create_po", "Buat PO Vendor")}</span>
           </Button>
         </div>
       </div>

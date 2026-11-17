@@ -46,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 import { listProjects } from "@/lib/data-service";
 import {
   SHORT_MONTHS_ID,
@@ -78,6 +79,7 @@ const PROJECT_STATUS_LABELS: Record<
 
 export function UserDashboardPage() {
   const { profile } = useAuth();
+  const { t } = useLanguage();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [pos, setPos] = React.useState<PurchaseOrderRow[]>([]);
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
@@ -279,14 +281,14 @@ export function UserDashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Dasbor Anggota Tim
+            {t("user_portal.dashboard_title", "Dasbor Anggota Tim")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Selamat datang,{" "}
+            {t("user_portal.welcome", "Selamat datang")},{" "}
             <span className="font-semibold text-foreground">
               {profile?.full_name ?? "Rekan"}
             </span>
-            . Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.
+            . {t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}
           </p>
         </div>
         <div className="shrink-0">
@@ -298,7 +300,7 @@ export function UserDashboardPage() {
           >
             <Link to="/user/pembayaran">
               <PlusIcon className="size-4" />
-              <span>Ajukan Pembayaran</span>
+              <span>{t("user_portal.submit_payment", "Ajukan Pembayaran")}</span>
             </Link>
           </Button>
         </div>
@@ -309,15 +311,15 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Proyek Ditugaskan
+              {t("user_portal.kpi_projects", "Proyek Ditugaskan")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {projects.length} Proyek
+              {projects.length} {t("user_portal.projects_count", "Proyek")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {projects.length > 0
-                ? "Terdaftar sebagai pelaksana proyek"
-                : "Belum ada penugasan aktif"}
+                ? t("user_portal.kpi_projects_sub", "Terdaftar sebagai pelaksana proyek")
+                : t("user_portal.kpi_projects_empty", "Belum ada penugasan aktif")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -328,15 +330,15 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              PO Pembelian Vendor
+              {t("user_portal.kpi_po", "PO Pembelian Vendor")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pos.length} Dokumen
+              {pos.length} {t("user_portal.documents", "Dokumen")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {pos.length > 0
-                ? "Dokumen pengadaan barang/jasa"
-                : "Belum ada PO pembelian tercatat"}
+                ? t("user_portal.kpi_po_sub", "Dokumen pengadaan barang/jasa")
+                : t("user_portal.kpi_po_empty", "Belum ada PO pembelian tercatat")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
@@ -347,17 +349,17 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Pengajuan Pembayaran
+              {t("user_portal.kpi_claims", "Pengajuan Pembayaran")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {requests.length} Pengajuan
+              {requests.length} {t("user_portal.submissions", "Pengajuan")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {pendingPa > 0
-                ? `${pendingPa} menunggu persetujuan Admin`
+                ? `${pendingPa} ${t("user_portal.pending_approval", "menunggu persetujuan Admin")}`
                 : approvedPa > 0
-                  ? `${approvedPa} disetujui menunggu transfer`
-                  : "Semua pengajuan telah diproses"}
+                  ? `${approvedPa} ${t("user_portal.approved_waiting", "disetujui menunggu transfer")}`
+                  : t("user_portal.all_processed", "Semua pengajuan telah diproses")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -368,14 +370,14 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Hak Bagi Hasil
+              {t("user_portal.kpi_sharing", "Hak Bagi Hasil")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalMyShare)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {sharingLines.length > 0
-                ? `Dari ${sharingLines.length} proyek diselesaikan`
+                ? `${t("user_portal.from", "Dari")} ${sharingLines.length} ${t("user_portal.projects_completed", "proyek diselesaikan")}`
                 : "Belum ada alokasi bagi hasil"}
             </p>
           </div>

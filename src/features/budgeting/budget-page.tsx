@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/table";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { getCompanyProfile, listAccounts, listProjects } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatRupiah } from "@/lib/formatters";
 import {
@@ -63,6 +64,7 @@ import type {
 } from "@/types/database.types";
 
 export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
+  const { t } = useLanguage();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
   const [expenseAccounts, setExpenseAccounts] = React.useState<AccountRow[]>([]);
@@ -266,19 +268,19 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {mode === "admin"
-              ? "Budgeting & Pengendalian Anggaran Proyek"
-              : "Anggaran vs Realisasi Proyek Saya"}
+              ? t("budget.title", "Budgeting & Pengendalian Anggaran Proyek")
+              : t("budget.my_title", "Anggaran vs Realisasi Proyek Saya")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {mode === "admin"
-              ? "Kendalikan pagu anggaran belanja dan pantau realisasi pengeluaran proyek."
-              : "Pantau pagu anggaran belanja dan realisasi pengeluaran proyek yang ditugaskan."}
+              ? t("budget.subtitle", "Kendalikan pagu anggaran belanja dan pantau realisasi pengeluaran proyek.")
+              : t("budget.my_subtitle", "Pantau pagu anggaran belanja dan realisasi pengeluaran proyek yang ditugaskan.")}
           </p>
         </div>
         {mode === "admin" && selectedProjectId ? (
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}

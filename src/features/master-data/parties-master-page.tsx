@@ -2,6 +2,7 @@ import * as React from "react";
 import { BriefcaseIcon, Building2Icon, UsersIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { Spinner } from "@/components/ui/empty";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ import { CustomerTabContent } from "./parties/customer-tab-content";
 import { ProductServiceTabContent } from "./parties/product-service-tab-content";
 
 export function PartiesMasterPage() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = React.useState<"vendor" | "pelanggan" | "produk_layanan">("vendor");
   const [vendors, setVendors] = React.useState<VendorRow[]>([]);
   const [customers, setCustomers] = React.useState<CustomerRow[]>([]);
@@ -95,10 +97,13 @@ export function PartiesMasterPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1 min-w-0 max-w-2xl">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Master Data Vendor &amp; Pelanggan
+            {t("parties.title", "Master Data Vendor & Pelanggan")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola direktori mitra vendor pengadaan, basis data pelanggan resmi, serta katalog produk dan layanan profesional perusahaan.
+            {t(
+              "parties.subtitle",
+              "Kelola direktori mitra vendor pengadaan, basis data pelanggan resmi, serta katalog produk dan layanan profesional perusahaan.",
+            )}
           </p>
         </div>
       </div>
@@ -119,7 +124,7 @@ export function PartiesMasterPage() {
                   : "text-muted-foreground",
               )}
             />
-            <span className="whitespace-nowrap">Vendor</span>
+            <span className="whitespace-nowrap">{t("parties.tab_vendors", "Vendor")}</span>
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums transition-colors",
@@ -140,7 +145,7 @@ export function PartiesMasterPage() {
                   : "text-muted-foreground",
               )}
             />
-            <span className="whitespace-nowrap">Pelanggan / Klien</span>
+            <span className="whitespace-nowrap">{t("parties.tab_customers", "Pelanggan / Klien")}</span>
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums transition-colors",
@@ -161,7 +166,7 @@ export function PartiesMasterPage() {
                   : "text-muted-foreground",
               )}
             />
-            <span className="whitespace-nowrap">Produk / Layanan</span>
+            <span className="whitespace-nowrap">{t("parties.tab_products", "Produk / Layanan")}</span>
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums transition-colors",

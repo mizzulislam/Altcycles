@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { saveServiceProduct } from "@/lib/services/products-services-service";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
@@ -56,6 +57,7 @@ export function ProductServiceTabContent({
   onReload,
   onRequestDelete,
 }: ProductServiceTabContentProps) {
+  const { t } = useLanguage();
   const [prdOpen, setPrdOpen] = React.useState(false);
   const [prdForm, setPrdForm] = React.useState({
     id: undefined as string | undefined,
@@ -188,14 +190,14 @@ export function ProductServiceTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Katalog Produk &amp; Layanan Altvira</CardTitle>
+            <CardTitle>{t("parties.services_title", "Katalog Produk & Layanan Altvira")}</CardTitle>
             <CardDescription>
-              Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.
+              {t("parties.services_desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportProductsExcel}
               onExportPdf={handleExportProductsPdf}
               onExportCsv={handleExportProductsCsv}
@@ -219,7 +221,7 @@ export function ProductServiceTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              Tambah Layanan / Produk
+              {t("parties.add_service", "Tambah Layanan / Produk")}
             </Button>
           </div>
         </CardHeader>
@@ -227,14 +229,14 @@ export function ProductServiceTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Layanan / Produk</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Kategori</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Deskripsi</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Satuan</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[140px]">Tarif Dasar</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_service_name", "Nama Layanan / Produk")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_category", "Kategori")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_desc", "Deskripsi")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_unit", "Satuan")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[140px]">{t("parties.col_base_rate", "Tarif Dasar")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,10 +248,10 @@ export function ProductServiceTabContent({
                         <BriefcaseIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        Belum Ada Data Produk / Layanan
+                        {t("parties.no_service", "Belum Ada Data Produk / Layanan")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        Katalog produk dan layanan Altvira masih kosong. Tambahkan paket atau penawaran baru untuk referensi transaksi &amp; SPK proyek.
+                        {t("parties.no_service_desc", "Katalog produk dan layanan Altvira masih kosong. Tambahkan paket atau penawaran baru untuk referensi transaksi & SPK proyek.")}
                       </p>
                     </div>
                   </TableCell>

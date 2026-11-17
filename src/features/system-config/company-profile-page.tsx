@@ -48,6 +48,7 @@ import {
   SOCIAL_PLATFORM_OPTIONS,
 } from "@/lib/asset-utils";
 import { getCompanyProfile, updateCompanyProfile } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type {
@@ -59,6 +60,7 @@ import type {
 type CompanyTab = "identitas" | "keuangan" | "sosmed" | "pajak";
 
 export function CompanyProfilePage() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab") as CompanyTab | null;
   const activeTab: CompanyTab =
@@ -224,10 +226,10 @@ export function CompanyProfilePage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Profil Perusahaan (Altvira)
+          {t("company.page_title", "Profil Perusahaan (Altvira)")}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan &amp; paraf, akun sosial media footer dokumen, serta status perpajakan.
+          {t("company.page_desc", "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan & paraf, akun sosial media footer dokumen, serta status perpajakan.")}
         </p>
       </div>
 
@@ -244,7 +246,7 @@ export function CompanyProfilePage() {
           )}
         >
           <Building2Icon className="size-4 shrink-0" />
-          <span className="truncate">Identitas &amp; Logo</span>
+          <span className="truncate">{t("company.tab_identity", "Identitas & Logo")}</span>
         </button>
 
         <button
@@ -258,7 +260,7 @@ export function CompanyProfilePage() {
           )}
         >
           <LandmarkIcon className="size-4 shrink-0" />
-          <span className="truncate">Rekening &amp; TTD</span>
+          <span className="truncate">{t("company.tab_accounts", "Rekening & TTD")}</span>
         </button>
 
         <button
@@ -272,7 +274,7 @@ export function CompanyProfilePage() {
           )}
         >
           <Share2Icon className="size-4 shrink-0" />
-          <span className="truncate">Sosial Media Footer</span>
+          <span className="truncate">{t("company.tab_social", "Sosial Media Footer")}</span>
         </button>
 
         <button

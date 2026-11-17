@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveVendor } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -53,6 +54,7 @@ export function VendorTabContent({
   onReload,
   onRequestDelete,
 }: VendorTabContentProps) {
+  const { t } = useLanguage();
   const [vndOpen, setVndOpen] = React.useState(false);
   const [vndForm, setVndForm] = React.useState({
     id: undefined as string | undefined,
@@ -193,14 +195,14 @@ export function VendorTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Daftar Vendor Pemasok</CardTitle>
+            <CardTitle>{t("parties.vendor_title", "Daftar Vendor Pemasok")}</CardTitle>
             <CardDescription>
-              Vendor bukan pengguna sistem dan tidak memiliki akun login.
+              {t("parties.vendor_desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportVendorsExcel}
               onExportPdf={handleExportVendorsPdf}
               onExportCsv={handleExportVendorsCsv}
@@ -226,7 +228,7 @@ export function VendorTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              Tambah Vendor
+              {t("parties.add_vendor", "Tambah Vendor")}
             </Button>
           </div>
         </CardHeader>
@@ -234,12 +236,12 @@ export function VendorTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Vendor</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">PIC &amp; Kontak</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Rekening Bank</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_vendor_name", "Nama Vendor")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_contact", "PIC & Kontak")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_bank", "Rekening Bank")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,10 +253,10 @@ export function VendorTabContent({
                         <Building2Icon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        Belum Ada Data Vendor
+                        {t("parties.no_vendor", "Belum Ada Data Vendor")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        Daftar vendor pemasok masih kosong. Tambahkan vendor baru untuk kebutuhan PO Pembelian internal.
+                        {t("parties.no_vendor_desc", "Daftar vendor pemasok masih kosong. Tambahkan vendor baru untuk kebutuhan PO Pembelian internal.")}
                       </p>
                     </div>
                   </TableCell>

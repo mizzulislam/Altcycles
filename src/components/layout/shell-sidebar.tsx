@@ -15,6 +15,7 @@ import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { NavEntry } from "./nav-structure";
 import { getRoleShortName } from "./nav-structure";
@@ -53,6 +54,7 @@ export function ShellSidebar({
   userMenuRef,
   handleLogout,
 }: ShellSidebarProps) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -146,7 +148,7 @@ export function ShellSidebar({
             Altcycles
           </span>
           <span className="truncate text-[10px] uppercase tracking-wider font-semibold text-white/70 leading-tight mt-0.5">
-            ERP Keuangan
+            {t("app.tagline", "ERP Keuangan")}
           </span>
         </div>
 
@@ -412,7 +414,7 @@ export function ShellSidebar({
               className="w-full flex items-center px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer text-left"
             >
               <UserCircleIcon className="size-4 mr-2.5 text-muted-foreground" />
-              <span>Profil</span>
+              <span>{t("user.my_profile", "Profil")}</span>
             </button>
 
             <button
@@ -424,7 +426,7 @@ export function ShellSidebar({
               className="w-full flex items-center px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer text-left"
             >
               <SettingsIcon className="size-4 mr-2.5 text-muted-foreground" />
-              <span>Pengaturan</span>
+              <span>{t("user.profile_settings", "Pengaturan")}</span>
             </button>
 
             <div className="h-px bg-border/60 my-1" />
@@ -435,7 +437,7 @@ export function ShellSidebar({
               className="w-full flex items-center px-3.5 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors cursor-pointer text-left"
             >
               <LogOutIcon className="size-4 mr-2.5" />
-              <span>Keluar</span>
+              <span>{t("user.logout", "Keluar")}</span>
             </button>
           </div>
         )}
@@ -471,7 +473,7 @@ export function ShellSidebar({
                   {profile.full_name || "User"}
                 </p>
                 <p className="text-[10px] text-white/75 truncate leading-tight mt-0.5">
-                  {getRoleShortName(currentRole)}
+                  {getRoleShortName(currentRole, t)}
                 </p>
               </div>
             )}

@@ -33,6 +33,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { listPeriods, listProjects } from "@/lib/data-service";
 import { formatDateID } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { PeriodRow, ProjectRow } from "@/types/database.types";
 
@@ -140,6 +141,7 @@ function calculatePresetDates(preset: PeriodPreset): { startDate?: string; endDa
 }
 
 export function AccountingPage() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab") as AccountingTabId | null;
 
@@ -235,10 +237,10 @@ export function AccountingPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1 min-w-0 max-w-2xl">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Siklus Akuntansi &amp; Laporan Keuangan
+            {t("accounting.title", "Siklus Akuntansi & Laporan Keuangan")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan secara terpadu.
+            {t("accounting.subtitle", "Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan secara terpadu.")}
           </p>
         </div>
       </div>
@@ -253,6 +255,18 @@ export function AccountingPage() {
           {ACCOUNTING_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = normalizedTab === tab.id;
+            const translatedLabel =
+              tab.id === "jurnal"
+                ? t("accounting.tab_journals", tab.label)
+                : tab.id === "buku_besar"
+                  ? t("accounting.tab_ledger", tab.label)
+                  : tab.id === "laporan"
+                    ? t("accounting.tab_reports", tab.label)
+                    : tab.id === "tutup_buku"
+                      ? t("accounting.tab_periods", tab.label)
+                      : tab.id === "coa"
+                        ? t("accounting.tab_coa", tab.label)
+                        : tab.label;
 
             return (
               <button
@@ -273,7 +287,7 @@ export function AccountingPage() {
                     isActive ? "text-primary-foreground" : "text-muted-foreground",
                   )}
                 />
-                <span className="whitespace-nowrap">{tab.label}</span>
+                <span className="whitespace-nowrap">{translatedLabel}</span>
               </button>
             );
           })}

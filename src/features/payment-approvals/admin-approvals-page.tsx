@@ -58,6 +58,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 import { getCompanyProfile, listAccounts, listProfiles, listProjects } from "@/lib/data-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -97,6 +98,7 @@ const PA_STATUS_META: Record<
 
 export function AdminApprovalsPage() {
   const { profile } = useAuth();
+  const { t } = useLanguage();
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
   const [attachments, setAttachments] = React.useState<AttachmentRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
@@ -389,15 +391,15 @@ export function AdminApprovalsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Persetujuan Pembayaran 1-Level &amp; Pencairan Dana
+            {t("approvals.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.
+            {t("approvals.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
           </p>
         </div>
         <div className="shrink-0">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}

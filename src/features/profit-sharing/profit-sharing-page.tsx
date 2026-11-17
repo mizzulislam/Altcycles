@@ -55,6 +55,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getCompanyProfile, listProfiles, listProjects } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateTimeID, formatRupiah } from "@/lib/formatters";
@@ -80,6 +81,7 @@ interface DraftRecipient {
 }
 
 export function ProfitSharingPage() {
+  const { t } = useLanguage();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState("");
@@ -307,16 +309,16 @@ export function ProfitSharingPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Perhitungan &amp; Finalisasi Bagi Hasil Proyek
+            {t("profit_sharing.title", "Perhitungan & Finalisasi Bagi Hasil Proyek")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Hitung pembagian laba bersih proyek bagi anggota tim dan finalisasi pencairan hak bagi hasil.
+            {t("profit_sharing.subtitle", "Hitung pembagian laba bersih proyek bagi anggota tim dan finalisasi pencairan hak bagi hasil.")}
           </p>
         </div>
         {result ? (
           <div className="flex items-center gap-2.5 shrink-0">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}

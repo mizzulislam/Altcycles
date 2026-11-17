@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import { useSidebarCollapsed } from "@/components/layout/portal-shell";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -99,6 +100,7 @@ const PROJECT_STATUS_META: Record<
 };
 
 export function ProjectsPage() {
+  const { t } = useLanguage();
   const isSidebarCollapsed = useSidebarCollapsed();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [members, setMembers] = React.useState<ProjectMemberRow[]>([]);
@@ -336,15 +338,18 @@ export function ProjectsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Master Proyek &amp; Penugasan Tim
+            {t("projects.title", "Master Proyek & Penugasan Tim")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.
+            {t(
+              "projects.subtitle",
+              "Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.",
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
@@ -355,7 +360,7 @@ export function ProjectsPage() {
             className="shrink-0"
           >
             <PlusIcon className="size-4" />
-            <span>Tambah Proyek</span>
+            <span>{t("projects.add_button", "Tambah Proyek")}</span>
           </Button>
         </div>
       </div>
@@ -364,31 +369,34 @@ export function ProjectsPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Daftar Proyek Altvira
+              {t("projects.card_title", "Daftar Proyek Altvira")}
             </CardTitle>
             <CardDescription>
-              Induk referensi PO pembelian, anggaran, termin penagihan, dan bagi hasil.
+              {t(
+                "projects.card_desc",
+                "Induk referensi PO pembelian, anggaran, termin penagihan, dan bagi hasil.",
+              )}
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 shrink-0">
             <Input
-              placeholder="Cari kode atau nama proyek..."
+              placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-44 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder="Semua Status" />
+                <SelectValue placeholder={t("status.all", "Semua Status")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="active">Aktif</SelectItem>
-                  <SelectItem value="draft">Draf</SelectItem>
-                  <SelectItem value="on_hold">Ditunda</SelectItem>
-                  <SelectItem value="completed">Selesai</SelectItem>
-                  <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                  <SelectItem value="all">{t("status.all", "Semua Status")}</SelectItem>
+                  <SelectItem value="active">{t("status.active", "Aktif")}</SelectItem>
+                  <SelectItem value="draft">{t("status.draft", "Draf")}</SelectItem>
+                  <SelectItem value="on_hold">{t("status.on_hold", "Ditunda")}</SelectItem>
+                  <SelectItem value="completed">{t("status.completed", "Selesai")}</SelectItem>
+                  <SelectItem value="cancelled">{t("status.cancelled", "Dibatalkan")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -402,7 +410,7 @@ export function ProjectsPage() {
                 className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
               >
                 <PencilIcon className="size-3.5" />
-                <span>Edit</span>
+                <span>{t("action.edit", "Edit")}</span>
               </Button>
             ) : (
               <div className="flex items-center gap-2">
@@ -416,7 +424,7 @@ export function ProjectsPage() {
                   }}
                   className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                 >
-                  Batal
+                  {t("action.cancel", "Batal")}
                 </Button>
                 <Button
                   type="button"
@@ -426,7 +434,7 @@ export function ProjectsPage() {
                   disabled={selectedProjectIds.length === 0}
                   className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                 >
-                  Hapus Pilihan ({selectedProjectIds.length})
+                  {t("action.delete_selected", "Hapus Pilihan")} ({selectedProjectIds.length})
                 </Button>
               </div>
             )}
@@ -466,14 +474,14 @@ export function ProjectsPage() {
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Proyek</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Periode</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nilai Kontrak</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Termin</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Anggota Tim</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects.col_code", "Kode")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_name", "Nama Proyek")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_period", "Periode")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_contract_val", "Nilai Kontrak")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_milestones", "Termin")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_team", "Anggota Tim")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_status", "Status")}</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("projects.col_actions", "Aksi")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -553,13 +561,13 @@ export function ProjectsPage() {
                         <MonetaryCell amount={p.contract_value} />
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
-                        {p.term_count} Termin
+                        {p.term_count} {t("projects.milestones_count", "Termin")}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone="secondary"
-                            label={`${countMembers} Anggota`}
+                            label={`${countMembers} ${t("projects.members_count", "Anggota")}`}
                           />
                         </div>
                       </TableCell>
@@ -567,7 +575,7 @@ export function ProjectsPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={statusMeta.tone}
-                            label={statusMeta.label}
+                            label={t(`status.${p.status}`, statusMeta.label)}
                           />
                         </div>
                       </TableCell>

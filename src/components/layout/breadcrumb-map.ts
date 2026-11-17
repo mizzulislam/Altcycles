@@ -3,52 +3,58 @@ export interface HeaderBreadcrumbItem {
   to?: string;
 }
 
-export function getHeaderBreadcrumbs(pathname: string): HeaderBreadcrumbItem[] {
+export function getHeaderBreadcrumbs(
+  pathname: string,
+  t?: (key: string, fallback?: string) => string,
+): HeaderBreadcrumbItem[] {
+  const translate = t || ((_k: string, f?: string) => f || _k);
+  const homeLabel = translate("nav.home", "Beranda");
+
   if (pathname === "/profil") {
-    return [{ label: "Beranda", to: "/" }, { label: "Profil Saya" }];
+    return [{ label: homeLabel, to: "/" }, { label: translate("user.my_profile", "Profil Saya") }];
   }
   if (pathname === "/pengaturan/profil") {
     return [
-      { label: "Beranda", to: "/" },
-      { label: "Profil", to: "/profil" },
-      { label: "Pengaturan Profil" },
+      { label: homeLabel, to: "/" },
+      { label: translate("user.my_profile", "Profil"), to: "/profil" },
+      { label: translate("user.profile_settings", "Pengaturan Profil") },
     ];
   }
   if (pathname.startsWith("/admin/proyek/") && pathname !== "/admin/proyek") {
     return [
-      { label: "Beranda", to: "/" },
-      { label: "Master Proyek", to: "/admin/proyek" },
-      { label: "Dokumen & Termin" },
+      { label: homeLabel, to: "/" },
+      { label: translate("projects.title", "Master Proyek"), to: "/admin/proyek" },
+      { label: translate("projects.col_milestones", "Dokumen & Termin") },
     ];
   }
 
   const staticTitles: Record<string, string> = {
-    "/admin/dashboard": "Dashboard Keuangan",
-    "/admin/persetujuan": "Persetujuan Pembayaran",
-    "/admin/po-internal": "PO Pembelian Vendor",
-    "/admin/anggaran": "Budgeting Proyek",
-    "/admin/proyek": "Master Proyek",
-    "/admin/penagihan": "Invoice & Penagihan",
-    "/admin/bagi-hasil": "Bagi Hasil Proyek",
-    "/admin/akuntansi": "Akuntansi & Laporan",
-    "/admin/master": "Master Vendor & Klien",
-    "/user/dashboard": "Ringkasan Proyek & Hak",
-    "/user/po": "PO Pembelian Vendor",
-    "/user/pembayaran": "Pengajuan Pembayaran",
-    "/user/anggaran": "Budgeting Proyek",
-    "/super-admin/dashboard": "Dashboard Sistem",
-    "/super-admin/profil-perusahaan": "Profil Perusahaan (Altvira)",
-    "/super-admin/administrasi": "Administrasi & Penomoran",
-    "/super-admin/pengguna": "Manajemen Pengguna",
-    "/super-admin/konfigurasi": "Konfigurasi Sistem",
-    "/super-admin/master-tinjau": "Tinjauan Data Master",
-    "/super-admin/audit-trail": "Jejak Audit",
-    "/super-admin/media-login": "Media & Banner Login",
+    "/admin/dashboard": translate("nav.dashboard", "Dashboard Keuangan"),
+    "/admin/persetujuan": translate("nav.approvals", "Persetujuan Pembayaran"),
+    "/admin/po-internal": translate("nav.vendor_po", "PO Pembelian Vendor"),
+    "/admin/anggaran": translate("nav.project_budget", "Budgeting Proyek"),
+    "/admin/proyek": translate("projects.title", "Master Proyek"),
+    "/admin/penagihan": translate("nav.invoicing", "Invoice & Penagihan"),
+    "/admin/bagi-hasil": translate("nav.profit_sharing", "Bagi Hasil Proyek"),
+    "/admin/akuntansi": translate("nav.accounting", "Akuntansi & Laporan"),
+    "/admin/master": translate("nav.parties", "Master Vendor & Klien"),
+    "/user/dashboard": translate("user_portal.dashboard_title", "Ringkasan Proyek & Hak"),
+    "/user/po": translate("nav.my_po", "PO Pembelian Saya"),
+    "/user/pembayaran": translate("nav.my_payments", "Pengajuan Pembayaran"),
+    "/user/anggaran": translate("nav.my_budget", "Budgeting Proyek"),
+    "/super-admin/dashboard": translate("nav.dashboard_system", "Dashboard Sistem"),
+    "/super-admin/profil-perusahaan": translate("nav.company_profile", "Profil Perusahaan (Altvira)"),
+    "/super-admin/administrasi": translate("nav.admin_settings", "Administrasi & Penomoran"),
+    "/super-admin/pengguna": translate("nav.users_management", "Manajemen Pengguna"),
+    "/super-admin/konfigurasi": translate("nav.accounting_controls", "Konfigurasi Sistem"),
+    "/super-admin/master-tinjau": translate("nav.accounting_controls", "Tinjauan Data Master"),
+    "/super-admin/audit-trail": translate("nav.audit_trail", "Jejak Audit"),
+    "/super-admin/media-login": translate("nav.login_media", "Media & Banner Login"),
   };
 
   const title = staticTitles[pathname];
   if (title) {
-    return [{ label: "Beranda", to: "/" }, { label: title }];
+    return [{ label: homeLabel, to: "/" }, { label: title }];
   }
-  return [{ label: "Beranda", to: "/" }];
+  return [{ label: homeLabel, to: "/" }];
 }

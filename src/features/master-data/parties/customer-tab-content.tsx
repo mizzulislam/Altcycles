@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveCustomer } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -54,6 +55,7 @@ export function CustomerTabContent({
   onReload,
   onRequestDelete,
 }: CustomerTabContentProps) {
+  const { t } = useLanguage();
   const [cstOpen, setCstOpen] = React.useState(false);
   const [cstForm, setCstForm] = React.useState({
     id: undefined as string | undefined,
@@ -199,14 +201,14 @@ export function CustomerTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Daftar Pelanggan / Klien Resmi</CardTitle>
+            <CardTitle>{t("parties.customer_title", "Daftar Pelanggan / Klien Resmi")}</CardTitle>
             <CardDescription>
-              Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.
+              {t("parties.customer_desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportCustomersExcel}
               onExportPdf={handleExportCustomersPdf}
               onExportCsv={handleExportCustomersCsv}
@@ -235,7 +237,7 @@ export function CustomerTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              Tambah Pelanggan
+              {t("parties.add_customer", "Tambah Pelanggan")}
             </Button>
           </div>
         </CardHeader>
@@ -243,12 +245,12 @@ export function CustomerTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Pelanggan</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Perusahaan &amp; PIC</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Kontak</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_customer_name", "Nama Pelanggan")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_company_pic", "Perusahaan & PIC")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_contact", "Kontak")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -260,10 +262,10 @@ export function CustomerTabContent({
                         <UsersIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        Belum Ada Data Pelanggan
+                        {t("parties.no_customer", "Belum Ada Data Pelanggan")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        Daftar pelanggan / klien masih kosong. Tambahkan pelanggan untuk penerbitan proyek dan invoice resmi.
+                        {t("parties.no_customer_desc", "Daftar pelanggan / klien masih kosong. Tambahkan pelanggan untuk penerbitan proyek dan invoice resmi.")}
                       </p>
                     </div>
                   </TableCell>

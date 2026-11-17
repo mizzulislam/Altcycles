@@ -45,6 +45,7 @@ import {
   listProfiles,
 } from "@/lib/data-service";
 import { formatDateTimeID } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type {
   AccountRow,
@@ -54,6 +55,7 @@ import type {
 } from "@/types/database.types";
 
 export function SuperAdminDashboardPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
@@ -249,10 +251,10 @@ export function SuperAdminDashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Dasbor Pengelola Sistem
+            {t("super_admin.dashboard_title", "Dasbor Pengelola Sistem")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Pantau kesehatan sistem, aktivitas pengguna internal, dan konfigurasi master aplikasi.
+            {t("super_admin.dashboard_desc", "Pantau kesehatan sistem, aktivitas pengguna internal, dan konfigurasi master aplikasi.")}
           </p>
         </div>
       </div>
@@ -262,16 +264,16 @@ export function SuperAdminDashboardPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Pengguna Internal
+              {t("super_admin.kpi_users", "Pengguna Internal")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {activeUsers}{" "}
               <span className="text-sm font-medium text-muted-foreground">
-                / {profiles.length} Aktif
+                / {profiles.length} {t("status.active", "Aktif")}
               </span>
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Akses peran aktif dan terverifikasi
+              {t("super_admin.kpi_users_sub", "Akses peran aktif dan terverifikasi")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -282,15 +284,15 @@ export function SuperAdminDashboardPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Status Perpajakan
+              {t("super_admin.kpi_tax", "Status Perpajakan")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1">
-              {company?.pkp_enabled ? "PKP Aktif" : "Non-PKP"}
+              {company?.pkp_enabled ? t("super_admin.pkp_active", "PKP Aktif") : t("super_admin.non_pkp", "Non-PKP")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {company?.pkp_enabled
-                ? `Tarif PPN ${company.ppn_rate}% berlaku pada invoice`
-                : "Faktur diterbitkan tanpa PPN"}
+                ? `${t("super_admin.vat_rate", "Tarif PPN")} ${company.ppn_rate}% ${t("super_admin.vat_applied", "berlaku pada invoice")}`
+                : t("super_admin.vat_none", "Faktur diterbitkan tanpa PPN")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -301,13 +303,13 @@ export function SuperAdminDashboardPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Bagan Akun Keuangan
+              {t("super_admin.kpi_coa", "Bagan Akun Keuangan")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {accounts.length} Akun
+              {accounts.length} {t("super_admin.accounts", "Akun")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Standar Akuntansi Keuangan
+              {t("super_admin.sak_standard", "Standar Akuntansi Keuangan")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -318,13 +320,13 @@ export function SuperAdminDashboardPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Jejak Audit Terbaru
+              {t("super_admin.kpi_audit", "Jejak Audit Terbaru")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {allLogs.length} Log
+              {allLogs.length} {t("super_admin.logs", "Log")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Rekaman audit aktivitas tersimpan
+              {t("super_admin.audit_saved", "Rekaman audit aktivitas tersimpan")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
