@@ -315,6 +315,20 @@ export type CustomerRow = {
   updated_at: string;
 };
 
+export type ServiceProductRow = {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  description: string | null;
+  unit: string;
+  price: number;
+  is_active: boolean;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ProjectRow = {
   id: string;
   code: string;
