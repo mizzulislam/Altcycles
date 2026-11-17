@@ -84,6 +84,8 @@ export async function updateCompanyProfile(
     "social_links_json",
     "bank_accounts_json",
     "logo_storage_path",
+    "telephone_fax",
+    "website",
   ];
   const prevExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
   const nextExt: Partial<CompanyProfileRow> = { ...prevExt };

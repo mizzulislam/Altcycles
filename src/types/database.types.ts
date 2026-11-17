@@ -162,6 +162,8 @@ export type CompanyProfileRow = {
   address: string;
   email: string;
   phone: string;
+  telephone_fax?: string | null;
+  website?: string | null;
   signing_city?: string | null;
   logo_storage_path: string | null;
   bank_name: string;

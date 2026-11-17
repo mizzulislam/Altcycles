@@ -101,6 +101,8 @@ export const DEMO_COMPANY: CompanyProfileRow = {
   address: "Area Pandu Raya Villa Citra Bantarjati, Jl. Flamboyan II No.F2/12, RT.05/RW.04, Tegal Gundil, Kec. Bogor Utara, Kota Bogor, Jawa Barat 16152",
   email: "altvira.tech@gmail.com",
   phone: "0895417311976",
+  telephone_fax: null,
+  website: "www.altvira.id",
   signing_city: "Bogor",
   logo_storage_path: null,
   bank_name: "Bank Jago",

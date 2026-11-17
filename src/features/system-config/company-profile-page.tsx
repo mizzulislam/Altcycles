@@ -141,6 +141,8 @@ export function CompanyProfilePage() {
         address: company.address.trim(),
         email: company.email.trim(),
         phone: company.phone.trim(),
+        telephone_fax: (company.telephone_fax ?? "").trim() || null,
+        website: (company.website ?? "").trim() || null,
         signing_city: (company.signing_city ?? "Bogor").trim(),
         logo_storage_path: company.logo_storage_path ?? null,
         bank_name: primaryBank.bank_name,
@@ -402,6 +404,37 @@ export function CompanyProfilePage() {
                       onChange={(e) =>
                         setCompany({ ...company, phone: e.target.value })
                       }
+                      className="text-xs h-9"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field>
+                    <FieldLabel htmlFor="cp-fax" className="text-xs font-semibold">
+                      Telp. / Fax
+                    </FieldLabel>
+                    <Input
+                      id="cp-fax"
+                      value={company.telephone_fax ?? ""}
+                      onChange={(e) =>
+                        setCompany({ ...company, telephone_fax: e.target.value })
+                      }
+                      placeholder="Contoh: (0251) 8321xxx"
+                      className="text-xs h-9"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="cp-website" className="text-xs font-semibold">
+                      Website
+                    </FieldLabel>
+                    <Input
+                      id="cp-website"
+                      value={company.website ?? ""}
+                      onChange={(e) =>
+                        setCompany({ ...company, website: e.target.value })
+                      }
+                      placeholder="Contoh: www.altvira.id"
                       className="text-xs h-9"
                     />
                   </Field>
