@@ -318,7 +318,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               className="shrink-0 cursor-pointer shadow-2xs"
             >
               <PlusIcon className="size-4" />
-              <span>Atur Alokasi Anggaran</span>
+              <span>{isEn ? "+ Set Budget Allocation" : "+ Atur Alokasi Anggaran"}</span>
             </Button>
           </div>
         ) : null}
@@ -333,7 +333,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                 <span className="text-xs sm:text-sm font-semibold text-foreground shrink-0">
-                  Proyek Aktif
+                  {isEn ? "Active Project" : "Proyek Aktif"}
                 </span>
                 <div className="w-full sm:max-w-lg min-w-0">
                   <Select
@@ -341,7 +341,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     onValueChange={setSelectedProjectId}
                   >
                     <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                      <SelectValue placeholder="Pilih proyek" />
+                      <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -358,7 +358,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             </div>
             {rows.length > 0 ? (
               <div className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                Total Serapan:{" "}
+                {isEn ? "Total Absorption: " : "Total Serapan: "}
                 <span className="font-semibold text-foreground">
                   {totalAbsorptionPct}%
                 </span>
@@ -371,10 +371,11 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       {overThresholdRows.length > 0 ? (
         <Alert variant="destructive" className="rounded-2xl">
           <AlertTriangleIcon className="size-4" />
-          <AlertTitle>Peringatan Ambang Serapan Anggaran</AlertTitle>
+          <AlertTitle>{isEn ? "Budget Absorption Threshold Warning" : "Peringatan Ambang Serapan Anggaran"}</AlertTitle>
           <AlertDescription>
-            Terdapat {overThresholdRows.length} pos beban yang telah melampaui
-            ambang peringatan serapan anggaran.
+            {isEn
+              ? `There are ${overThresholdRows.length} expense items that have exceeded the budget warning threshold.`
+              : `Terdapat ${overThresholdRows.length} pos beban yang telah melampaui ambang peringatan serapan anggaran.`}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -384,15 +385,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Total Pagu Anggaran
+              {isEn ? "Total Budget Ceiling" : "Total Pagu Anggaran"}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalBudget)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {rows.length > 0
-                ? `Tersebar pada ${rows.length} akun beban proyek`
-                : "Belum ada pos anggaran ditetapkan"}
+                ? (isEn ? `Spread across ${rows.length} project expense accounts` : `Tersebar pada ${rows.length} akun beban proyek`)
+                : (isEn ? "No budget items set yet" : "Belum ada pos anggaran ditetapkan")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -403,13 +404,13 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Realisasi Beban Terposting
+              {isEn ? "Posted Expense Realization" : "Realisasi Beban Terposting"}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalActual)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
-              Serapan {totalAbsorptionPct}% dari pagu berjalan
+              {isEn ? `Absorption ${totalAbsorptionPct}% of active ceiling` : `Serapan ${totalAbsorptionPct}% dari pagu berjalan`}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -420,7 +421,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Sisa Anggaran Tersedia
+              {isEn ? "Remaining Available Budget" : "Sisa Anggaran Tersedia"}
             </p>
             <p
               className={`text-xl sm:text-2xl font-bold tracking-tight mt-1 tabular-nums ${
@@ -433,8 +434,8 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {totalRemaining < 0
-                ? "Realisasi melebihi pagu anggaran"
-                : "Saldo anggaran yang masih dapat digunakan"}
+                ? (isEn ? "Realization exceeds budget ceiling" : "Realisasi melebihi pagu anggaran")
+                : (isEn ? "Budget balance available for use" : "Saldo anggaran yang masih dapat digunakan")}
             </p>
           </div>
           <div
@@ -452,28 +453,42 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70">
           <CardTitle>
-            Perbandingan Anggaran vs Realisasi per Akun Beban
+            {isEn ? "Budget vs Realization Comparison by Expense Account" : "Perbandingan Anggaran vs Realisasi per Akun Beban"}
           </CardTitle>
           <CardDescription>
-            Persentase serapan dan status ambang batas peringatan setiap akun.
+            {isEn
+              ? "Absorption percentage and warning threshold status for each account."
+              : "Persentase serapan dan status ambang batas peringatan setiap akun."}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat data anggaran...</span>
+              <span>{isEn ? "Loading budget data..." : "Memuat data anggaran..."}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode &amp; Nama Akun</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Pagu Anggaran</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Realisasi Terposting</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Sisa Anggaran</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-28">Serapan (%)</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-36">Status</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Account Code & Name" : "Kode & Nama Akun"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                    {isEn ? "Budget Ceiling" : "Pagu Anggaran"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                    {isEn ? "Posted Realization" : "Realisasi Terposting"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                    {isEn ? "Remaining Budget" : "Sisa Anggaran"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-28">
+                    {isEn ? "Absorption (%)" : "Serapan (%)"}
+                  </TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-36">
+                    {isEn ? "Status" : "Status"}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -485,12 +500,16 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                           <PiggyBankIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Anggaran Proyek Belum Disusun
+                          {isEn ? "Project Budget Not Yet Formulated" : "Anggaran Proyek Belum Disusun"}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          {mode === "admin"
-                            ? "Klik tombol Atur Alokasi Anggaran di kanan atas untuk menetapkan pagu per akun beban."
-                            : "Admin belum menetapkan pagu anggaran untuk proyek ini."}
+                          {isEn
+                            ? (mode === "admin"
+                                ? "Click the Set Budget Allocation button on the top right to define ceilings per expense account."
+                                : "Administrator has not yet set the budget ceiling for this project.")
+                            : (mode === "admin"
+                                ? "Klik tombol Atur Alokasi Anggaran di kanan atas untuk menetapkan pagu per akun beban."
+                                : "Admin belum menetapkan pagu anggaran untuk proyek ini.")}
                         </p>
                       </div>
                     </TableCell>
@@ -519,14 +538,14 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           {r.remaining_amount < 0 ? (
-                            <StatusBadge tone="destructive" label="Melebihi Pagu" />
+                            <StatusBadge tone="destructive" label={isEn ? "Exceeds Ceiling" : "Melebihi Pagu"} />
                           ) : r.is_over_threshold ? (
                             <StatusBadge
                               tone="warning"
-                              label={`>= ${r.alert_threshold_pct}% Ambang`}
+                              label={`>= ${r.alert_threshold_pct}% ${isEn ? "Threshold" : "Ambang"}`}
                             />
                           ) : (
-                            <StatusBadge tone="success" label="Aman" />
+                            <StatusBadge tone="success" label={isEn ? "Safe" : "Aman"} />
                           )}
                         </div>
                       </TableCell>
@@ -542,14 +561,14 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Susun / Perbarui Anggaran Proyek</DialogTitle>
+            <DialogTitle>{isEn ? "Set / Update Project Budget" : "Susun / Perbarui Anggaran Proyek"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveBudget} className="min-w-0">
             <FieldGroup className="gap-4">
               <div className="grid gap-3.5 sm:grid-cols-2 sm:items-end">
                 <Field>
                   <FieldLabel htmlFor="bdg-thr" required>
-                    Ambang Peringatan Serapan (%)
+                    {isEn ? "Absorption Warning Threshold (%)" : "Ambang Peringatan Serapan (%)"}
                   </FieldLabel>
                   <NumberInput
                     id="bdg-thr"
@@ -561,12 +580,14 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     onValueChange={setThresholdPct}
                   />
                   <FieldDescription>
-                    Sistem memberi peringatan otomatis saat realisasi mencapai ambang ini.
+                    {isEn
+                      ? "System warns automatically when expense realization hits this threshold."
+                      : "Sistem memberi peringatan otomatis saat realisasi mencapai ambang ini."}
                   </FieldDescription>
                 </Field>
                 <div className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5">
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    Total Pagu Anggaran Disusun
+                    {isEn ? "Total Planned Budget Ceiling" : "Total Pagu Anggaran Disusun"}
                   </p>
                   <p className="text-base sm:text-lg font-bold tracking-tight text-foreground tabular-nums mt-0.5">
                     {formatRupiah(draftAllocatedTotal)}
@@ -576,13 +597,13 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
 
               <div className="flex flex-col gap-2 rounded-xl border border-border/80 bg-muted/15 p-3.5">
                 <div className="flex items-center justify-between text-xs font-semibold text-foreground pb-1 border-b border-border/60">
-                  <span>Alokasi per Akun Beban</span>
-                  <span className="text-muted-foreground font-medium">Pagu (Rp)</span>
+                  <span>{isEn ? "Allocation per Expense Account" : "Alokasi per Akun Beban"}</span>
+                  <span className="text-muted-foreground font-medium">{isEn ? "Ceiling (Rp)" : "Pagu (Rp)"}</span>
                 </div>
                 <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
                   {expenseAccounts.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">
-                      Belum ada akun beban aktif pada Bagan Akun.
+                      {isEn ? "No active expense accounts in Chart of Accounts." : "Belum ada akun beban aktif pada Bagan Akun."}
                     </p>
                   ) : (
                     expenseAccounts.map((acc) => (
@@ -626,11 +647,30 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                   variant="outline"
                   onClick={() => setEditOpen(false)}
                 >
-                  Batal
+                  {isEn ? "Cancel" : "Batal"}
                 </Button>
                 <Button type="submit" disabled={saving}>
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Anggaran
+                  {isEn ? "Save Budget Allocation" : "Simpan Anggaran"}
+                </Button>
+              </DialogFooter>
+            </FieldGroup>
+          </form>
+        </DialogContent>
+      </Dialog>
+              </div>
+
+              <DialogFooter className="pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                >
+                  {isEn ? "Cancel" : "Batal"}
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? <Spinner data-icon="inline-start" /> : null}
+                  {isEn ? "Save Budget" : "Simpan Anggaran"}
                 </Button>
               </DialogFooter>
             </FieldGroup>

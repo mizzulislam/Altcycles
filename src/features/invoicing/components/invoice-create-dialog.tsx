@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
 import { cn } from "@/lib/utils";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import type {
   AccountRow,
   ClientPurchaseOrderRow,
@@ -44,6 +45,12 @@ export const INVOICE_KIND_LABELS: Record<InvoiceKind, string> = {
   down_payment: "Uang Muka (DP)",
   milestone: "Termin Progres (Wajib BAKP)",
   final_settlement: "Pelunasan Akhir (Wajib BAST)",
+};
+
+export const INVOICE_KIND_LABELS_EN: Record<InvoiceKind, string> = {
+  down_payment: "Down Payment (DP)",
+  milestone: "Progress Milestone (Requires BAKP)",
+  final_settlement: "Final Settlement (Requires BAST)",
 };
 
 export interface InvoiceCreateDialogProps {
@@ -119,28 +126,32 @@ export function InvoiceCreateDialog({
   issuing,
   onSubmit,
 }: InvoiceCreateDialogProps) {
+  const { language } = useLanguage();
+  const isEn = language === "en";
+  const kindLabels = isEn ? INVOICE_KIND_LABELS_EN : INVOICE_KIND_LABELS;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Terbitkan Invoice Penagihan Klien</DialogTitle>
+          <DialogTitle>{isEn ? "Issue Client Sales Invoice" : "Terbitkan Invoice Penagihan Klien"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="min-w-0">
           <FieldGroup className="gap-3.5">
             <Field>
-              <FieldLabel required>Proyek Klien</FieldLabel>
+              <FieldLabel required>{isEn ? "Client Project" : "Proyek Klien"}</FieldLabel>
               <Select
                 value={selectedProjectId}
                 onValueChange={setSelectedProjectId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih proyek klien" />
+                  <SelectValue placeholder={isEn ? "Select client project" : "Pilih proyek klien"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     {projects.length === 0 ? (
                       <SelectItem value="__empty" disabled>
-                        Belum ada proyek klien aktif
+                        {isEn ? "No active client projects" : "Belum ada proyek klien aktif"}
                       </SelectItem>
                     ) : (
                       projects.map((p) => (
@@ -156,7 +167,7 @@ export function InvoiceCreateDialog({
 
             <div className="grid gap-3.5 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="inv-date" required>Tanggal Invoice</FieldLabel>
+                <FieldLabel htmlFor="inv-date" required>{isEn ? "Invoice Date" : "Tanggal Invoice"}</FieldLabel>
                 <DatePicker
                   id="inv-date"
                   required
@@ -174,7 +185,7 @@ export function InvoiceCreateDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="inv-due" required>Tanggal Jatuh Tempo</FieldLabel>
+                <FieldLabel htmlFor="inv-due" required>{isEn ? "Due Date" : "Tanggal Jatuh Tempo"}</FieldLabel>
                 <DatePicker
                   id="inv-due"
                   required
@@ -187,17 +198,17 @@ export function InvoiceCreateDialog({
 
             <div className="grid gap-3.5 sm:grid-cols-2">
               <Field>
-                <FieldLabel required>Jenis Tagihan</FieldLabel>
+                <FieldLabel required>{isEn ? "Billing Kind" : "Jenis Tagihan"}</FieldLabel>
                 <Select
                   value={invoiceKind}
                   onValueChange={(v) => setInvoiceKind(v as InvoiceKind)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih jenis tagihan" />
+                    <SelectValue placeholder={isEn ? "Select billing kind" : "Pilih jenis tagihan"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {Object.entries(INVOICE_KIND_LABELS).map(([k, v]) => (
+                      {Object.entries(kindLabels).map(([k, v]) => (
                         <SelectItem key={k} value={k}>
                           {v}
                         </SelectItem>
@@ -207,16 +218,16 @@ export function InvoiceCreateDialog({
                 </Select>
               </Field>
               <Field>
-                <FieldLabel>Referensi PO Klien Terverifikasi</FieldLabel>
+                <FieldLabel>{isEn ? "Verified Client PO Reference" : "Referensi PO Klien Terverifikasi"}</FieldLabel>
                 <Select value={clientPoId} onValueChange={setClientPoId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih PO Klien" />
+                    <SelectValue placeholder={isEn ? "Select Client PO" : "Pilih PO Klien"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {projectVerifiedPos.length === 0 ? (
                         <SelectItem value="__empty" disabled>
-                          Belum ada PO Klien terverifikasi untuk proyek ini
+                          {isEn ? "No verified Client PO for this project" : "Belum ada PO Klien terverifikasi untuk proyek ini"}
                         </SelectItem>
                       ) : (
                         projectVerifiedPos.map((cpo) => (
@@ -230,7 +241,7 @@ export function InvoiceCreateDialog({
                 </Select>
                 {projectVerifiedPos.length === 0 ? (
                   <FieldDescription className="text-amber-600 dark:text-amber-400">
-                    Verifikasi PO klien di menu Dokumen &amp; Termin Proyek terlebih dahulu.
+                    {isEn ? "Verify client PO in Project Documents & Milestones first." : "Verifikasi PO klien di menu Dokumen & Termin Proyek terlebih dahulu."}
                   </FieldDescription>
                 ) : null}
               </Field>
@@ -245,7 +256,7 @@ export function InvoiceCreateDialog({
               )}
             >
               <Field>
-                <FieldLabel>Termin Proyek</FieldLabel>
+                <FieldLabel>{isEn ? "Project Milestone" : "Termin Proyek"}</FieldLabel>
                 <Select
                   value={milestoneId}
                   onValueChange={(id) => {
@@ -255,11 +266,11 @@ export function InvoiceCreateDialog({
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih termin proyek" />
+                    <SelectValue placeholder={isEn ? "Select milestone" : "Pilih termin proyek"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="none">Tanpa Termin Spesifik</SelectItem>
+                      <SelectItem value="none">{isEn ? "No Specific Milestone" : "Tanpa Termin Spesifik"}</SelectItem>
                       {projectMilestones.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.name}: {formatRupiah(m.amount)}
@@ -272,17 +283,17 @@ export function InvoiceCreateDialog({
 
               {invoiceKind === "milestone" ? (
                 <Field>
-                  <FieldLabel>Dokumen BAKP Disetujui Klien</FieldLabel>
+                  <FieldLabel>{isEn ? "Client-Approved BAKP Document" : "Dokumen BAKP Disetujui Klien"}</FieldLabel>
                   <Select value={bakpId} onValueChange={setBakpId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih BAKP" />
+                      <SelectValue placeholder={isEn ? "Select BAKP" : "Pilih BAKP"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="none">
                           {projectApprovedBakps.length === 0
-                            ? "Belum ada BAKP disetujui klien"
-                            : "Pilih Dokumen BAKP"}
+                            ? (isEn ? "No approved BAKP yet" : "Belum ada BAKP disetujui klien")
+                            : (isEn ? "Select BAKP Document" : "Pilih Dokumen BAKP")}
                         </SelectItem>
                         {projectApprovedBakps.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
@@ -297,17 +308,17 @@ export function InvoiceCreateDialog({
 
               {invoiceKind === "final_settlement" ? (
                 <Field>
-                  <FieldLabel>Dokumen BAST Ditandatangani</FieldLabel>
+                  <FieldLabel>{isEn ? "Signed BAST Document" : "Dokumen BAST Ditandatangani"}</FieldLabel>
                   <Select value={bastId} onValueChange={setBastId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih BAST" />
+                      <SelectValue placeholder={isEn ? "Select BAST" : "Pilih BAST"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="none">
                           {projectSignedBasts.length === 0
-                            ? "Belum ada BAST ditandatangani"
-                            : "Pilih Dokumen BAST"}
+                            ? (isEn ? "No signed BAST yet" : "Belum ada BAST ditandatangani")
+                            : (isEn ? "Select BAST Document" : "Pilih Dokumen BAST")}
                         </SelectItem>
                         {projectSignedBasts.map((h) => (
                           <SelectItem key={h.id} value={h.id}>
@@ -324,7 +335,7 @@ export function InvoiceCreateDialog({
             <div className="grid gap-3.5 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="inv-amt" required>
-                  Nominal Subtotal Tagihan (Rp Bulat)
+                  {isEn ? "Subtotal Billing Amount (IDR Rounded)" : "Nominal Subtotal Tagihan (Rp Bulat)"}
                 </FieldLabel>
                 <NumberInput
                   id="inv-amt"
@@ -336,7 +347,7 @@ export function InvoiceCreateDialog({
                 />
                 {company?.pkp_enabled && subtotalAmount > 0 ? (
                   <FieldDescription>
-                    PPN {company.ppn_rate}%:{" "}
+                    {isEn ? "VAT / PPN" : "PPN"} {company.ppn_rate}%:{" "}
                     <span className="font-medium text-foreground tabular-nums">
                       {formatRupiah(
                         roundRupiah((roundRupiah(subtotalAmount) * company.ppn_rate) / 100),
@@ -353,7 +364,7 @@ export function InvoiceCreateDialog({
                 ) : null}
               </Field>
               <Field>
-                <FieldLabel>Mode Pencatatan Saat Terbit</FieldLabel>
+                <FieldLabel>{isEn ? "Accounting Recognition Mode" : "Mode Pencatatan Saat Terbit"}</FieldLabel>
                 <Select
                   value={directCashAccountId}
                   onValueChange={setDirectCashAccountId}
@@ -364,30 +375,32 @@ export function InvoiceCreateDialog({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="none">
-                        Catat ke Piutang Usaha terlebih dahulu
+                        {isEn ? "Post to Accounts Receivable first" : "Catat ke Piutang Usaha terlebih dahulu"}
                       </SelectItem>
                       {cashAccounts.map((ca) => (
                         <SelectItem key={ca.id} value={ca.id}>
-                          Dibayar Tunai/Transfer Langsung ke {ca.code} —{" "}
-                          {ca.name}
+                          {isEn ? "Paid in cash/transfer directly to " : "Dibayar Tunai/Transfer Langsung ke "}
+                          {ca.code} — {ca.name}
                         </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
                 <FieldDescription>
-                  Mendukung pencatatan lewat Piutang Usaha maupun kas langsung.
+                  {isEn
+                    ? "Supports recording through Accounts Receivable or direct cash settlement."
+                    : "Mendukung pencatatan lewat Piutang Usaha maupun kas langsung."}
                 </FieldDescription>
               </Field>
             </div>
 
             <Field>
-              <FieldLabel htmlFor="inv-notes">Catatan Invoice</FieldLabel>
+              <FieldLabel htmlFor="inv-notes">{isEn ? "Invoice Notes" : "Catatan Invoice"}</FieldLabel>
               <Textarea
                 id="inv-notes"
                 rows={2}
                 className="min-h-[64px]"
-                placeholder="Opsional: keterangan penagihan, referensi kontrak, atau instruksi pembayaran..."
+                placeholder={isEn ? "Optional: billing notes, contract reference, or payment instructions..." : "Opsional: keterangan penagihan, referensi kontrak, atau instruksi pembayaran..."}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -401,14 +414,14 @@ export function InvoiceCreateDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Batal
+                {isEn ? "Cancel" : "Batal"}
               </Button>
               <Button
                 type="submit"
                 disabled={issuing || !invoiceChecklist.isValid}
               >
                 {issuing ? <Spinner data-icon="inline-start" /> : null}
-                Terbitkan Invoice &amp; Posting Jurnal
+                {isEn ? "Issue Invoice & Post Journal" : "Terbitkan Invoice & Posting Jurnal"}
               </Button>
             </DialogFooter>
           </FieldGroup>

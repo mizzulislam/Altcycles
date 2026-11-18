@@ -5,6 +5,7 @@ import {
   SaveIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,8 @@ function previewSequenceFormat(seq: Pick<DocSequenceRow, "prefix_pattern" | "pad
 }
 
 export function AdminSettingsPage() {
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [loading, setLoading] = React.useState(true);
   const [sequences, setSequences] = React.useState<DocSequenceRow[]>([]);
   const [counters, setCounters] = React.useState<DocSequenceCounterRow[]>([]);
@@ -397,15 +400,15 @@ export function AdminSettingsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Jenis Dokumen</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Pola Nomor</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Contoh Output</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Digit</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Periode Reset</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Urutan Terakhir</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Document Type" : "Jenis Dokumen"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Number Pattern" : "Pola Nomor"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Sample Output" : "Contoh Output"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Digits" : "Digit"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Reset Period" : "Periode Reset"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Last Sequence" : "Urutan Terakhir"}</TableHead>
                 {isEditingSeq && (
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Actions" : "Aksi"}</TableHead>
                 )}
               </TableRow>
             </TableHeader>

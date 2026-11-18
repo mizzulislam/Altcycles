@@ -1,5 +1,6 @@
 import * as React from "react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 import {
   ArrowUpDownIcon,
   ChevronLeftIcon,
@@ -63,6 +64,8 @@ function buildPageNumbers(currentPage: number, totalPages: number): Array<number
 }
 
 export function AuditTrailPage() {
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [logs, setLogs] = React.useState<AuditLogRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -126,10 +129,12 @@ export function AuditTrailPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Jejak Audit Sistem (Audit Trail)
+          {isEn ? "System Audit Trail" : "Jejak Audit Sistem (Audit Trail)"}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          Telusuri catatan historis perubahan data dan aktivitas penting pengguna yang terekam permanen.
+          {isEn
+            ? "Trace permanent historical records of data changes and critical user activities."
+            : "Telusuri catatan historis perubahan data dan aktivitas penting pengguna yang terekam permanen."}
         </p>
       </div>
 
@@ -137,26 +142,28 @@ export function AuditTrailPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Riwayat Aktivitas &amp; Perubahan Data
+              {isEn ? "Activity Logs & Data Changes" : "Riwayat Aktivitas & Perubahan Data"}
             </CardTitle>
             <CardDescription>
-              Rekaman historis seluruh aktivitas dan perubahan data sistem secara kronologis.
+              {isEn
+                ? "Chronological historical records of all system activities and data mutations."
+                : "Rekaman historis seluruh aktivitas dan perubahan data sistem secara kronologis."}
             </CardDescription>
           </div>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center shrink-0">
             <Input
-              placeholder="Cari tabel entitas, ID, atau peran..."
+              placeholder={isEn ? "Search entity, ID, or role..." : "Cari tabel entitas, ID, atau peran..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
             />
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder="Filter aksi" />
+                <SelectValue placeholder={isEn ? "Filter action" : "Filter aksi"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">Semua Aksi</SelectItem>
+                  <SelectItem value="all">{isEn ? "All Actions" : "Semua Aksi"}</SelectItem>
                   <SelectItem value="INSERT">INSERT</SelectItem>
                   <SelectItem value="UPDATE">UPDATE</SelectItem>
                   <SelectItem value="DELETE">DELETE</SelectItem>
@@ -175,7 +182,9 @@ export function AuditTrailPage() {
               className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
             >
               <ArrowUpDownIcon className="size-3.5" />
-              <span>Urutan: {sortOrder === "asc" ? "Terlama" : "Terbaru"}</span>
+              <span>
+                {isEn ? "Order:" : "Urutan:"} {sortOrder === "asc" ? (isEn ? "Oldest" : "Terlama") : (isEn ? "Newest" : "Terbaru")}
+              </span>
             </Button>
           </div>
         </CardHeader>
@@ -183,19 +192,19 @@ export function AuditTrailPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat audit trail...</span>
+              <span>{isEn ? "Loading audit trail..." : "Memuat audit trail..."}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">ID</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Waktu</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Peran Pelaku</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Entitas</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">ID Entitas</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Rincian</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Time" : "Waktu"}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Actor Role" : "Peran Pelaku"}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Action" : "Aksi"}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Entity" : "Entitas"}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Entity ID" : "ID Entitas"}</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Details" : "Rincian"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -207,10 +216,12 @@ export function AuditTrailPage() {
                           <ShieldAlertIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Tidak Ada Log Audit yang Cocok
+                          {isEn ? "No Matching Audit Logs" : "Tidak Ada Log Audit yang Cocok"}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          Sesuaikan filter pencarian di kanan atas.
+                          {isEn
+                            ? "Adjust your search filters in the top right."
+                            : "Sesuaikan filter pencarian di kanan atas."}
                         </p>
                       </div>
                     </TableCell>
@@ -255,7 +266,7 @@ export function AuditTrailPage() {
                             onClick={() => setSelected(row)}
                           >
                             <EyeIcon className="size-3.5" />
-                            <span>Bandingkan</span>
+                            <span>{isEn ? "Compare" : "Bandingkan"}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -269,8 +280,8 @@ export function AuditTrailPage() {
             <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground tabular-nums">
                 {totalItems === 0
-                  ? "0 dari 0"
-                  : `${startDisplay}–${endDisplay} dari ${totalItems.toLocaleString("id-ID")}`}
+                  ? isEn ? "0 of 0" : "0 dari 0"
+                  : `${startDisplay}–${endDisplay} ${isEn ? "of" : "dari"} ${totalItems.toLocaleString(isEn ? "en-US" : "id-ID")}`}
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -281,8 +292,8 @@ export function AuditTrailPage() {
                     size="icon"
                     disabled={safePage <= 1}
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    title="Halaman sebelumnya"
-                    aria-label="Halaman sebelumnya"
+                    title={isEn ? "Previous page" : "Halaman sebelumnya"}
+                    aria-label={isEn ? "Previous page" : "Halaman sebelumnya"}
                     className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
                   >
                     <ChevronLeftIcon className="size-4" />
@@ -323,8 +334,8 @@ export function AuditTrailPage() {
                     onClick={() =>
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
-                    title="Halaman berikutnya"
-                    aria-label="Halaman berikutnya"
+                    title={isEn ? "Next page" : "Halaman berikutnya"}
+                    aria-label={isEn ? "Next page" : "Halaman berikutnya"}
                     className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
                   >
                     <ChevronRightIcon className="size-4" />
@@ -336,7 +347,7 @@ export function AuditTrailPage() {
                   onValueChange={(val) => setPageSize(Number(val))}
                 >
                   <SelectTrigger
-                    aria-label="Jumlah baris per halaman"
+                    aria-label={isEn ? "Rows per page" : "Jumlah baris per halaman"}
                     className="h-8 w-[76px] rounded-xl text-xs font-medium tabular-nums"
                   >
                     <SelectValue />
@@ -370,38 +381,42 @@ export function AuditTrailPage() {
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
-              Rincian Audit #{selected?.id} — {selected?.action} pada{" "}
-              {selected?.entity_name}
+              {isEn
+                ? `Audit Details #${selected?.id} — ${selected?.action} on ${selected?.entity_name}`
+                : `Rincian Audit #${selected?.id} — ${selected?.action} pada ${selected?.entity_name}`}
             </DialogTitle>
           </DialogHeader>
           <div className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs text-muted-foreground">
-            Waktu: <span className="font-semibold text-foreground">{formatDateTimeID(selected?.created_at)}</span>{" "}
-            · Pelaku:{" "}
+            {isEn ? "Time: " : "Waktu: "}
             <span className="font-semibold text-foreground">
-              {selected?.actor_role ?? "sistem"} ({selected?.actor_id ?? "-"})
+              {formatDateTimeID(selected?.created_at)}
+            </span>{" "}
+            · {isEn ? "Actor: " : "Pelaku: "}
+            <span className="font-semibold text-foreground">
+              {selected?.actor_role ?? (isEn ? "system" : "sistem")} ({selected?.actor_id ?? "-"})
             </span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex min-w-0 flex-col gap-1.5">
               <p className="text-xs font-semibold text-muted-foreground">
-                Nilai Sebelum (old_data)
+                {isEn ? "Values Before (old_data)" : "Nilai Sebelum (old_data)"}
               </p>
               <JsonCodeView
                 data={selected?.old_data}
                 compareWith={selected?.new_data}
                 diffTone="removed"
-                emptyLabel="— (Kosong / Rekaman Baru)"
+                emptyLabel={isEn ? "— (Empty / New Record)" : "— (Kosong / Rekaman Baru)"}
               />
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
               <p className="text-xs font-semibold text-muted-foreground">
-                Nilai Sesudah (new_data)
+                {isEn ? "Values After (new_data)" : "Nilai Sesudah (new_data)"}
               </p>
               <JsonCodeView
                 data={selected?.new_data}
                 compareWith={selected?.old_data}
                 diffTone="added"
-                emptyLabel="— (Dihapus)"
+                emptyLabel={isEn ? "— (Deleted)" : "— (Dihapus)"}
               />
             </div>
           </div>

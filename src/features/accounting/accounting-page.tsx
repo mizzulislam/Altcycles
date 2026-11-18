@@ -141,7 +141,8 @@ function calculatePresetDates(preset: PeriodPreset): { startDate?: string; endDa
 }
 
 export function AccountingPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab") as AccountingTabId | null;
 
@@ -375,34 +376,34 @@ export function AccountingPage() {
                 <div className="space-y-4 rounded-2xl border border-border/80 bg-card/60 p-5 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <label className="text-xs sm:text-sm font-semibold text-foreground">
-                      Kustom Rentang Tanggal
+                      {isEn ? "Custom Date Range" : "Kustom Rentang Tanggal"}
                     </label>
                     {(customStartDate || customEndDate) && (
                       <span className="text-xs font-semibold text-primary dark:text-cyan-400 bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                        {customStartDate ? formatDateID(customStartDate) : "Awal"} &minus;{" "}
-                        {customEndDate ? formatDateID(customEndDate) : "Akhir"}
+                        {customStartDate ? formatDateID(customStartDate) : isEn ? "Start" : "Awal"} &minus;{" "}
+                        {customEndDate ? formatDateID(customEndDate) : isEn ? "End" : "Akhir"}
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-muted-foreground block">
-                        Dari Tanggal (Mulai)
+                        {isEn ? "Start Date (From)" : "Dari Tanggal (Mulai)"}
                       </span>
                       <DatePicker
                         value={customStartDate}
                         onChange={setCustomStartDate}
-                        placeholder="Pilih tanggal mulai..."
+                        placeholder={isEn ? "Select start date..." : "Pilih tanggal mulai..."}
                       />
                     </div>
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-muted-foreground block">
-                        Sampai Tanggal (Selesai)
+                        {isEn ? "End Date (To)" : "Sampai Tanggal (Selesai)"}
                       </span>
                       <DatePicker
                         value={customEndDate}
                         onChange={setCustomEndDate}
-                        placeholder="Pilih tanggal selesai..."
+                        placeholder={isEn ? "Select end date..." : "Pilih tanggal selesai..."}
                       />
                     </div>
                   </div>
@@ -412,7 +413,7 @@ export function AccountingPage() {
                     onClick={applyCustomPeriod}
                     className="w-full h-9.5 text-xs sm:text-sm font-semibold cursor-pointer border-primary/30 text-primary dark:text-cyan-400 hover:bg-primary/10 rounded-xl"
                   >
-                    Terapkan Rentang Kustom
+                    {isEn ? "Apply Custom Range" : "Terapkan Rentang Kustom"}
                   </Button>
                 </div>
 
@@ -420,15 +421,15 @@ export function AccountingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                      Entitas / Proyek
+                      {isEn ? "Entity / Project" : "Entitas / Proyek"}
                     </label>
                     <Select value={projectFilter} onValueChange={setProjectFilter}>
                       <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
-                        <SelectValue placeholder="Pilih proyek" />
+                        <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">
-                          Semua Proyek (Seluruh Entitas Altvira)
+                          {isEn ? "All Projects (All Altvira Entities)" : "Semua Proyek (Seluruh Entitas Altvira)"}
                         </SelectItem>
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
@@ -442,14 +443,16 @@ export function AccountingPage() {
                   {(normalizedTab === "jurnal" || normalizedTab === "penyesuaian") ? (
                     <div className="space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                        Jenis Jurnal
+                        {isEn ? "Journal Type" : "Jenis Jurnal"}
                       </label>
                       <Select value={typeFilter} onValueChange={setTypeFilter}>
                         <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
-                          <SelectValue placeholder="Pilih jenis jurnal" />
+                          <SelectValue placeholder={isEn ? "Select journal type" : "Pilih jenis jurnal"} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ALL">Semua Jenis Jurnal</SelectItem>
+                          <SelectItem value="ALL">
+                            {isEn ? "All Journal Types" : "Semua Jenis Jurnal"}
+                          </SelectItem>
                           {Object.entries(JOURNAL_TYPE_LABELS).map(([k, v]) => (
                             <SelectItem key={k} value={k}>
                               {v.label}
@@ -461,10 +464,10 @@ export function AccountingPage() {
                   ) : (
                     <div className="space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                        Status Filter
+                        {isEn ? "Filter Status" : "Status Filter"}
                       </label>
                       <div className="h-10 rounded-xl border border-border/60 bg-muted/30 px-3 flex items-center text-xs sm:text-sm text-muted-foreground">
-                        Aktif: {periodFilter.label}
+                        {isEn ? "Active:" : "Aktif:"} {periodFilter.label}
                       </div>
                     </div>
                   )}
@@ -474,7 +477,7 @@ export function AccountingPage() {
                 {dbPeriods.length > 0 && (
                   <div className="space-y-3 pt-3 border-t border-border/70">
                     <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                      Periode Buku Resmi
+                      {isEn ? "Official Fiscal Periods" : "Periode Buku Resmi"}
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-36 overflow-y-auto pr-1">
                       {dbPeriods.map((p) => {
@@ -493,7 +496,7 @@ export function AccountingPage() {
                           >
                             <span className="truncate">{p.name}</span>
                             <span className="text-[10px] text-muted-foreground ml-2">
-                              {p.status === "open" ? "Aktif" : "Tutup"}
+                              {p.status === "open" ? (isEn ? "Active" : "Aktif") : (isEn ? "Closed" : "Tutup")}
                             </span>
                           </button>
                         );
@@ -512,7 +515,7 @@ export function AccountingPage() {
                   className="h-9.5 px-3.5 rounded-xl text-xs sm:text-sm cursor-pointer text-muted-foreground hover:text-foreground font-medium"
                 >
                   <RotateCcwIcon className="size-3.5 mr-1.5" />
-                  Reset Filter
+                  {isEn ? "Reset Filters" : "Reset Filter"}
                 </Button>
                 <div className="flex items-center gap-2.5">
                   <Button
@@ -522,7 +525,7 @@ export function AccountingPage() {
                     onClick={() => setIsFilterModalOpen(false)}
                     className="h-9.5 px-4 rounded-xl text-xs sm:text-sm cursor-pointer"
                   >
-                    Batal
+                    {isEn ? "Cancel" : "Batal"}
                   </Button>
                   <Button
                     type="button"
@@ -530,7 +533,7 @@ export function AccountingPage() {
                     onClick={() => setIsFilterModalOpen(false)}
                     className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
                   >
-                    Terapkan Filter
+                    {isEn ? "Apply Filters" : "Terapkan Filter"}
                   </Button>
                 </div>
               </DialogFooter>

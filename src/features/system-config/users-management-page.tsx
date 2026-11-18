@@ -8,6 +8,7 @@ import {
   UserXIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,8 @@ function getRolesSummary(user: ProfileRow): string {
 
 export function UsersManagementPage() {
   const { profile: currentUser } = useAuth();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [users, setUsers] = React.useState<ProfileRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -212,10 +215,12 @@ export function UsersManagementPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Manajemen Akun &amp; Peran Internal
+            {isEn ? "Internal Accounts & Roles Management" : "Manajemen Akun & Peran Internal"}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.
+            {isEn
+              ? "Manage user accounts, dual-role authorizations, and internal company module access rights."
+              : "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan."}
           </p>
         </div>
         <Button
@@ -224,34 +229,38 @@ export function UsersManagementPage() {
           className="shrink-0"
         >
           <PlusIcon className="size-4" />
-          <span>Tambah Akun Internal</span>
+          <span>{isEn ? "Add Internal Account" : "Tambah Akun Internal"}</span>
         </Button>
       </div>
 
       <Card className="overflow-visible">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">Daftar Pengguna Internal</CardTitle>
+            <CardTitle className="text-base sm:text-lg font-bold">
+              {isEn ? "Internal Users List" : "Daftar Pengguna Internal"}
+            </CardTitle>
             <CardDescription>
-              Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.
+              {isEn
+                ? "Configure single or multi-role access for Super Admin, Admin, and User."
+                : "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User."}
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <Input
-              placeholder="Cari nama atau email..."
+              placeholder={isEn ? "Search name or email..." : "Cari nama atau email..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
             />
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder="Filter peran" />
+                <SelectValue placeholder={isEn ? "Filter role" : "Filter peran"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">Semua Peran</SelectItem>
-                  <SelectItem value="user">User (Tim Proyek)</SelectItem>
-                  <SelectItem value="admin">Admin (Bendahara)</SelectItem>
+                  <SelectItem value="all">{isEn ? "All Roles" : "Semua Peran"}</SelectItem>
+                  <SelectItem value="user">{isEn ? "User (Project Team)" : "User (Tim Proyek)"}</SelectItem>
+                  <SelectItem value="admin">{isEn ? "Admin (Treasurer)" : "Admin (Bendahara)"}</SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -262,18 +271,28 @@ export function UsersManagementPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat daftar akun...</span>
+              <span>{isEn ? "Loading accounts list..." : "Memuat daftar akun..."}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nama Lengkap</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Full Name" : "Nama Lengkap"}
+                  </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Email</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[200px]">Peran (Multi-Role)</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Terakhir Login</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[200px]">
+                    {isEn ? "Roles (Multi-Role)" : "Peran (Multi-Role)"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Status" : "Status"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Last Login" : "Terakhir Login"}
+                  </TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Actions" : "Aksi"}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -285,10 +304,12 @@ export function UsersManagementPage() {
                           <UsersIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Tidak Ada Pengguna Ditemukan
+                          {isEn ? "No Users Found" : "Tidak Ada Pengguna Ditemukan"}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          Ubah kata kunci pencarian atau filter peran di atas.
+                          {isEn
+                            ? "Adjust your search keywords or role filters above."
+                            : "Ubah kata kunci pencarian atau filter peran di atas."}
                         </p>
                       </div>
                     </TableCell>
@@ -306,7 +327,7 @@ export function UsersManagementPage() {
                           <span>{u.full_name}</span>
                           {isSelf ? (
                             <span className="text-[11px] font-semibold text-primary dark:text-sky-400">
-                              (Akun Anda)
+                              {isEn ? "(Your Account)" : "(Akun Anda)"}
                             </span>
                           ) : null}
                         </div>
@@ -463,51 +484,61 @@ export function UsersManagementPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Buat Akun Internal Baru</DialogTitle>
+            <DialogTitle>{isEn ? "Create New Internal Account" : "Buat Akun Internal Baru"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateUser} className="space-y-4">
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="u-name" required className="text-xs font-semibold">Nama Lengkap</FieldLabel>
+                <FieldLabel htmlFor="u-name" required className="text-xs font-semibold">
+                  {isEn ? "Full Name" : "Nama Lengkap"}
+                </FieldLabel>
                 <Input
                   id="u-name"
                   required
-                  placeholder="Contoh: Nadia Putri"
+                  placeholder={isEn ? "e.g. Nadia Putri" : "Contoh: Nadia Putri"}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="text-xs h-9"
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="u-email" required className="text-xs font-semibold">Email Altvira</FieldLabel>
+                <FieldLabel htmlFor="u-email" required className="text-xs font-semibold">
+                  {isEn ? "Altvira Email" : "Email Altvira"}
+                </FieldLabel>
                 <Input
                   id="u-email"
                   type="email"
                   required
-                  placeholder="nama@altvira.id"
+                  placeholder="name@altvira.id"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="text-xs h-9"
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="u-pwd" required className="text-xs font-semibold">Kata Sandi Awal</FieldLabel>
+                <FieldLabel htmlFor="u-pwd" required className="text-xs font-semibold">
+                  {isEn ? "Initial Password" : "Kata Sandi Awal"}
+                </FieldLabel>
                 <Input
                   id="u-pwd"
                   type="password"
                   required
                   minLength={8}
-                  placeholder="Minimal 8 karakter..."
+                  placeholder={isEn ? "Minimum 8 characters..." : "Minimal 8 karakter..."}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="text-xs h-9"
                 />
                 <FieldDescription className="text-[11px]">
-                  Pengguna dapat mengganti kata sandi setelah masuk ke sistem.
+                  {isEn
+                    ? "Users can change their password after signing into the system."
+                    : "Pengguna dapat mengganti kata sandi setelah masuk ke sistem."}
                 </FieldDescription>
               </Field>
               <Field>
-                <FieldLabel required className="text-xs font-semibold">Peran Utama Awal</FieldLabel>
+                <FieldLabel required className="text-xs font-semibold">
+                  {isEn ? "Initial Primary Role" : "Peran Utama Awal"}
+                </FieldLabel>
                 <Select
                   value={newRole}
                   onValueChange={(val) => setNewRole(val as UserRole)}
@@ -517,8 +548,8 @@ export function UsersManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="user">User (Tim Proyek)</SelectItem>
-                      <SelectItem value="admin">Admin (Bendahara)</SelectItem>
+                      <SelectItem value="user">{isEn ? "User (Project Team)" : "User (Tim Proyek)"}</SelectItem>
+                      <SelectItem value="admin">{isEn ? "Admin (Treasurer)" : "Admin (Bendahara)"}</SelectItem>
                       <SelectItem value="super_admin">Super Admin</SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -535,10 +566,10 @@ export function UsersManagementPage() {
                 onClick={() => setCreateOpen(false)}
                 className="rounded-2xl text-xs h-9"
               >
-                Batal
+                {isEn ? "Cancel" : "Batal"}
               </Button>
               <Button type="submit" disabled={creating} className="rounded-2xl text-xs h-9 shadow-2xs">
-                {creating ? "Membuat..." : "Buat Akun"}
+                {creating ? (isEn ? "Creating..." : "Membuat...") : (isEn ? "Create Account" : "Buat Akun")}
               </Button>
             </div>
           </form>
@@ -554,13 +585,23 @@ export function UsersManagementPage() {
           }}
           title={
             toggleTarget.is_active
-              ? "Nonaktifkan Akses Pengguna"
-              : "Aktifkan Kembali Pengguna"
+              ? isEn ? "Deactivate User Access" : "Nonaktifkan Akses Pengguna"
+              : isEn ? "Reactivate User" : "Aktifkan Kembali Pengguna"
           }
-          description={`Apakah Anda yakin ingin ${
-            toggleTarget.is_active ? "menonaktifkan" : "mengaktifkan kembali"
-          } akun ${toggleTarget.full_name} (${toggleTarget.email})?`}
-          confirmLabel={toggleTarget.is_active ? "Nonaktifkan" : "Aktifkan"}
+          description={
+            isEn
+              ? `Are you sure you want to ${
+                  toggleTarget.is_active ? "deactivate" : "reactivate"
+                } the account for ${toggleTarget.full_name} (${toggleTarget.email})?`
+              : `Apakah Anda yakin ingin ${
+                  toggleTarget.is_active ? "menonaktifkan" : "mengaktifkan kembali"
+                } akun ${toggleTarget.full_name} (${toggleTarget.email})?`
+          }
+          confirmLabel={
+            toggleTarget.is_active
+              ? isEn ? "Deactivate" : "Nonaktifkan"
+              : isEn ? "Reactivate" : "Aktifkan"
+          }
           destructive={toggleTarget.is_active}
           onConfirm={async () => {
             if (!toggleTarget) return;
@@ -570,9 +611,13 @@ export function UsersManagementPage() {
                 !toggleTarget.is_active,
               );
               toast.success(
-                `Akun ${toggleTarget.full_name} berhasil ${
-                  toggleTarget.is_active ? "dinonaktifkan" : "diaktifkan"
-                }.`,
+                isEn
+                  ? `Account ${toggleTarget.full_name} successfully ${
+                      toggleTarget.is_active ? "deactivated" : "reactivated"
+                    }.`
+                  : `Akun ${toggleTarget.full_name} berhasil ${
+                      toggleTarget.is_active ? "dinonaktifkan" : "diaktifkan"
+                    }.`,
               );
               setToggleTarget(null);
               await reload();
@@ -580,7 +625,7 @@ export function UsersManagementPage() {
               toast.error(
                 err instanceof Error
                   ? err.message
-                  : "Gagal memperbarui status.",
+                  : isEn ? "Failed to update status." : "Gagal memperbarui status.",
               );
             }
           }}
@@ -594,9 +639,13 @@ export function UsersManagementPage() {
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}
-          title="Hapus Akun Pengguna Secara Permanen"
-          description={`Apakah Anda yakin ingin menghapus akun ${deleteTarget.full_name} (${deleteTarget.email}) secara permanen dari sistem? Tindakan ini tidak dapat dibatalkan. Jika pengguna sudah memiliki riwayat data keuangan/pembukuan, penghapusan akan ditolak demi integritas audit dan disarankan untuk dinonaktifkan.`}
-          confirmLabel="Hapus Permanen"
+          title={isEn ? "Permanently Delete User Account" : "Hapus Akun Pengguna Secara Permanen"}
+          description={
+            isEn
+              ? `Are you sure you want to permanently delete account ${deleteTarget.full_name} (${deleteTarget.email}) from the system? This action cannot be undone. If the user has financial/bookkeeping history, deletion will be rejected for audit integrity and deactivation is recommended.`
+              : `Apakah Anda yakin ingin menghapus akun ${deleteTarget.full_name} (${deleteTarget.email}) secara permanen dari sistem? Tindakan ini tidak dapat dibatalkan. Jika pengguna sudah memiliki riwayat data keuangan/pembukuan, penghapusan akan ditolak demi integritas audit dan disarankan untuk dinonaktifkan.`
+          }
+          confirmLabel={isEn ? "Permanently Delete" : "Hapus Permanen"}
           destructive={true}
           confirmText="DELETE"
           onConfirm={handleDeleteUser}

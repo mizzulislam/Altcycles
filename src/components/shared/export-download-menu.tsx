@@ -8,6 +8,7 @@ import {
   Loader2Icon,
   TableIcon,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export interface ExportDownloadMenuProps {
@@ -21,7 +22,7 @@ export interface ExportDownloadMenuProps {
 }
 
 export function ExportDownloadMenu({
-  label = "Unduh / Ekspor",
+  label,
   onExportExcel,
   onExportPdf,
   onExportCsv,
@@ -29,6 +30,10 @@ export function ExportDownloadMenu({
   className,
   align = "end",
 }: ExportDownloadMenuProps) {
+  const { t, language } = useLanguage();
+  const displayLabel = !label || label === "Unduh / Ekspor" ? t("action.download", "Unduh / Ekspor") : label;
+  const isEn = language === "en";
+
   const [isOpen, setIsOpen] = React.useState(false);
   const [loadingType, setLoadingType] = React.useState<"excel" | "pdf" | "csv" | null>(null);
   const [coords, setCoords] = React.useState<{
@@ -138,7 +143,7 @@ export function ExportDownloadMenu({
           ) : (
             <DownloadIcon className="size-4 text-primary" />
           )}
-          <span>{label}</span>
+          <span>{displayLabel}</span>
         </span>
         <ChevronDownIcon
           className={cn(
@@ -178,7 +183,9 @@ export function ExportDownloadMenu({
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground">Excel (.xlsx)</span>
-                  <span className="text-[11px] text-muted-foreground">Buku kerja spreadsheet lengkap</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {isEn ? "Complete spreadsheet workbook" : "Buku kerja spreadsheet lengkap"}
+                  </span>
                 </div>
               </button>
             )}
@@ -203,8 +210,12 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
-                  <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
+                  <span className="font-semibold text-foreground">
+                    {isEn ? "PDF Document (.pdf)" : "PDF Dokumen (.pdf)"}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {isEn ? "Print format & official report" : "Format cetak & laporan resmi"}
+                  </span>
                 </div>
               </button>
             )}
@@ -229,8 +240,12 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">Format CSV (.csv)</span>
-                  <span className="text-[11px] text-muted-foreground">Tabel data pemisah koma</span>
+                  <span className="font-semibold text-foreground">
+                    {isEn ? "CSV Format (.csv)" : "Format CSV (.csv)"}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {isEn ? "Comma-separated data table" : "Tabel data pemisah koma"}
+                  </span>
                 </div>
               </button>
             )}

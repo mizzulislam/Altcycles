@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
@@ -121,6 +122,8 @@ import { SowSpkTab } from "./tabs/sow-spk-tab";
 import { AcceptanceDocsTab } from "./tabs/acceptance-docs-tab";
 
 export function ProjectDetailPage() {
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = React.useState<ProjectRow | null>(null);
@@ -777,17 +780,19 @@ export function ProjectDetailPage() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Dokumen &amp; Termin Proyek
+              {isEn ? "Project Documents & Milestones" : "Dokumen & Termin Proyek"}
             </h1>
             {project.is_eliminated ? (
               <StatusBadge
                 tone="success"
-                label="WIP & Penagihan Tereliminasi 100%"
+                label={isEn ? "WIP & Billing Eliminated 100%" : "WIP & Penagihan Tereliminasi 100%"}
               />
             ) : null}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek.
+            {isEn
+              ? "Manage milestone schedules, completion progress, and official project documents."
+              : "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek."}
           </p>
         </div>
 
@@ -801,12 +806,12 @@ export function ProjectDetailPage() {
             }}
           >
             <SelectTrigger
-              aria-label="Pindah ke proyek lain"
+              aria-label={isEn ? "Switch to another project" : "Pindah ke proyek lain"}
               className="h-9 w-full sm:w-52 rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
             >
               <div className="flex items-center gap-2 truncate">
                 <FolderKanbanIcon className="size-4 text-primary shrink-0" />
-                <SelectValue placeholder="Pilih kode proyek" />
+                <SelectValue placeholder={isEn ? "Select project code" : "Pilih kode proyek"} />
               </div>
             </SelectTrigger>
             <SelectContent align="end">
@@ -828,7 +833,7 @@ export function ProjectDetailPage() {
           <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                Kode Proyek
+                {isEn ? "Project Code" : "Kode Proyek"}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
                 {project.code}
@@ -836,7 +841,7 @@ export function ProjectDetailPage() {
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                Nama Proyek
+                {isEn ? "Project Name" : "Nama Proyek"}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug">
                 {project.name}
@@ -849,15 +854,15 @@ export function ProjectDetailPage() {
           <div className="shrink-0 md:min-w-[230px] lg:min-w-[260px] flex flex-col justify-between gap-3">
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                Klien
+                {isEn ? "Client" : "Klien"}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                {customer?.name ?? "Proyek Internal"}
+                {customer?.name ?? (isEn ? "Internal Project" : "Proyek Internal")}
               </p>
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                Periode Pelaksanaan
+                {isEn ? "Execution Period" : "Periode Pelaksanaan"}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap tabular-nums">
                 {formatDateID(project.start_date)} &minus;{" "}
@@ -873,13 +878,13 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Nilai Kontrak Proyek
+              {isEn ? "Project Contract Value" : "Nilai Kontrak Proyek"}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(project.contract_value)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {customer?.name ?? "Proyek Internal"}
+              {customer?.name ?? (isEn ? "Internal Project" : "Proyek Internal")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -890,13 +895,13 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Progres Penyelesaian Proyek
+              {isEn ? "Completion Progress" : "Progres Penyelesaian Proyek"}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {maxProgressPct}%
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {bundle.milestones.length} termin terstruktur
+              {bundle.milestones.length} {isEn ? "structured milestones" : "termin terstruktur"}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -907,13 +912,13 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Kelengkapan Dokumen &amp; PO
+              {isEn ? "Documents & PO Completeness" : "Kelengkapan Dokumen & PO"}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {totalDocsCount} Dokumen
+              {totalDocsCount} {isEn ? "Documents" : "Dokumen"}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {verifiedClientPosCount} PO klien terverifikasi
+              {verifiedClientPosCount} {isEn ? "verified client POs" : "PO klien terverifikasi"}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -927,24 +932,31 @@ export function ProjectDetailPage() {
         {[
           {
             id: "termin" as const,
-            label: "Termin & Progres",
+            label: isEn ? "Milestones & Progress" : "Termin & Progres",
             badge: `${maxProgressPct}%`,
             icon: CalendarCheck2Icon,
           },
           {
             id: "quotation_po" as const,
-            label: "Quotation & PO Klien",
+            label: isEn ? "Quotations & Client PO" : "Quotation & PO Klien",
             badge: String(bundle.clientPos.length),
             icon: FileCheck2Icon,
           },
           {
             id: "sow_spk" as const,
-            label: "SoW & SPK",
+            label: isEn ? "SoW & SPK" : "SoW & SPK",
             badge: String(bundle.documents.length),
             icon: FileSignatureIcon,
           },
           {
             id: "bakp_uat_bast" as const,
+            label: isEn ? "BAKP, UAT, & BAST" : "BAKP, UAT, & BAST",
+            badge: String(
+              bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
+            ),
+            icon: ClipboardCheckIcon,
+          },
+        ].map((tab) => {
             label: "BAKP, UAT, & BAST",
             badge: String(
               bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,

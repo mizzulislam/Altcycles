@@ -55,7 +55,8 @@ import type {
 } from "@/types/database.types";
 
 export function SuperAdminDashboardPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [loading, setLoading] = React.useState(true);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
@@ -200,13 +201,13 @@ export function SuperAdminDashboardPage() {
       dotClass: "bg-primary",
     },
     {
-      label: "Bendahara",
+      label: isEn ? "Treasurer" : "Bendahara",
       value: adminRoles,
       color: "#10b981",
       dotClass: "bg-emerald-500",
     },
     {
-      label: "Anggota Tim",
+      label: isEn ? "Team Member" : "Anggota Tim",
       value: userRoles,
       color: "#0ea5e9",
       dotClass: "bg-sky-500",
@@ -215,31 +216,31 @@ export function SuperAdminDashboardPage() {
 
   const coaCompositionSlices = [
     {
-      label: "Aset",
+      label: isEn ? "Assets" : "Aset",
       value: accounts.filter((a) => a.account_type === "asset").length,
       color: "#0B43C8",
       dotClass: "bg-primary",
     },
     {
-      label: "Liabilitas",
+      label: isEn ? "Liabilities" : "Liabilitas",
       value: accounts.filter((a) => a.account_type === "liability").length,
       color: "#f59e0b",
       dotClass: "bg-amber-500",
     },
     {
-      label: "Ekuitas",
+      label: isEn ? "Equity" : "Ekuitas",
       value: accounts.filter((a) => a.account_type === "equity").length,
       color: "#8b5cf6",
       dotClass: "bg-violet-500",
     },
     {
-      label: "Pendapatan",
+      label: isEn ? "Revenue" : "Pendapatan",
       value: accounts.filter((a) => a.account_type === "revenue").length,
       color: "#10b981",
       dotClass: "bg-emerald-500",
     },
     {
-      label: "Beban",
+      label: isEn ? "Expense" : "Beban",
       value: accounts.filter((a) => a.account_type === "expense").length,
       color: "#f43f5e",
       dotClass: "bg-rose-500",
@@ -341,11 +342,15 @@ export function SuperAdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1 min-w-0">
-              <CardTitle>Aktivitas Audit &amp; Perubahan Data</CardTitle>
+              <CardTitle>{isEn ? "Audit Activity & Data Changes" : "Aktivitas Audit & Perubahan Data"}</CardTitle>
               <CardDescription>
                 {auditViewMode === "daily"
-                  ? "Frekuensi operasi tambah, ubah, dan hapus data per hari."
-                  : "Distribusi operasi audit berdasarkan entitas sistem teraktif."}
+                  ? isEn
+                    ? "Frequency of create, update, and delete operations per day."
+                    : "Frekuensi operasi tambah, ubah, dan hapus data per hari."
+                  : isEn
+                    ? "Distribution of audit operations by top active system entities."
+                    : "Distribusi operasi audit berdasarkan entitas sistem teraktif."}
               </CardDescription>
             </div>
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0 self-start sm:self-auto">
@@ -359,7 +364,7 @@ export function SuperAdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Harian
+                {isEn ? "Daily" : "Harian"}
               </button>
               <button
                 type="button"
@@ -371,7 +376,7 @@ export function SuperAdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Entitas
+                {isEn ? "Entity" : "Entitas"}
               </button>
             </div>
           </CardHeader>
@@ -379,15 +384,15 @@ export function SuperAdminDashboardPage() {
             <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-emerald-500" />
-                Tambah (Insert)
+                {isEn ? "Insert (Create)" : "Tambah (Insert)"}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-primary" />
-                Ubah (Update)
+                {isEn ? "Update (Modify)" : "Ubah (Update)"}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2.5 rounded-xs bg-rose-500" />
-                Hapus (Delete)
+                {isEn ? "Delete (Remove)" : "Hapus (Delete)"}
               </span>
             </div>
 
@@ -397,46 +402,50 @@ export function SuperAdminDashboardPage() {
               series={[
                 {
                   key: "insert",
-                  label: "Tambah",
+                  label: isEn ? "Insert" : "Tambah",
                   color: "#10b981",
                   textClass: "text-emerald-600 dark:text-emerald-400",
                 },
                 {
                   key: "update",
-                  label: "Ubah",
+                  label: isEn ? "Update" : "Ubah",
                   color: "#0B43C8",
                   textClass: "text-primary dark:text-sky-400",
                 },
                 {
                   key: "delete",
-                  label: "Hapus",
+                  label: isEn ? "Delete" : "Hapus",
                   color: "#f43f5e",
                   textClass: "text-rose-600 dark:text-rose-400",
                 },
               ]}
-              formatValue={(v) => `${v} Log`}
+              formatValue={(v) => `${v} Logs`}
               formatShortValue={(v) => `${v}`}
-              emptyTitle="Belum Ada Aktivitas Audit"
-              emptySubtitle="Grafik tren audit otomatis muncul saat aktivitas pengguna dan perubahan data terekam."
+              emptyTitle={isEn ? "No Audit Activity Yet" : "Belum Ada Aktivitas Audit"}
+              emptySubtitle={
+                isEn
+                  ? "Audit trend chart will appear automatically as user activity and data changes are recorded."
+                  : "Grafik tren audit otomatis muncul saat aktivitas pengguna dan perubahan data terekam."
+              }
             />
 
             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
               <div>
-                <p className="text-[11px] text-muted-foreground">Operasi Tambah</p>
+                <p className="text-[11px] text-muted-foreground">{isEn ? "Insert Operations" : "Operasi Tambah"}</p>
                 <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                  {totalInserts} Log
+                  {totalInserts} {isEn ? "Logs" : "Log"}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Operasi Ubah</p>
+                <p className="text-[11px] text-muted-foreground">{isEn ? "Update Operations" : "Operasi Ubah"}</p>
                 <p className="text-xs sm:text-sm font-bold text-primary dark:text-sky-400 tabular-nums mt-0.5">
-                  {totalUpdates} Log
+                  {totalUpdates} {isEn ? "Logs" : "Log"}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Operasi Hapus</p>
+                <p className="text-[11px] text-muted-foreground">{isEn ? "Delete Operations" : "Operasi Hapus"}</p>
                 <p className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 tabular-nums mt-0.5">
-                  {totalDeletes} Log
+                  {totalDeletes} {isEn ? "Logs" : "Log"}
                 </p>
               </div>
             </div>
@@ -459,11 +468,15 @@ export function SuperAdminDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
-              <CardTitle>Komposisi Master Sistem</CardTitle>
+              <CardTitle>{isEn ? "System Master Composition" : "Komposisi Master Sistem"}</CardTitle>
               <CardDescription>
                 {compDataset === "roles"
-                  ? "Sebaran hak akses peran pengguna internal."
-                  : "Struktur klasifikasi bagan akun."}
+                  ? isEn
+                    ? "Distribution of internal user access roles."
+                    : "Sebaran hak akses peran pengguna internal."
+                  : isEn
+                    ? "Classification structure of chart of accounts."
+                    : "Struktur klasifikasi bagan akun."}
               </CardDescription>
             </div>
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
@@ -477,7 +490,7 @@ export function SuperAdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Peran
+                {isEn ? "Roles" : "Peran"}
               </button>
               <button
                 type="button"
@@ -489,7 +502,7 @@ export function SuperAdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Bagan Akun
+                {isEn ? "COA Accounts" : "Bagan Akun"}
               </button>
             </div>
           </CardHeader>
@@ -502,18 +515,26 @@ export function SuperAdminDashboardPage() {
                   : coaCompositionSlices
               }
               centerLabel={
-                compDataset === "roles" ? "Pengguna Aktif" : "Total Akun"
+                compDataset === "roles"
+                  ? isEn ? "Active Users" : "Pengguna Aktif"
+                  : isEn ? "Total Accounts" : "Total Akun"
               }
               centerValue={
                 compDataset === "roles"
-                  ? `${activeUsers} Orang`
-                  : `${accounts.length} Akun`
+                  ? `${activeUsers} ${isEn ? "Users" : "Orang"}`
+                  : `${accounts.length} ${isEn ? "Accounts" : "Akun"}`
               }
               formatValue={(v) =>
-                compDataset === "roles" ? `${v} Akun` : `${v} COA`
+                compDataset === "roles"
+                  ? `${v} ${isEn ? "Users" : "Akun"}`
+                  : `${v} COA`
               }
-              emptyTitle="Belum Ada Data Master"
-              emptySubtitle="Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia."
+              emptyTitle={isEn ? "No Master Data Yet" : "Belum Ada Data Master"}
+              emptySubtitle={
+                isEn
+                  ? "Proportions will appear automatically when users or chart of accounts are available."
+                  : "Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia."
+              }
             />
           </CardContent>
           <ChartCardFooter>
@@ -534,15 +555,17 @@ export function SuperAdminDashboardPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Jejak Audit Terbaru
+              {isEn ? "Recent Audit Trail" : "Jejak Audit Terbaru"}
             </CardTitle>
             <CardDescription>
-              Setiap perubahan konfigurasi, master data, dan status periode tercatat otomatis.
+              {isEn
+                ? "Every configuration change, master data modification, and period status is automatically recorded."
+                : "Setiap perubahan konfigurasi, master data, dan status periode tercatat otomatis."}
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild className="shrink-0">
             <Link to="/super-admin/audit-trail">
-              Semua Audit
+              {isEn ? "All Audits" : "Semua Audit"}
               <ArrowRightIcon className="size-3.5" />
             </Link>
           </Button>
@@ -551,11 +574,11 @@ export function SuperAdminDashboardPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Waktu</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Peran Pelaku</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Entitas</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">ID Rekaman</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Time" : "Waktu"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Actor Role" : "Peran Pelaku"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Action" : "Aksi"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Entity" : "Entitas"}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Record ID" : "ID Rekaman"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

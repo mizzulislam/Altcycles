@@ -103,8 +103,22 @@ const PO_STATUS_META: Record<
   cancelled: { label: "Dibatalkan", tone: "destructive" },
 };
 
+function getPoStatusMeta(status: PoStatus, isEn: boolean): { label: string; tone: "secondary" | "info" | "success" | "destructive" } {
+  switch (status) {
+    case "draft":
+      return { label: isEn ? "Draft" : "Draf", tone: "secondary" };
+    case "issued":
+      return { label: isEn ? "Issued" : "Diterbitkan", tone: "info" };
+    case "completed":
+      return { label: isEn ? "Completed" : "Selesai", tone: "success" };
+    case "cancelled":
+      return { label: isEn ? "Cancelled" : "Dibatalkan", tone: "destructive" };
+  }
+}
+
 export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [orders, setOrders] = React.useState<PurchaseOrderRow[]>([]);
   const [items, setItems] = React.useState<PoItemRow[]>([]);
   const [vendors, setVendors] = React.useState<VendorRow[]>([]);
@@ -548,9 +562,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Daftar Dokumen PO</CardTitle>
+            <CardTitle>{isEn ? "PO Documents List" : "Daftar Dokumen PO"}</CardTitle>
             <CardDescription>
-              Saring berdasarkan status penerbitan atau penyelesaian pengadaan.
+              {isEn
+                ? "Filter by issuance status or procurement fulfillment."
+                : "Saring berdasarkan status penerbitan atau penyelesaian pengadaan."}
             </CardDescription>
           </div>
           <div className="w-full sm:w-52 shrink-0">
@@ -560,11 +576,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="ALL">Semua Status</SelectItem>
-                  <SelectItem value="draft">Draf</SelectItem>
-                  <SelectItem value="issued">Diterbitkan</SelectItem>
-                  <SelectItem value="completed">Selesai</SelectItem>
-                  <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                  <SelectItem value="ALL">{isEn ? "All Statuses" : "Semua Status"}</SelectItem>
+                  <SelectItem value="draft">{isEn ? "Draft" : "Draf"}</SelectItem>
+                  <SelectItem value="issued">{isEn ? "Issued" : "Diterbitkan"}</SelectItem>
+                  <SelectItem value="completed">{isEn ? "Completed" : "Selesai"}</SelectItem>
+                  <SelectItem value="cancelled">{isEn ? "Cancelled" : "Dibatalkan"}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -574,19 +590,33 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat PO pembelian...</span>
+              <span>{isEn ? "Loading purchase orders..." : "Memuat PO pembelian..."}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nomor PO</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Vendor</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Proyek</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Total Nilai</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "PO Number" : "Nomor PO"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Date" : "Tanggal"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Vendor" : "Vendor"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Project" : "Proyek"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                    {isEn ? "Total Value" : "Total Nilai"}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {isEn ? "Status" : "Status"}
+                  </TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                    {isEn ? "Actions" : "Aksi"}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -598,10 +628,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                           <FileTextIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Belum Ada Dokumen PO
+                          {isEn ? "No PO Documents Found" : "Belum Ada Dokumen PO"}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          Klik tombol Buat PO Vendor di kanan atas untuk membuat pesanan pembelian barang atau jasa proyek.
+                          {isEn
+                            ? "Click the Create Vendor PO button above to order project goods or services."
+                            : "Klik tombol Buat PO Vendor di kanan atas untuk membuat pesanan pembelian barang atau jasa proyek."}
                         </p>
                       </div>
                     </TableCell>
@@ -610,7 +642,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   filtered.map((po) => {
                   const vnd = vendors.find((v) => v.id === po.vendor_id);
                   const prj = projects.find((p) => p.id === po.project_id);
-                  const meta = PO_STATUS_META[po.status];
+                  const meta = getPoStatusMeta(po.status, isEn);
                   return (
                     <TableRow key={po.id}>
                       <TableCell className="align-top pl-6 pr-3 py-3.5 text-center font-mono text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
@@ -636,7 +668,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
-                            title="Unduh PO (PDF / Word)"
+                            title={isEn ? "Download PO (PDF / Word)" : "Unduh PO (PDF / Word)"}
                             onDownloadPdf={() => void handleDownloadPdf(po)}
                             onDownloadWord={() => void handleDownloadWord(po)}
                           />
@@ -645,16 +677,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title="Terbitkan PO"
+                              title={isEn ? "Issue PO" : "Terbitkan PO"}
                               onClick={async () => {
                                 await updatePurchaseOrderStatus(po.id, "issued");
-                                toast.success(`PO ${po.po_number} diterbitkan.`);
+                                toast.success(isEn ? `PO ${po.po_number} issued.` : `PO ${po.po_number} diterbitkan.`);
                                 await reload();
                               }}
                               className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
                             >
                               <SendIcon className="size-4" />
-                              <span className="sr-only">Terbitkan PO</span>
+                              <span className="sr-only">{isEn ? "Issue PO" : "Terbitkan PO"}</span>
                             </Button>
                           ) : null}
                           {mode === "admin" && po.status === "issued" ? (
@@ -662,16 +694,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title="Tandai PO Selesai"
+                              title={isEn ? "Mark PO as Completed" : "Tandai PO Selesai"}
                               onClick={async () => {
                                 await updatePurchaseOrderStatus(po.id, "completed");
-                                toast.success(`PO ${po.po_number} ditandai selesai.`);
+                                toast.success(isEn ? `PO ${po.po_number} marked completed.` : `PO ${po.po_number} ditandai selesai.`);
                                 await reload();
                               }}
                               className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                             >
                               <CheckCircle2Icon className="size-4" />
-                              <span className="sr-only">Tandai Selesai</span>
+                              <span className="sr-only">{isEn ? "Mark Completed" : "Tandai Selesai"}</span>
                             </Button>
                           ) : null}
                           {(po.status === "draft" || po.status === "issued") ? (
@@ -679,12 +711,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title="Batalkan PO"
+                              title={isEn ? "Cancel PO" : "Batalkan PO"}
                               onClick={() => setCancelTarget(po)}
                               className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                             >
                               <BanIcon className="size-4" />
-                              <span className="sr-only">Batalkan PO</span>
+                              <span className="sr-only">{isEn ? "Cancel PO" : "Batalkan PO"}</span>
                             </Button>
                           ) : null}
                         </div>
@@ -701,13 +733,13 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Buat Purchase Order Pembelian Vendor</DialogTitle>
+            <DialogTitle>{isEn ? "Create Vendor Purchase Order" : "Buat Purchase Order Pembelian Vendor"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreatePo} className="min-w-0">
             <FieldGroup className="gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="po-date" required>Tanggal PO</FieldLabel>
+                  <FieldLabel htmlFor="po-date" required>{isEn ? "PO Date" : "Tanggal PO"}</FieldLabel>
                   <DatePicker
                     id="po-date"
                     required
@@ -716,16 +748,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel required>Vendor / Pemasok</FieldLabel>
+                  <FieldLabel required>{isEn ? "Vendor / Supplier" : "Vendor / Pemasok"}</FieldLabel>
                   <Select value={vendorId} onValueChange={setVendorId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih vendor" />
+                      <SelectValue placeholder={isEn ? "Select vendor" : "Pilih vendor"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {vendors.length === 0 ? (
                           <SelectItem value="__empty" disabled>
-                            Belum ada vendor aktif
+                            {isEn ? "No active vendors" : "Belum ada vendor aktif"}
                           </SelectItem>
                         ) : (
                           vendors.map((v) => (
@@ -740,16 +772,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 </Field>
               </div>
               <Field>
-                <FieldLabel required>Proyek Terkait</FieldLabel>
+                <FieldLabel required>{isEn ? "Related Project" : "Proyek Terkait"}</FieldLabel>
                 <Select value={projectId} onValueChange={setProjectId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih proyek" />
+                    <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {projects.length === 0 ? (
                         <SelectItem value="__empty" disabled>
-                          Belum ada proyek tersedia
+                          {isEn ? "No projects available" : "Belum ada proyek tersedia"}
                         </SelectItem>
                       ) : (
                         projects.map((p) => (
@@ -766,7 +798,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               <div className="flex flex-col gap-2.5 rounded-xl border border-border/80 bg-muted/15 p-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground">
-                    Rincian Item PO
+                    {isEn ? "PO Items Details" : "Rincian Item PO"}
                   </span>
                   <Button
                     type="button"
@@ -781,15 +813,15 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                     }
                   >
                     <PlusIcon className="size-3.5 mr-1" />
-                    Tambah Baris
+                    {isEn ? "Add Row" : "Tambah Baris"}
                   </Button>
                 </div>
                 <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-0.5 text-[11px] font-medium text-muted-foreground">
-                  <div className="sm:col-span-5">Deskripsi Barang / Jasa</div>
-                  <div className="sm:col-span-2">Qty</div>
-                  <div className="sm:col-span-2">Satuan</div>
-                  <div className="sm:col-span-2">Harga Satuan (Rp)</div>
-                  <div className="sm:col-span-1 text-center">Hapus</div>
+                  <div className="sm:col-span-5">{isEn ? "Item / Service Description" : "Deskripsi Barang / Jasa"}</div>
+                  <div className="sm:col-span-2">{isEn ? "Qty" : "Qty"}</div>
+                  <div className="sm:col-span-2">{isEn ? "Unit" : "Satuan"}</div>
+                  <div className="sm:col-span-2">{isEn ? "Unit Price (Rp)" : "Harga Satuan (Rp)"}</div>
+                  <div className="sm:col-span-1 text-center">{isEn ? "Delete" : "Hapus"}</div>
                 </div>
                 {formItems.map((it, idx) => (
                   <div
@@ -798,7 +830,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   >
                     <div className="sm:col-span-5">
                       <Input
-                        placeholder="Deskripsi barang/jasa"
+                        placeholder={isEn ? "Item/service description" : "Deskripsi barang/jasa"}
                         required
                         value={it.description}
                         onChange={(e) =>
@@ -827,7 +859,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                     </div>
                     <div className="sm:col-span-2">
                       <Input
-                        placeholder="Satuan"
+                        placeholder={isEn ? "Unit" : "Satuan"}
                         value={it.unit}
                         onChange={(e) =>
                           setFormItems((prev) =>
@@ -859,7 +891,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        title="Hapus baris item"
+                        title={isEn ? "Delete item row" : "Hapus baris item"}
                         disabled={formItems.length === 1}
                         onClick={() =>
                           setFormItems((prev) => prev.filter((_, i) => i !== idx))
@@ -867,7 +899,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                       >
                         <Trash2Icon className="size-4" />
-                        <span className="sr-only">Hapus baris</span>
+                        <span className="sr-only">{isEn ? "Delete row" : "Hapus baris"}</span>
                       </Button>
                     </div>
                   </div>
@@ -879,11 +911,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
               {exceedsBudget ? (
                 <Alert variant="destructive">
-                  <AlertTitle>Peringatan Melampaui Sisa Anggaran Proyek</AlertTitle>
+                  <AlertTitle>{isEn ? "Warning: Exceeds Project Budget Remaining" : "Peringatan Melampaui Sisa Anggaran Proyek"}</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
-                      Total PO ({formatRupiah(draftTotal)}) melebihi sisa
-                      anggaran proyek saat ini ({formatRupiah(budgetRemaining ?? 0)}).
+                      {isEn
+                        ? `PO Total (${formatRupiah(draftTotal)}) exceeds project remaining budget (${formatRupiah(budgetRemaining ?? 0)}).`
+                        : `Total PO (${formatRupiah(draftTotal)}) melebihi sisa anggaran proyek saat ini (${formatRupiah(budgetRemaining ?? 0)}).`}
                     </span>
                     <div className="flex items-center gap-2.5 text-xs font-medium">
                       <Checkbox
@@ -895,7 +928,9 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         htmlFor="ack-po-budget-warning"
                         className="cursor-pointer select-none leading-relaxed"
                       >
-                        Saya memahami peringatan anggaran ini dan tetap melanjutkan.
+                        {isEn
+                          ? "I understand this budget warning and choose to proceed."
+                          : "Saya memahami peringatan anggaran ini dan tetap melanjutkan."}
                       </label>
                     </div>
                   </AlertDescription>
@@ -903,20 +938,20 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               ) : null}
 
               <Field>
-                <FieldLabel htmlFor="po-notes">Catatan Tambahan</FieldLabel>
+                <FieldLabel htmlFor="po-notes">{isEn ? "Additional Notes" : "Catatan Tambahan"}</FieldLabel>
                 <Textarea
                   id="po-notes"
                   rows={2}
                   className="min-h-[64px]"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Jadwal pengiriman atau spesifikasi teknis..."
+                  placeholder={isEn ? "Delivery schedule or technical specifications..." : "Jadwal pengiriman atau spesifikasi teknis..."}
                 />
               </Field>
 
               <Field orientation="horizontal">
                 <FieldLabel htmlFor="po-issue" className="font-normal">
-                  Langsung terbitkan PO setelah disimpan (mengunci rincian nilai)
+                  {isEn ? "Immediately issue PO upon saving (locks values)" : "Langsung terbitkan PO setelah disimpan (mengunci rincian nilai)"}
                 </FieldLabel>
                 <Switch
                   id="po-issue"
@@ -927,7 +962,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
               <DocumentIssueChecklistCard
                 items={poChecklist.items}
-                title="Checklist Validasi PO Vendor (Standar Altvira)"
+                title={isEn ? "Vendor PO Validation Checklist (Altvira Standard)" : "Checklist Validasi PO Vendor (Standar Altvira)"}
               />
 
               <DialogFooter>
@@ -936,7 +971,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  Batal
+                  {isEn ? "Cancel" : "Batal"}
                 </Button>
                 <Button
                   type="submit"
@@ -945,9 +980,13 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   }
                 >
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan PO
+                  {isEn ? "Save PO" : "Simpan PO"}
                 </Button>
               </DialogFooter>
+            </FieldGroup>
+          </form>
+        </DialogContent>
+      </Dialog>
             </FieldGroup>
           </form>
         </DialogContent>
@@ -958,16 +997,20 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         onOpenChange={(open) => {
           if (!open) setCancelTarget(null);
         }}
-        title={`Batalkan dokumen ${cancelTarget?.po_number ?? ""}?`}
-        description="Pembatalan bersifat permanen dan tercatat di riwayat status dokumen."
+        title={isEn ? `Cancel PO Document ${cancelTarget?.po_number ?? ""}?` : `Batalkan dokumen ${cancelTarget?.po_number ?? ""}?`}
+        description={
+          isEn
+            ? "Cancellation is permanent and recorded in document history."
+            : "Pembatalan bersifat permanen dan tercatat di riwayat status dokumen."
+        }
         destructive
         requireReason
-        reasonLabel="Alasan Pembatalan PO"
-        confirmLabel="Ya, Batalkan PO"
+        reasonLabel={isEn ? "PO Cancellation Reason" : "Alasan Pembatalan PO"}
+        confirmLabel={isEn ? "Yes, Cancel PO" : "Ya, Batalkan PO"}
         onConfirm={async (reason) => {
           if (!cancelTarget) return;
           await updatePurchaseOrderStatus(cancelTarget.id, "cancelled", reason);
-          toast.success(`PO ${cancelTarget.po_number} dibatalkan.`);
+          toast.success(isEn ? `PO ${cancelTarget.po_number} cancelled.` : `PO ${cancelTarget.po_number} dibatalkan.`);
           await reload();
         }}
       />

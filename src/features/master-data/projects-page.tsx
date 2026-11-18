@@ -100,7 +100,8 @@ const PROJECT_STATUS_META: Record<
 };
 
 export function ProjectsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const isSidebarCollapsed = useSidebarCollapsed();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [members, setMembers] = React.useState<ProjectMemberRow[]>([]);
@@ -536,14 +537,22 @@ export function ProjectsPage() {
                           <FolderOpenIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {projects.length === 0
-                            ? "Belum Ada Proyek Terdaftar"
-                            : "Tidak Ada Proyek yang Cocok"}
+                          {isEn
+                            ? projects.length === 0
+                              ? "No Registered Projects"
+                              : "No Matching Projects"
+                            : projects.length === 0
+                              ? "Belum Ada Proyek Terdaftar"
+                              : "Tidak Ada Proyek yang Cocok"}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          {projects.length === 0
-                            ? "Klik tombol Tambah Proyek di kanan atas untuk mendaftarkan proyek pertama."
-                            : "Sesuaikan kata kunci pencarian atau filter status proyek."}
+                          {isEn
+                            ? projects.length === 0
+                              ? "Click the Add Project button on the top right to register the first project."
+                              : "Adjust your search keywords or project status filters."
+                            : projects.length === 0
+                              ? "Klik tombol Tambah Proyek di kanan atas untuk mendaftarkan proyek pertama."
+                              : "Sesuaikan kata kunci pencarian atau filter status proyek."}
                         </p>
                       </div>
                     </TableCell>
@@ -683,25 +692,39 @@ export function ProjectsPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Kelola Proyek & Anggota Tim" : "Tambah Proyek Baru"}
+              {isEn
+                ? editingId
+                  ? "Manage Project & Team Members"
+                  : "Add New Project"
+                : editingId
+                  ? "Kelola Proyek & Anggota Tim"
+                  : "Tambah Proyek Baru"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="prj-name" required>Nama Proyek</FieldLabel>
+                <FieldLabel htmlFor="prj-name" required>
+                  {isEn ? "Project Name" : "Nama Proyek"}
+                </FieldLabel>
                 <Input
                   id="prj-name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Pengembangan ERP Logistik Nusantara"
+                  placeholder={
+                    isEn
+                      ? "e.g. Nusantara Logistics ERP Development"
+                      : "Contoh: Pengembangan ERP Logistik Nusantara"
+                  }
                 />
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel required>Kategori Proyek</FieldLabel>
+                  <FieldLabel required>
+                    {isEn ? "Project Category" : "Kategori Proyek"}
+                  </FieldLabel>
                   <Select
                     value={category}
                     onValueChange={(v) => setCategory(v as ProjectCategory)}
@@ -711,9 +734,11 @@ export function ProjectsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="client">Proyek Klien</SelectItem>
+                        <SelectItem value="client">
+                          {isEn ? "Client Project" : "Proyek Klien"}
+                        </SelectItem>
                         <SelectItem value="internal">
-                          Proyek Internal Altvira
+                          {isEn ? "Altvira Internal Project" : "Proyek Internal Altvira"}
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -721,18 +746,20 @@ export function ProjectsPage() {
                 </Field>
 
                 <Field data-disabled={category !== "client"}>
-                  <FieldLabel>Pelanggan / Klien</FieldLabel>
+                  <FieldLabel>{isEn ? "Client / Customer" : "Pelanggan / Klien"}</FieldLabel>
                   <Select
                     value={customerId}
                     disabled={category !== "client"}
                     onValueChange={setCustomerId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih pelanggan" />
+                      <SelectValue placeholder={isEn ? "Select client" : "Pilih pelanggan"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">— Belum Dipilih —</SelectItem>
+                        <SelectItem value="none">
+                          {isEn ? "— Unassigned —" : "— Belum Dipilih —"}
+                        </SelectItem>
                         {customers.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.code} — {c.name}
@@ -747,7 +774,7 @@ export function ProjectsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="prj-val" required>
-                    Nilai Kontrak (Rp Bulat)
+                    {isEn ? "Contract Value (IDR)" : "Nilai Kontrak (Rp Bulat)"}
                   </FieldLabel>
                   <NumberInput
                     id="prj-val"
@@ -759,7 +786,9 @@ export function ProjectsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="prj-terms" required>Jumlah Termin</FieldLabel>
+                  <FieldLabel htmlFor="prj-terms" required>
+                    {isEn ? "Milestones Count" : "Jumlah Termin"}
+                  </FieldLabel>
                   <NumberInput
                     id="prj-terms"
                     allowDecimal={false}
@@ -770,14 +799,18 @@ export function ProjectsPage() {
                     onValueChange={setTermCount}
                   />
                   <FieldDescription>
-                    Metode otomatis: {REVENUE_METHOD_LABELS[previewMethod]}
+                    {isEn
+                      ? `Automatic method: ${REVENUE_METHOD_LABELS[previewMethod]}`
+                      : `Metode otomatis: ${REVENUE_METHOD_LABELS[previewMethod]}`}
                   </FieldDescription>
                 </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="prj-start">Tanggal Mulai</FieldLabel>
+                  <FieldLabel htmlFor="prj-start">
+                    {isEn ? "Start Date" : "Tanggal Mulai"}
+                  </FieldLabel>
                   <DatePicker
                     id="prj-start"
                     value={startDate}
@@ -785,7 +818,9 @@ export function ProjectsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="prj-end">Target Selesai</FieldLabel>
+                  <FieldLabel htmlFor="prj-end">
+                    {isEn ? "Target Completion" : "Target Selesai"}
+                  </FieldLabel>
                   <DatePicker
                     id="prj-end"
                     value={targetEndDate}
@@ -795,7 +830,9 @@ export function ProjectsPage() {
               </div>
 
               <Field>
-                <FieldLabel required>Status Proyek</FieldLabel>
+                <FieldLabel required>
+                  {isEn ? "Project Status" : "Status Proyek"}
+                </FieldLabel>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as ProjectStatus)}
@@ -805,11 +842,11 @@ export function ProjectsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="draft">Draf</SelectItem>
-                      <SelectItem value="active">Aktif</SelectItem>
-                      <SelectItem value="on_hold">Ditunda</SelectItem>
-                      <SelectItem value="completed">Selesai</SelectItem>
-                      <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                      <SelectItem value="draft">{isEn ? "Draft" : "Draf"}</SelectItem>
+                      <SelectItem value="active">{isEn ? "Active" : "Aktif"}</SelectItem>
+                      <SelectItem value="on_hold">{isEn ? "On Hold" : "Ditunda"}</SelectItem>
+                      <SelectItem value="completed">{isEn ? "Completed" : "Selesai"}</SelectItem>
+                      <SelectItem value="cancelled">{isEn ? "Cancelled" : "Dibatalkan"}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -818,15 +855,21 @@ export function ProjectsPage() {
               <FieldSet className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] p-4 space-y-3">
                 <div>
                   <FieldLegend className="text-xs font-semibold text-foreground">
-                    Penugasan Anggota Tim (Portal User)
+                    {isEn
+                      ? "Team Member Assignment (User Portal)"
+                      : "Penugasan Anggota Tim (Portal User)"}
                   </FieldLegend>
                   <FieldDescription className="text-[11px]">
-                    Hanya User yang diaktifkan di bawah yang dapat melihat proyek dan anggarannya di Portal User.
+                    {isEn
+                      ? "Only enabled users below can view the project and its budget in the User Portal."
+                      : "Hanya User yang diaktifkan di bawah yang dapat melihat proyek dan anggarannya di Portal User."}
                   </FieldDescription>
                 </div>
                 {teamUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    Belum ada pengguna dengan peran User.
+                    {isEn
+                      ? "No users with User role yet."
+                      : "Belum ada pengguna dengan peran User."}
                   </p>
                 ) : (
                   <div className="space-y-2.5">
@@ -848,7 +891,9 @@ export function ProjectsPage() {
               </FieldSet>
 
               <Field>
-                <FieldLabel htmlFor="prj-desc">Catatan Proyek</FieldLabel>
+                <FieldLabel htmlFor="prj-desc">
+                  {isEn ? "Project Notes" : "Catatan Proyek"}
+                </FieldLabel>
                 <Textarea
                   id="prj-desc"
                   value={description}
@@ -862,11 +907,11 @@ export function ProjectsPage() {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  Batal
+                  {isEn ? "Cancel" : "Batal"}
                 </Button>
                 <Button type="submit" disabled={saving}>
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Proyek
+                  {isEn ? "Save Project" : "Simpan Proyek"}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -884,36 +929,45 @@ export function ProjectsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {viewProject ? `Rincian ${viewProject.code}` : "Rincian Proyek"}
+              {viewProject
+                ? isEn
+                  ? `Details of ${viewProject.code}`
+                  : `Rincian ${viewProject.code}`
+                : isEn
+                  ? "Project Details"
+                  : "Rincian Proyek"}
             </DialogTitle>
           </DialogHeader>
           {viewProject ? (
             <div className="space-y-4">
               <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-muted/15">
                 {[
-                  { label: "Kode Proyek", value: viewProject.code },
-                  { label: "Nama Proyek", value: viewProject.name },
+                  { label: isEn ? "Project Code" : "Kode Proyek", value: viewProject.code },
+                  { label: isEn ? "Project Name" : "Nama Proyek", value: viewProject.name },
                   {
-                    label: "Klien",
+                    label: isEn ? "Client" : "Klien",
                     value:
                       customers.find((c) => c.id === viewProject.customer_id)?.name ??
-                      "Proyek Internal",
+                      (isEn ? "Internal Project" : "Proyek Internal"),
                   },
                   {
-                    label: "Periode",
+                    label: isEn ? "Period" : "Periode",
                     value: `${formatDateID(viewProject.start_date)} - ${formatDateID(viewProject.target_end_date)}`,
                   },
                   {
-                    label: "Nilai Kontrak",
+                    label: isEn ? "Contract Value" : "Nilai Kontrak",
                     value: formatRupiah(viewProject.contract_value),
                   },
-                  { label: "Jumlah Termin", value: `${viewProject.term_count} Termin` },
                   {
-                    label: "Metode Pengakuan",
+                    label: isEn ? "Milestones" : "Jumlah Termin",
+                    value: isEn ? `${viewProject.term_count} Milestones` : `${viewProject.term_count} Termin`,
+                  },
+                  {
+                    label: isEn ? "Revenue Method" : "Metode Pengakuan",
                     value: REVENUE_METHOD_LABELS[viewProject.revenue_method],
                   },
                   {
-                    label: "Catatan",
+                    label: isEn ? "Notes" : "Catatan",
                     value: viewProject.description ?? "-",
                   },
                 ].map((item, idx) => (
@@ -938,7 +992,7 @@ export function ProjectsPage() {
                   className="cursor-pointer"
                 >
                   <Link to={`/admin/proyek/${viewProject.id}`}>
-                    Buka Dokumen &amp; Termin
+                    {isEn ? "Open Documents & Milestones" : "Buka Dokumen & Termin"}
                   </Link>
                 </Button>
                 <Button
@@ -946,7 +1000,7 @@ export function ProjectsPage() {
                   onClick={() => setViewProject(null)}
                   className="cursor-pointer"
                 >
-                  Tutup
+                  {isEn ? "Close" : "Tutup"}
                 </Button>
               </DialogFooter>
             </div>

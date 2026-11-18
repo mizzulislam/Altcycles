@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BarChart3Icon } from "lucide-react";
 import { formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export interface ChartSwitchOption<T extends string> {
@@ -11,7 +12,7 @@ export interface ChartSwitchOption<T extends string> {
 }
 
 export function ChartCardFooter({
-  label = "Jenis Grafik",
+  label,
   rightMeta,
   children,
   className,
@@ -21,6 +22,10 @@ export function ChartCardFooter({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { language } = useLanguage();
+  const isEn = language === "en";
+  const displayLabel = !label || label === "Jenis Grafik" ? (isEn ? "Chart Type" : "Jenis Grafik") : label;
+
   return (
     <div
       className={cn(
@@ -29,7 +34,7 @@ export function ChartCardFooter({
       )}
     >
       <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
-        <span>{label}</span>
+        <span>{displayLabel}</span>
         {rightMeta}
       </div>
       {children}
@@ -1071,6 +1076,8 @@ export function HistogramChart({
   emptyTitle?: string;
   emptySubtitle?: string;
 }) {
+  const { language } = useLanguage();
+  const isEn = language === "en";
   const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
 
   if (bins.length === 0 || totalCount === 0) {
@@ -1177,19 +1184,19 @@ export function HistogramChart({
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60 text-xs">
         <div>
-          <p className="text-[10px] text-muted-foreground">Jumlah Sampel</p>
+          <p className="text-[10px] text-muted-foreground">{isEn ? "Sample Count" : "Jumlah Sampel"}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {totalCount} {unitLabel}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-muted-foreground">Rata-Rata Nominal</p>
+          <p className="text-[10px] text-muted-foreground">{isEn ? "Average Amount" : "Rata-Rata Nominal"}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {formatRupiah(average)}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-muted-foreground">Median Nominal</p>
+          <p className="text-[10px] text-muted-foreground">{isEn ? "Median Amount" : "Median Nominal"}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {formatRupiah(median)}
           </p>

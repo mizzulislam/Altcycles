@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/empty";
 import { formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import type { AccountRow, SalesInvoiceRow } from "@/types/database.types";
 
 export interface InvoicePaymentDialogProps {
@@ -49,6 +50,9 @@ export function InvoicePaymentDialog({
   paying,
   onSubmit,
 }: InvoicePaymentDialogProps) {
+  const { language } = useLanguage();
+  const isEn = language === "en";
+
   return (
     <Dialog
       open={Boolean(payTarget)}
@@ -59,7 +63,8 @@ export function InvoicePaymentDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            Catat Penerimaan Pembayaran {payTarget?.invoice_number}
+            {isEn ? "Record Payment Receipt" : "Catat Penerimaan Pembayaran"}{" "}
+            {payTarget?.invoice_number}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -67,7 +72,7 @@ export function InvoicePaymentDialog({
             <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs">
               <div>
                 <span className="text-muted-foreground block text-[11px]">
-                  Total Tagihan
+                  {isEn ? "Total Invoiced" : "Total Tagihan"}
                 </span>
                 <span className="font-semibold text-foreground">
                   {formatRupiah(payTarget.total_amount)}
@@ -75,7 +80,7 @@ export function InvoicePaymentDialog({
               </div>
               <div className="text-right">
                 <span className="text-muted-foreground block text-[11px]">
-                  Sisa Belum Terbayar
+                  {isEn ? "Remaining Balance" : "Sisa Belum Terbayar"}
                 </span>
                 <span className="font-bold text-primary dark:text-sky-400">
                   {formatRupiah(payTarget.total_amount - payTarget.paid_amount)}
@@ -85,7 +90,9 @@ export function InvoicePaymentDialog({
           ) : null}
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="pay-date" required>Tanggal Dana Masuk</FieldLabel>
+              <FieldLabel htmlFor="pay-date" required>
+                {isEn ? "Payment Received Date" : "Tanggal Dana Masuk"}
+              </FieldLabel>
               <DatePicker
                 id="pay-date"
                 required
@@ -95,7 +102,7 @@ export function InvoicePaymentDialog({
             </Field>
             <Field>
               <FieldLabel htmlFor="pay-amt" required>
-                Nominal Pembayaran Diterima (Rp)
+                {isEn ? "Payment Amount Received (IDR)" : "Nominal Pembayaran Diterima (Rp)"}
               </FieldLabel>
               <NumberInput
                 id="pay-amt"
@@ -112,19 +119,23 @@ export function InvoicePaymentDialog({
               />
             </Field>
             <Field>
-              <FieldLabel required>Rekening Tujuan Kas / Bank Perusahaan</FieldLabel>
+              <FieldLabel required>
+                {isEn
+                  ? "Destination Cash / Bank Account"
+                  : "Rekening Tujuan Kas / Bank Perusahaan"}
+              </FieldLabel>
               <Select
                 value={destCashAccountId}
                 onValueChange={setDestCashAccountId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih akun kas/bank" />
+                  <SelectValue placeholder={isEn ? "Select cash/bank account" : "Pilih akun kas/bank"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     {cashAccounts.length === 0 ? (
                       <SelectItem value="__empty" disabled>
-                        Belum ada akun kas/bank aktif
+                        {isEn ? "No active cash/bank accounts" : "Belum ada akun kas/bank aktif"}
                       </SelectItem>
                     ) : (
                       cashAccounts.map((ca) => (
@@ -143,11 +154,11 @@ export function InvoicePaymentDialog({
                 variant="outline"
                 onClick={onClose}
               >
-                Batal
+                {isEn ? "Cancel" : "Batal"}
               </Button>
               <Button type="submit" disabled={paying}>
                 {paying ? <Spinner data-icon="inline-start" /> : null}
-                Simpan Pembayaran &amp; Buat Kuitansi
+                {isEn ? "Save Payment & Generate Receipt" : "Simpan Pembayaran & Buat Kuitansi"}
               </Button>
             </DialogFooter>
           </FieldGroup>
