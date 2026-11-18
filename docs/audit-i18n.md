@@ -249,7 +249,122 @@ Sesuai aturan ketat proyek, kategori teks berikut **dikecualikan dari proses ter
 
 ---
 
-## 5. Daftar "Perlu Keputusanku: Ya"
+## 7. Audit Langkah 3a: Perluasan Cakupan i18n (Isi Tabel, Seluruh Tab Modul, Enum Mentah, & Pola Jurnal Otomatis)
+
+Audit ini merupakan tindak lanjut langsung dari evaluasi hasil Langkah 2, guna memastikan **seluruh modul, seluruh sub-halaman/tab, dan isi tabel data dinamis** (nama akun CoA, deskripsi jurnal otomatis, status enum, label tanggal/bulan) tercover secara komprehensif tanpa teks mentah yang lolos.
+
+### 7.1. Inventaris Tab / Sub-Halaman & Sumber Teks Isi Tabel per Modul
+
+Berikut adalah daftar lengkap tab antarmuka, sub-halaman, dan teks data dinamis pada sel tabel yang belum diterjemahkan:
+
+| Modul & File | Tab / Sub-Halaman | Est. Teks Belum Bersih | Contoh Teks Hardcode & Isi Tabel Belum Diterjemahkan |
+|---|---|:---:|---|
+| **Akuntansi & Laporan**<br>`src/features/accounting/journals-page.tsx` | Jurnal Umum & Penyesuaian | 38 | Nama akun (`acc.name` -> "Kas di Bank - Bank Jago", "Kas Kecil", "Piutang Usaha"), memo transaksi (`j.description`), header tabel cetak ("Tanggal", "Deskripsi", "Ref", "Debit", "Kredit"), sort order ("Urutan: Terbaru") |
+| **Akuntansi & Laporan**<br>`src/features/master-data/coa-accounts-page.tsx` | Setup Akuntansi (Tab CoA) | 52 | Header ("Setup Akuntansi"), tombol ("+ Buka Periode Baru", "+ Tambah Akun Baru"), header tabel ("Kode", "Nama Akun", "Tipe Akun", "Saldo Normal", "Kategori Arus Kas", "Postable", "Status", "Aksi"), nama akun CoA (`acc.name`), deskripsi akun (`acc.description`), enum tipe akun, enum saldo normal, enum arus kas, postable ("Header" / "Ya"), status ("Aktif") |
+| **Akuntansi & Laporan**<br>`src/features/master-data/components/period-list-table.tsx` | Setup Akuntansi (Tab Periode) | 24 | Header kartu ("Daftar Periode Bulanan", "Status terbuka mengizinkan..."), header kolom ("Periode", "Rentang Tanggal", "Status", "Riwayat Tutup / Buka Kembali", "Aksi"), nama bulan periode ("November 2026", "Agustus 2026"), status badge ("Periode Terbuka" / "Periode Ditutup"), riwayat interpolasi ("Dibuka kembali (09/11/2026 19:57): \"testing\"") |
+| **Akuntansi & Laporan**<br>`src/features/master-data/periods-page.tsx` | Tutup Buku | 45 | Kartu tutup buku, status kunci jurnal, modal jurnal penutup akhir periode, modal jurnal pembalik otomatis awal periode |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/general-ledger-view.tsx` | Buku Besar (General Ledger) | 35 | Pemilih akun CoA, label saldo awal ("Saldo Awal"), mutasi debit/kredit berjalan, deskripsi jurnal memo per baris |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/trial-balance-view.tsx` | Neraca Saldo (Trial Balance) | 22 | Header tabel saldo, nama akun CoA, baris penyeimbang total ("Total Saldo Seimbang") |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/income-statement-view.tsx` | Laporan Laba Rugi | 33 | Header grup pendapatan ("Pendapatan Operasional"), beban langsung proyek, beban bersama operasional, laba kotor, laba bersih |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/balance-sheet-view.tsx` | Posisi Keuangan (Neraca) | 31 | Aset lancar, kas & setara kas, piutang usaha, liabilitas jangka pendek, ekuitas pemilik |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/equity-statement-view.tsx` | Perubahan Ekuitas | 21 | Modal disetor, saldo laba ditahan awal, laba bersih berjalan, penarikan dividen |
+| **Akuntansi & Laporan**<br>`src/features/accounting/reports/cash-flow-view.tsx` | Laporan Arus Kas Langsung | 24 | Penerimaan kas operasi, pengeluaran kas vendor & beban, arus kas bersih aktivitas operasi/investasi/pendanaan |
+| **Akuntansi & Laporan**<br>`src/features/accounting/accounting-page.tsx` | Navigasi Tab Utama Akuntansi | 18 | Array `ACCOUNTING_TABS`: label ("Jurnal Umum", "Buku Besar", "Neraca Saldo", "Jurnal Penyesuaian", "Laporan Keuangan", "Tutup Buku", "Setup Akuntansi") dan deskripsi tab |
+| **PO Internal**<br>`src/features/purchase-orders/po-page.tsx` | PO Internal & Pengadaan | 48 | Header kolom ("No. PO", "Tanggal", "Vendor", "Proyek", "Nilai PO", "Status", "Aksi"), status badge PO (`draft`, `issued`, `approved`, `received`, `cancelled`), modal create PO, confirm cancel dialog |
+| **Persetujuan Pembayaran**<br>`src/features/payment-approvals/admin-approvals-page.tsx` | Admin Approvals | 42 | Tab "Menunggu Persetujuan", "Siap Transfer", "Selesai Dibayar", kategori pengeluaran, status klaim (`submitted`, `approved`, `paid`, `rejected`), modal persetujuan / penolakan dana |
+| **Persetujuan Pembayaran**<br>`src/features/payment-approvals/user-payments-page.tsx` | Pengajuan Dana Anggota | 36 | Daftar pengajuan pembayaran pengguna, status klaim pengguna, modal form permohonan pembayaran |
+| **Budgeting Proyek**<br>`src/features/budgeting/budget-page.tsx` | Pagu & Realisasi Proyek | 35 | Status serapan anggaran (`under_budget`, `warning`, `over_budget`), kartu alokasi pagu proyek, tabel serapan pos beban |
+| **Bagi Hasil**<br>`src/features/profit-sharing/profit-sharing-page.tsx` | Bagi Hasil Proyek Selesai | 28 | Rasio pembagian hak tim vs kas ditahan perusahaan, tombol finalisasi bagi hasil, tabel proyek selesai |
+| **Master Vendor & Klien**<br>`src/features/master-data/parties-master-page.tsx` | Navigasi Master Rekanan | 8 | Tab "Vendor", "Klien", "Layanan / Produk" |
+| **Master Vendor & Klien**<br>`src/features/master-data/parties/vendor-tab-content.tsx` | Master Vendor | 25 | Kolom tabel vendor, nama bank, status aktif/nonaktif vendor, modal tambah/edit vendor |
+| **Master Vendor & Klien**<br>`src/features/master-data/parties/customer-tab-content.tsx` | Master Klien | 25 | Kolom tabel klien, nama perusahaan/instansi, email & telepon klien, modal tambah/edit klien |
+| **Master Vendor & Klien**<br>`src/features/master-data/parties/product-service-tab-content.tsx` | Master Layanan / Produk | 32 | Modal "Tambah Layanan / Produk" (Kode Layanan, Kategori, Nama Layanan/Produk, Satuan, Tarif/Harga Dasar IDR, Deskripsi Ringkas, Status Layanan Aktif) |
+| **Dashboard Finansial**<br>`src/features/master-data/admin-dashboard.tsx` & `dashboard-charts.tsx` | Dashboard Utama | 55 | Legenda grafik ("Pendapatan", "Beban", "Kas Bersih"), singkatan nama bulan grafik ("Agu 26", "Sep 26"), komposisi ("Laba Bersih", "Beban Langsung", "Beban Bersama"), kartu KPI realisasi penagihan & umur piutang |
+| **Portal Pengguna**<br>`src/features/dashboard/user-dashboard.tsx` | Dashboard Tim | 30 | Kartu ringkasan penugasan proyek, rekap hak bagi hasil pribadi, status permohonan dana |
+| **Super Admin**<br>`src/features/system-config/` (7 halaman) | Admin Sistem & Legalitas | 145 | Tab Profil Perusahaan, Pengguna & Akses Peran, Konfigurasi Penomoran, Audit Trail (modal perbandingan data), Pengaturan Banner Login |
+| **Autentikasi**<br>`src/features/auth/login-page.tsx` | Halaman Login & Registrasi | 26 | Tab Masuk & Buat Akun, form sign-in / sign-up, banner slogan ch1, integrasi tombol bilingual `LanguageToggle` |
+
+---
+
+### 7.2. Daftar Nilai Enum Mentah yang Wajib Dipetakan ke Helper t()
+
+Audit mengidentifikasi nilai enum basis data yang sebelumnya tampil mentah (raw string database atau kapitalisasi mentah tanpa terjemahan):
+
+| Kategori Enum | Nilai Enum Database | Label Mode Indonesia (ID) | Label Mode English (EN) | Lokasi Tampilan Utama |
+|---|---|---|---|---|
+| **Arus Kas (CoA)** | `cash_equivalent` | **Setara Kas** | **Cash & Cash Equivalent** | Tabel CoA & Laporan Arus Kas *(sebelumnya tampil mentah `Cash_equivalent`)* |
+| **Arus Kas (CoA)** | `operating` | **Aktivitas Operasi** | **Operating Activities** | Tabel CoA & Laporan Arus Kas *(sebelumnya tampil mentah `Operating`)* |
+| **Arus Kas (CoA)** | `investing` | **Aktivitas Investasi** | **Investing Activities** | Tabel CoA & Laporan Arus Kas |
+| **Arus Kas (CoA)** | `financing` | **Aktivitas Pendanaan** | **Financing Activities** | Tabel CoA & Laporan Arus Kas |
+| **Tipe Akun (CoA)** | `asset` | **Aset** | **Asset** | Tabel CoA, Neraca, Jurnal |
+| **Tipe Akun (CoA)** | `contra_asset` | **Kontra-Aset** | **Contra-Asset** | Tabel CoA |
+| **Tipe Akun (CoA)** | `liability` | **Liabilitas** | **Liability** | Tabel CoA, Neraca |
+| **Tipe Akun (CoA)** | `equity` | **Ekuitas** | **Equity** | Tabel CoA, Perubahan Ekuitas |
+| **Tipe Akun (CoA)** | `revenue` | **Pendapatan** | **Revenue** | Tabel CoA, Laba Rugi |
+| **Tipe Akun (CoA)** | `expense` | **Beban** | **Expense** | Tabel CoA, Laba Rugi |
+| **Saldo Normal** | `debit` | **Debit** | **Debit** | Tabel CoA & Jurnal |
+| **Saldo Normal** | `credit` | **Kredit** | **Credit** | Tabel CoA & Jurnal |
+| **Status Postable** | `false` | **Header** | **Header** | Tabel CoA |
+| **Status Postable** | `true` | **Ya** (Bisa Diposting) | **Yes** (Postable) | Tabel CoA |
+| **Status Aktif** | `true` | **Aktif** | **Active** | Seluruh Master Data & CoA |
+| **Status Aktif** | `false` | **Nonaktif** | **Inactive** | Seluruh Master Data & CoA |
+| **Status Periode** | `open` | **Periode Terbuka** | **Open Period** | Tabel Periode Setup Akuntansi |
+| **Status Periode** | `closed` | **Periode Ditutup** | **Closed Period** | Tabel Periode Setup Akuntansi |
+| **Status Periode** | `reopened` | **Dibuka Kembali** | **Reopened Period** | Tabel Periode Setup Akuntansi |
+| **Tipe Jurnal** | `general` | **Jurnal Umum** | **General Journal** | Header & Filter Jurnal |
+| **Tipe Jurnal** | `adjusting` | **Jurnal Penyesuaian** | **Adjusting Journal** | Header & Filter Jurnal |
+| **Tipe Jurnal** | `closing` | **Jurnal Penutup** | **Closing Journal** | Tutup Buku |
+| **Tipe Jurnal** | `reversing` | **Jurnal Pembalik** | **Reversing Journal** | Tutup Buku |
+| **Tipe Jurnal** | `correction` | **Jurnal Koreksi** | **Correction Journal** | Riwayat Jurnal |
+| **Status PO** | `draft` / `issued` / `approved` / `received` / `cancelled` | **Draf / Diterbitkan / Disetujui / Diterima / Dibatalkan** | **Draft / Issued / Approved / Received / Cancelled** | Tabel PO Internal |
+| **Status Klaim** | `submitted` / `approved` / `paid` / `rejected` | **Menunggu Persetujuan / Disetujui / Dibayar Lunas / Ditolak** | **Pending Approval / Approved / Paid in Full / Rejected** | Persetujuan Pembayaran |
+| **Serapan Pagu** | `under_budget` / `warning` / `over_budget` | **Sesuai Pagu / Mendekati Batas / Melebihi Pagu** | **Within Budget / Near Ceiling / Over Budget** | Budgeting Proyek |
+
+---
+
+### 7.3. Pola Template Deskripsi Jurnal & Transaksi Otomatis
+
+Untuk memenuhi persyaratan bahwa deskripsi jurnal otomatis yang dibuat sistem tampil dwibahasa secara dinamis tanpa merusak teks yang tersimpan di basis data, berikut adalah pemetaan pola ekspresi reguler (regex) dan template terjemahannya:
+
+1. **Penerimaan Uang Muka Termin (Down Payment):**
+   - **Pola Indonesia (Database):** `Penerimaan termin {no} dari {client} berupa uang muka development {pct}%. Belum diakui pendapatan karena pekerjaan belum selesai.`
+   - **Template Inggris (Tampilan):** `Receipt of milestone payment {no} from {client} as development advance payment {pct}%. Revenue not yet recognized as work is in progress.`
+2. **Penerimaan Pembayaran Invoice:**
+   - **Pola Indonesia (Database):** `Penerimaan pembayaran Invoice {inv}` / `Penerimaan kas Termin {no} ({tag}) {inv}`
+   - **Template Inggris (Tampilan):** `Payment receipt for Invoice {inv}` / `Cash receipt for Milestone Payment {no} ({tag}) {inv}`
+3. **Penagihan Piutang atas Kontrak:**
+   - **Pola Indonesia (Database):** `Penagihan Invoice {inv} — {project}` / `Penagihan atas Kontrak Termin {no} ({tag})`
+   - **Template Inggris (Tampilan):** `Invoice billing {inv} — {project}` / `Contract billing for Milestone Payment {no} ({tag})`
+4. **Pengakuan Pendapatan Progres (Accrual Recognition):**
+   - **Pola Indonesia (Database):** `Pengakuan pendapatan progres {pct}% — {project}`
+   - **Template Inggris (Tampilan):** `Revenue recognition at progress {pct}% — {project}`
+5. **Jurnal Penutup Akhir Periode:**
+   - **Pola Indonesia (Database):** `Jurnal Penutup Manual Akhir Periode {period}` / `Penutupan akun nominal ke Ikhtisar Laba Rugi {period}`
+   - **Template Inggris (Tampilan):** `Period-End Manual Closing Entry {period}` / `Closing of nominal accounts to Income Summary {period}`
+6. **Jurnal Pembalik Awal Periode:**
+   - **Pola Indonesia (Database):** `Jurnal Pembalik Otomatis Awal Periode {period}` / `Pembalik akrual beban {period}`
+   - **Template Inggris (Tampilan):** `Period-Start Automated Reversing Entry {period}` / `Accrued expense reversal {period}`
+7. **Riwayat Buka Kembali Periode Pembukuan:**
+   - **Pola Indonesia (Database):** `Dibuka kembali ({timestamp}): "{reason}"`
+   - **Template Inggris (Tampilan):** `Reopened ({timestamp}): "{reason}"` *(catatan: nilai `{reason}` yang diketik pengguna dipertahankan apa adanya)*
+8. **Label Bulan & Tahun Periode:**
+   - **Pola Indonesia (Database):** `{BulanID} {Tahun}` (contoh: "Agustus 2026", "November 2026")
+   - **Template Inggris (Tampilan):** `{BulanEN} {Tahun}` (contoh: "August 2026", "November 2026")
+
+---
+
+### 7.4. Catatan "Perlu Keputusanku: Ya" Tambahan untuk Langkah 3
+
+- **Teks Bebas Pengguna di Database:**
+  - **Kondisi:** Pengguna dapat mengetikkan teks bebas seperti alasan pembatalan dokumen, alasan pembukaan kembali periode (misalnya `"testing"`), dan memo jurnal manual.
+  - **Rekomendasi:** Teks bebas tersebut **tetap ditampilkan apa adanya (as-is)** di kedua bahasa tanpa mencoba menerjemahkannya atau mengubah skema database, demi kepatuhan audit trail akuntansi.
+  - **Status:** **`Perlu keputusanku: Ya`**
+
+---
+
+> [!NOTE]
+> **Audit Langkah 3a telah selesai ditulis ke `docs/audit-i18n.md` tanpa melakukan perubahan pada kode aplikasi.**  
+> Sesuai instruksi Langkah 3a, eksekusi **BERHENTI** di sini untuk menunggu konfirmasi Anda sebelum kita memulai pengerjaan **Langkah 3b** (Migrasi penuh Modul Akuntansi & Laporan: semua tab, CoA, Jurnal, Periode, Buku Besar, dan Laporan Keuangan).
 
 Berikut adalah daftar pertanyaan desain, konvensi format, dan istilah ambigu yang memerlukan konfirmasi/keputusan pengguna sebelum dieksekusi pada Langkah 2 & 3:
 
