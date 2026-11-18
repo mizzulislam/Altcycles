@@ -906,14 +906,33 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-48
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Opsi A)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen PDF (`drawSocialMediaFooters`, `pdf-engine.ts`)
+- **Apa yang bertentangan:**
+  - Ikon sosial media di footer dokumen sebelumnya melorot turun (titik tengah 1.37 pt di bawah teks, dasar ikon 3.5 pt di bawah baseline teks) sehingga tampak tidak sejajar dengan teks *"Altvira Technology"* dan nomor halaman.
+  - Anotasi tautan (*Link Annotation*) pada ikon medsos memiliki hit-box sempit (10x10 pt) tanpa flag standar PDF `/F 4` (*Print flag*) dan `/H /I` (*Invert highlight mode*).
+  - Teks tengah disclaimer (*"Dokumen ini dibuat otomatis oleh Altcycles"*) dipertahankan pada ukuran `7.5 pt` agar terhindar dari tabrakan kotak batas tanda tangan di dokumen satu halaman yang padat.
+- **Yang kulakukan:**
+  - Menyelaraskan titik tengah vertikal ikon SVG tepat pada titik tengah optik huruf kapital teks (`textY + 2.87 pt`, `iconSize = 8.5 pt`, `iconTopY = textY + 7.12 pt`).
+  - Memperluas area hit box tautan (`/Rect`) dengan padding 3 pt, menambahkan flag PDF `/F 4` dan `/H /I`, serta mengunci URL tujuan interaktif.
+  - Mempertahankan Opsi A (pratinjau cetak peramban) dan memastikan verifikasi test otomatis 100% lulus.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Penyelarasan optik sumbu tengah teks & perluasan padding anotasi interaktif PDF. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 31 | 29 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`, `K-44`, `K-45`, `K-46`, `K-47`) | 2 (`K-20`, `K-27`) | 2 (`K-20`, `K-45`) |
+| `standar-vs-layout` | 32 | 30 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`, `K-44`, `K-45`, `K-46`, `K-47`, `K-48`) | 2 (`K-20`, `K-27`) | 2 (`K-20`, `K-45`) |
 | `standar-vs-sistem` | 7 | 6 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`, `K-39`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **47** | **40** | **7** | **2** |
+| **Total Temuan** | **48** | **41** | **7** | **2** |

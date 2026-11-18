@@ -1,6 +1,7 @@
 import {
   degrees,
   PDFDocument,
+  PDFName,
   PDFString,
   StandardFonts,
   rgb,
@@ -379,10 +380,16 @@ export async function drawSocialMediaFooters(params: {
       rawSocials.length > 0 ? rawSocials : DEFAULT_SOCIAL_LINKS
     ).slice(0, 3);
 
-    const iconSize = 10;
+    const iconSize = 8.5;
     const iconGap = 4;
-    const iconTopY = textY + 6.5;
-    const iconBottomY = textY - 3.5;
+    // Penyelarasan optik vertikal sempurna:
+    // Font Helvetica ukuran 8 pt memiliki cap-height 5.74 pt pada baseline textY.
+    // Titik tengah optik huruf kapital teks berada di textY + 2.87 pt.
+    // Ikon SVG 24x24 memiliki konten visual di rentang y = 2..22 (tinggi 20 unit).
+    // Dengan scale iconSize / 24, titik tengah visual ikon berada di anchor Y - (iconSize / 2).
+    // Maka iconTopY = textY + 2.87 + (iconSize / 2) = textY + 7.12 pt agar titik tengahnya sejajar tepat.
+    const iconTopY = textY + 7.12;
+    const iconBottomY = textY - 1.38;
     let curIconX = marginX;
 
     for (const soc of activeSocials) {
@@ -405,7 +412,7 @@ export async function drawSocialMediaFooters(params: {
         y: iconTopY,
         scale: iconSize / 24,
         borderColor: BRAND_BLUE,
-        borderWidth: 0.9,
+        borderWidth: 0.8,
       });
 
       const targetUrl =
@@ -419,11 +426,20 @@ export async function drawSocialMediaFooters(params: {
               : `https://${soc.username.replace(/^@/, "").trim()}`);
 
       if (targetUrl) {
+        // Area klik responsif dengan padding 3 pt di sekeliling ikon
+        const clickPad = 3;
         const linkAnnot = p.doc.context.obj({
           Type: "Annot",
           Subtype: "Link",
-          Rect: [curIconX, iconBottomY, curIconX + iconSize, iconTopY],
+          Rect: [
+            curIconX - clickPad,
+            iconBottomY - clickPad,
+            curIconX + iconSize + clickPad,
+            iconTopY + clickPad,
+          ],
           Border: [0, 0, 0],
+          F: 4,
+          H: PDFName.of("I"),
           A: {
             Type: "Action",
             S: "URI",
@@ -436,7 +452,7 @@ export async function drawSocialMediaFooters(params: {
       curIconX += iconSize + iconGap;
     }
 
-    const companyNameX = curIconX + 3;
+    const companyNameX = curIconX + 4;
     const companyNameText = sanitizePdfText(company.company_name || "Altvira Technology");
     const companyNameW = fontRegular.widthOfTextAtSize(companyNameText, fontSize);
     p.drawText(companyNameText, {
@@ -466,17 +482,18 @@ export async function drawSocialMediaFooters(params: {
       const centerText = isEnFooter
         ? "This document was generated automatically by Altcycles"
         : "Dokumen ini dibuat otomatis oleh Altcycles";
-      const centerW = fontRegular.widthOfTextAtSize(centerText, 7.5);
+      const centerFontSize = 7.5;
+      const centerW = fontRegular.widthOfTextAtSize(centerText, centerFontSize);
       const centerX = (pageWidth - centerW) / 2;
       if (centerX > companyNameX + companyNameW + 12 && centerX + centerW < rightX - 12) {
         p.drawText(centerText, {
           x: centerX,
           y: textY,
-          size: 7.5,
+          size: centerFontSize,
           font: fontRegular,
           color: TEXT_LABEL,
         });
-        recordBox?.(idx, centerX, textY, centerW, 7.5, centerText, "I-footer");
+        recordBox?.(idx, centerX, textY, centerW, centerFontSize, centerText, "I-footer");
       }
     }
   });

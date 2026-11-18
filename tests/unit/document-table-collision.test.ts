@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { inspectPdfDocumentLayout } from "@/lib/pdf-generator";
+import { generateDocumentPdf, inspectPdfDocumentLayout } from "@/lib/pdf-generator";
+import { PDFDocument, PDFName } from "pdf-lib";
 import { PDF_TABLE_COLUMN_CONFIGS } from "@/lib/pdf/pdf-table-columns";
 import {
   REPORT_LIST_FIXTURES,
@@ -339,5 +340,35 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
       const words = desc.trim().split(/\s+/);
       expect(words.length, `Deskripsi EN '${desc}' harus <= 3 kata`).toBeLessThanOrEqual(3);
     }
+  });
+
+  it("(l) Validasi footer PDF: ikon medsos memiliki Link Annotation aktif (URI action, F=4, H=I) dan tersinkronisasi", async () => {
+    const bytes = await generateDocumentPdf({
+      docTitle: "DAFTAR VENDOR",
+      docNumber: "VND-RPT/20261118",
+      docDate: "2026-11-18",
+      company: FIXTURE_COMPANY,
+      tableColumns: [{ header: "Vendor", widthRatio: 1 }],
+      tableRows: [["Test Vendor"]],
+    });
+
+    const doc = await PDFDocument.load(bytes);
+    const pages = doc.getPages();
+    expect(pages.length).toBeGreaterThanOrEqual(1);
+    const page = pages[0]!;
+    const annots = page.node.Annots();
+    expect(annots, "Halaman harus memiliki objek Annots").toBeDefined();
+    expect(annots!.size()).toBeGreaterThanOrEqual(1);
+
+    const firstAnnotRef = annots!.get(0);
+    const annotObj = doc.context.lookup(firstAnnotRef) as any;
+    expect(annotObj.get(PDFName.of("Type")).encodedName).toBe("/Annot");
+    expect(annotObj.get(PDFName.of("Subtype")).encodedName).toBe("/Link");
+    expect(annotObj.get(PDFName.of("F")).numberValue).toBe(4);
+    expect(annotObj.get(PDFName.of("H")).encodedName).toBe("/I");
+
+    const actionObj = annotObj.get(PDFName.of("A"));
+    expect(actionObj.get(PDFName.of("S")).encodedName).toBe("/URI");
+    expect(actionObj.get(PDFName.of("URI"))).toBeDefined();
   });
 });
