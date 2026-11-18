@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { EmptyState } from "@/components/ui/empty";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -20,14 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah, formatDateI18n } from "@/lib/formatters";
+import { formatRupiah, formatDateI18n } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import {
-  BAKP_STATUS_META,
-  BAST_STATUS_META,
   RowEditActionButtons,
   SectionEditControls,
-  UAT_CONCLUSION_META,
   getBakpStatusMeta,
   getUatConclusionMeta,
   getBastStatusMeta,
@@ -571,10 +568,10 @@ export function AcceptanceDocsTab({
                         {h.bast_number}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateI18n(h.handover_date, language)}
+                        {formatDateI18n(h.bast_date, language)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
-                        {h.warranty_period_months} {language === "en" ? "Months" : "Bulan"}
+                        {h.warranty_days} {language === "en" ? "Days" : "Hari"}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
@@ -592,9 +589,9 @@ export function AcceptanceDocsTab({
                                 title: `Rincian ${h.bast_number}`,
                                 rows: [
                                   { label: language === "en" ? "BAST No." : "Nomor BAST", value: h.bast_number },
-                                  { label: language === "en" ? "Handover Date" : "Tanggal Serah Terima", value: formatDateI18n(h.handover_date, language) },
-                                  { label: language === "en" ? "Warranty Period" : "Masa Garansi", value: `${h.warranty_period_months} ${language === "en" ? "Months" : "Bulan"}` },
-                                  { label: language === "en" ? "Project Deliverables" : "Pekerjaan Diserahterimakan", value: h.deliverables_summary ?? "-" },
+                                  { label: language === "en" ? "Handover Date" : "Tanggal Serah Terima", value: formatDateI18n(h.bast_date, language) },
+                                  { label: language === "en" ? "Warranty (Days)" : "Masa Garansi", value: `${h.warranty_days} ${language === "en" ? "Days" : "Hari"}` },
+                                  { label: language === "en" ? "Project Deliverables" : "Pekerjaan Diserahterimakan", value: h.handover_items_json?.map((i) => i.item).join(", ") || "-" },
                                   { label: t("projects:acceptance.col_status"), value: bastStatus.label },
                                 ],
                                 onDownloadPdf: () => void onDownloadBastPdf(h),
@@ -614,65 +611,6 @@ export function AcceptanceDocsTab({
                           <div className="flex justify-center items-center -my-1.5">
                             <DocumentDownloadMenu
                               title={language === "en" ? "Download BAST (PDF / Word)" : "Unduh BAST (PDF / Word)"}
-                              onDownloadPdf={() => onDownloadBastPdf(h)}
-                              onDownloadWord={() => onDownloadBastWord(h)}
-                            />
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-                        {formatDateID(h.bast_date)}
-                      </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap tabular-nums">
-                        {h.warranty_days} Hari
-                      </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
-                        <div className="inline-flex items-center min-h-5 -my-px">
-                          <StatusBadge
-                            tone={bastStatus.tone}
-                            label={bastStatus.label}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
-                        {isSectionEditing("bast") ? (
-                          <RowEditActionButtons
-                            onView={() =>
-                              setViewModal({
-                                title: `Rincian ${h.bast_number}`,
-                                rows: [
-                                  { label: "Nomor BAST", value: h.bast_number },
-                                  { label: "Tanggal Serah Terima", value: formatDateID(h.bast_date) },
-                                  { label: "Garansi Pemeliharaan", value: `${h.warranty_days} Hari` },
-                                  { label: "Status", value: bastStatus.label },
-                                ],
-                                onDownloadPdf: () => void onDownloadBastPdf(h),
-                                onDownloadWord: () => void onDownloadBastWord(h),
-                              })
-                            }
-                            onEdit={() => setEditRecord({ section: "bast", item: { ...h } })}
-                            onDelete={() =>
-                              setDeleteConfirm({
-                                section: "bast",
-                                ids: [h.id],
-                                label: h.bast_number,
-                              })
-                            }
-                          />
-                        ) : (
-                          <div className="flex justify-center items-center -my-1.5">
-                            <DocumentDownloadMenu
-                              title="Unduh BAST (PDF / Word)"
                               onDownloadPdf={() => onDownloadBastPdf(h)}
                               onDownloadWord={() => onDownloadBastWord(h)}
                             />

@@ -50,7 +50,14 @@ import {
 } from "@/lib/data-service";
 import { runPeriodClosingBook } from "@/lib/operations-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
-import { ACCOUNT_TYPE_LABELS } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
+import {
+  getLocalizedAccountName,
+  getLocalizedAccountDescription,
+  getLocalizedAccountType,
+  getLocalizedNormalBalance,
+  getLocalizedCashFlowCategory,
+} from "@/lib/glossary";
 import type {
   AccountRow,
   AccountSystemTag,
@@ -67,6 +74,7 @@ export interface CoaAccountsPageProps {
 }
 
 export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {}) {
+  const { t, language } = useLanguage();
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [periods, setPeriods] = React.useState<PeriodRow[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -282,10 +290,10 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Setup Akuntansi
+              {t("accounting:coa.title", "Setup Akuntansi")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.
+              {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -296,7 +304,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
             >
               <PlusIcon className="size-4" />
-              <span>Buka Periode Baru</span>
+              <span>{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
             </Button>
             <Button
               type="button"
@@ -304,7 +312,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
             >
               <PlusIcon className="size-4" />
-              <span>Tambah Akun Baru</span>
+              <span>{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
             </Button>
           </div>
         </div>
@@ -312,10 +320,10 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Setup Akuntansi
+              {t("accounting:coa.title", "Setup Akuntansi")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.
+              {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -326,7 +334,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
             >
               <PlusIcon className="size-4" />
-              <span>Buka Periode Baru</span>
+              <span>{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
             </Button>
             <Button
               type="button"
@@ -334,7 +342,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
             >
               <PlusIcon className="size-4" />
-              <span>Tambah Akun Baru</span>
+              <span>{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
             </Button>
           </div>
         </div>
@@ -353,31 +361,31 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Daftar Bagan Akun</CardTitle>
+            <CardTitle>{t("accounting:coa.card_coa_title", "Daftar Bagan Akun")}</CardTitle>
             <CardDescription>
-              Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.
+              {t("accounting:coa.card_coa_desc", "Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Input
-              placeholder="Cari kode atau nama akun..."
+              placeholder={t("accounting:coa.search_placeholder", "Cari kode atau nama akun...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-56 sm:w-64 h-9 rounded-xl bg-background"
             />
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
-                <SelectValue placeholder="Semua tipe akun" />
+                <SelectValue placeholder={t("accounting:coa.all_types", "Semua Tipe Akun")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">Semua Tipe Akun</SelectItem>
-                  <SelectItem value="asset">Aset</SelectItem>
-                  <SelectItem value="contra_asset">Kontra-Aset</SelectItem>
-                  <SelectItem value="liability">Liabilitas</SelectItem>
-                  <SelectItem value="equity">Ekuitas</SelectItem>
-                  <SelectItem value="revenue">Pendapatan</SelectItem>
-                  <SelectItem value="expense">Beban</SelectItem>
+                  <SelectItem value="all">{t("accounting:coa.all_types", "Semua Tipe Akun")}</SelectItem>
+                  <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
+                  <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
+                  <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
+                  <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
+                  <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
+                  <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -387,14 +395,14 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32 pl-6">Kode</TableHead>
-                <TableHead>Nama Akun</TableHead>
-                <TableHead className="w-36">Tipe Akun</TableHead>
-                <TableHead className="w-28 text-center">Saldo Normal</TableHead>
-                <TableHead className="w-28 text-center">Kategori Arus Kas</TableHead>
-                <TableHead className="w-24 text-center">Postable</TableHead>
-                <TableHead className="w-28 text-center">Status</TableHead>
-                <TableHead className="w-24 text-center pr-6">Aksi</TableHead>
+                <TableHead className="w-32 pl-6">{t("accounting:coa.col_code", "Kode")}</TableHead>
+                <TableHead>{t("accounting:coa.col_name", "Nama Akun")}</TableHead>
+                <TableHead className="w-36">{t("accounting:coa.col_type", "Tipe Akun")}</TableHead>
+                <TableHead className="w-28 text-center">{t("accounting:coa.col_balance", "Saldo Normal")}</TableHead>
+                <TableHead className="w-28 text-center">{t("accounting:coa.col_cash_flow", "Kategori Arus Kas")}</TableHead>
+                <TableHead className="w-24 text-center">{t("accounting:coa.col_postable", "Postable")}</TableHead>
+                <TableHead className="w-28 text-center">{t("accounting:coa.col_status", "Status")}</TableHead>
+                <TableHead className="w-24 text-center pr-6">{t("accounting:coa.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -406,7 +414,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                   >
                     <div className="flex items-center justify-center gap-2">
                       <Spinner />
-                      <span>Memuat bagan akun...</span>
+                      <span>{t("accounting:coa.loading_accounts", "Memuat bagan akun...")}</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -416,7 +424,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                     colSpan={8}
                     className="py-12 text-center text-muted-foreground"
                   >
-                    Tidak ada akun yang sesuai dengan filter.
+                    {t("accounting:coa.empty_accounts", "Tidak ada akun yang sesuai dengan filter.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -426,35 +434,39 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                       {acc.code}
                     </TableCell>
                     <TableCell className="align-top">
-                      <div className="font-medium text-foreground">{acc.name}</div>
+                      <div className="font-medium text-foreground">
+                        {getLocalizedAccountName(acc, language)}
+                      </div>
                       {acc.description && (
                         <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                          {acc.description}
+                          {getLocalizedAccountDescription(acc.code, acc.description, language)}
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground align-top">
-                      {ACCOUNT_TYPE_LABELS[acc.account_type] ?? acc.account_type}
+                      {getLocalizedAccountType(acc.account_type, language)}
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium capitalize align-top">
-                      {acc.normal_balance}
+                    <TableCell className="text-xs text-center font-medium align-top">
+                      {getLocalizedNormalBalance(acc.normal_balance, language)}
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium capitalize align-top">
-                      {acc.cash_flow_category}
+                    <TableCell className="text-xs text-center font-medium align-top">
+                      {getLocalizedCashFlowCategory(acc.cash_flow_category, language)}
                     </TableCell>
                     <TableCell className="text-center align-top">
                       {acc.is_postable ? (
                         <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                          Ya
+                          {t("accounting:coa.postable_yes", "Ya")}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Header</span>
+                        <span className="text-xs text-muted-foreground">
+                          {t("accounting:coa.postable_header", "Header")}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-center align-top">
                       <StatusBadge
                         tone={acc.is_active ? "success" : "secondary"}
-                        label={acc.is_active ? "Aktif" : "Nonaktif"}
+                        label={acc.is_active ? t("accounting:coa.status_active", "Aktif") : t("accounting:coa.status_inactive", "Nonaktif")}
                       />
                     </TableCell>
                     <TableCell className="text-center pr-6 align-top">

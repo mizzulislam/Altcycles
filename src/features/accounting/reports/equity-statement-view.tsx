@@ -13,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { formatCurrency } from "./reports-common";
 
 interface EquityStatementCardProps {
@@ -33,47 +34,61 @@ export function EquityStatementCard({
   modalDisetorBalance,
   totalEndingEquity,
 }: EquityStatementCardProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-2xl border border-border/80 bg-background p-5 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[560px] w-full">
       <div>
         <div className="border-b border-border/60 pb-3 mb-4">
           <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-            Ekuitas Mutasi
+            {t("accounting:reports.equity_badge", "Ekuitas Mutasi")}
           </span>
-          <h2 className="text-lg font-bold text-foreground mt-0.5">Perubahan Ekuitas</h2>
-          <p className="text-xs text-muted-foreground mt-1">Mutasi laba ditahan dan modal selama periode berjalan</p>
+          <h2 className="text-lg font-bold text-foreground mt-0.5">
+            {t("accounting:reports.equity_title", "Perubahan Ekuitas")}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("accounting:reports.equity_subtitle", "Mutasi laba ditahan dan modal selama periode berjalan")}
+          </p>
         </div>
 
         <div className="space-y-4">
           <div className="text-foreground font-bold text-xs uppercase tracking-wider mb-2 pl-1">
-            Laba Ditahan (Retained Earnings)
+            {t("accounting:reports.retained_earnings_sec", "Laba Ditahan (Retained Earnings)")}
           </div>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-              <span className="text-muted-foreground font-medium">Saldo Laba Ditahan Awal</span>
+              <span className="text-muted-foreground font-medium">
+                {t("accounting:reports.beginning_retained_earnings", "Saldo Laba Ditahan Awal")}
+              </span>
               {formatCurrency(beginningRetainedEarnings)}
             </div>
             <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-              <span className="text-muted-foreground font-medium">Ditambah: Laba Bersih Periode Ini</span>
+              <span className="text-muted-foreground font-medium">
+                {t("accounting:reports.add_net_income", "Ditambah: Laba Bersih Periode Ini")}
+              </span>
               <span>{formatCurrency(netProfit, false, "text-xs font-bold text-primary dark:text-cyan-400")}</span>
             </div>
             <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-              <span className="text-muted-foreground font-medium">Dikurangi: Prive Pemilik (Dividen)</span>
+              <span className="text-muted-foreground font-medium">
+                {t("accounting:reports.less_dividends", "Dikurangi: Prive Pemilik (Dividen)")}
+              </span>
               {formatCurrency(dividends, true)}
             </div>
             <div className="flex justify-between items-center py-1.5 pl-1 font-bold text-foreground border-t border-border/70 mt-1">
-              <span>Laba Ditahan Akhir</span>
+              <span>{t("accounting:reports.ending_retained_earnings", "Laba Ditahan Akhir")}</span>
               <span>{formatCurrency(endingRetainedEarnings)}</span>
             </div>
           </div>
 
           <div className="pt-2">
             <div className="text-foreground font-bold text-xs uppercase tracking-wider mb-2 pl-1">
-              Modal Disetor Pemilik
+              {t("accounting:reports.paid_in_capital_sec", "Modal Disetor Pemilik")}
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                <span className="text-muted-foreground font-medium">Modal Disetor Altvira</span>
+                <span className="text-muted-foreground font-medium">
+                  {t("accounting:reports.paid_in_capital_altvira", "Modal Disetor Altvira")}
+                </span>
                 {formatCurrency(modalDisetorBalance)}
               </div>
             </div>
@@ -82,7 +97,9 @@ export function EquityStatementCard({
       </div>
 
       <div className="mt-6 flex justify-between items-center py-2.5 pl-1 border-t border-b-2 border-border/80 text-foreground">
-        <span className="font-bold text-xs uppercase tracking-wide">Total Ekuitas Akhir</span>
+        <span className="font-bold text-xs uppercase tracking-wide">
+          {t("accounting:reports.total_ending_equity", "Total Ekuitas Akhir")}
+        </span>
         <span>
           {formatCurrency(totalEndingEquity, false, "text-xs font-bold text-primary dark:text-cyan-400")}
         </span>
@@ -112,17 +129,22 @@ export function EquityStatementView({
   modalDisetorBalance,
   totalEndingEquity,
 }: EquityStatementViewProps) {
+  const { t, language } = useLanguage();
+
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
         <div className="space-y-1 min-w-0">
           <CardTitle className="text-lg font-bold text-foreground">
-            Laporan Perubahan Ekuitas per {formatDateID(endDate)}
+            {t("accounting:reports.equity_report_as_of", {
+              date: formatDateI18n(endDate, language),
+              defaultValue: `Laporan Perubahan Ekuitas per ${formatDateI18n(endDate, language)}`,
+            })}
           </CardTitle>
           <CardDescription>
-            Menyajikan mutasi laba ditahan dan saldo modal disetor selama periode{" "}
+            {t("accounting:reports.equity_report_desc", "Menyajikan mutasi laba ditahan dan saldo modal disetor selama periode")}{" "}
             <span className="font-semibold text-foreground">
-              {formatDateID(startDate)} &minus; {formatDateID(endDate)}
+              {formatDateI18n(startDate, language)} &minus; {formatDateI18n(endDate, language)}
             </span>
             .
           </CardDescription>
@@ -133,19 +155,23 @@ export function EquityStatementView({
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead className="text-center font-semibold text-xs sm:text-sm">Komponen Ekuitas</TableHead>
-                <TableHead className="w-56 text-center font-semibold text-xs sm:text-sm">Nominal</TableHead>
+                <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                  {t("accounting:reports.equity_component", "Komponen Ekuitas")}
+                </TableHead>
+                <TableHead className="w-56 text-center font-semibold text-xs sm:text-sm">
+                  {t("accounting:reports.amount", "Nominal")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow className="bg-muted/20 font-bold border-t border-border/80">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground">
-                  Akumulasi Laba Ditahan (Retained Earnings)
+                  {t("accounting:reports.retained_earnings_sec", "Akumulasi Laba Ditahan (Retained Earnings)")}
                 </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="px-6 text-xs text-foreground pl-8">
-                  Saldo Laba Ditahan Awal Periode
+                  {t("accounting:reports.beginning_retained_earnings_full", "Saldo Laba Ditahan Awal Periode")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                   {formatRupiah(beginningRetainedEarnings)}
@@ -153,7 +179,7 @@ export function EquityStatementView({
               </TableRow>
               <TableRow>
                 <TableCell className="px-6 text-xs text-foreground pl-8">
-                  Ditambah: Laba Bersih Periode Berjalan (dari Laba Rugi)
+                  {t("accounting:reports.add_net_income_full", "Ditambah: Laba Bersih Periode Berjalan (dari Laba Rugi)")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-semibold text-primary dark:text-cyan-400">
                   {formatRupiah(netProfit)}
@@ -161,7 +187,7 @@ export function EquityStatementView({
               </TableRow>
               <TableRow>
                 <TableCell className="px-6 text-xs text-foreground pl-8">
-                  Dikurangi: Prive Pemilik / Dividen
+                  {t("accounting:reports.less_dividends_full", "Dikurangi: Prive Pemilik / Dividen")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs text-foreground">
                   ({formatRupiah(dividends)})
@@ -169,7 +195,7 @@ export function EquityStatementView({
               </TableRow>
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground">
-                  Saldo Laba Ditahan Akhir Periode
+                  {t("accounting:reports.ending_retained_earnings_full", "Saldo Laba Ditahan Akhir Periode")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatRupiah(endingRetainedEarnings)}
@@ -178,12 +204,12 @@ export function EquityStatementView({
 
               <TableRow className="bg-muted/20 font-bold border-t-2 border-border/80">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground">
-                  Modal Disetor Pemilik
+                  {t("accounting:reports.paid_in_capital_sec", "Modal Disetor Pemilik")}
                 </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="px-6 text-xs text-foreground pl-8">
-                  Modal Disetor Altvira
+                  {t("accounting:reports.paid_in_capital_altvira", "Modal Disetor Altvira")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                   {formatRupiah(modalDisetorBalance)}
@@ -192,7 +218,7 @@ export function EquityStatementView({
 
               <TableRow className="bg-muted/50 font-bold border-t-2 border-b-4 border-double border-border/90">
                 <TableCell className="px-6 text-xs font-bold text-foreground">
-                  TOTAL EKUITAS AKHIR PERIODE
+                  {t("accounting:reports.total_ending_equity_full", "TOTAL EKUITAS AKHIR PERIODE")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
                   {formatRupiah(totalEndingEquity)}

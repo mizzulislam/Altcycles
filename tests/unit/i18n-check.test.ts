@@ -77,5 +77,86 @@ describe("i18n navigation and layout checks", () => {
     expect(Object.keys(commonId).sort()).toEqual(Object.keys(commonEn).sort());
     expect(Object.keys(projectsId).sort()).toEqual(Object.keys(projectsEn).sort());
     expect(Object.keys(invoicingId).sort()).toEqual(Object.keys(invoicingEn).sort());
+
+    const accountingId = (await import("@/locales/id/accounting.json")).default;
+    const accountingEn = (await import("@/locales/en/accounting.json")).default;
+
+    function getDeepKeys(obj: Record<string, any>, prefix = ""): string[] {
+      return Object.keys(obj).reduce((res: string[], el: string) => {
+        if (typeof obj[el] === "object" && obj[el] !== null && !Array.isArray(obj[el])) {
+          return [...res, ...getDeepKeys(obj[el], prefix + el + ".")];
+        }
+        return [...res, prefix + el];
+      }, []);
+    }
+
+    const idKeys = getDeepKeys(accountingId).sort();
+    const enKeys = getDeepKeys(accountingEn).sort();
+
+    expect(idKeys).toEqual(enKeys);
+    expect(idKeys.length).toBeGreaterThan(50);
+
+    // Ensure no empty translation values
+    for (const key of idKeys) {
+      const parts = key.split(".");
+      let valId: any = accountingId;
+      let valEn: any = accountingEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("translates accounting glossary and dynamic data accurately", async () => {
+    const {
+      getLocalizedAccountName,
+      getLocalizedCashFlowCategory,
+      getLocalizedAccountType,
+      getLocalizedNormalBalance,
+      getLocalizedPeriodName,
+      getLocalizedPeriodStatus,
+    } = await import("@/lib/glossary");
+
+    // Standard CoA
+    expect(getLocalizedAccountName({ code: "1-1101", name: "Kas Kecil" }, "en")).toBe("Petty Cash");
+    expect(getLocalizedAccountName({ code: "1-1101", name: "Kas Kecil" }, "id")).toBe("Kas Kecil");
+
+    // Suffix preservation for customer/client sub-accounts
+    expect(
+      getLocalizedAccountName({ code: "1-1202", name: "Piutang Usaha - TIM Travel RMM" }, "en")
+    ).toBe("Accounts Receivable - TIM Travel RMM");
+    expect(
+      getLocalizedAccountName({ code: "2-1402", name: "Pendapatan Diterima di Muka - Development" }, "en")
+    ).toBe("Unearned Revenue - Development");
+
+    // Cash flow categories (fixing raw enum Cash_equivalent / Operating bug)
+    expect(getLocalizedCashFlowCategory("cash_equivalent", "en")).toBe("Cash & Cash Equivalent");
+    expect(getLocalizedCashFlowCategory("cash_equivalent", "id")).toBe("Setara Kas");
+    expect(getLocalizedCashFlowCategory("operating", "en")).toBe("Operating Activities");
+    expect(getLocalizedCashFlowCategory("operating", "id")).toBe("Aktivitas Operasi");
+
+    // Account types
+    expect(getLocalizedAccountType("asset", "en")).toBe("Asset");
+    expect(getLocalizedAccountType("asset", "id")).toBe("Aset");
+    expect(getLocalizedAccountType("liability", "en")).toBe("Liability");
+    expect(getLocalizedAccountType("liability", "id")).toBe("Liabilitas");
+
+    // Normal balance
+    expect(getLocalizedNormalBalance("debit", "en")).toBe("Debit");
+    expect(getLocalizedNormalBalance("credit", "en")).toBe("Credit");
+    expect(getLocalizedNormalBalance("credit", "id")).toBe("Kredit");
+
+    // Periods
+    expect(getLocalizedPeriodName("Agustus 2026", "en")).toBe("August 2026");
+    expect(getLocalizedPeriodName("Agustus 2026", "id")).toBe("Agustus 2026");
+    expect(getLocalizedPeriodStatus("open", "en")).toBe("Open Period");
+    expect(getLocalizedPeriodStatus("open", "id")).toBe("Periode Terbuka");
+    expect(getLocalizedPeriodStatus("closed", "en")).toBe("Closed Period");
+    expect(getLocalizedPeriodStatus("closed", "id")).toBe("Periode Ditutup");
   });
 });

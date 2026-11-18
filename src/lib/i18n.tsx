@@ -8,6 +8,8 @@ import projectsId from "@/locales/id/projects.json";
 import projectsEn from "@/locales/en/projects.json";
 import invoicingId from "@/locales/id/invoicing.json";
 import invoicingEn from "@/locales/en/invoicing.json";
+import accountingId from "@/locales/id/accounting.json";
+import accountingEn from "@/locales/en/accounting.json";
 
 export type Language = "id" | "en";
 
@@ -38,11 +40,13 @@ if (!i18n.isInitialized) {
         common: commonId,
         projects: projectsId,
         invoicing: invoicingId,
+        accounting: accountingId,
       },
       en: {
         common: commonEn,
         projects: projectsEn,
         invoicing: invoicingEn,
+        accounting: accountingEn,
       },
     },
     lng: getActiveLanguage(),
@@ -1034,7 +1038,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       // Normalisasi namespace: ubah "projects.milestones" -> "projects:milestones" jika diawali nama namespace
       let normalizedKey = key;
-      const knownNamespaces = ["common", "projects", "invoicing"];
+      const knownNamespaces = ["common", "projects", "invoicing", "accounting"];
       if (!normalizedKey.includes(":")) {
         for (const ns of knownNamespaces) {
           if (normalizedKey.startsWith(`${ns}.`)) {
@@ -1106,7 +1110,7 @@ export function useLanguage(): LanguageContextValue {
         const callOpts: TOptions = { lng: lang, ...opts };
 
         let normalizedKey = key;
-        const knownNamespaces = ["common", "projects", "invoicing"];
+        const knownNamespaces = ["common", "projects", "invoicing", "accounting"];
         if (!normalizedKey.includes(":")) {
           for (const ns of knownNamespaces) {
             if (normalizedKey.startsWith(`${ns}.`)) {

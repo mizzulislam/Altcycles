@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { EmptyState } from "@/components/ui/empty";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah, formatDateI18n } from "@/lib/formatters";
+import { formatRupiah, formatDateI18n } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import {
   buildClientPoPdfSpec,
@@ -33,8 +33,6 @@ import {
 } from "@/lib/word-generator";
 import { recordExportLog } from "@/lib/operations-service";
 import {
-  CPO_STATUS_META,
-  QUOTATION_STATUS_META,
   RowEditActionButtons,
   SectionEditControls,
   getQuotationStatusMeta,

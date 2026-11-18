@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
+import { getLocalizedAccountName } from "@/lib/glossary";
 import { formatBalanceAmount, formatCurrency } from "./reports-common";
 
 export interface BalanceSheetData {
@@ -57,16 +59,22 @@ export function BalanceSheetCard({
   endingRetainedEarnings,
   totalEndingEquity,
 }: BalanceSheetCardProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="rounded-2xl border border-border/80 bg-background p-5 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[560px] w-full">
       <div>
         <div className="border-b border-border/60 pb-3 mb-4 flex justify-between items-start">
           <div>
             <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-              Posisi Keuangan
+              {language === "en" ? "Financial Position" : "Posisi Keuangan"}
             </span>
-            <h2 className="text-lg font-bold text-foreground mt-0.5">Neraca (Balance Sheet)</h2>
-            <p className="text-xs text-muted-foreground mt-1">Ringkasan aset, kewajiban, dan ekuitas Altcycles</p>
+            <h2 className="text-lg font-bold text-foreground mt-0.5">
+              {t("accounting:reports.tab_balance_sheet", "Posisi Keuangan (Neraca)")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === "en" ? "Summary of Altcycles assets, liabilities, and equity" : "Ringkasan aset, kewajiban, dan ekuitas Altcycles"}
+            </p>
           </div>
           <ScaleIcon className="size-5 text-muted-foreground mt-1" />
         </div>
@@ -74,21 +82,25 @@ export function BalanceSheetCard({
         <div className="space-y-4 text-xs">
           <div>
             <div className="text-foreground font-bold text-xs uppercase tracking-wider mb-2 pl-1">
-              ASET (HARTA)
+              {language === "en" ? "ASSETS" : "ASET (HARTA)"}
             </div>
             <div className="space-y-1">
               <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                <span className="text-muted-foreground font-medium">Aset Lancar (Kas &amp; Piutang)</span>
+                <span className="text-muted-foreground font-medium">
+                  {language === "en" ? "Current Assets (Cash & Receivables)" : "Aset Lancar (Kas & Piutang)"}
+                </span>
                 {formatCurrency(balanceSheet.assets.reduce((s, a) => s + a.amount, 0))}
               </div>
               {balanceSheet.contractAssets.length > 0 && (
                 <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                  <span className="text-muted-foreground font-medium">Aset Kontrak (WIP &gt; Tagihan)</span>
+                  <span className="text-muted-foreground font-medium">
+                    {language === "en" ? "Contract Assets (WIP > Billings)" : "Aset Kontrak (WIP > Tagihan)"}
+                  </span>
                   {formatCurrency(balanceSheet.contractAssets.reduce((s, a) => s + a.netContractPosition, 0))}
                 </div>
               )}
               <div className="flex justify-between items-center py-1.5 pl-1 font-bold text-foreground border-t border-border/70 mt-1">
-                <span>TOTAL ASET</span>
+                <span>{t("accounting:reports.total_assets", "TOTAL ASET")}</span>
                 <span>{formatCurrency(balanceSheet.totalAssets, false, "text-xs font-bold text-foreground")}</span>
               </div>
             </div>
@@ -96,21 +108,25 @@ export function BalanceSheetCard({
 
           <div>
             <div className="text-foreground font-bold text-xs uppercase tracking-wider mb-2 pl-1">
-              KEWAJIBAN (HUTANG)
+              {language === "en" ? "LIABILITIES" : "KEWAJIBAN (HUTANG)"}
             </div>
             <div className="space-y-1">
               <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                <span className="text-muted-foreground font-medium">Kewajiban Berjalan &amp; Pajak</span>
+                <span className="text-muted-foreground font-medium">
+                  {language === "en" ? "Current Liabilities & Taxes" : "Kewajiban Berjalan & Pajak"}
+                </span>
                 {formatCurrency(balanceSheet.liabilities.reduce((s, l) => s + l.amount, 0))}
               </div>
               {balanceSheet.contractLiabilities.length > 0 && (
                 <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                  <span className="text-muted-foreground font-medium">Liabilitas Kontrak (Tagihan &gt; WIP)</span>
+                  <span className="text-muted-foreground font-medium">
+                    {language === "en" ? "Contract Liabilities (Billings > WIP)" : "Liabilitas Kontrak (Tagihan > WIP)"}
+                  </span>
                   {formatCurrency(balanceSheet.contractLiabilities.reduce((s, l) => s + Math.abs(l.netContractPosition), 0))}
                 </div>
               )}
               <div className="flex justify-between items-center py-1.5 pl-1 font-bold text-foreground border-t border-border/70 mt-1">
-                <span>Total Kewajiban</span>
+                <span>{t("accounting:reports.total_liabilities", "Total Kewajiban")}</span>
                 <span>
                   {formatCurrency(
                     balanceSheet.liabilities.reduce((s, l) => s + l.amount, 0) +
@@ -126,19 +142,23 @@ export function BalanceSheetCard({
 
           <div>
             <div className="text-foreground font-bold text-xs uppercase tracking-wider mb-2 pl-1">
-              MODAL (EKUITAS)
+              {language === "en" ? "EQUITY" : "MODAL (EKUITAS)"}
             </div>
             <div className="space-y-1">
               <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                <span className="text-muted-foreground font-medium">Modal Disetor &amp; Ekuitas</span>
+                <span className="text-muted-foreground font-medium">
+                  {language === "en" ? "Paid-in Capital & Equity" : "Modal Disetor & Ekuitas"}
+                </span>
                 {formatCurrency(modalDisetorBalance)}
               </div>
               <div className="flex justify-between items-center py-1 pl-1 border-b border-border/40">
-                <span className="text-muted-foreground font-medium">Laba Ditahan Akhir</span>
+                <span className="text-muted-foreground font-medium">
+                  {language === "en" ? "Ending Retained Earnings" : "Laba Ditahan Akhir"}
+                </span>
                 {formatCurrency(endingRetainedEarnings)}
               </div>
               <div className="flex justify-between items-center py-1.5 pl-1 font-bold text-foreground border-t border-border/70 mt-1">
-                <span>Total Ekuitas</span>
+                <span>{t("accounting:reports.total_equity", "Total Ekuitas")}</span>
                 <span>{formatCurrency(totalEndingEquity)}</span>
               </div>
             </div>
@@ -147,7 +167,9 @@ export function BalanceSheetCard({
       </div>
 
       <div className="mt-6 flex justify-between items-center py-2.5 pl-1 border-t border-b-2 border-border/80 text-foreground font-bold text-xs">
-        <span className="uppercase tracking-wide">Total Kewajiban &amp; Modal</span>
+        <span className="uppercase tracking-wide">
+          {language === "en" ? "Total Liabilities & Equity" : "Total Kewajiban & Modal"}
+        </span>
         <span>
           {formatCurrency(balanceSheet.totalLiabilitiesAndEquity, false, "text-xs font-bold text-foreground")}
         </span>
@@ -162,6 +184,7 @@ interface BalanceSheetViewProps {
 }
 
 export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProps) {
+  const { t, language } = useLanguage();
   const currentAssets = balanceSheet.assets.filter(
     (a) => a.code.startsWith("1-1") || a.code.startsWith("1-2"),
   );
@@ -199,10 +222,13 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
         <div className="space-y-1 min-w-0">
           <CardTitle className="text-lg font-bold text-foreground">
-            Laporan Posisi Keuangan (Neraca) per {formatDateID(endDate)}
+            {language === "en" ? "Statement of Financial Position (Balance Sheet) as of " : "Laporan Posisi Keuangan (Neraca) per "}
+            {formatDateI18n(endDate, language)}
           </CardTitle>
           <CardDescription>
-            Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual.
+            {language === "en"
+              ? "Presents accrual-basis Assets, Liabilities, Equity, and project Contract Assets/Liabilities."
+              : "Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual."}
           </CardDescription>
         </div>
         <div className="flex items-center gap-3">
@@ -210,8 +236,8 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
             tone={balanceSheet.isBalanced ? "success" : "destructive"}
             label={
               balanceSheet.isBalanced
-                ? "Neraca Seimbang"
-                : "Selisih Neraca"
+                ? (language === "en" ? "Balance Sheet Balanced" : "Neraca Seimbang")
+                : (language === "en" ? "Balance Sheet Difference" : "Selisih Neraca")
             }
           />
         </div>
@@ -222,10 +248,10 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
             <TableHeader className="bg-muted/30">
               <TableRow>
                 <TableHead className="text-center px-6 font-semibold text-xs text-foreground/80">
-                  Komponen / Akun
+                  {language === "en" ? "Component / Account" : "Komponen / Akun"}
                 </TableHead>
                 <TableHead className="w-56 text-center pr-6 font-semibold text-xs text-foreground/80">
-                  Nominal
+                  {language === "en" ? "Amount" : "Nominal"}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -233,18 +259,18 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               {/* ASET */}
               <TableRow className="bg-muted/30 font-bold border-t border-border/80">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
-                  ASET (HARTA)
+                  {language === "en" ? "ASSETS" : "ASET (HARTA)"}
                 </TableCell>
               </TableRow>
               <TableRow className="bg-muted/10 font-bold">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
-                  ASET LANCAR
+                  {language === "en" ? "CURRENT ASSETS" : "ASET LANCAR"}
                 </TableCell>
               </TableRow>
               {currentAssets.length === 0 && balanceSheet.contractAssets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
-                    Belum ada aset lancar pada periode ini.
+                    {language === "en" ? "No current assets in this period." : "Belum ada aset lancar pada periode ini."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -252,7 +278,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                   {currentAssets.map((a) => (
                     <TableRow key={a.code}>
                       <TableCell className="px-6 text-xs text-foreground pl-12">
-                        {a.name}
+                        {getLocalizedAccountName(a, language)}
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                         {formatBalanceAmount(a.amount)}
@@ -263,10 +289,12 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                     <TableRow key={ca.projectId} className="bg-primary/5">
                       <TableCell className="px-6 text-xs pl-12">
                         <div className="font-semibold text-foreground">
-                          Aset Kontrak: {ca.projectName}
+                          {language === "en" ? "Contract Asset: " : "Aset Kontrak: "}
+                          {ca.projectName}
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
-                          WIP {formatRupiah(ca.wipBalance)} &minus; Penagihan {formatRupiah(ca.billingsBalance)}
+                          WIP {formatRupiah(ca.wipBalance)} &minus; {language === "en" ? "Billings " : "Penagihan "}
+                          {formatRupiah(ca.billingsBalance)}
                         </div>
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
@@ -278,7 +306,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               )}
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
-                  Total Aset Lancar
+                  {language === "en" ? "Total Current Assets" : "Total Aset Lancar"}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalCurrentAssets)}
@@ -287,20 +315,20 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
 
               <TableRow className="bg-muted/10 font-bold border-t border-border/70">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
-                  ASET TETAP
+                  {language === "en" ? "NON-CURRENT ASSETS" : "ASET TETAP"}
                 </TableCell>
               </TableRow>
               {fixedAssets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
-                    Tidak ada aset tetap
+                    {language === "en" ? "No non-current assets" : "Tidak ada aset tetap"}
                   </TableCell>
                 </TableRow>
               ) : (
                 fixedAssets.map((a) => (
                   <TableRow key={a.code}>
                     <TableCell className="px-6 text-xs text-foreground pl-12">
-                      {a.name}
+                      {getLocalizedAccountName(a, language)}
                     </TableCell>
                     <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                       {formatBalanceAmount(a.amount)}
@@ -310,7 +338,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               )}
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
-                  Total Aset Tetap (Net)
+                  {language === "en" ? "Total Non-Current Assets (Net)" : "Total Aset Tetap (Net)"}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalFixedAssets)}
@@ -319,7 +347,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
 
               <TableRow className="bg-muted/40 font-bold border-t-2 border-b-2 border-border/80">
                 <TableCell className="px-6 text-xs font-bold text-foreground uppercase tracking-wide">
-                  TOTAL ASET
+                  {t("accounting:reports.total_assets", "TOTAL ASET")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
                   {formatBalanceAmount(balanceSheet.totalAssets)}
@@ -329,18 +357,18 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               {/* LIABILITAS */}
               <TableRow className="bg-muted/30 font-bold border-t-2 border-border/80">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
-                  LIABILITAS (KEWAJIBAN)
+                  {language === "en" ? "LIABILITIES" : "LIABILITAS (KEWAJIBAN)"}
                 </TableCell>
               </TableRow>
               <TableRow className="bg-muted/10 font-bold">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
-                  LIABILITAS JANGKA PENDEK
+                  {language === "en" ? "CURRENT LIABILITIES" : "LIABILITAS JANGKA PENDEK"}
                 </TableCell>
               </TableRow>
               {currentLiabilities.length === 0 && balanceSheet.contractLiabilities.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
-                    Belum ada liabilitas jangka pendek pada periode ini.
+                    {language === "en" ? "No current liabilities in this period." : "Belum ada liabilitas jangka pendek pada periode ini."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -348,7 +376,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                   {currentLiabilities.map((l) => (
                     <TableRow key={l.code}>
                       <TableCell className="px-6 text-xs text-foreground pl-12">
-                        {l.name}
+                        {getLocalizedAccountName(l, language)}
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                         {formatBalanceAmount(l.amount)}
@@ -359,10 +387,12 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                     <TableRow key={cl.projectId} className="bg-primary/5">
                       <TableCell className="px-6 text-xs pl-12">
                         <div className="font-semibold text-foreground">
-                          Liabilitas Kontrak: {cl.projectName}
+                          {language === "en" ? "Contract Liability: " : "Liabilitas Kontrak: "}
+                          {cl.projectName}
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
-                          Penagihan {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
+                          {language === "en" ? "Billings " : "Penagihan "}
+                          {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
                         </div>
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
@@ -374,7 +404,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               )}
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
-                  Total Liabilitas Jangka Pendek
+                  {language === "en" ? "Total Current Liabilities" : "Total Liabilitas Jangka Pendek"}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalCurrentLiabilities)}
@@ -383,20 +413,20 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
 
               <TableRow className="bg-muted/10 font-bold border-t border-border/70">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground pl-8 font-bold">
-                  LIABILITAS JANGKA PANJANG
+                  {language === "en" ? "LONG-TERM LIABILITIES" : "LIABILITAS JANGKA PANJANG"}
                 </TableCell>
               </TableRow>
               {longTermLiabilities.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
-                    Tidak ada liabilitas jangka panjang
+                    {language === "en" ? "No long-term liabilities" : "Tidak ada liabilitas jangka panjang"}
                   </TableCell>
                 </TableRow>
               ) : (
                 longTermLiabilities.map((l) => (
                   <TableRow key={l.code}>
                     <TableCell className="px-6 text-xs text-foreground pl-12">
-                      {l.name}
+                      {getLocalizedAccountName(l, language)}
                     </TableCell>
                     <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                       {formatBalanceAmount(l.amount)}
@@ -406,7 +436,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               )}
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
-                  Total Liabilitas Jangka Panjang
+                  {language === "en" ? "Total Long-Term Liabilities" : "Total Liabilitas Jangka Panjang"}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalLongTermLiabilities)}
@@ -415,7 +445,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
 
               <TableRow className="bg-muted/25 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs font-bold text-foreground pl-8">
-                  Total Liabilitas
+                  {t("accounting:reports.total_liabilities", "Total Liabilitas")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalLiabilities)}
@@ -425,13 +455,13 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               {/* EKUITAS */}
               <TableRow className="bg-muted/30 font-bold border-t-2 border-border/80">
                 <TableCell colSpan={2} className="px-6 text-xs text-foreground font-bold uppercase tracking-wider">
-                  EKUITAS (MODAL)
+                  {language === "en" ? "EQUITY" : "EKUITAS (MODAL)"}
                 </TableCell>
               </TableRow>
               {balanceSheet.equities.length === 0 && balanceSheet.currentUnclosedEarnings === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} className="px-6 text-xs text-muted-foreground italic pl-12">
-                    Belum ada akun ekuitas pada periode ini.
+                    {language === "en" ? "No equity accounts in this period." : "Belum ada akun ekuitas pada periode ini."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -439,7 +469,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                   {balanceSheet.equities.map((eq) => (
                     <TableRow key={eq.code}>
                       <TableCell className="px-6 text-xs text-foreground pl-12">
-                        {eq.name}
+                        {getLocalizedAccountName(eq, language)}
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                         {formatBalanceAmount(eq.amount)}
@@ -449,7 +479,9 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                   {balanceSheet.currentUnclosedEarnings !== 0 ? (
                     <TableRow>
                       <TableCell className="px-6 text-xs italic text-muted-foreground pl-12">
-                        Laba (Rugi) Periode Berjalan (Belum Ditutup)
+                        {language === "en"
+                          ? "Current Period Unclosed Net Income (Loss)"
+                          : "Laba (Rugi) Periode Berjalan (Belum Ditutup)"}
                       </TableCell>
                       <TableCell className="pr-6 text-right text-xs font-medium text-foreground">
                         {formatBalanceAmount(balanceSheet.currentUnclosedEarnings)}
@@ -460,7 +492,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               )}
               <TableRow className="bg-muted/20 font-bold border-t border-border/70">
                 <TableCell className="px-6 text-xs text-foreground pl-8 font-bold">
-                  Total Ekuitas
+                  {t("accounting:reports.total_equity", "Total Ekuitas")}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-foreground">
                   {formatBalanceAmount(totalEquity)}
@@ -470,7 +502,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
               {/* TOTAL LIABILITAS & EKUITAS */}
               <TableRow className="bg-muted/50 font-bold border-t-2 border-b-4 border-double border-border/90">
                 <TableCell className="px-6 text-xs font-bold text-foreground uppercase tracking-wide">
-                  TOTAL LIABILITAS DAN EKUITAS
+                  {language === "en" ? "TOTAL LIABILITIES AND EQUITY" : "TOTAL LIABILITAS DAN EKUITAS"}
                 </TableCell>
                 <TableCell className="pr-6 text-right text-xs font-bold text-primary dark:text-cyan-400">
                   {formatBalanceAmount(balanceSheet.totalLiabilitiesAndEquity)}

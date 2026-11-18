@@ -372,7 +372,7 @@ export function AccountingReportsPage({
     return (
       <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
         <Spinner />
-        <span>Menyusun laporan keuangan berbasis akrual...</span>
+        <span>{t("accounting:reports.loading", "Menyusun laporan keuangan berbasis akrual...")}</span>
       </div>
     );
   }
@@ -383,18 +383,18 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0 max-w-xl">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("reports.accrual_title", "Laporan Keuangan Akrual")}
+              {t("accounting:reports.accrual_title", "Laporan Keuangan Akrual")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
               {t(
-                "reports.accrual_subtitle",
+                "accounting:reports.accrual_subtitle",
                 "Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.",
               )}
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
             <ExportDownloadMenu
-              label={t("action.download", "Unduh / Ekspor")}
+              label={t("common:action.download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
@@ -407,18 +407,18 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {t("reports.title", "Laporan Keuangan")}
+              {t("accounting:reports.title", "Laporan Keuangan")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
               {t(
-                "reports.subtitle",
-                "Laporan Laba/Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas.",
+                "accounting:reports.subtitle",
+                "Laporan kinerja laba rugi, posisi keuangan, neraca saldo, dan arus kas.",
               )}
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
             <ExportDownloadMenu
-              label={t("action.download", "Unduh / Ekspor")}
+              label={t("common:action.download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
@@ -436,10 +436,10 @@ export function AccountingReportsPage({
                 <div className="flex items-center gap-1.5 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
                   <div className="flex items-center gap-1 px-1">
                     {[
-                      { label: t("reports.tab_income", "Laba Rugi"), value: "laba_rugi" },
-                      { label: t("reports.tab_equity", "Perubahan Ekuitas"), value: "ekuitas" },
-                      { label: t("reports.tab_balance", "Neraca"), value: "neraca" },
-                      { label: t("reports.tab_cashflow", "Arus Kas"), value: "arus_kas" },
+                      { label: t("accounting:reports.tab_income_statement", "Laba Rugi"), value: "laba_rugi" },
+                      { label: t("accounting:reports.tab_equity", "Perubahan Ekuitas"), value: "ekuitas" },
+                      { label: t("accounting:reports.tab_balance_short", "Neraca"), value: "neraca" },
+                      { label: t("accounting:reports.tab_cash_flow", "Arus Kas"), value: "arus_kas" },
                     ].map((tab) => (
                       <button
                         key={tab.value}
@@ -459,7 +459,7 @@ export function AccountingReportsPage({
                 </div>
               ) : (
                 <span className="text-sm font-semibold text-muted-foreground pl-1">
-                  Menampilkan Semua Laporan (4 Dokumen)
+                  {t("accounting:reports.layout_showing_all", "Menampilkan Semua Laporan (4 Dokumen)")}
                 </span>
               )}
             </div>
@@ -477,7 +477,7 @@ export function AccountingReportsPage({
                 )}
               >
                 <LayoutGridIcon className="size-3.5" />
-                <span>Semua Laporan</span>
+                <span>{t("accounting:reports.layout_all", "Semua Laporan")}</span>
               </button>
               <button
                 type="button"
@@ -490,7 +490,7 @@ export function AccountingReportsPage({
                 )}
               >
                 <BookOpenIcon className="size-3.5" />
-                <span>Satu Halaman</span>
+                <span>{t("accounting:reports.layout_single", "Satu Halaman")}</span>
               </button>
             </div>
           </div>
@@ -589,22 +589,22 @@ export function AccountingReportsPage({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-card p-2 rounded-2xl border border-border/80 shadow-2xs">
               <TabsList className="flex h-auto w-auto flex-wrap justify-start gap-1.5 bg-transparent border-0 shadow-none p-0">
                 <TabsTrigger value="laba_rugi" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Laba Rugi
+                  {t("accounting:reports.tab_income_statement", "Laba Rugi")}
                 </TabsTrigger>
                 <TabsTrigger value="ekuitas" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Perubahan Ekuitas
+                  {t("accounting:reports.tab_equity", "Perubahan Ekuitas")}
                 </TabsTrigger>
                 <TabsTrigger value="neraca" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Neraca
+                  {t("accounting:reports.tab_balance_short", "Neraca")}
                 </TabsTrigger>
                 <TabsTrigger value="arus_kas" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Arus Kas
+                  {t("accounting:reports.tab_cash_flow", "Arus Kas")}
                 </TabsTrigger>
                 <TabsTrigger value="neraca_saldo" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Neraca Saldo
+                  {t("accounting:reports.tab_trial_balance", "Neraca Saldo")}
                 </TabsTrigger>
                 <TabsTrigger value="buku_besar" className="rounded-xl px-3.5 py-2 text-xs sm:text-sm font-semibold">
-                  Buku Besar
+                  {t("accounting:reports.tab_general_ledger", "Buku Besar")}
                 </TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-2 self-end sm:self-auto px-2">

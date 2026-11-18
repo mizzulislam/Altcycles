@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { listPeriods, listProjects } from "@/lib/data-service";
-import { formatDateID } from "@/lib/formatters";
+import { formatDateID, formatDateI18n } from "@/lib/formatters";
+import { getLocalizedPeriodName } from "@/lib/glossary";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { PeriodRow, ProjectRow } from "@/types/database.types";
@@ -256,22 +257,8 @@ export function AccountingPage() {
           {ACCOUNTING_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = normalizedTab === tab.id;
-            const translatedLabel =
-              tab.id === "jurnal"
-                ? t("accounting.tab_journals", tab.label)
-                : tab.id === "buku_besar"
-                  ? t("accounting.tab_ledger", tab.label)
-                  : tab.id === "neraca_saldo"
-                    ? t("accounting.tab_trial_balance", tab.label)
-                    : tab.id === "penyesuaian"
-                      ? t("accounting.tab_adjusting", tab.label)
-                      : tab.id === "laporan"
-                        ? t("accounting.tab_reports", tab.label)
-                        : tab.id === "tutup_buku"
-                          ? t("accounting.tab_periods", tab.label)
-                          : tab.id === "coa"
-                            ? t("accounting.tab_coa", tab.label)
-                            : tab.label;
+            const translatedLabel = t(`accounting:tabs.${tab.id}`, tab.label);
+            const translatedDesc = t(`accounting:tabs.${tab.id}_desc`, tab.description);
 
             return (
               <button
@@ -284,7 +271,7 @@ export function AccountingPage() {
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                 )}
-                title={tab.description}
+                title={translatedDesc}
               >
                 <Icon
                   className={cn(
@@ -314,17 +301,19 @@ export function AccountingPage() {
               <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-cyan-400">
                 <CalendarDaysIcon className="size-3.5" />
               </span>
-              <span className="text-muted-foreground text-xs font-normal">Filter:</span>
+              <span className="text-muted-foreground text-xs font-normal">
+                {t("accounting:filter.btn_label", "Filter:")}
+              </span>
               <span className="font-semibold text-foreground truncate">
                 {periodFilter.preset === "all"
-                  ? t("accounting.filter_all_periods", "Semua Periode")
+                  ? t("accounting:filter.all_periods", "Semua Periode")
                   : periodFilter.preset === "this_month"
-                    ? t("accounting.filter_this_month", "Bulan Ini")
+                    ? t("accounting:filter.this_month", "Bulan Ini")
                     : periodFilter.preset === "last_month"
-                      ? t("accounting.filter_last_month", "Bulan Lalu")
+                      ? t("accounting:filter.last_month", "Bulan Lalu")
                       : periodFilter.preset === "this_year"
-                        ? t("accounting.filter_this_year", "Tahun Ini")
-                        : periodFilter.label}
+                        ? t("accounting:filter.this_year", "Tahun Ini")
+                        : getLocalizedPeriodName(periodFilter.label, language)}
               </span>
               {activeExtraFiltersCount > 0 && (
                 <span className="rounded-full bg-primary/15 text-primary dark:text-cyan-400 px-1.5 py-0.5 text-[10px] font-bold">
@@ -339,21 +328,21 @@ export function AccountingPage() {
           <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>{t("accounting.filter_modal_title", "Saring Data Akuntansi & Periode")}</DialogTitle>
+                <DialogTitle>{t("accounting:filter.modal_title", "Saring Data Akuntansi & Periode")}</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6 pt-1 pb-1">
                 {/* 1. Preset Waktu Cepat */}
                 <div className="space-y-2.5">
                   <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                    {t("accounting.filter_quick_preset", "Preset Waktu Cepat")}
+                    {t("accounting:filter.quick_preset", "Preset Waktu Cepat")}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {[
-                      { label: t("accounting.filter_all_periods", "Semua Periode"), value: "all" },
-                      { label: t("accounting.filter_this_month", "Bulan Ini"), value: "this_month" },
-                      { label: t("accounting.filter_last_month", "Bulan Lalu"), value: "last_month" },
-                      { label: t("accounting.filter_this_year", "Tahun Ini"), value: "this_year" },
+                      { label: t("accounting:filter.all_periods", "Semua Periode"), value: "all" },
+                      { label: t("accounting:filter.this_month", "Bulan Ini"), value: "this_month" },
+                      { label: t("accounting:filter.last_month", "Bulan Lalu"), value: "last_month" },
+                      { label: t("accounting:filter.this_year", "Tahun Ini"), value: "this_year" },
                     ].map((item) => (
                       <button
                         key={item.value}
@@ -376,34 +365,34 @@ export function AccountingPage() {
                 <div className="space-y-4 rounded-2xl border border-border/80 bg-card/60 p-5 shadow-2xs">
                   <div className="flex items-center justify-between">
                     <label className="text-xs sm:text-sm font-semibold text-foreground">
-                      {isEn ? "Custom Date Range" : "Kustom Rentang Tanggal"}
+                      {t("accounting:filter.custom_range", "Kustom Rentang Tanggal")}
                     </label>
                     {(customStartDate || customEndDate) && (
                       <span className="text-xs font-semibold text-primary dark:text-cyan-400 bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                        {customStartDate ? formatDateID(customStartDate) : isEn ? "Start" : "Awal"} &minus;{" "}
-                        {customEndDate ? formatDateID(customEndDate) : isEn ? "End" : "Akhir"}
+                        {customStartDate ? formatDateI18n(customStartDate, language) : (isEn ? "Start" : "Awal")} &minus;{" "}
+                        {customEndDate ? formatDateI18n(customEndDate, language) : (isEn ? "End" : "Akhir")}
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-muted-foreground block">
-                        {isEn ? "Start Date (From)" : "Dari Tanggal (Mulai)"}
+                        {t("accounting:filter.start_date", "Dari Tanggal (Mulai)")}
                       </span>
                       <DatePicker
                         value={customStartDate}
                         onChange={setCustomStartDate}
-                        placeholder={isEn ? "Select start date..." : "Pilih tanggal mulai..."}
+                        placeholder={t("accounting:filter.select_start", "Pilih tanggal mulai...")}
                       />
                     </div>
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-muted-foreground block">
-                        {isEn ? "End Date (To)" : "Sampai Tanggal (Selesai)"}
+                        {t("accounting:filter.end_date", "Sampai Tanggal (Selesai)")}
                       </span>
                       <DatePicker
                         value={customEndDate}
                         onChange={setCustomEndDate}
-                        placeholder={isEn ? "Select end date..." : "Pilih tanggal selesai..."}
+                        placeholder={t("accounting:filter.select_end", "Pilih tanggal selesai...")}
                       />
                     </div>
                   </div>
@@ -413,7 +402,7 @@ export function AccountingPage() {
                     onClick={applyCustomPeriod}
                     className="w-full h-9.5 text-xs sm:text-sm font-semibold cursor-pointer border-primary/30 text-primary dark:text-cyan-400 hover:bg-primary/10 rounded-xl"
                   >
-                    {isEn ? "Apply Custom Range" : "Terapkan Rentang Kustom"}
+                    {t("accounting:filter.apply_custom", "Terapkan Rentang Kustom")}
                   </Button>
                 </div>
 
@@ -421,15 +410,15 @@ export function AccountingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                      {isEn ? "Entity / Project" : "Entitas / Proyek"}
+                      {t("accounting:filter.entity_project", "Entitas / Proyek")}
                     </label>
                     <Select value={projectFilter} onValueChange={setProjectFilter}>
                       <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
-                        <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
+                        <SelectValue placeholder={t("projects.filter_project", "Pilih proyek")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">
-                          {isEn ? "All Projects (All Altvira Entities)" : "Semua Proyek (Seluruh Entitas Altvira)"}
+                          {t("accounting:filter.all_projects", "Semua Proyek (Seluruh Entitas Altvira)")}
                         </SelectItem>
                         {projects.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
@@ -443,15 +432,15 @@ export function AccountingPage() {
                   {(normalizedTab === "jurnal" || normalizedTab === "penyesuaian") ? (
                     <div className="space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                        {isEn ? "Journal Type" : "Jenis Jurnal"}
+                        {t("accounting:filter.journal_type", "Jenis Jurnal")}
                       </label>
                       <Select value={typeFilter} onValueChange={setTypeFilter}>
                         <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
-                          <SelectValue placeholder={isEn ? "Select journal type" : "Pilih jenis jurnal"} />
+                          <SelectValue placeholder={t("accounting:filter.journal_type", "Pilih jenis jurnal")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="ALL">
-                            {isEn ? "All Journal Types" : "Semua Jenis Jurnal"}
+                            {t("accounting:filter.all_journal_types", "Semua Jenis Jurnal")}
                           </SelectItem>
                           {Object.entries(JOURNAL_TYPE_LABELS).map(([k, v]) => (
                             <SelectItem key={k} value={k}>
@@ -464,10 +453,10 @@ export function AccountingPage() {
                   ) : (
                     <div className="space-y-2">
                       <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                        {isEn ? "Filter Status" : "Status Filter"}
+                        {t("accounting:filter.status_filter", "Status Filter")}
                       </label>
                       <div className="h-10 rounded-xl border border-border/60 bg-muted/30 px-3 flex items-center text-xs sm:text-sm text-muted-foreground">
-                        {isEn ? "Active:" : "Aktif:"} {periodFilter.label}
+                        {t("accounting:filter.active", "Aktif:")} {getLocalizedPeriodName(periodFilter.label, language)}
                       </div>
                     </div>
                   )}
@@ -477,7 +466,7 @@ export function AccountingPage() {
                 {dbPeriods.length > 0 && (
                   <div className="space-y-3 pt-3 border-t border-border/70">
                     <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                      {isEn ? "Official Fiscal Periods" : "Periode Buku Resmi"}
+                      {t("accounting:filter.fiscal_periods", "Periode Buku Resmi")}
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-36 overflow-y-auto pr-1">
                       {dbPeriods.map((p) => {
@@ -494,9 +483,11 @@ export function AccountingPage() {
                                 : "border-border/70 text-foreground hover:bg-muted/60",
                             )}
                           >
-                            <span className="truncate">{p.name}</span>
+                            <span className="truncate">{getLocalizedPeriodName(p.name, language)}</span>
                             <span className="text-[10px] text-muted-foreground ml-2">
-                              {p.status === "open" ? (isEn ? "Active" : "Aktif") : (isEn ? "Closed" : "Tutup")}
+                              {p.status === "open"
+                                ? t("accounting:filter.period_active", "Aktif")
+                                : t("accounting:filter.period_closed", "Tutup")}
                             </span>
                           </button>
                         );
@@ -515,7 +506,7 @@ export function AccountingPage() {
                   className="h-9.5 px-3.5 rounded-xl text-xs sm:text-sm cursor-pointer text-muted-foreground hover:text-foreground font-medium"
                 >
                   <RotateCcwIcon className="size-3.5 mr-1.5" />
-                  {isEn ? "Reset Filters" : "Reset Filter"}
+                  {t("accounting:filter.reset_filters", "Reset Filter")}
                 </Button>
                 <div className="flex items-center gap-2.5">
                   <Button
@@ -525,7 +516,7 @@ export function AccountingPage() {
                     onClick={() => setIsFilterModalOpen(false)}
                     className="h-9.5 px-4 rounded-xl text-xs sm:text-sm cursor-pointer"
                   >
-                    {isEn ? "Cancel" : "Batal"}
+                    {t("accounting:filter.cancel", "Batal")}
                   </Button>
                   <Button
                     type="button"
@@ -533,7 +524,7 @@ export function AccountingPage() {
                     onClick={() => setIsFilterModalOpen(false)}
                     className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
                   >
-                    {isEn ? "Apply Filters" : "Terapkan Filter"}
+                    {t("accounting:filter.apply_filters", "Terapkan Filter")}
                   </Button>
                 </div>
               </DialogFooter>

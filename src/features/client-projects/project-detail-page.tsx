@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatDateID, formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import {
   getCompanyProfile,
   listCustomers,
@@ -123,7 +123,6 @@ import { AcceptanceDocsTab } from "./tabs/acceptance-docs-tab";
 
 export function ProjectDetailPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = React.useState<ProjectRow | null>(null);

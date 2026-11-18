@@ -37,6 +37,11 @@ import { useRealtimeSync } from "@/lib/realtime-cache";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
 import { formatAccountRef, formatDateID, roundRupiah } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedTransactionDescription,
+  formatJournalDateI18n,
+} from "@/lib/glossary";
 import { cn } from "@/lib/utils";
 import {
   createCorrectionJournalEntry,
@@ -83,24 +88,6 @@ export const JOURNAL_TYPE_LABELS: Record<
   profit_sharing: { label: "Bagi Hasil Proyek", tone: "info" },
 };
 
-function formatJournalDate(val: string | null | undefined): string {
-  if (!val) return "-";
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-    "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
-  ];
-  const parts = val.split("-");
-  const y = parts[0];
-  const mStr = parts[1];
-  const d = parts[2];
-  if (y && mStr && d) {
-    const monthIdx = parseInt(mStr, 10) - 1;
-    const m = months[monthIdx] ?? mStr;
-    return `${d}/${m}/${y}`;
-  }
-  return formatDateID(val);
-}
-
 export interface JournalsPageProps {
   initialTypeFilter?: string;
   hideHeader?: boolean;
@@ -122,7 +109,7 @@ export function JournalsPage({
   externalProjectFilter,
   externalTypeFilter,
 }: JournalsPageProps = {}) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [journals, setJournals] = React.useState<JournalRow[]>([]);
   const [lines, setLines] = React.useState<JournalLineRow[]>([]);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
@@ -621,7 +608,7 @@ export function JournalsPage({
               return (
                 <tr key={j.id} className="align-top">
                   <td className="print-center whitespace-nowrap">
-                    {formatDateID(j.journal_date)}
+                    {formatJournalDateI18n(j.journal_date, language)}
                   </td>
                   <td>
                     <div className="print-deskripsi-wrap">
@@ -629,7 +616,7 @@ export function JournalsPage({
                         const acc = accountMap.get(row.account_id);
                         return (
                           <div key={`d-${idx}`} className="print-account-debit">
-                            {acc?.name ?? "Akun Debit"}
+                            {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.debit_account", "Akun Debit")}
                           </div>
                         );
                       })}
@@ -637,14 +624,14 @@ export function JournalsPage({
                         const acc = accountMap.get(row.account_id);
                         return (
                           <div key={`c-${idx}`} className="print-account-credit">
-                            {acc?.name ?? "Akun Kredit"}
+                            {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.credit_account", "Akun Kredit")}
                           </div>
                         );
                       })}
                     </div>
                     {j.description && (
                       <div className="print-memo">
-                        ({j.description})
+                        ({getLocalizedTransactionDescription(j.description, language)})
                       </div>
                     )}
                   </td>
@@ -881,7 +868,7 @@ export function JournalsPage({
                   disabled={selectedJournalIds.length === 0}
                   className="text-xs font-medium cursor-pointer"
                 >
-                  Hapus Pilihan ({selectedJournalIds.length})
+                  {t("action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
                 </Button>
               </div>
             )}
@@ -1040,7 +1027,7 @@ export function JournalsPage({
                         {/* TANGGAL: Left-up / top-left alignment */}
                         <TableCell className="align-top py-4 pl-6 pr-3 text-left whitespace-nowrap">
                           <span className="font-medium text-xs sm:text-sm text-foreground">
-                            {formatJournalDate(j.journal_date)}
+                            {formatJournalDateI18n(j.journal_date, language)}
                           </span>
                         </TableCell>
 
@@ -1054,7 +1041,7 @@ export function JournalsPage({
                                   key={`d-${idx}`}
                                   className="text-foreground font-medium min-h-5 flex items-center whitespace-normal break-words"
                                 >
-                                  {acc?.name ?? "Akun Debit"}
+                                  {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.debit_account", "Akun Debit")}
                                 </div>
                               );
                             })}
@@ -1065,14 +1052,14 @@ export function JournalsPage({
                                   key={`c-${idx}`}
                                   className="text-foreground font-medium min-h-5 flex items-center pl-6 whitespace-normal break-words"
                                 >
-                                  {acc?.name ?? "Akun Kredit"}
+                                  {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.credit_account", "Akun Kredit")}
                                 </div>
                               );
                             })}
                           </div>
                           {/* Keterangan di bawah baris kredit (membungkus rapi 2 baris jika panjang) */}
                           <div className="mt-2 max-w-[54ch] text-xs leading-relaxed text-blue-600 dark:text-cyan-400 italic font-medium whitespace-normal break-words">
-                            ({j.description})
+                            ({getLocalizedTransactionDescription(j.description, language)})
                           </div>
                         </TableCell>
 

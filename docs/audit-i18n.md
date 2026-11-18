@@ -449,5 +449,30 @@ Pada Langkah 2, infrastruktur dual language standar akan dibangun tanpa menyentu
 
 ---
 
-> [!NOTE]
-> Audit Langkah 1 telah selesai disusun tanpa melakukan modifikasi kode apapun. Menunggu peninjauan dan arahan pengguna sebelum melanjutkan ke Langkah 2.
+## 7. Catatan Pelaksanaan Langkah 3b (Modul Akuntansi & Laporan Penuh)
+
+### 7.1. File & Namespace yang Ditambahkan
+1. **File Locale:**
+   - `src/locales/id/accounting.json`: Terjemahan lengkap bahasa Indonesia (tabs, coa, journals, reports, filter, account_types, normal_balance, cash_flow).
+   - `src/locales/en/accounting.json`: Terjemahan lengkap bahasa Inggris dengan struktur kunci 100% identik dan tanpa nilai string kosong.
+2. **Integrasi i18n:**
+   - `src/lib/i18n.tsx`: Registrasi namespace `accounting` untuk `id` dan `en`.
+   - `src/lib/glossary.ts`: Pemetaan menyeluruh nama akun standar CoA (`COA_NAME_MAP`), deskripsi akun (`COA_DESCRIPTION_MAP`), tipe akun, saldo normal, kategori arus kas, nama periode, status periode, dan tanggal jurnal dwibahasa.
+3. **Komponen yang Dimigrasikan:**
+   - `src/features/accounting/accounting-page.tsx`: Navigasi tab, subjudul, filter kustom rentang tanggal & entitas, label periode.
+   - `src/features/master-data/coa-accounts-page.tsx`: Header, tombol aksi, pencarian, filter tipe, header kolom tabel, sel data tabel (nama akun, tipe, saldo normal, kategori arus kas, status header/aktif).
+   - `src/features/master-data/components/period-list-table.tsx`: Judul, header tabel, nama periode terjemahan, rentang tanggal berbasis `formatDateI18n`, badge status, riwayat buka kembali.
+   - `src/features/accounting/journals-page.tsx`: Header riwayat jurnal, tombol aksi, tabel jurnal harian, tabel jurnal penyesuaian, tanggal jurnal dwibahasa, nama akun debit/kredit, memo transaksi sistem, tata letak cetak dokumen.
+   - `src/features/accounting/reports-page.tsx`: Header laporan akrual, toggle tampilan (Semua Laporan / Satu Halaman), tab selektor laporan, menu unduh/ekspor.
+   - `src/features/accounting/reports/income-statement-view.tsx`: Header, tabel pendapatan & beban, nama akun terlokalisasi, format tanggal dwibahasa.
+   - `src/features/accounting/reports/balance-sheet-view.tsx`: Header, aset, liabilitas, ekuitas, nama akun terlokalisasi, format tanggal dwibahasa.
+   - `src/features/accounting/reports/cash-flow-view.tsx`: Ringkasan arus kas metode langsung, aktivitas operasi, investasi, pendanaan.
+   - `src/features/accounting/reports/equity-statement-view.tsx`: Laporan perubahan ekuitas, laba ditahan awal/akhir, laba bersih, dividen, modal disetor.
+   - `src/features/accounting/reports/trial-balance-view.tsx`: Banner keseimbangan debit-kredit, tombol disesuaikan/belum disesuaikan, nama akun terlokalisasi.
+   - `src/features/accounting/reports/general-ledger-view.tsx`: Dropdown akun, tampilan seluruh buku besar, tanggal dan memo transaksi dwibahasa.
+
+### 7.2. Hasil Pengujian Otomatis
+- **Paritas Kunci & Glosarium:** `tests/unit/i18n-check.test.ts` (7/7 tes lulus, memverifikasi kesamaan kunci ID & EN > 50 kunci tanpa nilai kosong).
+- **Seluruh Rangkaian Tes Sistem:** 14 test suites, 75 tests lulus tanpa regresi (100% pass).
+- **Pemeriksaan Tipe TypeScript:** `npx tsc --noEmit` & `tsc -b` lulus 0 error.
+- **Production Build:** `npm run build` sukses dalam 11.21s.

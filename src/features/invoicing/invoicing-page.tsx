@@ -48,7 +48,7 @@ import {
 import { useRealtimeSync } from "@/lib/realtime-cache";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { formatDateID, formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { getActiveLanguage, useLanguage } from "@/lib/i18n";
 import {
   createAndIssueSalesInvoice,
@@ -95,7 +95,6 @@ import {
 
 export function InvoicingPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [bundle, setBundle] = React.useState<ProjectWorkspaceBundle | null>(
     null,
   );

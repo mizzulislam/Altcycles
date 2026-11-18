@@ -4,6 +4,8 @@ import {
 } from "lucide-react";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
+import { getLocalizedAccountName } from "@/lib/glossary";
 import { cn } from "@/lib/utils";
 import { formatSplitzCurrency } from "./reports-common";
 
@@ -40,20 +42,22 @@ export function TrialBalanceView({
   onExportPdf,
   onExportCsv,
 }: TrialBalanceViewProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            Neraca Saldo
+            {t("accounting:reports.tab_trial_balance", "Neraca Saldo")}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-            Daftar seluruh saldo akhir akun untuk memastikan total Debit dan Kredit seimbang.
+            {t("accounting:tabs.neraca_saldo_desc", "Verifikasi keseimbangan total debit vs kredit (balancing check)")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.download", "Unduh / Ekspor")}
             onExportExcel={onExportExcel}
             onExportPdf={onExportPdf}
             onExportCsv={onExportCsv}
@@ -76,14 +80,16 @@ export function TrialBalanceView({
               <>
                 <CheckCircle2Icon className="size-5 text-primary dark:text-cyan-400 mr-2 shrink-0" />
                 <span className="text-primary dark:text-cyan-300 font-semibold text-sm">
-                  Buku Kas Seimbang (Balanced)
+                  {t("accounting:reports.balanced_status", "Buku Kas Seimbang (Balanced)")}
                 </span>
               </>
             ) : (
               <>
                 <AlertCircleIcon className="size-5 text-rose-500 mr-2 shrink-0" />
                 <span className="text-rose-700 dark:text-rose-300 font-semibold text-sm">
-                  Peringatan: Terdapat selisih antara Debit dan Kredit ({formatRupiah(balanceDifference)})!
+                  {language === "en"
+                    ? `Warning: Difference between Debit and Credit (${formatRupiah(balanceDifference)})!`
+                    : `Peringatan: Terdapat selisih antara Debit dan Kredit (${formatRupiah(balanceDifference)})!`}
                 </span>
               </>
             )}
@@ -101,7 +107,7 @@ export function TrialBalanceView({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Sebelum Penyesuaian
+              {language === "en" ? "Unadjusted Trial Balance" : "Sebelum Penyesuaian"}
             </button>
             <button
               type="button"
@@ -113,7 +119,7 @@ export function TrialBalanceView({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              Setelah Penyesuaian
+              {language === "en" ? "Adjusted Trial Balance" : "Setelah Penyesuaian"}
             </button>
           </div>
         </div>
@@ -122,17 +128,27 @@ export function TrialBalanceView({
           <table className="w-full text-left text-sm">
             <thead className="bg-muted/40 border-b border-border/80 text-foreground/80 text-xs font-semibold">
               <tr>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-36">No. Akun</th>
-                <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">Nama Akun</th>
-                <th className="px-6 py-4 font-semibold text-center w-60 sm:w-72">Debit</th>
-                <th className="px-6 py-4 font-semibold text-center w-60 sm:w-72">Kredit</th>
+                <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-36">
+                  {t("accounting:coa.col_code", "No. Akun")}
+                </th>
+                <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">
+                  {t("accounting:coa.col_name", "Nama Akun")}
+                </th>
+                <th className="px-6 py-4 font-semibold text-center w-60 sm:w-72">
+                  {t("accounting:journals.col_debit", "Debit")}
+                </th>
+                <th className="px-6 py-4 font-semibold text-center w-60 sm:w-72">
+                  {language === "en" ? "Credit" : "Kredit"}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60 text-foreground">
               {trialBalance.rows.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                    Belum ada data neraca saldo pada periode terpilih.
+                    {language === "en"
+                      ? "No trial balance data in the selected period."
+                      : "Belum ada data neraca saldo pada periode terpilih."}
                   </td>
                 </tr>
               ) : (
@@ -142,7 +158,7 @@ export function TrialBalanceView({
                       {item.code}
                     </td>
                     <td className="px-6 py-3.5 text-xs text-foreground font-medium">
-                      {item.name}
+                      {getLocalizedAccountName(item, language)}
                     </td>
                     <td className="px-6 py-3.5 text-right text-xs">
                       {formatSplitzCurrency(item.endingDebit)}
@@ -157,7 +173,7 @@ export function TrialBalanceView({
             <tfoot className="bg-muted/30 border-t-2 border-border/80 font-bold">
               <tr>
                 <td colSpan={2} className="px-6 py-4 text-right font-bold text-xs text-foreground">
-                  Total Keseluruhan:
+                  {language === "en" ? "Grand Total:" : "Total Keseluruhan:"}
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-xs text-foreground">
                   {formatSplitzCurrency(trialBalance.sumEndingDebit)}

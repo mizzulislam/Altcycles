@@ -7,7 +7,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ACCOUNT_TYPE_LABELS } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
+import {
+  getLocalizedAccountName,
+  getLocalizedAccountType,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import type { AccountRow } from "@/types/database.types";
 import { formatDateSplitz, formatLedgerCellAmount } from "./reports-common";
 
@@ -52,20 +57,22 @@ export function GeneralLedgerView({
   onExportPdf,
   onExportCsv,
 }: GeneralLedgerViewProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            Buku Besar
+            {t("accounting:reports.tab_general_ledger", "Buku Besar")}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-            Melihat rincian mutasi (Debit/Kredit) dan Saldo Akhir per Akun tunggal.
+            {t("accounting:tabs.buku_besar_desc", "Mutasi debit-kredit dan saldo berjalan per akun COA")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("action.download", "Unduh / Ekspor")}
             onExportExcel={onExportExcel}
             onExportPdf={onExportPdf}
             onExportCsv={onExportCsv}
@@ -75,22 +82,24 @@ export function GeneralLedgerView({
 
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-2xs space-y-6">
         <div className="max-w-md">
-          <label className="block text-sm font-medium text-foreground mb-2">Pilih Akun</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            {t("accounting:reports.select_account", "Pilih Akun")}
+          </label>
           <Select
             value={selectedLedgerAccountId || "ALL"}
             onValueChange={setSelectedLedgerAccountId}
           >
             <SelectTrigger className="w-full h-10 text-xs sm:text-sm">
-              <SelectValue placeholder="Pilih Semua Akun" />
+              <SelectValue placeholder={t("accounting:reports.all_accounts", "Pilih Semua Akun")} />
             </SelectTrigger>
             <SelectContent className="max-h-72">
               <SelectGroup>
                 <SelectItem value="ALL" className="font-semibold text-primary dark:text-cyan-400">
-                  Pilih Semua Akun
+                  {t("accounting:reports.all_accounts", "Pilih Semua Akun")}
                 </SelectItem>
                 {postableAccounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.code} - {a.name}
+                    {a.code} - {getLocalizedAccountName(a, language)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -104,14 +113,16 @@ export function GeneralLedgerView({
             <div className="flex justify-between items-center bg-primary/10 border border-primary/25 p-4 rounded-xl">
               <div>
                 <h3 className="font-semibold text-primary dark:text-cyan-400 text-sm sm:text-base">
-                  Buku Besar: Semua Akun
+                  {t("accounting:reports.tab_general_ledger", "Buku Besar")}: {t("accounting:reports.all_accounts", "Semua Akun")}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Diklasifikasikan per akun dengan tabel masing-masing (Urutan Terlama ke Terbaru).
+                  {language === "en"
+                    ? "Classified per account with respective tables (Oldest to Newest order)."
+                    : "Diklasifikasikan per akun dengan tabel masing-masing (Urutan Terlama ke Terbaru)."}
                 </p>
               </div>
               <div className="text-xs sm:text-sm font-semibold text-primary dark:text-cyan-400 shrink-0">
-                {allLedgers.length} akun aktif
+                {allLedgers.length} {language === "en" ? "active accounts" : "akun aktif"}
               </div>
             </div>
 
@@ -123,15 +134,18 @@ export function GeneralLedgerView({
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-border/70 p-4 bg-muted/30">
                   <div>
                     <h4 className="font-bold text-foreground text-base sm:text-lg">
-                      {item.account.code} - {item.account.name}
+                      {item.account.code} - {getLocalizedAccountName(item.account, language)}
                     </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Tipe: {ACCOUNT_TYPE_LABELS[item.account.account_type] ?? item.account.account_type} | Saldo Normal:{" "}
-                      {["asset", "expense"].includes(item.account.account_type) ? "Debit" : "Kredit"}
+                      {language === "en" ? "Type: " : "Tipe: "}
+                      {getLocalizedAccountType(item.account.account_type, language)} | {language === "en" ? "Normal Balance: " : "Saldo Normal: "}
+                      {["asset", "expense"].includes(item.account.account_type) ? "Debit" : (language === "en" ? "Credit" : "Kredit")}
                     </p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <span className="text-xs font-semibold text-muted-foreground block">Saldo Akhir</span>
+                    <span className="text-xs font-semibold text-muted-foreground block">
+                      {t("accounting:reports.ending_balance", "Saldo Akhir")}
+                    </span>
                     <div className="text-lg sm:text-xl font-bold text-primary dark:text-cyan-400">
                       Rp {new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0 }).format(item.endingBalance)}
                     </div>
@@ -142,18 +156,28 @@ export function GeneralLedgerView({
                   <table className="w-full text-left text-sm">
                     <thead className="bg-muted/40 border-b border-border/70 text-foreground/80 text-xs font-semibold">
                       <tr>
-                        <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">Tanggal</th>
-                        <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">Keterangan</th>
+                        <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">
+                          {t("accounting:journals.col_date", "Tanggal")}
+                        </th>
+                        <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">
+                          {t("accounting:journals.col_description", "Keterangan")}
+                        </th>
                         <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Debit (Rp)</th>
-                        <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Kredit (Rp)</th>
-                        <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">Saldo Berjalan (Rp)</th>
+                        <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">
+                          {language === "en" ? "Credit (Rp)" : "Kredit (Rp)"}
+                        </th>
+                        <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">
+                          {t("accounting:reports.running_balance", "Saldo Berjalan")} (Rp)
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60 text-foreground">
                       {item.rows.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                            Belum ada mutasi untuk akun ini pada periode terpilih.
+                            {language === "en"
+                              ? "No transactions for this account in the selected period."
+                              : "Belum ada mutasi untuk akun ini pada periode terpilih."}
                           </td>
                         </tr>
                       ) : (
@@ -163,7 +187,7 @@ export function GeneralLedgerView({
                               {formatDateSplitz(entry.journalDate)}
                             </td>
                             <td className="px-6 py-3.5 text-xs text-foreground">
-                              {entry.description}
+                              {getLocalizedTransactionDescription(entry.description, language)}
                             </td>
                             <td className="px-6 py-3.5 text-right text-xs">
                               {formatLedgerCellAmount(entry.debit)}
@@ -185,7 +209,9 @@ export function GeneralLedgerView({
 
             {allLedgers.length === 0 && (
               <div className="px-6 py-12 text-center text-muted-foreground border border-dashed border-border rounded-2xl">
-                Belum ada mutasi untuk semua akun pada periode terpilih.
+                {language === "en"
+                  ? "No transactions found for any account in the selected period."
+                  : "Belum ada mutasi untuk semua akun pada periode terpilih."}
               </div>
             )}
           </div>
@@ -195,11 +221,11 @@ export function GeneralLedgerView({
             <div className="mb-4 flex justify-between items-center bg-primary/10 border border-primary/20 p-4 rounded-xl">
               <div>
                 <h3 className="font-semibold text-primary dark:text-cyan-400 text-sm sm:text-base">
-                  Saldo Akhir: {selectedAccount.name}
+                  {t("accounting:reports.ending_balance", "Saldo Akhir")}: {getLocalizedAccountName(selectedAccount, language)}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Perhitungan berjalan menyesuaikan Saldo Normal (
-                  {["asset", "expense"].includes(selectedAccount.account_type) ? "Debit" : "Kredit"})
+                  {language === "en" ? "Running balance reflects Normal Balance (" : "Perhitungan berjalan menyesuaikan Saldo Normal ("}
+                  {["asset", "expense"].includes(selectedAccount.account_type) ? "Debit" : (language === "en" ? "Credit" : "Kredit")})
                 </p>
               </div>
               <div className="text-xl sm:text-2xl font-bold text-primary dark:text-cyan-400">
@@ -212,18 +238,28 @@ export function GeneralLedgerView({
                 <table className="w-full text-left text-sm">
                   <thead className="bg-muted/40 border-b border-border/70 text-foreground/80 text-xs font-semibold">
                     <tr>
-                      <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">Tanggal</th>
-                      <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">Keterangan</th>
+                      <th className="px-6 py-4 font-semibold whitespace-nowrap text-center w-32">
+                        {t("accounting:journals.col_date", "Tanggal")}
+                      </th>
+                      <th className="px-6 py-4 font-semibold whitespace-nowrap text-center">
+                        {t("accounting:journals.col_description", "Keterangan")}
+                      </th>
                       <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Debit (Rp)</th>
-                      <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">Kredit (Rp)</th>
-                      <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">Saldo Berjalan (Rp)</th>
+                      <th className="px-6 py-4 font-semibold text-center w-44 sm:w-48">
+                        {language === "en" ? "Credit (Rp)" : "Kredit (Rp)"}
+                      </th>
+                      <th className="px-6 py-4 font-semibold text-center w-48 sm:w-52">
+                        {t("accounting:reports.running_balance", "Saldo Berjalan")} (Rp)
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60 text-foreground">
                     {ledgerRows.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                          Belum ada mutasi untuk akun ini pada periode terpilih.
+                          {language === "en"
+                            ? "No transactions for this account in the selected period."
+                            : "Belum ada mutasi untuk akun ini pada periode terpilih."}
                         </td>
                       </tr>
                     ) : (
@@ -233,7 +269,7 @@ export function GeneralLedgerView({
                             {formatDateSplitz(entry.journalDate)}
                           </td>
                           <td className="px-6 py-3.5 text-xs text-foreground">
-                            {entry.description}
+                            {getLocalizedTransactionDescription(entry.description, language)}
                           </td>
                           <td className="px-6 py-3.5 text-right text-xs">
                             {formatLedgerCellAmount(entry.debit)}
