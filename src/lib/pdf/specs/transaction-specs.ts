@@ -557,7 +557,7 @@ export function buildClientPoPdfSpec(params: {
     ],
     tableColumns: [
       { header: "No", widthRatio: 0.07, align: "center" },
-      { header: isEn ? "Package / Scope Description" : "Deskripsi Paket / Pekerjaan", widthRatio: 0.43 },
+      { header: isEn ? "Scope Description" : "Deskripsi Pekerjaan", widthRatio: 0.43 },
       { header: "Qty", widthRatio: 0.12, align: "center" },
       { header: isEn ? "Unit Price" : "Harga Satuan", widthRatio: 0.19, align: "right" },
       { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },

@@ -147,11 +147,11 @@ export function CustomerTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:customers.col_code", "Kode"), widthRatio: 1.5 },
-        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 3 },
-        { header: t("parties:customers.col_company", "Perusahaan / PIC"), widthRatio: 3.5 },
-        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 3 },
-        { header: t("parties:customers.col_status", "Status"), widthRatio: 1.5 },
+        { header: t("parties:customers.col_code", "Kode"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 0.28 },
+        { header: t("parties:customers.col_company", "Perusahaan PIC"), widthRatio: 0.26 },
+        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 0.22 },
+        { header: t("parties:customers.col_status", "Status"), widthRatio: 0.12, align: "center" },
       ],
       tableRows: customers.map((c) => [
         c.code,

@@ -224,12 +224,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         },
       ],
       tableColumns: [
-        { header: t("budgeting:export.excel_col_name"), widthRatio: 0.34 },
-        { header: t("budgeting:common.col_ceiling"), widthRatio: 0.16, align: "right" },
+        { header: t("budgeting:export.excel_col_name"), widthRatio: 0.27 },
+        { header: t("budgeting:common.col_ceiling"), widthRatio: 0.17, align: "right" },
         { header: t("budgeting:common.col_realization"), widthRatio: 0.16, align: "right" },
         { header: t("budgeting:common.col_remaining"), widthRatio: 0.16, align: "right" },
-        { header: t("budgeting:common.col_absorption"), widthRatio: 0.08, align: "right" },
-        { header: t("budgeting:common.col_status"), widthRatio: 0.10 },
+        { header: t("budgeting:common.col_absorption"), widthRatio: 0.12, align: "center" },
+        { header: t("budgeting:common.col_status"), widthRatio: 0.12, align: "center" },
       ],
       tableRows: rows.map((r) => [
         `${r.account_code} - ${getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language)}`,

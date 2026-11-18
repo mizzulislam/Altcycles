@@ -130,7 +130,7 @@
     "toast_rejected": "Pengajuan pembayaran berhasil ditolak.",
     "disburse_title": "Catat Realisasi Pembayaran {{number}}",
     "disburse_amount": "Nominal Pembayaran:",
-    "disburse_date": "Tanggal Transfer / Pembayaran",
+    "disburse_date": "Tanggal Transfer",
     "disburse_cash_account": "Akun Sumber Kas / Bank Perusahaan",
     "select_cash_placeholder": "Pilih rekening kas/bank",
     "no_cash_accounts": "Belum ada akun kas/bank aktif",

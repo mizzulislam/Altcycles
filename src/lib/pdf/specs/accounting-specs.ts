@@ -410,7 +410,7 @@ export function buildIncomeStatementPdfSpec(params: {
     ],
     tableColumns: [
       {
-        header: isEn ? "Component / Description" : "Komponen / Keterangan",
+        header: isEn ? "Description" : "Keterangan",
         widthRatio: 0.68,
       },
       {
@@ -633,8 +633,8 @@ export function buildBalanceSheetPdfSpec(params: {
     tableColumns: [
       {
         header: isEn
-          ? "Account / Financial Position Component"
-          : "Akun / Komponen Posisi Keuangan",
+          ? "Financial Position Component"
+          : "Komponen Posisi Keuangan",
         widthRatio: 0.68,
       },
       {
@@ -800,7 +800,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
 
   const stdCols: PdfTableColumn[] = [
     {
-      header: isEn ? "Component / Report Line" : "Komponen / Pos Laporan",
+      header: isEn ? "Report Line" : "Pos Laporan",
       widthRatio: 0.68,
     },
     {

@@ -141,12 +141,12 @@ export function ProductServiceTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:products.col_code", "Kode"), widthRatio: 1.5 },
-        { header: t("parties:products.col_name", "Nama Layanan / Produk"), widthRatio: 3.5 },
-        { header: t("parties:products.col_category", "Kategori"), widthRatio: 2 },
-        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 1.5 },
-        { header: t("parties:products.col_base_rate", "Tarif Dasar"), widthRatio: 2.5 },
-        { header: t("parties:products.col_status", "Status"), widthRatio: 1.5 },
+        { header: t("parties:products.col_code", "Kode"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:products.col_name", "Nama Layanan"), widthRatio: 0.32 },
+        { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.18 },
+        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.10, align: "center" },
+        { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.16, align: "right" },
+        { header: t("parties:products.col_status", "Status"), widthRatio: 0.12, align: "center" },
       ],
       tableRows: products.map((p) => [
         p.code,

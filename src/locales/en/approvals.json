@@ -130,7 +130,7 @@
     "toast_rejected": "Payment request successfully rejected.",
     "disburse_title": "Record Payment Disbursement {{number}}",
     "disburse_amount": "Payment Amount:",
-    "disburse_date": "Transfer / Payment Date",
+    "disburse_date": "Transfer Date",
     "disburse_cash_account": "Source Company Cash / Bank Account",
     "select_cash_placeholder": "Select cash/bank account",
     "no_cash_accounts": "No active cash/bank accounts",

@@ -450,12 +450,12 @@ export function UserPaymentsPage() {
         },
       ],
       tableColumns: [
-        { header: t("approvals:user.col_number"), widthRatio: 2 },
-        { header: t("approvals:modals.request_date"), widthRatio: 1.2 },
-        { header: t("approvals:modals.recipient_name"), widthRatio: 2.2 },
-        { header: t("approvals:modals.purpose"), widthRatio: 3 },
-        { header: t("approvals:admin.col_status"), widthRatio: 1.8 },
-        { header: t("approvals:user.col_amount"), widthRatio: 1.8, align: "right" },
+        { header: t("approvals:user.col_number"), widthRatio: 0.16 },
+        { header: t("approvals:modals.request_date"), widthRatio: 0.12, align: "center" },
+        { header: t("approvals:modals.recipient_name"), widthRatio: 0.18 },
+        { header: t("approvals:modals.purpose"), widthRatio: 0.26 },
+        { header: t("approvals:admin.col_status"), widthRatio: 0.12, align: "center" },
+        { header: t("approvals:user.col_amount"), widthRatio: 0.16, align: "right" },
       ],
       tableRows: requests.map((r) => [
         r.request_number,

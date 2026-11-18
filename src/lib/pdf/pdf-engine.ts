@@ -42,6 +42,7 @@ import {
   PDF_LAYOUT_TOKENS,
   TEXT_DARK,
   TEXT_LABEL,
+  getTableColumnsConfig,
   resolveDocTitleConfig,
   sanitizePdfText,
   stripCurrencySymbol,
@@ -1375,7 +1376,7 @@ async function renderDocumentPdfInternal(
         });
         y -= row.lineCount * rowLineH + rowGap;
       }
-      y -= 4;
+      y -= 14;
     } else if (hasRecipient) {
       // Hanya Penerima
       const rawRecipientTitle = (spec.recipientTitle ?? "Kepada Yth.").replace(
@@ -1415,7 +1416,7 @@ async function renderDocumentPdfInternal(
           y -= 13;
         }
       });
-      y -= 4;
+      y -= 14;
     }
 
     // Garis pemisah tipis di bawah Zona B
@@ -1463,7 +1464,7 @@ async function renderDocumentPdfInternal(
       const isLastPara = pIdx === spec.paragraphsBefore!.length - 1;
       // Jika di bawahnya ada tabel, spasi after paragraf terakhir adalah 0 sesuai arahan pengguna
       if (!isLastPara) {
-        y -= 4;
+        y -= 14;
       } else if (!hasTableBelow) {
         y -= 6;
       }
@@ -1660,10 +1661,19 @@ async function renderDocumentPdfInternal(
         cols.forEach((col, idx) => {
           const w = colWidths[idx]!;
           const headerClean = sanitizePdfText(col.header);
-          const textW = fontBold.widthOfTextAtSize(headerClean, headerFontSize);
-          let drawX = colX + 8;
+          const maxTextW = Math.max(12, w - 8);
+
+          // Pastikan judul header tabel muat 1 baris utuh tanpa overlap
+          let size: number = headerFontSize;
+          let textW = fontBold.widthOfTextAtSize(headerClean, size);
+          if (textW > maxTextW) {
+            size = Math.max(7.2, (maxTextW / textW) * size);
+            textW = fontBold.widthOfTextAtSize(headerClean, size);
+          }
+
+          let drawX = colX + 4;
           if (col.align === "right") {
-            drawX = colX + w - textW - 8;
+            drawX = Math.max(colX + 4, colX + w - textW - 4);
           } else if (col.align === "center") {
             drawX = colX + (w - textW) / 2;
           }
@@ -1672,7 +1682,7 @@ async function renderDocumentPdfInternal(
             {
               x: drawX,
               y: textBaselineY,
-              size: headerFontSize,
+              size,
               font: fontBold,
               color: TEXT_DARK,
             },
@@ -1745,9 +1755,9 @@ async function renderDocumentPdfInternal(
               const textW = rowFont.widthOfTextAtSize(lineClean, cellFontSize);
               let drawX = colX + 8;
               if (col.align === "right") {
-                drawX = colX + w - textW - 8;
+                drawX = Math.max(colX + 8, colX + w - textW - 8);
               } else if (col.align === "center") {
-                drawX = colX + (w - textW) / 2;
+                drawX = Math.max(colX + 8, colX + (w - textW) / 2);
               }
               const lineY = rowTopY - cellPadY - 9 - lIdx * cellLineH;
               drawTrackedText(
@@ -1787,7 +1797,17 @@ async function renderDocumentPdfInternal(
     spec.tableColumns.length > 0 &&
     spec.tableRows !== undefined
   ) {
-    const cols = spec.tableColumns;
+    const isEn = Boolean(
+      (spec as any).language?.startsWith("en") ||
+        (spec as any).lang === "en" ||
+        getActiveLanguage() === "en",
+    );
+    const stdCols = getTableColumnsConfig(spec.docTitle, isEn);
+    const rawCols = stdCols && stdCols.length === spec.tableColumns.length ? stdCols : spec.tableColumns;
+    const cols = rawCols.map((col) => ({
+      ...col,
+      header: col.header.replace(/\s*\/\s*/g, " "),
+    }));
     const totalRatio = cols.reduce((s, c) => s + c.widthRatio, 0) || 1;
     const colWidths = cols.map((c) => (c.widthRatio / totalRatio) * contentWidth);
     // Spasi before & after tabel disamakan dengan tabel invoice (12 pt)
@@ -1826,10 +1846,19 @@ async function renderDocumentPdfInternal(
       cols.forEach((col, idx) => {
         const w = colWidths[idx]!;
         const headerClean = sanitizePdfText(col.header);
-        const textW = fontBold.widthOfTextAtSize(headerClean, headerFontSize);
-        let drawX = colX + 8;
+        const maxTextW = Math.max(12, w - 8);
+
+        // Pastikan judul header tabel muat 1 baris utuh tanpa overlap
+        let size: number = headerFontSize;
+        let textW = fontBold.widthOfTextAtSize(headerClean, size);
+        if (textW > maxTextW) {
+          size = Math.max(7.2, (maxTextW / textW) * size);
+          textW = fontBold.widthOfTextAtSize(headerClean, size);
+        }
+
+        let drawX = colX + 4;
         if (col.align === "right") {
-          drawX = colX + w - textW - 8;
+          drawX = Math.max(colX + 4, colX + w - textW - 4);
         } else if (col.align === "center") {
           drawX = colX + (w - textW) / 2;
         }
@@ -1838,7 +1867,7 @@ async function renderDocumentPdfInternal(
           {
             x: drawX,
             y: textBaselineY,
-            size: headerFontSize,
+            size,
             font: fontBold,
             color: TEXT_DARK,
           },
@@ -1947,7 +1976,9 @@ async function renderDocumentPdfInternal(
       const emptyH = 26;
       const emptyTopY = y + cellPadY + 9;
       const emptyBottomY = emptyTopY - emptyH;
-      const emptyText = "Tidak ada transaksi pada periode ini";
+      const emptyText = isEn
+        ? "No transactions in this period"
+        : "Tidak ada transaksi pada periode ini";
       const emptyTextW = fontRegular.widthOfTextAtSize(emptyText, cellFontSize);
       drawTrackedText(
         emptyText,
@@ -2008,9 +2039,9 @@ async function renderDocumentPdfInternal(
             const textW = rowFont.widthOfTextAtSize(cleanL, cellFontSize);
             let drawX = cellX + 8;
             if (col.align === "right") {
-              drawX = cellX + w - textW - 8;
+              drawX = Math.max(cellX + 8, cellX + w - textW - 8);
             } else if (col.align === "center") {
-              drawX = cellX + (w - textW) / 2;
+              drawX = Math.max(cellX + 8, cellX + (w - textW) / 2);
             }
             drawTrackedText(
               cleanL,
@@ -2618,7 +2649,7 @@ async function renderDocumentPdfInternal(
 
       // Render kalimat Terbilang
       if (terbilangLines.length > 0) {
-        y -= 4;
+        y -= 14;
         for (const tLine of terbilangLines) {
           drawTrackedText(
             tLine,
@@ -2779,7 +2810,7 @@ async function renderDocumentPdfInternal(
     // Pastikan seluruh blok pengesahan utuh pada satu halaman
     ensureSpace(totalSigBlockH);
 
-    y -= 4;
+    y -= 14;
     const sigTopY = y;
     // Baseline garis tanda tangan diturunkan 24 pt dari sigTopY agar sejajar sempurna
     // antara kolom kiri (1 baris) dan kolom kanan (2 baris: pembuka + Altvira Technology).

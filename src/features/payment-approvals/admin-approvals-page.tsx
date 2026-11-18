@@ -289,12 +289,12 @@ export function AdminApprovalsPage() {
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       tableColumns: [
-        { header: t("approvals:admin.col_number_date"), widthRatio: 0.16 },
+        { header: t("approvals:admin.col_number_date"), widthRatio: 0.18 },
         { header: t("approvals:modals.requester_name"), widthRatio: 0.15 },
-        { header: t("approvals:modals.purpose"), widthRatio: 0.35 },
-        { header: t("approvals:admin.col_amount"), widthRatio: 0.14, align: "right" },
-        { header: t("approvals:admin.col_status"), widthRatio: 0.12 },
-        { header: t("approvals:modals.disburse_date"), widthRatio: 0.08 },
+        { header: t("approvals:modals.purpose"), widthRatio: 0.26 },
+        { header: t("approvals:admin.col_amount"), widthRatio: 0.16, align: "right" },
+        { header: t("approvals:admin.col_status"), widthRatio: 0.11, align: "center" },
+        { header: t("approvals:modals.disburse_date"), widthRatio: 0.14, align: "center" },
       ],
       tableRows: filteredRequests.map((r) => [
         r.request_number,

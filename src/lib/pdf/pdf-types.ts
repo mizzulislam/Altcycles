@@ -23,6 +23,7 @@ export interface PdfDocumentSpec {
   docSubtitle?: string;
   docNumber: string;
   docDate: string;
+  language?: "id" | "en";
   docVersion?: number | string;
   statusBadge?: {
     text: string;

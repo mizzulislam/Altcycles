@@ -791,14 +791,53 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-43
+- **Status:** Selesai (Diterapkan pada Tahap 1 Bagian A)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh dokumen bertabel di PDF Altcycles (Daftar Pengajuan Pembayaran, Laporan Anggaran Proyek, Master Vendor, Master Klien, Katalog Produk & Layanan, Daftar Invoice, Daftar PO Vendor, Master Proyek & Termin, Bagi Hasil, serta Dokumen Proyek SOW/BAKP/UAT/BAST) di `src/lib/pdf/` dan fitur terkait
+- **Apa yang bertentangan:**
+  - Header kolom pada tabel PDF saling menimpa, teks keluar dari batas area konten/tabel, alokasi rasio kolom tidak menjumlahkan 1.00 (100%), dan kolom moneter/persentase rata kanan menyebabkan teks bergeser mundur menimpa kolom sebelumnya pada mode EN karena label bahasa Inggris lebih panjang.
+  - Terdapat pilihan kata ganda yang ditandai karakter slash (`/`) pada judul header kolom (misal: "Tanggal Transfer / Pembayaran", "Deskripsi Barang / Jasa", "Perusahaan / PIC", "Module / Scope of Work").
+  - Pesan tabel kosong (*empty state*) pada mode EN masih berbahasa Indonesia dan tidak rata tengah di seluruh lebar konten.
+  - Jarak tabel ke blok pengesahan ("Hormat kami" & TTD) terlalu mepet.
+- **Tabel Hasil Audit Kolom Bermasalah:**
+
+| Dokumen | Bahasa | Kolom Bermasalah | Gejala | Perbaikan | Status |
+| :--- | :---: | :--- | :--- | :--- | :---: |
+| Daftar Pengajuan Pembayaran | ID | Tanggal Transfer / Pembayaran, No & Tanggal, Pemohon | Lebar 8% (39.5pt) terpotong di tepi kanan; No & Tanggal dan Pemohon menempel; ada karakter slash `/` | Konfigurasi kolom terpusat 100%: 0.18, 0.15, 0.26, 0.16, 0.11, 0.14; label tunggal "Tanggal Transfer" | Selesai |
+| Payment Approvals Report | EN | Transfer / Payment Date, Requester, No. & Date | Header Transfer Date terpotong kanan; label menimpa kolom status; ada karakter slash `/` | Konfigurasi kolom EN 100%: 0.18, 0.15, 0.26, 0.16, 0.11, 0.14; label tunggal "Transfer Date" | Selesai |
+| Laporan Anggaran Proyek | ID | Serapan (%), Sisa Anggaran, Realisasi | Lebar 8% rata kanan menyebabkan teks mundur menimpa Sisa Anggaran | Rasio baru 100%: 0.27, 0.17, 0.16, 0.16, 0.12, 0.12; perataan Serapan (%) center dengan bounding aman | Selesai |
+| Project Budgeting Report | EN | Budget Ceiling, Posted Realization, Remaining Budget, Absorption (%) | Label EN panjang ("Absorption (%)" 14 char) menimpa kolom sebelumnya hingga -25.5pt | Rasio baru 100%: 0.27, 0.17, 0.16, 0.16, 0.12, 0.12; bounding `drawX >= colX + 4`; auto-scaling font header bila perlu | Selesai |
+| Master Vendor | ID | PIC / Kontak, Bank & Rekening | Rasio integer (12 total); terdapat karakter slash `/` di header | Rasio dinormalisasi 100%: 0.12, 0.28, 0.26, 0.22, 0.12; label "Kontak PIC" tanpa slash | Selesai |
+| Suppliers & Vendors List | EN | PIC Contact, Bank Account | Header bertabrakan saat kontak panjang | Rasio 100%; token panjang dipecah aman via `wrapTextByWidth` | Selesai |
+| Master Pelanggan / Klien | ID | Perusahaan / PIC | Rasio 12.5; terdapat karakter slash `/` | Rasio dinormalisasi 100%: 0.12, 0.28, 0.26, 0.22, 0.12; label "Perusahaan PIC" tanpa slash | Selesai |
+| Clients & Customers List | EN | Client Name, PIC Contact, Tax ID | Alokasi tidak proporsional | Rasio terstandar 100%: 0.12, 0.30, 0.26, 0.20, 0.12 | Selesai |
+| Katalog Produk & Layanan | ID | Nama Layanan / Produk | Terdapat karakter slash `/`; rasio integer 12 | Rasio 100%: 0.12, 0.32, 0.18, 0.10, 0.16, 0.12; label "Nama Layanan" tanpa slash | Selesai |
+| Official Catalog | EN | Service Name, Base Rate (IDR) | Alokasi tarif dasar mepet | Rasio terstandar 100%: 0.12, 0.32, 0.18, 0.10, 0.16, 0.12 | Selesai |
+| PO Pembelian Vendor | ID & EN | Deskripsi Barang / Jasa, Item / Service Description | Terdapat karakter slash `/` | Diseragamkan menjadi "Deskripsi Barang" (ID) dan "Item Description" (EN) tanpa slash | Selesai |
+| SOW / BAKP / UAT / BAST | ID & EN | Module / Scope of Work, Deliverable / Work Component, Fitur / Modul, Objek / Komponen Serah Terima, Format / Media | Terdapat karakter slash `/` pada seluruh header tabel dokumen proyek klien | Diseragamkan menjadi 1 kata/frasa pasti tanpa slash: "Lingkup Pekerjaan", "Komponen Pekerjaan", "Modul", "Komponen Serah Terima", "Format Media" | Selesai |
+| Empty State Seluruh Tabel | EN | Baris kosong | Teks masih berbahasa Indonesia ("Tidak ada transaksi pada periode ini") | Dilokalisasi dinamis mengikuti `spec.language` ("No transactions in this period" pada EN) dan rata tengah penuh | Selesai |
+| Blok Pengesahan Seluruh Dokumen | ID & EN | Jarak tabel ke pengesahan | Jarak terlalu mepet (hanya 4pt) | Diberikan jarak proporsional 14pt (`y -= 14`) sebelum blok pengesahan | Selesai |
+
+- **Yang kulakukan:**
+  1. Membuat berkas konfigurasi tunggal kolom tabel PDF `src/lib/pdf/pdf-table-columns.ts` dengan total rasio tepat 1.00 (100%), judul header 1 baris, dan eliminasi seluruh slash (`/`).
+  2. Mengintegrasikan mesin render `pdf-engine.ts` dengan penyesuaian font header otomatis (auto-scaling hingga 7.2pt), pembungkusan token panjang (`wrapTextByWidth`), bounding `drawX` batas kiri (`Math.max(colX + 4, ...)`), lokalisasi pesan kosong, dan jarak blok pengesahan 14pt.
+  3. Menambahkan tes otomatis `tests/unit/document-table-collision.test.ts` yang menguji bounding box sel, non-intersection sel sebaris, rasio 100%, serta skenario fixture ekstrem terburuk di ID dan EN.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Standardisasi melalui konfigurasi kolom terpusat dan perbaikan mesin tabel bersama. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 26 | 24 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 27 | 25 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
 | `standar-vs-sistem` | 7 | 6 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`, `K-39`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **42** | **35** | **7** | **1** |
+| **Total Temuan** | **43** | **36** | **7** | **1** |

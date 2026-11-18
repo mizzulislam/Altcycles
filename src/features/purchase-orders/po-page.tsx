@@ -315,7 +315,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       tableColumns: [
         { header: "No", widthRatio: 0.07, align: "center" },
         {
-          header: t("po:doc_spec.item_desc", "Deskripsi Barang / Jasa"),
+          header: t("po:doc_spec.item_desc", "Deskripsi Barang"),
           widthRatio: 0.43,
         },
         { header: "Qty", widthRatio: 0.12, align: "center" },

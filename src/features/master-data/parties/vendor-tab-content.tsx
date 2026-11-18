@@ -141,11 +141,11 @@ export function VendorTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 1.5 },
-        { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 3 },
-        { header: t("parties:vendors.col_pic", "PIC / Kontak"), widthRatio: 3 },
-        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 3 },
-        { header: t("parties:vendors.col_status", "Status"), widthRatio: 1.5 },
+        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 0.28 },
+        { header: t("parties:vendors.col_pic", "Kontak PIC"), widthRatio: 0.26 },
+        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 0.22 },
+        { header: t("parties:vendors.col_status", "Status"), widthRatio: 0.12, align: "center" },
       ],
       tableRows: vendors.map((v) => [
         v.code,

@@ -108,7 +108,7 @@ export function makeQuotationSpec(
       : undefined,
     tableColumns: [
       { header: "No", widthRatio: 0.08, align: "center" },
-      { header: isEn ? "Module / Scope of Work" : "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
+      { header: isEn ? "Scope of Work" : "Lingkup Pekerjaan", widthRatio: 0.62 },
       { header: isEn ? "Cost (IDR)" : "Biaya (IDR)", widthRatio: 0.3, align: "right" },
     ],
     tableRows: qItems.map((it, idx) => [
@@ -360,7 +360,7 @@ export function makeBakpSpec(
       deliverables.length > 0
         ? [
             { header: "No", widthRatio: 0.1, align: "center" },
-            { header: isEn ? "Deliverable / Work Component" : "Deliverable / Komponen Pekerjaan", widthRatio: 0.65 },
+            { header: isEn ? "Work Component" : "Komponen Pekerjaan", widthRatio: 0.65 },
             { header: isEn ? "Progress Status" : "Status Capaian", widthRatio: 0.25, align: "center" },
           ]
         : undefined,
@@ -486,7 +486,7 @@ export function makeUatSpec(
     ],
     tableColumns: [
       { header: "No", widthRatio: 0.08, align: "center" },
-      { header: isEn ? "Feature / Module" : "Fitur / Modul", widthRatio: 0.32 },
+      { header: isEn ? "Module" : "Modul", widthRatio: 0.32 },
       { header: isEn ? "Test Scenario" : "Skenario Uji", widthRatio: 0.44 },
       { header: isEn ? "Test Result" : "Hasil Pengujian", widthRatio: 0.16, align: "center" },
     ],
@@ -605,8 +605,8 @@ export function makeBastSpec(
       handoverItems.length > 0
         ? [
             { header: "No", widthRatio: 0.08, align: "center" },
-            { header: isEn ? "Deliverable / Handover Component" : "Objek / Komponen Serah Terima", widthRatio: 0.46 },
-            { header: isEn ? "Format / Media" : "Format / Media", widthRatio: 0.22 },
+            { header: isEn ? "Handover Component" : "Komponen Serah Terima", widthRatio: 0.46 },
+            { header: isEn ? "Media Format" : "Format Media", widthRatio: 0.22 },
             { header: isEn ? "Completeness Notes" : "Catatan Kelengkapan", widthRatio: 0.24 },
           ]
         : undefined,

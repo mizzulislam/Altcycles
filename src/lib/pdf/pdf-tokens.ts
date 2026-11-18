@@ -514,3 +514,5 @@ export function sanitizePdfText(text: string): string {
     .replace(/\u2264/g, "<=")
     .replace(/[^\x20-\x7E\xA0-\xFF\u2013\u2022]/g, "");
 }
+
+export * from "./pdf-table-columns";
