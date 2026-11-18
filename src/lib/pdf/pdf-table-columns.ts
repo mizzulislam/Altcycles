@@ -395,6 +395,10 @@ export function getTableColumnsConfig(
     const entry = PDF_TABLE_COLUMN_CONFIGS["DAFTAR MASTER PELANGGAN/KLIEN"]!;
     return isEn ? entry.en : entry.id;
   }
+  if (upper.includes("KATALOG") || upper.includes("CATALOG") || upper.includes("PRODUCT & SERVICE")) {
+    const entry = PDF_TABLE_COLUMN_CONFIGS["DAFTAR KATALOG LAYANAN & PRODUK"]!;
+    return isEn ? entry.en : entry.id;
+  }
   if (upper.includes("INVOICE") || upper.includes("TAGIHAN")) {
     const entry = PDF_TABLE_COLUMN_CONFIGS["DAFTAR INVOICE PENAGIHAN & PIUTANG"]!;
     return isEn ? entry.en : entry.id;

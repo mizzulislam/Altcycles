@@ -193,8 +193,8 @@ export function DocumentDownloadMenu({
                 )}
               </div>
               <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground">PDF Dokumen (.pdf)</span>
-                <span className="text-[11px] text-muted-foreground">Format cetak &amp; laporan resmi</span>
+                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.pdf", "PDF (.pdf)")}</span>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{t("export.pdf_desc", "Siap cetak")}</span>
               </div>
             </button>
 
@@ -217,8 +217,8 @@ export function DocumentDownloadMenu({
                 )}
               </div>
               <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground">Word Dokumen (.docx)</span>
-                <span className="text-[11px] text-muted-foreground">Dapat disunting</span>
+                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.word", "Word (.docx)")}</span>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{t("export.word_desc", "Dapat disunting")}</span>
               </div>
             </button>
           </div>,

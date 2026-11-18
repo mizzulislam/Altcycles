@@ -152,7 +152,11 @@ export function VendorTabContent({
         v.contact_name
           ? `${v.contact_name} (${v.phone || v.email || "-"})`
           : "-",
-        v.bank_name ? `${v.bank_name} - ${v.bank_account_number}` : "-",
+        v.bank_account_number || v.bank_name
+          ? (v.bank_account_number && v.bank_name
+              ? `${v.bank_account_number}\n${v.bank_name}`
+              : v.bank_account_number || v.bank_name || "-")
+          : "-",
       ]),
     });
     downloadPdfBytes(bytes, t("parties:vendors.export_pdf_title", "Master_Vendor_Altcycles.pdf"));
@@ -278,7 +282,16 @@ export function VendorTabContent({
                       </div>
                     </TableCell>
                     <TableCell className="text-xs">
-                      {v.bank_name ?? "-"} {v.bank_account_number ?? ""}
+                      {v.bank_account_number || v.bank_name ? (
+                        <>
+                          <div>{v.bank_account_number || "-"}</div>
+                          <div className="text-muted-foreground">
+                            {v.bank_name || ""}
+                          </div>
+                        </>
+                      ) : (
+                        "-"
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="-my-px inline-flex justify-center">

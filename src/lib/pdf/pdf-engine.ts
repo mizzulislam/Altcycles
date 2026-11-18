@@ -42,6 +42,7 @@ import {
   PDF_LAYOUT_TOKENS,
   TEXT_DARK,
   TEXT_LABEL,
+  TEXT_MUTED,
   getTableColumnsConfig,
   resolveDocTitleConfig,
   sanitizePdfText,
@@ -1075,16 +1076,17 @@ async function renderDocumentPdfInternal(
 
   // Pastikan tanggal dokumen ada di Zona B
   if (spec.docDate && spec.docDate.trim()) {
-    const formattedDocDate = formatDocDateLong(spec.docDate);
+    const isEn = (spec.language ?? getActiveLanguage()) === "en";
+    const formattedDocDate = formatDocDateLong(spec.docDate, isEn ? "en" : "id");
     const alreadyHasDocDate = rawMeta.some(
       (m) =>
-        /tanggal\s*(terbit|dokumen|invoice|kuitansi|po|uji|pengujian|evaluasi|serah\s*terima|pengajuan)/i.test(
+        /tanggal\s*(terbit|dokumen|invoice|kuitansi|po|uji|pengujian|evaluasi|serah\s*terima|pengajuan)|document\s*date|issue\s*date/i.test(
           m.label,
         ) || m.value === formattedDocDate,
     );
     if (!alreadyHasDocDate) {
       effectiveMetaRows.push({
-        label: "Tanggal Dokumen",
+        label: isEn ? "Document Date" : "Tanggal Dokumen",
         value: formattedDocDate,
       });
     }
@@ -2029,6 +2031,7 @@ async function renderDocumentPdfInternal(
         let cellX = marginX;
         cols.forEach((col, idx) => {
           const w = colWidths[idx]!;
+          const rawCell = row[idx] ?? "";
           const lines = wrappedCells[idx] ?? [""];
           lines.forEach((l, lIdx) => {
             const cleanL = sanitizePdfText(l);
@@ -2039,6 +2042,9 @@ async function renderDocumentPdfInternal(
             } else if (col.align === "center") {
               drawX = Math.max(cellX + 8, cellX + (w - textW) / 2);
             }
+            const isSecondaryLine =
+              lIdx > 0 &&
+              (rawCell.includes("\n") || /bank|rekening|pic|kontak/i.test(col.header));
             drawTrackedText(
               cleanL,
               {
@@ -2046,7 +2052,7 @@ async function renderDocumentPdfInternal(
                 y: y - lIdx * cellLineH,
                 size: cellFontSize,
                 font: rowFont,
-                color: TEXT_DARK,
+                color: isSecondaryLine ? TEXT_MUTED : TEXT_DARK,
               },
               "D-table-cell",
             );

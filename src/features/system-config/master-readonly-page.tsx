@@ -327,7 +327,7 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {accounts.map((acc) => (
                     <TableRow key={acc.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-semibold text-center whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">
                         {acc.code}
                       </TableCell>
                       <TableCell className="px-3 font-medium">
@@ -379,7 +379,7 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {projects.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-semibold text-center whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">
                         {p.code}
                       </TableCell>
                       <TableCell className="px-3 font-medium">{p.name}</TableCell>
@@ -425,11 +425,18 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {vendors.map((v) => (
                     <TableRow key={v.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-semibold text-center whitespace-nowrap">{v.code}</TableCell>
+                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">{v.code}</TableCell>
                       <TableCell className="px-3 font-medium">{v.name}</TableCell>
                       <TableCell className="px-3 text-center">{v.contact_name ?? "-"}</TableCell>
-                      <TableCell className="px-3 text-center text-muted-foreground">
-                        {v.bank_name ?? "-"} {v.bank_account_number ?? ""}
+                      <TableCell className="px-3 text-xs">
+                        {v.bank_account_number || v.bank_name ? (
+                          <>
+                            <div>{v.bank_account_number || "-"}</div>
+                            <div className="text-muted-foreground">{v.bank_name || ""}</div>
+                          </>
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                       <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
@@ -467,7 +474,7 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {customers.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-semibold text-center whitespace-nowrap">{c.code}</TableCell>
+                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">{c.code}</TableCell>
                       <TableCell className="px-3 font-medium">{c.name}</TableCell>
                       <TableCell className="px-3 text-center">{c.contact_person ?? "-"}</TableCell>
                       <TableCell className="px-3 text-center text-muted-foreground">{c.email ?? "-"}</TableCell>

@@ -424,7 +424,7 @@ export function AdminSettingsPage() {
                   .sort((a, b) => b.period_key.localeCompare(a.period_key))[0];
                 return (
                   <TableRow key={seq.doc_type}>
-                    <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-bold whitespace-nowrap">
+                    <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
                       {seq.doc_type}
                     </TableCell>
                     <TableCell className="px-3 py-3.5 align-top text-xs sm:text-sm leading-5 font-medium text-foreground">
@@ -510,7 +510,7 @@ export function AdminSettingsPage() {
             <TableBody>
               {templates.map((tmpl) => (
                 <TableRow key={tmpl.doc_type}>
-                  <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-bold whitespace-nowrap">
+                  <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
                     {tmpl.doc_type}
                   </TableCell>
                   <TableCell className="px-3 py-3.5 align-top text-xs sm:text-sm leading-5 font-medium text-foreground">

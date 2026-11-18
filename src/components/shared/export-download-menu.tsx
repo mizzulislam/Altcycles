@@ -187,9 +187,9 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">{t("export.excel", "Excel (.xlsx)")}</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {t("export.excel_desc", "Buku kerja spreadsheet lengkap")}
+                  <span className="font-semibold text-foreground whitespace-nowrap">{t("export.excel", "Excel (.xlsx)")}</span>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {t("export.excel_desc", "Data & rumus")}
                   </span>
                 </div>
               </button>
@@ -215,11 +215,11 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">
-                    {t("export.pdf", "PDF Dokumen (.pdf)")}
+                  <span className="font-semibold text-foreground whitespace-nowrap">
+                    {t("export.pdf", "PDF (.pdf)")}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {t("export.pdf_desc", "Format cetak & laporan resmi")}
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {t("export.pdf_desc", "Siap cetak")}
                   </span>
                 </div>
               </button>
@@ -245,11 +245,11 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">
-                    {t("export.csv", "Format CSV (.csv)")}
+                  <span className="font-semibold text-foreground whitespace-nowrap">
+                    {t("export.csv", "CSV (.csv)")}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {t("export.csv_desc", "Tabel data pemisah koma")}
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    {t("export.csv_desc", "Data mentah")}
                   </span>
                 </div>
               </button>

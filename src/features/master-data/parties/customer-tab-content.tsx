@@ -131,7 +131,7 @@ export function CustomerTabContent({
     const activeCount = customers.filter((c) => c.is_active).length;
     const inactiveCount = customers.filter((c) => !c.is_active).length;
     const bytes = await generateDocumentPdf({
-      docTitle: t("parties:customers.export_pdf_title", "DAFTAR MASTER PELANGGAN RESMI"),
+      docTitle: t("parties:customers.export_pdf_title", "DAFTAR PELANGGAN/KLIEN"),
       docSubtitle: t("parties:customers.export_pdf_subtitle", "Basis Data Klien & Pelanggan Resmi Perusahaan"),
       docNumber: `REKAP-CST-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),

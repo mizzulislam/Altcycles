@@ -128,12 +128,14 @@
     "next_page": "Halaman berikutnya"
   },
   "export": {
-    "excel": "Format Spreadsheet Excel (.xlsx)",
-    "excel_desc": "Data terstruktur lengkap siap olah rumus",
-    "pdf": "Dokumen Cetak PDF (.pdf)",
-    "pdf_desc": "Tata letak siap cetak & arsip resmi A4",
-    "csv": "Format Teks CSV (.csv)",
-    "csv_desc": "File mentah kompatibel lintas sistem"
+    "excel": "Excel (.xlsx)",
+    "excel_desc": "Data & rumus",
+    "pdf": "PDF (.pdf)",
+    "pdf_desc": "Siap cetak",
+    "csv": "CSV (.csv)",
+    "csv_desc": "Data mentah",
+    "word": "Word (.docx)",
+    "word_desc": "Dapat disunting"
   },
   "status": {
     "active": "Aktif",

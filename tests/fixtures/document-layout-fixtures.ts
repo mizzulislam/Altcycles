@@ -2322,7 +2322,7 @@ export function buildFixtureInvoicesListMinimum(): PdfDocumentSpec {
  */
 export function buildFixtureCustomersMasterNormal(): PdfDocumentSpec {
   return {
-    docTitle: "DAFTAR MASTER PELANGGAN/KLIEN",
+    docTitle: "DAFTAR PELANGGAN/KLIEN",
     docSubtitle: "Rekapitulasi Klien & Pemegang Akun Portal Pembeli",
     docNumber: "REKAP-CST-20261116",
     docDate: "2026-11-16",
@@ -2420,25 +2420,25 @@ export function buildFixtureVendorsMasterNormal(): PdfDocumentSpec {
         "VND-001",
         "PT Cipta Solusi Hosting",
         "Reza Permana (0812-1111-2222)",
-        "BCA - 8820192831",
+        "8820192831\nBCA",
       ],
       [
         "VND-002",
         "CV Digital Kreasi Mandiri",
         "Diana Lestari (0813-3333-4444)",
-        "Mandiri - 133001928311",
+        "133001928311\nMandiri",
       ],
       [
         "VND-003",
         "PT Net Solusi Indonesia",
         "Farhan Aziz (0815-5555-6666)",
-        "BNI - 0982319201",
+        "0982319201\nBNI",
       ],
       [
         "VND-004",
         "Mitra Legal Prima",
         "Dewi Sartika (0818-7777-8888)",
-        "Bank Jago - 103289122849",
+        "103289122849\nBank Jago",
       ],
     ],
     rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
@@ -2450,7 +2450,7 @@ export function buildFixtureVendorsMasterExtreme(): PdfDocumentSpec {
     `VND-${String(i + 1).padStart(3, "0")}`,
     `PT Rekanan Vendor Pemasok Layanan ${i + 1}`,
     `Kontak PIC Vendor ${i + 1}`,
-    `Bank Mandiri - 144000${String(i + 1).padStart(4, "0")}`,
+    `144000${String(i + 1).padStart(4, "0")}\nBank Mandiri`,
   ]);
   return {
     ...buildFixtureVendorsMasterNormal(),

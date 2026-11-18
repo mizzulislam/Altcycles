@@ -869,14 +869,51 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-46
+- **Status:** Selesai (Diterapkan pada Tahap 2 Bagian B Item 2)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** `Daftar Vendor`, `Daftar Klien / Pelanggan`, `Katalog Produk & Layanan`
+- **Apa yang bertentangan:**
+  - Judul PDF bahasa Inggris sebelumnya bervariasi dan belum terstandar batas 2 kata / 16 karakter: Vendor (`SUPPLIERS & VENDORS DIRECTORY`), Klien (`OFFICIAL CLIENTS & CUSTOMERS DIRECTORY`), dan Katalog (`OFFICIAL ALTVIRA PRODUCTS & SERVICES CATALOG`).
+  - PDF Klien versi Indonesia sebelumnya menggunakan kata `"DAFTAR MASTER PELANGGAN RESMI"` yang belum sesuai pemetaan final (`DAFTAR KLIEN` | `DAFTAR PELANGGAN/KLIEN`).
+- **Yang kulakukan:**
+  - Menetapkan pemetaan judul EN resmi: Vendor (`headerTitle: "VENDOR LIST"`, `fullTitle: "SUPPLIER VENDOR LIST"`), Klien (`headerTitle: "CLIENT LIST"`, `fullTitle: "CUSTOMER / CLIENT LIST"`), dan Katalog (`headerTitle: "OFFICIAL CATALOG"`, `fullTitle: "ALTVIRA OFFICIAL PRODUCT & SERVICE CATALOG"`).
+  - Menyelaraskan PDF Klien versi Indonesia ke `DAFTAR KLIEN` (header) dan `DAFTAR PELANGGAN/KLIEN` (baris biru).
+  - Melokalisasi label "Tanggal Dokumen" otomatis pada Zona B menjadi "Document Date" jika bahasa aktif adalah Inggris (`spec.language === "en"`).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan pemetaan judul EN & ID terstandar. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
+### ID: K-47
+- **Status:** Selesai (Diterapkan pada Tahap 2 Bagian B Item 1, 3, 4)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Seluruh menu `ExportDownloadMenu` dan `DocumentDownloadMenu`, tabel Rekening Bank Vendor, dan sel data tabel
+- **Apa yang bertentangan:**
+  - Deskripsi pilihan format unduh sebelumnya bertele-tele dan melebihi 3 kata ("Buku kerja spreadsheet lengkap", "Tata letak siap cetak & arsip resmi A4", dll).
+  - Rekening bank vendor di tabel sebelumnya digabung 1 baris dengan pemisah " - " tanpa pembedaan warna nomor rekening vs nama bank.
+  - Sebagian sel tabel pada halaman konfigurasi admin masih menggunakan font tebal (`font-bold` / `font-semibold`) untuk data kode/nomor biasa.
+- **Yang kulakukan:**
+  - Menstandarisasi deskripsi format unduh maksimal 3 kata di id dan en: Excel (id: "Data & rumus" | en: "Spreadsheet"), PDF (id: "Siap cetak" | en: "Print-ready"), CSV (id: "Data mentah" | en: "Raw data"), Word (id: "Dapat disunting" | en: "Editable").
+  - Mengatur kolom Rekening Bank menjadi 2 baris (Baris 1 nomor rekening teks utama, Baris 2 nama bank teks sekunder abu `text-muted-foreground`), menghapus tanda pemisah " - " di PDF, serta menerapkan warna sekunder `TEXT_MUTED` pada baris kedua di PDF.
+  - Merapikan tebal font isi sel tabel menjadi `font-medium` / `font-normal` (bold hanya untuk header kolom, baris total/summary, dan judul).
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan deskripsi ringkas format unduh <= 3 kata, rekening bank 2 baris terpisah dengan warna sekunder, dan isi tabel reguler/medium. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 29 | 27 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`, `K-44`, `K-45`) | 2 (`K-20`, `K-27`) | 2 (`K-20`, `K-45`) |
+| `standar-vs-layout` | 31 | 29 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`, `K-44`, `K-45`, `K-46`, `K-47`) | 2 (`K-20`, `K-27`) | 2 (`K-20`, `K-45`) |
 | `standar-vs-sistem` | 7 | 6 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`, `K-39`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **45** | **38** | **7** | **2** |
+| **Total Temuan** | **47** | **40** | **7** | **2** |

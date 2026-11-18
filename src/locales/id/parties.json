@@ -77,7 +77,7 @@
     "empty_desc": "Daftar pelanggan / klien masih kosong. Tambahkan pelanggan untuk penerbitan proyek dan invoice resmi.",
     "export_excel_sheet": "Daftar Pelanggan",
     "export_excel_filename": "Master_Pelanggan_Altcycles.xlsx",
-    "export_pdf_title": "DAFTAR MASTER PELANGGAN RESMI",
+    "export_pdf_title": "DAFTAR PELANGGAN/KLIEN",
     "export_pdf_subtitle": "Basis Data Klien & Pelanggan Resmi Perusahaan",
     "export_pdf_total_label": "Total Pelanggan",
     "export_pdf_total_unit": "klien",

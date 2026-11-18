@@ -129,12 +129,14 @@
     "next_page": "Next page"
   },
   "export": {
-    "excel": "Excel Spreadsheet (.xlsx)",
-    "excel_desc": "Full structured data ready for analysis & formulas",
-    "pdf": "Printable PDF Document (.pdf)",
-    "pdf_desc": "A4 printable format for official archiving",
-    "csv": "Raw CSV Data Format (.csv)",
-    "csv_desc": "Raw text file compatible with external systems"
+    "excel": "Excel (.xlsx)",
+    "excel_desc": "Spreadsheet",
+    "pdf": "PDF (.pdf)",
+    "pdf_desc": "Print-ready",
+    "csv": "CSV (.csv)",
+    "csv_desc": "Raw data",
+    "word": "Word (.docx)",
+    "word_desc": "Editable"
   },
   "status": {
     "active": "Active",
