@@ -5,6 +5,7 @@ import {
   formatDocRupiah,
   simplifyLedgerDescription,
 } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
 import type {
   PdfDocumentSection,
@@ -30,15 +31,23 @@ export function buildJournalsPdfSpec(params: {
   }>;
   totalDebit?: number;
   totalCredit?: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const isAdj = Boolean(params.isAdjusting);
   const docTitle = isAdj
-    ? "JURNAL PENYESUAIAN & KOREKSI"
-    : "JURNAL UMUM";
+    ? isEn
+      ? "ADJUSTING & CORRECTION ENTRIES"
+      : "JURNAL PENYESUAIAN & KOREKSI"
+    : isEn
+      ? "GENERAL JOURNAL"
+      : "JURNAL UMUM";
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ??
-    `${isAdj ? "AJP" : "JRN"}/${docDate.replace(/-/g, "")}`;
+    `${isAdj ? (isEn ? "AJE" : "AJP") : (isEn ? "GJN" : "JRN")}/${docDate.replace(/-/g, "")}`;
 
   const tableRows = params.rows.map((r) => [
     r.date,
@@ -54,7 +63,7 @@ export function buildJournalsPdfSpec(params: {
   if (params.rows.length > 0) {
     tableRows.push([
       "",
-      "TOTAL KESELURUHAN",
+      isEn ? "GRAND TOTAL" : "TOTAL KESELURUHAN",
       "",
       formatDocRupiah(totDeb),
       formatDocRupiah(totCred),
@@ -66,24 +75,34 @@ export function buildJournalsPdfSpec(params: {
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Entitas & Siklus",
+    recipientTitle: isEn ? "Entity & Cycle" : "Entitas & Siklus",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
       isAdj
-        ? "Siklus: Ayat Jurnal Penyesuaian & Koreksi Transaksi"
-        : "Siklus: Buku Jurnal Transaksi Kronologis",
+        ? isEn
+          ? "Cycle: Adjusting & Correction Entries"
+          : "Siklus: Ayat Jurnal Penyesuaian & Koreksi Transaksi"
+        : isEn
+          ? "Cycle: Chronological Journal Transactions"
+          : "Siklus: Buku Jurnal Transaksi Kronologis",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Status Verifikasi", value: "Terposting Lengkap" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Verification Status" : "Status Verifikasi",
+        value: isEn ? "Fully Posted" : "Terposting Lengkap",
+      },
     ],
     tableColumns: [
-      { header: "Tanggal", widthRatio: 0.13 },
-      { header: "Deskripsi", widthRatio: 0.39 },
+      { header: isEn ? "Date" : "Tanggal", widthRatio: 0.13 },
+      { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.39 },
       { header: "Ref", widthRatio: 0.16, align: "center" },
       { header: "Debit", widthRatio: 0.16, align: "right" },
-      { header: "Kredit", widthRatio: 0.16, align: "right" },
+      { header: isEn ? "Credit" : "Kredit", widthRatio: 0.16, align: "right" },
     ],
     tableRows,
   };
@@ -114,7 +133,11 @@ export function buildGeneralLedgerPdfSpec(params: {
       runningBalance: number;
     }>;
   }>;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `GL/${docDate.replace(/-/g, "")}`;
@@ -131,36 +154,48 @@ export function buildGeneralLedgerPdfSpec(params: {
 
     return {
       title: `${formatAccountRef(acc.code)} - ${acc.name}`,
-      subtitle: `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
+      subtitle: isEn
+        ? `Type: ${acc.type} | Normal Balance: ${acc.normalBalance}`
+        : `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
       badge: formatDocRupiah(acc.endingBalance),
       tableColumns: [
-        { header: "Tanggal", widthRatio: 0.15 },
-        { header: "Keterangan", widthRatio: 0.28 },
+        { header: isEn ? "Date" : "Tanggal", widthRatio: 0.15 },
+        { header: isEn ? "Description" : "Keterangan", widthRatio: 0.28 },
         { header: "Ref", widthRatio: 0.14, align: "center" },
         { header: "Debit", widthRatio: 0.14, align: "right" },
-        { header: "Kredit", widthRatio: 0.14, align: "right" },
-        { header: "Balance", widthRatio: 0.15, align: "right" },
+        { header: isEn ? "Credit" : "Kredit", widthRatio: 0.14, align: "right" },
+        { header: isEn ? "Balance" : "Balance", widthRatio: 0.15, align: "right" },
       ],
       tableRows,
     };
   });
 
   return {
-    docTitle: "BUKU BESAR (GENERAL LEDGER)",
+    docTitle: isEn ? "GENERAL LEDGER" : "BUKU BESAR (GENERAL LEDGER)",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Buku Besar Entitas",
+    recipientTitle: isEn ? "Entity General Ledger" : "Buku Besar Entitas",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
       params.isAllAccounts
-        ? "Cakupan: Seluruh Akun Buku Besar"
-        : `Akun: ${params.accountName || "Akun Terpilih"}`,
+        ? isEn
+          ? "Scope: All General Ledger Accounts"
+          : "Cakupan: Seluruh Akun Buku Besar"
+        : isEn
+          ? `Account: ${params.accountName || "Selected Account"}`
+          : `Akun: ${params.accountName || "Akun Terpilih"}`,
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Status Rekonsiliasi", value: "Selesai Direkonsiliasi" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Reconciliation Status" : "Status Rekonsiliasi",
+        value: isEn ? "Fully Reconciled" : "Selesai Direkonsiliasi",
+      },
     ],
     sections,
   };
@@ -184,7 +219,11 @@ export function buildTrialBalancePdfSpec(params: {
   }>;
   sumDebit?: number;
   sumCredit?: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `TB/${docDate.replace(/-/g, "")}`;
@@ -204,43 +243,58 @@ export function buildTrialBalancePdfSpec(params: {
   if (params.rows.length > 0) {
     tableRows.push([
       "",
-      "TOTAL KESELURUHAN",
+      isEn ? "GRAND TOTAL" : "TOTAL KESELURUHAN",
       formatDocRupiah(sumDeb),
       formatDocRupiah(sumCred),
     ]);
   }
 
   return {
-    docTitle: "NERACA SALDO (TRIAL BALANCE)",
+    docTitle: isEn ? "TRIAL BALANCE" : "NERACA SALDO (TRIAL BALANCE)",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Pelaporan",
+    recipientTitle: isEn ? "Reporting Basis" : "Dasar Pelaporan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
       isAdjusted
-        ? "Dasar: Setelah Penyesuaian (Adjusted Trial Balance)"
-        : "Dasar: Sebelum Penyesuaian (Unadjusted Trial Balance)",
+        ? isEn
+          ? "Basis: Adjusted Trial Balance"
+          : "Dasar: Setelah Penyesuaian (Adjusted Trial Balance)"
+        : isEn
+          ? "Basis: Unadjusted Trial Balance"
+          : "Dasar: Sebelum Penyesuaian (Unadjusted Trial Balance)",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
       {
-        label: "Status Keseimbangan",
-        value: isBalanced ? "Seimbang (Balanced)" : "Tidak Seimbang",
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Balance Status" : "Status Keseimbangan",
+        value: isBalanced
+          ? isEn
+            ? "Balanced"
+            : "Seimbang (Balanced)"
+          : isEn
+            ? "Unbalanced"
+            : "Tidak Seimbang",
       },
     ],
     bannerBox: !isBalanced
       ? {
-          text: "⚠ Buku Besar Tidak Seimbang - Terdapat selisih antara Total Debit dan Total Kredit",
+          text: isEn
+            ? "⚠ General Ledger Unbalanced - Difference detected between Total Debit and Total Credit"
+            : "⚠ Buku Besar Tidak Seimbang - Terdapat selisih antara Total Debit dan Total Kredit",
           variant: "warning",
         }
       : undefined,
     tableColumns: [
-      { header: "No. Akun", widthRatio: 0.11 },
-      { header: "Nama Akun", widthRatio: 0.43 },
+      { header: isEn ? "Account No." : "No. Akun", widthRatio: 0.11 },
+      { header: isEn ? "Account Name" : "Nama Akun", widthRatio: 0.43 },
       { header: "Debit", widthRatio: 0.23, align: "right" },
-      { header: "Kredit", widthRatio: 0.23, align: "right" },
+      { header: isEn ? "Credit" : "Kredit", widthRatio: 0.23, align: "right" },
     ],
     tableRows,
   };
@@ -261,7 +315,11 @@ export function buildIncomeStatementPdfSpec(params: {
   opexRows?: Array<{ label: string; amount: number }>;
   totalOpex?: number;
   netIncome: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `IS/${docDate.replace(/-/g, "")}`;
@@ -269,61 +327,97 @@ export function buildIncomeStatementPdfSpec(params: {
   const tableRows: string[][] = [];
 
   // PENDAPATAN USAHA
-  tableRows.push(["PENDAPATAN USAHA", ""]);
+  tableRows.push([isEn ? "OPERATING REVENUE" : "PENDAPATAN USAHA", ""]);
   for (const r of params.revenueRows) {
     tableRows.push([`  ${r.label}`, formatDocRupiah(r.amount)]);
   }
-  tableRows.push(["TOTAL PENDAPATAN USAHA", formatDocRupiah(params.totalRevenue)]);
+  tableRows.push([
+    isEn ? "TOTAL OPERATING REVENUE" : "TOTAL PENDAPATAN USAHA",
+    formatDocRupiah(params.totalRevenue),
+  ]);
 
   // BEBAN LANGSUNG PROYEK
-  tableRows.push(["BEBAN LANGSUNG PROYEK", ""]);
+  tableRows.push([isEn ? "DIRECT PROJECT COSTS" : "BEBAN LANGSUNG PROYEK", ""]);
   if (params.cogsRows && params.cogsRows.length > 0) {
     for (const c of params.cogsRows) {
       tableRows.push([`  ${c.label}`, formatDocRupiah(c.amount)]);
     }
   } else {
-    tableRows.push(["  Belum ada beban langsung proyek pada periode ini.", "-"]);
+    tableRows.push([
+      isEn
+        ? "  No direct project costs in this period."
+        : "  Belum ada beban langsung proyek pada periode ini.",
+      "-",
+    ]);
   }
   const gross = params.grossProfit ?? params.totalRevenue;
-  tableRows.push(["LABA KOTOR PROYEK", formatDocRupiah(gross)]);
+  tableRows.push([
+    isEn ? "PROJECT GROSS PROFIT" : "LABA KOTOR PROYEK",
+    formatDocRupiah(gross),
+  ]);
 
   // BEBAN OPERASIONAL BERSAMA
-  tableRows.push(["BEBAN OPERASIONAL BERSAMA", ""]);
+  tableRows.push([
+    isEn ? "SHARED OPERATING EXPENSES" : "BEBAN OPERASIONAL BERSAMA",
+    "",
+  ]);
   if (params.opexRows && params.opexRows.length > 0) {
     for (const o of params.opexRows) {
       tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
     }
     if (params.totalOpex !== undefined) {
-      tableRows.push(["TOTAL BEBAN OPERASIONAL BERSAMA", formatDocRupiah(params.totalOpex)]);
+      tableRows.push([
+        isEn ? "TOTAL SHARED OPERATING EXPENSES" : "TOTAL BEBAN OPERASIONAL BERSAMA",
+        formatDocRupiah(params.totalOpex),
+      ]);
     }
   } else {
-    tableRows.push(["  Belum ada beban operasional bersama pada periode ini.", "-"]);
+    tableRows.push([
+      isEn
+        ? "  No shared operating expenses in this period."
+        : "  Belum ada beban operasional bersama pada periode ini.",
+      "-",
+    ]);
   }
 
   // LABA (RUGI) BERSIH
   tableRows.push([
-    "LABA (RUGI) BERSIH PERIODE BERJALAN",
+    isEn
+      ? "NET INCOME (LOSS) FOR THE PERIOD"
+      : "LABA (RUGI) BERSIH PERIODE BERJALAN",
     formatDocRupiah(params.netIncome),
   ]);
 
   return {
-    docTitle: "LAPORAN LABA RUGI BASIS AKRUAL",
+    docTitle: isEn ? "STATEMENT OF PROFIT OR LOSS" : "LAPORAN LABA RUGI BASIS AKRUAL",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Penyusunan",
+    recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
-      "Basis Akuntansi: Akrual (Accrual Basis)",
+      isEn
+        ? "Accounting Basis: Accrual Basis"
+        : "Basis Akuntansi: Akrual (Accrual Basis)",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Mata Uang", value: "Rupiah (IDR)" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
-      { header: "Komponen / Keterangan", widthRatio: 0.68 },
-      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+      {
+        header: isEn ? "Component / Description" : "Komponen / Keterangan",
+        widthRatio: 0.68,
+      },
+      {
+        header: isEn ? "Amount (IDR)" : "Nominal (IDR)",
+        widthRatio: 0.32,
+        align: "right",
+      },
     ],
     tableRows,
   };
@@ -339,7 +433,11 @@ export function buildRetainedEarningsPdfSpec(params: {
   refNumber?: string;
   rows: Array<{ label: string; amount: number }>;
   endingRetainedEarnings: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `EQ/${docDate.replace(/-/g, "")}`;
@@ -349,28 +447,42 @@ export function buildRetainedEarningsPdfSpec(params: {
     formatDocRupiah(r.amount),
   ]);
   tableRows.push([
-    "TOTAL SALDO LABA DITAHAN AKHIR",
+    isEn ? "TOTAL ENDING RETAINED EARNINGS" : "TOTAL SALDO LABA DITAHAN AKHIR",
     formatDocRupiah(params.endingRetainedEarnings),
   ]);
 
   return {
-    docTitle: "LAPORAN PERUBAHAN EKUITAS",
+    docTitle: isEn ? "STATEMENT OF CHANGES IN EQUITY" : "LAPORAN PERUBAHAN EKUITAS",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Penyusunan",
+    recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
-      "Komponen: Modal Disetor & Saldo Laba Ditahan",
+      isEn
+        ? "Components: Paid-in Capital & Retained Earnings"
+        : "Komponen: Modal Disetor & Saldo Laba Ditahan",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Mata Uang", value: "Rupiah (IDR)" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
-      { header: "Komponen Ekuitas & Saldo Laba", widthRatio: 0.68 },
-      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+      {
+        header: isEn
+          ? "Equity & Retained Earnings Component"
+          : "Komponen Ekuitas & Saldo Laba",
+        widthRatio: 0.68,
+      },
+      {
+        header: isEn ? "Amount (IDR)" : "Nominal (IDR)",
+        widthRatio: 0.32,
+        align: "right",
+      },
     ],
     tableRows,
   };
@@ -398,7 +510,11 @@ export function buildBalanceSheetPdfSpec(params: {
   equityRows: Array<{ label: string; amount: number }>;
   totalEquity: number;
   totalLiabilitiesAndEquity: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `BS/${docDate.replace(/-/g, "")}`;
@@ -407,85 +523,125 @@ export function buildBalanceSheetPdfSpec(params: {
   const tableRows: string[][] = [];
 
   // 1. ASET
-  tableRows.push(["ASET LANCAR", ""]);
+  tableRows.push([isEn ? "CURRENT ASSETS" : "ASET LANCAR", ""]);
   for (const a of params.currentAssetRows) {
     tableRows.push([`  ${a.label}`, formatDocRupiah(a.amount)]);
   }
-  tableRows.push(["TOTAL ASET LANCAR", formatDocRupiah(params.totalCurrentAssets)]);
+  tableRows.push([
+    isEn ? "TOTAL CURRENT ASSETS" : "TOTAL ASET LANCAR",
+    formatDocRupiah(params.totalCurrentAssets),
+  ]);
 
   if (params.nonCurrentAssetRows.length > 0) {
-    tableRows.push(["ASET TIDAK LANCAR", ""]);
+    tableRows.push([isEn ? "NON-CURRENT ASSETS" : "ASET TIDAK LANCAR", ""]);
     for (const na of params.nonCurrentAssetRows) {
       tableRows.push([`  ${na.label}`, formatDocRupiah(na.amount)]);
     }
     tableRows.push([
-      "TOTAL ASET TIDAK LANCAR",
+      isEn ? "TOTAL NON-CURRENT ASSETS" : "TOTAL ASET TIDAK LANCAR",
       formatDocRupiah(params.totalNonCurrentAssets),
     ]);
   }
-  tableRows.push(["TOTAL ASET", formatDocRupiah(params.totalAssets)]);
+  tableRows.push([
+    isEn ? "TOTAL ASSETS" : "TOTAL ASET",
+    formatDocRupiah(params.totalAssets),
+  ]);
 
   // 2. LIABILITAS
-  tableRows.push(["LIABILITAS JANGKA PENDEK", ""]);
+  tableRows.push([
+    isEn ? "CURRENT LIABILITIES" : "LIABILITAS JANGKA PENDEK",
+    "",
+  ]);
   for (const l of params.currentLiabRows) {
     tableRows.push([`  ${l.label}`, formatDocRupiah(l.amount)]);
   }
   tableRows.push([
-    "TOTAL LIABILITAS JANGKA PENDEK",
+    isEn ? "TOTAL CURRENT LIABILITIES" : "TOTAL LIABILITAS JANGKA PENDEK",
     formatDocRupiah(params.totalCurrentLiabilities),
   ]);
 
   if (params.nonCurrentLiabRows.length > 0) {
-    tableRows.push(["LIABILITAS JANGKA PANJANG", ""]);
+    tableRows.push([
+      isEn ? "NON-CURRENT LIABILITIES" : "LIABILITAS JANGKA PANJANG",
+      "",
+    ]);
     for (const nl of params.nonCurrentLiabRows) {
       tableRows.push([`  ${nl.label}`, formatDocRupiah(nl.amount)]);
     }
     tableRows.push([
-      "TOTAL LIABILITAS JANGKA PANJANG",
+      isEn ? "TOTAL NON-CURRENT LIABILITIES" : "TOTAL LIABILITAS JANGKA PANJANG",
       formatDocRupiah(params.totalNonCurrentLiabilities),
     ]);
   }
-  tableRows.push(["TOTAL LIABILITAS", formatDocRupiah(params.totalLiabilities)]);
+  tableRows.push([
+    isEn ? "TOTAL LIABILITIES" : "TOTAL LIABILITAS",
+    formatDocRupiah(params.totalLiabilities),
+  ]);
 
   // 3. EKUITAS
-  tableRows.push(["EKUITAS", ""]);
+  tableRows.push([isEn ? "EQUITY" : "EKUITAS", ""]);
   for (const eq of params.equityRows) {
     tableRows.push([`  ${eq.label}`, formatDocRupiah(eq.amount)]);
   }
-  tableRows.push(["TOTAL EKUITAS", formatDocRupiah(params.totalEquity)]);
+  tableRows.push([
+    isEn ? "TOTAL EQUITY" : "TOTAL EKUITAS",
+    formatDocRupiah(params.totalEquity),
+  ]);
 
   tableRows.push([
-    "TOTAL LIABILITAS & EKUITAS",
+    isEn ? "TOTAL LIABILITIES & EQUITY" : "TOTAL LIABILITAS & EKUITAS",
     formatDocRupiah(params.totalLiabilitiesAndEquity),
   ]);
 
   return {
-    docTitle: "LAPORAN POSISI KEUANGAN (NERACA)",
+    docTitle: isEn ? "STATEMENT OF FINANCIAL POSITION" : "LAPORAN POSISI KEUANGAN (NERACA)",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Posisi Keuangan",
+    recipientTitle: isEn ? "Financial Position Basis" : "Dasar Posisi Keuangan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
-      "Struktur: Aset = Liabilitas + Ekuitas",
+      isEn
+        ? "Structure: Assets = Liabilities + Equity"
+        : "Struktur: Aset = Liabilitas + Ekuitas",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Posisi Per", value: params.periodLabel },
       {
-        label: "Status Keseimbangan",
-        value: isBalanced ? "Seimbang (Balanced)" : "Selisih Perhitungan",
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "As of" : "Posisi Per", value: params.periodLabel },
+      {
+        label: isEn ? "Balance Status" : "Status Keseimbangan",
+        value: isBalanced
+          ? isEn
+            ? "Balanced"
+            : "Seimbang (Balanced)"
+          : isEn
+            ? "Calculation Imbalance"
+            : "Selisih Perhitungan",
       },
     ],
     bannerBox: !isBalanced
       ? {
-          text: "⚠ Posisi Keuangan Tidak Seimbang - Terdapat selisih antara Aset dan Pasiva",
+          text: isEn
+            ? "⚠ Financial Position Unbalanced - Difference detected between Assets and Total Liabilities & Equity"
+            : "⚠ Posisi Keuangan Tidak Seimbang - Terdapat selisih antara Aset dan Pasiva",
           variant: "warning",
         }
       : undefined,
     tableColumns: [
-      { header: "Akun / Komponen Posisi Keuangan", widthRatio: 0.68 },
-      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+      {
+        header: isEn
+          ? "Account / Financial Position Component"
+          : "Akun / Komponen Posisi Keuangan",
+        widthRatio: 0.68,
+      },
+      {
+        header: isEn ? "Amount (IDR)" : "Nominal (IDR)",
+        widthRatio: 0.32,
+        align: "right",
+      },
     ],
     tableRows,
   };
@@ -508,77 +664,114 @@ export function buildCashFlowPdfSpec(params: {
   netCashChange: number;
   beginningCash: number;
   endingCash: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `CF/${docDate.replace(/-/g, "")}`;
 
   const tableRows: string[][] = [];
 
-  tableRows.push(["SALDO KAS AWAL PERIODE", formatDocRupiah(params.beginningCash)]);
+  tableRows.push([
+    isEn ? "BEGINNING CASH BALANCE" : "SALDO KAS AWAL PERIODE",
+    formatDocRupiah(params.beginningCash),
+  ]);
 
-  tableRows.push(["AKTIVITAS OPERASI", ""]);
+  tableRows.push([isEn ? "OPERATING ACTIVITIES" : "AKTIVITAS OPERASI", ""]);
   for (const o of params.operatingRows) {
     tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
   }
   tableRows.push([
-    "ARUS KAS BERSIH DARI AKTIVITAS OPERASI",
+    isEn
+      ? "NET CASH FLOWS FROM OPERATING ACTIVITIES"
+      : "ARUS KAS BERSIH DARI AKTIVITAS OPERASI",
     formatDocRupiah(params.netOperating),
   ]);
 
-  tableRows.push(["AKTIVITAS INVESTASI", ""]);
+  tableRows.push([isEn ? "INVESTING ACTIVITIES" : "AKTIVITAS INVESTASI", ""]);
   if (params.investingRows && params.investingRows.length > 0) {
     for (const inv of params.investingRows) {
       tableRows.push([`  ${inv.label}`, formatDocRupiah(inv.amount)]);
     }
   } else {
-    tableRows.push(["  Tidak ada mutasi aktivitas investasi pada periode ini.", "-"]);
+    tableRows.push([
+      isEn
+        ? "  No investing activities in this period."
+        : "  Tidak ada mutasi aktivitas investasi pada periode ini.",
+      "-",
+    ]);
   }
   tableRows.push([
-    "ARUS KAS BERSIH DARI AKTIVITAS INVESTASI",
+    isEn
+      ? "NET CASH FLOWS FROM INVESTING ACTIVITIES"
+      : "ARUS KAS BERSIH DARI AKTIVITAS INVESTASI",
     formatDocRupiah(params.netInvesting ?? 0),
   ]);
 
-  tableRows.push(["AKTIVITAS PENDANAAN", ""]);
+  tableRows.push([isEn ? "FINANCING ACTIVITIES" : "AKTIVITAS PENDANAAN", ""]);
   if (params.financingRows && params.financingRows.length > 0) {
     for (const fin of params.financingRows) {
       tableRows.push([`  ${fin.label}`, formatDocRupiah(fin.amount)]);
     }
   } else {
-    tableRows.push(["  Tidak ada mutasi aktivitas pendanaan pada periode ini.", "-"]);
+    tableRows.push([
+      isEn
+        ? "  No financing activities in this period."
+        : "  Tidak ada mutasi aktivitas pendanaan pada periode ini.",
+      "-",
+    ]);
   }
   tableRows.push([
-    "ARUS KAS BERSIH DARI AKTIVITAS PENDANAAN",
+    isEn
+      ? "NET CASH FLOWS FROM FINANCING ACTIVITIES"
+      : "ARUS KAS BERSIH DARI AKTIVITAS PENDANAAN",
     formatDocRupiah(params.netFinancing ?? 0),
   ]);
 
   tableRows.push([
-    "KENAIKAN (PENURUNAN) BERSIH KAS",
+    isEn
+      ? "NET INCREASE (DECREASE) IN CASH"
+      : "KENAIKAN (PENURUNAN) BERSIH KAS",
     formatDocRupiah(params.netCashChange),
   ]);
   tableRows.push([
-    "SALDO KAS AKHIR PERIODE",
+    isEn ? "ENDING CASH BALANCE" : "SALDO KAS AKHIR PERIODE",
     formatDocRupiah(params.endingCash),
   ]);
 
   return {
-    docTitle: "LAPORAN ARUS KAS METODE LANGSUNG",
+    docTitle: isEn ? "STATEMENT OF CASH FLOWS" : "LAPORAN ARUS KAS METODE LANGSUNG",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Penyusunan",
+    recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
-      "Metode: Langsung (Direct Cash Flow Method)",
+      isEn
+        ? "Method: Direct Cash Flow Method"
+        : "Metode: Langsung (Direct Cash Flow Method)",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Mata Uang", value: "Rupiah (IDR)" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
-      { header: "Aktivitas Arus Kas", widthRatio: 0.68 },
-      { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+      {
+        header: isEn ? "Cash Flow Activity" : "Aktivitas Arus Kas",
+        widthRatio: 0.68,
+      },
+      {
+        header: isEn ? "Amount (IDR)" : "Nominal (IDR)",
+        widthRatio: 0.32,
+        align: "right",
+      },
     ],
     tableRows,
   };
@@ -596,40 +789,67 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
   retainedEarningsRows: string[][];
   balanceSheetRows: string[][];
   cashFlowRows: string[][];
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const docDate = params.docDate ?? new Date().toISOString().slice(0, 10);
   const docNumber =
     params.refNumber ?? `FS/${docDate.replace(/-/g, "")}`;
 
   const stdCols: PdfTableColumn[] = [
-    { header: "Komponen / Pos Laporan", widthRatio: 0.68 },
-    { header: "Nominal (IDR)", widthRatio: 0.32, align: "right" },
+    {
+      header: isEn ? "Component / Report Line" : "Komponen / Pos Laporan",
+      widthRatio: 0.68,
+    },
+    {
+      header: isEn ? "Amount (IDR)" : "Nominal (IDR)",
+      widthRatio: 0.32,
+      align: "right",
+    },
   ];
 
   const sections: PdfDocumentSection[] = [
     {
-      title: "1. LAPORAN LABA RUGI BASIS AKRUAL",
-      subtitle: "Pendapatan Usaha, Beban Langsung & Beban Operasional",
+      title: isEn
+        ? "1. STATEMENT OF PROFIT OR LOSS (ACCRUAL BASIS)"
+        : "1. LAPORAN LABA RUGI BASIS AKRUAL",
+      subtitle: isEn
+        ? "Operating Revenue, Direct Costs & Operating Expenses"
+        : "Pendapatan Usaha, Beban Langsung & Beban Operasional",
       tableColumns: stdCols,
       tableRows: params.incomeStatementRows,
     },
     {
-      title: "2. LAPORAN PERUBAHAN EKUITAS",
-      subtitle: "Modal Disetor dan Mutasi Saldo Laba Ditahan",
+      title: isEn
+        ? "2. STATEMENT OF CHANGES IN EQUITY"
+        : "2. LAPORAN PERUBAHAN EKUITAS",
+      subtitle: isEn
+        ? "Paid-in Capital and Retained Earnings Movements"
+        : "Modal Disetor dan Mutasi Saldo Laba Ditahan",
       tableColumns: stdCols,
       tableRows: params.retainedEarningsRows,
       pageBreakBefore: true,
     },
     {
-      title: "3. LAPORAN POSISI KEUANGAN (NERACA)",
-      subtitle: "Posisi Aset, Liabilitas, dan Ekuitas Per Akhir Periode",
+      title: isEn
+        ? "3. STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)"
+        : "3. LAPORAN POSISI KEUANGAN (NERACA)",
+      subtitle: isEn
+        ? "Assets, Liabilities, and Equity Position at Period End"
+        : "Posisi Aset, Liabilitas, dan Ekuitas Per Akhir Periode",
       tableColumns: stdCols,
       tableRows: params.balanceSheetRows,
       pageBreakBefore: true,
     },
     {
-      title: "4. LAPORAN ARUS KAS METODE LANGSUNG",
-      subtitle: "Aktivitas Operasi, Investasi, dan Pendanaan Kas",
+      title: isEn
+        ? "4. STATEMENT OF CASH FLOWS (DIRECT METHOD)"
+        : "4. LAPORAN ARUS KAS METODE LANGSUNG",
+      subtitle: isEn
+        ? "Operating, Investing, and Financing Cash Activities"
+        : "Aktivitas Operasi, Investasi, dan Pendanaan Kas",
       tableColumns: stdCols,
       tableRows: params.cashFlowRows,
       pageBreakBefore: true,
@@ -637,19 +857,29 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
   ];
 
   return {
-    docTitle: "LAPORAN KEUANGAN LENGKAP",
+    docTitle: isEn ? "COMPLETE FINANCIAL STATEMENTS" : "LAPORAN KEUANGAN LENGKAP",
     docNumber,
     docDate,
     company: params.company,
-    recipientTitle: "Dasar Penyusunan",
+    recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
       params.company.legal_entity_name || "PT Representasi Mitra Mandiri",
-      "Paket Lengkap: Laba Rugi, Ekuitas, Neraca, dan Arus Kas",
+      isEn
+        ? "Complete Package: Profit & Loss, Equity, Balance Sheet, and Cash Flows"
+        : "Paket Lengkap: Laba Rugi, Ekuitas, Neraca, dan Arus Kas",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(docDate) },
-      { label: "Periode", value: params.periodLabel },
-      { label: "Standar Pelaporan", value: "SAK Entitas Privat" },
+      {
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(docDate, lang),
+      },
+      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Reporting Standard" : "Standar Pelaporan",
+        value: isEn
+          ? "Indonesian Financial Accounting Standards for Private Entities (SAK EP)"
+          : "SAK Entitas Privat",
+      },
     ],
     sections,
   };

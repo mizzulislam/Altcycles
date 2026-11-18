@@ -10,9 +10,19 @@ export interface LanguageContextValue {
   t: (key: string, fallback?: string) => string;
 }
 
-const STORAGE_KEY = "altcycles_language";
+export const STORAGE_KEY = "altcycles_language";
 
-const DICTIONARY: Record<Language, Record<string, string>> = {
+export function getActiveLanguage(): Language {
+  if (typeof window === "undefined") return "id";
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY) as Language | null;
+    return saved === "en" ? "en" : "id";
+  } catch {
+    return "id";
+  }
+}
+
+export const DICTIONARY: Record<Language, Record<string, string>> = {
   id: {
     // Navigasi & Shell Header
     "nav.home": "Beranda",
@@ -37,6 +47,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     "nav.audit_trail": "Audit Trail",
     "nav.login_media": "Media & Banner Login",
 
+    // Shell & Branding
+    "app.tagline": "ERP Keuangan",
+    "sidebar.open": "Buka sidebar",
+    "sidebar.close": "Tutup sidebar",
+
     // Nav Groups
     "nav.group.operations": "Operasional & PO",
     "nav.group.projects": "Proyek & Pendapatan",
@@ -47,6 +62,8 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     "header.language": "Pilihan Bahasa (Language)",
     "header.active_mode": "Mode Aktif",
     "header.role_switch": "Ganti peran aktif sistem",
+    "header.switching_mode": "Mengganti Mode Operasi...",
+    "header.open_nav": "Buka menu navigasi",
     "role.super_admin": "Super Admin",
     "role.admin": "Bendahara",
     "role.user": "Anggota Tim",
@@ -319,6 +336,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     "nav.audit_trail": "Audit Trail",
     "nav.login_media": "Login Media & Banners",
 
+    // Shell & Branding
+    "app.tagline": "Financial ERP",
+    "sidebar.open": "Open sidebar",
+    "sidebar.close": "Close sidebar",
+
     // Nav Groups
     "nav.group.operations": "Operations & PO",
     "nav.group.projects": "Projects & Revenue",
@@ -329,6 +351,8 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     "header.language": "Language Options",
     "header.active_mode": "Active Mode",
     "header.role_switch": "Switch active system role",
+    "header.switching_mode": "Switching Operating Mode...",
+    "header.open_nav": "Open navigation menu",
     "role.super_admin": "Super Admin",
     "role.admin": "Treasurer",
     "role.user": "Team Member",
@@ -653,3 +677,6 @@ export function useLanguage(): LanguageContextValue {
   }
   return ctx;
 }
+
+export const useTranslation = useLanguage;
+

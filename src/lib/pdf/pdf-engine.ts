@@ -22,6 +22,7 @@ import {
   formatDocEmpty,
   terbilangRupiah,
 } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
 import type {
   PdfCollisionIssue,
@@ -302,12 +303,13 @@ export async function drawSocialMediaFooters(params: {
   const lineY = PDF_LAYOUT_TOKENS.footerLineY;
   const textY = PDF_LAYOUT_TOKENS.footerTextY;
   const fontSize = PDF_LAYOUT_TOKENS.fontSizes.footer;
+  const isEnFooter = getActiveLanguage() === "en";
 
   pages.forEach((p, idx) => {
     // Jika SPK menyertakan area paraf per halaman
     if (parafInfo) {
       const parafY = 64;
-      p.drawText("Paraf Pihak Pertama:", {
+      p.drawText(isEnFooter ? "First Party Initials:" : "Paraf Pihak Pertama:", {
         x: marginX,
         y: parafY,
         size: 7.5,
@@ -333,7 +335,7 @@ export async function drawSocialMediaFooters(params: {
       }
 
       const midX = pageWidth / 2 + 24;
-      p.drawText("Paraf Pihak Kedua:", {
+      p.drawText(isEnFooter ? "Second Party Initials:" : "Paraf Pihak Kedua:", {
         x: midX,
         y: parafY,
         size: 7.5,
@@ -444,7 +446,9 @@ export async function drawSocialMediaFooters(params: {
     });
     recordBox?.(idx, companyNameX, textY, companyNameW, fontSize, companyNameText, "I-footer");
 
-    const rightText = `Hal. ${idx + 1} / ${total}`;
+    const rightText = isEnFooter
+      ? `Page ${idx + 1} / ${total}`
+      : `Hal. ${idx + 1} / ${total}`;
     const rightW = fontRegular.widthOfTextAtSize(rightText, fontSize);
     const rightX = pageWidth - marginX - rightW;
     p.drawText(rightText, {
@@ -457,7 +461,9 @@ export async function drawSocialMediaFooters(params: {
     recordBox?.(idx, rightX, textY, rightW, fontSize, rightText, "I-footer");
 
     if (!hideSystemFooter) {
-      const centerText = "Dokumen ini dibuat otomatis oleh Altcycles";
+      const centerText = isEnFooter
+        ? "This document was generated automatically by Altcycles"
+        : "Dokumen ini dibuat otomatis oleh Altcycles";
       const centerW = fontRegular.widthOfTextAtSize(centerText, 7.5);
       const centerX = (pageWidth - centerW) / 2;
       if (centerX > companyNameX + companyNameW + 12 && centerX + centerW < rightX - 12) {
@@ -528,6 +534,7 @@ async function renderDocumentPdfInternal(
   headerAlignment: PdfHeaderAlignmentMetrics;
 }> {
   const spec = normalizeSpecCurrencyDecimals(rawSpec);
+  const isEnPdf = (spec as any).lang === "en" || getActiveLanguage() === "en";
   const pdfDoc = await PDFDocument.create();
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -2267,7 +2274,7 @@ async function renderDocumentPdfInternal(
 
       // Header Detail Pembayaran
       drawTrackedText(
-        "Detail Pembayaran",
+        isEnPdf ? "Payment Details" : "Detail Pembayaran",
         {
           x: marginX + 10,
           y: pdBoxTopY - 12,
@@ -2297,7 +2304,7 @@ async function renderDocumentPdfInternal(
       const leftColW = rightColX - leftColX - 16;
       const leftColTopY = pdDividerY - 11;
       drawTrackedText(
-        "Terbilang",
+        isEnPdf ? "Amount in Words" : "Terbilang",
         {
           x: leftColX,
           y: leftColTopY,
@@ -2324,13 +2331,13 @@ async function renderDocumentPdfInternal(
       });
 
       const bankItems: Array<{ label: string; value: string }> = [
-        { label: "Nama Bank", value: pd.bankName },
-        { label: "Nomor Rekening", value: pd.accountNumber },
-        { label: "Atas Nama", value: pd.accountHolder },
-        { label: "Berita Transfer", value: pd.transferNews },
+        { label: isEnPdf ? "Bank Name" : "Nama Bank", value: pd.bankName },
+        { label: isEnPdf ? "Account Number" : "Nomor Rekening", value: pd.accountNumber },
+        { label: isEnPdf ? "Account Holder" : "Atas Nama", value: pd.accountHolder },
+        { label: isEnPdf ? "Transfer Reference" : "Berita Transfer", value: pd.transferNews },
       ];
       if (pd.isPaid) {
-        bankItems.push({ label: "Status", value: "LUNAS" });
+        bankItems.push({ label: isEnPdf ? "Status" : "Status", value: isEnPdf ? "PAID" : "LUNAS" });
       }
       if (pd.swiftCode) {
         bankItems.push({ label: "Swift Code", value: pd.swiftCode });
@@ -2396,7 +2403,9 @@ async function renderDocumentPdfInternal(
       isContractInfoRow(r.label),
     );
 
-    const isReceiptDoc = spec.docTitle.toUpperCase().includes("KUITANSI");
+    const isReceiptDoc =
+      spec.docTitle.toUpperCase().includes("KUITANSI") ||
+      spec.docTitle.toUpperCase().includes("RECEIPT");
 
     if (isReceiptDoc) {
       // Kuitansi: "Jumlah Diterima" dan "Terbilang" dibungkus dalam SATU KOTAK ABU selebar konten, rata tengah, tanpa garis hitam di atasnya, tanpa "# ... #"
@@ -2404,15 +2413,19 @@ async function renderDocumentPdfInternal(
         stripCurrencySymbol(primaryRows[0]?.value ?? ""),
       );
       const rawTerbilang = spec.terbilangAmount
-        ? terbilangRupiah(spec.terbilangAmount).toUpperCase()
+        ? terbilangRupiah(spec.terbilangAmount, isEnPdf ? "en" : "id").toUpperCase()
         : "";
 
       const boxW = contentWidth;
-      const terbStr = `Terbilang : ${rawTerbilang}`;
+      const terbStr = isEnPdf
+        ? `In words : ${rawTerbilang}`
+        : `Terbilang : ${rawTerbilang}`;
       const terbSize = 8.5;
       const maxTerbW = boxW - 24;
       const terbLines = wrapTextByWidth(terbStr, fontBold, terbSize, maxTerbW);
-      const amtStr = `Jumlah Diterima : ${receiptAmountVal}`;
+      const amtStr = isEnPdf
+        ? `Amount Received : ${receiptAmountVal}`
+        : `Jumlah Diterima : ${receiptAmountVal}`;
       const amtSize = 11;
       const interLineGap = 6;
       const contentH = amtSize + interLineGap + terbLines.length * 12;
@@ -2468,7 +2481,9 @@ async function renderDocumentPdfInternal(
     } else if (tableSummaryRenderedInTable) {
       // Total sudah menjadi baris terakhir tabel (Poin 2 - 7); hanya render Terbilang bila ada
       const terbilangStr = hasTerbilang
-        ? `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
+        ? isEnPdf
+          ? `In words: ${terbilangRupiah(spec.terbilangAmount!, "en").toUpperCase()}`
+          : `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
         : null;
       const terbilangLines = terbilangStr
         ? wrapTextByWidth(terbilangStr, fontBold, 9.5, contentWidth)
@@ -2496,7 +2511,9 @@ async function renderDocumentPdfInternal(
       }
     } else {
       const terbilangStr = hasTerbilang
-        ? `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
+        ? isEnPdf
+          ? `In words: ${terbilangRupiah(spec.terbilangAmount!, "en").toUpperCase()}`
+          : `Terbilang: ${terbilangRupiah(spec.terbilangAmount!).toUpperCase()}`
         : null;
       const terbilangLines = terbilangStr
         ? wrapTextByWidth(terbilangStr, fontBold, 9.5, contentWidth)
@@ -2633,21 +2650,37 @@ async function renderDocumentPdfInternal(
       !/sistem\s+komputerisasi/i.test(n),
   );
   if (rawNotes.length > 0) {
-    const defaultNotesTitle = spec.docTitle.toUpperCase().includes("UAT")
-      ? "Catatan Pengujian & Tindak Lanjut"
-      : spec.docTitle.toUpperCase().includes("BAST")
-        ? "Catatan & Ketentuan Serah Terima"
-        : spec.docTitle.toUpperCase().includes("BAKP")
-          ? "Catatan Pemeriksaan Capaian"
-          : spec.docTitle.toUpperCase().includes("QUOTATION")
-            ? "Ketentuan Penawaran Harga"
-            : spec.docTitle.toUpperCase().includes("SPK") ||
-                spec.docTitle.toUpperCase().includes("SOW")
-              ? "Ketentuan Pelaksanaan Pekerjaan"
-              : spec.docTitle.toUpperCase().includes("INVOICE") ||
-                  spec.docTitle.toUpperCase().includes("TAGIHAN")
-                ? "Ketentuan Pembayaran"
-                : "Catatan & Ketentuan";
+    const defaultNotesTitle = isEnPdf
+      ? spec.docTitle.toUpperCase().includes("UAT")
+        ? "Testing Notes & Follow-up"
+        : spec.docTitle.toUpperCase().includes("BAST")
+          ? "Handover Terms & Conditions"
+          : spec.docTitle.toUpperCase().includes("BAKP")
+            ? "Progress Assessment Notes"
+            : spec.docTitle.toUpperCase().includes("QUOTATION")
+              ? "Price Quotation Terms"
+              : spec.docTitle.toUpperCase().includes("SPK") ||
+                  spec.docTitle.toUpperCase().includes("SOW")
+                ? "Scope & Execution Terms"
+                : spec.docTitle.toUpperCase().includes("INVOICE") ||
+                    spec.docTitle.toUpperCase().includes("TAGIHAN")
+                  ? "Payment Terms"
+                  : "Notes & Terms"
+      : spec.docTitle.toUpperCase().includes("UAT")
+        ? "Catatan Pengujian & Tindak Lanjut"
+        : spec.docTitle.toUpperCase().includes("BAST")
+          ? "Catatan & Ketentuan Serah Terima"
+          : spec.docTitle.toUpperCase().includes("BAKP")
+            ? "Catatan Pemeriksaan Capaian"
+            : spec.docTitle.toUpperCase().includes("QUOTATION")
+              ? "Ketentuan Penawaran Harga"
+              : spec.docTitle.toUpperCase().includes("SPK") ||
+                  spec.docTitle.toUpperCase().includes("SOW")
+                ? "Ketentuan Pelaksanaan Pekerjaan"
+                : spec.docTitle.toUpperCase().includes("INVOICE") ||
+                    spec.docTitle.toUpperCase().includes("TAGIHAN")
+                  ? "Ketentuan Pembayaran"
+                  : "Catatan & Ketentuan";
     const notesHeading = (spec.notesTitle ?? defaultNotesTitle).replace(
       /\s*:\s*$/,
       "",

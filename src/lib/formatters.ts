@@ -1,4 +1,5 @@
 import type { RevenueRecognitionMethod } from "@/types/database.types";
+import { getActiveLanguage } from "@/lib/i18n";
 
 const ANGKA_DASAR = [
   "",
@@ -65,6 +66,36 @@ export const FULL_MONTHS_ID = [
   "Oktober",
   "November",
   "Desember",
+] as const;
+
+export const FULL_MONTHS_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+export const SHORT_MONTHS_EN = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ] as const;
 
 /**
@@ -214,16 +245,22 @@ export function hasAnyDecimalCurrency(
 }
 
 /**
- * Memformat tanggal dokumen resmi Altvira dengan nama bulan lengkap bahasa Indonesia (contoh: 14 Oktober 2026).
+ * Memformat tanggal dokumen resmi Altvira dengan nama bulan lengkap bahasa Indonesia / Inggris (contoh: 14 Oktober 2026 / 14 October 2026).
  */
-export function formatDocDateLong(value: string | Date | null | undefined): string {
+export function formatDocDateLong(
+  value: string | Date | null | undefined,
+  lang?: "id" | "en",
+): string {
   if (!value) {
     return DOC_EMPTY_CELL;
   }
+  const targetLang = lang ?? getActiveLanguage();
+  const months = targetLang === "en" ? FULL_MONTHS_EN : FULL_MONTHS_ID;
+
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const [year, month, day] = value.split("-");
     const monthIdx = parseInt(month!, 10) - 1;
-    const monthName = FULL_MONTHS_ID[monthIdx] ?? month;
+    const monthName = months[monthIdx] ?? month;
     const dayNum = parseInt(day!, 10);
     return `${dayNum} ${monthName} ${year}`;
   }
@@ -232,7 +269,7 @@ export function formatDocDateLong(value: string | Date | null | undefined): stri
     return DOC_EMPTY_CELL;
   }
   const dayNum = date.getDate();
-  const monthName = FULL_MONTHS_ID[date.getMonth()] ?? String(date.getMonth() + 1);
+  const monthName = months[date.getMonth()] ?? String(date.getMonth() + 1);
   const year = date.getFullYear();
   return `${dayNum} ${monthName} ${year}`;
 }
@@ -352,10 +389,75 @@ function terbilangInt(n: number): string {
   return `${terbilangInt(triliun)} triliun ${terbilangInt(sisa)}`.trim();
 }
 
+const ONES_EN = [
+  "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+];
+const TENS_EN = [
+  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+];
+
+function numberToWordsIntEn(n: number): string {
+  if (n === 0) return "";
+  if (n < 20) return ONES_EN[n]!;
+  if (n < 100) {
+    const ten = Math.floor(n / 10);
+    const rem = n % 10;
+    return rem === 0 ? TENS_EN[ten]! : `${TENS_EN[ten]}-${ONES_EN[rem]}`;
+  }
+  if (n < 1000) {
+    const hundred = Math.floor(n / 100);
+    const rem = n % 100;
+    return rem === 0
+      ? `${ONES_EN[hundred]} hundred`
+      : `${ONES_EN[hundred]} hundred ${numberToWordsIntEn(rem)}`;
+  }
+  if (n < 1_000_000) {
+    const thousand = Math.floor(n / 1000);
+    const rem = n % 1000;
+    return rem === 0
+      ? `${numberToWordsIntEn(thousand)} thousand`
+      : `${numberToWordsIntEn(thousand)} thousand ${numberToWordsIntEn(rem)}`;
+  }
+  if (n < 1_000_000_000) {
+    const million = Math.floor(n / 1_000_000);
+    const rem = n % 1_000_000;
+    return rem === 0
+      ? `${numberToWordsIntEn(million)} million`
+      : `${numberToWordsIntEn(million)} million ${numberToWordsIntEn(rem)}`;
+  }
+  if (n < 1_000_000_000_000) {
+    const billion = Math.floor(n / 1_000_000_000);
+    const rem = n % 1_000_000_000;
+    return rem === 0
+      ? `${numberToWordsIntEn(billion)} billion`
+      : `${numberToWordsIntEn(billion)} billion ${numberToWordsIntEn(rem)}`;
+  }
+  const trillion = Math.floor(n / 1_000_000_000_000);
+  const rem = n % 1_000_000_000_000;
+  return rem === 0
+    ? `${numberToWordsIntEn(trillion)} trillion`
+    : `${numberToWordsIntEn(trillion)} trillion ${numberToWordsIntEn(rem)}`;
+}
+
+export function terbilangEnglish(amount: number): string {
+  const whole = roundRupiah(amount);
+  if (whole === 0) {
+    return "Zero rupiah";
+  }
+  const prefix = whole < 0 ? "minus " : "";
+  const raw = `${prefix}${numberToWordsIntEn(Math.abs(whole))} rupiah`.replace(/\s+/g, " ").trim();
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 /**
- * Mengubah nominal Rupiah bulat menjadi kalimat terbilang Bahasa Indonesia (Lampiran A.0).
+ * Mengubah nominal Rupiah bulat menjadi kalimat terbilang Bahasa Indonesia / Inggris (Lampiran A.0).
  */
-export function terbilangRupiah(amount: number): string {
+export function terbilangRupiah(amount: number, lang?: "id" | "en"): string {
+  const targetLang = lang ?? getActiveLanguage();
+  if (targetLang === "en") {
+    return terbilangEnglish(amount);
+  }
   const whole = roundRupiah(amount);
   if (whole === 0) {
     return "Nol rupiah";

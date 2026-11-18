@@ -64,7 +64,8 @@ import type {
 } from "@/types/database.types";
 
 export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
   const [expenseAccounts, setExpenseAccounts] = React.useState<AccountRow[]>([]);
@@ -203,23 +204,32 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       : "-";
     const projectCode = (selectedProject?.code ?? "PRJ").replace(/\//g, "-");
     const bytes = await generateDocumentPdf({
-      docTitle: "LAPORAN ANGGARAN VS REALISASI PROYEK",
-      docSubtitle: `Proyek: ${projectLabel}`,
+      docTitle: isEn ? "PROJECT BUDGETING REPORT" : "LAPORAN ANGGARAN VS REALISASI PROYEK",
+      docSubtitle: isEn ? `Project: ${projectLabel}` : `Proyek: ${projectLabel}`,
       docNumber: `BDG-${projectCode}/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: "Total Pagu Anggaran", value: formatRupiah(totalBudget) },
-        { label: "Realisasi Terposting", value: formatRupiah(totalActual) },
-        { label: "Sisa Anggaran", value: formatRupiah(totalRemaining) },
+        {
+          label: isEn ? "Total Budget Ceiling" : "Total Pagu Anggaran",
+          value: formatRupiah(totalBudget),
+        },
+        {
+          label: isEn ? "Posted Realization" : "Realisasi Terposting",
+          value: formatRupiah(totalActual),
+        },
+        {
+          label: isEn ? "Remaining Budget" : "Sisa Anggaran",
+          value: formatRupiah(totalRemaining),
+        },
       ],
       tableColumns: [
-        { header: "Akun Beban", widthRatio: 0.34 },
-        { header: "Pagu", widthRatio: 0.16, align: "right" },
-        { header: "Realisasi", widthRatio: 0.16, align: "right" },
-        { header: "Sisa", widthRatio: 0.16, align: "right" },
-        { header: "Serapan", widthRatio: 0.08, align: "right" },
-        { header: "Status", widthRatio: 0.10 },
+        { header: isEn ? "Expense Account" : "Akun Beban", widthRatio: 0.34 },
+        { header: isEn ? "Ceiling" : "Pagu", widthRatio: 0.16, align: "right" },
+        { header: isEn ? "Actual" : "Realisasi", widthRatio: 0.16, align: "right" },
+        { header: isEn ? "Remaining" : "Sisa", widthRatio: 0.16, align: "right" },
+        { header: isEn ? "Absorption" : "Serapan", widthRatio: 0.08, align: "right" },
+        { header: isEn ? "Status" : "Status", widthRatio: 0.10 },
       ],
       tableRows: rows.map((r) => [
         `${r.account_code} - ${r.account_name}`,
@@ -231,23 +241,36 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ]),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, `Anggaran_Proyek_${projectCode}.pdf`);
+    downloadPdfBytes(
+      bytes,
+      isEn ? `Project_Budget_${projectCode}.pdf` : `Anggaran_Proyek_${projectCode}.pdf`,
+    );
     await recordExportLog("PROJECT_BUDGET", "PDF", selectedProject?.code);
   }
 
   async function handleExportCsv() {
     const projectCode = (selectedProject?.code ?? "PRJ").replace(/\//g, "-");
     downloadCsvFile(
-      `Anggaran_Proyek_${projectCode}.csv`,
-      [
-        "Kode Akun",
-        "Nama Akun Beban",
-        "Pagu Anggaran (Rp)",
-        "Realisasi Terposting (Rp)",
-        "Sisa Anggaran (Rp)",
-        "Serapan (%)",
-        "Status",
-      ],
+      isEn ? `Project_Budget_${projectCode}.csv` : `Anggaran_Proyek_${projectCode}.csv`,
+      isEn
+        ? [
+            "Account Code",
+            "Expense Account Name",
+            "Budget Ceiling (IDR)",
+            "Posted Realization (IDR)",
+            "Remaining Budget (IDR)",
+            "Absorption (%)",
+            "Status",
+          ]
+        : [
+            "Kode Akun",
+            "Nama Akun Beban",
+            "Pagu Anggaran (Rp)",
+            "Realisasi Terposting (Rp)",
+            "Sisa Anggaran (Rp)",
+            "Serapan (%)",
+            "Status",
+          ],
       rows.map((r) => [
         r.account_code,
         r.account_name,
@@ -259,7 +282,11 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ]),
     );
     await recordExportLog("PROJECT_BUDGET", "CSV", selectedProject?.code);
-    toast.success("Perbandingan anggaran proyek berhasil diekspor ke CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Project budget comparison exported to CSV (.csv) successfully."
+        : "Perbandingan anggaran proyek berhasil diekspor ke CSV (.csv).",
+    );
   }
 
   return (

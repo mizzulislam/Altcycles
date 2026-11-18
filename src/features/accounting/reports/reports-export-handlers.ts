@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { getCompanyProfile } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
+import { getActiveLanguage } from "@/lib/i18n";
 import {
   buildBalanceSheetPdfSpec,
   buildCashFlowPdfSpec,
@@ -126,6 +127,7 @@ export interface ReportExportData {
 }
 
 export async function exportReportToPdf(data: ReportExportData): Promise<void> {
+  const isEn = getActiveLanguage() === "en";
   const {
     company,
     activeTab,
@@ -215,8 +217,10 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         isAllAccounts: isAll,
         accounts: targetAccounts,
       });
-      fileName = "Buku_Besar_Altcycles.pdf";
-      successMsg = "Buku Besar berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "General_Ledger_Altcycles.pdf" : "Buku_Besar_Altcycles.pdf";
+      successMsg = isEn
+        ? "General Ledger successfully downloaded in PDF (.pdf) format."
+        : "Buku Besar berhasil diunduh dalam format PDF (.pdf).";
     } else if (mode === "trial_balance" || activeTab === "neraca_saldo") {
       spec = buildTrialBalancePdfSpec({
         company: comp,
@@ -232,37 +236,39 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         sumDebit: trialBalance.sumEndingDebit,
         sumCredit: trialBalance.sumEndingCredit,
       });
-      fileName = "Neraca_Saldo_Altcycles.pdf";
-      successMsg = "Neraca Saldo berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Trial_Balance_Altcycles.pdf" : "Neraca_Saldo_Altcycles.pdf";
+      successMsg = isEn
+        ? "Trial Balance successfully downloaded in PDF (.pdf) format."
+        : "Neraca Saldo berhasil diunduh dalam format PDF (.pdf).";
     } else if (mode === "statements" && layoutMode === "grid") {
       const isRows = [
         ...incomeStatement.revenues.map((r) => [r.name, formatRupiah(r.amount)]),
-        ["Total Pendapatan Usaha", formatRupiah(incomeStatement.totalRevenue)],
+        [isEn ? "Total Operating Revenue" : "Total Pendapatan Usaha", formatRupiah(incomeStatement.totalRevenue)],
         ...incomeStatement.directExpenses.map((c) => [c.name, formatRupiah(c.amount)]),
-        ["Laba Kotor Proyek", formatRupiah(incomeStatement.grossProfit)],
+        [isEn ? "Gross Profit" : "Laba Kotor Proyek", formatRupiah(incomeStatement.grossProfit)],
         ...incomeStatement.sharedExpenses.map((o) => [o.name, formatRupiah(o.amount)]),
-        ["Laba (Rugi) Bersih", formatRupiah(incomeStatement.netProfit)],
+        [isEn ? "Net Income (Loss)" : "Laba (Rugi) Bersih", formatRupiah(incomeStatement.netProfit)],
       ];
       const eqRows = [
-        ["Saldo Laba Ditahan Awal", formatRupiah(beginningRetainedEarnings)],
-        ["Laba Bersih Berjalan", formatRupiah(incomeStatement.netProfit)],
-        ["Dividen / Prive", formatRupiah(dividends)],
-        ["Saldo Laba Ditahan Akhir", formatRupiah(endingRetainedEarnings)],
+        [isEn ? "Beginning Retained Earnings" : "Saldo Laba Ditahan Awal", formatRupiah(beginningRetainedEarnings)],
+        [isEn ? "Current Net Income" : "Laba Bersih Berjalan", formatRupiah(incomeStatement.netProfit)],
+        [isEn ? "Dividends / Drawings" : "Dividen / Prive", formatRupiah(dividends)],
+        [isEn ? "Ending Retained Earnings" : "Saldo Laba Ditahan Akhir", formatRupiah(endingRetainedEarnings)],
       ];
       const bsRows = [
         ...balanceSheet.assets.map((a) => [a.name, formatRupiah(a.amount)]),
-        ["Total Aset", formatRupiah(balanceSheet.totalAssets)],
+        [isEn ? "Total Assets" : "Total Aset", formatRupiah(balanceSheet.totalAssets)],
         ...balanceSheet.liabilities.map((l) => [l.name, formatRupiah(l.amount)]),
-        ["Total Liabilitas", formatRupiah(totalLiabilities)],
+        [isEn ? "Total Liabilities" : "Total Liabilitas", formatRupiah(totalLiabilities)],
         ...balanceSheet.equities.map((e) => [e.name, formatRupiah(e.amount)]),
-        ["Total Liabilitas & Ekuitas", formatRupiah(balanceSheet.totalLiabilitiesAndEquity)],
+        [isEn ? "Total Liabilities & Equity" : "Total Liabilitas & Ekuitas", formatRupiah(balanceSheet.totalLiabilitiesAndEquity)],
       ];
       const cfRows = [
-        ["Saldo Kas Awal", formatRupiah(cashFlow.beginningCash)],
-        ["Kas Bersih dari Aktivitas Operasi", formatRupiah(cashFlow.netOperating)],
-        ["Kas Bersih dari Aktivitas Investasi", formatRupiah(cashFlow.netInvesting)],
-        ["Kas Bersih dari Aktivitas Pendanaan", formatRupiah(cashFlow.netFinancing)],
-        ["Saldo Kas Akhir", formatRupiah(cashFlow.endingCash)],
+        [isEn ? "Beginning Cash Balance" : "Saldo Kas Awal", formatRupiah(cashFlow.beginningCash)],
+        [isEn ? "Net Cash from Operating Activities" : "Kas Bersih dari Aktivitas Operasi", formatRupiah(cashFlow.netOperating)],
+        [isEn ? "Net Cash from Investing Activities" : "Kas Bersih dari Aktivitas Investasi", formatRupiah(cashFlow.netInvesting)],
+        [isEn ? "Net Cash from Financing Activities" : "Kas Bersih dari Aktivitas Pendanaan", formatRupiah(cashFlow.netFinancing)],
+        [isEn ? "Ending Cash Balance" : "Saldo Kas Akhir", formatRupiah(cashFlow.endingCash)],
       ];
       spec = buildCompleteFinancialStatementsPdfSpec({
         company: comp,
@@ -272,8 +278,10 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         balanceSheetRows: bsRows,
         cashFlowRows: cfRows,
       });
-      fileName = "Laporan_Keuangan_Lengkap_Altcycles.pdf";
-      successMsg = "Laporan Keuangan Lengkap berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Complete_Financial_Statements_Altcycles.pdf" : "Laporan_Keuangan_Lengkap_Altcycles.pdf";
+      successMsg = isEn
+        ? "Complete Financial Statements successfully downloaded in PDF (.pdf) format."
+        : "Laporan Keuangan Lengkap berhasil diunduh dalam format PDF (.pdf).";
     } else if (activeTab === "laba_rugi") {
       spec = buildIncomeStatementPdfSpec({
         company: comp,
@@ -295,30 +303,34 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         totalOpex: incomeStatement.totalSharedExpense,
         netIncome: incomeStatement.netProfit,
       });
-      fileName = "Laba_Rugi_Altcycles.pdf";
-      successMsg = "Laporan Laba Rugi berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Income_Statement_Altcycles.pdf" : "Laba_Rugi_Altcycles.pdf";
+      successMsg = isEn
+        ? "Statement of Profit or Loss successfully downloaded in PDF (.pdf) format."
+        : "Laporan Laba Rugi berhasil diunduh dalam format PDF (.pdf).";
     } else if (activeTab === "ekuitas") {
       spec = buildRetainedEarningsPdfSpec({
         company: comp,
         periodLabel,
         rows: [
           {
-            label: "Saldo Laba Ditahan Awal Periode",
+            label: isEn ? "Beginning Retained Earnings" : "Saldo Laba Ditahan Awal Periode",
             amount: beginningRetainedEarnings,
           },
           {
-            label: "Laba (Rugi) Bersih Periode Berjalan",
+            label: isEn ? "Net Income (Loss) for the Period" : "Laba (Rugi) Bersih Periode Berjalan",
             amount: incomeStatement.netProfit,
           },
           {
-            label: "Dividen / Penarikan Modal Pemilik (Prive)",
+            label: isEn ? "Dividends / Owner Withdrawals (Drawings)" : "Dividen / Penarikan Modal Pemilik (Prive)",
             amount: -Math.abs(dividends),
           },
         ],
         endingRetainedEarnings,
       });
-      fileName = "Perubahan_Ekuitas_Altcycles.pdf";
-      successMsg = "Laporan Perubahan Ekuitas berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Statement_of_Changes_in_Equity_Altcycles.pdf" : "Perubahan_Ekuitas_Altcycles.pdf";
+      successMsg = isEn
+        ? "Statement of Changes in Equity successfully downloaded in PDF (.pdf) format."
+        : "Laporan Perubahan Ekuitas berhasil diunduh dalam format PDF (.pdf).";
     } else if (activeTab === "neraca") {
       const sumContractAssets = balanceSheet.contractAssets.reduce(
         (s, ca) => s + ca.netContractPosition,
@@ -360,27 +372,28 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
             amount: e.amount,
           })),
           {
-            label: "Laba/Rugi Periode Berjalan (Belum Ditutup)",
+            label: isEn ? "Current Unclosed Net Income (Loss)" : "Laba/Rugi Periode Berjalan (Belum Ditutup)",
             amount: balanceSheet.currentUnclosedEarnings,
           },
         ],
         totalEquity: totalEquity,
         totalLiabilitiesAndEquity: balanceSheet.totalLiabilitiesAndEquity,
       });
-      fileName = "Posisi_Keuangan_Neraca_Altcycles.pdf";
-      successMsg =
-        "Laporan Posisi Keuangan (Neraca) berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Statement_of_Financial_Position_Altcycles.pdf" : "Posisi_Keuangan_Neraca_Altcycles.pdf";
+      successMsg = isEn
+        ? "Statement of Financial Position (Balance Sheet) successfully downloaded in PDF (.pdf) format."
+        : "Laporan Posisi Keuangan (Neraca) berhasil diunduh dalam format PDF (.pdf).";
     } else if (activeTab === "arus_kas") {
       spec = buildCashFlowPdfSpec({
         company: comp,
         periodLabel,
         operatingRows: [
           {
-            label: "Penerimaan Kas dari Pelanggan & Klien",
+            label: isEn ? "Cash Receipts from Customers & Clients" : "Penerimaan Kas dari Pelanggan & Klien",
             amount: cashFlow.operatingInflow,
           },
           {
-            label: "Pembayaran Kas untuk Beban Operasional & Vendor",
+            label: isEn ? "Cash Payments for Operating Expenses & Vendors" : "Pembayaran Kas untuk Beban Operasional & Vendor",
             amount: -Math.abs(cashFlow.operatingOutflow),
           },
         ],
@@ -393,8 +406,10 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         beginningCash: cashFlow.beginningCash,
         endingCash: cashFlow.endingCash,
       });
-      fileName = "Arus_Kas_Altcycles.pdf";
-      successMsg = "Laporan Arus Kas berhasil diunduh dalam format PDF (.pdf).";
+      fileName = isEn ? "Statement_of_Cash_Flows_Altcycles.pdf" : "Arus_Kas_Altcycles.pdf";
+      successMsg = isEn
+        ? "Statement of Cash Flows successfully downloaded in PDF (.pdf) format."
+        : "Laporan Arus Kas berhasil diunduh dalam format PDF (.pdf).";
     }
 
     if (spec) {
@@ -416,6 +431,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
 }
 
 export async function exportReportToExcel(data: ReportExportData): Promise<void> {
+  const isEn = getActiveLanguage() === "en";
   const {
     activeTab,
     startDate,
@@ -438,44 +454,53 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
   try {
     if (activeTab === "neraca") {
       await downloadExcelSheet({
-        fileName: `Neraca_${endDate}.xlsx`,
-        sheetName: "Neraca",
-        columns: [
-          { header: "Kelompok", width: 28 },
-          { header: "Kode / Proyek", width: 18 },
-          { header: "Nama Akun / Proyek", width: 34 },
-          { header: "Nominal (Rp)", width: 20 },
-        ],
+        fileName: isEn ? `Balance_Sheet_${endDate}.xlsx` : `Neraca_${endDate}.xlsx`,
+        sheetName: isEn ? "Balance Sheet" : "Neraca",
+        columns: isEn
+          ? [
+              { header: "Category", width: 28 },
+              { header: "Code / Project", width: 18 },
+              { header: "Account / Project Name", width: 34 },
+              { header: "Amount (IDR)", width: 20 },
+            ]
+          : [
+              { header: "Kelompok", width: 28 },
+              { header: "Kode / Proyek", width: 18 },
+              { header: "Nama Akun / Proyek", width: 34 },
+              { header: "Nominal (Rp)", width: 20 },
+            ],
         rows: [
-          ...balanceSheet.assets.map((a) => ["Aset", a.code, a.name, a.amount]),
+          ...balanceSheet.assets.map((a) => [isEn ? "Assets" : "Aset", a.code, a.name, a.amount]),
           ...balanceSheet.contractAssets.map((ca) => [
-            "Aset Kontrak",
+            isEn ? "Contract Assets" : "Aset Kontrak",
             ca.projectCode,
             ca.projectName,
             ca.netContractPosition,
           ]),
-          ["TOTAL ASET", "", "", balanceSheet.totalAssets],
+          [isEn ? "TOTAL ASSETS" : "TOTAL ASET", "", "", balanceSheet.totalAssets],
           ...balanceSheet.liabilities.map((l) => [
-            "Liabilitas",
+            isEn ? "Liabilities" : "Liabilitas",
             l.code,
             l.name,
             l.amount,
           ]),
           ...balanceSheet.contractLiabilities.map((cl) => [
-            "Liabilitas Kontrak",
+            isEn ? "Contract Liabilities" : "Liabilitas Kontrak",
             cl.projectCode,
             cl.projectName,
             Math.abs(cl.netContractPosition),
           ]),
-          ...balanceSheet.equities.map((e) => ["Ekuitas", e.code, e.name, e.amount]),
+          ...balanceSheet.equities.map((e) => [isEn ? "Equity" : "Ekuitas", e.code, e.name, e.amount]),
           [
-            "Ekuitas",
+            isEn ? "Equity" : "Ekuitas",
             "-",
-            "Laba/Rugi Periode Berjalan (Belum Ditutup)",
+            isEn
+              ? "Current Period Net Income (Unclosed)"
+              : "Laba/Rugi Periode Berjalan (Belum Ditutup)",
             balanceSheet.currentUnclosedEarnings,
           ],
           [
-            "TOTAL LIABILITAS + EKUITAS",
+            isEn ? "TOTAL LIABILITIES & EQUITY" : "TOTAL LIABILITAS + EKUITAS",
             "",
             "",
             balanceSheet.totalLiabilitiesAndEquity,
@@ -483,84 +508,122 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
         ],
       });
       await recordExportLog("BALANCE_SHEET", "EXCEL", endDate);
-      toast.success("Neraca berhasil diekspor ke Excel.");
+      toast.success(
+        isEn
+          ? "Balance sheet exported to Excel successfully."
+          : "Neraca berhasil diekspor ke Excel.",
+      );
       return;
     }
 
     if (activeTab === "laba_rugi") {
       await downloadExcelSheet({
-        fileName: `Laba_Rugi_${startDate}_${endDate}.xlsx`,
-        sheetName: "Laba Rugi",
-        columns: [
-          { header: "Kategori", width: 26 },
-          { header: "Kode Akun", width: 14 },
-          { header: "Nama Akun", width: 34 },
-          { header: "Nominal (Rp)", width: 20 },
-        ],
+        fileName: isEn
+          ? `Income_Statement_${startDate}_${endDate}.xlsx`
+          : `Laba_Rugi_${startDate}_${endDate}.xlsx`,
+        sheetName: isEn ? "Income Statement" : "Laba Rugi",
+        columns: isEn
+          ? [
+              { header: "Category", width: 26 },
+              { header: "Account Code", width: 14 },
+              { header: "Account Name", width: 34 },
+              { header: "Amount (IDR)", width: 20 },
+            ]
+          : [
+              { header: "Kategori", width: 26 },
+              { header: "Kode Akun", width: 14 },
+              { header: "Nama Akun", width: 34 },
+              { header: "Nominal (Rp)", width: 20 },
+            ],
         rows: [
           ...incomeStatement.revenues.map((r) => [
-            "Pendapatan",
+            isEn ? "Revenue" : "Pendapatan",
             r.code,
             r.name,
             r.amount,
           ]),
-          ["Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
+          [isEn ? "Subtotal Operating Revenue" : "Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
           ...incomeStatement.directExpenses.map((e) => [
-            "Beban Langsung",
+            isEn ? "Direct Costs" : "Beban Langsung",
             e.code,
             e.name,
             e.amount,
           ]),
-          ["Laba Kotor", "", "", incomeStatement.grossProfit],
+          [isEn ? "Gross Profit" : "Laba Kotor", "", "", incomeStatement.grossProfit],
           ...incomeStatement.sharedExpenses.map((s) => [
-            "Beban Bersama",
+            isEn ? "Operating Expenses" : "Beban Bersama",
             s.code,
             s.name,
             s.amount,
           ]),
-          ["LABA BERSIH", "", "", incomeStatement.netProfit],
+          [isEn ? "NET INCOME (LOSS)" : "LABA BERSIH", "", "", incomeStatement.netProfit],
         ],
       });
       await recordExportLog("INCOME_STATEMENT", "EXCEL", `${startDate}..${endDate}`);
-      toast.success("Laporan Laba Rugi berhasil diekspor ke Excel.");
+      toast.success(
+        isEn
+          ? "Income statement exported to Excel successfully."
+          : "Laporan Laba Rugi berhasil diekspor ke Excel.",
+      );
       return;
     }
 
     if (activeTab === "ekuitas") {
       await downloadExcelSheet({
-        fileName: `Perubahan_Ekuitas_${startDate}_${endDate}.xlsx`,
-        sheetName: "Perubahan Ekuitas",
-        columns: [
-          { header: "Komponen Ekuitas", width: 38 },
-          { header: "Nominal (Rp)", width: 22 },
-        ],
+        fileName: isEn
+          ? `Equity_Changes_${startDate}_${endDate}.xlsx`
+          : `Perubahan_Ekuitas_${startDate}_${endDate}.xlsx`,
+        sheetName: isEn ? "Equity Changes" : "Perubahan Ekuitas",
+        columns: isEn
+          ? [
+              { header: "Equity Component", width: 38 },
+              { header: "Amount (IDR)", width: 22 },
+            ]
+          : [
+              { header: "Komponen Ekuitas", width: 38 },
+              { header: "Nominal (Rp)", width: 22 },
+            ],
         rows: [
-          ["Saldo Laba Ditahan Awal Periode", beginningRetainedEarnings],
-          ["Ditambah: Laba Bersih Periode Berjalan", incomeStatement.netProfit],
-          ["Dikurangi: Prive Pemilik (Dividen)", -dividends],
-          ["Saldo Laba Ditahan Akhir Periode", endingRetainedEarnings],
-          ["Modal Disetor Pemilik", modalDisetorBalance],
-          ["TOTAL EKUITAS AKHIR PERIODE", totalEndingEquity],
+          [isEn ? "Beginning Retained Earnings" : "Saldo Laba Ditahan Awal Periode", beginningRetainedEarnings],
+          [isEn ? "Add: Net Income for the Period" : "Ditambah: Laba Bersih Periode Berjalan", incomeStatement.netProfit],
+          [isEn ? "Less: Owner Withdrawals / Dividends" : "Dikurangi: Prive Pemilik (Dividen)", -dividends],
+          [isEn ? "Ending Retained Earnings" : "Saldo Laba Ditahan Akhir Periode", endingRetainedEarnings],
+          [isEn ? "Owner Paid-in Capital" : "Modal Disetor Pemilik", modalDisetorBalance],
+          [isEn ? "TOTAL ENDING EQUITY" : "TOTAL EKUITAS AKHIR PERIODE", totalEndingEquity],
         ],
       });
       await recordExportLog("EQUITY_STATEMENT", "EXCEL", `${startDate}..${endDate}`);
-      toast.success("Laporan Perubahan Ekuitas berhasil diekspor ke Excel.");
+      toast.success(
+        isEn
+          ? "Statement of changes in equity exported to Excel successfully."
+          : "Laporan Perubahan Ekuitas berhasil diekspor ke Excel.",
+      );
       return;
     }
 
     if (activeTab === "neraca_saldo") {
       await downloadExcelSheet({
-        fileName: `Neraca_Saldo_${endDate}.xlsx`,
-        sheetName: "Neraca Saldo",
-        columns: [
-          { header: "Kode Akun", width: 14 },
-          { header: "Nama Akun", width: 32 },
-          { header: "Kelompok", width: 16 },
-          { header: "Mutasi Debit", width: 18 },
-          { header: "Mutasi Kredit", width: 18 },
-          { header: "Saldo Akhir Debit", width: 18 },
-          { header: "Saldo Akhir Kredit", width: 18 },
-        ],
+        fileName: isEn ? `Trial_Balance_${endDate}.xlsx` : `Neraca_Saldo_${endDate}.xlsx`,
+        sheetName: isEn ? "Trial Balance" : "Neraca Saldo",
+        columns: isEn
+          ? [
+              { header: "Account Code", width: 14 },
+              { header: "Account Name", width: 32 },
+              { header: "Group", width: 16 },
+              { header: "Debit Mutation", width: 18 },
+              { header: "Credit Mutation", width: 18 },
+              { header: "Ending Debit", width: 18 },
+              { header: "Ending Credit", width: 18 },
+            ]
+          : [
+              { header: "Kode Akun", width: 14 },
+              { header: "Nama Akun", width: 32 },
+              { header: "Kelompok", width: 16 },
+              { header: "Mutasi Debit", width: 18 },
+              { header: "Mutasi Kredit", width: 18 },
+              { header: "Saldo Akhir Debit", width: 18 },
+              { header: "Saldo Akhir Kredit", width: 18 },
+            ],
         rows: trialBalance.rows.map((r) => [
           r.code,
           r.name,
@@ -572,31 +635,46 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
         ]),
       });
       await recordExportLog("TRIAL_BALANCE", "EXCEL", endDate);
-      toast.success("Neraca Saldo berhasil diekspor ke Excel.");
+      toast.success(
+        isEn
+          ? "Trial balance exported to Excel successfully."
+          : "Neraca Saldo berhasil diekspor ke Excel.",
+      );
       return;
     }
 
     if (activeTab === "arus_kas") {
       await downloadExcelSheet({
-        fileName: `Arus_Kas_${startDate}_${endDate}.xlsx`,
-        sheetName: "Arus Kas",
-        columns: [
-          { header: "Uraian Komponen Arus Kas", width: 38 },
-          { header: "Nominal (Rp)", width: 22 },
-        ],
+        fileName: isEn
+          ? `Cash_Flow_${startDate}_${endDate}.xlsx`
+          : `Arus_Kas_${startDate}_${endDate}.xlsx`,
+        sheetName: isEn ? "Cash Flows" : "Arus Kas",
+        columns: isEn
+          ? [
+              { header: "Cash Flow Component Description", width: 38 },
+              { header: "Amount (IDR)", width: 22 },
+            ]
+          : [
+              { header: "Uraian Komponen Arus Kas", width: 38 },
+              { header: "Nominal (Rp)", width: 22 },
+            ],
         rows: [
-          ["Saldo Kas Awal Periode", cashFlow.beginningCash],
-          ["Penerimaan Kas Aktivitas Operasi", cashFlow.operatingInflow],
-          ["Pengeluaran Kas Aktivitas Operasi", -cashFlow.operatingOutflow],
-          ["Arus Kas Bersih Aktivitas Operasi", cashFlow.netOperating],
-          ["Arus Kas Bersih Aktivitas Investasi", cashFlow.netInvesting],
-          ["Arus Kas Bersih Aktivitas Pendanaan", cashFlow.netFinancing],
-          ["Perubahan Bersih Kas", cashFlow.netChangeInCash],
-          ["Saldo Kas Akhir Periode", cashFlow.endingCash],
+          [isEn ? "Beginning Cash Balance" : "Saldo Kas Awal Periode", cashFlow.beginningCash],
+          [isEn ? "Operating Cash Inflows" : "Penerimaan Kas Aktivitas Operasi", cashFlow.operatingInflow],
+          [isEn ? "Operating Cash Outflows" : "Pengeluaran Kas Aktivitas Operasi", -cashFlow.operatingOutflow],
+          [isEn ? "Net Cash from Operating Activities" : "Arus Kas Bersih Aktivitas Operasi", cashFlow.netOperating],
+          [isEn ? "Net Cash from Investing Activities" : "Arus Kas Bersih Aktivitas Investasi", cashFlow.netInvesting],
+          [isEn ? "Net Cash from Financing Activities" : "Arus Kas Bersih Aktivitas Pendanaan", cashFlow.netFinancing],
+          [isEn ? "Net Change in Cash" : "Perubahan Bersih Kas", cashFlow.netChangeInCash],
+          [isEn ? "Ending Cash Balance" : "Saldo Kas Akhir Periode", cashFlow.endingCash],
         ],
       });
       await recordExportLog("CASH_FLOW", "EXCEL", `${startDate}..${endDate}`);
-      toast.success("Laporan Arus Kas berhasil diekspor ke Excel.");
+      toast.success(
+        isEn
+          ? "Statement of cash flows exported to Excel successfully."
+          : "Laporan Arus Kas berhasil diekspor ke Excel.",
+      );
       return;
     }
 
@@ -626,29 +704,51 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
         ]);
 
     await downloadExcelSheet({
-      fileName: `Buku_Besar_${selectedAccount ? selectedAccount.code : "Kompilasi"}_${endDate}.xlsx`,
-      sheetName: "Buku Besar",
-      columns: [
-        { header: "Tanggal", width: 14 },
-        { header: "No. Jurnal", width: 20 },
-        { header: "Akun", width: 28 },
-        { header: "Proyek", width: 16 },
-        { header: "Uraian", width: 36 },
-        { header: "Debit", width: 18 },
-        { header: "Kredit", width: 18 },
-        { header: "Saldo Berjalan", width: 20 },
-      ],
+      fileName: isEn
+        ? `General_Ledger_${selectedAccount ? selectedAccount.code : "Compilation"}_${endDate}.xlsx`
+        : `Buku_Besar_${selectedAccount ? selectedAccount.code : "Kompilasi"}_${endDate}.xlsx`,
+      sheetName: isEn ? "General Ledger" : "Buku Besar",
+      columns: isEn
+        ? [
+            { header: "Date", width: 14 },
+            { header: "Journal No.", width: 20 },
+            { header: "Account", width: 28 },
+            { header: "Project", width: 16 },
+            { header: "Description", width: 36 },
+            { header: "Debit", width: 18 },
+            { header: "Credit", width: 18 },
+            { header: "Running Balance", width: 20 },
+          ]
+        : [
+            { header: "Tanggal", width: 14 },
+            { header: "No. Jurnal", width: 20 },
+            { header: "Akun", width: 28 },
+            { header: "Proyek", width: 16 },
+            { header: "Uraian", width: 36 },
+            { header: "Debit", width: 18 },
+            { header: "Kredit", width: 18 },
+            { header: "Saldo Berjalan", width: 20 },
+          ],
       rows: exportRows,
     });
     await recordExportLog("GENERAL_LEDGER", "EXCEL", `${startDate}..${endDate}`);
-    toast.success("Buku Besar berhasil diekspor ke Excel.");
+    toast.success(
+      isEn
+        ? "General ledger exported to Excel successfully."
+        : "Buku Besar berhasil diekspor ke Excel.",
+    );
   } catch (err) {
     console.error("Gagal mengekspor laporan ke Excel:", err);
-    toast.error("Gagal mengekspor laporan keuangan ke Excel.");
+    toast.error(
+      isEn
+        ? "Failed to export financial report to Excel."
+        : "Gagal mengekspor laporan keuangan ke Excel.",
+    );
   }
 }
 
 export async function exportReportToCsv(data: ReportExportData): Promise<void> {
+  const isEn = getActiveLanguage() === "en";
   const {
     activeTab,
     startDate,
@@ -666,38 +766,42 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
   try {
     if (activeTab === "neraca") {
       downloadCsvFile(
-        `Neraca_SAK_${endDate}.csv`,
-        ["Kelompok", "Kode / Proyek", "Nama Akun / Proyek", "Nominal"],
+        isEn ? `Balance_Sheet_SAK_${endDate}.csv` : `Neraca_SAK_${endDate}.csv`,
+        isEn
+          ? ["Category", "Code / Project", "Account / Project Name", "Amount"]
+          : ["Kelompok", "Kode / Proyek", "Nama Akun / Proyek", "Nominal"],
         [
-          ...balanceSheet.assets.map((a) => ["Aset", a.code, a.name, a.amount]),
+          ...balanceSheet.assets.map((a) => [isEn ? "Assets" : "Aset", a.code, a.name, a.amount]),
           ...balanceSheet.contractAssets.map((ca) => [
-            "Aset Kontrak",
+            isEn ? "Contract Assets" : "Aset Kontrak",
             ca.projectCode,
             ca.projectName,
             ca.netContractPosition,
           ]),
-          ["TOTAL ASET", "", "", balanceSheet.totalAssets],
+          [isEn ? "TOTAL ASSETS" : "TOTAL ASET", "", "", balanceSheet.totalAssets],
           ...balanceSheet.liabilities.map((l) => [
-            "Liabilitas",
+            isEn ? "Liabilities" : "Liabilitas",
             l.code,
             l.name,
             l.amount,
           ]),
           ...balanceSheet.contractLiabilities.map((cl) => [
-            "Liabilitas Kontrak",
+            isEn ? "Contract Liabilities" : "Liabilitas Kontrak",
             cl.projectCode,
             cl.projectName,
             Math.abs(cl.netContractPosition),
           ]),
-          ...balanceSheet.equities.map((e) => ["Ekuitas", e.code, e.name, e.amount]),
+          ...balanceSheet.equities.map((e) => [isEn ? "Equity" : "Ekuitas", e.code, e.name, e.amount]),
           [
-            "Ekuitas",
+            isEn ? "Equity" : "Ekuitas",
             "-",
-            "Laba/Rugi Periode Berjalan (Belum Ditutup)",
+            isEn
+              ? "Current Period Net Income (Unclosed)"
+              : "Laba/Rugi Periode Berjalan (Belum Ditutup)",
             balanceSheet.currentUnclosedEarnings,
           ],
           [
-            "TOTAL LIABILITAS + EKUITAS",
+            isEn ? "TOTAL LIABILITIES & EQUITY" : "TOTAL LIABILITAS + EKUITAS",
             "",
             "",
             balanceSheet.totalLiabilitiesAndEquity,
@@ -705,55 +809,77 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
         ],
       );
       await recordExportLog("BALANCE_SHEET", "CSV", endDate);
-      toast.success("Neraca berhasil diekspor ke CSV.");
+      toast.success(
+        isEn
+          ? "Balance sheet exported to CSV successfully."
+          : "Neraca berhasil diekspor ke CSV.",
+      );
       return;
     }
 
     if (activeTab === "laba_rugi") {
       downloadCsvFile(
-        `Laba_Rugi_${startDate}_${endDate}.csv`,
-        ["Kategori", "Kode Akun", "Nama Akun", "Nominal"],
+        isEn
+          ? `Income_Statement_${startDate}_${endDate}.csv`
+          : `Laba_Rugi_${startDate}_${endDate}.csv`,
+        isEn
+          ? ["Category", "Account Code", "Account Name", "Amount"]
+          : ["Kategori", "Kode Akun", "Nama Akun", "Nominal"],
         [
           ...incomeStatement.revenues.map((r) => [
-            "Pendapatan",
+            isEn ? "Revenue" : "Pendapatan",
             r.code,
             r.name,
             r.amount,
           ]),
-          ["Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
+          [isEn ? "Subtotal Operating Revenue" : "Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
           ...incomeStatement.directExpenses.map((e) => [
-            "Beban Langsung",
+            isEn ? "Direct Costs" : "Beban Langsung",
             e.code,
             e.name,
             e.amount,
           ]),
-          ["Laba Kotor", "", "", incomeStatement.grossProfit],
+          [isEn ? "Gross Profit" : "Laba Kotor", "", "", incomeStatement.grossProfit],
           ...incomeStatement.sharedExpenses.map((s) => [
-            "Beban Bersama",
+            isEn ? "Operating Expenses" : "Beban Bersama",
             s.code,
             s.name,
             s.amount,
           ]),
-          ["LABA BERSIH", "", "", incomeStatement.netProfit],
+          [isEn ? "NET INCOME (LOSS)" : "LABA BERSIH", "", "", incomeStatement.netProfit],
         ],
       );
       await recordExportLog("INCOME_STATEMENT", "CSV", `${startDate}..${endDate}`);
-      toast.success("Laporan Laba Rugi berhasil diekspor ke CSV.");
+      toast.success(
+        isEn
+          ? "Income statement exported to CSV successfully."
+          : "Laporan Laba Rugi berhasil diekspor ke CSV.",
+      );
       return;
     }
 
     if (activeTab === "neraca_saldo") {
       downloadCsvFile(
-        `Neraca_Saldo_${endDate}.csv`,
-        [
-          "Kode Akun",
-          "Nama Akun",
-          "Kelompok",
-          "Mutasi Debit",
-          "Mutasi Kredit",
-          "Saldo Akhir Debit",
-          "Saldo Akhir Kredit",
-        ],
+        isEn ? `Trial_Balance_${endDate}.csv` : `Neraca_Saldo_${endDate}.csv`,
+        isEn
+          ? [
+              "Account Code",
+              "Account Name",
+              "Group",
+              "Debit Mutation",
+              "Credit Mutation",
+              "Ending Debit",
+              "Ending Credit",
+            ]
+          : [
+              "Kode Akun",
+              "Nama Akun",
+              "Kelompok",
+              "Mutasi Debit",
+              "Mutasi Kredit",
+              "Saldo Akhir Debit",
+              "Saldo Akhir Kredit",
+            ],
         trialBalance.rows.map((r) => [
           r.code,
           r.name,
@@ -765,27 +891,39 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
         ]),
       );
       await recordExportLog("TRIAL_BALANCE", "CSV", endDate);
-      toast.success("Neraca Saldo berhasil diekspor ke CSV.");
+      toast.success(
+        isEn
+          ? "Trial balance exported to CSV successfully."
+          : "Neraca Saldo berhasil diekspor ke CSV.",
+      );
       return;
     }
 
     if (activeTab === "arus_kas") {
       downloadCsvFile(
-        `Arus_Kas_${startDate}_${endDate}.csv`,
-        ["Uraian Komponen Arus Kas", "Nominal"],
+        isEn
+          ? `Cash_Flow_${startDate}_${endDate}.csv`
+          : `Arus_Kas_${startDate}_${endDate}.csv`,
+        isEn
+          ? ["Cash Flow Component Description", "Amount"]
+          : ["Uraian Komponen Arus Kas", "Nominal"],
         [
-          ["Saldo Kas Awal Periode", cashFlow.beginningCash],
-          ["Penerimaan Kas Aktivitas Operasi", cashFlow.operatingInflow],
-          ["Pengeluaran Kas Aktivitas Operasi", -cashFlow.operatingOutflow],
-          ["Arus Kas Bersih Aktivitas Operasi", cashFlow.netOperating],
-          ["Arus Kas Bersih Aktivitas Investasi", cashFlow.netInvesting],
-          ["Arus Kas Bersih Aktivitas Pendanaan", cashFlow.netFinancing],
-          ["Perubahan Bersih Kas", cashFlow.netChangeInCash],
-          ["Saldo Kas Akhir Periode", cashFlow.endingCash],
+          [isEn ? "Beginning Cash Balance" : "Saldo Kas Awal Periode", cashFlow.beginningCash],
+          [isEn ? "Operating Cash Inflows" : "Penerimaan Kas Aktivitas Operasi", cashFlow.operatingInflow],
+          [isEn ? "Operating Cash Outflows" : "Pengeluaran Kas Aktivitas Operasi", -cashFlow.operatingOutflow],
+          [isEn ? "Net Cash from Operating Activities" : "Arus Kas Bersih Aktivitas Operasi", cashFlow.netOperating],
+          [isEn ? "Net Cash from Investing Activities" : "Arus Kas Bersih Aktivitas Investasi", cashFlow.netInvesting],
+          [isEn ? "Net Cash from Financing Activities" : "Arus Kas Bersih Aktivitas Pendanaan", cashFlow.netFinancing],
+          [isEn ? "Net Change in Cash" : "Perubahan Bersih Kas", cashFlow.netChangeInCash],
+          [isEn ? "Ending Cash Balance" : "Saldo Kas Akhir Periode", cashFlow.endingCash],
         ],
       );
       await recordExportLog("CASH_FLOW", "CSV", `${startDate}..${endDate}`);
-      toast.success("Laporan Arus Kas berhasil diekspor ke CSV.");
+      toast.success(
+        isEn
+          ? "Statement of cash flows exported to CSV successfully."
+          : "Laporan Arus Kas berhasil diekspor ke CSV.",
+      );
       return;
     }
 
@@ -814,23 +952,44 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
         ]);
 
     downloadCsvFile(
-      `Buku_Besar_${selectedAccount?.code ?? "Kompilasi"}.csv`,
-      [
-        "Tanggal",
-        "No. Jurnal",
-        "Akun",
-        "Proyek",
-        "Uraian",
-        "Debit",
-        "Kredit",
-        "Saldo Berjalan",
-      ],
+      isEn
+        ? `General_Ledger_${selectedAccount?.code ?? "Compilation"}.csv`
+        : `Buku_Besar_${selectedAccount?.code ?? "Kompilasi"}.csv`,
+      isEn
+        ? [
+            "Date",
+            "Journal No.",
+            "Account",
+            "Project",
+            "Description",
+            "Debit",
+            "Credit",
+            "Running Balance",
+          ]
+        : [
+            "Tanggal",
+            "No. Jurnal",
+            "Akun",
+            "Proyek",
+            "Uraian",
+            "Debit",
+            "Kredit",
+            "Saldo Berjalan",
+          ],
       exportCsvRows,
     );
     await recordExportLog("GENERAL_LEDGER", "CSV", `${startDate}..${endDate}`);
-    toast.success("Buku Besar berhasil diekspor ke CSV.");
+    toast.success(
+      isEn
+        ? "General ledger exported to CSV successfully."
+        : "Buku Besar berhasil diekspor ke CSV.",
+    );
   } catch (err) {
     console.error("Gagal mengekspor laporan ke CSV:", err);
-    toast.error("Gagal mengekspor laporan keuangan ke CSV.");
+    toast.error(
+      isEn
+        ? "Failed to export financial report to CSV."
+        : "Gagal mengekspor laporan keuangan ke CSV.",
+    );
   }
 }

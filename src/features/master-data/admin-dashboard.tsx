@@ -23,7 +23,7 @@ import {
   WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, getActiveLanguage } from "@/lib/i18n";
 import {
   buildRupiahHistogramBins,
   ChartCardFooter,
@@ -370,6 +370,7 @@ export function AdminDashboardPage() {
     .slice(0, 4);
 
   async function handleBackupExport() {
+    const isEn = getActiveLanguage() === "en";
     const rows: Array<Array<string | number>> = [];
     for (const j of journals) {
       const jLines = lines.filter((l) => l.journal_id === j.id);
@@ -388,25 +389,37 @@ export function AdminDashboardPage() {
       }
     }
     await downloadExcelSheet({
-      fileName: "Cadangan_Buku_Jurnal_Altcycles.xlsx",
-      sheetName: "Backup Jurnal",
-      columns: [
-        { header: "No. Jurnal", width: 22 },
-        { header: "Tanggal", width: 14 },
-        { header: "Tipe", width: 18 },
-        { header: "Status", width: 14 },
-        { header: "Akun", width: 32 },
-        { header: "Keterangan", width: 38 },
-        { header: "Debit", width: 18 },
-        { header: "Kredit", width: 18 },
-      ],
+      fileName: isEn ? "Altcycles_Journal_Books_Backup.xlsx" : "Cadangan_Buku_Jurnal_Altcycles.xlsx",
+      sheetName: isEn ? "Journals Backup" : "Backup Jurnal",
+      columns: isEn
+        ? [
+            { header: "Journal No.", width: 22 },
+            { header: "Date", width: 14 },
+            { header: "Type", width: 18 },
+            { header: "Status", width: 14 },
+            { header: "Account", width: 32 },
+            { header: "Description", width: 38 },
+            { header: "Debit", width: 18 },
+            { header: "Credit", width: 18 },
+          ]
+        : [
+            { header: "No. Jurnal", width: 22 },
+            { header: "Tanggal", width: 14 },
+            { header: "Tipe", width: 18 },
+            { header: "Status", width: 14 },
+            { header: "Akun", width: 32 },
+            { header: "Keterangan", width: 38 },
+            { header: "Debit", width: 18 },
+            { header: "Kredit", width: 18 },
+          ],
       rows,
     });
     await recordExportLog("FULL_BACKUP_LEDGER", "EXCEL");
-    toast.success("Cadangan data jurnal berhasil diunduh ke Excel (.xlsx).");
+    toast.success(isEn ? "Journal backup data successfully downloaded to Excel (.xlsx)." : "Cadangan data jurnal berhasil diunduh ke Excel (.xlsx).");
   }
 
   async function handleBackupExportPdf() {
+    const isEn = getActiveLanguage() === "en";
     const comp = await getCompanyProfile();
     const tableRows: string[][] = [];
     for (const j of journals) {
@@ -424,27 +437,37 @@ export function AdminDashboardPage() {
       }
     }
     const bytes = await generateDocumentPdf({
-      docTitle: "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES",
-      docSubtitle: `Total Entri Jurnal: ${journals.length} transaksi`,
+      docTitle: isEn ? "ALTCYCLES ACCOUNTING GENERAL JOURNALS BACKUP" : "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES",
+      docSubtitle: isEn ? `Total Journal Entries: ${journals.length} transactions` : `Total Entri Jurnal: ${journals.length} transaksi`,
       docNumber: `BKP/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: [
-        { header: "Tanggal", widthRatio: 0.14 },
-        { header: "No. Jurnal", widthRatio: 0.18 },
-        { header: "Akun", widthRatio: 0.28 },
-        { header: "Keterangan", widthRatio: 0.20 },
-        { header: "Debit", widthRatio: 0.10, align: "right" },
-        { header: "Kredit", widthRatio: 0.10, align: "right" },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "Date", widthRatio: 0.14 },
+            { header: "Journal No.", widthRatio: 0.18 },
+            { header: "Account", widthRatio: 0.28 },
+            { header: "Description", widthRatio: 0.20 },
+            { header: "Debit", widthRatio: 0.10, align: "right" },
+            { header: "Credit", widthRatio: 0.10, align: "right" },
+          ]
+        : [
+            { header: "Tanggal", widthRatio: 0.14 },
+            { header: "No. Jurnal", widthRatio: 0.18 },
+            { header: "Akun", widthRatio: 0.28 },
+            { header: "Keterangan", widthRatio: 0.20 },
+            { header: "Debit", widthRatio: 0.10, align: "right" },
+            { header: "Kredit", widthRatio: 0.10, align: "right" },
+          ],
       tableRows,
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, "Cadangan_Buku_Jurnal_Altcycles.pdf");
+    downloadPdfBytes(bytes, isEn ? "Altcycles_Journal_Books_Backup.pdf" : "Cadangan_Buku_Jurnal_Altcycles.pdf");
     await recordExportLog("FULL_BACKUP_LEDGER", "PDF");
   }
 
   async function handleBackupExportCsv() {
+    const isEn = getActiveLanguage() === "en";
     const rows: Array<Array<string | number>> = [];
     for (const j of journals) {
       const jLines = lines.filter((l) => l.journal_id === j.id);
@@ -463,21 +486,32 @@ export function AdminDashboardPage() {
       }
     }
     downloadCsvFile(
-      "Cadangan_Buku_Jurnal_Altcycles.csv",
-      [
-        "No. Jurnal",
-        "Tanggal",
-        "Tipe",
-        "Status",
-        "Akun",
-        "Keterangan",
-        "Debit",
-        "Kredit",
-      ],
+      isEn ? "Altcycles_Journal_Books_Backup.csv" : "Cadangan_Buku_Jurnal_Altcycles.csv",
+      isEn
+        ? [
+            "Journal No.",
+            "Date",
+            "Type",
+            "Status",
+            "Account",
+            "Description",
+            "Debit",
+            "Credit",
+          ]
+        : [
+            "No. Jurnal",
+            "Tanggal",
+            "Tipe",
+            "Status",
+            "Akun",
+            "Keterangan",
+            "Debit",
+            "Credit",
+          ],
       rows,
     );
     await recordExportLog("FULL_BACKUP_LEDGER", "CSV");
-    toast.success("Cadangan data jurnal berhasil diunduh ke CSV (.csv).");
+    toast.success(isEn ? "Journal backup data successfully downloaded to CSV (.csv)." : "Cadangan data jurnal berhasil diunduh ke CSV (.csv).");
   }
 
   const totalExpense =

@@ -16,6 +16,7 @@ import {
   formatDocEmpty,
   formatDocRupiah,
 } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import type {
   CompanyProfileRow,
@@ -42,9 +43,17 @@ export function makeQuotationSpec(
 ): PdfDocumentSpec | null {
   const { customer, company, bundle } = ctx;
   if (!company || !bundle) return null;
+  const isEn = getActiveLanguage() === "en";
   const qItems = bundle.quotationItems.filter((i) => i.quotation_id === qt.id);
-  const statusText =
-    qt.status === "accepted"
+  const statusText = isEn
+    ? qt.status === "accepted"
+      ? "ACCEPTED"
+      : qt.status === "sent"
+        ? "SENT"
+        : qt.status === "rejected"
+          ? "REJECTED"
+          : "DRAFT"
+    : qt.status === "accepted"
       ? "DISETUJUI"
       : qt.status === "sent"
         ? "TERKIRIM"
@@ -65,38 +74,42 @@ export function makeQuotationSpec(
     : null;
 
   return {
-    docTitle: "SURAT PENAWARAN HARGA (QUOTATION)",
-    docSubtitle: `Masa Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
+    docTitle: isEn ? "PRICE QUOTATION" : "SURAT PENAWARAN HARGA (QUOTATION)",
+    docSubtitle: isEn
+      ? `Valid until ${formatDocDateLong(qt.valid_until, "en")}`
+      : `Masa Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
     docNumber: qt.quotation_number,
     docDate: qt.quotation_date,
     statusBadge: { text: statusText, variant: statusTone },
     balanceDueBox: {
-      label: "TOTAL PENAWARAN HARGA",
+      label: isEn ? "TOTAL PRICE QUOTATION" : "TOTAL PENAWARAN HARGA",
       amountText: formatDocRupiah(qt.total_amount),
-      dueDateText: `Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
+      dueDateText: isEn
+        ? `Valid until ${formatDocDateLong(qt.valid_until, "en")}`
+        : `Berlaku s.d. ${formatDocDateLong(qt.valid_until)}`,
     },
     company,
     clientLogoUrl: customer?.logo_storage_path ?? null,
-    recipientTitle: "Kepada Yth.",
+    recipientTitle: isEn ? "Addressed To:" : "Kepada Yth.",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Klien Mitra",
+      customer?.company_name ?? customer?.name ?? (isEn ? "Client Partner" : "Klien Mitra"),
       ...(clientContactLine ? [clientContactLine] : []),
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(qt.quotation_date) },
-      { label: "Masa Berlaku s.d.", value: formatDocDateLong(qt.valid_until) },
-      { label: "Judul Proyek", value: qt.project_title },
-      { label: "Estimasi Durasi", value: `${qt.estimated_weeks} Minggu Kalender` },
-      { label: "Batas Sesi Revisi", value: `${qt.revision_limit}x Sesi` },
+      { label: isEn ? "Issue Date" : "Tanggal Terbit", value: formatDocDateLong(qt.quotation_date, isEn ? "en" : "id") },
+      { label: isEn ? "Valid Until" : "Masa Berlaku s.d.", value: formatDocDateLong(qt.valid_until, isEn ? "en" : "id") },
+      { label: isEn ? "Project Title" : "Judul Proyek", value: qt.project_title },
+      { label: isEn ? "Estimated Duration" : "Estimasi Durasi", value: isEn ? `${qt.estimated_weeks} Calendar Weeks` : `${qt.estimated_weeks} Minggu Kalender` },
+      { label: isEn ? "Revision Limit" : "Batas Sesi Revisi", value: isEn ? `${qt.revision_limit}x Sessions` : `${qt.revision_limit}x Sesi` },
     ],
     paragraphsBefore: qt.client_need_summary
-      ? [`Ringkasan Kebutuhan Proyek: ${qt.client_need_summary}`]
+      ? [isEn ? `Project Needs Summary: ${qt.client_need_summary}` : `Ringkasan Kebutuhan Proyek: ${qt.client_need_summary}`]
       : undefined,
     tableColumns: [
       { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
-      { header: "Biaya (IDR)", widthRatio: 0.3, align: "right" },
+      { header: isEn ? "Module / Scope of Work" : "Modul / Lingkup Fitur Pekerjaan", widthRatio: 0.62 },
+      { header: isEn ? "Cost (IDR)" : "Biaya (IDR)", widthRatio: 0.3, align: "right" },
     ],
     tableRows: qItems.map((it, idx) => [
       String(idx + 1),
@@ -104,21 +117,29 @@ export function makeQuotationSpec(
       formatDocRupiah(it.cost_amount),
     ]),
     summaryRows: [
-      { label: "Total Penawaran Harga", value: formatDocRupiah(qt.total_amount) },
+      { label: isEn ? "Total Price Quotation" : "Total Penawaran Harga", value: formatDocRupiah(qt.total_amount) },
     ],
     terbilangAmount: qt.total_amount,
-    notesTitle: "Ketentuan Penawaran Harga",
-    notes: [
-      company.pkp_enabled
-        ? `Harga belum termasuk PPN ${company.ppn_rate}%.`
-        : "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).",
-      "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
-    ],
-    leftSignatureLabel: "Disetujui Oleh (Klien),",
-    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
+    notesTitle: isEn ? "Quotation Terms & Conditions" : "Ketentuan Penawaran Harga",
+    notes: isEn
+      ? [
+          company.pkp_enabled
+            ? `Price excludes VAT ${company.ppn_rate}%.`
+            : "Price is not subject to VAT as Altvira Technology (PT Representasi Mitra Mandiri) is not yet registered as a Taxable Enterprise (Non-PKP).",
+          "This price quotation is official as the basis for official Purchase Order (PO) issuance by the Client.",
+          "This document is officially generated by the Altcycles Financial ERP system and is valid without wet signature.",
+        ]
+      : [
+          company.pkp_enabled
+            ? `Harga belum termasuk PPN ${company.ppn_rate}%.`
+            : "Harga tidak dikenakan PPN karena Altvira Technology (PT Representasi Mitra Mandiri) belum dikukuhkan sebagai Pengusaha Kena Pajak (Non-PKP).",
+          "Penawaran harga ini sah sebagai dasar penerbitan Purchase Order (PO) resmi oleh Pihak Klien.",
+          "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+        ],
+    leftSignatureLabel: isEn ? "Approved By (Client)," : "Disetujui Oleh (Klien),",
+    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
     leftSignatureImageUrl: customer?.signature_storage_path ?? null,
-    rightSignatureLabel: `Hormat kami, ${company.company_name}`,
+    rightSignatureLabel: isEn ? `Sincerely, ${company.company_name}` : `Hormat kami, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: qt.quotation_number,
@@ -153,6 +174,7 @@ export function makeSowDocSpec(
 ): PdfDocumentSpec | null {
   const { project, customer, company, bundle } = ctx;
   if (!company || !project) return null;
+  const isEn = getActiveLanguage() === "en";
   const summaryText =
     typeof doc.content_json === "object" &&
     doc.content_json !== null &&
@@ -164,50 +186,64 @@ export function makeSowDocSpec(
     docTitle:
       doc.doc_type === "SOW"
         ? "STATEMENT OF WORK (SOW)"
-        : "SURAT PERINTAH KERJA (SPK)",
-    docSubtitle: "RUANG LINGKUP PEKERJAAN & KRITERIA PENERIMAAN",
+        : isEn
+          ? "WORK ORDER (SPK)"
+          : "SURAT PERINTAH KERJA (SPK)",
+    docSubtitle: isEn
+      ? "SCOPE OF WORK & ACCEPTANCE CRITERIA"
+      : "RUANG LINGKUP PEKERJAAN & KRITERIA PENERIMAAN",
     docNumber: doc.doc_number,
     docDate: doc.created_at.slice(0, 10),
     statusBadge: {
-      text: doc.is_signed ? "DISETUJUI SAH" : "DRAF REVIEW",
+      text: doc.is_signed
+        ? isEn ? "OFFICIALLY SIGNED" : "DISETUJUI SAH"
+        : isEn ? "DRAFT REVIEW" : "DRAF REVIEW",
       variant: doc.is_signed ? "success" : "neutral",
     },
     company,
     clientLogoUrl: customer?.logo_storage_path ?? null,
-    recipientTitle: "Pihak Klien (Pemberi Kerja):",
+    recipientTitle: isEn ? "Client Party (Employer):" : "Pihak Klien (Pemberi Kerja):",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Klien",
+      customer?.company_name ?? customer?.name ?? (isEn ? "Client" : "Klien"),
       ...(customer?.contact_person ? [customer.contact_person] : []),
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Terbit", value: formatDocDateLong(doc.created_at.slice(0, 10)) },
-      { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
-      ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
-      { label: "Nilai Kontrak", value: formatDocRupiah(project.contract_value) },
+      { label: isEn ? "Issue Date" : "Tanggal Terbit", value: formatDocDateLong(doc.created_at.slice(0, 10), isEn ? "en" : "id") },
+      { label: isEn ? "Project Code & Name" : "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
+      ...(cpo ? [{ label: isEn ? "Client PO Ref" : "Referensi PO Klien", value: cpo.po_number }] : []),
+      { label: isEn ? "Contract Value" : "Nilai Kontrak", value: formatDocRupiah(project.contract_value) },
       {
-        label: "Target Penyelesaian",
-        value: formatDocDateLong(project.target_end_date ?? doc.created_at.slice(0, 10)),
+        label: isEn ? "Target Completion" : "Target Penyelesaian",
+        value: formatDocDateLong(project.target_end_date ?? doc.created_at.slice(0, 10), isEn ? "en" : "id"),
       },
       {
-        label: "Status Pengesahan",
-        value: doc.is_signed ? "Telah Ditandatangani Sah" : "Draf Review",
+        label: isEn ? "Approval Status" : "Status Pengesahan",
+        value: doc.is_signed ? (isEn ? "Officially Signed" : "Telah Ditandatangani Sah") : (isEn ? "Draft Review" : "Draf Review"),
       },
     ],
     paragraphsBefore: [
       summaryText ||
-        `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin pelaksanaan pekerjaan proyek ${project.name}.`,
+        (isEn
+          ? `This ${doc.doc_type} document governs the technical scope of work, acceptance criteria, intellectual property rights (source code copyright fully transfers to the Client after 100% payment settlement), and milestone schedules for project ${project.name}.`
+          : `Dokumen ${doc.doc_type} ini mengatur ruang lingkup teknis, kriteria penerimaan, hak kekayaan intelektual (source code beralih setelah pelunasan 100%), serta jadwal termin pelaksanaan pekerjaan proyek ${project.name}.`),
     ],
-    notesTitle: "Ketentuan Pelaksanaan Pekerjaan:",
-    notes: [
-      "Perubahan di luar ruang lingkup yang telah disepakati akan diproses melalui mekanisme Change Request (CR) tertulis.",
-      "Hak cipta kode sumber beralih sepenuhnya kepada Pihak Klien setelah pelunasan 100% nilai kontrak.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
-    ],
-    leftSignatureLabel: "Disetujui Pihak Klien,",
-    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
+    notesTitle: isEn ? "Execution Terms & Conditions:" : "Ketentuan Pelaksanaan Pekerjaan:",
+    notes: isEn
+      ? [
+          "Changes outside the agreed scope will be processed through written Change Request (CR) mechanism.",
+          "Source code copyright fully transfers to the Client after 100% contract settlement.",
+          "This document is officially generated by the Altcycles Financial ERP system and is valid without wet signature.",
+        ]
+      : [
+          "Perubahan di luar ruang lingkup yang telah disepakati akan diproses melalui mekanisme Change Request (CR) tertulis.",
+          "Hak cipta kode sumber beralih sepenuhnya kepada Pihak Klien setelah pelunasan 100% nilai kontrak.",
+          "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+        ],
+    leftSignatureLabel: isEn ? "Approved by Client," : "Disetujui Pihak Klien,",
+    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
     leftSignatureImageUrl: customer?.signature_storage_path ?? null,
-    rightSignatureLabel: `Pelaksana, ${company.company_name}`,
+    rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: doc.doc_number,
@@ -274,6 +310,7 @@ export function makeBakpSpec(
 ): PdfDocumentSpec | null {
   const { project, customer, company, bundle } = ctx;
   if (!company || !project || !bundle) return null;
+  const isEn = getActiveLanguage() === "en";
   const ms = bundle.milestones.find((m) => m.id === bakp.milestone_id);
   const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
   const spkDoc = bundle.documents.find(
@@ -285,42 +322,46 @@ export function makeBakpSpec(
     : [];
 
   return {
-    docTitle: "BERITA ACARA KEMAJUAN PEKERJAAN (BAKP)",
-    docSubtitle: "BUKTI CAPAIAN PROGRES TERMIN PEKERJAAN",
+    docTitle: isEn ? "WORK PROGRESS REPORT (BAKP)" : "BERITA ACARA KEMAJUAN PEKERJAAN (BAKP)",
+    docSubtitle: isEn ? "PROOF OF MILESTONE PROGRESS COMPLETION" : "BUKTI CAPAIAN PROGRES TERMIN PEKERJAAN",
     docNumber: bakp.bakp_number,
     docDate: bakp.bakp_date,
     statusBadge: {
       text:
-        bakp.status === "approved_by_client" ? "DISETUJUI KLIEN" : "DRAF",
+        bakp.status === "approved_by_client"
+          ? isEn ? "CLIENT APPROVED" : "DISETUJUI KLIEN"
+          : isEn ? "DRAFT" : "DRAF",
       variant: bakp.status === "approved_by_client" ? "success" : "neutral",
     },
     company,
     clientLogoUrl: customer?.logo_storage_path ?? null,
-    recipientTitle: "Pihak Klien (Pemberi Kerja):",
+    recipientTitle: isEn ? "Client Party (Employer):" : "Pihak Klien (Pemberi Kerja):",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Klien",
+      customer?.company_name ?? customer?.name ?? (isEn ? "Client" : "Klien"),
       ...(customer?.contact_person ? [customer.contact_person] : []),
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Pemeriksaan", value: formatDocDateLong(bakp.bakp_date) },
-      { label: "Proyek", value: `${project.code} - ${project.name}` },
-      ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
-      ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
-      { label: "Termin Terkait", value: ms?.name ?? "-" },
-      { label: "Capaian Fisik", value: `${bakp.cumulative_percentage}%` },
-      { label: "Nilai Tagihan Termin", value: formatDocRupiah(bakp.billable_amount) },
+      { label: isEn ? "Inspection Date" : "Tanggal Pemeriksaan", value: formatDocDateLong(bakp.bakp_date, isEn ? "en" : "id") },
+      { label: isEn ? "Project" : "Proyek", value: `${project.code} - ${project.name}` },
+      ...(cpo ? [{ label: isEn ? "Client PO Ref" : "Referensi PO Klien", value: cpo.po_number }] : []),
+      ...(spkDoc ? [{ label: isEn ? "Contract / SPK Ref" : "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
+      { label: isEn ? "Related Milestone" : "Termin Terkait", value: ms?.name ?? "-" },
+      { label: isEn ? "Physical Progress" : "Capaian Fisik", value: `${bakp.cumulative_percentage}%` },
+      { label: isEn ? "Milestone Billable Amount" : "Nilai Tagihan Termin", value: formatDocRupiah(bakp.billable_amount) },
     ],
     paragraphsBefore: [
       bakp.findings_notes ||
-        `Pada tanggal ${formatDocDateLong(bakp.bakp_date)}, telah dilakukan pemeriksaan bersama atas pencapaian pekerjaan termin ${ms?.name ?? ""} proyek ${project.name} dengan capaian fisik kumulatif sebesar ${bakp.cumulative_percentage}%. Hasil pemeriksaan dinyatakan memenuhi syarat dan dapat ditagihkan melalui Invoice Termin resmi.`,
+        (isEn
+          ? `On ${formatDocDateLong(bakp.bakp_date, "en")}, a joint inspection was conducted on the progress of milestone ${ms?.name ?? ""} for project ${project.name} with cumulative physical progress of ${bakp.cumulative_percentage}%. The inspection results are declared eligible for official Milestone Invoice billing.`
+          : `Pada tanggal ${formatDocDateLong(bakp.bakp_date)}, telah dilakukan pemeriksaan bersama atas pencapaian pekerjaan termin ${ms?.name ?? ""} proyek ${project.name} dengan capaian fisik kumulatif sebesar ${bakp.cumulative_percentage}%. Hasil pemeriksaan dinyatakan memenuhi syarat dan dapat ditagihkan melalui Invoice Termin resmi.`),
     ],
     tableColumns:
       deliverables.length > 0
         ? [
             { header: "No", widthRatio: 0.1, align: "center" },
-            { header: "Deliverable / Komponen Pekerjaan", widthRatio: 0.65 },
-            { header: "Status Capaian", widthRatio: 0.25, align: "center" },
+            { header: isEn ? "Deliverable / Work Component" : "Deliverable / Komponen Pekerjaan", widthRatio: 0.65 },
+            { header: isEn ? "Progress Status" : "Status Capaian", widthRatio: 0.25, align: "center" },
           ]
         : undefined,
     tableRows:
@@ -331,15 +372,20 @@ export function makeBakpSpec(
             typeof d === "object" && d !== null && "status" in d ? String((d as { status: string }).status) : "",
           ])
         : undefined,
-    notesTitle: "Catatan Pemeriksaan Capaian:",
-    notes: [
-      "Dokumen Berita Acara Kemajuan Pekerjaan (BAKP) ini sah sebagai dasar penagihan Invoice Termin.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
-    ],
-    leftSignatureLabel: "Disetujui Pihak Klien,",
-    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
+    notesTitle: isEn ? "Progress Inspection Notes:" : "Catatan Pemeriksaan Capaian:",
+    notes: isEn
+      ? [
+          "This Work Progress Report (BAKP) document is official as the basis for milestone invoice billing.",
+          "This document is officially generated by the Altcycles Financial ERP system and is valid without wet signature.",
+        ]
+      : [
+          "Dokumen Berita Acara Kemajuan Pekerjaan (BAKP) ini sah sebagai dasar penagihan Invoice Termin.",
+          "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+        ],
+    leftSignatureLabel: isEn ? "Approved by Client," : "Disetujui Pihak Klien,",
+    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
     leftSignatureImageUrl: customer?.signature_storage_path ?? null,
-    rightSignatureLabel: `Pelaksana, ${company.company_name}`,
+    rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: bakp.bakp_number,
@@ -372,14 +418,22 @@ export function makeUatSpec(
 ): PdfDocumentSpec | null {
   const { project, customer, company, bundle } = ctx;
   if (!company || !project || !bundle) return null;
+  const isEn = getActiveLanguage() === "en";
   const items = bundle.uatItems.filter((i) => i.uat_id === uat.id);
   const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
   const spkDoc = bundle.documents.find(
     (d) => d.project_id === project.id && d.doc_type === "SPK",
   );
 
-  const conclusionLabel =
-    uat.conclusion === "accepted"
+  const conclusionLabel = isEn
+    ? uat.conclusion === "accepted"
+      ? "ACCEPTED (PASS)"
+      : uat.conclusion === "accepted_with_notes"
+        ? "ACCEPTED WITH NOTES"
+        : uat.conclusion === "rejected"
+          ? "REJECTED (NEEDS REVISION)"
+          : "PENDING (UNDER TEST)"
+    : uat.conclusion === "accepted"
       ? "LULUS / SESUAI (ACCEPTED)"
       : uat.conclusion === "accepted_with_notes"
         ? "LULUS BERSYARAT (WITH NOTES)"
@@ -398,7 +452,9 @@ export function makeUatSpec(
 
   return {
     docTitle: "USER ACCEPTANCE TEST (UAT) CHECKLIST",
-    docSubtitle: "BERITA ACARA PENGUJIAN PENERIMAAN PENGGUNA",
+    docSubtitle: isEn
+      ? "USER ACCEPTANCE TESTING REPORT"
+      : "BERITA ACARA PENGUJIAN PENERIMAAN PENGGUNA",
     docNumber: uat.uat_number,
     docDate: uat.test_date,
     statusBadge: {
@@ -407,53 +463,70 @@ export function makeUatSpec(
     },
     company,
     clientLogoUrl: customer?.logo_storage_path ?? null,
-    recipientTitle: "Pihak Penguji (Klien):",
+    recipientTitle: isEn ? "Testing Party (Client):" : "Pihak Penguji (Klien):",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Klien",
-      `Penguji: ${uat.client_tester_name}`,
+      customer?.company_name ?? customer?.name ?? (isEn ? "Client" : "Klien"),
+      isEn ? `Tester: ${uat.client_tester_name}` : `Penguji: ${uat.client_tester_name}`,
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Pengujian", value: formatDocDateLong(uat.test_date) },
-      { label: "Proyek", value: `${project.code} - ${project.name}` },
-      ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
-      ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
-      { label: "Lingkungan Uji (Staging)", value: uat.staging_url ?? "-" },
-      { label: "Penguji Pihak Klien", value: uat.client_tester_name },
-      { label: "Pendamping Altvira", value: uat.altvira_companion_name },
-      { label: "Hasil Pengujian", value: conclusionLabel },
+      { label: isEn ? "Testing Date" : "Tanggal Pengujian", value: formatDocDateLong(uat.test_date, isEn ? "en" : "id") },
+      { label: isEn ? "Project" : "Proyek", value: `${project.code} - ${project.name}` },
+      ...(cpo ? [{ label: isEn ? "Client PO Ref" : "Referensi PO Klien", value: cpo.po_number }] : []),
+      ...(spkDoc ? [{ label: isEn ? "Contract / SPK Ref" : "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
+      { label: isEn ? "Staging Environment" : "Lingkungan Uji (Staging)", value: uat.staging_url ?? "-" },
+      { label: isEn ? "Client Tester" : "Penguji Pihak Klien", value: uat.client_tester_name },
+      { label: isEn ? "Altvira Companion" : "Pendamping Altvira", value: uat.altvira_companion_name },
+      { label: isEn ? "Test Result" : "Hasil Pengujian", value: conclusionLabel },
     ],
     paragraphsBefore: [
-      `Pengujian User Acceptance Test (UAT) untuk proyek ${project.name} telah dilaksanakan bersama pada lingkungan ${uat.staging_url ?? "Staging"}. Seluruh skenario di bawah ini telah diuji dan diverifikasi langsung oleh perwakilan Klien.`,
+      isEn
+        ? `User Acceptance Test (UAT) for project ${project.name} was conducted jointly on the ${uat.staging_url ?? "Staging"} environment. All scenarios below have been tested and verified directly by the Client's representatives.`
+        : `Pengujian User Acceptance Test (UAT) untuk proyek ${project.name} telah dilaksanakan bersama pada lingkungan ${uat.staging_url ?? "Staging"}. Seluruh skenario di bawah ini telah diuji dan diverifikasi langsung oleh perwakilan Klien.`,
     ],
     tableColumns: [
       { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Fitur / Modul", widthRatio: 0.32 },
-      { header: "Skenario Uji", widthRatio: 0.44 },
-      { header: "Hasil Pengujian", widthRatio: 0.16, align: "center" },
+      { header: isEn ? "Feature / Module" : "Fitur / Modul", widthRatio: 0.32 },
+      { header: isEn ? "Test Scenario" : "Skenario Uji", widthRatio: 0.44 },
+      { header: isEn ? "Test Result" : "Hasil Pengujian", widthRatio: 0.16, align: "center" },
     ],
     tableRows: items.map((it) => [
       String(it.line_no),
       it.feature_name,
       it.test_scenario,
-      it.result === "pass" ? "SESUAI" : it.result === "fail" ? "REVISI" : "PENDING",
+      it.result === "pass"
+        ? isEn ? "PASS" : "SESUAI"
+        : it.result === "fail"
+          ? isEn ? "REVISION" : "REVISI"
+          : isEn ? "PENDING" : "PENDING",
     ]),
-    notesTitle: "Catatan Pengujian & Tindak Lanjut:",
-    notes: [
-      uat.conclusion === "accepted"
-        ? "Seluruh skenario pengujian telah dinyatakan SESUAI oleh penguji klien dan siap dilanjutkan ke tahap serah terima (BAST)."
-        : "Terdapat catatan perbaikan yang harus diselesaikan oleh tim pengembang sebelum penandatanganan Berita Acara Serah Terima (BAST).",
-      "Dokumen UAT ini sah sebagai lampiran teknis Berita Acara Serah Terima (BAST).",
-    ],
-    leftSignatureLabel: "Penguji Pihak Klien,",
+    notesTitle: isEn ? "Testing Notes & Follow-up:" : "Catatan Pengujian & Tindak Lanjut:",
+    notes: isEn
+      ? [
+          uat.conclusion === "accepted"
+            ? "All test scenarios have been declared PASS by client testers and are ready for handover (BAST)."
+            : "There are improvement notes that must be resolved by the development team prior to signing the Handover Certificate (BAST).",
+          "This UAT document is valid as a technical appendix to the Handover Certificate (BAST).",
+        ]
+      : [
+          uat.conclusion === "accepted"
+            ? "Seluruh skenario pengujian telah dinyatakan SESUAI oleh penguji klien dan siap dilanjutkan ke tahap serah terima (BAST)."
+            : "Terdapat catatan perbaikan yang harus diselesaikan oleh tim pengembang sebelum penandatanganan Berita Acara Serah Terima (BAST).",
+          "Dokumen UAT ini sah sebagai lampiran teknis Berita Acara Serah Terima (BAST).",
+        ],
+    leftSignatureLabel: isEn ? "Client Tester," : "Penguji Pihak Klien,",
     leftSignatureName: uat.client_tester_name.includes(" - ")
       ? uat.client_tester_name
-      : `${uat.client_tester_name} - Penguji Pihak Klien`,
+      : isEn
+        ? `${uat.client_tester_name} - Client Tester`
+        : `${uat.client_tester_name} - Penguji Pihak Klien`,
     leftSignatureImageUrl: customer?.signature_storage_path ?? null,
-    rightSignatureLabel: "Pendamping Teknis Altvira,",
+    rightSignatureLabel: isEn ? "Altvira Technical Companion," : "Pendamping Teknis Altvira,",
     rightSignatureName: uat.altvira_companion_name.includes(" - ")
       ? uat.altvira_companion_name
-      : `${uat.altvira_companion_name} - Pendamping Teknis Altvira`,
+      : isEn
+        ? `${uat.altvira_companion_name} - Altvira Technical Companion`
+        : `${uat.altvira_companion_name} - Pendamping Teknis Altvira`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: uat.uat_number,
   };
@@ -485,6 +558,7 @@ export function makeBastSpec(
 ): PdfDocumentSpec | null {
   const { project, customer, company, bundle } = ctx;
   if (!company || !project || !bundle) return null;
+  const isEn = getActiveLanguage() === "en";
   const cpo = bundle.clientPos.find((c) => c.project_id === project.id);
   const spkDoc = bundle.documents.find(
     (d) => d.project_id === project.id && d.doc_type === "SPK",
@@ -495,41 +569,45 @@ export function makeBastSpec(
     : [];
 
   return {
-    docTitle: "BERITA ACARA SERAH TERIMA (BAST)",
-    docSubtitle: "SERAH TERIMA HASIL PEKERJAAN PENGEMBANGAN SISTEM",
+    docTitle: isEn ? "WORK HANDOVER CERTIFICATE (BAST)" : "BERITA ACARA SERAH TERIMA (BAST)",
+    docSubtitle: isEn ? "SYSTEM DEVELOPMENT WORK COMPLETION & HANDOVER" : "SERAH TERIMA HASIL PEKERJAAN PENGEMBANGAN SISTEM",
     docNumber: bast.bast_number,
     docDate: bast.bast_date,
     statusBadge: {
-      text: bast.status === "signed" ? "DITANDATANGANI SAH" : "DRAF",
+      text: bast.status === "signed" ? (isEn ? "OFFICIALLY SIGNED" : "DITANDATANGANI SAH") : (isEn ? "DRAFT" : "DRAF"),
       variant: bast.status === "signed" ? "success" : "neutral",
     },
     company,
     clientLogoUrl: customer?.logo_storage_path ?? null,
-    recipientTitle: "Pihak Klien (Pemberi Kerja):",
+    recipientTitle: isEn ? "Client Party (Employer):" : "Pihak Klien (Pemberi Kerja):",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Klien",
+      customer?.company_name ?? customer?.name ?? (isEn ? "Client" : "Klien"),
       ...(customer?.contact_person ? [customer.contact_person] : []),
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Serah Terima", value: formatDocDateLong(bast.bast_date) },
-      { label: "Proyek", value: `${project.code} - ${project.name}` },
-      ...(cpo ? [{ label: "Referensi PO Klien", value: cpo.po_number }] : []),
-      ...(spkDoc ? [{ label: "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
-      ...(uatDoc ? [{ label: "Referensi Dokumen UAT", value: uatDoc.uat_number }] : []),
-      { label: "Masa Garansi Bug-Fix", value: `${bast.warranty_days} Hari Kalender` },
+      { label: isEn ? "Handover Date" : "Tanggal Serah Terima", value: formatDocDateLong(bast.bast_date, isEn ? "en" : "id") },
+      { label: isEn ? "Project" : "Proyek", value: `${project.code} - ${project.name}` },
+      ...(cpo ? [{ label: isEn ? "Client PO Ref" : "Referensi PO Klien", value: cpo.po_number }] : []),
+      ...(spkDoc ? [{ label: isEn ? "Contract / SPK Ref" : "Referensi SPK / Kontrak", value: spkDoc.doc_number }] : []),
+      ...(uatDoc ? [{ label: isEn ? "UAT Document Ref" : "Referensi Dokumen UAT", value: uatDoc.uat_number }] : []),
+      { label: isEn ? "Bug-Fix Warranty Period" : "Masa Garansi Bug-Fix", value: isEn ? `${bast.warranty_days} Calendar Days` : `${bast.warranty_days} Hari Kalender` },
     ],
     paragraphsBefore: [
-      `Pada hari ini, ${formatDocDateLong(bast.bast_date)}, telah dilakukan serah terima penyelesaian pekerjaan proyek ${project.name} antara PIHAK PERTAMA (${company.company_name}) dan PIHAK KEDUA (${customer?.company_name ?? customer?.name ?? "Pihak Klien"}).`,
-      `Kedua belah pihak menyatakan bahwa seluruh ruang lingkup pekerjaan pengembangan perangkat lunak telah diselesaikan 100%, seluruh item pengujian UAT telah disetujui, dan seluruh artefak hasil pekerjaan diserahkan dengan baik. Masa garansi bug-fix berlaku selama ${bast.warranty_days} hari kalender terhitung sejak tanggal dokumen ini ditandatangani.`,
+      isEn
+        ? `On this day, ${formatDocDateLong(bast.bast_date, "en")}, the handover of completed development work for project ${project.name} was conducted between FIRST PARTY (${company.company_name}) and SECOND PARTY (${customer?.company_name ?? customer?.name ?? "Client Party"}).`
+        : `Pada hari ini, ${formatDocDateLong(bast.bast_date)}, telah dilakukan serah terima penyelesaian pekerjaan proyek ${project.name} antara PIHAK PERTAMA (${company.company_name}) dan PIHAK KEDUA (${customer?.company_name ?? customer?.name ?? "Pihak Klien"}).`,
+      isEn
+        ? `Both parties declare that 100% of software development scope has been accomplished, all UAT testing items have been approved, and all work deliverables and artifacts are properly handed over. The bug-fix warranty period is valid for ${bast.warranty_days} calendar days from the date of this signed document.`
+        : `Kedua belah pihak menyatakan bahwa seluruh ruang lingkup pekerjaan pengembangan perangkat lunak telah diselesaikan 100%, seluruh item pengujian UAT telah disetujui, dan seluruh artefak hasil pekerjaan diserahkan dengan baik. Masa garansi bug-fix berlaku selama ${bast.warranty_days} hari kalender terhitung sejak tanggal dokumen ini ditandatangani.`,
     ],
     tableColumns:
       handoverItems.length > 0
         ? [
             { header: "No", widthRatio: 0.08, align: "center" },
-            { header: "Objek / Komponen Serah Terima", widthRatio: 0.46 },
-            { header: "Format / Media", widthRatio: 0.22 },
-            { header: "Catatan Kelengkapan", widthRatio: 0.24 },
+            { header: isEn ? "Deliverable / Handover Component" : "Objek / Komponen Serah Terima", widthRatio: 0.46 },
+            { header: isEn ? "Format / Media" : "Format / Media", widthRatio: 0.22 },
+            { header: isEn ? "Completeness Notes" : "Catatan Kelengkapan", widthRatio: 0.24 },
           ]
         : undefined,
     tableRows:
@@ -542,16 +620,21 @@ export function makeBastSpec(
           ])
         : undefined,
     hasMeterai: true,
-    meteraiLabel: "TEMPAT E-METERAI Rp10.000",
-    notesTitle: "Catatan & Ketentuan Serah Terima:",
-    notes: [
-      "Berita Acara Serah Terima (BAST) ini merupakan dokumen sah penyelesaian pekerjaan dan menjadi syarat penerbitan Invoice Pelunasan.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
-    ],
-    leftSignatureLabel: "Penerima Hasil Pekerjaan (Klien),",
-    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || "Perwakilan Klien"} - ${customer?.contact_title || "Pihak Klien"}`,
+    meteraiLabel: isEn ? "E-METERAI Rp10,000" : "TEMPAT E-METERAI Rp10.000",
+    notesTitle: isEn ? "Handover Notes & Provisions:" : "Catatan & Ketentuan Serah Terima:",
+    notes: isEn
+      ? [
+          "This Handover Certificate (BAST) is an official document of work completion and a prerequisite for final invoice billing.",
+          "This document is officially generated by the Altcycles Financial ERP system and is valid without wet signature.",
+        ]
+      : [
+          "Berita Acara Serah Terima (BAST) ini merupakan dokumen sah penyelesaian pekerjaan dan menjadi syarat penerbitan Invoice Pelunasan.",
+          "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
+        ],
+    leftSignatureLabel: isEn ? "Deliverables Recipient (Client)," : "Penerima Hasil Pekerjaan (Klien),",
+    leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
     leftSignatureImageUrl: customer?.signature_storage_path ?? null,
-    rightSignatureLabel: `Pelaksana, ${company.company_name}`,
+    rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: bast.bast_number,

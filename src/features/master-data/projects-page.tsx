@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, getActiveLanguage } from "@/lib/i18n";
 import { useSidebarCollapsed } from "@/components/layout/portal-shell";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -237,22 +237,36 @@ export function ProjectsPage() {
   }, [projects, statusFilter, search]);
 
   async function handleExportExcel() {
+    const isEn = getActiveLanguage() === "en";
     await downloadExcelSheet({
-      fileName: "Daftar_Proyek_Altvira_Altcycles.xlsx",
-      sheetName: "Daftar Proyek",
-      columns: [
-        { header: "Kode", width: 18 },
-        { header: "Nama Proyek", width: 36 },
-        { header: "Tanggal Mulai", width: 14 },
-        { header: "Target Selesai", width: 14 },
-        { header: "Nilai Kontrak (Rp)", width: 20 },
-        { header: "Jumlah Termin", width: 14 },
-        { header: "Metode Pengakuan", width: 32 },
-        { header: "Anggota Tim", width: 14 },
-        { header: "Status", width: 14 },
-      ],
+      fileName: isEn ? "Altvira_Projects_Master_Altcycles.xlsx" : "Daftar_Proyek_Altvira_Altcycles.xlsx",
+      sheetName: isEn ? "Projects List" : "Daftar Proyek",
+      columns: isEn
+        ? [
+            { header: "Code", width: 18 },
+            { header: "Project Name", width: 36 },
+            { header: "Start Date", width: 14 },
+            { header: "Target Completion", width: 14 },
+            { header: "Contract Value (IDR)", width: 20 },
+            { header: "Milestones", width: 14 },
+            { header: "Revenue Method", width: 32 },
+            { header: "Team Members", width: 14 },
+            { header: "Status", width: 14 },
+          ]
+        : [
+            { header: "Kode", width: 18 },
+            { header: "Nama Proyek", width: 36 },
+            { header: "Tanggal Mulai", width: 14 },
+            { header: "Target Selesai", width: 14 },
+            { header: "Nilai Kontrak (Rp)", width: 20 },
+            { header: "Jumlah Termin", width: 14 },
+            { header: "Metode Pengakuan", width: 32 },
+            { header: "Anggota Tim", width: 14 },
+            { header: "Status", width: 14 },
+          ],
       rows: filteredProjects.map((p) => {
         const countMembers = members.filter((m) => m.project_id === p.id).length;
+        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
@@ -261,61 +275,90 @@ export function ProjectsPage() {
           p.contract_value,
           p.term_count,
           REVENUE_METHOD_LABELS[p.revenue_method],
-          `${countMembers} Anggota`,
-          PROJECT_STATUS_META[p.status]?.label ?? p.status,
+          isEn ? `${countMembers} Members` : `${countMembers} Anggota`,
+          statusLabel,
         ];
       }),
     });
     await recordExportLog("PROJECTS_MASTER", "EXCEL");
-    toast.success("Daftar proyek berhasil diekspor ke Excel (.xlsx).");
+    toast.success(isEn ? "Projects list successfully exported to Excel (.xlsx)." : "Daftar proyek berhasil diekspor ke Excel (.xlsx).");
   }
 
   async function handleExportPdf() {
+    const isEn = getActiveLanguage() === "en";
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR MASTER PROYEK & PENUGASAN TIM",
-      docSubtitle: `Total Proyek Ditampilkan: ${filteredProjects.length} proyek`,
+      docTitle: isEn ? "PROJECTS MASTER & TEAM ASSIGNMENTS" : "DAFTAR MASTER PROYEK & PENUGASAN TIM",
+      docSubtitle: isEn
+        ? `Total Displayed Projects: ${filteredProjects.length} projects`
+        : `Total Proyek Ditampilkan: ${filteredProjects.length} proyek`,
       docNumber: `PRJ-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: [
-        { header: "Kode", widthRatio: 0.16 },
-        { header: "Nama Proyek", widthRatio: 0.30 },
-        { header: "Periode", widthRatio: 0.20 },
-        { header: "Nilai Kontrak", widthRatio: 0.16, align: "right" },
-        { header: "Termin", widthRatio: 0.08 },
-        { header: "Status", widthRatio: 0.10 },
-      ],
-      tableRows: filteredProjects.map((p) => [
-        p.code,
-        p.name,
-        `${formatDateID(p.start_date)} - ${formatDateID(p.target_end_date)}`,
-        formatRupiah(p.contract_value),
-        `${p.term_count}`,
-        PROJECT_STATUS_META[p.status]?.label ?? p.status,
-      ]),
+      tableColumns: isEn
+        ? [
+            { header: "Code", widthRatio: 0.16 },
+            { header: "Project Name", widthRatio: 0.30 },
+            { header: "Period", widthRatio: 0.20 },
+            { header: "Contract Value", widthRatio: 0.16, align: "right" },
+            { header: "Milestones", widthRatio: 0.08 },
+            { header: "Status", widthRatio: 0.10 },
+          ]
+        : [
+            { header: "Kode", widthRatio: 0.16 },
+            { header: "Nama Proyek", widthRatio: 0.30 },
+            { header: "Periode", widthRatio: 0.20 },
+            { header: "Nilai Kontrak", widthRatio: 0.16, align: "right" },
+            { header: "Termin", widthRatio: 0.08 },
+            { header: "Status", widthRatio: 0.10 },
+          ],
+      tableRows: filteredProjects.map((p) => {
+        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
+        return [
+          p.code,
+          p.name,
+          `${formatDateID(p.start_date)} - ${formatDateID(p.target_end_date)}`,
+          formatRupiah(p.contract_value),
+          `${p.term_count}`,
+          statusLabel,
+        ];
+      }),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, "Daftar_Proyek_Altvira_Altcycles.pdf");
+    downloadPdfBytes(bytes, isEn ? "Altvira_Projects_Master_Altcycles.pdf" : "Daftar_Proyek_Altvira_Altcycles.pdf");
     await recordExportLog("PROJECTS_MASTER", "PDF");
   }
 
   async function handleExportCsv() {
+    const isEn = getActiveLanguage() === "en";
     downloadCsvFile(
-      "Daftar_Proyek_Altvira_Altcycles.csv",
-      [
-        "Kode",
-        "Nama Proyek",
-        "Tanggal Mulai",
-        "Target Selesai",
-        "Nilai Kontrak (Rp)",
-        "Jumlah Termin",
-        "Metode Pengakuan",
-        "Anggota Tim",
-        "Status",
-      ],
+      isEn ? "Altvira_Projects_Master_Altcycles.csv" : "Daftar_Proyek_Altvira_Altcycles.csv",
+      isEn
+        ? [
+            "Code",
+            "Project Name",
+            "Start Date",
+            "Target Completion",
+            "Contract Value (IDR)",
+            "Milestones",
+            "Revenue Method",
+            "Team Members",
+            "Status",
+          ]
+        : [
+            "Kode",
+            "Nama Proyek",
+            "Tanggal Mulai",
+            "Target Selesai",
+            "Nilai Kontrak (Rp)",
+            "Jumlah Termin",
+            "Metode Pengakuan",
+            "Anggota Tim",
+            "Status",
+          ],
       filteredProjects.map((p) => {
         const countMembers = members.filter((m) => m.project_id === p.id).length;
+        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
@@ -325,12 +368,12 @@ export function ProjectsPage() {
           p.term_count,
           REVENUE_METHOD_LABELS[p.revenue_method],
           countMembers,
-          PROJECT_STATUS_META[p.status]?.label ?? p.status,
+          statusLabel,
         ];
       }),
     );
     await recordExportLog("PROJECTS_MASTER", "CSV");
-    toast.success("Daftar proyek berhasil diekspor ke CSV (.csv).");
+    toast.success(isEn ? "Projects list successfully exported to CSV (.csv)." : "Daftar proyek berhasil diekspor ke CSV (.csv).");
   }
 
   return (

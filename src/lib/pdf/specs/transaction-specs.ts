@@ -6,6 +6,7 @@ import {
   hasAnyDecimalCurrency,
   terbilangRupiah,
 } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import type {
   ClientPoItemJson,
   CompanyProfileRow,
@@ -65,7 +66,11 @@ export function buildInvoicePdfSpec(params: {
     text: string;
     variant?: DocStatusVariant;
   };
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const pph23EstVal = params.includePph23Estimate
     ? Math.round(params.subtotal * 0.02)
     : 0;
@@ -116,12 +121,12 @@ export function buildInvoicePdfSpec(params: {
   const statusBadge =
     params.statusBadge ??
     (params.paymentStatus === "paid"
-      ? { text: "LUNAS", variant: "success" as const }
+      ? { text: isEn ? "PAID" : "LUNAS", variant: "success" as const }
       : params.docStatus === "cancelled"
-        ? { text: "DIBATALKAN", variant: "danger" as const }
+        ? { text: isEn ? "CANCELLED" : "DIBATALKAN", variant: "danger" as const }
         : params.docStatus === "draft"
           ? { text: "DRAFT", variant: "neutral" as const }
-          : { text: "TERBIT", variant: "info" as const });
+          : { text: isEn ? "ISSUED" : "TERBIT", variant: "info" as const });
 
   // Tabel rincian item: dukung multi-item dan single-item
   let tableColumns: PdfTableColumn[];
@@ -132,16 +137,16 @@ export function buildInvoicePdfSpec(params: {
     if (hasDuration) {
       tableColumns = [
         { header: "No", widthRatio: 0.06, align: "center" },
-        { header: "Deskripsi", widthRatio: 0.34 },
+        { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.34 },
         { header: "Qty", widthRatio: 0.11, align: "center" },
-        { header: "Durasi", widthRatio: 0.11, align: "center" },
-        { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+        { header: isEn ? "Duration" : "Durasi", widthRatio: 0.11, align: "center" },
+        { header: isEn ? "Unit Price" : "Harga Satuan", widthRatio: 0.19, align: "right" },
         { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
       ];
       tableRows = params.items.map((it, idx) => [
         String(idx + 1),
         it.description,
-        `${it.qty} ${it.unit ?? "Paket"}`,
+        `${it.qty} ${it.unit ?? (isEn ? "Package" : "Paket")}`,
         it.duration ?? formatDocEmpty(),
         fmtRp(it.unitPrice),
         fmtRp(it.subtotal),
@@ -149,15 +154,15 @@ export function buildInvoicePdfSpec(params: {
     } else {
       tableColumns = [
         { header: "No", widthRatio: 0.07, align: "center" },
-        { header: "Deskripsi", widthRatio: 0.43 },
+        { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.43 },
         { header: "Qty", widthRatio: 0.12, align: "center" },
-        { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+        { header: isEn ? "Unit Price" : "Harga Satuan", widthRatio: 0.19, align: "right" },
         { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
       ];
       tableRows = params.items.map((it, idx) => [
         String(idx + 1),
         it.description,
-        `${it.qty} ${it.unit ?? "Paket"}`,
+        `${it.qty} ${it.unit ?? (isEn ? "Package" : "Paket")}`,
         fmtRp(it.unitPrice),
         fmtRp(it.subtotal),
       ]);
@@ -168,16 +173,16 @@ export function buildInvoicePdfSpec(params: {
       params.unitPrice ?? Math.round(params.subtotal / Math.max(1, qty));
     tableColumns = [
       { header: "No", widthRatio: 0.07, align: "center" },
-      { header: "Deskripsi", widthRatio: 0.43 },
+      { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.43 },
       { header: "Qty", widthRatio: 0.12, align: "center" },
-      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: isEn ? "Unit Price" : "Harga Satuan", widthRatio: 0.19, align: "right" },
       { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
     ];
     tableRows = [
       [
         "1",
         params.description,
-        `${qty} ${params.unit ?? "Paket"}`,
+        `${qty} ${params.unit ?? (isEn ? "Package" : "Paket")}`,
         fmtRp(unitPrice),
         fmtRp(params.subtotal),
       ],
@@ -186,34 +191,34 @@ export function buildInvoicePdfSpec(params: {
 
   // Akumulasi termin dan estimasi PPh 23
   const summaryRows: PdfKeyValue[] = [
-    { label: "Subtotal Tagihan", value: fmtRp(params.subtotal) },
+    { label: isEn ? "Subtotal Billed" : "Subtotal Tagihan", value: fmtRp(params.subtotal) },
     ...(params.company.pkp_enabled
       ? [
           {
-            label: `PPN (${params.company.ppn_rate}%)`,
+            label: isEn ? `VAT (${params.company.ppn_rate}%)` : `PPN (${params.company.ppn_rate}%)`,
             value: fmtRp(params.ppnAmount),
           },
         ]
       : []),
-    { label: "Total Tagihan Invoice", value: fmtRp(params.totalAmount) },
+    { label: isEn ? "Total Invoice Amount" : "Total Tagihan Invoice", value: fmtRp(params.totalAmount) },
   ];
 
   if (params.contractValue && params.contractValue > 0) {
     summaryRows.push(
       {
-        label: "Total Nilai Kontrak Proyek",
+        label: isEn ? "Total Contract Value" : "Total Nilai Kontrak Proyek",
         value: fmtRp(params.contractValue),
       },
       {
-        label: "Akumulasi Tagihan Sebelumnya",
+        label: isEn ? "Previous Invoiced Total" : "Akumulasi Tagihan Sebelumnya",
         value: fmtRp(prevBilledVal),
       },
       {
-        label: "Tagihan Termin Berjalan",
+        label: isEn ? "Current Milestone Billed" : "Tagihan Termin Berjalan",
         value: fmtRp(params.subtotal),
       },
       {
-        label: "Sisa Nilai Kontrak",
+        label: isEn ? "Remaining Contract Value" : "Sisa Nilai Kontrak",
         value: fmtRp(remainingContractVal),
       },
     );
@@ -222,11 +227,11 @@ export function buildInvoicePdfSpec(params: {
   if (params.includePph23Estimate) {
     summaryRows.push(
       {
-        label: "Estimasi Potongan PPh 23 (2%)",
+        label: isEn ? "Estimated WHT Art. 23 (2%)" : "Estimasi Potongan PPh 23 (2%)",
         value: fmtRp(pph23EstVal),
       },
       {
-        label: "Estimasi Kas Neto Diterima",
+        label: isEn ? "Estimated Net Cash Received" : "Estimasi Kas Neto Diterima",
         value: fmtRp(netEstVal),
       },
     );
@@ -243,24 +248,34 @@ export function buildInvoicePdfSpec(params: {
     docTitle: "INVOICE",
     docSubtitle: params.company.pkp_enabled
       ? undefined
-      : "DOKUMEN TAGIHAN RESMI (NON-PKP)",
+      : isEn
+        ? "OFFICIAL BILLING DOCUMENT (NON-VAT)"
+        : "DOKUMEN TAGIHAN RESMI (NON-PKP)",
     docNumber: params.invoiceNumber,
     docDate: params.invoiceDate,
     statusBadge,
     balanceDueBox: {
       label:
         dueAmount === 0
-          ? "STATUS TAGIHAN"
-          : "TOTAL TAGIHAN JATUH TEMPO",
-      amountText: dueAmount === 0 ? "LUNAS" : fmtRp(dueAmount),
+          ? isEn
+            ? "BILLING STATUS"
+            : "STATUS TAGIHAN"
+          : isEn
+            ? "TOTAL BALANCE DUE"
+            : "TOTAL TAGIHAN JATUH TEMPO",
+      amountText: dueAmount === 0 ? (isEn ? "PAID" : "LUNAS") : fmtRp(dueAmount),
       dueDateText:
         dueAmount === 0
-          ? "Lunas Sepenuhnya"
-          : `Jatuh Tempo: ${formatDocDateLong(params.dueDate)}`,
+          ? isEn
+            ? "Fully Settled"
+            : "Lunas Sepenuhnya"
+          : isEn
+            ? `Due Date: ${formatDocDateLong(params.dueDate, "en")}`
+            : `Jatuh Tempo: ${formatDocDateLong(params.dueDate)}`,
     },
     company: params.company,
     clientLogoUrl: params.customerLogoUrl ?? null,
-    recipientTitle: "Ditagihkan Kepada",
+    recipientTitle: isEn ? "Billed To" : "Ditagihkan Kepada",
     recipientLines: [
       params.customerName,
       ...(picDisplay ? [picDisplay] : []),
@@ -268,40 +283,46 @@ export function buildInvoicePdfSpec(params: {
     ],
     metaRows: [
       {
-        label: "Tanggal Terbit",
-        value: formatDocDateLong(params.invoiceDate),
+        label: isEn ? "Issue Date" : "Tanggal Terbit",
+        value: formatDocDateLong(params.invoiceDate, lang),
       },
       {
-        label: "Tanggal Jatuh Tempo",
-        value: formatDocDateLong(params.dueDate),
+        label: isEn ? "Due Date" : "Tanggal Jatuh Tempo",
+        value: formatDocDateLong(params.dueDate, lang),
       },
-      { label: "Proyek", value: params.projectName },
-      { label: "Referensi PO Klien", value: params.clientPoNumber },
+      { label: isEn ? "Project" : "Proyek", value: params.projectName },
+      { label: isEn ? "Client PO Reference" : "Referensi PO Klien", value: params.clientPoNumber },
       ...(params.spkNumber
-        ? [{ label: "Referensi SPK / Kontrak", value: params.spkNumber }]
+        ? [{ label: isEn ? "Contract / SPK Ref" : "Referensi SPK / Kontrak", value: params.spkNumber }]
         : []),
       ...(params.bakpNumber
-        ? [{ label: "Referensi BAKP Acuan", value: params.bakpNumber }]
+        ? [{ label: isEn ? "BAKP Milestone Ref" : "Referensi BAKP Acuan", value: params.bakpNumber }]
         : []),
       ...(params.bastNumber
-        ? [{ label: "Referensi BAST Acuan", value: params.bastNumber }]
+        ? [{ label: isEn ? "BAST Handover Ref" : "Referensi BAST Acuan", value: params.bastNumber }]
         : []),
       ...(normalizedServicePeriod
-        ? [{ label: "Periode Layanan", value: normalizedServicePeriod }]
+        ? [{ label: isEn ? "Service Period" : "Periode Layanan", value: normalizedServicePeriod }]
         : []),
     ],
     tableColumns,
     tableRows,
     summaryRows,
     terbilangAmount: params.totalAmount,
-    notes: [
-      "Pembayaran dilakukan via transfer ke rekening di atas paling lambat pada tanggal jatuh tempo.",
-      `Klausul Keterlambatan: ${params.overdueClauseText ?? "Keterlambatan pembayaran setelah tanggal jatuh tempo dapat mengakibatkan penangguhan sementara operasional layanan dan/atau penyesuaian jadwal pelaksanaan sesuai perjanjian kerja sama."}`,
-      "Konfirmasi pembayaran ke finance +62 878-0256-8095 atau altvira.tech@gmail.com",
-    ],
-    notesTitle: "Ketentuan Pembayaran",
+    notes: isEn
+      ? [
+          "Payment shall be made via bank transfer to the account above on or before the due date.",
+          `Late Payment Clause: ${params.overdueClauseText ?? "Late payment after the due date may result in temporary suspension of services and/or project schedule adjustment in accordance with the agreement."}`,
+          "Payment confirmation to finance +62 878-0256-8095 or altvira.tech@gmail.com",
+        ]
+      : [
+          "Pembayaran dilakukan via transfer ke rekening di atas paling lambat pada tanggal jatuh tempo.",
+          `Klausul Keterlambatan: ${params.overdueClauseText ?? "Keterlambatan pembayaran setelah tanggal jatuh tempo dapat mengakibatkan penangguhan sementara operasional layanan dan/atau penyesuaian jadwal pelaksanaan sesuai perjanjian kerja sama."}`,
+          "Konfirmasi pembayaran ke finance +62 878-0256-8095 atau altvira.tech@gmail.com",
+        ],
+    notesTitle: isEn ? "Payment Terms" : "Ketentuan Pembayaran",
     paymentDetail: {
-      terbilangText: terbilangRupiah(params.totalAmount),
+      terbilangText: terbilangRupiah(params.totalAmount, lang),
       bankName: cleanBankName,
       accountNumber: params.company.bank_account_number || "-",
       accountHolder: params.company.bank_account_holder || "-",
@@ -310,7 +331,9 @@ export function buildInvoicePdfSpec(params: {
       swiftCode: (params.company as any).swift_code || null,
     },
     documentNotes: (params as any).documentNotes ?? null,
-    rightSignatureLabel: `Hormat kami, ${params.company.company_name}`,
+    rightSignatureLabel: isEn
+      ? `Sincerely, ${params.company.company_name}`
+      : `Hormat kami, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.invoiceNumber,
@@ -338,7 +361,11 @@ export function buildReceiptPdfSpec(params: {
   servicePeriod?: string | null;
   paymentMethod?: string | null;
   hasMeterai?: boolean;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const needsMeterai =
     params.hasMeterai !== undefined
       ? params.hasMeterai
@@ -351,51 +378,78 @@ export function buildReceiptPdfSpec(params: {
     : null;
 
   return {
-    docTitle: "KUITANSI",
-    docSubtitle: "BUKTI PENERIMAAN PEMBAYARAN RESMI",
+    docTitle: isEn ? "RECEIPT" : "KUITANSI",
+    docSubtitle: isEn ? "OFFICIAL PAYMENT RECEIPT" : "BUKTI PENERIMAAN PEMBAYARAN RESMI",
     docNumber: params.receiptNumber,
     docDate: params.receiptDate,
     statusBadge: {
-      text: "LUNAS",
+      text: isEn ? "PAID" : "LUNAS",
       variant: "success",
     },
     balanceDueBox: {
-      label: "STATUS PEMBAYARAN: LUNAS",
+      label: isEn ? "PAYMENT STATUS: PAID" : "STATUS PEMBAYARAN: LUNAS",
       amountText: fmtAmount,
-      dueDateText: `Diterima Pada: ${formatDocDateLong(params.receiptDate)}`,
+      dueDateText: isEn
+        ? `Received On: ${formatDocDateLong(params.receiptDate, "en")}`
+        : `Diterima Pada: ${formatDocDateLong(params.receiptDate)}`,
     },
     company: params.company,
     metaRows: [
-      { label: "Tanggal Terima", value: formatDocDateLong(params.receiptDate) },
-      { label: "Telah Terima Dari", value: params.receivedFrom },
       {
-        label: "Untuk Pembayaran",
-        value: `Pelunasan / Pembayaran Invoice ${params.invoiceNumber}`,
+        label: isEn ? "Receipt Date" : "Tanggal Terima",
+        value: formatDocDateLong(params.receiptDate, lang),
       },
-      { label: "Nama Proyek", value: params.projectName },
+      {
+        label: isEn ? "Received From" : "Telah Terima Dari",
+        value: params.receivedFrom,
+      },
+      {
+        label: isEn ? "Payment For" : "Untuk Pembayaran",
+        value: isEn
+          ? `Settlement / Payment for Invoice ${params.invoiceNumber}`
+          : `Pelunasan / Pembayaran Invoice ${params.invoiceNumber}`,
+      },
+      {
+        label: isEn ? "Project Name" : "Nama Proyek",
+        value: params.projectName,
+      },
       ...(params.clientPoNumber
-        ? [{ label: "Referensi PO Klien", value: params.clientPoNumber }]
+        ? [{ label: isEn ? "Client PO Reference" : "Referensi PO Klien", value: params.clientPoNumber }]
         : []),
       ...(normalizedServicePeriod
-        ? [{ label: "Periode Layanan", value: normalizedServicePeriod }]
+        ? [{ label: isEn ? "Service Period" : "Periode Layanan", value: normalizedServicePeriod }]
         : []),
       ...(params.paymentMethod
-        ? [{ label: "Metode / Rekening", value: params.paymentMethod }]
+        ? [{ label: isEn ? "Method / Account" : "Metode / Rekening", value: params.paymentMethod }]
         : []),
-      { label: "Jumlah Pembayaran", value: fmtAmount },
+      {
+        label: isEn ? "Payment Amount" : "Jumlah Pembayaran",
+        value: fmtAmount,
+      },
     ],
-    summaryRows: [{ label: "Jumlah Diterima", value: fmtAmount }],
+    summaryRows: [{ label: isEn ? "Amount Received" : "Jumlah Diterima", value: fmtAmount }],
     terbilangAmount: params.amount,
     hasMeterai: needsMeterai,
-    meteraiLabel: "TEMPAT E-METERAI Rp10.000",
-    appreciationBarText: `Terima kasih telah memilih Altvira, ${params.receivedFrom}`,
-    notes: [
-      "Kuitansi ini merupakan bukti penerimaan pembayaran yang sah dan mengikat atas tagihan invoice terkait.",
-      needsMeterai
-        ? "Bea meterai Rp10.000 telah diperhitungkan sesuai UU No. 10 Tahun 2020 tentang Bea Meterai."
-        : "Nilai pembayaran di bawah batas pengenaan bea meterai sesuai UU No. 10 Tahun 2020.",
-    ],
-    rightSignatureLabel: `Penerima, ${params.company.company_name}`,
+    meteraiLabel: isEn ? "E-METERAI Rp10,000 SLOT" : "TEMPAT E-METERAI Rp10.000",
+    appreciationBarText: isEn
+      ? `Thank you for choosing Altvira, ${params.receivedFrom}`
+      : `Terima kasih telah memilih Altvira, ${params.receivedFrom}`,
+    notes: isEn
+      ? [
+          "This official receipt is valid and binding evidence of payment received for the referenced invoice.",
+          needsMeterai
+            ? "Stamp duty Rp10,000 included in accordance with Law No. 10 of 2020 on Stamp Duty."
+            : "Payment amount is below stamp duty threshold in accordance with Law No. 10 of 2020.",
+        ]
+      : [
+          "Kuitansi ini merupakan bukti penerimaan pembayaran yang sah dan mengikat atas tagihan invoice terkait.",
+          needsMeterai
+            ? "Bea meterai Rp10.000 telah diperhitungkan sesuai UU No. 10 Tahun 2020 tentang Bea Meterai."
+            : "Nilai pembayaran di bawah batas pengenaan bea meterai sesuai UU No. 10 Tahun 2020.",
+        ],
+    rightSignatureLabel: isEn
+      ? `Received By, ${params.company.company_name}`
+      : `Penerima, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.receiptNumber,
@@ -420,11 +474,19 @@ export function buildClientPoPdfSpec(params: {
   projectLabel?: string | null;
   items: ClientPoItemJson[];
   poValue: number;
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
+  const defaultItemDesc = isEn
+    ? "Package / Service as per PO submission"
+    : "Paket Pekerjaan / Layanan Sesuai Pengajuan PO";
+
   const safeItems =
     params.items.length > 0
       ? params.items
-      : [{ item: "Paket Pekerjaan / Layanan Sesuai Pengajuan PO", qty: 1, price: params.poValue }];
+      : [{ item: defaultItemDesc, qty: 1, price: params.poValue }];
 
   const forceTwoDecimals = hasAnyDecimalCurrency([
     params.poValue,
@@ -443,61 +505,87 @@ export function buildClientPoPdfSpec(params: {
 
   const statusUpper = params.statusLabel.toUpperCase();
   const statusBadge: { text: string; variant: DocStatusVariant } =
-    /terverifikasi|disetujui|sah/i.test(statusUpper)
-      ? { text: "TERVERIFIKASI", variant: "success" }
-      : /tolak|batal/i.test(statusUpper)
-        ? { text: "DITOLAK", variant: "danger" }
-        : { text: statusUpper || "DIAJUKAN", variant: "info" };
+    /terverifikasi|disetujui|sah|verified|approved/i.test(statusUpper)
+      ? { text: isEn ? "VERIFIED" : "TERVERIFIKASI", variant: "success" }
+      : /tolak|batal|rejected|cancelled/i.test(statusUpper)
+        ? { text: isEn ? "REJECTED" : "DITOLAK", variant: "danger" }
+        : { text: isEn ? (statusUpper === "DIAJUKAN" ? "SUBMITTED" : statusUpper) : (statusUpper || "DIAJUKAN"), variant: "info" };
 
   const metaRows: PdfKeyValue[] = [
-    { label: "Tanggal PO", value: formatDocDateLong(params.poDate) },
-    { label: "Nomor PO Klien", value: params.poNumber },
+    {
+      label: isEn ? "PO Date" : "Tanggal PO",
+      value: formatDocDateLong(params.poDate, lang),
+    },
+    {
+      label: isEn ? "Client PO Number" : "Nomor PO Klien",
+      value: params.poNumber,
+    },
     ...(params.quotationReference?.trim()
-      ? [{ label: "Referensi Quotation", value: params.quotationReference.trim() }]
+      ? [{ label: isEn ? "Quotation Reference" : "Referensi Quotation", value: params.quotationReference.trim() }]
       : []),
     ...(params.projectLabel?.trim()
-      ? [{ label: "Proyek Terkait", value: params.projectLabel.trim() }]
+      ? [{ label: isEn ? "Related Project" : "Proyek Terkait", value: params.projectLabel.trim() }]
       : []),
-    { label: "Status Verifikasi", value: params.statusLabel },
+    {
+      label: isEn ? "Verification Status" : "Status Verifikasi",
+      value: isEn
+        ? /terverifikasi|disetujui|sah/i.test(params.statusLabel)
+          ? "Verified"
+          : /tolak|batal/i.test(params.statusLabel)
+            ? "Rejected"
+            : "Submitted"
+        : params.statusLabel,
+    },
   ];
 
   return {
-    docTitle: "PURCHASE ORDER (PO) KLIEN",
-    docSubtitle: "Dokumen Pengajuan Pesanan Resmi Pelanggan",
+    docTitle: isEn ? "CLIENT PURCHASE ORDER" : "PURCHASE ORDER (PO) KLIEN",
+    docSubtitle: isEn
+      ? "Official Client Purchase Order Document"
+      : "Dokumen Pengajuan Pesanan Resmi Pelanggan",
     docNumber: params.poNumber,
     docDate: params.poDate,
     statusBadge,
     company: params.company,
-    recipientTitle: "Diajukan Oleh Klien",
+    recipientTitle: isEn ? "Submitted By Client" : "Diajukan Oleh Klien",
     recipientLines,
     metaRows,
     paragraphsBefore: [
-      "Dokumen Purchase Order (PO) Klien ini diterbitkan secara resmi melalui Portal Pelanggan Altvira Technology sebagai bukti pengajuan pesanan pekerjaan atau layanan.",
+      isEn
+        ? "This Client Purchase Order is officially issued through Altvira Technology Customer Portal as an order submission for services or deliverables."
+        : "Dokumen Purchase Order (PO) Klien ini diterbitkan secara resmi melalui Portal Pelanggan Altvira Technology sebagai bukti pengajuan pesanan pekerjaan atau layanan.",
     ],
     tableColumns: [
       { header: "No", widthRatio: 0.07, align: "center" },
-      { header: "Deskripsi Paket / Pekerjaan", widthRatio: 0.43 },
+      { header: isEn ? "Package / Scope Description" : "Deskripsi Paket / Pekerjaan", widthRatio: 0.43 },
       { header: "Qty", widthRatio: 0.12, align: "center" },
-      { header: "Harga Satuan", widthRatio: 0.19, align: "right" },
+      { header: isEn ? "Unit Price" : "Harga Satuan", widthRatio: 0.19, align: "right" },
       { header: "Subtotal (IDR)", widthRatio: 0.19, align: "right" },
     ],
     tableRows: safeItems.map((it, idx) => [
       String(idx + 1),
       it.item,
-      it.qty.toLocaleString("id-ID"),
+      it.qty.toLocaleString(isEn ? "en-US" : "id-ID"),
       fmtRp(it.price),
       fmtRp(it.qty * it.price),
     ]),
     summaryRows: [
-      { label: "Total Nilai Purchase Order", value: fmtRp(params.poValue) },
+      {
+        label: isEn ? "Total Purchase Order Value" : "Total Nilai Purchase Order",
+        value: fmtRp(params.poValue),
+      },
     ],
     terbilangAmount: params.poValue,
     notes: [
-      "Gunakan Kode Akses PO di atas pada Portal Pembeli untuk memantau progres pekerjaan dan mengunduh dokumen tagihan resmi.",
+      isEn
+        ? "Use the PO Access Code above on the Customer Portal to monitor project progress and download official invoices."
+        : "Gunakan Kode Akses PO di atas pada Portal Pembeli untuk memantau progres pekerjaan dan mengunduh dokumen tagihan resmi.",
     ],
-    leftSignatureLabel: "Diajukan Oleh (Klien),",
-    leftSignatureName: `${params.clientName} - ${params.clientCompany?.trim() || "Pihak Klien"}`,
-    rightSignatureLabel: `Diterima Oleh, ${params.company.company_name}`,
+    leftSignatureLabel: isEn ? "Submitted By (Client)," : "Diajukan Oleh (Klien),",
+    leftSignatureName: `${params.clientName} - ${params.clientCompany?.trim() || (isEn ? "Client Party" : "Pihak Klien")}`,
+    rightSignatureLabel: isEn
+      ? `Accepted By, ${params.company.company_name}`
+      : `Diterima Oleh, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
     rightSignatureImageUrl: params.company.signer_signature_path ?? null,
     footerDocNumber: params.poNumber,
@@ -530,7 +618,11 @@ export function buildPaymentApprovalPdfSpec(params: {
   paidDate?: string | null;
   rejectionReason?: string | null;
   attachmentNames?: string[];
+  lang?: "id" | "en";
 }): PdfDocumentSpec {
+  const lang = params.lang ?? getActiveLanguage();
+  const isEn = lang === "en";
+
   const statusTone: DocStatusVariant =
     params.status === "paid"
       ? "success"
@@ -540,8 +632,15 @@ export function buildPaymentApprovalPdfSpec(params: {
           ? "danger"
           : "warning";
 
-  const statusText =
-    params.status === "paid"
+  const statusText = isEn
+    ? params.status === "paid"
+      ? "DISBURSED (PAID)"
+      : params.status === "approved"
+        ? "APPROVED"
+        : params.status === "rejected"
+          ? "REJECTED"
+          : "PENDING APPROVAL"
+    : params.status === "paid"
       ? "TELAH DICAIRKAN (PAID)"
       : params.status === "approved"
         ? "DISETUJUI (APPROVED)"
@@ -556,9 +655,14 @@ export function buildPaymentApprovalPdfSpec(params: {
     : params.requesterName;
 
   return {
-    docTitle: "FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)",
-    docSubtitle:
-      params.revisionNo && params.revisionNo > 0
+    docTitle: isEn
+      ? "PAYMENT APPROVAL"
+      : "FORM PERSETUJUAN PEMBAYARAN (PAYMENT APPROVAL)",
+    docSubtitle: isEn
+      ? params.revisionNo && params.revisionNo > 0
+        ? `DISBURSEMENT & VERIFICATION SHEET (REV.${params.revisionNo})`
+        : "DISBURSEMENT & VERIFICATION SHEET"
+      : params.revisionNo && params.revisionNo > 0
         ? `LEMBAR VERIFIKASI & PENCAIRAN DANA BIAYA (REV.${params.revisionNo})`
         : "LEMBAR VERIFIKASI & PENCAIRAN DANA BIAYA",
     docNumber: params.requestNumber,
@@ -568,55 +672,110 @@ export function buildPaymentApprovalPdfSpec(params: {
       variant: statusTone,
     },
     balanceDueBox: {
-      label: "TOTAL NOMINAL PEMBAYARAN",
+      label: isEn ? "TOTAL PAYMENT AMOUNT" : "TOTAL NOMINAL PEMBAYARAN",
       amountText: fmtAmount,
       dueDateText: params.paidDate
-        ? `Telah Dicairkan: ${formatDocDateLong(params.paidDate)}`
-        : `Diajukan Pada: ${formatDocDateLong(params.requestDate)}`,
+        ? isEn
+          ? `Disbursed On: ${formatDocDateLong(params.paidDate, "en")}`
+          : `Telah Dicairkan: ${formatDocDateLong(params.paidDate)}`
+        : isEn
+          ? `Submitted On: ${formatDocDateLong(params.requestDate, "en")}`
+          : `Diajukan Pada: ${formatDocDateLong(params.requestDate)}`,
     },
     company: params.company,
-    recipientTitle: "Penerima Dana / Rekening Tujuan",
+    recipientTitle: isEn
+      ? "Payee / Destination Account"
+      : "Penerima Dana / Rekening Tujuan",
     recipientLines: [
       params.recipientName,
       params.recipientBankInfo
-        ? `Rekening / Bank: ${params.recipientBankInfo}`
-        : "Rekening Tujuan: –",
+        ? isEn
+          ? `Account / Bank: ${params.recipientBankInfo}`
+          : `Rekening / Bank: ${params.recipientBankInfo}`
+        : isEn
+          ? "Destination Account: –"
+          : "Rekening Tujuan: –",
     ],
     metaRows: [
-      { label: "Tanggal Pengajuan", value: formatDocDateLong(params.requestDate) },
-      { label: "Nomor Form PA", value: params.requestNumber },
-      { label: "Pemohon / Pengaju", value: params.requesterName },
-      { label: "Proyek Terkait", value: params.projectName ?? "Operasional Umum" },
-      { label: "Pos Akun Beban", value: params.expenseAccountName ?? "-" },
+      {
+        label: isEn ? "Submission Date" : "Tanggal Pengajuan",
+        value: formatDocDateLong(params.requestDate, lang),
+      },
+      {
+        label: isEn ? "PA Form Number" : "Nomor Form PA",
+        value: params.requestNumber,
+      },
+      {
+        label: isEn ? "Requester / Submitter" : "Pemohon / Pengaju",
+        value: params.requesterName,
+      },
+      {
+        label: isEn ? "Related Project" : "Proyek Terkait",
+        value: params.projectName ?? (isEn ? "General Operations" : "Operasional Umum"),
+      },
+      {
+        label: isEn ? "Expense Account" : "Pos Akun Beban",
+        value: params.expenseAccountName ?? "-",
+      },
       ...(params.approvedAt
-        ? [{ label: "Disetujui Pada", value: formatDateTimeID(params.approvedAt) }]
+        ? [
+            {
+              label: isEn ? "Approved On" : "Disetujui Pada",
+              value: formatDateTimeID(params.approvedAt),
+            },
+          ]
         : []),
       ...(params.paidDate
-        ? [{ label: "Tanggal Pencairan Kas", value: formatDocDateLong(params.paidDate) }]
+        ? [
+            {
+              label: isEn ? "Disbursement Date" : "Tanggal Pencairan Kas",
+              value: formatDocDateLong(params.paidDate, lang),
+            },
+          ]
         : []),
     ],
     tableColumns: [
       { header: "No", widthRatio: 0.08, align: "center" },
-      { header: "Deskripsi Keperluan Pembayaran", widthRatio: 0.62 },
+      {
+        header: isEn ? "Payment Purpose Description" : "Deskripsi Keperluan Pembayaran",
+        widthRatio: 0.62,
+      },
       { header: "Nominal (IDR)", widthRatio: 0.3, align: "right" },
     ],
     tableRows: [["1", params.purpose, fmtAmount]],
     summaryRows: [
-      { label: "Total Biaya Diajukan", value: fmtAmount },
+      {
+        label: isEn ? "Total Amount Requested" : "Total Biaya Diajukan",
+        value: fmtAmount,
+      },
     ],
     terbilangAmount: params.amount,
     notes: [
       ...(params.rejectionReason
-        ? [`Alasan Penolakan: ${params.rejectionReason}`]
+        ? [
+            isEn
+              ? `Rejection Reason: ${params.rejectionReason}`
+              : `Alasan Penolakan: ${params.rejectionReason}`,
+          ]
         : []),
       ...(params.attachmentNames && params.attachmentNames.length > 0
-        ? [`Dokumen Pendukung Terlampir: ${params.attachmentNames.join(", ")}`]
+        ? [
+            isEn
+              ? `Attached Supporting Documents: ${params.attachmentNames.join(", ")}`
+              : `Dokumen Pendukung Terlampir: ${params.attachmentNames.join(", ")}`,
+          ]
         : []),
-      "Pengajuan pembayaran ini wajib diverifikasi dan disetujui Pejabat Keuangan sebelum pencairan kas atau transfer bank dilakukan.",
+      isEn
+        ? "This payment request must be verified and approved by authorized Financial Officer prior to cash disbursement or bank transfer."
+        : "Pengajuan pembayaran ini wajib diverifikasi dan disetujui Pejabat Keuangan sebelum pencairan kas atau transfer bank dilakukan.",
     ],
-    leftSignatureLabel: "Diajukan Oleh (Pemohon),",
+    leftSignatureLabel: isEn
+      ? "Submitted By (Requester),"
+      : "Diajukan Oleh (Pemohon),",
     leftSignatureName: leftSigDisplay,
-    rightSignatureLabel: "Disetujui Oleh (Finance / Admin),",
+    rightSignatureLabel: isEn
+      ? "Approved By (Finance / Admin),"
+      : "Disetujui Oleh (Finance / Admin),",
     rightSignatureName:
       params.approverName ??
       `${params.company.signer_name} - ${params.company.signer_title}`,

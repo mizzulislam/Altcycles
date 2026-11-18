@@ -98,7 +98,8 @@ const PA_STATUS_META: Record<
 
 export function AdminApprovalsPage() {
   const { profile } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
   const [attachments, setAttachments] = React.useState<AttachmentRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
@@ -245,97 +246,177 @@ export function AdminApprovalsPage() {
 
   async function handleExportExcel() {
     await downloadExcelSheet({
-      fileName: "Daftar_Payment_Approval_Altcycles.xlsx",
-      sheetName: "Payment Approval",
-      columns: [
-        { header: "Nomor PA", width: 20 },
-        { header: "Revisi", width: 10 },
-        { header: "Pengaju", width: 22 },
-        { header: "Proyek", width: 28 },
-        { header: "Akun Beban", width: 28 },
-        { header: "Penerima Dana", width: 24 },
-        { header: "Keperluan", width: 34 },
-        { header: "Nominal (Rp)", width: 18 },
-        { header: "Status", width: 20 },
-        { header: "Tanggal Bayar", width: 16 },
-      ],
+      fileName: isEn
+        ? "Payment_Approvals_Altcycles.xlsx"
+        : "Daftar_Payment_Approval_Altcycles.xlsx",
+      sheetName: isEn ? "Payment Approvals" : "Payment Approval",
+      columns: isEn
+        ? [
+            { header: "PA Number", width: 20 },
+            { header: "Revision", width: 10 },
+            { header: "Requester", width: 22 },
+            { header: "Project", width: 28 },
+            { header: "Expense Account", width: 28 },
+            { header: "Payee", width: 24 },
+            { header: "Purpose", width: 34 },
+            { header: "Amount (IDR)", width: 18 },
+            { header: "Status", width: 20 },
+            { header: "Payment Date", width: 16 },
+          ]
+        : [
+            { header: "Nomor PA", width: 20 },
+            { header: "Revisi", width: 10 },
+            { header: "Pengaju", width: 22 },
+            { header: "Proyek", width: 28 },
+            { header: "Akun Beban", width: 28 },
+            { header: "Penerima Dana", width: 24 },
+            { header: "Keperluan", width: 34 },
+            { header: "Nominal (Rp)", width: 18 },
+            { header: "Status", width: 20 },
+            { header: "Tanggal Bayar", width: 16 },
+          ],
       rows: filteredRequests.map((r) => [
         r.request_number,
         r.revision_no,
-        profileMap.get(r.requester_id) ?? "Pengguna",
+        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
         projectMap.get(r.project_id) ?? "-",
         accountMap.get(r.expense_account_id) ?? "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         r.paid_date ? formatDateID(r.paid_date) : "-",
       ]),
     });
     await recordExportLog("PAYMENT_APPROVALS", "EXCEL");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).");
+    toast.success(
+      isEn
+        ? "Payment requests list exported to Excel (.xlsx) successfully."
+        : "Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).",
+    );
   }
 
   async function handleExportPdf() {
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA",
-      docSubtitle: `Total Pengajuan Ditampilkan: ${filteredRequests.length} dokumen`,
+      docTitle: isEn
+        ? "PAYMENT APPROVALS & CASH DISBURSEMENTS"
+        : "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA",
+      docSubtitle: isEn
+        ? `Total Requests Displayed: ${filteredRequests.length} documents`
+        : `Total Pengajuan Ditampilkan: ${filteredRequests.length} dokumen`,
       docNumber: `PA-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: [
-        { header: "Nomor PA", widthRatio: 0.16 },
-        { header: "Pengaju", widthRatio: 0.15 },
-        { header: "Penerima & Keperluan", widthRatio: 0.35 },
-        { header: "Nominal", widthRatio: 0.14, align: "right" },
-        { header: "Status", widthRatio: 0.12 },
-        { header: "Tgl Bayar", widthRatio: 0.08 },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "PA Number", widthRatio: 0.16 },
+            { header: "Requester", widthRatio: 0.15 },
+            { header: "Payee & Purpose", widthRatio: 0.35 },
+            { header: "Amount (IDR)", widthRatio: 0.14, align: "right" },
+            { header: "Status", widthRatio: 0.12 },
+            { header: "Payment Date", widthRatio: 0.08 },
+          ]
+        : [
+            { header: "Nomor PA", widthRatio: 0.16 },
+            { header: "Pengaju", widthRatio: 0.15 },
+            { header: "Penerima & Keperluan", widthRatio: 0.35 },
+            { header: "Nominal", widthRatio: 0.14, align: "right" },
+            { header: "Status", widthRatio: 0.12 },
+            { header: "Tgl Bayar", widthRatio: 0.08 },
+          ],
       tableRows: filteredRequests.map((r) => [
         r.request_number,
-        profileMap.get(r.requester_id) ?? "Pengguna",
+        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
         `${r.recipient_name} - ${r.purpose}`,
         formatRupiah(r.amount),
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         r.paid_date ? formatDateID(r.paid_date) : "-",
       ]),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, "Daftar_Payment_Approval_Altcycles.pdf");
+    downloadPdfBytes(
+      bytes,
+      isEn
+        ? "Payment_Approvals_Altcycles.pdf"
+        : "Daftar_Payment_Approval_Altcycles.pdf",
+    );
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
   }
 
   async function handleExportCsv() {
     downloadCsvFile(
-      "Daftar_Payment_Approval_Altcycles.csv",
-      [
-        "Nomor PA",
-        "Revisi",
-        "Pengaju",
-        "Proyek",
-        "Akun Beban",
-        "Penerima Dana",
-        "Keperluan",
-        "Nominal (Rp)",
-        "Status",
-        "Tanggal Bayar",
-      ],
+      isEn
+        ? "Payment_Approvals_Altcycles.csv"
+        : "Daftar_Payment_Approval_Altcycles.csv",
+      isEn
+        ? [
+            "PA Number",
+            "Revision",
+            "Requester",
+            "Project",
+            "Expense Account",
+            "Payee",
+            "Purpose",
+            "Amount (IDR)",
+            "Status",
+            "Payment Date",
+          ]
+        : [
+            "Nomor PA",
+            "Revisi",
+            "Pengaju",
+            "Proyek",
+            "Akun Beban",
+            "Penerima Dana",
+            "Keperluan",
+            "Nominal (Rp)",
+            "Status",
+            "Tanggal Bayar",
+          ],
       filteredRequests.map((r) => [
         r.request_number,
         r.revision_no,
-        profileMap.get(r.requester_id) ?? "Pengguna",
+        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
         projectMap.get(r.project_id) ?? "-",
         accountMap.get(r.expense_account_id) ?? "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         r.paid_date ?? "-",
       ]),
     );
     await recordExportLog("PAYMENT_APPROVALS", "CSV");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Payment requests list exported to CSV (.csv) successfully."
+        : "Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).",
+    );
   }
 
   async function makePaDocSpec(req: PaymentRequestRow) {

@@ -13,6 +13,7 @@ import {
 } from "docx";
 import { decodeImageBytes } from "@/lib/asset-utils";
 import { formatDocDateLong, terbilangRupiah } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import type { PdfDocumentSpec } from "@/lib/pdf-generator";
 import {
   BRAND_HEX,
@@ -354,13 +355,17 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     );
   }
 
+  const isEn = (spec as any)?.lang === "en" || getActiveLanguage() === "en";
+
   if (typeof spec.terbilangAmount === "number") {
     bodyChildren.push(
       new Paragraph({
         spacing: { before: 80, after: 140 },
         children: [
           new TextRun({
-            text: `Terbilang: # ${terbilangRupiah(spec.terbilangAmount)} #`,
+            text: isEn
+              ? `Amount in words: # ${terbilangRupiah(spec.terbilangAmount, "en")} #`
+              : `Terbilang: # ${terbilangRupiah(spec.terbilangAmount)} #`,
             bold: true,
             size: 17,
             color: SLATE_600,
@@ -371,8 +376,19 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
   }
 
   if (spec.notes && spec.notes.length > 0) {
-    const defaultNotesTitle =
-      spec.docTitle.toUpperCase().includes("UAT")
+    const defaultNotesTitle = isEn
+      ? spec.docTitle.toUpperCase().includes("UAT")
+        ? "Testing Notes & Follow-up:"
+        : spec.docTitle.toUpperCase().includes("SERAH TERIMA") || spec.docTitle.toUpperCase().includes("BAST")
+          ? "Handover Terms & Conditions:"
+          : spec.docTitle.toUpperCase().includes("KEMAJUAN") || spec.docTitle.toUpperCase().includes("BAKP")
+            ? "Progress Assessment Notes:"
+            : spec.docTitle.toUpperCase().includes("PENAWARAN") || spec.docTitle.toUpperCase().includes("QUOTATION")
+              ? "Price Quotation Terms:"
+              : spec.docTitle.toUpperCase().includes("SPK") || spec.docTitle.toUpperCase().includes("KERJA")
+                ? "Scope & Execution Terms:"
+                : "Payment Terms & Conditions:"
+      : spec.docTitle.toUpperCase().includes("UAT")
         ? "Catatan Pengujian & Tindak Lanjut:"
         : spec.docTitle.toUpperCase().includes("SERAH TERIMA") || spec.docTitle.toUpperCase().includes("BAST")
           ? "Catatan & Ketentuan Serah Terima:"

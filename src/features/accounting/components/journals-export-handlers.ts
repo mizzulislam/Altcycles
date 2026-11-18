@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { getCompanyProfile } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
+import { getActiveLanguage } from "@/lib/i18n";
 import {
   buildJournalsPdfSpec,
   downloadPdfBytes,
@@ -97,16 +98,27 @@ export async function exportJournalsToPdf({
       rows,
     });
 
+    const isEn = getActiveLanguage() === "en";
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(
       bytes,
-      isAdj ? "Jurnal_Penyesuaian_Altcycles.pdf" : "Jurnal_Umum_Altcycles.pdf",
+      isAdj
+        ? isEn
+          ? "Adjusting_Entries_Altcycles.pdf"
+          : "Jurnal_Penyesuaian_Altcycles.pdf"
+        : isEn
+          ? "General_Journal_Altcycles.pdf"
+          : "Jurnal_Umum_Altcycles.pdf",
     );
     void recordExportLog("JOURNALS", "PDF", periodFilter);
     toast.success(
       isAdj
-        ? "Jurnal Penyesuaian berhasil diunduh dalam format PDF (.pdf)."
-        : "Jurnal Umum berhasil diunduh dalam format PDF (.pdf).",
+        ? isEn
+          ? "Adjusting entries successfully downloaded in PDF (.pdf) format."
+          : "Jurnal Penyesuaian berhasil diunduh dalam format PDF (.pdf)."
+        : isEn
+          ? "General journal successfully downloaded in PDF (.pdf) format."
+          : "Jurnal Umum berhasil diunduh dalam format PDF (.pdf).",
     );
   } catch (err) {
     console.error("Gagal mengunduh PDF jurnal:", err);
@@ -151,23 +163,28 @@ export async function exportJournalsToExcel({
       }
     }
 
+    const isEn = getActiveLanguage() === "en";
     await downloadExcelSheet({
-      fileName: "Jurnal_Akuntansi_Altcycles.xlsx",
-      sheetName: "Jurnal Akuntansi",
+      fileName: isEn ? "General_Journals_Altcycles.xlsx" : "Jurnal_Akuntansi_Altcycles.xlsx",
+      sheetName: isEn ? "Accounting Journals" : "Jurnal Akuntansi",
       columns: [
-        { header: "No. Jurnal", width: 20 },
-        { header: "Tanggal", width: 14 },
-        { header: "Jenis Jurnal", width: 24 },
-        { header: "Proyek", width: 16 },
-        { header: "Akun", width: 32 },
-        { header: "Uraian", width: 36 },
-        { header: "Debit (Rp)", width: 18 },
-        { header: "Kredit (Rp)", width: 18 },
+        { header: isEn ? "Journal No." : "No. Jurnal", width: 20 },
+        { header: isEn ? "Date" : "Tanggal", width: 14 },
+        { header: isEn ? "Journal Type" : "Jenis Jurnal", width: 24 },
+        { header: isEn ? "Project" : "Proyek", width: 16 },
+        { header: isEn ? "Account" : "Akun", width: 32 },
+        { header: isEn ? "Description" : "Uraian", width: 36 },
+        { header: isEn ? "Debit (IDR)" : "Debit (Rp)", width: 18 },
+        { header: isEn ? "Credit (IDR)" : "Kredit (Rp)", width: 18 },
       ],
       rows: exportRows,
     });
     await recordExportLog("JOURNALS", "EXCEL", periodFilter);
-    toast.success("Jurnal akuntansi berhasil diekspor ke Excel (.xlsx).");
+    toast.success(
+      isEn
+        ? "Accounting journals exported to Excel (.xlsx) successfully."
+        : "Jurnal akuntansi berhasil diekspor ke Excel (.xlsx).",
+    );
   } catch (err) {
     console.error("Gagal mengekspor Excel jurnal:", err);
     toast.error("Gagal mengekspor jurnal akuntansi ke Excel.");
@@ -230,17 +247,18 @@ export async function exportJournalsToCsv({
         ]);
       }
     }
+    const isEn = getActiveLanguage() === "en";
     downloadCsvFile(
       filterMode === "adjusting"
-        ? "Jurnal_Penyesuaian_Altcycles.csv"
-        : "Jurnal_Umum_Altcycles.csv",
-      [
-        "Tanggal",
-        "Deskripsi",
-        "Ref",
-        "Debit",
-        "Kredit",
-      ],
+        ? isEn
+          ? "Adjusting_Entries_Altcycles.csv"
+          : "Jurnal_Penyesuaian_Altcycles.csv"
+        : isEn
+          ? "General_Journal_Altcycles.csv"
+          : "Jurnal_Umum_Altcycles.csv",
+      isEn
+        ? ["Date", "Description", "Ref", "Debit", "Credit"]
+        : ["Tanggal", "Deskripsi", "Ref", "Debit", "Kredit"],
       exportRows,
     );
     await recordExportLog("JOURNALS", "CSV", periodFilter);

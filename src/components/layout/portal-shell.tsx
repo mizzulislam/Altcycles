@@ -49,7 +49,7 @@ export function useSidebarCollapsed(): boolean {
 
 export function PortalShell() {
   const { profile, activeRole, availableRoles, switchRole, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -200,7 +200,7 @@ export function PortalShell() {
   const currentRole = activeRole || profile.role;
   const navStructure = React.useMemo(
     () => getNavStructureForRole(currentRole, t),
-    [currentRole, t],
+    [currentRole, language, t],
   );
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -249,7 +249,7 @@ export function PortalShell() {
       >
         <div className="size-12 rounded-full border-4 border-muted border-t-primary animate-spin mb-4" />
         <p className="text-foreground font-semibold text-sm tracking-tight animate-pulse">
-          Mengganti Mode Operasi...
+          {t("header.switching_mode", "Mengganti Mode Operasi...")}
         </p>
       </div>
 
@@ -265,7 +265,7 @@ export function PortalShell() {
             variant="ghost"
             size="icon"
             className="size-9 rounded-xl relative"
-            aria-label="Notifikasi"
+            aria-label={t("header.notifications", "Notifikasi")}
             onClick={() => void handleOpenNotifications()}
           >
             <BellIcon className="size-4" />
@@ -280,7 +280,7 @@ export function PortalShell() {
             variant="ghost"
             size="icon"
             className="size-9 rounded-xl"
-            aria-label="Buka menu navigasi"
+            aria-label={t("header.open_nav", "Buka menu navigasi")}
             onClick={() => setMobileOpen((prev) => !prev)}
           >
             {mobileOpen ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}

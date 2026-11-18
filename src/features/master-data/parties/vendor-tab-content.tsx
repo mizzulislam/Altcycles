@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveVendor } from "@/lib/data-service";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, getActiveLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -82,24 +82,37 @@ export function VendorTabContent({
   }
 
   async function handleExportVendorsExcel() {
+    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error("Tidak ada data vendor untuk diekspor.");
+      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
       return;
     }
     await downloadExcelSheet({
-      sheetName: "Daftar Vendor",
-      fileName: "Master_Vendor_Altcycles.xlsx",
-      columns: [
-        { header: "Kode", width: 14 },
-        { header: "Nama Vendor", width: 28 },
-        { header: "PIC", width: 22 },
-        { header: "Email", width: 24 },
-        { header: "Telepon", width: 18 },
-        { header: "Bank", width: 20 },
-        { header: "No Rekening", width: 20 },
-        { header: "Alamat", width: 36 },
-        { header: "Status", width: 14 },
-      ],
+      sheetName: isEn ? "Vendors List" : "Daftar Vendor",
+      fileName: isEn ? "Master_Vendors_Altcycles.xlsx" : "Master_Vendor_Altcycles.xlsx",
+      columns: isEn
+        ? [
+            { header: "Code", width: 14 },
+            { header: "Vendor Name", width: 28 },
+            { header: "PIC", width: 22 },
+            { header: "Email", width: 24 },
+            { header: "Phone", width: 18 },
+            { header: "Bank", width: 20 },
+            { header: "Account Number", width: 20 },
+            { header: "Address", width: 36 },
+            { header: "Status", width: 14 },
+          ]
+        : [
+            { header: "Kode", width: 14 },
+            { header: "Nama Vendor", width: 28 },
+            { header: "PIC", width: 22 },
+            { header: "Email", width: 24 },
+            { header: "Telepon", width: 18 },
+            { header: "Bank", width: 20 },
+            { header: "No Rekening", width: 20 },
+            { header: "Alamat", width: 36 },
+            { header: "Status", width: 14 },
+          ],
       rows: vendors.map((v) => [
         v.code,
         v.name,
@@ -109,39 +122,52 @@ export function VendorTabContent({
         v.bank_name ?? "-",
         v.bank_account_number ?? "-",
         v.address ?? "-",
-        v.is_active ? "Aktif" : "Nonaktif",
+        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success("Daftar vendor berhasil diekspor ke Excel (.xlsx).");
+    toast.success(isEn ? "Vendors list successfully exported to Excel (.xlsx)." : "Daftar vendor berhasil diekspor ke Excel (.xlsx).");
   }
 
   async function handleExportVendorsPdf() {
+    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error("Tidak ada data vendor untuk diekspor.");
+      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
       return;
     }
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR MASTER VENDOR PEMASOK",
-      docSubtitle: "Rekapitulasi Data Rekanan & Mitra Vendor Terdaftar",
+      docTitle: isEn ? "SUPPLIERS & VENDORS DIRECTORY" : "DAFTAR MASTER VENDOR PEMASOK",
+      docSubtitle: isEn
+        ? "Summary of Registered Partners & Procurement Vendors"
+        : "Rekapitulasi Data Rekanan & Mitra Vendor Terdaftar",
       docNumber: `REKAP-VND-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: "Total Vendor", value: `${vendors.length} vendor` },
+        { label: isEn ? "Total Vendors" : "Total Vendor", value: isEn ? `${vendors.length} vendors` : `${vendors.length} vendor` },
         {
-          label: "Status Vendor",
-          value: `${vendors.filter((v) => v.is_active).length} Aktif, ${vendors.filter((v) => !v.is_active).length} Nonaktif`,
+          label: isEn ? "Vendor Status" : "Status Vendor",
+          value: isEn
+            ? `${vendors.filter((v) => v.is_active).length} Active, ${vendors.filter((v) => !v.is_active).length} Inactive`
+            : `${vendors.filter((v) => v.is_active).length} Aktif, ${vendors.filter((v) => !v.is_active).length} Nonaktif`,
         },
       ],
-      tableColumns: [
-        { header: "Kode", widthRatio: 1.5 },
-        { header: "Nama Vendor", widthRatio: 3 },
-        { header: "PIC / Kontak", widthRatio: 3 },
-        { header: "Bank & Rekening", widthRatio: 3 },
-        { header: "Status", widthRatio: 1.5 },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "Code", widthRatio: 1.5 },
+            { header: "Vendor Name", widthRatio: 3 },
+            { header: "PIC / Contact", widthRatio: 3 },
+            { header: "Bank & Account", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.5 },
+          ]
+        : [
+            { header: "Kode", widthRatio: 1.5 },
+            { header: "Nama Vendor", widthRatio: 3 },
+            { header: "PIC / Kontak", widthRatio: 3 },
+            { header: "Bank & Rekening", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.5 },
+          ],
       tableRows: vendors.map((v) => [
         v.code,
         v.name,
@@ -149,31 +175,44 @@ export function VendorTabContent({
           ? `${v.contact_name} (${v.phone || v.email || "-"})`
           : "-",
         v.bank_name ? `${v.bank_name} - ${v.bank_account_number}` : "-",
-        v.is_active ? "Aktif" : "Nonaktif",
+        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, "Master_Vendor_Altcycles.pdf");
+    downloadPdfBytes(bytes, isEn ? "Master_Vendors_Altcycles.pdf" : "Master_Vendor_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportVendorsCsv() {
+    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error("Tidak ada data vendor untuk diekspor.");
+      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
       return;
     }
     downloadCsvFile(
-      "Master_Vendor_Altcycles.csv",
-      [
-        "Kode",
-        "Nama Vendor",
-        "PIC",
-        "Email",
-        "Telepon",
-        "Bank",
-        "No Rekening",
-        "Alamat",
-        "Status",
-      ],
+      isEn ? "Master_Vendors_Altcycles.csv" : "Master_Vendor_Altcycles.csv",
+      isEn
+        ? [
+            "Code",
+            "Vendor Name",
+            "PIC",
+            "Email",
+            "Phone",
+            "Bank",
+            "Account Number",
+            "Address",
+            "Status",
+          ]
+        : [
+            "Kode",
+            "Nama Vendor",
+            "PIC",
+            "Email",
+            "Telepon",
+            "Bank",
+            "No Rekening",
+            "Alamat",
+            "Status",
+          ],
       vendors.map((v) => [
         v.code,
         v.name,
@@ -183,11 +222,11 @@ export function VendorTabContent({
         v.bank_name ?? "-",
         v.bank_account_number ?? "-",
         v.address ?? "-",
-        v.is_active ? "Aktif" : "Nonaktif",
+        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success("Daftar vendor berhasil diekspor ke CSV (.csv).");
+    toast.success(isEn ? "Vendors list successfully exported to CSV (.csv)." : "Daftar vendor berhasil diekspor ke CSV (.csv).");
   }
 
   return (

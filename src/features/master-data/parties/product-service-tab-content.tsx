@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile } from "@/lib/data-service";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, getActiveLanguage } from "@/lib/i18n";
 import { saveServiceProduct } from "@/lib/services/products-services-service";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
@@ -85,22 +85,33 @@ export function ProductServiceTabContent({
   }
 
   async function handleExportProductsExcel() {
+    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error("Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
       return;
     }
     await downloadExcelSheet({
-      sheetName: "Katalog Produk & Layanan",
-      fileName: "Master_Produk_Layanan_Altcycles.xlsx",
-      columns: [
-        { header: "Kode", width: 14 },
-        { header: "Nama Produk / Layanan", width: 32 },
-        { header: "Kategori", width: 22 },
-        { header: "Satuan", width: 16 },
-        { header: "Tarif / Harga Dasar (IDR)", width: 24 },
-        { header: "Deskripsi", width: 44 },
-        { header: "Status", width: 14 },
-      ],
+      sheetName: isEn ? "Products & Services" : "Katalog Produk & Layanan",
+      fileName: isEn ? "Master_Products_Services_Altcycles.xlsx" : "Master_Produk_Layanan_Altcycles.xlsx",
+      columns: isEn
+        ? [
+            { header: "Code", width: 14 },
+            { header: "Product / Service Name", width: 32 },
+            { header: "Category", width: 22 },
+            { header: "Unit", width: 16 },
+            { header: "Base Rate / Price (IDR)", width: 24 },
+            { header: "Description", width: 44 },
+            { header: "Status", width: 14 },
+          ]
+        : [
+            { header: "Kode", width: 14 },
+            { header: "Nama Produk / Layanan", width: 32 },
+            { header: "Kategori", width: 22 },
+            { header: "Satuan", width: 16 },
+            { header: "Tarif / Harga Dasar (IDR)", width: 24 },
+            { header: "Deskripsi", width: 44 },
+            { header: "Status", width: 14 },
+          ],
       rows: products.map((p) => [
         p.code,
         p.name,
@@ -108,69 +119,94 @@ export function ProductServiceTabContent({
         p.unit,
         p.price,
         p.description ?? "-",
-        p.is_active ? "Aktif" : "Nonaktif",
+        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success("Katalog produk/layanan berhasil diekspor ke Excel (.xlsx).");
+    toast.success(isEn ? "Products/services catalog successfully exported to Excel (.xlsx)." : "Katalog produk/layanan berhasil diekspor ke Excel (.xlsx).");
   }
 
   async function handleExportProductsPdf() {
+    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error("Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
       return;
     }
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "KATALOG PRODUK & LAYANAN RESMI ALTVIRA",
-      docSubtitle: "Rekapitulasi Penawaran Solusi Digital, Software, & Layanan Profesional",
+      docTitle: isEn ? "ALTVIRA OFFICIAL PRODUCTS & SERVICES CATALOG" : "KATALOG PRODUK & LAYANAN RESMI ALTVIRA",
+      docSubtitle: isEn
+        ? "Summary of Digital Solutions, Software Products, & Professional Service Offerings"
+        : "Rekapitulasi Penawaran Solusi Digital, Software, & Layanan Profesional",
       docNumber: `KATALOG-SRV-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: "Total Layanan / Produk", value: `${products.length} item` },
+        { label: isEn ? "Total Services / Products" : "Total Layanan / Produk", value: isEn ? `${products.length} items` : `${products.length} item` },
         {
-          label: "Status Layanan",
-          value: `${products.filter((p) => p.is_active).length} Aktif, ${products.filter((p) => !p.is_active).length} Nonaktif`,
+          label: isEn ? "Service Status" : "Status Layanan",
+          value: isEn
+            ? `${products.filter((p) => p.is_active).length} Active, ${products.filter((p) => !p.is_active).length} Inactive`
+            : `${products.filter((p) => p.is_active).length} Aktif, ${products.filter((p) => !p.is_active).length} Nonaktif`,
         },
       ],
-      tableColumns: [
-        { header: "Kode", widthRatio: 1.5 },
-        { header: "Nama Layanan / Produk", widthRatio: 3.5 },
-        { header: "Kategori", widthRatio: 2 },
-        { header: "Satuan", widthRatio: 1.5 },
-        { header: "Tarif Dasar", widthRatio: 2.5 },
-        { header: "Status", widthRatio: 1.5 },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "Code", widthRatio: 1.5 },
+            { header: "Service / Product Name", widthRatio: 3.5 },
+            { header: "Category", widthRatio: 2 },
+            { header: "Unit", widthRatio: 1.5 },
+            { header: "Base Rate", widthRatio: 2.5 },
+            { header: "Status", widthRatio: 1.5 },
+          ]
+        : [
+            { header: "Kode", widthRatio: 1.5 },
+            { header: "Nama Layanan / Produk", widthRatio: 3.5 },
+            { header: "Kategori", widthRatio: 2 },
+            { header: "Satuan", widthRatio: 1.5 },
+            { header: "Tarif Dasar", widthRatio: 2.5 },
+            { header: "Status", widthRatio: 1.5 },
+          ],
       tableRows: products.map((p) => [
         p.code,
         p.name,
         p.category,
         p.unit,
-        new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p.price),
-        p.is_active ? "Aktif" : "Nonaktif",
+        new Intl.NumberFormat(isEn ? "en-US" : "id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p.price),
+        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, "Master_Produk_Layanan_Altcycles.pdf");
+    downloadPdfBytes(bytes, isEn ? "Master_Products_Services_Altcycles.pdf" : "Master_Produk_Layanan_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportProductsCsv() {
+    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error("Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
       return;
     }
     downloadCsvFile(
-      "Master_Produk_Layanan_Altcycles.csv",
-      [
-        "Kode",
-        "Nama Layanan / Produk",
-        "Kategori",
-        "Satuan",
-        "Tarif Dasar",
-        "Deskripsi",
-        "Status",
-      ],
+      isEn ? "Master_Products_Services_Altcycles.csv" : "Master_Produk_Layanan_Altcycles.csv",
+      isEn
+        ? [
+            "Code",
+            "Service / Product Name",
+            "Category",
+            "Unit",
+            "Base Rate",
+            "Description",
+            "Status",
+          ]
+        : [
+            "Kode",
+            "Nama Layanan / Produk",
+            "Kategori",
+            "Satuan",
+            "Tarif Dasar",
+            "Deskripsi",
+            "Status",
+          ],
       products.map((p) => [
         p.code,
         p.name,
@@ -178,11 +214,11 @@ export function ProductServiceTabContent({
         p.unit,
         String(p.price),
         p.description ?? "-",
-        p.is_active ? "Aktif" : "Nonaktif",
+        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success("Katalog produk/layanan berhasil diekspor ke CSV (.csv).");
+    toast.success(isEn ? "Products/services catalog successfully exported to CSV (.csv)." : "Katalog produk/layanan berhasil diekspor ke CSV (.csv).");
   }
 
   return (

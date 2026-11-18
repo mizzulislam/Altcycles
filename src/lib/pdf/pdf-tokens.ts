@@ -229,12 +229,97 @@ const TITLE_MAPPING_ALIASES: Record<string, DocumentTitleMapping> = {
 };
 
 /**
+ * Pemetaan Judul Dokumen Versi Bahasa Inggris (English Edition).
+ */
+export const DOCUMENT_TITLE_MAPPINGS_EN: Record<string, DocumentTitleMapping> = {
+  "INVOICES & RECEIVABLES LIST": {
+    headerTitle: "INVOICE LIST",
+    fullTitle: "INVOICES AND RECEIVABLES LIST",
+  },
+  "OFFICIAL CLIENTS & CUSTOMERS LIST": {
+    headerTitle: "CLIENTS LIST",
+    fullTitle: "OFFICIAL CLIENTS AND CUSTOMERS LIST",
+  },
+  "SUPPLIERS & VENDORS LIST": {
+    headerTitle: "VENDORS LIST",
+    fullTitle: "SUPPLIERS AND VENDORS LIST",
+  },
+  "PAYMENT APPROVALS & CASH DISBURSEMENTS": {
+    headerTitle: "PAYMENT APPROVAL",
+    fullTitle: "PAYMENT APPROVALS AND CASH DISBURSEMENTS",
+  },
+  "GENERAL JOURNAL": {
+    headerTitle: "GENERAL JOURNAL",
+    fullTitle: "GENERAL JOURNAL TRANSACTIONS",
+  },
+  "ADJUSTING & CORRECTION ENTRIES": {
+    headerTitle: "ADJUSTING ENTRY",
+    fullTitle: "ADJUSTING AND CORRECTION ENTRIES",
+  },
+  "GENERAL LEDGER": {
+    headerTitle: "GENERAL LEDGER",
+    fullTitle: "GENERAL LEDGER ACCOUNTS",
+  },
+  "GENERAL LEDGER (GL)": {
+    headerTitle: "GENERAL LEDGER",
+    fullTitle: "GENERAL LEDGER ACCOUNTS",
+  },
+  "TRIAL BALANCE": {
+    headerTitle: "TRIAL BALANCE",
+    fullTitle: "GENERAL LEDGER TRIAL BALANCE",
+  },
+  "STATEMENT OF PROFIT OR LOSS": {
+    headerTitle: "INCOME STATEMENT",
+    fullTitle: "STATEMENT OF PROFIT OR LOSS (ACCRUAL BASIS)",
+  },
+  "STATEMENT OF CHANGES IN EQUITY": {
+    headerTitle: "EQUITY CHANGES",
+    fullTitle: "STATEMENT OF CHANGES IN EQUITY",
+  },
+  "STATEMENT OF FINANCIAL POSITION": {
+    headerTitle: "BALANCE SHEET",
+    fullTitle: "STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)",
+  },
+  "STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)": {
+    headerTitle: "BALANCE SHEET",
+    fullTitle: "STATEMENT OF FINANCIAL POSITION (BALANCE SHEET)",
+  },
+  "STATEMENT OF CASH FLOWS": {
+    headerTitle: "CASH FLOWS",
+    fullTitle: "STATEMENT OF CASH FLOWS (DIRECT METHOD)",
+  },
+  "COMPLETE FINANCIAL STATEMENTS": {
+    headerTitle: "FINANCIAL REPORT",
+    fullTitle: "COMPLETE FINANCIAL STATEMENTS",
+  },
+  "PROJECT BUDGETING REPORT": {
+    headerTitle: "PROJECT BUDGET",
+    fullTitle: "PROJECT BUDGET AND REALIZATION REPORT",
+  },
+  "ALL VENDOR PURCHASE ORDERS": {
+    headerTitle: "PURCHASE ORDERS",
+    fullTitle: "ALL VENDOR PURCHASE ORDERS RECAP",
+  },
+  "PROJECT PROFIT SHARING REPORT": {
+    headerTitle: "PROFIT SHARING",
+    fullTitle: "PROJECT PROFIT SHARING REPORT",
+  },
+  "PROJECTS LIST & TEAM ASSIGNMENTS": {
+    headerTitle: "PROJECTS LIST",
+    fullTitle: "PROJECTS LIST AND TEAM ASSIGNMENTS",
+  },
+};
+
+/**
  * Mencari pemetaan judul berdasarkan kecocokan persis atau setelah normalisasi simbol.
  */
 export function findDocumentTitleMapping(rawTitle: string): DocumentTitleMapping | undefined {
   const trimmed = rawTitle.trim().toUpperCase();
   if (DOCUMENT_TITLE_MAPPINGS[trimmed]) {
     return DOCUMENT_TITLE_MAPPINGS[trimmed];
+  }
+  if (DOCUMENT_TITLE_MAPPINGS_EN[trimmed]) {
+    return DOCUMENT_TITLE_MAPPINGS_EN[trimmed];
   }
   if (TITLE_MAPPING_ALIASES[trimmed]) {
     return TITLE_MAPPING_ALIASES[trimmed];
@@ -246,14 +331,21 @@ export function findDocumentTitleMapping(rawTitle: string): DocumentTitleMapping
   if (DOCUMENT_TITLE_MAPPINGS[normalized]) {
     return DOCUMENT_TITLE_MAPPINGS[normalized];
   }
+  const normalizedEn = trimmed
+    .replace(/\s*&\s*/g, " AND ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ");
+  if (DOCUMENT_TITLE_MAPPINGS_EN[normalizedEn]) {
+    return DOCUMENT_TITLE_MAPPINGS_EN[normalizedEn];
+  }
   // Dukungan judul dinamis yang memuat kode proyek atau kategori dokumen
-  if (normalized.startsWith("PERHITUNGAN BAGI HASIL PROYEK")) {
+  if (normalized.startsWith("PERHITUNGAN BAGI HASIL PROYEK") || normalizedEn.startsWith("PROJECT PROFIT SHARING")) {
     return {
       headerTitle: "BAGI HASIL",
       fullTitle: trimmed,
     };
   }
-  if (normalized.startsWith("DOKUMEN PROYEK")) {
+  if (normalized.startsWith("DOKUMEN PROYEK") || normalizedEn.startsWith("PROJECT DOCUMENT")) {
     return {
       headerTitle: "DOKUMEN PROYEK",
       fullTitle: trimmed,
@@ -378,11 +470,14 @@ export function resolveDocTitleConfig(rawTitle: string): DocTitleConfig {
     };
   }
 
-  // 10. Judul pendek lainnya: INVOICE, KUITANSI
+  // 10. Judul pendek lainnya: INVOICE, KUITANSI, RECEIPT
   if (normalized === "INVOICE" || normalized.includes("FAKTUR")) {
     return { headerTitle: "INVOICE" };
   }
-  if (normalized === "KUITANSI" || normalized.includes("RECEIPT")) {
+  if (normalized === "RECEIPT" || normalized.includes("RECEIPT")) {
+    return { headerTitle: "RECEIPT" };
+  }
+  if (normalized === "KUITANSI") {
     return { headerTitle: "KUITANSI" };
   }
 

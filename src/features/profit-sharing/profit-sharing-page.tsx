@@ -81,7 +81,8 @@ interface DraftRecipient {
 }
 
 export function ProfitSharingPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState("");
@@ -263,45 +264,98 @@ export function ProfitSharingPage() {
     if (!result || !selectedProject) return;
     const comp = await getCompanyProfile();
     const tableRows: string[][] = [
-      ["Pendapatan Proyek Diakui", "-", formatRupiah(result.recognized_revenue)],
-      ["Biaya Langsung Proyek", "-", `(${formatRupiah(result.direct_cost)})`],
-      ["Alokasi Biaya Bersama", "-", `(${formatRupiah(result.allocated_shared_cost)})`],
-      ["Laba Kotor Dasar Bagi Hasil", "100%", formatRupiah(result.gross_profit)],
+      [
+        isEn ? "Recognized Project Revenue" : "Pendapatan Proyek Diakui",
+        "-",
+        formatRupiah(result.recognized_revenue),
+      ],
+      [
+        isEn ? "Direct Project Costs" : "Biaya Langsung Proyek",
+        "-",
+        `(${formatRupiah(result.direct_cost)})`,
+      ],
+      [
+        isEn ? "Allocated Shared Costs" : "Alokasi Biaya Bersama",
+        "-",
+        `(${formatRupiah(result.allocated_shared_cost)})`,
+      ],
+      [
+        isEn ? "Gross Profit Subject to Sharing" : "Laba Kotor Dasar Bagi Hasil",
+        "100%",
+        formatRupiah(result.gross_profit),
+      ],
       ...lines.map((l) => [l.recipient_name, `${l.percentage}%`, formatRupiah(l.share_amount)]),
     ];
     const bytes = await generateDocumentPdf({
-      docTitle: `PERHITUNGAN BAGI HASIL PROYEK ${selectedProject.code}`,
-      docSubtitle: `${selectedProject.name} (${isFinalized ? "Difinalisasi" : "Simulasi Draf"})`,
+      docTitle: isEn
+        ? `PROJECT PROFIT SHARING ${selectedProject.code}`
+        : `PERHITUNGAN BAGI HASIL PROYEK ${selectedProject.code}`,
+      docSubtitle: `${selectedProject.name} (${isFinalized ? (isEn ? "Finalized" : "Difinalisasi") : (isEn ? "Draft Simulation" : "Simulasi Draf")})`,
       docNumber: `BH/${selectedProject.code}`,
       docDate: postingDate || new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: [
-        { header: "Komponen / Penerima", widthRatio: 0.52 },
-        { header: "Porsi (%)", widthRatio: 0.16, align: "right" },
-        { header: "Nominal (Rp)", widthRatio: 0.32, align: "right" },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "Component / Recipient", widthRatio: 0.52 },
+            { header: "Share (%)", widthRatio: 0.16, align: "right" },
+            { header: "Amount (IDR)", widthRatio: 0.32, align: "right" },
+          ]
+        : [
+            { header: "Komponen / Penerima", widthRatio: 0.52 },
+            { header: "Porsi (%)", widthRatio: 0.16, align: "right" },
+            { header: "Nominal (Rp)", widthRatio: 0.32, align: "right" },
+          ],
       tableRows,
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, `Bagi_Hasil_${selectedProject.code}.pdf`);
+    downloadPdfBytes(
+      bytes,
+      isEn
+        ? `Profit_Sharing_${selectedProject.code}.pdf`
+        : `Bagi_Hasil_${selectedProject.code}.pdf`,
+    );
     await recordExportLog("PROFIT_SHARING", "PDF");
   }
 
   async function handleExportCsv() {
     if (!result || !selectedProject) return;
     downloadCsvFile(
-      `Bagi_Hasil_${selectedProject.code}.csv`,
-      ["Penerima Bagi Hasil", "Persentase (%)", "Nominal Hak Bagi Hasil (Rp)"],
+      isEn
+        ? `Profit_Sharing_${selectedProject.code}.csv`
+        : `Bagi_Hasil_${selectedProject.code}.csv`,
+      isEn
+        ? ["Profit Sharing Recipient", "Percentage (%)", "Entitled Amount (IDR)"]
+        : ["Penerima Bagi Hasil", "Persentase (%)", "Nominal Hak Bagi Hasil (Rp)"],
       [
-        ["Pendapatan Proyek Diakui", 0, result.recognized_revenue],
-        ["Biaya Langsung Proyek", 0, -result.direct_cost],
-        ["Alokasi Biaya Bersama", 0, -result.allocated_shared_cost],
-        ["Laba Kotor Dasar Bagi Hasil", 100, result.gross_profit],
+        [
+          isEn ? "Recognized Project Revenue" : "Pendapatan Proyek Diakui",
+          0,
+          result.recognized_revenue,
+        ],
+        [
+          isEn ? "Direct Project Costs" : "Biaya Langsung Proyek",
+          0,
+          -result.direct_cost,
+        ],
+        [
+          isEn ? "Allocated Shared Costs" : "Alokasi Biaya Bersama",
+          0,
+          -result.allocated_shared_cost,
+        ],
+        [
+          isEn ? "Gross Profit Subject to Sharing" : "Laba Kotor Dasar Bagi Hasil",
+          100,
+          result.gross_profit,
+        ],
         ...lines.map((l) => [l.recipient_name, l.percentage, l.share_amount]),
       ],
     );
     await recordExportLog("PROFIT_SHARING", "CSV");
-    toast.success("Rincian bagi hasil berhasil diekspor ke CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Profit sharing breakdown exported to CSV (.csv) successfully."
+        : "Rincian bagi hasil berhasil diekspor ke CSV (.csv).",
+    );
   }
 
   return (

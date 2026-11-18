@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveCustomer } from "@/lib/data-service";
-import { useLanguage } from "@/lib/i18n";
+import { useLanguage, getActiveLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -88,24 +88,37 @@ export function CustomerTabContent({
   }
 
   async function handleExportCustomersExcel() {
+    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
       return;
     }
     await downloadExcelSheet({
-      sheetName: "Daftar Pelanggan",
-      fileName: "Master_Pelanggan_Altcycles.xlsx",
-      columns: [
-        { header: "Kode", width: 14 },
-        { header: "Nama Lengkap", width: 28 },
-        { header: "Perusahaan / Instansi", width: 28 },
-        { header: "PIC", width: 22 },
-        { header: "Jabatan", width: 20 },
-        { header: "Email", width: 24 },
-        { header: "Telepon", width: 18 },
-        { header: "Alamat", width: 36 },
-        { header: "Status", width: 14 },
-      ],
+      sheetName: isEn ? "Clients List" : "Daftar Pelanggan",
+      fileName: isEn ? "Master_Clients_Altcycles.xlsx" : "Master_Pelanggan_Altcycles.xlsx",
+      columns: isEn
+        ? [
+            { header: "Code", width: 14 },
+            { header: "Full Name", width: 28 },
+            { header: "Company / Institution", width: 28 },
+            { header: "PIC", width: 22 },
+            { header: "Title", width: 20 },
+            { header: "Email", width: 24 },
+            { header: "Phone", width: 18 },
+            { header: "Address", width: 36 },
+            { header: "Status", width: 14 },
+          ]
+        : [
+            { header: "Kode", width: 14 },
+            { header: "Nama Lengkap", width: 28 },
+            { header: "Perusahaan / Instansi", width: 28 },
+            { header: "PIC", width: 22 },
+            { header: "Jabatan", width: 20 },
+            { header: "Email", width: 24 },
+            { header: "Telepon", width: 18 },
+            { header: "Alamat", width: 36 },
+            { header: "Status", width: 14 },
+          ],
       rows: customers.map((c) => [
         c.code,
         c.name,
@@ -115,39 +128,52 @@ export function CustomerTabContent({
         c.email ?? "-",
         c.phone ?? "-",
         c.address ?? "-",
-        c.is_active ? "Aktif" : "Nonaktif",
+        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success("Daftar pelanggan berhasil diekspor ke Excel (.xlsx).");
+    toast.success(isEn ? "Clients list successfully exported to Excel (.xlsx)." : "Daftar pelanggan berhasil diekspor ke Excel (.xlsx).");
   }
 
   async function handleExportCustomersPdf() {
+    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
       return;
     }
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR MASTER PELANGGAN RESMI",
-      docSubtitle: "Rekapitulasi Basis Data Klien, Pelanggan, & Mitra Strategis Perusahaan",
+      docTitle: isEn ? "OFFICIAL CLIENTS & CUSTOMERS DIRECTORY" : "DAFTAR MASTER PELANGGAN RESMI",
+      docSubtitle: isEn
+        ? "Summary of Company Clients, Customers, & Strategic Partners"
+        : "Rekapitulasi Basis Data Klien, Pelanggan, & Mitra Strategis Perusahaan",
       docNumber: `REKAP-CST-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: "Total Pelanggan", value: `${customers.length} klien` },
+        { label: isEn ? "Total Clients" : "Total Pelanggan", value: isEn ? `${customers.length} clients` : `${customers.length} klien` },
         {
-          label: "Status Klien",
-          value: `${customers.filter((c) => c.is_active).length} Aktif, ${customers.filter((c) => !c.is_active).length} Nonaktif`,
+          label: isEn ? "Client Status" : "Status Klien",
+          value: isEn
+            ? `${customers.filter((c) => c.is_active).length} Active, ${customers.filter((c) => !c.is_active).length} Inactive`
+            : `${customers.filter((c) => c.is_active).length} Aktif, ${customers.filter((c) => !c.is_active).length} Nonaktif`,
         },
       ],
-      tableColumns: [
-        { header: "Kode", widthRatio: 1.5 },
-        { header: "Nama Pelanggan", widthRatio: 3 },
-        { header: "Perusahaan / PIC", widthRatio: 3.5 },
-        { header: "Kontak", widthRatio: 3 },
-        { header: "Status", widthRatio: 1.5 },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "Code", widthRatio: 1.5 },
+            { header: "Customer Name", widthRatio: 3 },
+            { header: "Company / PIC", widthRatio: 3.5 },
+            { header: "Contact", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.5 },
+          ]
+        : [
+            { header: "Kode", widthRatio: 1.5 },
+            { header: "Nama Pelanggan", widthRatio: 3 },
+            { header: "Perusahaan / PIC", widthRatio: 3.5 },
+            { header: "Kontak", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.5 },
+          ],
       tableRows: customers.map((c) => [
         c.code,
         c.name,
@@ -155,31 +181,44 @@ export function CustomerTabContent({
           ? `${c.company_name} (PIC: ${c.contact_person || "-"})`
           : c.contact_person || "-",
         `${c.email || "-"} / ${c.phone || "-"}`,
-        c.is_active ? "Aktif" : "Nonaktif",
+        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");
+    downloadPdfBytes(bytes, isEn ? "Master_Clients_Altcycles.pdf" : "Master_Pelanggan_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportCustomersCsv() {
+    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error("Tidak ada data pelanggan untuk diekspor.");
+      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
       return;
     }
     downloadCsvFile(
-      "Master_Pelanggan_Altcycles.csv",
-      [
-        "Kode",
-        "Nama Pelanggan",
-        "Perusahaan",
-        "PIC",
-        "Jabatan",
-        "Email",
-        "Telepon",
-        "Alamat",
-        "Status",
-      ],
+      isEn ? "Master_Clients_Altcycles.csv" : "Master_Pelanggan_Altcycles.csv",
+      isEn
+        ? [
+            "Code",
+            "Customer Name",
+            "Company",
+            "PIC",
+            "Title",
+            "Email",
+            "Phone",
+            "Address",
+            "Status",
+          ]
+        : [
+            "Kode",
+            "Nama Pelanggan",
+            "Perusahaan",
+            "PIC",
+            "Jabatan",
+            "Email",
+            "Telepon",
+            "Alamat",
+            "Status",
+          ],
       customers.map((c) => [
         c.code,
         c.name,
@@ -189,11 +228,11 @@ export function CustomerTabContent({
         c.email ?? "-",
         c.phone ?? "-",
         c.address ?? "-",
-        c.is_active ? "Aktif" : "Nonaktif",
+        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success("Daftar pelanggan berhasil diekspor ke CSV (.csv).");
+    toast.success(isEn ? "Clients list successfully exported to CSV (.csv)." : "Daftar pelanggan berhasil diekspor ke CSV (.csv).");
   }
 
   return (

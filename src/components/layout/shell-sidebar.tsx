@@ -14,7 +14,6 @@ import {
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
-import { ROLE_LABELS } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { NavEntry } from "./nav-structure";
@@ -85,13 +84,13 @@ export function ShellSidebar({
         )}
       >
         <ActionTooltip
-          content={isCollapsed ? "Buka sidebar" : "Tutup sidebar"}
+          content={isCollapsed ? t("sidebar.open", "Buka sidebar") : t("sidebar.close", "Tutup sidebar")}
           side={isCollapsed ? "right" : "bottom"}
         >
           <button
             type="button"
             onClick={toggleCollapsed}
-            aria-label={isCollapsed ? "Buka sidebar" : "Tutup sidebar"}
+            aria-label={isCollapsed ? t("sidebar.open", "Buka sidebar") : t("sidebar.close", "Tutup sidebar")}
             className={cn(
               "group relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl",
               "bg-white/20 text-white ring-1 ring-white/40 shadow-lg focus:outline-none focus:ring-white/60",
@@ -178,11 +177,12 @@ export function ShellSidebar({
           {navStructure.map((entry) => {
             if (entry.type === "item") {
               const Icon = entry.icon;
+              const itemLabel = entry.key ? t(entry.key, entry.label) : entry.label;
 
               if (isCollapsed) {
                 return (
                   <div key={entry.to} className="w-16 flex items-center justify-center py-0.5">
-                    <ActionTooltip content={entry.label} side="right">
+                    <ActionTooltip content={itemLabel} side="right">
                       <NavLink
                         to={entry.to}
                         onClick={() => setMobileOpen(false)}
@@ -227,7 +227,7 @@ export function ShellSidebar({
                           isActive ? "text-white" : "text-white/80 group-hover:text-white",
                         )}
                       />
-                      <span className="truncate">{entry.label}</span>
+                      <span className="truncate">{itemLabel}</span>
                     </>
                   )}
                 </NavLink>
@@ -236,6 +236,7 @@ export function ShellSidebar({
 
             // Grup Navigasi dengan Submenu
             const GroupIcon = entry.icon;
+            const groupLabel = entry.key ? t(entry.key, entry.label) : entry.label;
             const isGroupOpen = Boolean(openGroups[entry.id]);
             const isChildActive = entry.items.some(
               (item) => location.pathname === item.to,
@@ -245,7 +246,7 @@ export function ShellSidebar({
               return (
                 <div key={entry.id} className="w-16 flex items-center justify-center py-0.5">
                   <ActionTooltip
-                    content={`${entry.label} (${entry.items.length} menu)`}
+                    content={`${groupLabel} (${entry.items.length} menu)`}
                     side="right"
                   >
                     <button
@@ -292,7 +293,7 @@ export function ShellSidebar({
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <GroupIcon className="size-4 shrink-0 opacity-90" />
-                    <span className="truncate">{entry.label}</span>
+                    <span className="truncate">{groupLabel}</span>
                   </div>
                   <ChevronDownIcon
                     className={cn(
@@ -320,6 +321,7 @@ export function ShellSidebar({
                     </span>
                     {entry.items.map((subItem) => {
                       const SubIcon = subItem.icon;
+                      const subLabel = subItem.key ? t(subItem.key, subItem.label) : subItem.label;
                       return (
                         <NavLink
                           key={subItem.to}
@@ -358,7 +360,7 @@ export function ShellSidebar({
                                     : "text-white/75 group-hover:text-white",
                                 )}
                               />
-                              <span className="truncate">{subItem.label}</span>
+                              <span className="truncate">{subLabel}</span>
                             </>
                           )}
                         </NavLink>
@@ -400,7 +402,7 @@ export function ShellSidebar({
                   {profile.full_name}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate capitalize">
-                  {ROLE_LABELS[currentRole] || currentRole}
+                  {getRoleShortName(currentRole, t)}
                 </p>
               </div>
             )}

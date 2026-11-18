@@ -16,6 +16,7 @@ import {
   renderSocialIconPngBytes,
 } from "@/lib/asset-utils";
 import { formatDateTimeID } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import type { PdfDocumentSpec } from "@/lib/pdf-generator";
 import type { CompanyProfileRow } from "@/types/database.types";
 import {
@@ -53,6 +54,7 @@ export function buildSocialFooter(
   },
   spec?: PdfDocumentSpec,
 ): Footer {
+  const isEn = (spec as any)?.lang === "en" || getActiveLanguage() === "en";
   const entries = getFooterSocialEntries(company);
   const children: Array<Paragraph | Table> = [];
 
@@ -78,7 +80,11 @@ export function buildSocialFooter(
                 children: [
                   new Paragraph({
                     children: [
-                      new TextRun({ text: "Paraf Pihak Pertama: ", size: 16, color: SLATE_600 }),
+                      new TextRun({
+                        text: isEn ? "First Party Initials: " : "Paraf Pihak Pertama: ",
+                        size: 16,
+                        color: SLATE_600,
+                      }),
                       ...(p1Img
                         ? [p1Img]
                         : [new TextRun({ text: "..................", size: 16, color: SLATE_600 })]),
@@ -92,7 +98,11 @@ export function buildSocialFooter(
                   new Paragraph({
                     alignment: AlignmentType.RIGHT,
                     children: [
-                      new TextRun({ text: "Paraf Pihak Kedua: ", size: 16, color: SLATE_600 }),
+                      new TextRun({
+                        text: isEn ? "Second Party Initials: " : "Paraf Pihak Kedua: ",
+                        size: 16,
+                        color: SLATE_600,
+                      }),
                       ...(p2Img
                         ? [p2Img]
                         : [new TextRun({ text: "..................", size: 16, color: SLATE_600 })]),
@@ -167,7 +177,9 @@ export function buildSocialFooter(
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `Dibuat otomatis oleh Altcycles ERP Keuangan Altvira • ${formatDateTimeID(new Date())}`,
+            text: isEn
+              ? `Generated automatically by Altcycles Altvira Financial ERP • ${formatDateTimeID(new Date())}`
+              : `Dibuat otomatis oleh Altcycles ERP Keuangan Altvira • ${formatDateTimeID(new Date())}`,
             size: 14,
             color: SLATE_600,
           }),

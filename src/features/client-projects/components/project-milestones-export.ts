@@ -7,6 +7,7 @@ import {
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
 import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { getActiveLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import type {
   CompanyProfileRow,
@@ -24,93 +25,107 @@ export interface ProjectMilestonesExportData {
 
 export async function exportMilestonesToExcel(data: ProjectMilestonesExportData): Promise<void> {
   const { project, bundle } = data;
+  const isEn = getActiveLanguage() === "en";
   if (!project || !bundle || bundle.milestones.length === 0) {
-    toast.error("Belum ada data jadwal termin untuk diekspor.");
+    toast.error(isEn ? "No milestone schedule data to export." : "Belum ada data jadwal termin untuk diekspor.");
     return;
   }
   await downloadExcelSheet({
-    sheetName: "Jadwal Termin Proyek",
-    fileName: `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    sheetName: isEn ? "Milestone Schedule" : "Jadwal Termin Proyek",
+    fileName: isEn
+      ? `Milestone_Schedule_${project.code}_${new Date().toISOString().slice(0, 10)}.xlsx`
+      : `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.xlsx`,
     columns: [
-      { header: "Termin Ke", width: 14 },
-      { header: "Keterangan Termin", width: 36 },
-      { header: "Porsi (%)", width: 14 },
-      { header: "Nominal (IDR)", width: 22 },
-      { header: "Status Penagihan", width: 18 },
+      { header: isEn ? "Milestone No" : "Termin Ke", width: 14 },
+      { header: isEn ? "Milestone Description" : "Keterangan Termin", width: 36 },
+      { header: isEn ? "Share (%)" : "Porsi (%)", width: 14 },
+      { header: isEn ? "Amount (IDR)" : "Nominal (IDR)", width: 22 },
+      { header: isEn ? "Billing Status" : "Status Penagihan", width: 18 },
     ],
     rows: bundle.milestones.map((m) => {
       const isBilled = bundle.invoices.some((inv) => inv.milestone_id === m.id);
       const isPaid = bundle.invoices.some(
         (inv) => inv.milestone_id === m.id && inv.payment_status === "paid",
       );
+      const statusLabel = isPaid
+        ? isEn ? "PAID" : "LUNAS"
+        : isBilled
+          ? isEn ? "BILLED" : "DITAGIHKAN"
+          : isEn ? "DRAFT" : "DRAFT";
       return [
-        `Termin ${m.sequence_no}`,
+        isEn ? `Milestone ${m.sequence_no}` : `Termin ${m.sequence_no}`,
         m.name,
         `${m.percentage}%`,
         m.amount,
-        isPaid ? "LUNAS" : isBilled ? "DITAGIHKAN" : "DRAFT",
+        statusLabel,
       ];
     }),
   });
   await recordExportLog("PROJECT_WORKSPACE", "EXCEL");
-  toast.success("Jadwal termin proyek berhasil diekspor ke Excel (.xlsx).");
+  toast.success(isEn ? "Milestone schedule successfully exported to Excel (.xlsx)." : "Jadwal termin proyek berhasil diekspor ke Excel (.xlsx).");
 }
 
 export async function exportMilestonesToPdf(data: ProjectMilestonesExportData): Promise<void> {
   const { project, customer, company, bundle } = data;
+  const isEn = getActiveLanguage() === "en";
   if (!company || !project || !bundle || bundle.milestones.length === 0) {
-    toast.error("Belum ada data jadwal termin untuk diekspor.");
+    toast.error(isEn ? "No milestone schedule data to export." : "Belum ada data jadwal termin untuk diekspor.");
     return;
   }
   const todayStr = new Date().toISOString().slice(0, 10);
   const docNum = `SCH/${project.code}/${new Date().getFullYear()}`;
   const spec: PdfDocumentSpec = {
-    docTitle: "JADWAL TERMIN PENAGIHAN PROYEK",
+    docTitle: isEn ? "PROJECT MILESTONE BILLING SCHEDULE" : "JADWAL TERMIN PENAGIHAN PROYEK",
     docSubtitle: `${project.code} - ${project.name}`,
     docNumber: docNum,
     docDate: todayStr,
     statusBadge: {
-      text: "JADWAL AKTIF",
+      text: isEn ? "ACTIVE SCHEDULE" : "JADWAL AKTIF",
       variant: "info",
     },
     company,
-    recipientTitle: "Informasi Proyek & Klien:",
+    recipientTitle: isEn ? "Project & Client Information:" : "Informasi Proyek & Klien:",
     recipientLines: [
-      customer?.company_name ?? customer?.name ?? "Proyek Internal",
+      customer?.company_name ?? customer?.name ?? (isEn ? "Internal Project" : "Proyek Internal"),
       ...(customer?.contact_person ? [customer.contact_person] : []),
       customer?.address ?? "-",
     ],
     metaRows: [
-      { label: "Tanggal Cetak", value: formatDateID(todayStr) },
-      { label: "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
-      { label: "Total Nilai Kontrak", value: formatRupiah(project.contract_value) },
+      { label: isEn ? "Print Date" : "Tanggal Cetak", value: formatDateID(todayStr) },
+      { label: isEn ? "Project Code & Name" : "Kode & Nama Proyek", value: `${project.code} - ${project.name}` },
+      { label: isEn ? "Total Contract Value" : "Total Nilai Kontrak", value: formatRupiah(project.contract_value) },
     ],
     tableColumns: [
-      { header: "Termin", widthRatio: 0.16, align: "center" },
-      { header: "Keterangan Termin", widthRatio: 0.44 },
-      { header: "Porsi", widthRatio: 0.16, align: "center" },
-      { header: "Nominal (IDR)", widthRatio: 0.24, align: "right" },
+      { header: isEn ? "Milestone" : "Termin", widthRatio: 0.16, align: "center" },
+      { header: isEn ? "Milestone Description" : "Keterangan Termin", widthRatio: 0.44 },
+      { header: isEn ? "Share" : "Porsi", widthRatio: 0.16, align: "center" },
+      { header: isEn ? "Amount (IDR)" : "Nominal (IDR)", widthRatio: 0.24, align: "right" },
     ],
     tableRows: bundle.milestones.map((m) => [
-      `Termin ${m.sequence_no}`,
+      isEn ? `Milestone ${m.sequence_no}` : `Termin ${m.sequence_no}`,
       m.name,
       `${m.percentage}%`,
       formatRupiah(m.amount),
     ]),
     summaryRows: [
       {
-        label: "Total Nilai Termin",
+        label: isEn ? "Total Milestones Value" : "Total Nilai Termin",
         value: formatRupiah(
           bundle.milestones.reduce((sum, m) => sum + m.amount, 0),
         ),
       },
     ],
     terbilangAmount: bundle.milestones.reduce((sum, m) => sum + m.amount, 0),
-    notes: [
-      "Jadwal termin penagihan ini menjadi dasar penerbitan Berita Acara Kemajuan Pekerjaan (BAKP) dan Invoice resmi termin proyek.",
-      "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira.",
-    ],
-    rightSignatureLabel: `Dikeluarkan Oleh, ${company.company_name}`,
+    notes: isEn
+      ? [
+          "This milestone billing schedule serves as the basis for Work Progress Reports (BAKP) and official project milestone invoices.",
+          "This document is officially generated by the Altcycles Financial ERP system.",
+        ]
+      : [
+          "Jadwal termin penagihan ini menjadi dasar penerbitan Berita Acara Kemajuan Pekerjaan (BAKP) dan Invoice resmi termin proyek.",
+          "Dokumen ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira.",
+        ],
+    rightSignatureLabel: isEn ? `Issued By, ${company.company_name}` : `Dikeluarkan Oleh, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
     rightSignatureImageUrl: company.signer_signature_path ?? null,
     footerDocNumber: docNum,
@@ -118,40 +133,58 @@ export async function exportMilestonesToPdf(data: ProjectMilestonesExportData): 
   const bytes = await generateDocumentPdf(spec);
   downloadPdfBytes(
     bytes,
-    `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.pdf`,
+    isEn
+      ? `Milestone_Schedule_${project.code}_${new Date().toISOString().slice(0, 10)}.pdf`
+      : `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.pdf`,
   );
   await recordExportLog("PROJECT_WORKSPACE", "PDF");
 }
 
 export async function exportMilestonesToCsv(data: ProjectMilestonesExportData): Promise<void> {
   const { project, bundle } = data;
+  const isEn = getActiveLanguage() === "en";
   if (!project || !bundle || bundle.milestones.length === 0) {
-    toast.error("Belum ada data jadwal termin untuk diekspor.");
+    toast.error(isEn ? "No milestone schedule data to export." : "Belum ada data jadwal termin untuk diekspor.");
     return;
   }
   downloadCsvFile(
-    `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.csv`,
-    [
-      "Termin Ke",
-      "Keterangan Termin",
-      "Porsi (%)",
-      "Nominal (IDR)",
-      "Status Penagihan",
-    ],
+    isEn
+      ? `Milestone_Schedule_${project.code}_${new Date().toISOString().slice(0, 10)}.csv`
+      : `Jadwal_Termin_${project.code}_${new Date().toISOString().slice(0, 10)}.csv`,
+    isEn
+      ? [
+          "Milestone No",
+          "Milestone Description",
+          "Share (%)",
+          "Amount (IDR)",
+          "Billing Status",
+        ]
+      : [
+          "Termin Ke",
+          "Keterangan Termin",
+          "Porsi (%)",
+          "Nominal (IDR)",
+          "Status Penagihan",
+        ],
     bundle.milestones.map((m) => {
       const isBilled = bundle.invoices.some((inv) => inv.milestone_id === m.id);
       const isPaid = bundle.invoices.some(
         (inv) => inv.milestone_id === m.id && inv.payment_status === "paid",
       );
+      const statusLabel = isPaid
+        ? isEn ? "PAID" : "LUNAS"
+        : isBilled
+          ? isEn ? "BILLED" : "DITAGIHKAN"
+          : isEn ? "DRAFT" : "DRAFT";
       return [
-        `Termin ${m.sequence_no}`,
+        isEn ? `Milestone ${m.sequence_no}` : `Termin ${m.sequence_no}`,
         m.name,
         m.percentage,
         m.amount,
-        isPaid ? "LUNAS" : isBilled ? "DITAGIHKAN" : "DRAFT",
+        statusLabel,
       ];
     }),
   );
   await recordExportLog("PROJECT_WORKSPACE", "CSV");
-  toast.success("Jadwal termin proyek berhasil diekspor ke CSV (.csv).");
+  toast.success(isEn ? "Milestone schedule successfully exported to CSV (.csv)." : "Jadwal termin proyek berhasil diekspor ke CSV (.csv).");
 }

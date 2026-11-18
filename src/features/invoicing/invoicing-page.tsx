@@ -46,10 +46,10 @@ import {
   listProjects,
 } from "@/lib/data-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
-import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { getActiveLanguage, useLanguage } from "@/lib/i18n";
 import {
   createAndIssueSalesInvoice,
   deleteReceipts,
@@ -540,19 +540,22 @@ export function InvoicingPage() {
 
   async function handleExportInvoicesExcel() {
     if (!bundle) return;
+    const isEn = getActiveLanguage() === "en";
     await downloadExcelSheet({
-      fileName: "Daftar_Invoice_dan_Piutang_Altcycles.xlsx",
-      sheetName: "Invoice Penjualan",
+      fileName: isEn
+        ? "Invoices_and_Receivables_Altcycles.xlsx"
+        : "Daftar_Invoice_dan_Piutang_Altcycles.xlsx",
+      sheetName: isEn ? "Sales Invoices" : "Invoice Penjualan",
       columns: [
-        { header: "No. Invoice", width: 22 },
-        { header: "Tanggal", width: 14 },
-        { header: "Jatuh Tempo", width: 14 },
-        { header: "Proyek", width: 22 },
-        { header: "Pelanggan", width: 26 },
-        { header: "Total Tagihan", width: 18 },
-        { header: "Terbayar", width: 18 },
-        { header: "Sisa Piutang", width: 18 },
-        { header: "Status Bayar", width: 16 },
+        { header: isEn ? "Invoice No." : "No. Invoice", width: 22 },
+        { header: isEn ? "Issue Date" : "Tanggal", width: 14 },
+        { header: isEn ? "Due Date" : "Jatuh Tempo", width: 14 },
+        { header: isEn ? "Project" : "Proyek", width: 22 },
+        { header: isEn ? "Customer" : "Pelanggan", width: 26 },
+        { header: isEn ? "Total Amount" : "Total Tagihan", width: 18 },
+        { header: isEn ? "Paid Amount" : "Terbayar", width: 18 },
+        { header: isEn ? "Outstanding Balance" : "Sisa Piutang", width: 18 },
+        { header: isEn ? "Payment Status" : "Status Bayar", width: 16 },
       ],
       rows: bundle.invoices.map((inv) => [
         inv.invoice_number,
@@ -563,30 +566,45 @@ export function InvoicingPage() {
         inv.total_amount,
         inv.paid_amount,
         inv.total_amount - inv.paid_amount,
-        inv.payment_status,
+        isEn
+          ? inv.payment_status === "paid"
+            ? "Paid"
+            : inv.payment_status === "partial"
+              ? "Partial"
+              : "Unpaid"
+          : inv.payment_status,
       ]),
     });
     await recordExportLog("SALES_INVOICES", "EXCEL");
-    toast.success("Daftar invoice & piutang berhasil diekspor ke Excel (.xlsx).");
+    toast.success(
+      isEn
+        ? "Invoices and receivables exported to Excel (.xlsx) successfully."
+        : "Daftar invoice & piutang berhasil diekspor ke Excel (.xlsx).",
+    );
   }
 
   async function handleExportInvoicesPdf() {
     if (!bundle) return;
+    const isEn = getActiveLanguage() === "en";
     const comp = company ?? (await getCompanyProfile());
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR INVOICE PENAGIHAN & PIUTANG",
-      docSubtitle: `Total Nilai Invoice: ${formatRupiah(totalInvoiced)} | Sisa Piutang: ${formatRupiah(totalOutstanding)}`,
+      docTitle: isEn
+        ? "INVOICES & RECEIVABLES LIST"
+        : "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+      docSubtitle: isEn
+        ? `Total Invoiced: ${formatRupiah(totalInvoiced)} | Outstanding: ${formatRupiah(totalOutstanding)}`
+        : `Total Nilai Invoice: ${formatRupiah(totalInvoiced)} | Sisa Piutang: ${formatRupiah(totalOutstanding)}`,
       docNumber: `INV-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       tableColumns: [
-        { header: "No. Invoice", widthRatio: 0.15 },
-        { header: "Tanggal", widthRatio: 0.11 },
-        { header: "Jatuh Tempo", widthRatio: 0.14 },
-        { header: "Proyek / Klien", widthRatio: 0.23 },
-        { header: "Total", widthRatio: 0.14, align: "right" },
-        { header: "Sisa", widthRatio: 0.13, align: "right" },
-        { header: "Status", widthRatio: 0.10 },
+        { header: isEn ? "Invoice No." : "No. Invoice", widthRatio: 0.15 },
+        { header: isEn ? "Issue Date" : "Tanggal", widthRatio: 0.11 },
+        { header: isEn ? "Due Date" : "Jatuh Tempo", widthRatio: 0.14 },
+        { header: isEn ? "Project / Client" : "Proyek / Klien", widthRatio: 0.23 },
+        { header: isEn ? "Total (IDR)" : "Total", widthRatio: 0.14, align: "right" },
+        { header: isEn ? "Remaining (IDR)" : "Sisa", widthRatio: 0.13, align: "right" },
+        { header: isEn ? "Status" : "Status", widthRatio: 0.10 },
       ],
       tableRows: bundle.invoices.map((inv) => [
         inv.invoice_number,
@@ -595,33 +613,59 @@ export function InvoicingPage() {
         `${projectMap.get(inv.project_id)?.code ?? "-"} - ${customerMap.get(inv.customer_id)?.name ?? "Klien"}`,
         formatRupiah(inv.total_amount),
         formatRupiah(inv.total_amount - inv.paid_amount),
-        inv.payment_status === "paid"
-          ? "Lunas"
-          : inv.payment_status === "partial"
-            ? "Sebagian"
-            : "Belum Lunas",
+        isEn
+          ? inv.payment_status === "paid"
+            ? "Paid"
+            : inv.payment_status === "partial"
+              ? "Partial"
+              : "Unpaid"
+          : inv.payment_status === "paid"
+            ? "Lunas"
+            : inv.payment_status === "partial"
+              ? "Sebagian"
+              : "Belum Lunas",
       ]),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, "Daftar_Invoice_dan_Piutang_Altcycles.pdf");
+    downloadPdfBytes(
+      bytes,
+      isEn
+        ? "Invoices_and_Receivables_Altcycles.pdf"
+        : "Daftar_Invoice_dan_Piutang_Altcycles.pdf",
+    );
     await recordExportLog("SALES_INVOICES", "PDF");
   }
 
   async function handleExportInvoicesCsv() {
     if (!bundle) return;
+    const isEn = getActiveLanguage() === "en";
     downloadCsvFile(
-      "Daftar_Invoice_dan_Piutang_Altcycles.csv",
-      [
-        "No. Invoice",
-        "Tanggal",
-        "Jatuh Tempo",
-        "Proyek",
-        "Pelanggan",
-        "Total Tagihan",
-        "Terbayar",
-        "Sisa Piutang",
-        "Status Bayar",
-      ],
+      isEn
+        ? "Invoices_and_Receivables_Altcycles.csv"
+        : "Daftar_Invoice_dan_Piutang_Altcycles.csv",
+      isEn
+        ? [
+            "Invoice No.",
+            "Issue Date",
+            "Due Date",
+            "Project",
+            "Customer",
+            "Total Amount",
+            "Paid Amount",
+            "Outstanding Balance",
+            "Payment Status",
+          ]
+        : [
+            "No. Invoice",
+            "Tanggal",
+            "Jatuh Tempo",
+            "Proyek",
+            "Pelanggan",
+            "Total Tagihan",
+            "Terbayar",
+            "Sisa Piutang",
+            "Status Bayar",
+          ],
       bundle.invoices.map((inv) => [
         inv.invoice_number,
         inv.invoice_date,
@@ -631,11 +675,21 @@ export function InvoicingPage() {
         inv.total_amount,
         inv.paid_amount,
         inv.total_amount - inv.paid_amount,
-        inv.payment_status,
+        isEn
+          ? inv.payment_status === "paid"
+            ? "Paid"
+            : inv.payment_status === "partial"
+              ? "Partial"
+              : "Unpaid"
+          : inv.payment_status,
       ]),
     );
     await recordExportLog("SALES_INVOICES", "CSV");
-    toast.success("Daftar invoice & piutang berhasil diekspor ke CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Invoices and receivables exported to CSV (.csv) successfully."
+        : "Daftar invoice & piutang berhasil diekspor ke CSV (.csv).",
+    );
   }
 
   const totalInvoiced = (bundle?.invoices ?? []).reduce(

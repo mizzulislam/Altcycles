@@ -67,6 +67,7 @@ import {
 } from "@/lib/data-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
+import { getActiveLanguage } from "@/lib/i18n";
 import {
   buildPaymentApprovalPdfSpec,
   downloadPdfBytes,
@@ -386,112 +387,202 @@ export function UserPaymentsPage() {
   }
 
   async function handleExportExcel() {
+    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      toast.error(
+        isEn
+          ? "No payment request data to export."
+          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
+      );
       return;
     }
     await downloadExcelSheet({
-      sheetName: "Pengajuan Pembayaran",
-      fileName: "Pengajuan_Pembayaran_Saya.xlsx",
-      columns: [
-        { header: "Nomor PA", width: 22 },
-        { header: "Tanggal", width: 14 },
-        { header: "Proyek", width: 28 },
-        { header: "Pos Beban", width: 28 },
-        { header: "Penerima", width: 24 },
-        { header: "Keperluan", width: 34 },
-        { header: "Nominal", width: 18 },
-        { header: "Status", width: 24 },
-        { header: "Tanggal Bayar", width: 16 },
-      ],
+      sheetName: isEn ? "My Payment Requests" : "Pengajuan Pembayaran",
+      fileName: isEn ? "My_Payment_Requests.xlsx" : "Pengajuan_Pembayaran_Saya.xlsx",
+      columns: isEn
+        ? [
+            { header: "PA Number", width: 22 },
+            { header: "Date", width: 14 },
+            { header: "Project", width: 28 },
+            { header: "Expense Account", width: 28 },
+            { header: "Payee", width: 24 },
+            { header: "Purpose", width: 34 },
+            { header: "Amount (IDR)", width: 18 },
+            { header: "Status", width: 24 },
+            { header: "Payment Date", width: 16 },
+          ]
+        : [
+            { header: "Nomor PA", width: 22 },
+            { header: "Tanggal", width: 14 },
+            { header: "Proyek", width: 28 },
+            { header: "Pos Beban", width: 28 },
+            { header: "Penerima", width: 24 },
+            { header: "Keperluan", width: 34 },
+            { header: "Nominal", width: 18 },
+            { header: "Status", width: 24 },
+            { header: "Tanggal Bayar", width: 16 },
+          ],
       rows: requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
-        r.project_id ? (projectMap.get(r.project_id) ?? "-") : "Operasional Umum",
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : (isEn ? "General Operations" : "Operasional Umum"),
         r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         r.paid_date ?? "-",
       ]),
     });
     await recordExportLog("PAYMENT_APPROVALS", "EXCEL");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).");
+    toast.success(
+      isEn
+        ? "Payment requests list exported to Excel (.xlsx) successfully."
+        : "Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).",
+    );
   }
 
   async function handleExportPdf() {
+    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      toast.error(
+        isEn
+          ? "No payment request data to export."
+          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
+      );
       return;
     }
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
-      docSubtitle: "Rekapitulasi Histori Pengajuan Payment Approval (PA) Pengguna",
+      docTitle: isEn
+        ? "PAYMENT APPROVALS & CASH DISBURSEMENTS"
+        : "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
+      docSubtitle: isEn
+        ? "Summary History of User Payment Approvals (PA)"
+        : "Rekapitulasi Histori Pengajuan Payment Approval (PA) Pengguna",
       docNumber: `REKAP-PA-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: "Total Pengajuan", value: `${requests.length} pengajuan` },
         {
-          label: "Total Nilai Diajukan",
+          label: isEn ? "Total Requests" : "Total Pengajuan",
+          value: isEn ? `${requests.length} requests` : `${requests.length} pengajuan`,
+        },
+        {
+          label: isEn ? "Total Amount Requested" : "Total Nilai Diajukan",
           value: formatRupiah(requests.reduce((s, r) => s + r.amount, 0)),
         },
       ],
-      tableColumns: [
-        { header: "Nomor PA", widthRatio: 2 },
-        { header: "Tanggal", widthRatio: 1.2 },
-        { header: "Penerima / Vendor", widthRatio: 2.2 },
-        { header: "Keperluan", widthRatio: 3 },
-        { header: "Status", widthRatio: 1.8 },
-        { header: "Nominal", widthRatio: 1.8, align: "right" },
-      ],
+      tableColumns: isEn
+        ? [
+            { header: "PA Number", widthRatio: 2 },
+            { header: "Date", widthRatio: 1.2 },
+            { header: "Payee / Vendor", widthRatio: 2.2 },
+            { header: "Purpose", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.8 },
+            { header: "Amount (IDR)", widthRatio: 1.8, align: "right" },
+          ]
+        : [
+            { header: "Nomor PA", widthRatio: 2 },
+            { header: "Tanggal", widthRatio: 1.2 },
+            { header: "Penerima / Vendor", widthRatio: 2.2 },
+            { header: "Keperluan", widthRatio: 3 },
+            { header: "Status", widthRatio: 1.8 },
+            { header: "Nominal", widthRatio: 1.8, align: "right" },
+          ],
       tableRows: requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
         r.recipient_name,
         r.purpose,
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         formatRupiah(r.amount),
       ]),
     });
-    downloadPdfBytes(bytes, "Pengajuan_Pembayaran_Saya.pdf");
+    downloadPdfBytes(
+      bytes,
+      isEn ? "My_Payment_Requests.pdf" : "Pengajuan_Pembayaran_Saya.pdf",
+    );
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
   }
 
   async function handleExportCsv() {
+    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error("Tidak ada data pengajuan pembayaran untuk diekspor.");
+      toast.error(
+        isEn
+          ? "No payment request data to export."
+          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
+      );
       return;
     }
     downloadCsvFile(
-      "Pengajuan_Pembayaran_Saya.csv",
-      [
-        "Nomor PA",
-        "Tanggal",
-        "Proyek",
-        "Pos Beban",
-        "Penerima",
-        "Keperluan",
-        "Nominal",
-        "Status",
-        "Tanggal Bayar",
-      ],
+      isEn ? "My_Payment_Requests.csv" : "Pengajuan_Pembayaran_Saya.csv",
+      isEn
+        ? [
+            "PA Number",
+            "Date",
+            "Project",
+            "Expense Account",
+            "Payee",
+            "Purpose",
+            "Amount (IDR)",
+            "Status",
+            "Payment Date",
+          ]
+        : [
+            "Nomor PA",
+            "Tanggal",
+            "Proyek",
+            "Pos Beban",
+            "Penerima",
+            "Keperluan",
+            "Nominal",
+            "Status",
+            "Tanggal Bayar",
+          ],
       requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
-        r.project_id ? (projectMap.get(r.project_id) ?? "-") : "Operasional Umum",
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : (isEn ? "General Operations" : "Operasional Umum"),
         r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        PA_STATUS_META[r.status].label,
+        isEn
+          ? r.status === "paid"
+            ? "Paid"
+            : r.status === "approved"
+              ? "Approved"
+              : r.status === "rejected"
+                ? "Rejected"
+                : "Pending Approval"
+          : PA_STATUS_META[r.status].label,
         r.paid_date ?? "-",
       ]),
     );
     await recordExportLog("PAYMENT_APPROVALS", "CSV");
-    toast.success("Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Payment requests list exported to CSV (.csv) successfully."
+        : "Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).",
+    );
   }
 
   const pendingCount = requests.filter((r) => r.status === "submitted").length;
