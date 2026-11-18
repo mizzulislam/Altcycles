@@ -566,9 +566,15 @@ async function renderDocumentPdfInternal(
     altviraWordmarkBytes ? pdfDoc.embedPng(altviraWordmarkBytes).catch(() => null) : Promise.resolve(null),
   ]);
 
-  const { pageWidth, pageHeight, marginX, marginTop, bottomSafeY } =
-    PDF_LAYOUT_TOKENS;
-  const contentWidth = pageWidth - marginX * 2; // 493.24 pt
+  const isLandscape = spec.orientation === "landscape";
+  const pageWidth = isLandscape
+    ? PDF_LAYOUT_TOKENS.pageHeight
+    : PDF_LAYOUT_TOKENS.pageWidth; // 841.89 pt (Landscape) vs 595.28 pt (Portrait)
+  const pageHeight = isLandscape
+    ? PDF_LAYOUT_TOKENS.pageWidth
+    : PDF_LAYOUT_TOKENS.pageHeight; // 595.28 pt (Landscape) vs 841.89 pt (Portrait)
+  const { marginX, marginTop, bottomSafeY } = PDF_LAYOUT_TOKENS;
+  const contentWidth = pageWidth - marginX * 2;
 
   const pages: PDFPage[] = [];
   const textBoxes: PdfTextBox[] = [];
@@ -1661,15 +1667,10 @@ async function renderDocumentPdfInternal(
         cols.forEach((col, idx) => {
           const w = colWidths[idx]!;
           const headerClean = sanitizePdfText(col.header);
-          const maxTextW = Math.max(12, w - 8);
 
-          // Pastikan judul header tabel muat 1 baris utuh tanpa overlap
-          let size: number = headerFontSize;
-          let textW = fontBold.widthOfTextAtSize(headerClean, size);
-          if (textW > maxTextW) {
-            size = Math.max(7.2, (maxTextW / textW) * size);
-            textW = fontBold.widthOfTextAtSize(headerClean, size);
-          }
+          // Semua header kolom memakai ukuran dan bobot yang sama seragam tanpa penyusutan font
+          const size = headerFontSize;
+          const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
           let drawX = colX + 4;
           if (col.align === "right") {
@@ -1846,15 +1847,10 @@ async function renderDocumentPdfInternal(
       cols.forEach((col, idx) => {
         const w = colWidths[idx]!;
         const headerClean = sanitizePdfText(col.header);
-        const maxTextW = Math.max(12, w - 8);
 
-        // Pastikan judul header tabel muat 1 baris utuh tanpa overlap
-        let size: number = headerFontSize;
-        let textW = fontBold.widthOfTextAtSize(headerClean, size);
-        if (textW > maxTextW) {
-          size = Math.max(7.2, (maxTextW / textW) * size);
-          textW = fontBold.widthOfTextAtSize(headerClean, size);
-        }
+        // Semua header kolom memakai ukuran dan bobot yang sama seragam tanpa penyusutan font
+        const size = headerFontSize;
+        const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
         let drawX = colX + 4;
         if (col.align === "right") {
@@ -3247,7 +3243,14 @@ export async function inspectPdfDocumentLayout(
   const collisions: PdfCollisionIssue[] = [];
   const marginViolations: PdfMarginIssue[] = [];
 
-  const { pageWidth, pageHeight, marginX } = PDF_LAYOUT_TOKENS;
+  const isLandscape = spec.orientation === "landscape";
+  const pageWidth = isLandscape
+    ? PDF_LAYOUT_TOKENS.pageHeight
+    : PDF_LAYOUT_TOKENS.pageWidth;
+  const pageHeight = isLandscape
+    ? PDF_LAYOUT_TOKENS.pageWidth
+    : PDF_LAYOUT_TOKENS.pageHeight;
+  const { marginX } = PDF_LAYOUT_TOKENS;
   const minX = marginX - 1.5;
   const maxX = pageWidth - marginX + 1.5;
   const minY = 20;

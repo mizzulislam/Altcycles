@@ -141,11 +141,10 @@ export function VendorTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 0.10, align: "center" },
         { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 0.28 },
-        { header: t("parties:vendors.col_pic", "Kontak PIC"), widthRatio: 0.26 },
-        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 0.22 },
-        { header: t("parties:vendors.col_status", "Status"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:vendors.col_pic", "Kontak PIC"), widthRatio: 0.35 },
+        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 0.27 },
       ],
       tableRows: vendors.map((v) => [
         v.code,
@@ -154,7 +153,6 @@ export function VendorTabContent({
           ? `${v.contact_name} (${v.phone || v.email || "-"})`
           : "-",
         v.bank_name ? `${v.bank_name} - ${v.bank_account_number}` : "-",
-        v.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     downloadPdfBytes(bytes, t("parties:vendors.export_pdf_title", "Master_Vendor_Altcycles.pdf"));

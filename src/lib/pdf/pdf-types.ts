@@ -24,6 +24,7 @@ export interface PdfDocumentSpec {
   docNumber: string;
   docDate: string;
   language?: "id" | "en";
+  orientation?: "portrait" | "landscape";
   docVersion?: number | string;
   statusBadge?: {
     text: string;

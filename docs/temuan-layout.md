@@ -830,14 +830,53 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 
 ---
 
+### ID: K-44
+- **Status:** Selesai (Diterapkan pada Item 1: Font Header Seragam & Landscape)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** `Daftar Pengajuan Pembayaran`, `Laporan Anggaran vs Realisasi Proyek`, `Daftar Invoice Penagihan & Piutang`
+- **Apa yang bertentangan:**
+  - Font header kolom pada dokumen dengan kolom banyak/lebar sebelumnya menyusut (*shrink-to-fit* turun ke 8.4–8.8pt atau 7.2pt) pada mode Portrait agar muat, sehingga tidak seragam dengan header kolom lain yang berukuran token 9.5pt.
+- **Yang kulakukan:**
+  - Menghapus pengecilan font (*shrink-to-fit*) otomatis di seluruh mesin PDF `src/lib/pdf/pdf-engine.ts`; seluruh header kolom wajib memakai font ukuran tetap 9.5pt bold seragam di semua dokumen.
+  - Menambahkan dukungan orientasi `landscape` (`isLandscape`, `pageWidth = 841.89`, `pageHeight = 595.28`, `contentWidth = 769.89`) pada `PdfDocumentSpec` dan generator PDF.
+  - Menetapkan orientasi `landscape` secara deterministik pada dokumen: `DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL & TIM`, `LAPORAN ANGGARAN VS REALISASI PROYEK`, dan `DAFTAR INVOICE PENAGIHAN & PIUTANG`.
+  - Memastikan pratinjau browser dan dialog cetak mengikuti orientasi landscape melalui geometri MediaBox PDF `[841.89, 595.28]` tanpa mengandalkan setelan manual pengguna.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Terapkan landscape pada dokumen multi-kolom padat dan kunci seluruh font header di 9.5pt seragam. (Diterapkan).
+- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+- **Perlu keputusanku?** tidak (Selesai diterapkan)
+
+---
+
+### ID: K-45
+- **Status:** Selesai (Diterapkan pada Item 2: Hapus Kolom Status Master Data di PDF)
+- **Jenis:** `standar-vs-layout`
+- **Dokumen terdampak:** Dokumen Master Data (`Daftar Vendor`, `Daftar Klien / Pelanggan`, `Katalog Produk & Layanan`) di `src/lib/pdf/pdf-table-columns.ts`, `vendor-tab-content.tsx`, `customer-tab-content.tsx`, `product-service-tab-content.tsx`
+- **Apa yang bertentangan:**
+  - Kolom "Status" (Aktif/Nonaktif) pada PDF master data memakan ruang horizontal yang berharga sehingga data teks panjang seperti email PIC terpotong/terpecah baris (`mizzulislam.id@gmail.c / om`).
+  - Di sisi lain, pada blok metadata atas (Zona B) dokumen master data, masih tercantum baris ringkasan: `"Status Vendor: 1 Aktif, 0 Nonaktif"` dan `"Status Klien: 4 Aktif, 0 Nonaktif"`.
+- **Yang kulakukan:**
+  - Menghapus kolom "Status" dari konfigurasi kolom PDF master data dan dari data row yang dikirimkan ke generator PDF (bukan sekadar disembunyikan via CSS).
+  - Mendistribusikan ulang lebar kolom yang tersisa menjadi 100% sehingga kontak email PIC muat utuh tanpa terputus.
+  - Mempertahankan seluruh baris data (baik status aktif maupun nonaktif tetap tercetak lengkap).
+  - Mempertahankan kolom Status pada tabel UI aplikasi serta ekspor Excel dan CSV.
+  - Menjaga baris ringkasan info status atas tetap utuh pada tahap ini sesuai aturan, dan mencatatnya sebagai opsi keputusan pengguna.
+- **Opsi penyelesaian permanen:**
+  - **Opsi A:** Pertahankan baris ringkasan status di info atas sebagai statistik rekapitulasi entitas aktif/nonaktif meskipun kolom status pada tabel ditiadakan.
+  - **Opsi B:** Hapus baris ringkasan status di info atas agar selaras dengan tabel tanpa kolom status.
+- **Rekomendasi:** **Opsi A** (atau Opsi B bila pengguna ingin menyembunyikannya juga).
+- **Perlu keputusanku?** ya (Untuk baris ringkasan status di blok info atas Zona B)
+
+---
+
 ## Ringkasan Jumlah Temuan per Jenis (Langkah Selesai)
 
 | Jenis Temuan | Total | Selesai | Aktif (Tanpa Ubah Data/Sistem) | Perlu Keputusan Pengguna |
 | :--- | :---: | :---: | :---: | :---: |
 | `standar-vs-standar` | 1 | 1 (`K-08`) | 0 | 0 |
-| `standar-vs-layout` | 27 | 25 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`) | 2 (`K-20`, `K-27`) | 1 (`K-20`) |
+| `standar-vs-layout` | 29 | 27 (`K-01`, `K-03`, `K-11`, `K-16`, `K-17`, `K-18`, `K-19`, `K-23`, `K-25`, `K-26`, `K-28`, `K-29`, `K-30`, `K-31`, `K-32`, `K-33`, `K-34`, `K-35`, `K-36`, `K-37`, `K-38`, `K-40`, `K-41`, `K-42`, `K-43`, `K-44`, `K-45`) | 2 (`K-20`, `K-27`) | 2 (`K-20`, `K-45`) |
 | `standar-vs-sistem` | 7 | 6 (`K-02`, `K-06`, `K-13`, `K-14`, `K-15`, `K-39`) | 1 (`K-09`) | 0 |
 | `sistem-menghalangi` | 2 | 2 (`K-07`, `K-24`) | 0 | 0 |
 | `data-janggal` | 6 | 2 (`K-04`, `K-05`) | 4 (`K-10`, `K-12`, `K-21`, `K-22`) | 0 |
 | `keputusan-sendiri` | 0 | 0 | 0 | 0 |
-| **Total Temuan** | **43** | **36** | **7** | **1** |
+| **Total Temuan** | **45** | **38** | **7** | **2** |

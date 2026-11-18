@@ -147,11 +147,10 @@ export function CustomerTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:customers.col_code", "Kode"), widthRatio: 0.12, align: "center" },
-        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 0.28 },
-        { header: t("parties:customers.col_company", "Perusahaan PIC"), widthRatio: 0.26 },
-        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 0.22 },
-        { header: t("parties:customers.col_status", "Status"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:customers.col_code", "Kode"), widthRatio: 0.10, align: "center" },
+        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 0.30 },
+        { header: t("parties:customers.col_company", "Perusahaan PIC"), widthRatio: 0.36 },
+        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 0.24 },
       ],
       tableRows: customers.map((c) => [
         c.code,
@@ -160,7 +159,6 @@ export function CustomerTabContent({
           ? `${c.company_name} (PIC: ${c.contact_person || "-"})`
           : c.contact_person || "-",
         `${c.email || "-"} / ${c.phone || "-"}`,
-        c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");

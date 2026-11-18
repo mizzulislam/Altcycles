@@ -141,12 +141,11 @@ export function ProductServiceTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:products.col_code", "Kode"), widthRatio: 0.12, align: "center" },
-        { header: t("parties:products.col_name", "Nama Layanan"), widthRatio: 0.32 },
-        { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.18 },
-        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.10, align: "center" },
-        { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.16, align: "right" },
-        { header: t("parties:products.col_status", "Status"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:products.col_code", "Kode"), widthRatio: 0.10, align: "center" },
+        { header: t("parties:products.col_name", "Nama Layanan"), widthRatio: 0.38 },
+        { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.20 },
+        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.12, align: "center" },
+        { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.20, align: "right" },
       ],
       tableRows: products.map((p) => [
         p.code,
@@ -154,7 +153,6 @@ export function ProductServiceTabContent({
         p.category,
         p.unit,
         formatRupiah(p.price),
-        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     downloadPdfBytes(bytes, "Master_Produk_Layanan_Altcycles.pdf");

@@ -287,13 +287,14 @@ export function AdminApprovalsPage() {
       docSubtitle: t("approvals:export.admin_pdf_subtitle"),
       docNumber: `PA-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
+      orientation: "landscape",
       company: comp,
       tableColumns: [
-        { header: t("approvals:admin.col_number_date"), widthRatio: 0.18 },
-        { header: t("approvals:modals.requester_name"), widthRatio: 0.15 },
-        { header: t("approvals:modals.purpose"), widthRatio: 0.26 },
+        { header: t("approvals:admin.col_number_date"), widthRatio: 0.16 },
+        { header: t("approvals:modals.requester_name"), widthRatio: 0.16 },
+        { header: t("approvals:modals.purpose"), widthRatio: 0.28 },
         { header: t("approvals:admin.col_amount"), widthRatio: 0.16, align: "right" },
-        { header: t("approvals:admin.col_status"), widthRatio: 0.11, align: "center" },
+        { header: t("approvals:admin.col_status"), widthRatio: 0.10, align: "center" },
         { header: t("approvals:modals.disburse_date"), widthRatio: 0.14, align: "center" },
       ],
       tableRows: filteredRequests.map((r) => [

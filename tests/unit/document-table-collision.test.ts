@@ -86,12 +86,13 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
       docNumber: "PA-EMPTY-001",
       docDate: "2026-11-19",
       company: FIXTURE_COMPANY,
+      orientation: "landscape" as const,
       tableColumns: [
-        { header: "No. & Tanggal", widthRatio: 0.18 },
-        { header: "Pemohon", widthRatio: 0.15 },
-        { header: "Keterangan", widthRatio: 0.26 },
+        { header: "No. & Tanggal", widthRatio: 0.16 },
+        { header: "Pemohon", widthRatio: 0.16 },
+        { header: "Keterangan", widthRatio: 0.28 },
         { header: "Nominal (IDR)", widthRatio: 0.16, align: "right" as const },
-        { header: "Status", widthRatio: 0.11, align: "center" as const },
+        { header: "Status", widthRatio: 0.10, align: "center" as const },
         { header: "Tanggal Transfer", widthRatio: 0.14, align: "center" as const },
       ],
       tableRows: [],
@@ -105,12 +106,13 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
       ...emptySpecId,
       docTitle: "PAYMENT APPROVALS & CASH DISBURSEMENTS",
       language: "en" as const,
+      orientation: "landscape" as const,
       tableColumns: [
-        { header: "No. & Date", widthRatio: 0.18 },
-        { header: "Requester", widthRatio: 0.15 },
-        { header: "Description", widthRatio: 0.26 },
+        { header: "No. & Date", widthRatio: 0.16 },
+        { header: "Requester", widthRatio: 0.16 },
+        { header: "Description", widthRatio: 0.28 },
         { header: "Amount (IDR)", widthRatio: 0.16, align: "right" as const },
-        { header: "Status", widthRatio: 0.11, align: "center" as const },
+        { header: "Status", widthRatio: 0.10, align: "center" as const },
         { header: "Transfer Date", widthRatio: 0.14, align: "center" as const },
       ],
     };
@@ -122,15 +124,16 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
     const extremeSpec = {
       docTitle: "PROJECT BUDGETING REPORT",
       language: "en" as const,
+      orientation: "landscape" as const,
       docNumber: "BUDGET-EXTREME-999",
       docDate: "2026-11-19",
       company: FIXTURE_COMPANY,
       tableColumns: [
-        { header: "Expense Account", widthRatio: 0.27, align: "left" as const },
-        { header: "Budget Ceiling", widthRatio: 0.17, align: "right" as const },
+        { header: "Expense Account", widthRatio: 0.26, align: "left" as const },
+        { header: "Budget Ceiling", widthRatio: 0.16, align: "right" as const },
         { header: "Realization", widthRatio: 0.16, align: "right" as const },
         { header: "Remaining", widthRatio: 0.16, align: "right" as const },
-        { header: "Absorption (%)", widthRatio: 0.12, align: "center" as const },
+        { header: "Absorption (%)", widthRatio: 0.14, align: "center" as const },
         { header: "Status", widthRatio: 0.12, align: "center" as const },
       ],
       tableRows: [
@@ -170,6 +173,101 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
         layout.marginViolations,
         `Margin violations on accounting fixture ${fixture.slug}`,
       ).toEqual([]);
+    }
+  });
+
+  it("(g) Item 1: Memastikan ukuran font header tabel seragam 9.5pt di seluruh box header tanpa penyusutan font (shrink-to-fit)", async () => {
+    for (const fixture of REPORT_LIST_FIXTURES) {
+      // Uji ID
+      const specId = fixture.buildSpec();
+      const layoutId = await inspectPdfDocumentLayout(specId);
+      const headerBoxesId = layoutId.textBoxes.filter((b) => b.zone === "D-table-header");
+      for (const box of headerBoxesId) {
+        expect(
+          box.height,
+          `Header font size pada ${fixture.slug} (ID) teks '${box.text}' harus 9.5pt tapi bernilai ${box.height}pt`,
+        ).toBe(9.5);
+      }
+
+      // Uji EN
+      const specEn = {
+        ...fixture.buildSpec(),
+        language: "en" as const,
+        docTitle: fixture.slug.includes("budget")
+          ? "PROJECT BUDGET"
+          : fixture.slug.includes("payment")
+            ? "PAYMENT APPROVALS & CASH DISBURSEMENTS"
+            : fixture.buildSpec().docTitle,
+      };
+      const layoutEn = await inspectPdfDocumentLayout(specEn);
+      const headerBoxesEn = layoutEn.textBoxes.filter((b) => b.zone === "D-table-header");
+      for (const box of headerBoxesEn) {
+        expect(
+          box.height,
+          `Header font size pada ${fixture.slug} (EN) teks '${box.text}' harus 9.5pt tapi bernilai ${box.height}pt`,
+        ).toBe(9.5);
+      }
+    }
+  });
+
+  it("(h) Item 1: Memastikan dokumen dengan orientasi landscape memiliki dimensi 841.89 x 595.28 pt", async () => {
+    const landscapeSlugs = [
+      "13-daftar-payment-approval",
+      "15-laporan-budgeting",
+      "16-daftar-invoice",
+    ];
+
+    for (const slug of landscapeSlugs) {
+      const fixture = REPORT_LIST_FIXTURES.find((f) => f.slug === slug);
+      expect(fixture, `Fixture ${slug} harus ditemukan`).toBeDefined();
+      const spec = fixture!.buildSpec();
+      expect(spec.orientation).toBe("landscape");
+
+      const layout = await inspectPdfDocumentLayout(spec);
+      expect(layout.pageCount).toBeGreaterThanOrEqual(1);
+      // Cek bahwa seluruh bounding box berada dalam rentang landscape x <= 805.89 (margin 36pt dari 841.89pt)
+      for (const box of layout.textBoxes) {
+        expect(box.x + box.width).toBeLessThanOrEqual(841.89 - 36 + 1.0); // Margin kanan 36pt
+      }
+    }
+  });
+
+  it("(i) Item 2: Memastikan konfigurasi kolom PDF master data tidak memiliki kolom Status, sedangkan dokumen non-master tetap memilikinya", () => {
+    const masterKeys = [
+      "DAFTAR MASTER VENDOR PEMASOK",
+      "SUPPLIERS & VENDORS LIST",
+      "DAFTAR MASTER PELANGGAN/KLIEN",
+      "OFFICIAL CLIENTS & CUSTOMERS LIST",
+      "DAFTAR KATALOG LAYANAN & PRODUK",
+      "OFFICIAL PRODUCT & SERVICE CATALOG",
+    ];
+
+    for (const key of masterKeys) {
+      const config = PDF_TABLE_COLUMN_CONFIGS[key];
+      expect(config, `Konfigurasi ${key} harus ada`).toBeDefined();
+      const hasStatusId = config!.id.some((c) => c.header.toLowerCase().includes("status"));
+      const hasStatusEn = config!.en.some((c) => c.header.toLowerCase().includes("status"));
+      expect(hasStatusId, `Master PDF ${key} (ID) tidak boleh ada kolom Status`).toBe(false);
+      expect(hasStatusEn, `Master PDF ${key} (EN) tidak boleh ada kolom Status`).toBe(false);
+    }
+
+    // Dokumen non-master tetap memiliki kolom status
+    const nonMasterKeys = [
+      "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
+      "PAYMENT APPROVALS & CASH DISBURSEMENTS",
+      "LAPORAN ANGGARAN VS REALISASI PROYEK",
+      "PROJECT BUDGETING REPORT",
+      "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+      "INVOICES & RECEIVABLES LIST",
+    ];
+
+    for (const key of nonMasterKeys) {
+      const config = PDF_TABLE_COLUMN_CONFIGS[key];
+      expect(config, `Konfigurasi ${key} harus ada`).toBeDefined();
+      const hasStatusId = config!.id.some((c) => c.header.toLowerCase().includes("status"));
+      const hasStatusEn = config!.en.some((c) => c.header.toLowerCase().includes("status"));
+      expect(hasStatusId, `Non-master PDF ${key} (ID) harus tetap punya kolom Status`).toBe(true);
+      expect(hasStatusEn, `Non-master PDF ${key} (EN) harus tetap punya kolom Status`).toBe(true);
     }
   });
 });

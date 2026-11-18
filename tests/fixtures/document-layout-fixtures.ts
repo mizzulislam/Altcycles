@@ -1964,13 +1964,14 @@ export function buildFixturePaymentApprovalListNormal(): PdfDocumentSpec {
     docNumber: "PA-RPT/20261116",
     docDate: "2026-11-16",
     company: FIXTURE_COMPANY,
+    orientation: "landscape",
     tableColumns: [
       { header: "Nomor PA", widthRatio: 0.16 },
-      { header: "Pengaju", widthRatio: 0.14 },
-      { header: "Penerima & Keperluan", widthRatio: 0.34 },
-      { header: "Nominal", widthRatio: 0.15, align: "right" },
-      { header: "Status", widthRatio: 0.11 },
-      { header: "Tgl Bayar", widthRatio: 0.10, align: "center" },
+      { header: "Pengaju", widthRatio: 0.16 },
+      { header: "Penerima & Keperluan", widthRatio: 0.28 },
+      { header: "Nominal", widthRatio: 0.16, align: "right" },
+      { header: "Status", widthRatio: 0.10 },
+      { header: "Tgl Bayar", widthRatio: 0.14, align: "center" },
     ],
     tableRows: [
       [
@@ -2149,18 +2150,19 @@ export function buildFixtureBudgetingReportNormal(): PdfDocumentSpec {
     docNumber: "BDG-PRJ-001/20261116",
     docDate: "2026-11-16",
     company: FIXTURE_COMPANY,
+    orientation: "landscape",
     metaRows: [
       { label: "Total Pagu Anggaran", value: "Rp120.000.000" },
       { label: "Realisasi Terposting", value: "Rp45.000.000" },
       { label: "Sisa Anggaran", value: "Rp75.000.000" },
     ],
     tableColumns: [
-      { header: "Akun Beban", widthRatio: 0.34 },
+      { header: "Akun Beban", widthRatio: 0.26 },
       { header: "Pagu", widthRatio: 0.16, align: "right" },
       { header: "Realisasi", widthRatio: 0.16, align: "right" },
       { header: "Sisa", widthRatio: 0.16, align: "right" },
-      { header: "Serapan", widthRatio: 0.08, align: "right" },
-      { header: "Status", widthRatio: 0.10 },
+      { header: "Serapan", widthRatio: 0.14, align: "center" },
+      { header: "Status", widthRatio: 0.12, align: "center" },
     ],
     tableRows: [
       [
@@ -2240,11 +2242,12 @@ export function buildFixtureInvoicesListNormal(): PdfDocumentSpec {
     docNumber: "INV-RPT/20261116",
     docDate: "2026-11-16",
     company: FIXTURE_COMPANY,
+    orientation: "landscape",
     tableColumns: [
       { header: "No. Invoice", widthRatio: 0.15 },
-      { header: "Tanggal", widthRatio: 0.11 },
-      { header: "Jatuh Tempo", widthRatio: 0.14 },
-      { header: "Proyek / Klien", widthRatio: 0.23 },
+      { header: "Tanggal", widthRatio: 0.12 },
+      { header: "Jatuh Tempo", widthRatio: 0.12 },
+      { header: "Proyek / Klien", widthRatio: 0.24 },
       { header: "Total", widthRatio: 0.14, align: "right" },
       { header: "Sisa", widthRatio: 0.13, align: "right" },
       { header: "Status", widthRatio: 0.10 },
@@ -2329,11 +2332,10 @@ export function buildFixtureCustomersMasterNormal(): PdfDocumentSpec {
       { label: "Status Klien", value: "4 Aktif, 0 Nonaktif" },
     ],
     tableColumns: [
-      { header: "Kode", widthRatio: 0.15 },
-      { header: "Nama Klien / Perusahaan", widthRatio: 0.35 },
-      { header: "PIC & Jabatan", widthRatio: 0.25 },
-      { header: "Kontak", widthRatio: 0.15 },
-      { header: "Status", widthRatio: 0.10 },
+      { header: "Kode", widthRatio: 0.10 },
+      { header: "Nama Klien / Perusahaan", widthRatio: 0.30 },
+      { header: "PIC & Jabatan", widthRatio: 0.36 },
+      { header: "Kontak", widthRatio: 0.24 },
     ],
     tableRows: [
       [
@@ -2341,28 +2343,24 @@ export function buildFixtureCustomersMasterNormal(): PdfDocumentSpec {
         "PT Satu Dental Indonesia (TIMTravel RMM)",
         "Anni Nuraini, M.T. (Direktur)",
         "0812-8889-0011",
-        "Aktif",
       ],
       [
         "CST-002",
         "PT Sinar Niaga Digital",
         "Hendra Wijaya (Operasional)",
         "0813-7778-9900",
-        "Aktif",
       ],
       [
         "CST-003",
         "CV Mitra Abadi Makmur",
         "Siti Fatimah (Finance)",
         "0815-4433-2211",
-        "Aktif",
       ],
       [
         "CST-004",
         "PT Global Prima Solusindo",
         "Bambang Hermanto (Direktur Utama)",
         "0811-9988-7766",
-        "Aktif",
       ],
     ],
     rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
@@ -2375,7 +2373,6 @@ export function buildFixtureCustomersMasterExtreme(): PdfDocumentSpec {
     `PT Korporasi Mitra Strategis Nusantara ${i + 1}`,
     `Bpk. Pimpinan Eksekutif ${i + 1}`,
     `0812-${String(1000 + i)}-${String(5000 + i)}`,
-    "Aktif",
   ]);
   return {
     ...buildFixtureCustomersMasterNormal(),
@@ -2413,11 +2410,10 @@ export function buildFixtureVendorsMasterNormal(): PdfDocumentSpec {
       { label: "Status Vendor", value: "4 Aktif, 0 Nonaktif" },
     ],
     tableColumns: [
-      { header: "Kode", widthRatio: 0.15 },
-      { header: "Nama Vendor", widthRatio: 0.30 },
-      { header: "PIC / Kontak", widthRatio: 0.25 },
-      { header: "Bank & Rekening", widthRatio: 0.20 },
-      { header: "Status", widthRatio: 0.10 },
+      { header: "Kode", widthRatio: 0.10 },
+      { header: "Nama Vendor", widthRatio: 0.28 },
+      { header: "PIC / Kontak", widthRatio: 0.35 },
+      { header: "Bank & Rekening", widthRatio: 0.27 },
     ],
     tableRows: [
       [
@@ -2425,28 +2421,24 @@ export function buildFixtureVendorsMasterNormal(): PdfDocumentSpec {
         "PT Cipta Solusi Hosting",
         "Reza Permana (0812-1111-2222)",
         "BCA - 8820192831",
-        "Aktif",
       ],
       [
         "VND-002",
         "CV Digital Kreasi Mandiri",
         "Diana Lestari (0813-3333-4444)",
         "Mandiri - 133001928311",
-        "Aktif",
       ],
       [
         "VND-003",
         "PT Net Solusi Indonesia",
         "Farhan Aziz (0815-5555-6666)",
         "BNI - 0982319201",
-        "Aktif",
       ],
       [
         "VND-004",
         "Mitra Legal Prima",
         "Dewi Sartika (0818-7777-8888)",
         "Bank Jago - 103289122849",
-        "Aktif",
       ],
     ],
     rightSignatureName: `${FIXTURE_COMPANY.signer_name} - ${FIXTURE_COMPANY.signer_title}`,
@@ -2459,7 +2451,6 @@ export function buildFixtureVendorsMasterExtreme(): PdfDocumentSpec {
     `PT Rekanan Vendor Pemasok Layanan ${i + 1}`,
     `Kontak PIC Vendor ${i + 1}`,
     `Bank Mandiri - 144000${String(i + 1).padStart(4, "0")}`,
-    "Aktif",
   ]);
   return {
     ...buildFixtureVendorsMasterNormal(),

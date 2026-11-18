@@ -209,6 +209,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       docNumber: `BDG-${projectCode}/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
+      orientation: "landscape",
       metaRows: [
         {
           label: t("budgeting:common.kpi_ceiling"),
@@ -224,11 +225,11 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         },
       ],
       tableColumns: [
-        { header: t("budgeting:export.excel_col_name"), widthRatio: 0.27 },
-        { header: t("budgeting:common.col_ceiling"), widthRatio: 0.17, align: "right" },
+        { header: t("budgeting:export.excel_col_name"), widthRatio: 0.26 },
+        { header: t("budgeting:common.col_ceiling"), widthRatio: 0.16, align: "right" },
         { header: t("budgeting:common.col_realization"), widthRatio: 0.16, align: "right" },
         { header: t("budgeting:common.col_remaining"), widthRatio: 0.16, align: "right" },
-        { header: t("budgeting:common.col_absorption"), widthRatio: 0.12, align: "center" },
+        { header: t("budgeting:common.col_absorption"), widthRatio: 0.14, align: "center" },
         { header: t("budgeting:common.col_status"), widthRatio: 0.12, align: "center" },
       ],
       tableRows: rows.map((r) => [
