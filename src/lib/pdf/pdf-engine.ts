@@ -415,7 +415,7 @@ export async function drawSocialMediaFooters(params: {
         borderWidth: 0.8,
       });
 
-      const targetUrl =
+      let targetUrl =
         soc.url?.trim() ||
         (pKey.includes("instagram")
           ? `https://instagram.com/${soc.username.replace(/^@/, "").trim()}`
@@ -424,6 +424,10 @@ export async function drawSocialMediaFooters(params: {
             : pKey.includes("tiktok")
               ? `https://tiktok.com/@${soc.username.replace(/^@/, "").trim()}`
               : `https://${soc.username.replace(/^@/, "").trim()}`);
+
+      if (targetUrl && !/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = `https://${targetUrl}`;
+      }
 
       if (targetUrl) {
         // Area klik responsif dengan padding 3 pt di sekeliling ikon

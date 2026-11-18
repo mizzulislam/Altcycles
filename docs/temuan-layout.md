@@ -907,20 +907,21 @@ Dokumen ini mencatat seluruh temuan konflik antara `docs/standar-dokumen.md`, sp
 ---
 
 ### ID: K-48
-- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Opsi A)
+- **Status:** Selesai (Diterapkan sesuai Arahan Pengguna Opsi B: Direct Download)
 - **Jenis:** `standar-vs-layout`
-- **Dokumen terdampak:** Seluruh dokumen PDF (`drawSocialMediaFooters`, `pdf-engine.ts`)
+- **Dokumen terdampak:** Seluruh dokumen PDF (`drawSocialMediaFooters`, `downloadPdfBytes`, `pdf-download.ts`, `pdf-engine.ts`)
 - **Apa yang bertentangan:**
   - Ikon sosial media di footer dokumen sebelumnya melorot turun (titik tengah 1.37 pt di bawah teks, dasar ikon 3.5 pt di bawah baseline teks) sehingga tampak tidak sejajar dengan teks *"Altvira Technology"* dan nomor halaman.
+  - Dialog cetak bawaan peramban (`window.print()`) menonaktifkan hyperlink interaktif dan saat pengguna menyimpan PDF dari print preview, peramban meratakan (*flatten*) PDF serta menghapus objek `/Annots /Link`.
   - Anotasi tautan (*Link Annotation*) pada ikon medsos memiliki hit-box sempit (10x10 pt) tanpa flag standar PDF `/F 4` (*Print flag*) dan `/H /I` (*Invert highlight mode*).
   - Teks tengah disclaimer (*"Dokumen ini dibuat otomatis oleh Altcycles"*) dipertahankan pada ukuran `7.5 pt` agar terhindar dari tabrakan kotak batas tanda tangan di dokumen satu halaman yang padat.
 - **Yang kulakukan:**
   - Menyelaraskan titik tengah vertikal ikon SVG tepat pada titik tengah optik huruf kapital teks (`textY + 2.87 pt`, `iconSize = 8.5 pt`, `iconTopY = textY + 7.12 pt`).
-  - Memperluas area hit box tautan (`/Rect`) dengan padding 3 pt, menambahkan flag PDF `/F 4` dan `/H /I`, serta mengunci URL tujuan interaktif.
-  - Mempertahankan Opsi A (pratinjau cetak peramban) dan memastikan verifikasi test otomatis 100% lulus.
+  - Memperluas area hit box tautan (`/Rect`) dengan padding 3 pt, menambahkan flag PDF `/F 4` dan `/H /I`, serta memastikan normalisasi protokol URL mutlak (`https://`).
+  - Mengubah mode pengunduhan PDF global (`downloadPdfBytes`) dari print preview iframe peramban menjadi **Direct Download (Opsi B)** melalui elemen `<a download>`, menjamin integritas 100% objek biner PDF asli beserta tautan interaktifnya ke profil medsos.
 - **Opsi penyelesaian permanen:**
-  - **Opsi A:** Penyelarasan optik sumbu tengah teks & perluasan padding anotasi interaktif PDF. (Diterapkan).
-- **Rekomendasi:** **Opsi A** (Selesai diterapkan).
+  - **Opsi B:** Penyelarasan optik sumbu tengah teks, normalisasi URL `https://`, perluasan padding anotasi interaktif PDF, dan Direct Download berkas biner `.pdf` asli. (Diterapkan).
+- **Rekomendasi:** **Opsi B** (Selesai diterapkan).
 - **Perlu keputusanku?** tidak (Selesai diterapkan)
 
 ---
