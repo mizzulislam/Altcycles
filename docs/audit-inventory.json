@@ -8,150 +8,33 @@
       "/user/pembayaran",
       "/user/anggaran"
     ],
-    "totalIssues": 76,
+    "totalIssues": 2,
     "files": [
       {
         "file": "src/features/dashboard/user-dashboard.tsx",
-        "count": 19,
+        "count": 1,
         "items": [
-          {
-            "line": 124,
-            "type": "raw_jsx_text",
-            "text": "Memuat ringkasan portal anggota tim..."
-          },
           {
             "line": 173,
             "type": "ternary",
             "text": "const monthsArr = language === \"en\" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;"
-          },
-          {
-            "line": 437,
-            "type": "raw_jsx_text",
-            "text": "Aktivitas PO &amp; Pengajuan Pembayaran"
-          },
-          {
-            "line": 471,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Histogram distribusi nominal otomatis muncul setelah Anda membuat PO pembelian atau pengajuan pembayaran."
-          },
-          {
-            "line": 500,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat."
-          },
-          {
-            "line": 506,
-            "type": "raw_jsx_text",
-            "text": "Total Nilai PO"
-          },
-          {
-            "line": 512,
-            "type": "raw_jsx_text",
-            "text": "Total Diajukan"
-          },
-          {
-            "line": 518,
-            "type": "raw_jsx_text",
-            "text": "Sudah Dicairkan"
-          },
-          {
-            "line": 544,
-            "type": "raw_jsx_text",
-            "text": "Status Klaim &amp; Bagi Hasil"
-          },
-          {
-            "line": 683,
-            "type": "raw_jsx_text",
-            "text": "Proyek Aktif Saya"
           }
         ]
       },
       {
         "file": "src/features/payment-approvals/user-payments-page.tsx",
-        "count": 5,
-        "items": [
-          {
-            "line": 342,
-            "type": "ternary",
-            "text": "requesterName: language === \"en\" ? \"Requester\" : \"Pengaju\","
-          },
-          {
-            "line": 344,
-            "type": "ternary",
-            "text": "? projectMap.get(req.project_id) ?? (language === \"en\" ? \"Project Operations\" : \"Operasional Proyek\")"
-          },
-          {
-            "line": 345,
-            "type": "ternary",
-            "text": ": (language === \"en\" ? \"General Operations\" : \"Operasional Umum\"),"
-          },
-          {
-            "line": 355,
-            "type": "ternary",
-            "text": "approverName: req.approver_id ? (language === \"en\" ? \"Financial Admin\" : \"Admin Keuangan\") : null,"
-          },
-          {
-            "line": 376,
-            "type": "ternary",
-            "text": "language === \"en\""
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/purchase-orders/po-page.tsx",
-        "count": 52,
+        "count": 1,
         "items": [
           {
-            "line": 255,
-            "type": "ternary",
-            "text": "const isEn = lang === \"en\";"
-          },
-          {
-            "line": 270,
-            "type": "ternary",
-            "text": "const statusText = isEn"
-          },
-          {
-            "line": 281,
-            "type": "ternary",
-            "text": "docTitle: isEn ? \"VENDOR PURCHASE ORDER\" : \"PURCHASE ORDER (PO PEMBELIAN VENDOR)\","
-          },
-          {
-            "line": 282,
-            "type": "ternary",
-            "text": "docSubtitle: isEn"
-          },
-          {
-            "line": 292,
-            "type": "ternary",
-            "text": "label: isEn ? \"TOTAL ORDER VALUE (PO)\" : \"TOTAL NILAI PESANAN (PO)\","
-          },
-          {
-            "line": 294,
-            "type": "ternary",
-            "text": "dueDateText: isEn"
-          },
-          {
-            "line": 299,
-            "type": "ternary",
-            "text": "recipientTitle: isEn ? \"To Vendor / Supplier\" : \"Kepada Vendor / Pemasok\","
-          },
-          {
-            "line": 301,
-            "type": "ternary",
-            "text": "vendor?.name ?? (isEn ? \"Partner Vendor\" : \"Vendor Mitra\"),"
-          },
-          {
-            "line": 303,
-            "type": "ternary",
-            "text": "isEn"
-          },
-          {
-            "line": 309,
-            "type": "ternary",
-            "text": "label: isEn ? \"Issue Date\" : \"Tanggal Terbit\","
+            "line": 822,
+            "type": "raw_prop",
+            "prop": "placeholder",
+            "text": "Harga Rp"
           }
         ]
       },
@@ -175,248 +58,47 @@
       "/super-admin/audit-trail",
       "/super-admin/media-login"
     ],
-    "totalIssues": 132,
+    "totalIssues": 6,
     "files": [
       {
         "file": "src/features/system-config/super-admin-dashboard.tsx",
-        "count": 1,
-        "items": [
-          {
-            "line": 104,
-            "type": "raw_jsx_text",
-            "text": "Memuat ringkasan sistem..."
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/system-config/company-profile-page.tsx",
-        "count": 32,
-        "items": [
-          {
-            "line": 214,
-            "type": "raw_jsx_text",
-            "text": "Memuat profil perusahaan..."
-          },
-          {
-            "line": 291,
-            "type": "raw_jsx_text",
-            "text": "Perpajakan (PKP)"
-          },
-          {
-            "line": 314,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Klik untuk memilih dari Lokal atau Google Drive"
-          },
-          {
-            "line": 332,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Contoh: ADAPT TODAY, INNOVATE TOMORROW"
-          },
-          {
-            "line": 341,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Kota penandatanganan dokumen (mis. Bogor)"
-          },
-          {
-            "line": 425,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Contoh: (0251) 8321xxx"
-          },
-          {
-            "line": 439,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Contoh: www.altvira.id"
-          },
-          {
-            "line": 470,
-            "type": "raw_jsx_text",
-            "text": "Menyimpan..."
-          },
-          {
-            "line": 475,
-            "type": "raw_jsx_text",
-            "text": "Simpan Identitas Perusahaan"
-          },
-          {
-            "line": 503,
-            "type": "raw_jsx_text",
-            "text": "Tambah Rekening"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/system-config/admin-settings-page.tsx",
-        "count": 19,
-        "items": [
-          {
-            "line": 228,
-            "type": "raw_jsx_text",
-            "text": "Memuat pengaturan administrasi..."
-          },
-          {
-            "line": 270,
-            "type": "raw_jsx_text",
-            "text": "Bulanan"
-          },
-          {
-            "line": 294,
-            "type": "raw_jsx_text",
-            "text": "YYYY-MM"
-          },
-          {
-            "line": 335,
-            "type": "raw_jsx_text",
-            "text": "ALT/JENIS/YYYY/MM/URUT4"
-          },
-          {
-            "line": 369,
-            "type": "raw_jsx_text",
-            "text": "Edit"
-          },
-          {
-            "line": 497,
-            "type": "raw_jsx_text",
-            "text": "Kode"
-          },
-          {
-            "line": 498,
-            "type": "raw_jsx_text",
-            "text": "Nama Template"
-          },
-          {
-            "line": 499,
-            "type": "raw_jsx_text",
-            "text": "Versi"
-          },
-          {
-            "line": 500,
-            "type": "raw_jsx_text",
-            "text": "Catatan Ketentuan"
-          },
-          {
-            "line": 501,
-            "type": "raw_jsx_text",
-            "text": "Aksi"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/system-config/users-management-page.tsx",
-        "count": 3,
-        "items": [
-          {
-            "line": 491,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "e.g. Nadia Putri"
-          },
-          {
-            "line": 505,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "name@altvira.id"
-          },
-          {
-            "line": 520,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Minimum 8 characters..."
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/system-config/system-config-page.tsx",
-        "count": 40,
+        "count": 1,
         "items": [
           {
-            "line": 215,
+            "line": 903,
             "type": "raw_jsx_text",
-            "text": "Memuat pengaturan sistem..."
-          },
-          {
-            "line": 233,
-            "type": "raw_jsx_text",
-            "text": "Identitas &amp; Rekening"
-          },
-          {
-            "line": 234,
-            "type": "raw_jsx_text",
-            "text": "Pengaturan Pajak (PKP)"
-          },
-          {
-            "line": 235,
-            "type": "raw_jsx_text",
-            "text": "Kunci Jurnal"
-          },
-          {
-            "line": 236,
-            "type": "raw_jsx_text",
-            "text": "Penomoran Dokumen"
-          },
-          {
-            "line": 237,
-            "type": "raw_jsx_text",
-            "text": "Template &amp; Placeholder"
-          },
-          {
-            "line": 244,
-            "type": "raw_jsx_text",
-            "text": "Kop Surat, Rekening Bank, &amp; Penandatangan"
-          },
-          {
-            "line": 255,
-            "type": "raw_jsx_text",
-            "text": "Nama Unit Usaha"
-          },
-          {
-            "line": 266,
-            "type": "raw_jsx_text",
-            "text": "Badan Hukum"
-          },
-          {
-            "line": 282,
-            "type": "raw_jsx_text",
-            "text": "Alamat Lengkap Kop"
+            "text": "Promise"
           }
         ]
       },
       {
         "file": "src/features/system-config/master-readonly-page.tsx",
-        "count": 4,
-        "items": [
-          {
-            "line": 104,
-            "type": "raw_jsx_text",
-            "text": "Memuat konfigurasi akuntansi &amp; master data..."
-          },
-          {
-            "line": 151,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Toggle Kunci Jurnal"
-          },
-          {
-            "line": 200,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Toggle Tutup Buku Otomatis"
-          },
-          {
-            "line": 249,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Toggle Estimasi PPh 23 (2%)"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/system-config/audit-trail-page.tsx",
-        "count": 7,
+        "count": 5,
         "items": [
           {
             "line": 162,
@@ -442,77 +124,13 @@
             "line": 166,
             "type": "raw_jsx_text",
             "text": "REOPEN_PERIOD"
-          },
-          {
-            "line": 196,
-            "type": "raw_jsx_text",
-            "text": "ID"
-          },
-          {
-            "line": 280,
-            "type": "ternary",
-            "text": "total: totalItems.toLocaleString(language === \"en\" ? \"en-US\" : \"id-ID\"),"
           }
         ]
       },
       {
         "file": "src/features/system-config/login-media-page.tsx",
-        "count": 26,
-        "items": [
-          {
-            "line": 287,
-            "type": "raw_jsx_text",
-            "text": "Memuat galeri media &amp; banner halaman login..."
-          },
-          {
-            "line": 360,
-            "type": "raw_jsx_text",
-            "text": "Tambah Media Login"
-          },
-          {
-            "line": 368,
-            "type": "raw_jsx_text",
-            "text": "Menunggu Migrasi Tabel Supabase Cloud"
-          },
-          {
-            "line": 371,
-            "type": "raw_jsx_text",
-            "text": "public.login_media_items"
-          },
-          {
-            "line": 442,
-            "type": "raw_jsx_text",
-            "text": "Pratinjau Panel Kiri Halaman Login"
-          },
-          {
-            "line": 459,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Slide sebelumnya"
-          },
-          {
-            "line": 474,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Slide berikutnya"
-          },
-          {
-            "line": 559,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Cari judul atau tautan..."
-          },
-          {
-            "line": 574,
-            "type": "raw_jsx_text",
-            "text": "Filter"
-          },
-          {
-            "line": 782,
-            "type": "raw_jsx_text",
-            "text": "Buka Tautan"
-          }
-        ]
+        "count": 0,
+        "items": []
       }
     ]
   },
@@ -531,7 +149,7 @@
       "/admin/bagi-hasil",
       "/admin/master"
     ],
-    "totalIssues": 173,
+    "totalIssues": 122,
     "files": [
       {
         "file": "src/features/master-data/admin-dashboard.tsx",
@@ -617,57 +235,13 @@
       },
       {
         "file": "src/features/purchase-orders/po-page.tsx",
-        "count": 52,
+        "count": 1,
         "items": [
           {
-            "line": 255,
-            "type": "ternary",
-            "text": "const isEn = lang === \"en\";"
-          },
-          {
-            "line": 270,
-            "type": "ternary",
-            "text": "const statusText = isEn"
-          },
-          {
-            "line": 281,
-            "type": "ternary",
-            "text": "docTitle: isEn ? \"VENDOR PURCHASE ORDER\" : \"PURCHASE ORDER (PO PEMBELIAN VENDOR)\","
-          },
-          {
-            "line": 282,
-            "type": "ternary",
-            "text": "docSubtitle: isEn"
-          },
-          {
-            "line": 292,
-            "type": "ternary",
-            "text": "label: isEn ? \"TOTAL ORDER VALUE (PO)\" : \"TOTAL NILAI PESANAN (PO)\","
-          },
-          {
-            "line": 294,
-            "type": "ternary",
-            "text": "dueDateText: isEn"
-          },
-          {
-            "line": 299,
-            "type": "ternary",
-            "text": "recipientTitle: isEn ? \"To Vendor / Supplier\" : \"Kepada Vendor / Pemasok\","
-          },
-          {
-            "line": 301,
-            "type": "ternary",
-            "text": "vendor?.name ?? (isEn ? \"Partner Vendor\" : \"Vendor Mitra\"),"
-          },
-          {
-            "line": 303,
-            "type": "ternary",
-            "text": "isEn"
-          },
-          {
-            "line": 309,
-            "type": "ternary",
-            "text": "label: isEn ? \"Issue Date\" : \"Tanggal Terbit\","
+            "line": 822,
+            "type": "raw_prop",
+            "prop": "placeholder",
+            "text": "Harga Rp"
           }
         ]
       },

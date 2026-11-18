@@ -101,7 +101,7 @@ export function MasterReadonlyPage() {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat konfigurasi akuntansi &amp; master data...</span>
+        <span>{t("settings:master_readonly.loading", "Memuat konfigurasi akuntansi & master data...")}</span>
       </div>
     );
   }
@@ -148,7 +148,7 @@ export function MasterReadonlyPage() {
                 id="journal-lock-switch"
                 checked={journalLockEnabled}
                 disabled={togglingLock}
-                aria-label="Toggle Kunci Jurnal"
+                aria-label={t("settings:master_readonly.journal_lock_title", "Toggle Kunci Jurnal")}
                 onCheckedChange={async (nextVal) => {
                   setTogglingLock(true);
                   try {
@@ -197,7 +197,7 @@ export function MasterReadonlyPage() {
                 id="auto-closing-switch"
                 checked={autoClosingEnabled}
                 disabled={togglingAutoClosing}
-                aria-label="Toggle Tutup Buku Otomatis"
+                aria-label={t("settings:master_readonly.auto_close_title", "Toggle Tutup Buku Otomatis")}
                 onCheckedChange={async (nextVal) => {
                   setTogglingAutoClosing(true);
                   try {
@@ -246,7 +246,7 @@ export function MasterReadonlyPage() {
                 id="pph23-estimate-switch"
                 checked={pph23Enabled}
                 disabled={togglingPph23}
-                aria-label="Toggle Estimasi PPh 23 (2%)"
+                aria-label={t("settings:master_readonly.pph23_title", "Toggle Estimasi PPh 23 (2%)")}
                 onCheckedChange={async (nextVal) => {
                   setTogglingPph23(true);
                   try {

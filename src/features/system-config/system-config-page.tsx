@@ -52,6 +52,7 @@ import {
   updateDocSequence,
   updateDocTemplate,
 } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import type {
   CompanyProfileRow,
   DocSequenceCounterRow,
@@ -60,6 +61,7 @@ import type {
 } from "@/types/database.types";
 
 export function SystemConfigPage() {
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
   const [sequences, setSequences] = React.useState<DocSequenceRow[]>([]);
@@ -212,7 +214,7 @@ export function SystemConfigPage() {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat pengaturan sistem...</span>
+        <span>{t("settings:company.loading")}</span>
       </div>
     );
   }
@@ -221,30 +223,29 @@ export function SystemConfigPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Konfigurasi Perusahaan, Pajak, &amp; Dokumen
+          {t("settings:admin_settings.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Atur profil identitas perusahaan, tarif pajak transaksi, dan format penomoran dokumen resmi.
+          {t("settings:admin_settings.subtitle")}
         </p>
       </div>
 
       <Tabs defaultValue="identitas">
         <TabsList>
-          <TabsTrigger value="identitas">Identitas &amp; Rekening</TabsTrigger>
-          <TabsTrigger value="pajak">Pengaturan Pajak (PKP)</TabsTrigger>
-          <TabsTrigger value="akuntansi">Kunci Jurnal</TabsTrigger>
-          <TabsTrigger value="penomoran">Penomoran Dokumen</TabsTrigger>
-          <TabsTrigger value="template">Template &amp; Placeholder</TabsTrigger>
+          <TabsTrigger value="identitas">{t("settings:company.tab_identity")}</TabsTrigger>
+          <TabsTrigger value="pajak">{t("settings:company.tab_tax_pkp")}</TabsTrigger>
+          <TabsTrigger value="akuntansi">{t("settings:master_readonly.tab_controls")}</TabsTrigger>
+          <TabsTrigger value="penomoran">{t("settings:admin_settings.sequences_card_title")}</TabsTrigger>
+          <TabsTrigger value="template">{t("settings:admin_settings.templates_card_title")}</TabsTrigger>
         </TabsList>
 
         {/* TAB 1: IDENTITAS & REKENING */}
         <TabsContent value="identitas">
           <Card>
             <CardHeader>
-              <CardTitle>Kop Surat, Rekening Bank, &amp; Penandatangan</CardTitle>
+              <CardTitle>{t("settings:company.identity_card_title")}</CardTitle>
               <CardDescription>
-                Data ini otomatis tercantum pada Quotation, Invoice, Kuitansi,
-                BAKP, UAT, BAST, dan PO Pembelian.
+                {t("settings:company.identity_card_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -252,7 +253,9 @@ export function SystemConfigPage() {
                 <FieldGroup>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel htmlFor="cp-name" required>Nama Unit Usaha</FieldLabel>
+                      <FieldLabel htmlFor="cp-name" required>
+                        {t("settings:company.name")}
+                      </FieldLabel>
                       <Input
                         id="cp-name"
                         required
@@ -263,7 +266,9 @@ export function SystemConfigPage() {
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="cp-legal" required>Badan Hukum</FieldLabel>
+                      <FieldLabel htmlFor="cp-legal" required>
+                        {t("settings:company.brand_name")}
+                      </FieldLabel>
                       <Input
                         id="cp-legal"
                         required
@@ -279,7 +284,9 @@ export function SystemConfigPage() {
                   </div>
 
                   <Field>
-                    <FieldLabel htmlFor="cp-addr" required>Alamat Lengkap Kop</FieldLabel>
+                    <FieldLabel htmlFor="cp-addr" required>
+                      {t("settings:company.address")}
+                    </FieldLabel>
                     <Textarea
                       id="cp-addr"
                       required
@@ -292,7 +299,9 @@ export function SystemConfigPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel htmlFor="cp-email" required>Email Resmi</FieldLabel>
+                      <FieldLabel htmlFor="cp-email" required>
+                        {t("settings:company.email")}
+                      </FieldLabel>
                       <Input
                         id="cp-email"
                         type="email"
@@ -304,7 +313,9 @@ export function SystemConfigPage() {
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="cp-phone" required>Telepon</FieldLabel>
+                      <FieldLabel htmlFor="cp-phone" required>
+                        {t("settings:company.phone")}
+                      </FieldLabel>
                       <Input
                         id="cp-phone"
                         required
@@ -317,10 +328,12 @@ export function SystemConfigPage() {
                   </div>
 
                   <FieldSet>
-                    <FieldLegend>Rekening Penerimaan Pembayaran Klien</FieldLegend>
+                    <FieldLegend>{t("settings:company.accounts_card_title")}</FieldLegend>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <Field>
-                        <FieldLabel htmlFor="cp-bank" required>Nama Bank</FieldLabel>
+                        <FieldLabel htmlFor="cp-bank" required>
+                          {t("settings:company.bank_name")}
+                        </FieldLabel>
                         <Input
                           id="cp-bank"
                           required
@@ -331,7 +344,9 @@ export function SystemConfigPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="cp-accno" required>Nomor Rekening</FieldLabel>
+                        <FieldLabel htmlFor="cp-accno" required>
+                          {t("settings:company.bank_account_number")}
+                        </FieldLabel>
                         <Input
                           id="cp-accno"
                           required
@@ -345,7 +360,9 @@ export function SystemConfigPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="cp-holder" required>Atas Nama</FieldLabel>
+                        <FieldLabel htmlFor="cp-holder" required>
+                          {t("settings:company.bank_account_holder")}
+                        </FieldLabel>
                         <Input
                           id="cp-holder"
                           required
@@ -364,7 +381,7 @@ export function SystemConfigPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
                       <FieldLabel htmlFor="cp-signer" required>
-                        Nama Penandatangan Default
+                        {t("settings:company.default_signer_name")}
                       </FieldLabel>
                       <Input
                         id="cp-signer"
@@ -377,7 +394,7 @@ export function SystemConfigPage() {
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="cp-title" required>
-                        Jabatan Penandatangan
+                        {t("settings:company.signer_title")}
                       </FieldLabel>
                       <Input
                         id="cp-title"
@@ -397,7 +414,7 @@ export function SystemConfigPage() {
                       ) : (
                         <SaveIcon data-icon="inline-start" />
                       )}
-                      Simpan Identitas Perusahaan
+                      {t("common:action.save")}
                     </Button>
                   </div>
                 </FieldGroup>
@@ -410,36 +427,34 @@ export function SystemConfigPage() {
         <TabsContent value="pajak">
           <Card>
             <CardHeader>
-              <CardTitle>Status Pengusaha Kena Pajak (PKP) &amp; Modul Pajak</CardTitle>
+              <CardTitle>{t("settings:company.tax_card_title")}</CardTitle>
               <CardDescription>
-                Selama entitas belum berstatus PKP, seluruh invoice diterbitkan tanpa PPN dan modul faktur pajak dinonaktifkan secara default.
+                {t("settings:company.tax_card_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <Alert variant={company.pkp_enabled ? "warning" : "info"}>
                 <AlertTitle>
-                  Status Saat Ini:{" "}
                   {company.pkp_enabled
-                    ? "PKP Aktif (Modul PPN Diaktifkan)"
-                    : "Belum PKP — Invoice Tanpa PPN (Default)"}
+                    ? t("settings:company.badge_pkp_active", { rate: company.ppn_rate })
+                    : t("settings:company.badge_non_pkp")}
                 </AlertTitle>
                 <AlertDescription>
                   {company.pkp_enabled
-                    ? `PPN ${company.ppn_rate}% akan dihitung pada dokumen penagihan baru.`
-                    : "Invoice mencantumkan keterangan resmi bahwa harga tidak dikenakan PPN karena perusahaan belum dikukuhkan sebagai PKP."}
+                    ? t("settings:company.pkp_desc_active", { rate: company.ppn_rate })
+                    : t("settings:company.pkp_desc_inactive")}
                 </AlertDescription>
               </Alert>
 
               <FieldSet>
-                <FieldLegend>Kontrol Aktivasi Pajak</FieldLegend>
+                <FieldLegend>{t("settings:company.tax_pkp_title")}</FieldLegend>
                 <Field orientation="horizontal">
                   <div className="flex flex-col gap-0.5">
                     <FieldLabel htmlFor="sw-pkp">
-                      Aktifkan Status PKP &amp; Perhitungan PPN
+                      {t("settings:company.enable_pkp_label")}
                     </FieldLabel>
                     <FieldDescription>
-                      Aktifkan hanya setelah PT Representasi Mitra Mandiri resmi
-                      dikukuhkan sebagai PKP.
+                      {t("settings:company.enable_pkp_desc", { name: company.company_name })}
                     </FieldDescription>
                   </div>
                   <Switch
@@ -450,7 +465,9 @@ export function SystemConfigPage() {
                 </Field>
 
                 <Field className="max-w-xs" data-disabled={!company.pkp_enabled}>
-                  <FieldLabel htmlFor="ppn-rate">Tarif PPN Default (%)</FieldLabel>
+                  <FieldLabel htmlFor="ppn-rate">
+                    {t("settings:company.default_vat_rate")}
+                  </FieldLabel>
                   <NumberInput
                     id="ppn-rate"
                     allowDecimal
@@ -476,35 +493,34 @@ export function SystemConfigPage() {
         <TabsContent value="akuntansi">
           <Card>
             <CardHeader>
-              <CardTitle>Kebijakan Kunci Immutabilitas Jurnal &amp; Mode Pengujian (BR-2)</CardTitle>
+              <CardTitle>{t("settings:master_readonly.journal_lock_title")}</CardTitle>
               <CardDescription>
-                Atur proteksi permanensi pencatatan jurnal akuntansi buku besar atau aktifkan mode pengujian untuk kebebasan edit dan hapus transaksi testing.
+                {t("settings:master_readonly.controls_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <Alert variant={company.journal_lock_enabled !== false ? "info" : "warning"}>
                 <AlertTitle>
-                  Status Kunci Jurnal:{" "}
                   {company.journal_lock_enabled !== false
-                    ? "Terkunci (Immutabilitas BR-2 Aktif)"
-                    : "Terbuka (Mode Pengujian / Testing Transaksi Aktif)"}
+                    ? t("settings:master_readonly.journal_lock_desc_active")
+                    : t("settings:master_readonly.journal_lock_desc_inactive")}
                 </AlertTitle>
                 <AlertDescription>
                   {company.journal_lock_enabled !== false
-                    ? "Jurnal yang sudah diposting bersifat permanen dan tidak dapat diedit atau dihapus secara langsung. Segala perubahan wajib diterbitkan melalui jurnal koreksi/penyesuaian (BR-2) dengan jejak audit resmi."
-                    : "Perlindungan immutabilitas dinonaktifkan sementara. Anda dan tim Admin dapat mengedit serta menghapus transaksi jurnal yang sudah diposting langsung dari Buku Jurnal Harian."}
+                    ? t("settings:master_readonly.journal_lock_desc_active")
+                    : t("settings:master_readonly.journal_lock_desc_inactive")}
                 </AlertDescription>
               </Alert>
 
               <FieldSet>
-                <FieldLegend>Kontrol Penguncian Jurnal</FieldLegend>
+                <FieldLegend>{t("settings:master_readonly.journal_lock_title")}</FieldLegend>
                 <Field orientation="horizontal">
                   <div className="flex flex-col gap-0.5">
                     <FieldLabel htmlFor="sw-journal-lock">
-                      Kunci Immutabilitas Jurnal Akuntansi (BR-2)
+                      {t("settings:master_readonly.journal_lock_title")}
                     </FieldLabel>
                     <FieldDescription>
-                      Aktifkan untuk mematuhi kaidah akuntansi (permanen &amp; anti-manipulasi). Nonaktifkan jika sedang melakukan input transaksi testing dan ingin bebas mengubah atau menghapus data jurnal.
+                      {t("settings:master_readonly.journal_lock_desc_active")}
                     </FieldDescription>
                   </div>
                   <Switch
@@ -517,9 +533,9 @@ export function SystemConfigPage() {
                           prev ? { ...prev, journal_lock_enabled: checked } : prev,
                         );
                         if (checked) {
-                          toast.success("Kunci jurnal diaktifkan (Mode Produksi).");
+                          toast.success(t("settings:master_readonly.journal_lock_toast_enabled"));
                         } else {
-                          toast.warning("Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit dan dihapus).");
+                          toast.warning(t("settings:master_readonly.journal_lock_toast_disabled"));
                         }
                       } catch (err) {
                         toast.error(
@@ -544,7 +560,7 @@ export function SystemConfigPage() {
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-base sm:text-lg font-bold">
-                    Kebijakan Periode Reset Penomoran Dokumen
+                    {t("settings:admin_settings.policy_card_title")}
                   </CardTitle>
                   <StatusBadge
                     tone={
@@ -556,15 +572,15 @@ export function SystemConfigPage() {
                     }
                     label={
                       currentGlobalResetPeriod === "yearly"
-                        ? "Tahunan (Standar 2027)"
+                        ? t("settings:admin_settings.policy_status_yearly")
                         : currentGlobalResetPeriod === "monthly"
-                          ? "Bulanan (Aktif 2026)"
-                          : "Kustom / Campuran"
+                          ? t("settings:admin_settings.policy_status_monthly")
+                          : t("settings:admin_settings.policy_status_custom")
                     }
                   />
                 </div>
                 <CardDescription>
-                  Atur siklus nomor urut seluruh dokumen resmi Altvira. Saat ini aktif <strong>Bulanan</strong> (periode 2026). Anda dapat beralih ke <strong>Tahunan</strong> untuk persiapan tahun 2027 tanpa perlu mengubah kode (hardcode).
+                  {t("settings:admin_settings.policy_card_desc")}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -581,17 +597,20 @@ export function SystemConfigPage() {
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-foreground">
-                        Mode 2026: Reset Bulanan
+                        {t("settings:admin_settings.mode_monthly")}
                       </span>
                       {currentGlobalResetPeriod === "monthly" && (
-                        <StatusBadge tone="success" label="Sedang Aktif" />
+                        <StatusBadge
+                          tone="success"
+                          label={t("settings:admin_settings.active_badge")}
+                        />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Pencacah mereset ke 001 tiap awal bulan (<code>YYYY-MM</code>). Format: <code>JENIS/ALT/YYYY/MM/URUT3</code>.
+                      {t("settings:admin_settings.mode_monthly_desc")}
                     </p>
                     <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                      Contoh: INV/ALT/2026/11/001
+                      {t("settings:admin_settings.sample_monthly")}
                     </div>
                   </div>
                   <Button
@@ -607,7 +626,7 @@ export function SystemConfigPage() {
                     }
                     className="w-full rounded-xl text-xs h-9 cursor-pointer"
                   >
-                    Terapkan Reset Bulanan (2026)
+                    {t("settings:admin_settings.btn_apply_monthly")}
                   </Button>
                 </div>
 
@@ -622,17 +641,20 @@ export function SystemConfigPage() {
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-foreground">
-                        Mode 2027: Reset Tahunan (Standar Baru)
+                        {t("settings:admin_settings.mode_yearly")}
                       </span>
                       {currentGlobalResetPeriod === "yearly" && (
-                        <StatusBadge tone="info" label="Sedang Aktif" />
+                        <StatusBadge
+                          tone="info"
+                          label={t("settings:admin_settings.active_badge")}
+                        />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Pencacah berlanjut 1 tahun penuh dan reset per 1 Januari. Format standar: <code>ALT/JENIS/YYYY/MM/URUT4</code> (4 digit).
+                      {t("settings:admin_settings.mode_yearly_desc")}
                     </p>
                     <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                      Contoh: ALT/INV/2027/01/0001
+                      {t("settings:admin_settings.sample_yearly")}
                     </div>
                   </div>
                   <Button
@@ -648,7 +670,7 @@ export function SystemConfigPage() {
                     }
                     className="w-full rounded-xl text-xs h-9 cursor-pointer"
                   >
-                    Beralih ke Standar Tahunan (2027)
+                    {t("settings:admin_settings.btn_apply_yearly")}
                   </Button>
                 </div>
               </div>
@@ -657,25 +679,36 @@ export function SystemConfigPage() {
 
           <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
             <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle>Format Penomoran Dokumen Berurutan (Lampiran A.0)</CardTitle>
+              <CardTitle>{t("settings:admin_settings.sequences_card_title")}</CardTitle>
               <CardDescription>
-                Gunakan variabel <code>{"{{tahun}}"}</code>,{" "}
-                <code>{"{{bulan}}"}</code>, dan wajib{" "}
-                <code>{"{{urut}}"}</code>. Nomor PO Klien dibuat terpisah dengan
-                kode acak 6 karakter (<code>PO-YYYYMM-XXXXXX</code>).
+                {t("settings:admin_settings.sequences_card_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Dokumen</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Pola Nomor</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Digit</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Reset</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Urutan Terakhir</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_code")}
+                    </TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_doc_type")}
+                    </TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_pattern")}
+                    </TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_digits")}
+                    </TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_reset")}
+                    </TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_last_sequence")}
+                    </TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                      {t("settings:admin_settings.col_actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -744,9 +777,15 @@ export function SystemConfigPage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectGroup>
-                                <SelectItem value="monthly">Bulanan</SelectItem>
-                                <SelectItem value="yearly">Tahunan</SelectItem>
-                                <SelectItem value="never">Tanpa Reset</SelectItem>
+                                <SelectItem value="monthly">
+                                  {t("settings:admin_settings.reset_monthly")}
+                                </SelectItem>
+                                <SelectItem value="yearly">
+                                  {t("settings:admin_settings.reset_yearly")}
+                                </SelectItem>
+                                <SelectItem value="never">
+                                  {t("settings:admin_settings.reset_never")}
+                                </SelectItem>
                               </SelectGroup>
                             </SelectContent>
                           </Select>
@@ -758,7 +797,7 @@ export function SystemConfigPage() {
                               label={`${latestCounter.period_key}: #${latestCounter.last_number}`}
                             />
                           ) : (
-                            "Belum dipakai"
+                            t("settings:admin_settings.status_unused")
                           )}
                         </TableCell>
                         <TableCell className="pl-2 pr-6 py-3 text-center whitespace-nowrap">
@@ -767,12 +806,12 @@ export function SystemConfigPage() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              title="Simpan Pola Penomoran"
+                              title={t("settings:admin_settings.btn_save_format")}
                               onClick={() => void handleSaveSequence(seq)}
                               className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
                             >
                               <SaveIcon className="size-4" />
-                              <span className="sr-only">Simpan</span>
+                              <span className="sr-only">{t("common:action.save")}</span>
                             </Button>
                           </div>
                         </TableCell>
@@ -806,13 +845,13 @@ export function SystemConfigPage() {
         }}
         title={
           pendingPkpState
-            ? "Aktifkan Status PKP & Modul Pajak?"
-            : "Nonaktifkan Kembali Status PKP?"
+            ? t("settings:company.confirm_pkp_activate_title")
+            : t("settings:company.confirm_pkp_deactivate_title")
         }
         description={
           pendingPkpState
-            ? "Setelah diaktifkan, dokumen penagihan baru akan menyertakan perhitungan PPN. Perubahan ini dicatat pada Audit Trail."
-            : "Invoice baru akan kembali diterbitkan tanpa PPN sesuai status belum PKP."
+            ? t("settings:company.confirm_pkp_activate_desc")
+            : t("settings:company.confirm_pkp_deactivate_desc")
         }
         onConfirm={async () => {
           if (pendingPkpState === null) return;
@@ -820,7 +859,7 @@ export function SystemConfigPage() {
             pkp_enabled: pendingPkpState,
           });
           setCompany(updated);
-          toast.success("Status pengaturan pajak berhasil diperbarui.");
+          toast.success(t("settings:company.toast_tax_updated"));
         }}
       />
 
@@ -831,20 +870,20 @@ export function SystemConfigPage() {
         }
         title={
           confirmMasterPolicy.period === "yearly"
-            ? "Beralih ke Kebijakan Reset Tahunan (Standar 2027)"
-            : "Terapkan Kebijakan Reset Bulanan (Mode 2026)"
+            ? t("settings:admin_settings.confirm_policy_yearly_title")
+            : t("settings:admin_settings.confirm_policy_monthly_title")
         }
         description={
           confirmMasterPolicy.period === "yearly"
-            ? "Seluruh jenis dokumen resmi akan dialihkan ke siklus reset nomor urut tahunan (1 tahun penuh tanpa reset bulanan) dengan format standar baru ALT/{JENIS}/{YYYY}/{MM}/{URUT4} (4 digit). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
-            : "Seluruh jenis dokumen resmi akan menggunakan siklus reset nomor urut bulanan (reset ke 001 tiap awal bulan baru). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
+            ? t("settings:admin_settings.confirm_policy_yearly_desc")
+            : t("settings:admin_settings.confirm_policy_monthly_desc")
         }
         confirmLabel={
           savingMasterPolicy
-            ? "Menerapkan..."
+            ? t("settings:admin_settings.confirm_policy_applying")
             : confirmMasterPolicy.period === "yearly"
-              ? "Beralih ke Standar 2027"
-              : "Terapkan Mode 2026"
+              ? t("settings:admin_settings.btn_apply_yearly")
+              : t("settings:admin_settings.btn_apply_monthly")
         }
         onConfirm={handleApplyMasterPolicy}
       />
@@ -863,6 +902,7 @@ function TemplateEditorCard({
     footerNotes: string,
   ) => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [jsonText, setJsonText] = React.useState(() =>
     JSON.stringify(template.default_placeholders, null, 2),
   );
@@ -876,15 +916,14 @@ function TemplateEditorCard({
           <StatusBadge tone="outline" label={`v${template.version}`} />
         </div>
         <CardDescription>
-          Kode: <code>{template.doc_type}</code> — Nilai default untuk isian{" "}
-          <code>[kurung siku]</code>
+          {t("settings:admin_settings.col_code")}: <code>{template.doc_type}</code>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor={`json-${template.doc_type}`}>
-              Placeholder Default (JSON)
+              {t("settings:admin_settings.field_placeholder_json")}
             </FieldLabel>
             <Textarea
               id={`json-${template.doc_type}`}
@@ -895,7 +934,7 @@ function TemplateEditorCard({
           </Field>
           <Field>
             <FieldLabel htmlFor={`note-${template.doc_type}`}>
-              Catatan Ketentuan Bawah Dokumen
+              {t("settings:admin_settings.field_footer_notes")}
             </FieldLabel>
             <Textarea
               id={`note-${template.doc_type}`}
@@ -910,7 +949,7 @@ function TemplateEditorCard({
               variant="outline"
               onClick={() => void onSave(template, jsonText, notes)}
             >
-              Simpan Template {template.doc_type}
+              {t("settings:admin_settings.btn_save_template")}
             </Button>
           </div>
         </FieldGroup>

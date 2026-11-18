@@ -62,10 +62,10 @@ import type {
   DocTemplateRow,
 } from "@/types/database.types";
 
-const RESET_PERIOD_LABELS: Record<DocSequenceRow["reset_period"], string> = {
-  monthly: "Bulanan",
-  yearly: "Tahunan",
-  never: "Tanpa Reset",
+const RESET_PERIOD_KEYS: Record<DocSequenceRow["reset_period"], string> = {
+  monthly: "settings:admin_settings.reset_monthly",
+  yearly: "settings:admin_settings.reset_yearly",
+  never: "settings:admin_settings.reset_never",
 };
 
 function previewSequenceFormat(seq: Pick<DocSequenceRow, "prefix_pattern" | "padding_digits">): string {
@@ -225,7 +225,7 @@ export function AdminSettingsPage() {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat pengaturan administrasi...</span>
+        <span>{t("settings:admin_settings.loading")}</span>
       </div>
     );
   }
@@ -234,10 +234,10 @@ export function AdminSettingsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Administrasi &amp; Format Penomoran Dokumen
+          {t("settings:admin_settings.title")}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          Atur format penomoran otomatis dokumen resmi dan template standar perusahaan.
+          {t("settings:admin_settings.subtitle")}
         </p>
       </div>
 
@@ -247,7 +247,7 @@ export function AdminSettingsPage() {
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Kebijakan Periode Reset Penomoran Dokumen
+                {t("settings:admin_settings.policy_card_title")}
               </CardTitle>
               <StatusBadge
                 tone={
@@ -259,15 +259,15 @@ export function AdminSettingsPage() {
                 }
                 label={
                   currentGlobalResetPeriod === "yearly"
-                    ? "Tahunan (Standar 2027)"
+                    ? t("settings:admin_settings.policy_status_yearly")
                     : currentGlobalResetPeriod === "monthly"
-                      ? "Bulanan (Aktif 2026)"
-                      : "Kustom / Campuran"
+                      ? t("settings:admin_settings.policy_status_monthly")
+                      : t("settings:admin_settings.policy_status_custom")
                 }
               />
             </div>
             <CardDescription>
-              Atur siklus nomor urut seluruh dokumen resmi Altvira. Saat ini aktif <strong>Bulanan</strong> (periode 2026). Anda dapat beralih ke <strong>Tahunan</strong> untuk persiapan tahun 2027 tanpa perlu mengubah kode (hardcode).
+              {t("settings:admin_settings.policy_card_desc")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -284,17 +284,20 @@ export function AdminSettingsPage() {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">
-                    Mode 2026: Reset Bulanan
+                    {t("settings:admin_settings.mode_monthly")}
                   </span>
                   {currentGlobalResetPeriod === "monthly" && (
-                    <StatusBadge tone="success" label="Sedang Aktif" />
+                    <StatusBadge
+                      tone="success"
+                      label={t("settings:admin_settings.active_badge")}
+                    />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pencacah mereset ke 001 tiap awal bulan (<code>YYYY-MM</code>). Format: <code>JENIS/ALT/YYYY/MM/URUT3</code>.
+                  {t("settings:admin_settings.mode_monthly_desc")}
                 </p>
                 <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                  Contoh: INV/ALT/2026/11/001
+                  {t("settings:admin_settings.sample_monthly")}
                 </div>
               </div>
               <Button
@@ -310,7 +313,7 @@ export function AdminSettingsPage() {
                 }
                 className="w-full rounded-xl text-xs h-9 cursor-pointer"
               >
-                Terapkan Reset Bulanan (2026)
+                {t("settings:admin_settings.btn_apply_monthly")}
               </Button>
             </div>
 
@@ -325,17 +328,20 @@ export function AdminSettingsPage() {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">
-                    Mode 2027: Reset Tahunan (Standar Baru)
+                    {t("settings:admin_settings.mode_yearly")}
                   </span>
                   {currentGlobalResetPeriod === "yearly" && (
-                    <StatusBadge tone="info" label="Sedang Aktif" />
+                    <StatusBadge
+                      tone="info"
+                      label={t("settings:admin_settings.active_badge")}
+                    />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pencacah berlanjut 1 tahun penuh dan reset per 1 Januari. Format standar: <code>ALT/JENIS/YYYY/MM/URUT4</code> (4 digit).
+                  {t("settings:admin_settings.mode_yearly_desc")}
                 </p>
                 <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                  Contoh: ALT/INV/2027/01/0001
+                  {t("settings:admin_settings.sample_yearly")}
                 </div>
               </div>
               <Button
@@ -351,7 +357,7 @@ export function AdminSettingsPage() {
                 }
                 className="w-full rounded-xl text-xs h-9 cursor-pointer"
               >
-                Beralih ke Standar Tahunan (2027)
+                {t("settings:admin_settings.btn_apply_yearly")}
               </Button>
             </div>
           </div>
@@ -363,10 +369,10 @@ export function AdminSettingsPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Format Penomoran Dokumen Otomatis
+              {t("settings:admin_settings.sequences_card_title")}
             </CardTitle>
             <CardDescription>
-              Klik tombol <strong>Edit</strong> untuk menyesuaikan pola <code>{"{{tahun}}"}</code>, <code>{"{{bulan}}"}</code>, <code>{"{{urut}}"}</code>, digit urut, maupun periode reset.
+              {t("settings:admin_settings.sequences_card_desc")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -378,7 +384,7 @@ export function AdminSettingsPage() {
                 onClick={() => setIsEditingSeq(false)}
                 className="h-9 rounded-xl px-3.5 text-xs font-medium cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
               >
-                Batal
+                {t("common:action.cancel")}
               </Button>
             ) : (
               <Button
@@ -389,7 +395,7 @@ export function AdminSettingsPage() {
                 className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-blue-600 dark:text-sky-400 bg-blue-50/80 dark:bg-sky-500/10 hover:bg-blue-100/80 dark:hover:bg-sky-500/20 border-blue-200/80 dark:border-sky-500/20 transition-colors shadow-2xs"
               >
                 <PencilIcon className="size-3.5" />
-                Edit
+                {t("settings:admin_settings.btn_edit")}
               </Button>
             )}
           </div>
@@ -437,7 +443,7 @@ export function AdminSettingsPage() {
                       <div className="inline-flex items-center min-h-5 -my-px">
                         <StatusBadge
                           tone="info"
-                          label={RESET_PERIOD_LABELS[seq.reset_period]}
+                          label={t(RESET_PERIOD_KEYS[seq.reset_period])}
                         />
                       </div>
                     </TableCell>
@@ -451,7 +457,7 @@ export function AdminSettingsPage() {
                         </div>
                       ) : (
                         <span className="text-xs sm:text-sm leading-5 text-muted-foreground">
-                          Belum dipakai
+                          {t("settings:admin_settings.status_unused")}
                         </span>
                       )}
                     </TableCell>
@@ -484,21 +490,21 @@ export function AdminSettingsPage() {
       <Card className="overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70">
           <CardTitle className="text-base sm:text-lg font-bold">
-            Template &amp; Catatan Standar Dokumen
+            {t("settings:admin_settings.templates_card_title")}
           </CardTitle>
           <CardDescription>
-            Kelola placeholder default dan catatan footer ketentuan hukum tiap jenis dokumen (Lampiran A.0–A.8).
+            {t("settings:admin_settings.templates_card_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Template</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Versi</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Catatan Ketentuan</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_version")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_notes")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -556,14 +562,18 @@ export function AdminSettingsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              Edit Format Nomor {editingSeq?.doc_type}
+              {t("settings:admin_settings.edit_format_title", {
+                type: editingSeq?.doc_type,
+              })}
             </DialogTitle>
           </DialogHeader>
           {editingSeq ? (
             <form onSubmit={handleSaveSequenceModal}>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="seq-pat" required>Pola Penomoran</FieldLabel>
+                  <FieldLabel htmlFor="seq-pat" required>
+                    {t("settings:admin_settings.field_pattern")}
+                  </FieldLabel>
                   <Input
                     id="seq-pat"
                     required
@@ -577,14 +587,15 @@ export function AdminSettingsPage() {
                     className="font-mono text-xs sm:text-sm"
                   />
                   <FieldDescription className="text-[11px]">
-                    Wajib memuat <code>{"{{urut}}"}</code>. Variabel lain yang tersedia:{" "}
-                    <code>{"{{tahun}}"}</code> dan <code>{"{{bulan}}"}</code>.
+                    {t("settings:admin_settings.field_pattern_desc")}
                   </FieldDescription>
                 </Field>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field>
-                    <FieldLabel htmlFor="seq-dig" required>Jumlah Digit Urut (2–6)</FieldLabel>
+                    <FieldLabel htmlFor="seq-dig" required>
+                      {t("settings:admin_settings.field_digits")}
+                    </FieldLabel>
                     <Input
                       id="seq-dig"
                       type="number"
@@ -601,7 +612,9 @@ export function AdminSettingsPage() {
                     />
                   </Field>
                   <Field>
-                    <FieldLabel required>Periode Reset Pencacah</FieldLabel>
+                    <FieldLabel required>
+                      {t("settings:admin_settings.field_reset_period")}
+                    </FieldLabel>
                     <Select
                       value={editingSeq.reset_period}
                       onValueChange={(val) =>
@@ -616,9 +629,15 @@ export function AdminSettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="monthly">Bulanan</SelectItem>
-                          <SelectItem value="yearly">Tahunan</SelectItem>
-                          <SelectItem value="never">Tanpa Reset</SelectItem>
+                          <SelectItem value="monthly">
+                            {t("settings:admin_settings.reset_monthly")}
+                          </SelectItem>
+                          <SelectItem value="yearly">
+                            {t("settings:admin_settings.reset_yearly")}
+                          </SelectItem>
+                          <SelectItem value="never">
+                            {t("settings:admin_settings.reset_never")}
+                          </SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -628,7 +647,7 @@ export function AdminSettingsPage() {
                 <div className="rounded-xl border border-border/70 bg-muted/20 p-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-medium text-muted-foreground">
-                      Pratinjau Nomor Dihasilkan:
+                      {t("settings:admin_settings.preview_generated")}
                     </p>
                     <p className="text-xs sm:text-sm font-mono font-bold text-primary dark:text-cyan-400">
                       {previewSequenceFormat(editingSeq)}
@@ -642,7 +661,7 @@ export function AdminSettingsPage() {
                     className="h-8 text-xs gap-1.5 rounded-lg cursor-pointer"
                   >
                     <RotateCcwIcon className="size-3.5" />
-                    Default
+                    {t("settings:admin_settings.btn_default")}
                   </Button>
                 </div>
 
@@ -653,11 +672,11 @@ export function AdminSettingsPage() {
                     onClick={() => setEditingSeq(null)}
                     className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
                   >
-                    Batal
+                    {t("common:action.cancel")}
                   </Button>
                   <Button type="submit" disabled={savingSeq} className="cursor-pointer">
                     {savingSeq ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
-                    Simpan Format
+                    {t("settings:admin_settings.btn_save_format")}
                   </Button>
                 </DialogFooter>
               </FieldGroup>
@@ -676,14 +695,18 @@ export function AdminSettingsPage() {
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              Edit Template {editingTemplate?.doc_type}
+              {t("settings:admin_settings.edit_tmpl_title", {
+                type: editingTemplate?.doc_type,
+              })}
             </DialogTitle>
           </DialogHeader>
           {editingTemplate ? (
             <form onSubmit={handleSaveTemplateModal}>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="tmpl-json" required>Placeholder Default (JSON)</FieldLabel>
+                  <FieldLabel htmlFor="tmpl-json" required>
+                    {t("settings:admin_settings.field_placeholder_json")}
+                  </FieldLabel>
                   <Textarea
                     id="tmpl-json"
                     required
@@ -694,7 +717,9 @@ export function AdminSettingsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="tmpl-notes">Catatan Ketentuan Bawah Dokumen</FieldLabel>
+                  <FieldLabel htmlFor="tmpl-notes">
+                    {t("settings:admin_settings.field_footer_notes")}
+                  </FieldLabel>
                   <Textarea
                     id="tmpl-notes"
                     rows={3}
@@ -710,11 +735,11 @@ export function AdminSettingsPage() {
                     onClick={() => setEditingTemplate(null)}
                     className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
                   >
-                    Batal
+                    {t("common:action.cancel")}
                   </Button>
                   <Button type="submit" disabled={savingTmpl} className="cursor-pointer">
                     {savingTmpl ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
-                    Simpan Template
+                    {t("settings:admin_settings.btn_save_template")}
                   </Button>
                 </DialogFooter>
               </FieldGroup>
@@ -730,20 +755,20 @@ export function AdminSettingsPage() {
         }
         title={
           confirmMasterPolicy.period === "yearly"
-            ? "Beralih ke Kebijakan Reset Tahunan (Standar 2027)"
-            : "Terapkan Kebijakan Reset Bulanan (Mode 2026)"
+            ? t("settings:admin_settings.confirm_policy_yearly_title")
+            : t("settings:admin_settings.confirm_policy_monthly_title")
         }
         description={
           confirmMasterPolicy.period === "yearly"
-            ? "Seluruh jenis dokumen resmi akan dialihkan ke siklus reset nomor urut tahunan (1 tahun penuh tanpa reset bulanan) dengan format standar baru ALT/{JENIS}/{YYYY}/{MM}/{URUT4} (4 digit). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
-            : "Seluruh jenis dokumen resmi akan menggunakan siklus reset nomor urut bulanan (reset ke 001 tiap awal bulan baru). Dokumen yang sudah diterbitkan sebelumnya tidak akan berubah."
+            ? t("settings:admin_settings.confirm_policy_yearly_desc")
+            : t("settings:admin_settings.confirm_policy_monthly_desc")
         }
         confirmLabel={
           savingMasterPolicy
-            ? "Menerapkan..."
+            ? t("settings:admin_settings.confirm_policy_applying")
             : confirmMasterPolicy.period === "yearly"
-              ? "Beralih ke Standar 2027"
-              : "Terapkan Mode 2026"
+              ? t("settings:admin_settings.btn_apply_yearly")
+              : t("settings:admin_settings.btn_apply_monthly")
         }
         onConfirm={handleApplyMasterPolicy}
       />

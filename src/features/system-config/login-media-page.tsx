@@ -66,22 +66,36 @@ import {
   listAllLoginMedia,
   updateLoginMediaItem,
 } from "@/lib/data-service";
-import { formatDateTimeID } from "@/lib/formatters";
+import { formatDateTimeI18n } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import type {
   LoginMediaCategory,
   LoginMediaItemRow,
 } from "@/types/database.types";
 
-const CATEGORY_META: Record<
-  LoginMediaCategory,
-  { label: string; tone: "info" | "success" | "warning" }
-> = {
-  banner: { label: "Banner Utama", tone: "info" },
-  flyer: { label: "Flyer Promosi", tone: "warning" },
-  medsos: { label: "Konten Medsos", tone: "success" },
-};
-
 export function LoginMediaPage() {
+  const { t, language } = useLanguage();
+  const categoryMeta: Record<
+    LoginMediaCategory,
+    { label: string; tone: "info" | "success" | "warning" }
+  > = React.useMemo(
+    () => ({
+      banner: {
+        label: t("settings:login_media.category_banner_label"),
+        tone: "info",
+      },
+      flyer: {
+        label: t("settings:login_media.category_flyer_label"),
+        tone: "warning",
+      },
+      medsos: {
+        label: t("settings:login_media.category_medsos_label"),
+        tone: "success",
+      },
+    }),
+    [t],
+  );
+
   const [items, setItems] = React.useState<LoginMediaItemRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [usingLocalFallback, setUsingLocalFallback] = React.useState(false);
@@ -147,12 +161,12 @@ export function LoginMediaPage() {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Gagal memuat daftar media halaman login.",
+          : t("settings:login_media.toast_load_err"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     void loadItems();
@@ -196,13 +210,11 @@ export function LoginMediaPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!titleInput.trim()) {
-      toast.error("Judul media wajib diisi.");
+      toast.error(t("settings:login_media.toast_title_req"));
       return;
     }
     if (!imageUrlInput) {
-      toast.error(
-        "Silakan pilih atau unggah gambar media dari Komputer atau Google Drive.",
-      );
+      toast.error(t("settings:login_media.toast_img_req"));
       return;
     }
 
@@ -219,7 +231,9 @@ export function LoginMediaPage() {
           is_active: activeInput,
         });
         setUsingLocalFallback(!res.savedToCloud);
-        toast.success("Media halaman login berhasil diperbarui.");
+        toast.success(
+          t("settings:login_media.toast_updated", { title: editingItem.title }),
+        );
       } else {
         const res = await createLoginMediaItem({
           title: titleInput.trim(),
@@ -231,13 +245,17 @@ export function LoginMediaPage() {
           is_active: activeInput,
         });
         setUsingLocalFallback(!res.savedToCloud);
-        toast.success("Media baru untuk halaman login berhasil ditambahkan.");
+        toast.success(
+          t("settings:login_media.toast_created", { title: titleInput.trim() }),
+        );
       }
       setDialogOpen(false);
       await loadItems();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menyimpan media login.",
+        err instanceof Error
+          ? err.message
+          : t("settings:login_media.toast_save_err"),
       );
     } finally {
       setSaving(false);
@@ -252,12 +270,14 @@ export function LoginMediaPage() {
       );
       toast.success(
         next
-          ? `"${row.title}" kini ditampilkan pada halaman login.`
-          : `"${row.title}" disembunyikan dari halaman login.`,
+          ? t("settings:login_media.toast_status_active", { title: row.title })
+          : t("settings:login_media.toast_status_inactive", { title: row.title }),
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengubah status media.",
+        err instanceof Error
+          ? err.message
+          : t("settings:login_media.toast_toggle_err"),
       );
     }
   }
@@ -266,12 +286,16 @@ export function LoginMediaPage() {
     if (!deleteTarget) return;
     try {
       await deleteLoginMediaItem(deleteTarget.id);
-      toast.success(`Media "${deleteTarget.title}" berhasil dihapus.`);
+      toast.success(
+        t("settings:login_media.toast_deleted", { title: deleteTarget.title }),
+      );
       setDeleteTarget(null);
       await loadItems();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menghapus media login.",
+        err instanceof Error
+          ? err.message
+          : t("settings:login_media.toast_delete_err"),
       );
     }
   }
@@ -284,7 +308,7 @@ export function LoginMediaPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
         <Spinner className="size-6 text-primary dark:text-sky-400" />
-        <span>Memuat galeri media &amp; banner halaman login...</span>
+        <span>{t("settings:login_media.loading_gallery")}</span>
       </div>
     );
   }
@@ -348,16 +372,16 @@ export function LoginMediaPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Media &amp; Banner Halaman Login
+            {t("settings:login_media.header_title")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Unggah banner, flyer promosi, atau konten media sosial dari komputer maupun Google Drive untuk ditampilkan pada sisi kiri halaman masuk.
+            {t("settings:login_media.header_desc")}
           </p>
         </div>
         <div className="shrink-0">
           <Button type="button" onClick={openCreateDialog}>
             <PlusIcon className="size-4" />
-            <span>Tambah Media Login</span>
+            <span>{t("settings:login_media.btn_add")}</span>
           </Button>
         </div>
       </div>
@@ -365,14 +389,9 @@ export function LoginMediaPage() {
       {usingLocalFallback ? (
         <Alert variant="info">
           <InfoIcon className="size-4" />
-          <AlertTitle>Menunggu Migrasi Tabel Supabase Cloud</AlertTitle>
+          <AlertTitle>{t("settings:login_media.alert_supabase_migration")}</AlertTitle>
           <AlertDescription className="text-xs leading-relaxed">
-            Data media saat ini tersimpan di penyimpanan peramban lokal karena tabel{" "}
-            <code className="font-mono">public.login_media_items</code> belum dijalankan di database cloud. Jalankan berkas{" "}
-            <code className="font-mono">
-              supabase/migrations/0016_login_banner_media.sql
-            </code>{" "}
-            pada SQL Editor Supabase agar banner sinkron lintas perangkat dan publik.
+            {t("settings:login_media.alert_supabase_desc")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -382,13 +401,13 @@ export function LoginMediaPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Total Media Terunggah
+              {t("settings:login_media.kpi_total")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {items.length} Konten
+              {items.length} {t("settings:login_media.unit_content")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Terdaftar di galeri halaman masuk
+              {t("settings:login_media.kpi_total_desc")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -399,17 +418,17 @@ export function LoginMediaPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Aktif Ditampilkan
+              {t("settings:login_media.kpi_active")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {activeItems.length} Tayang
+              {activeItems.length} {t("settings:login_media.unit_live")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {activeItems.length > 1
-                ? "Otomatis bergulir sebagai carousel"
+                ? t("settings:login_media.kpi_active_desc_carousel")
                 : activeItems.length === 1
-                  ? "Tampil statis pada panel kiri login"
-                  : "Menampilkan kanvas grid default"}
+                  ? t("settings:login_media.kpi_active_desc_static")
+                  : t("settings:login_media.kpi_active_desc_default")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -420,13 +439,17 @@ export function LoginMediaPage() {
         <Card className="p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Komposisi Kategori
+              {t("settings:login_media.kpi_composition")}
             </p>
             <p className="text-base sm:text-lg font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {bannerCount} Banner &bull; {flyerCount} Flyer &bull; {medsosCount} Medsos
+              {t("settings:login_media.kpi_comp_count", {
+                banner: bannerCount,
+                flyer: flyerCount,
+                medsos: medsosCount,
+              })}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Mendukung upload lokal &amp; Google Drive
+              {t("settings:login_media.kpi_composition_desc")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -439,9 +462,9 @@ export function LoginMediaPage() {
       <Card className="overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>Pratinjau Panel Kiri Halaman Login</CardTitle>
+            <CardTitle>{t("settings:login_media.preview_panel_title")}</CardTitle>
             <CardDescription>
-              Simulasi tampilan panel visual di sisi kiri halaman masuk ketika pengguna mengakses sistem.
+              {t("settings:login_media.preview_panel_desc")}
             </CardDescription>
           </div>
           {activeItems.length > 1 ? (
@@ -456,7 +479,7 @@ export function LoginMediaPage() {
                     (prev) => (prev - 1 + activeItems.length) % activeItems.length,
                   )
                 }
-                aria-label="Slide sebelumnya"
+                aria-label={t("settings:login_media.prev_slide")}
               >
                 <ChevronLeftIcon className="size-4" />
               </Button>
@@ -471,7 +494,7 @@ export function LoginMediaPage() {
                 onClick={() =>
                   setPreviewIdx((prev) => (prev + 1) % activeItems.length)
                 }
-                aria-label="Slide berikutnya"
+                aria-label={t("settings:login_media.next_slide")}
               >
                 <ChevronRightIcon className="size-4" />
               </Button>
@@ -509,7 +532,7 @@ export function LoginMediaPage() {
                     <div className="min-w-0 flex flex-col items-start gap-1">
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-sky-300 leading-none">
                         <span className="size-1.5 rounded-full bg-sky-400 shrink-0" />
-                        <span>{CATEGORY_META[previewSlide.category].label}</span>
+                        <span>{categoryMeta[previewSlide.category].label}</span>
                       </span>
                       <p className="text-sm font-bold text-white leading-snug text-left truncate max-w-full">
                         {previewSlide.title}
@@ -528,10 +551,10 @@ export function LoginMediaPage() {
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0f_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0f_1px,transparent_1px)] bg-[size:36px_36px]" />
                 <SparklesIcon className="size-7 text-sky-400/80 mb-2 relative z-10" />
                 <p className="text-sm font-semibold text-white relative z-10">
-                  Belum Ada Media Aktif
+                  {t("settings:login_media.preview_empty_title")}
                 </p>
                 <p className="text-xs text-white/70 mt-1 max-w-md relative z-10">
-                  Klik &ldquo;Tambah Media Login&rdquo; untuk mengunggah banner, flyer, atau konten media sosial agar tampil menggantikan kanvas grid bawaan.
+                  {t("settings:login_media.preview_empty_desc")}
                 </p>
               </div>
             )}
@@ -544,10 +567,10 @@ export function LoginMediaPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Daftar Media Banner &amp; Konten
+              {t("settings:login_media.table_title")}
             </CardTitle>
             <CardDescription>
-              Atur urutan tayang, kategori konten, serta visibilitas media pada halaman masuk.
+              {t("settings:login_media.table_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -556,7 +579,7 @@ export function LoginMediaPage() {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari judul atau tautan..."
+                placeholder={t("settings:login_media.search_input_placeholder")}
                 className="pl-9 h-9 rounded-xl text-xs sm:text-sm"
               />
             </div>
@@ -571,7 +594,7 @@ export function LoginMediaPage() {
                 className="gap-2"
               >
                 <SlidersHorizontalIcon className="size-4" />
-                <span>Filter</span>
+                <span>{t("common:action.filter")}</span>
                 {categoryFilter !== "all" || statusFilter !== "all" ? (
                   <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold tabular-nums">
                     {(categoryFilter !== "all" ? 1 : 0) +
@@ -584,7 +607,7 @@ export function LoginMediaPage() {
                 <div className="absolute right-0 top-full mt-2 z-50 w-68 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-border/70 flex items-center justify-between gap-2">
                     <span className="text-xs sm:text-sm font-semibold text-foreground">
-                      Filter Media
+                      {t("settings:login_media.filter_media_title")}
                     </span>
                     {categoryFilter !== "all" || statusFilter !== "all" ? (
                       <button
@@ -595,7 +618,7 @@ export function LoginMediaPage() {
                         }}
                         className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
                       >
-                        Reset
+                        {t("common:action.reset")}
                       </button>
                     ) : null}
                   </div>
@@ -603,15 +626,27 @@ export function LoginMediaPage() {
                   <div className="p-3.5 space-y-4">
                     <div className="space-y-1.5">
                       <p className="px-1 text-xs font-semibold text-muted-foreground">
-                        Kategori Media
+                        {t("settings:login_media.filter_category")}
                       </p>
                       <div className="space-y-1">
                         {(
                           [
-                            { value: "all", label: "Semua Kategori" },
-                            { value: "banner", label: "Banner Utama" },
-                            { value: "flyer", label: "Flyer Promosi" },
-                            { value: "medsos", label: "Konten Medsos" },
+                            {
+                              value: "all",
+                              label: t("settings:login_media.filter_all_cat"),
+                            },
+                            {
+                              value: "banner",
+                              label: t("settings:login_media.filter_banner"),
+                            },
+                            {
+                              value: "flyer",
+                              label: t("settings:login_media.filter_flyer"),
+                            },
+                            {
+                              value: "medsos",
+                              label: t("settings:login_media.filter_medsos"),
+                            },
                           ] as const
                         ).map((opt) => {
                           const active = categoryFilter === opt.value;
@@ -640,14 +675,23 @@ export function LoginMediaPage() {
 
                     <div className="space-y-2">
                       <p className="px-1 text-xs font-semibold text-muted-foreground">
-                        Status Tayang
+                        {t("settings:login_media.filter_status_heading")}
                       </p>
                       <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-border/70 bg-muted/35 p-1">
                         {(
                           [
-                            { value: "all", label: "Semua" },
-                            { value: "active", label: "Aktif" },
-                            { value: "inactive", label: "Nonaktif" },
+                            {
+                              value: "all",
+                              label: t("settings:login_media.filter_all"),
+                            },
+                            {
+                              value: "active",
+                              label: t("settings:login_media.filter_active"),
+                            },
+                            {
+                              value: "inactive",
+                              label: t("settings:login_media.filter_inactive"),
+                            },
                           ] as const
                         ).map((opt) => (
                           <button
@@ -680,7 +724,9 @@ export function LoginMediaPage() {
             >
               <ArrowUpDownIcon className="size-4" />
               <span>
-                Urutan: {sortOrder === "asc" ? "Terkecil" : "Terbesar"}
+                {sortOrder === "asc"
+                  ? t("settings:login_media.sort_order_asc")
+                  : t("settings:login_media.sort_order_desc")}
               </span>
             </Button>
           </div>
@@ -690,25 +736,25 @@ export function LoginMediaPage() {
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
                 <TableHead className="pl-6 pr-3 text-center font-semibold w-20 whitespace-nowrap">
-                  Urutan
+                  {t("settings:login_media.col_order")}
                 </TableHead>
                 <TableHead className="px-3 text-center font-semibold w-28 whitespace-nowrap">
-                  Pratinjau
+                  {t("settings:login_media.col_preview")}
                 </TableHead>
                 <TableHead className="px-3 text-center font-semibold">
-                  Judul &amp; Keterangan
+                  {t("settings:login_media.col_title_sub")}
                 </TableHead>
                 <TableHead className="px-3 text-center font-semibold w-36 whitespace-nowrap">
-                  Kategori
+                  {t("settings:login_media.col_category")}
                 </TableHead>
                 <TableHead className="px-3 text-center font-semibold w-36 whitespace-nowrap">
-                  Tautan
+                  {t("settings:login_media.col_link")}
                 </TableHead>
                 <TableHead className="px-3 text-center font-semibold w-32 whitespace-nowrap">
-                  Status
+                  {t("settings:login_media.col_status")}
                 </TableHead>
                 <TableHead className="pl-2 pr-6 text-center font-semibold w-28 whitespace-nowrap">
-                  Aksi
+                  {t("common:table.actions")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -721,19 +767,19 @@ export function LoginMediaPage() {
                         <ImageIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        Tidak Ada Media Ditemukan
+                        {t("settings:login_media.empty_title")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
                         {items.length === 0
-                          ? "Tambahkan banner, flyer promosi, atau konten media sosial agar tampil di sisi kiri halaman login."
-                          : "Ubah kata kunci pencarian atau filter kategori/status di kanan atas."}
+                          ? t("settings:login_media.empty_hint_none")
+                          : t("settings:login_media.empty_hint_items")}
                       </p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 paginatedItems.map((row) => {
-                  const meta = CATEGORY_META[row.category];
+                  const meta = categoryMeta[row.category];
                   return (
                     <TableRow key={row.id}>
                       <TableCell className="pl-6 pr-3 text-center font-mono font-semibold tabular-nums whitespace-nowrap">
@@ -758,7 +804,9 @@ export function LoginMediaPage() {
                           </p>
                         ) : null}
                         <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
-                          Diperbarui {formatDateTimeID(row.updated_at)}
+                          {t("settings:login_media.updated_at_label", {
+                            date: formatDateTimeI18n(row.updated_at, language),
+                          })}
                         </p>
                       </TableCell>
                       <TableCell className="px-3 text-center whitespace-nowrap">
@@ -779,7 +827,9 @@ export function LoginMediaPage() {
                             className="inline-flex items-center gap-1.5 text-xs sm:text-sm leading-5 font-medium text-foreground hover:text-primary dark:hover:text-sky-400 transition-colors max-w-32 truncate"
                             title={row.link_url}
                           >
-                            <span className="truncate">Buka Tautan</span>
+                            <span className="truncate">
+                              {t("settings:login_media.open_link")}
+                            </span>
                             <ExternalLinkIcon className="size-3.5 shrink-0" />
                           </a>
                         ) : (
@@ -795,7 +845,10 @@ export function LoginMediaPage() {
                             onCheckedChange={(v) =>
                               void handleToggleActive(row, v)
                             }
-                            aria-label={`Aktifkan tampilan ${row.title}`}
+                            aria-label={t(
+                              "settings:login_media.toast_status_active",
+                              { title: row.title },
+                            )}
                           />
                           <span
                             className={`text-xs sm:text-sm leading-5 font-medium ${
@@ -804,7 +857,9 @@ export function LoginMediaPage() {
                                 : "text-muted-foreground"
                             }`}
                           >
-                            {row.is_active ? "Aktif" : "Nonaktif"}
+                            {row.is_active
+                              ? t("settings:login_media.filter_active")
+                              : t("settings:login_media.filter_inactive")}
                           </span>
                         </div>
                       </TableCell>
@@ -814,23 +869,27 @@ export function LoginMediaPage() {
                             type="button"
                             size="icon"
                             variant="ghost"
-                            title="Edit Media"
+                            title={t("settings:login_media.edit_media")}
                             className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10"
                             onClick={() => openEditDialog(row)}
                           >
                             <PencilIcon className="size-4" />
-                            <span className="sr-only">Edit Media</span>
+                            <span className="sr-only">
+                              {t("settings:login_media.edit_media")}
+                            </span>
                           </Button>
                           <Button
                             type="button"
                             size="icon"
                             variant="ghost"
-                            title="Hapus Media"
+                            title={t("settings:login_media.delete_media")}
                             className="size-8 rounded-lg text-destructive hover:bg-destructive/10"
                             onClick={() => setDeleteTarget(row)}
                           >
                             <Trash2Icon className="size-4" />
-                            <span className="sr-only">Hapus Media</span>
+                            <span className="sr-only">
+                              {t("settings:login_media.delete_media")}
+                            </span>
                           </Button>
                         </div>
                       </TableCell>
@@ -845,8 +904,12 @@ export function LoginMediaPage() {
           <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs sm:text-sm text-muted-foreground tabular-nums">
               {totalFiltered === 0
-                ? "0 dari 0"
-                : `${startDisplay}–${endDisplay} dari ${totalFiltered.toLocaleString("id-ID")}`}
+                ? t("settings:login_media.pagination_zero")
+                : t("settings:login_media.pagination_summary", {
+                    start: startDisplay,
+                    end: endDisplay,
+                    total: totalFiltered.toLocaleString("id-ID"),
+                  })}
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -857,8 +920,8 @@ export function LoginMediaPage() {
                   size="icon"
                   disabled={safePage <= 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  title="Halaman sebelumnya"
-                  aria-label="Halaman sebelumnya"
+                  title={t("settings:login_media.pagination_prev")}
+                  aria-label={t("settings:login_media.pagination_prev")}
                   className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronLeftIcon className="size-4" />
@@ -899,8 +962,8 @@ export function LoginMediaPage() {
                   onClick={() =>
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
-                  title="Halaman berikutnya"
-                  aria-label="Halaman berikutnya"
+                  title={t("settings:login_media.pagination_next")}
+                  aria-label={t("settings:login_media.pagination_next")}
                   className="size-8 rounded-lg text-muted-foreground hover:text-foreground disabled:opacity-40 cursor-pointer"
                 >
                   <ChevronRightIcon className="size-4" />
@@ -931,8 +994,8 @@ export function LoginMediaPage() {
           <DialogHeader>
             <DialogTitle>
               {editingItem
-                ? "Edit Media Halaman Login"
-                : "Tambah Media Halaman Login"}
+                ? t("settings:login_media.modal_edit_header")
+                : t("settings:login_media.modal_add_title")}
             </DialogTitle>
           </DialogHeader>
 
@@ -941,19 +1004,19 @@ export function LoginMediaPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field className="sm:col-span-2">
                   <FieldLabel htmlFor="lm-title" required>
-                    Judul Konten
+                    {t("settings:login_media.field_title_content")}
                   </FieldLabel>
                   <Input
                     id="lm-title"
                     required
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
-                    placeholder="Contoh: Promo Layanan ERP & Pengembangan Web"
+                    placeholder={t("settings:login_media.field_title_ph")}
                   />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="lm-order" required>
-                    Urutan Tampil
+                    {t("settings:login_media.field_order_display")}
                   </FieldLabel>
                   <NumberInput
                     id="lm-order"
@@ -968,7 +1031,9 @@ export function LoginMediaPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel required>Kategori Media</FieldLabel>
+                  <FieldLabel required>
+                    {t("settings:login_media.field_category_label")}
+                  </FieldLabel>
                   <Select
                     value={categoryInput}
                     onValueChange={(v) =>
@@ -980,47 +1045,52 @@ export function LoginMediaPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="banner">
-                        Banner Utama (Full Panel)
+                        {t("settings:login_media.category_banner_desc")}
                       </SelectItem>
                       <SelectItem value="flyer">
-                        Flyer Promosi (Proporsi Utuh)
+                        {t("settings:login_media.category_flyer_desc")}
                       </SelectItem>
                       <SelectItem value="medsos">
-                        Konten Medsos (Feed / Poster)
+                        {t("settings:login_media.category_medsos_desc")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="lm-link">Tautan Tujuan (Opsional)</FieldLabel>
+                  <FieldLabel htmlFor="lm-link">
+                    {t("settings:login_media.field_link_target")}
+                  </FieldLabel>
                   <Input
                     id="lm-link"
                     type="url"
                     value={linkUrlInput}
                     onChange={(e) => setLinkUrlInput(e.target.value)}
-                    placeholder="https://instagram.com/altvira.tech"
+                    placeholder={t(
+                      "settings:login_media.field_link_placeholder",
+                      "https://altvira.id atau /portal-pembeli",
+                    )}
                   />
                 </Field>
               </div>
 
               <Field>
                 <FieldLabel htmlFor="lm-subtitle">
-                  Subjudul / Deskripsi Singkat (Opsional)
+                  {t("settings:login_media.field_subtitle_short")}
                 </FieldLabel>
                 <Input
                   id="lm-subtitle"
                   value={subtitleInput}
                   onChange={(e) => setSubtitleInput(e.target.value)}
-                  placeholder="Keterangan singkat yang tampil di bagian bawah banner"
+                  placeholder={t("settings:login_media.field_subtitle_ph")}
                 />
               </Field>
 
               <ImageAssetUploadBox
                 required
-                label="Media Gambar (Banner / Flyer / Konten Medsos)"
-                helperText="Lokal atau Google Drive"
-                emptyTitle="Pilih Gambar dari Komputer atau Google Drive"
-                emptySubtitle="Format PNG, JPG, atau WebP — terintegrasi Google Picker & tautan Drive"
+                label={t("settings:login_media.field_image_upload_label")}
+                helperText={t("settings:login_media.field_image_helper")}
+                emptyTitle={t("settings:login_media.field_image_empty_title")}
+                emptySubtitle={t("settings:login_media.field_image_empty_desc")}
                 value={imageUrlInput}
                 onChange={setImageUrlInput}
                 maxWidth={1440}
@@ -1032,16 +1102,16 @@ export function LoginMediaPage() {
               <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
                 <div>
                   <p className="text-xs font-semibold text-foreground">
-                    Tampilkan di Halaman Login
+                    {t("settings:login_media.field_toggle_login")}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Aktifkan agar media langsung muncul di sisi kiri halaman masuk.
+                    {t("settings:login_media.field_toggle_login_desc")}
                   </p>
                 </div>
                 <Switch
                   checked={activeInput}
                   onCheckedChange={setActiveInput}
-                  aria-label="Tampilkan media di halaman login"
+                  aria-label={t("settings:login_media.field_toggle_login")}
                 />
               </div>
             </FieldGroup>
@@ -1053,11 +1123,15 @@ export function LoginMediaPage() {
                 onClick={() => setDialogOpen(false)}
                 disabled={saving}
               >
-                Batal
+                {t("common:action.cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <Spinner data-icon="inline-start" /> : null}
-                <span>{editingItem ? "Simpan Perubahan" : "Simpan Media"}</span>
+                <span>
+                  {editingItem
+                    ? t("settings:login_media.btn_save_changes")
+                    : t("settings:login_media.btn_save")}
+                </span>
               </Button>
             </DialogFooter>
           </form>
@@ -1070,13 +1144,15 @@ export function LoginMediaPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title="Hapus Media Halaman Login"
+        title={t("settings:login_media.confirm_delete_modal_title")}
         description={
           deleteTarget
-            ? `Apakah Anda yakin ingin menghapus media "${deleteTarget.title}" secara permanen dari galeri halaman masuk?`
+            ? t("settings:login_media.confirm_delete_modal_desc", {
+                title: deleteTarget.title,
+              })
             : ""
         }
-        confirmLabel="Hapus Permanen"
+        confirmLabel={t("settings:login_media.confirm_delete_perm")}
         destructive
         confirmText="DELETE"
         onConfirm={handleConfirmDelete}

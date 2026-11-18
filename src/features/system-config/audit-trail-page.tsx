@@ -64,7 +64,7 @@ function buildPageNumbers(currentPage: number, totalPages: number): Array<number
 }
 
 export function AuditTrailPage() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [logs, setLogs] = React.useState<AuditLogRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -193,7 +193,7 @@ export function AuditTrailPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">ID</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_id", "ID")}</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_timestamp", "Waktu Kejadian")}</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_actor", "Pelaku & Peran")}</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_action", "Tindakan")}</TableHead>
@@ -277,7 +277,7 @@ export function AuditTrailPage() {
                   : t("common:table.pagination_info", {
                       start: startDisplay,
                       end: endDisplay,
-                      total: totalItems.toLocaleString(language === "en" ? "en-US" : "id-ID"),
+                      total: totalItems.toLocaleString("id-ID"),
                       defaultValue: `${startDisplay}–${endDisplay} dari ${totalItems}`,
                     })}
               </p>

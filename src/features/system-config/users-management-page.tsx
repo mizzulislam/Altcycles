@@ -488,7 +488,7 @@ export function UsersManagementPage() {
                 <Input
                   id="u-name"
                   required
-                  placeholder="e.g. Nadia Putri"
+                  placeholder={t("settings:users.ph_full_name", "Contoh: Nadia Putri")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="text-xs h-9"
@@ -502,7 +502,7 @@ export function UsersManagementPage() {
                   id="u-email"
                   type="email"
                   required
-                  placeholder="name@altvira.id"
+                  placeholder={t("settings:users.ph_email", "nama@altvira.id")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="text-xs h-9"
@@ -517,7 +517,7 @@ export function UsersManagementPage() {
                   type="password"
                   required
                   minLength={8}
-                  placeholder="Minimum 8 characters..."
+                  placeholder={t("settings:users.ph_password", "Minimal 8 karakter...")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="text-xs h-9"
