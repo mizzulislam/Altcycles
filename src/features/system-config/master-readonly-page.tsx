@@ -41,9 +41,9 @@ import {
   setPph23EstimateStatus,
 } from "@/lib/data-service";
 import {
-  ACCOUNT_TYPE_LABELS,
   REVENUE_METHOD_LABELS,
 } from "@/lib/formatters";
+import { getLocalizedAccountName, getLocalizedAccountType } from "@/lib/glossary";
 import type {
   AccountRow,
   CustomerRow,
@@ -53,8 +53,7 @@ import type {
 import { CurrencySettingsCard } from "./currency-settings-card";
 
 export function MasterReadonlyPage() {
-  const { language } = useLanguage();
-  const isEn = language === "en";
+  const { t, language } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
@@ -112,12 +111,10 @@ export function MasterReadonlyPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {isEn ? "Accounting Controls & Setup" : "Pengaturan & Kontrol Akuntansi"}
+            {t("settings:master_readonly.controls_title", "Pengaturan & Kontrol Akuntansi")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {isEn
-              ? "Manage journal locks and review chart of accounts and master entities structure."
-              : "Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master."}
+            {t("settings:master_readonly.controls_desc", "Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master.")}
           </p>
         </div>
       </div>
@@ -131,17 +128,13 @@ export function MasterReadonlyPage() {
               <div className="flex items-center gap-2">
                 <ShieldCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
                 <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
-                  {isEn ? "Journal & Bookkeeping Lock" : "Kunci Jurnal & Pembukuan"}
+                  {t("settings:master_readonly.journal_lock_title", "Kunci Jurnal & Pembukuan")}
                 </h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {journalLockEnabled
-                  ? isEn
-                    ? "All journal entries are automatically locked to preserve audit trail integrity. Transactions in the Treasurer portal cannot be edited or deleted."
-                    : "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus."
-                  : isEn
-                    ? "Journal lock temporarily disabled. Admin and Treasurer are allowed to edit and delete journal entries for testing purposes."
-                    : "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan mengedit serta menghapus transaksi jurnal untuk pengujian sistem."}
+                  ? t("settings:master_readonly.journal_lock_desc_active", "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus.")
+                  : t("settings:master_readonly.journal_lock_desc_inactive", "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan mengedit serta menghapus transaksi jurnal untuk pengujian sistem.")}
               </p>
             </div>
             <label
@@ -149,7 +142,7 @@ export function MasterReadonlyPage() {
               className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
             >
               <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {journalLockEnabled ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif")}
+                {journalLockEnabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
               </span>
               <Switch
                 id="journal-lock-switch"
@@ -162,12 +155,12 @@ export function MasterReadonlyPage() {
                     await setJournalLockStatus(nextVal);
                     setJournalLockEnabled(nextVal);
                     if (nextVal) {
-                      toast.success(isEn ? "Journal lock enabled (Production Mode)." : "Kunci jurnal diaktifkan (Mode Produksi).");
+                      toast.success(t("settings:master_readonly.journal_lock_toast_enabled", "Kunci jurnal diaktifkan (Mode Produksi)."));
                     } else {
-                      toast.warning(isEn ? "Journal lock disabled (Testing Mode Active: Transactions can be edited & deleted)." : "Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus).");
+                      toast.warning(t("settings:master_readonly.journal_lock_toast_disabled", "Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus)."));
                     }
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status kunci jurnal.");
+                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status kunci jurnal."));
                   } finally {
                     setTogglingLock(false);
                   }
@@ -184,17 +177,13 @@ export function MasterReadonlyPage() {
               <div className="flex items-center gap-2">
                 <BookCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
                 <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
-                  {isEn ? "Automated Period Closing" : "Tutup Buku Otomatis"}
+                  {t("settings:master_readonly.auto_close_title", "Tutup Buku Otomatis")}
                 </h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {autoClosingEnabled
-                  ? isEn
-                    ? "System automatically computes and posts GAAP/IFRS closing entries to Income Summary and Retained Earnings upon closing."
-                    : "Sistem otomatis menghitung dan memposting jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Laba Ditahan saat tutup buku periode."
-                  : isEn
-                    ? "Automated closing disabled. Treasurer and Admin can record manual closing entries or close period without auto-posting."
-                    : "Tutup buku otomatis dinonaktifkan. Bendahara dan Admin dapat mencatat jurnal penutup secara manual atau menutup periode tanpa auto-posting."}
+                  ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis menghitung dan memposting jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Laba Ditahan saat tutup buku periode.")
+                  : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis dinonaktifkan. Bendahara dan Admin dapat mencatat jurnal penutup secara manual atau menutup periode tanpa auto-posting.")}
               </p>
             </div>
             <label
@@ -202,7 +191,7 @@ export function MasterReadonlyPage() {
               className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
             >
               <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {autoClosingEnabled ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif")}
+                {autoClosingEnabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
               </span>
               <Switch
                 id="auto-closing-switch"
@@ -215,12 +204,12 @@ export function MasterReadonlyPage() {
                     await setAutoClosingStatus(nextVal);
                     setAutoClosingEnabled(nextVal);
                     if (nextVal) {
-                      toast.success(isEn ? "Automated closing enabled." : "Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode.");
+                      toast.success(t("settings:master_readonly.auto_close_toast_enabled", "Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode."));
                     } else {
-                      toast.info(isEn ? "Automated closing disabled." : "Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara.");
+                      toast.info(t("settings:master_readonly.auto_close_toast_disabled", "Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara."));
                     }
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status tutup buku otomatis.");
+                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status tutup buku otomatis."));
                   } finally {
                     setTogglingAutoClosing(false);
                   }
@@ -237,17 +226,13 @@ export function MasterReadonlyPage() {
               <div className="flex items-center gap-2">
                 <PercentIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
                 <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
-                  {isEn ? "Estimated PPh 23 (2%)" : "Estimasi PPh 23 (2%)"}
+                  {t("settings:master_readonly.pph23_title", "Estimasi PPh 23 (2%)")}
                 </h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 {pph23Enabled
-                  ? isEn
-                    ? "PPh Article 23 withholding information (2% of taxable base) and net cash estimate are automatically displayed on client Invoice print documents."
-                    : "Informasi pemotongan PPh Pasal 23 (2% dari DPP) dan estimasi kas bersih ditampilkan otomatis pada dokumen cetak PDF/Word Invoice klien."
-                  : isEn
-                    ? "PPh Article 23 estimate (2%) is hidden from client invoice print documents, displaying standard billing totals only."
-                    : "Estimasi potongan PPh Pasal 23 (2%) disembunyikan dari dokumen cetak Invoice klien sehingga hanya menampilkan nilai tagihan standar."}
+                  ? t("settings:master_readonly.pph23_desc_active", "Informasi pemotongan PPh Pasal 23 (2% dari DPP) dan estimasi kas bersih ditampilkan otomatis pada dokumen cetak PDF/Word Invoice klien.")
+                  : t("settings:master_readonly.pph23_desc_inactive", "Estimasi potongan PPh Pasal 23 (2%) disembunyikan dari dokumen cetak Invoice klien sehingga hanya menampilkan nilai tagihan standar.")}
               </p>
             </div>
             <label
@@ -255,7 +240,7 @@ export function MasterReadonlyPage() {
               className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
             >
               <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {pph23Enabled ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif")}
+                {pph23Enabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
               </span>
               <Switch
                 id="pph23-estimate-switch"
@@ -268,12 +253,12 @@ export function MasterReadonlyPage() {
                     await setPph23EstimateStatus(nextVal);
                     setPph23Enabled(nextVal);
                     if (nextVal) {
-                      toast.success(isEn ? "PPh 23 estimate (2%) enabled on client invoices." : "Estimasi PPh 23 (2%) diaktifkan pada dokumen cetak Invoice klien.");
+                      toast.success(t("settings:master_readonly.pph23_toast_enabled", "Estimasi PPh 23 (2%) diaktifkan pada dokumen cetak Invoice klien."));
                     } else {
-                      toast.info(isEn ? "PPh 23 estimate (2%) disabled on client invoices." : "Estimasi PPh 23 (2%) dinonaktifkan pada dokumen cetak Invoice klien.");
+                      toast.info(t("settings:master_readonly.pph23_toast_disabled", "Estimasi PPh 23 (2%) dinonaktifkan pada dokumen cetak Invoice klien."));
                     }
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Gagal mengubah status estimasi PPh 23.");
+                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status estimasi PPh 23."));
                   } finally {
                     setTogglingPph23(false);
                   }
@@ -291,28 +276,28 @@ export function MasterReadonlyPage() {
         <TabsList>
           <TabsTrigger value="coa">
             <BookOpenIcon className="size-4 shrink-0" />
-            <span>{isEn ? "Chart of Accounts" : "Bagan Akun"}</span>
+            <span>{t("settings:master_readonly.tab_coa", "Bagan Akun (CoA)")}</span>
             <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums bg-muted text-muted-foreground group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white transition-colors">
               {accounts.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="proyek">
             <FolderKanbanIcon className="size-4 shrink-0" />
-            <span>{isEn ? "Projects" : "Proyek"}</span>
+            <span>{t("settings:master_readonly.tab_projects", "Proyek")}</span>
             <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums bg-muted text-muted-foreground group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white transition-colors">
               {projects.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="vendor">
             <Building2Icon className="size-4 shrink-0" />
-            <span>{isEn ? "Vendors" : "Vendor"}</span>
+            <span>{t("settings:master_readonly.tab_vendors", "Vendor")}</span>
             <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums bg-muted text-muted-foreground group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white transition-colors">
               {vendors.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="pelanggan">
             <UsersIcon className="size-4 shrink-0" />
-            <span>{isEn ? "Customers" : "Pelanggan"}</span>
+            <span>{t("settings:master_readonly.tab_customers", "Pelanggan")}</span>
             <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums bg-muted text-muted-foreground group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white transition-colors">
               {customers.length}
             </span>
@@ -322,21 +307,21 @@ export function MasterReadonlyPage() {
         <TabsContent value="coa">
           <Card className="overflow-hidden">
             <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{isEn ? "Chart of Accounts (COA)" : "Bagan Akun (Chart of Accounts)"}</CardTitle>
+              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.coa_card_title", "Bagan Akun (Chart of Accounts)")}</CardTitle>
               <CardDescription>
-                {isEn ? "Read-only monitoring view for Super Admin." : "Tampilan pemantauan hanya-baca untuk Super Admin."}
+                {t("settings:master_readonly.coa_card_desc", "Tampilan pemantauan hanya-baca untuk Super Admin.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Account Name" : "Nama Akun"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Type" : "Tipe"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Normal Balance" : "Saldo Normal"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "System Tag" : "Penanda Sistem"}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Status" : "Status"}</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_account_name", "Nama Akun")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_type", "Tipe")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_normal_balance", "Saldo Normal")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_system_tag", "Penanda Sistem")}</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -345,12 +330,14 @@ export function MasterReadonlyPage() {
                       <TableCell className="pl-6 pr-3 font-mono font-semibold text-center whitespace-nowrap">
                         {acc.code}
                       </TableCell>
-                      <TableCell className="px-3 font-medium">{acc.name}</TableCell>
+                      <TableCell className="px-3 font-medium">
+                        {getLocalizedAccountName(acc, language)}
+                      </TableCell>
                       <TableCell className="px-3 text-center">
-                        {ACCOUNT_TYPE_LABELS[acc.account_type]}
+                        {getLocalizedAccountType(acc.account_type, language)}
                       </TableCell>
                       <TableCell className="px-3 capitalize text-center">
-                        {acc.normal_balance}
+                        {acc.normal_balance === "debit" ? t("accounting:normal_balance.debit", "Debit") : t("accounting:normal_balance.credit", "Kredit")}
                       </TableCell>
                       <TableCell className="px-3 font-mono text-muted-foreground text-center">
                         {acc.system_tag}
@@ -359,7 +346,7 @@ export function MasterReadonlyPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={acc.is_active ? "success" : "secondary"}
-                            label={acc.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif")}
+                            label={acc.is_active ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
                           />
                         </div>
                       </TableCell>
@@ -374,19 +361,19 @@ export function MasterReadonlyPage() {
         <TabsContent value="proyek">
           <Card className="overflow-hidden">
             <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{isEn ? "Projects List" : "Daftar Proyek"}</CardTitle>
-              <CardDescription>{isEn ? "Read-only monitoring view of client and internal projects." : "Tampilan pemantauan hanya-baca proyek klien dan internal."}</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.projects_card_title", "Daftar Proyek")}</CardTitle>
+              <CardDescription>{t("settings:master_readonly.projects_card_desc", "Tampilan pemantauan hanya-baca proyek klien dan internal.")}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Project Name" : "Nama Proyek"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">{isEn ? "Contract Value" : "Nilai Kontrak"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Milestones" : "Termin"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Revenue Method" : "Metode Pengakuan"}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Status" : "Status"}</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_project_name", "Nama Proyek")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">{t("settings:master_readonly.col_contract_value", "Nilai Kontrak")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_milestones", "Termin")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_rev_method", "Metode Pengakuan")}</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -400,7 +387,7 @@ export function MasterReadonlyPage() {
                         <MonetaryCell amount={p.contract_value} />
                       </TableCell>
                       <TableCell className="px-3 text-center tabular-nums whitespace-nowrap">
-                        {p.term_count} {isEn ? "Milestones" : "Termin"}
+                        {t("settings:master_readonly.milestones_count", { count: p.term_count })}
                       </TableCell>
                       <TableCell className="px-3 text-center text-muted-foreground">
                         {REVENUE_METHOD_LABELS[p.revenue_method]}
@@ -421,18 +408,18 @@ export function MasterReadonlyPage() {
         <TabsContent value="vendor">
           <Card className="overflow-hidden">
             <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{isEn ? "Vendors List" : "Daftar Vendor"}</CardTitle>
-              <CardDescription>{isEn ? "Read-only supplier directory for system oversight." : "Direktori vendor pemasok hanya-baca untuk pengawasan sistem."}</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.vendors_card_title", "Daftar Vendor")}</CardTitle>
+              <CardDescription>{t("settings:master_readonly.vendors_card_desc", "Direktori vendor pemasok hanya-baca untuk pengawasan sistem.")}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Vendor Name" : "Nama Vendor"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Contact" : "Kontak"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Bank Account" : "Rekening"}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Status" : "Status"}</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_vendor_name", "Nama Vendor")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_contact", "Kontak")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_bank_account", "Rekening")}</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -448,7 +435,7 @@ export function MasterReadonlyPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={v.is_active ? "success" : "secondary"}
-                            label={v.is_active ? "Aktif" : "Nonaktif"}
+                            label={v.is_active ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
                           />
                         </div>
                       </TableCell>
@@ -463,18 +450,18 @@ export function MasterReadonlyPage() {
         <TabsContent value="pelanggan">
           <Card className="overflow-hidden">
             <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{isEn ? "Customers List" : "Daftar Pelanggan"}</CardTitle>
-              <CardDescription>{isEn ? "Read-only company client and customer database." : "Basis data pelanggan dan klien perusahaan hanya-baca."}</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.customers_card_title", "Daftar Pelanggan")}</CardTitle>
+              <CardDescription>{t("settings:master_readonly.customers_card_desc", "Basis data pelanggan dan klien perusahaan hanya-baca.")}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Name / Company" : "Nama / Perusahaan"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "PIC" : "PIC"}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Email" : "Email"}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Status" : "Status"}</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_customer_name", "Nama / Perusahaan")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_pic", "PIC")}</TableHead>
+                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_email", "Email")}</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -488,7 +475,7 @@ export function MasterReadonlyPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={c.is_active ? "success" : "secondary"}
-                            label={c.is_active ? "Aktif" : "Nonaktif"}
+                            label={c.is_active ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
                           />
                         </div>
                       </TableCell>

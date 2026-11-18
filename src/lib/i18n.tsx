@@ -20,6 +20,10 @@ import profitSharingId from "@/locales/id/profit_sharing.json";
 import profitSharingEn from "@/locales/en/profit_sharing.json";
 import dashboardId from "@/locales/id/dashboard.json";
 import dashboardEn from "@/locales/en/dashboard.json";
+import partiesId from "@/locales/id/parties.json";
+import partiesEn from "@/locales/en/parties.json";
+import settingsId from "@/locales/id/settings.json";
+import settingsEn from "@/locales/en/settings.json";
 
 export type Language = "id" | "en";
 
@@ -56,6 +60,8 @@ if (!i18n.isInitialized) {
         budgeting: budgetingId,
         profit_sharing: profitSharingId,
         dashboard: dashboardId,
+        parties: partiesId,
+        settings: settingsId,
       },
       en: {
         common: commonEn,
@@ -67,6 +73,8 @@ if (!i18n.isInitialized) {
         budgeting: budgetingEn,
         profit_sharing: profitSharingEn,
         dashboard: dashboardEn,
+        parties: partiesEn,
+        settings: settingsEn,
       },
     },
     lng: getActiveLanguage(),
@@ -1037,6 +1045,8 @@ export function resolveTranslation(
     "budgeting",
     "profit_sharing",
     "dashboard",
+    "parties",
+    "settings",
   ];
   if (!normalizedKey.includes(":")) {
     for (const ns of knownNamespaces) {

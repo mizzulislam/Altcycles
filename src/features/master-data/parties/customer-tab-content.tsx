@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveCustomer } from "@/lib/data-service";
-import { useLanguage, getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -77,7 +77,7 @@ export function CustomerTabContent({
     e.preventDefault();
     try {
       await saveCustomer(cstForm);
-      toast.success("Data pelanggan berhasil disimpan.");
+      toast.success(t("parties:customers.toast_saved", "Data pelanggan berhasil disimpan."));
       setCstOpen(false);
       await onReload();
     } catch (err) {
@@ -88,37 +88,24 @@ export function CustomerTabContent({
   }
 
   async function handleExportCustomersExcel() {
-    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
+      toast.error(t("parties:customers.export_toast_no_data", "Tidak ada data pelanggan untuk diekspor."));
       return;
     }
     await downloadExcelSheet({
-      sheetName: isEn ? "Clients List" : "Daftar Pelanggan",
-      fileName: isEn ? "Master_Clients_Altcycles.xlsx" : "Master_Pelanggan_Altcycles.xlsx",
-      columns: isEn
-        ? [
-            { header: "Code", width: 14 },
-            { header: "Full Name", width: 28 },
-            { header: "Company / Institution", width: 28 },
-            { header: "PIC", width: 22 },
-            { header: "Title", width: 20 },
-            { header: "Email", width: 24 },
-            { header: "Phone", width: 18 },
-            { header: "Address", width: 36 },
-            { header: "Status", width: 14 },
-          ]
-        : [
-            { header: "Kode", width: 14 },
-            { header: "Nama Lengkap", width: 28 },
-            { header: "Perusahaan / Instansi", width: 28 },
-            { header: "PIC", width: 22 },
-            { header: "Jabatan", width: 20 },
-            { header: "Email", width: 24 },
-            { header: "Telepon", width: 18 },
-            { header: "Alamat", width: 36 },
-            { header: "Status", width: 14 },
-          ],
+      sheetName: t("parties:customers.export_excel_sheet", "Daftar Pelanggan"),
+      fileName: t("parties:customers.export_excel_filename", "Master_Pelanggan_Altcycles.xlsx"),
+      columns: [
+        { header: t("parties:customers.col_code", "Kode"), width: 14 },
+        { header: t("parties:customers.col_name", "Nama Lengkap"), width: 28 },
+        { header: t("parties:customers.modal_name", "Perusahaan / Instansi"), width: 28 },
+        { header: t("parties:customers.modal_pic", "PIC"), width: 22 },
+        { header: t("parties:customers.modal_pic_title", "Jabatan"), width: 20 },
+        { header: t("parties:customers.modal_email", "Email"), width: 24 },
+        { header: t("parties:customers.modal_phone", "Telepon"), width: 18 },
+        { header: t("parties:customers.modal_address", "Alamat"), width: 36 },
+        { header: t("parties:customers.col_status", "Status"), width: 14 },
+      ],
       rows: customers.map((c) => [
         c.code,
         c.name,
@@ -128,52 +115,44 @@ export function CustomerTabContent({
         c.email ?? "-",
         c.phone ?? "-",
         c.address ?? "-",
-        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success(isEn ? "Clients list successfully exported to Excel (.xlsx)." : "Daftar pelanggan berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("parties:customers.export_toast_excel", "Daftar pelanggan berhasil diekspor ke Excel (.xlsx)."));
   }
 
   async function handleExportCustomersPdf() {
-    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
+      toast.error(t("parties:customers.export_toast_no_data", "Tidak ada data pelanggan untuk diekspor."));
       return;
     }
     const comp = await getCompanyProfile();
+    const activeCount = customers.filter((c) => c.is_active).length;
+    const inactiveCount = customers.filter((c) => !c.is_active).length;
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "OFFICIAL CLIENTS & CUSTOMERS DIRECTORY" : "DAFTAR MASTER PELANGGAN RESMI",
-      docSubtitle: isEn
-        ? "Summary of Company Clients, Customers, & Strategic Partners"
-        : "Rekapitulasi Basis Data Klien, Pelanggan, & Mitra Strategis Perusahaan",
+      docTitle: t("parties:customers.export_pdf_title", "DAFTAR MASTER PELANGGAN RESMI"),
+      docSubtitle: t("parties:customers.export_pdf_subtitle", "Basis Data Klien & Pelanggan Resmi Perusahaan"),
       docNumber: `REKAP-CST-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: isEn ? "Total Clients" : "Total Pelanggan", value: isEn ? `${customers.length} clients` : `${customers.length} klien` },
         {
-          label: isEn ? "Client Status" : "Status Klien",
-          value: isEn
-            ? `${customers.filter((c) => c.is_active).length} Active, ${customers.filter((c) => !c.is_active).length} Inactive`
-            : `${customers.filter((c) => c.is_active).length} Aktif, ${customers.filter((c) => !c.is_active).length} Nonaktif`,
+          label: t("parties:customers.export_pdf_total_label", "Total Pelanggan"),
+          value: `${customers.length} ${t("parties:customers.export_pdf_total_unit", "klien")}`,
+        },
+        {
+          label: t("parties:customers.export_pdf_status_label", "Status Klien"),
+          value: `${activeCount} ${t("common:status.active", "Aktif")}, ${inactiveCount} ${t("common:status.inactive", "Nonaktif")}`,
         },
       ],
-      tableColumns: isEn
-        ? [
-            { header: "Code", widthRatio: 1.5 },
-            { header: "Customer Name", widthRatio: 3 },
-            { header: "Company / PIC", widthRatio: 3.5 },
-            { header: "Contact", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.5 },
-          ]
-        : [
-            { header: "Kode", widthRatio: 1.5 },
-            { header: "Nama Pelanggan", widthRatio: 3 },
-            { header: "Perusahaan / PIC", widthRatio: 3.5 },
-            { header: "Kontak", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.5 },
-          ],
+      tableColumns: [
+        { header: t("parties:customers.col_code", "Kode"), widthRatio: 1.5 },
+        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 3 },
+        { header: t("parties:customers.col_company", "Perusahaan / PIC"), widthRatio: 3.5 },
+        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 3 },
+        { header: t("parties:customers.col_status", "Status"), widthRatio: 1.5 },
+      ],
       tableRows: customers.map((c) => [
         c.code,
         c.name,
@@ -181,44 +160,31 @@ export function CustomerTabContent({
           ? `${c.company_name} (PIC: ${c.contact_person || "-"})`
           : c.contact_person || "-",
         `${c.email || "-"} / ${c.phone || "-"}`,
-        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, isEn ? "Master_Clients_Altcycles.pdf" : "Master_Pelanggan_Altcycles.pdf");
+    downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportCustomersCsv() {
-    const isEn = getActiveLanguage() === "en";
     if (customers.length === 0) {
-      toast.error(isEn ? "No customer data to export." : "Tidak ada data pelanggan untuk diekspor.");
+      toast.error(t("parties:customers.export_toast_no_data", "Tidak ada data pelanggan untuk diekspor."));
       return;
     }
     downloadCsvFile(
-      isEn ? "Master_Clients_Altcycles.csv" : "Master_Pelanggan_Altcycles.csv",
-      isEn
-        ? [
-            "Code",
-            "Customer Name",
-            "Company",
-            "PIC",
-            "Title",
-            "Email",
-            "Phone",
-            "Address",
-            "Status",
-          ]
-        : [
-            "Kode",
-            "Nama Pelanggan",
-            "Perusahaan",
-            "PIC",
-            "Jabatan",
-            "Email",
-            "Telepon",
-            "Alamat",
-            "Status",
-          ],
+      "Master_Pelanggan_Altcycles.csv",
+      [
+        t("parties:customers.col_code", "Kode"),
+        t("parties:customers.col_name", "Nama Pelanggan"),
+        t("parties:customers.modal_name", "Perusahaan"),
+        t("parties:customers.modal_pic", "PIC"),
+        t("parties:customers.modal_pic_title", "Jabatan"),
+        t("parties:customers.modal_email", "Email"),
+        t("parties:customers.modal_phone", "Telepon"),
+        t("parties:customers.modal_address", "Alamat"),
+        t("parties:customers.col_status", "Status"),
+      ],
       customers.map((c) => [
         c.code,
         c.name,
@@ -228,11 +194,11 @@ export function CustomerTabContent({
         c.email ?? "-",
         c.phone ?? "-",
         c.address ?? "-",
-        c.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success(isEn ? "Clients list successfully exported to CSV (.csv)." : "Daftar pelanggan berhasil diekspor ke CSV (.csv).");
+    toast.success(t("parties:customers.export_toast_csv", "Daftar pelanggan berhasil diekspor ke CSV (.csv)."));
   }
 
   return (
@@ -240,14 +206,14 @@ export function CustomerTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties.customer_title", "Daftar Pelanggan / Klien Resmi")}</CardTitle>
+            <CardTitle>{t("parties:customers.title", "Daftar Pelanggan / Klien Resmi")}</CardTitle>
             <CardDescription>
-              {t("parties.customer_desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
+              {t("parties:customers.desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportCustomersExcel}
               onExportPdf={handleExportCustomersPdf}
               onExportCsv={handleExportCustomersCsv}
@@ -276,7 +242,7 @@ export function CustomerTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              {t("parties.add_customer", "Tambah Pelanggan")}
+              {t("parties:customers.add_btn", "Tambah Pelanggan")}
             </Button>
           </div>
         </CardHeader>
@@ -284,12 +250,12 @@ export function CustomerTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_customer_name", "Nama Pelanggan")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_company_pic", "Perusahaan & PIC")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_contact", "Kontak")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_name", "Nama Pelanggan")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_company", "Perusahaan & PIC")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_contact", "Kontak")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -301,10 +267,10 @@ export function CustomerTabContent({
                         <UsersIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        {t("parties.no_customer", "Belum Ada Data Pelanggan")}
+                        {t("parties:customers.empty_title", "Belum Ada Data Pelanggan")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        {t("parties.no_customer_desc", "Daftar pelanggan / klien masih kosong. Tambahkan pelanggan untuk penerbitan proyek dan invoice resmi.")}
+                        {t("parties:customers.empty_desc", "Daftar pelanggan / klien masih kosong. Tambahkan pelanggan untuk penerbitan proyek dan invoice resmi.")}
                       </p>
                     </div>
                   </TableCell>
@@ -332,7 +298,7 @@ export function CustomerTabContent({
                       <div className="-my-px inline-flex justify-center">
                         <StatusBadge
                           tone={c.is_active ? "success" : "secondary"}
-                          label={c.is_active ? "Aktif" : "Nonaktif"}
+                          label={c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif")}
                         />
                       </div>
                     </TableCell>
@@ -361,11 +327,11 @@ export function CustomerTabContent({
                             setCstOpen(true);
                           }}
                           className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
-                          title="Ubah data pelanggan"
-                          aria-label="Ubah data pelanggan"
+                          title={t("common:action.edit", "Edit")}
+                          aria-label={t("common:action.edit", "Edit")}
                         >
                           <PencilIcon className="size-4" />
-                          <span className="sr-only">Ubah</span>
+                          <span className="sr-only">{t("common:action.edit", "Edit")}</span>
                         </Button>
                         <Button
                           type="button"
@@ -380,11 +346,11 @@ export function CustomerTabContent({
                             })
                           }
                           className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                          title="Hapus data pelanggan"
-                          aria-label="Hapus data pelanggan"
+                          title={t("common:action.delete", "Hapus")}
+                          aria-label={t("common:action.delete", "Hapus")}
                         >
                           <Trash2Icon className="size-4" />
-                          <span className="sr-only">Hapus</span>
+                          <span className="sr-only">{t("common:action.delete", "Hapus")}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -402,8 +368,8 @@ export function CustomerTabContent({
           <DialogHeader>
             <DialogTitle>
               {cstForm.id
-                ? t("customers.modal_edit_title", "Ubah Data Pelanggan")
-                : t("customers.modal_add_title", "Tambah Pelanggan Baru")}
+                ? t("parties:customers.modal_edit_title", "Ubah Data Pelanggan")
+                : t("parties:customers.modal_create_title", "Tambah Pelanggan Baru")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitCustomer}>
@@ -411,7 +377,7 @@ export function CustomerTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="c-code" required>
-                    {t("customers.code", "Kode Pelanggan")}
+                    {t("parties:customers.modal_code", "Kode Pelanggan")}
                   </FieldLabel>
                   <Input
                     id="c-code"
@@ -424,7 +390,7 @@ export function CustomerTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="c-name" required>
-                    {t("customers.name", "Nama Klien / Instansi")}
+                    {t("parties:customers.modal_name", "Nama Klien / Instansi")}
                   </FieldLabel>
                   <Input
                     id="c-name"
@@ -439,7 +405,7 @@ export function CustomerTabContent({
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field>
                   <FieldLabel htmlFor="c-comp">
-                    {t("customers.company_name", "Nama Perusahaan")}
+                    {t("parties:customers.modal_name", "Nama Perusahaan")}
                   </FieldLabel>
                   <Input
                     id="c-comp"
@@ -451,7 +417,7 @@ export function CustomerTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="c-pic">
-                    {t("customers.pic", "PIC / Pejabat")}
+                    {t("parties:customers.modal_pic", "PIC / Pejabat")}
                   </FieldLabel>
                   <Input
                     id="c-pic"
@@ -463,7 +429,7 @@ export function CustomerTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="c-title">
-                    {t("customers.pic_title", "Jabatan PIC")}
+                    {t("parties:customers.modal_pic_title", "Jabatan PIC")}
                   </FieldLabel>
                   <Input
                     id="c-title"
@@ -477,7 +443,7 @@ export function CustomerTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="c-email">
-                    {t("customers.email", "Email")}
+                    {t("parties:customers.modal_email", "Email")}
                   </FieldLabel>
                   <Input
                     id="c-email"
@@ -490,7 +456,7 @@ export function CustomerTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="c-phone">
-                    {t("customers.phone", "Telepon")}
+                    {t("parties:customers.modal_phone", "Telepon")}
                   </FieldLabel>
                   <Input
                     id="c-phone"
@@ -503,7 +469,7 @@ export function CustomerTabContent({
               </div>
               <Field>
                 <FieldLabel htmlFor="c-addr">
-                  {t("customers.address", "Alamat Lengkap")}
+                  {t("parties:customers.modal_address", "Alamat Lengkap")}
                 </FieldLabel>
                 <Textarea
                   id="c-addr"
@@ -515,7 +481,7 @@ export function CustomerTabContent({
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">
                 <ImageAssetUploadBox
-                  label={t("customers.logo", "Logo Klien")}
+                  label={t("parties:customers.modal_logo", "Logo Klien")}
                   emptyTitle="Upload Logo"
                   emptySubtitle="PNG / JPG"
                   value={cstForm.logo_storage_path}
@@ -524,7 +490,7 @@ export function CustomerTabContent({
                   }
                 />
                 <ImageAssetUploadBox
-                  label={t("customers.signature", "TTD Klien")}
+                  label={t("parties:customers.modal_signature", "TTD Klien")}
                   emptyTitle="Upload TTD"
                   emptySubtitle="PNG transparan"
                   value={cstForm.signature_storage_path}
@@ -533,7 +499,7 @@ export function CustomerTabContent({
                   }
                 />
                 <ImageAssetUploadBox
-                  label={t("customers.paraf", "Paraf Klien")}
+                  label={t("parties:customers.modal_paraf", "Paraf Klien")}
                   emptyTitle="Upload Paraf"
                   emptySubtitle="PNG transparan"
                   value={cstForm.paraf_storage_path}
@@ -544,7 +510,7 @@ export function CustomerTabContent({
               </div>
               <Field orientation="horizontal">
                 <FieldLabel htmlFor="c-act">
-                  {t("customers.status_active", "Status Pelanggan Aktif")}
+                  {t("parties:customers.modal_status_active", "Status Pelanggan Aktif")}
                 </FieldLabel>
                 <Switch
                   id="c-act"
@@ -560,10 +526,10 @@ export function CustomerTabContent({
                   variant="outline"
                   onClick={() => setCstOpen(false)}
                 >
-                  {t("action.cancel", "Batal")}
+                  {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button type="submit">
-                  {t("customers.btn_save", "Simpan Pelanggan")}
+                  {t("parties:customers.modal_btn_save", "Simpan Pelanggan")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

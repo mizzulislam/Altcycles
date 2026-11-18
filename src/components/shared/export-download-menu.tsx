@@ -30,9 +30,8 @@ export function ExportDownloadMenu({
   className,
   align = "end",
 }: ExportDownloadMenuProps) {
-  const { t, language } = useLanguage();
-  const displayLabel = !label || label === "Unduh / Ekspor" ? t("action.download", "Unduh / Ekspor") : label;
-  const isEn = language === "en";
+  const { t } = useLanguage();
+  const displayLabel = !label || label === "Unduh / Ekspor" ? t("action.export_download", "Unduh / Ekspor") : label;
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [loadingType, setLoadingType] = React.useState<"excel" | "pdf" | "csv" | null>(null);
@@ -182,9 +181,9 @@ export function ExportDownloadMenu({
                   )}
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
-                  <span className="font-semibold text-foreground">Excel (.xlsx)</span>
+                  <span className="font-semibold text-foreground">{t("export.excel", "Excel (.xlsx)")}</span>
                   <span className="text-[11px] text-muted-foreground">
-                    {isEn ? "Complete spreadsheet workbook" : "Buku kerja spreadsheet lengkap"}
+                    {t("export.excel_desc", "Buku kerja spreadsheet lengkap")}
                   </span>
                 </div>
               </button>
@@ -211,10 +210,10 @@ export function ExportDownloadMenu({
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground">
-                    {isEn ? "PDF Document (.pdf)" : "PDF Dokumen (.pdf)"}
+                    {t("export.pdf", "PDF Dokumen (.pdf)")}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
-                    {isEn ? "Print format & official report" : "Format cetak & laporan resmi"}
+                    {t("export.pdf_desc", "Format cetak & laporan resmi")}
                   </span>
                 </div>
               </button>
@@ -241,10 +240,10 @@ export function ExportDownloadMenu({
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground">
-                    {isEn ? "CSV Format (.csv)" : "Format CSV (.csv)"}
+                    {t("export.csv", "Format CSV (.csv)")}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
-                    {isEn ? "Comma-separated data table" : "Tabel data pemisah koma"}
+                    {t("export.csv_desc", "Tabel data pemisah koma")}
                   </span>
                 </div>
               </button>

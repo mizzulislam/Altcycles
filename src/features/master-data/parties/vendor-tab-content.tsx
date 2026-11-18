@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveVendor } from "@/lib/data-service";
-import { useLanguage, getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
@@ -73,7 +73,7 @@ export function VendorTabContent({
     e.preventDefault();
     try {
       await saveVendor(vndForm);
-      toast.success("Data vendor berhasil disimpan.");
+      toast.success(t("parties:vendors.toast_saved", "Data vendor berhasil disimpan."));
       setVndOpen(false);
       await onReload();
     } catch (err) {
@@ -82,37 +82,24 @@ export function VendorTabContent({
   }
 
   async function handleExportVendorsExcel() {
-    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
+      toast.error(t("parties:vendors.export_toast_no_data", "Tidak ada data vendor untuk diekspor."));
       return;
     }
     await downloadExcelSheet({
-      sheetName: isEn ? "Vendors List" : "Daftar Vendor",
-      fileName: isEn ? "Master_Vendors_Altcycles.xlsx" : "Master_Vendor_Altcycles.xlsx",
-      columns: isEn
-        ? [
-            { header: "Code", width: 14 },
-            { header: "Vendor Name", width: 28 },
-            { header: "PIC", width: 22 },
-            { header: "Email", width: 24 },
-            { header: "Phone", width: 18 },
-            { header: "Bank", width: 20 },
-            { header: "Account Number", width: 20 },
-            { header: "Address", width: 36 },
-            { header: "Status", width: 14 },
-          ]
-        : [
-            { header: "Kode", width: 14 },
-            { header: "Nama Vendor", width: 28 },
-            { header: "PIC", width: 22 },
-            { header: "Email", width: 24 },
-            { header: "Telepon", width: 18 },
-            { header: "Bank", width: 20 },
-            { header: "No Rekening", width: 20 },
-            { header: "Alamat", width: 36 },
-            { header: "Status", width: 14 },
-          ],
+      sheetName: t("parties:vendors.export_excel_sheet", "Daftar Vendor"),
+      fileName: t("parties:vendors.export_excel_filename", "Master_Vendor_Altcycles.xlsx"),
+      columns: [
+        { header: t("parties:vendors.col_code", "Kode"), width: 14 },
+        { header: t("parties:vendors.col_name", "Nama Vendor"), width: 28 },
+        { header: t("parties:vendors.col_pic", "PIC"), width: 22 },
+        { header: t("parties:vendors.col_email", "Email"), width: 24 },
+        { header: t("parties:vendors.col_phone", "Telepon"), width: 18 },
+        { header: t("parties:vendors.col_bank", "Bank"), width: 20 },
+        { header: t("parties:vendors.modal_account_number", "No Rekening"), width: 20 },
+        { header: t("parties:vendors.col_address", "Alamat"), width: 36 },
+        { header: t("parties:vendors.col_status", "Status"), width: 14 },
+      ],
       rows: vendors.map((v) => [
         v.code,
         v.name,
@@ -122,52 +109,44 @@ export function VendorTabContent({
         v.bank_name ?? "-",
         v.bank_account_number ?? "-",
         v.address ?? "-",
-        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        v.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success(isEn ? "Vendors list successfully exported to Excel (.xlsx)." : "Daftar vendor berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("parties:vendors.export_toast_excel", "Daftar vendor berhasil diekspor ke Excel (.xlsx)."));
   }
 
   async function handleExportVendorsPdf() {
-    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
+      toast.error(t("parties:vendors.export_toast_no_data", "Tidak ada data vendor untuk diekspor."));
       return;
     }
     const comp = await getCompanyProfile();
+    const activeCount = vendors.filter((v) => v.is_active).length;
+    const inactiveCount = vendors.filter((v) => !v.is_active).length;
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "SUPPLIERS & VENDORS DIRECTORY" : "DAFTAR MASTER VENDOR PEMASOK",
-      docSubtitle: isEn
-        ? "Summary of Registered Partners & Procurement Vendors"
-        : "Rekapitulasi Data Rekanan & Mitra Vendor Terdaftar",
+      docTitle: t("parties:vendors.export_pdf_title", "DAFTAR MASTER VENDOR PEMASOK"),
+      docSubtitle: t("parties:vendors.export_pdf_subtitle", "Direktori Rekanan Vendor Pemasok Resmi Perusahaan"),
       docNumber: `REKAP-VND-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: isEn ? "Total Vendors" : "Total Vendor", value: isEn ? `${vendors.length} vendors` : `${vendors.length} vendor` },
         {
-          label: isEn ? "Vendor Status" : "Status Vendor",
-          value: isEn
-            ? `${vendors.filter((v) => v.is_active).length} Active, ${vendors.filter((v) => !v.is_active).length} Inactive`
-            : `${vendors.filter((v) => v.is_active).length} Aktif, ${vendors.filter((v) => !v.is_active).length} Nonaktif`,
+          label: t("parties:vendors.export_pdf_total_label", "Total Vendor"),
+          value: `${vendors.length} ${t("parties:vendors.export_pdf_total_unit", "vendor")}`,
+        },
+        {
+          label: t("parties:vendors.export_pdf_status_label", "Status Vendor"),
+          value: `${activeCount} ${t("common:status.active", "Aktif")}, ${inactiveCount} ${t("common:status.inactive", "Nonaktif")}`,
         },
       ],
-      tableColumns: isEn
-        ? [
-            { header: "Code", widthRatio: 1.5 },
-            { header: "Vendor Name", widthRatio: 3 },
-            { header: "PIC / Contact", widthRatio: 3 },
-            { header: "Bank & Account", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.5 },
-          ]
-        : [
-            { header: "Kode", widthRatio: 1.5 },
-            { header: "Nama Vendor", widthRatio: 3 },
-            { header: "PIC / Kontak", widthRatio: 3 },
-            { header: "Bank & Rekening", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.5 },
-          ],
+      tableColumns: [
+        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 1.5 },
+        { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 3 },
+        { header: t("parties:vendors.col_pic", "PIC / Kontak"), widthRatio: 3 },
+        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 3 },
+        { header: t("parties:vendors.col_status", "Status"), widthRatio: 1.5 },
+      ],
       tableRows: vendors.map((v) => [
         v.code,
         v.name,
@@ -175,44 +154,31 @@ export function VendorTabContent({
           ? `${v.contact_name} (${v.phone || v.email || "-"})`
           : "-",
         v.bank_name ? `${v.bank_name} - ${v.bank_account_number}` : "-",
-        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        v.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, isEn ? "Master_Vendors_Altcycles.pdf" : "Master_Vendor_Altcycles.pdf");
+    downloadPdfBytes(bytes, t("parties:vendors.export_pdf_title", "Master_Vendor_Altcycles.pdf"));
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportVendorsCsv() {
-    const isEn = getActiveLanguage() === "en";
     if (vendors.length === 0) {
-      toast.error(isEn ? "No vendor data to export." : "Tidak ada data vendor untuk diekspor.");
+      toast.error(t("parties:vendors.export_toast_no_data", "Tidak ada data vendor untuk diekspor."));
       return;
     }
     downloadCsvFile(
-      isEn ? "Master_Vendors_Altcycles.csv" : "Master_Vendor_Altcycles.csv",
-      isEn
-        ? [
-            "Code",
-            "Vendor Name",
-            "PIC",
-            "Email",
-            "Phone",
-            "Bank",
-            "Account Number",
-            "Address",
-            "Status",
-          ]
-        : [
-            "Kode",
-            "Nama Vendor",
-            "PIC",
-            "Email",
-            "Telepon",
-            "Bank",
-            "No Rekening",
-            "Alamat",
-            "Status",
-          ],
+      "Master_Vendor_Altcycles.csv",
+      [
+        t("parties:vendors.col_code", "Kode"),
+        t("parties:vendors.col_name", "Nama Vendor"),
+        t("parties:vendors.col_pic", "PIC"),
+        t("parties:vendors.col_email", "Email"),
+        t("parties:vendors.col_phone", "Telepon"),
+        t("parties:vendors.col_bank", "Bank"),
+        t("parties:vendors.modal_account_number", "No Rekening"),
+        t("parties:vendors.col_address", "Alamat"),
+        t("parties:vendors.col_status", "Status"),
+      ],
       vendors.map((v) => [
         v.code,
         v.name,
@@ -222,11 +188,11 @@ export function VendorTabContent({
         v.bank_name ?? "-",
         v.bank_account_number ?? "-",
         v.address ?? "-",
-        v.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        v.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success(isEn ? "Vendors list successfully exported to CSV (.csv)." : "Daftar vendor berhasil diekspor ke CSV (.csv).");
+    toast.success(t("parties:vendors.export_toast_csv", "Daftar vendor berhasil diekspor ke CSV (.csv)."));
   }
 
   return (
@@ -234,14 +200,14 @@ export function VendorTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties.vendor_title", "Daftar Vendor Pemasok")}</CardTitle>
+            <CardTitle>{t("parties:vendors.title", "Daftar Vendor Pemasok")}</CardTitle>
             <CardDescription>
-              {t("parties.vendor_desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
+              {t("parties:vendors.desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportVendorsExcel}
               onExportPdf={handleExportVendorsPdf}
               onExportCsv={handleExportVendorsCsv}
@@ -267,7 +233,7 @@ export function VendorTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              {t("parties.add_vendor", "Tambah Vendor")}
+              {t("parties:vendors.add_btn", "Tambah Vendor")}
             </Button>
           </div>
         </CardHeader>
@@ -275,12 +241,12 @@ export function VendorTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_vendor_name", "Nama Vendor")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_contact", "PIC & Kontak")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_bank", "Rekening Bank")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_name", "Nama Vendor")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_pic", "PIC & Kontak")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_bank", "Rekening Bank")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -292,10 +258,10 @@ export function VendorTabContent({
                         <Building2Icon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        {t("parties.no_vendor", "Belum Ada Data Vendor")}
+                        {t("parties:vendors.empty_title", "Belum Ada Data Vendor")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        {t("parties.no_vendor_desc", "Daftar vendor pemasok masih kosong. Tambahkan vendor baru untuk kebutuhan PO Pembelian internal.")}
+                        {t("parties:vendors.empty_desc", "Daftar vendor pemasok masih kosong. Tambahkan vendor baru untuk kebutuhan PO Pembelian internal.")}
                       </p>
                     </div>
                   </TableCell>
@@ -320,7 +286,7 @@ export function VendorTabContent({
                       <div className="-my-px inline-flex justify-center">
                         <StatusBadge
                           tone={v.is_active ? "success" : "secondary"}
-                          label={v.is_active ? "Aktif" : "Nonaktif"}
+                          label={v.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif")}
                         />
                       </div>
                     </TableCell>
@@ -346,11 +312,11 @@ export function VendorTabContent({
                             setVndOpen(true);
                           }}
                           className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
-                          title="Ubah data vendor"
-                          aria-label="Ubah data vendor"
+                          title={t("common:action.edit", "Edit")}
+                          aria-label={t("common:action.edit", "Edit")}
                         >
                           <PencilIcon className="size-4" />
-                          <span className="sr-only">Ubah</span>
+                          <span className="sr-only">{t("common:action.edit", "Edit")}</span>
                         </Button>
                         <Button
                           type="button"
@@ -365,11 +331,11 @@ export function VendorTabContent({
                             })
                           }
                           className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                          title="Hapus data vendor"
-                          aria-label="Hapus data vendor"
+                          title={t("common:action.delete", "Hapus")}
+                          aria-label={t("common:action.delete", "Hapus")}
                         >
                           <Trash2Icon className="size-4" />
-                          <span className="sr-only">Hapus</span>
+                          <span className="sr-only">{t("common:action.delete", "Hapus")}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -387,8 +353,8 @@ export function VendorTabContent({
           <DialogHeader>
             <DialogTitle>
               {vndForm.id
-                ? t("vendors.modal_edit_title", "Ubah Data Vendor")
-                : t("vendors.modal_add_title", "Tambah Vendor Baru")}
+                ? t("parties:vendors.modal_edit_title", "Ubah Data Vendor")
+                : t("parties:vendors.modal_create_title", "Tambah Vendor Baru")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitVendor}>
@@ -396,7 +362,7 @@ export function VendorTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="v-code" required>
-                    {t("vendors.code", "Kode Vendor")}
+                    {t("parties:vendors.modal_code", "Kode Vendor")}
                   </FieldLabel>
                   <Input
                     id="v-code"
@@ -409,7 +375,7 @@ export function VendorTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="v-name" required>
-                    {t("vendors.name", "Nama Vendor")}
+                    {t("parties:vendors.modal_name", "Nama Vendor")}
                   </FieldLabel>
                   <Input
                     id="v-name"
@@ -423,7 +389,7 @@ export function VendorTabContent({
               </div>
               <Field>
                 <FieldLabel htmlFor="v-contact">
-                  {t("vendors.pic", "Nama Kontak / PIC")}
+                  {t("parties:vendors.modal_pic", "Nama Kontak / PIC")}
                 </FieldLabel>
                 <Input
                   id="v-contact"
@@ -436,7 +402,7 @@ export function VendorTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="v-email">
-                    {t("vendors.email", "Email")}
+                    {t("parties:vendors.modal_email", "Email")}
                   </FieldLabel>
                   <Input
                     id="v-email"
@@ -449,7 +415,7 @@ export function VendorTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="v-phone">
-                    {t("vendors.phone", "Telepon")}
+                    {t("parties:vendors.modal_phone", "Telepon")}
                   </FieldLabel>
                   <Input
                     id="v-phone"
@@ -463,7 +429,7 @@ export function VendorTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="v-bank">
-                    {t("vendors.bank_name", "Nama Bank")}
+                    {t("parties:vendors.modal_bank_name", "Nama Bank")}
                   </FieldLabel>
                   <Input
                     id="v-bank"
@@ -475,7 +441,7 @@ export function VendorTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="v-acc">
-                    {t("vendors.account_number", "Nomor Rekening")}
+                    {t("parties:vendors.modal_account_number", "Nomor Rekening")}
                   </FieldLabel>
                   <Input
                     id="v-acc"
@@ -491,7 +457,7 @@ export function VendorTabContent({
               </div>
               <Field>
                 <FieldLabel htmlFor="v-addr">
-                  {t("customers.address", "Alamat Lengkap")}
+                  {t("parties:vendors.modal_address", "Alamat Lengkap")}
                 </FieldLabel>
                 <Textarea
                   id="v-addr"
@@ -503,7 +469,7 @@ export function VendorTabContent({
               </Field>
               <Field orientation="horizontal">
                 <FieldLabel htmlFor="v-act">
-                  {t("vendors.status_active", "Status Vendor Aktif")}
+                  {t("parties:vendors.modal_status_active", "Status Vendor Aktif")}
                 </FieldLabel>
                 <Switch
                   id="v-act"
@@ -519,10 +485,10 @@ export function VendorTabContent({
                   variant="outline"
                   onClick={() => setVndOpen(false)}
                 >
-                  {t("action.cancel", "Batal")}
+                  {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button type="submit">
-                  {t("vendors.btn_save", "Simpan Vendor")}
+                  {t("parties:vendors.modal_btn_save", "Simpan Vendor")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

@@ -62,17 +62,17 @@ import { formatDateTimeID } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type { ProfileRow, UserRole } from "@/types/database.types";
 
-const ALL_ROLES: { id: UserRole; label: string; desc: string }[] = [
-  { id: "super_admin", label: "Super Admin", desc: "Pengelola Sistem & Akun" },
-  { id: "admin", label: "Admin", desc: "Bendahara / Keuangan" },
-  { id: "user", label: "User", desc: "Tim Proyek / Operasional" },
+const ALL_ROLES: { id: UserRole; label: string; descKey: string; fallbackDesc: string }[] = [
+  { id: "super_admin", label: "Super Admin", descKey: "settings:users.role_desc_super_admin", fallbackDesc: "Pengelola Sistem & Akun" },
+  { id: "admin", label: "Admin", descKey: "settings:users.role_desc_admin", fallbackDesc: "Bendahara / Keuangan" },
+  { id: "user", label: "User", descKey: "settings:users.role_desc_user", fallbackDesc: "Tim Proyek / Operasional" },
 ];
 
-function getRolesSummary(user: ProfileRow): string {
+function getRolesSummary(user: ProfileRow, t: (key: string, def?: string) => string): string {
   const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
   const shortLabels: Record<UserRole, string> = {
     super_admin: "Super Admin",
-    admin: "Bendahara",
+    admin: t("settings:super_admin.role_treasurer", "Bendahara"),
     user: "User",
   };
   return roles.map((r) => shortLabels[r] || r).join(", ");
@@ -80,8 +80,7 @@ function getRolesSummary(user: ProfileRow): string {
 
 export function UsersManagementPage() {
   const { profile: currentUser } = useAuth();
-  const { language } = useLanguage();
-  const isEn = language === "en";
+  const { t } = useLanguage();
   const [users, setUsers] = React.useState<ProfileRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -111,11 +110,11 @@ export function UsersManagementPage() {
       const data = await listProfiles();
       setUsers(data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memuat pengguna.");
+      toast.error(err instanceof Error ? err.message : t("settings:users.loading", "Gagal memuat pengguna."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     void reload();
@@ -137,7 +136,7 @@ export function UsersManagementPage() {
     e.preventDefault();
     setCreateError(null);
     if (password.length < 8) {
-      setCreateError("Kata sandi awal minimal 8 karakter.");
+      setCreateError(t("settings:users.toast_create_pwd_min", "Kata sandi awal minimal 8 karakter."));
       return;
     }
     setCreating(true);
@@ -148,7 +147,7 @@ export function UsersManagementPage() {
         password,
         role: newRole,
       });
-      toast.success(`Akun ${fullName} berhasil dibuat.`);
+      toast.success(t("settings:users.toast_created", { name: fullName }));
       setCreateOpen(false);
       setFullName("");
       setEmail("");
@@ -171,7 +170,7 @@ export function UsersManagementPage() {
 
     if (currentRoles.includes(toggledRole)) {
       if (currentRoles.length <= 1) {
-        toast.error("Minimal satu peran harus tetap tercentang.");
+        toast.error(t("settings:users.toast_min_one_role", "Minimal satu peran harus tetap tercentang."));
         return;
       }
       nextRoles = currentRoles.filter((r) => r !== toggledRole);
@@ -181,10 +180,10 @@ export function UsersManagementPage() {
 
     try {
       await updateInternalUserRoles(target.id, nextRoles);
-      toast.success(`Hak peran ${target.full_name} berhasil diperbarui.`);
+      toast.success(t("settings:users.toast_role_updated", { name: target.full_name, roles: nextRoles.join(", ") }));
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal mengubah peran pengguna.");
+      toast.error(err instanceof Error ? err.message : t("settings:users.toast_role_failed", "Gagal mengubah peran pengguna."));
     }
   }
 
@@ -193,7 +192,7 @@ export function UsersManagementPage() {
     if (!deleteTarget) return;
     try {
       await deleteInternalUser(deleteTarget.id);
-      toast.success(`Akun ${deleteTarget.full_name} (${deleteTarget.email}) berhasil dihapus.`);
+      toast.success(t("settings:users.toast_deleted", { name: deleteTarget.full_name }));
       setDeleteTarget(null);
       await reload();
     } catch (err) {
@@ -215,12 +214,10 @@ export function UsersManagementPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {isEn ? "Internal Accounts & Roles Management" : "Manajemen Akun & Peran Internal"}
+            {t("settings:users.page_title", "Manajemen Akun & Peran Internal")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {isEn
-              ? "Manage user accounts, dual-role authorizations, and internal company module access rights."
-              : "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan."}
+            {t("settings:users.page_desc", "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.")}
           </p>
         </div>
         <Button
@@ -229,7 +226,7 @@ export function UsersManagementPage() {
           className="shrink-0"
         >
           <PlusIcon className="size-4" />
-          <span>{isEn ? "Add Internal Account" : "Tambah Akun Internal"}</span>
+          <span>{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
         </Button>
       </div>
 
@@ -237,31 +234,29 @@ export function UsersManagementPage() {
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              {isEn ? "Internal Users List" : "Daftar Pengguna Internal"}
+              {t("settings:users.card_title", "Daftar Pengguna Internal")}
             </CardTitle>
             <CardDescription>
-              {isEn
-                ? "Configure single or multi-role access for Super Admin, Admin, and User."
-                : "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User."}
+              {t("settings:users.card_desc", "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.")}
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <Input
-              placeholder={isEn ? "Search name or email..." : "Cari nama atau email..."}
+              placeholder={t("settings:users.search_input_placeholder", "Cari nama atau email...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
             />
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={isEn ? "Filter role" : "Filter peran"} />
+                <SelectValue placeholder={t("settings:users.filter_role_placeholder", "Filter peran")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">{isEn ? "All Roles" : "Semua Peran"}</SelectItem>
-                  <SelectItem value="user">{isEn ? "User (Project Team)" : "User (Tim Proyek)"}</SelectItem>
-                  <SelectItem value="admin">{isEn ? "Admin (Treasurer)" : "Admin (Bendahara)"}</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="all">{t("settings:users.filter_role_all", "Semua Peran")}</SelectItem>
+                  <SelectItem value="user">{t("settings:users.filter_role_user", "User (Tim Proyek)")}</SelectItem>
+                  <SelectItem value="admin">{t("settings:users.filter_role_admin", "Admin (Bendahara)")}</SelectItem>
+                  <SelectItem value="super_admin">{t("settings:users.filter_role_super_admin", "Super Admin")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -271,27 +266,27 @@ export function UsersManagementPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>{isEn ? "Loading accounts list..." : "Memuat daftar akun..."}</span>
+              <span>{t("settings:users.loading", "Memuat daftar akun...")}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Full Name" : "Nama Lengkap"}
+                    {t("settings:users.col_full_name", "Nama Lengkap")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Email</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:users.col_email", "Email")}</TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[200px]">
-                    {isEn ? "Roles (Multi-Role)" : "Peran (Multi-Role)"}
+                    {t("settings:users.col_roles_multi", "Peran (Multi-Role)")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Status" : "Status"}
+                    {t("settings:users.col_status", "Status")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Last Login" : "Terakhir Login"}
+                    {t("settings:users.col_last_login", "Terakhir Login")}
                   </TableHead>
                   <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Actions" : "Aksi"}
+                    {t("settings:users.col_actions", "Aksi")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -304,12 +299,10 @@ export function UsersManagementPage() {
                           <UsersIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "No Users Found" : "Tidak Ada Pengguna Ditemukan"}
+                          {t("settings:users.empty_title", "Tidak Ada Pengguna Ditemukan")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          {isEn
-                            ? "Adjust your search keywords or role filters above."
-                            : "Ubah kata kunci pencarian atau filter peran di atas."}
+                          {t("settings:users.empty_desc", "Ubah kata kunci pencarian atau filter peran di atas.")}
                         </p>
                       </div>
                     </TableCell>
@@ -327,7 +320,7 @@ export function UsersManagementPage() {
                           <span>{u.full_name}</span>
                           {isSelf ? (
                             <span className="text-[11px] font-semibold text-primary dark:text-sky-400">
-                              {isEn ? "(Your Account)" : "(Akun Anda)"}
+                              {t("settings:users.your_account", "(Akun Anda)")}
                             </span>
                           ) : null}
                         </div>
@@ -349,7 +342,7 @@ export function UsersManagementPage() {
                               : "bg-card border-border hover:bg-muted/50 text-foreground",
                           )}
                         >
-                          <span className="truncate">{getRolesSummary(u)}</span>
+                          <span className="truncate">{getRolesSummary(u, t)}</span>
                           <ChevronDownIcon
                             className={cn(
                               "size-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
@@ -363,7 +356,7 @@ export function UsersManagementPage() {
                           <div className="absolute left-0 top-full mt-1.5 z-50 w-64 bg-card border border-border rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
                             <div className="px-2.5 py-1.5 border-b border-border/60 mb-1">
                               <p className="text-[11px] font-semibold text-muted-foreground">
-                                Atur Hak Peran Pengguna
+                                {t("settings:users.manage_role_rights", "Atur Hak Peran Pengguna")}
                               </p>
                             </div>
                             <div className="space-y-1">
@@ -403,7 +396,7 @@ export function UsersManagementPage() {
                                           {r.label}
                                         </p>
                                         <p className="text-[10px] text-muted-foreground leading-tight">
-                                          {r.desc}
+                                          {t(r.descKey, r.fallbackDesc)}
                                         </p>
                                       </div>
                                     </div>
@@ -411,7 +404,7 @@ export function UsersManagementPage() {
                                     {/* Penanda Peran Utama */}
                                     {isPrimary && (
                                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
-                                        Utama
+                                        {t("settings:users.role_primary_badge", "Utama")}
                                       </span>
                                     )}
                                   </label>
@@ -426,7 +419,7 @@ export function UsersManagementPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={u.is_active ? "success" : "destructive"}
-                            label={u.is_active ? "Aktif" : "Nonaktif"}
+                            label={u.is_active ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
                           />
                         </div>
                       </TableCell>
@@ -443,7 +436,7 @@ export function UsersManagementPage() {
                             size="icon"
                             disabled={isSelf}
                             onClick={() => setToggleTarget(u)}
-                            title={u.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
+                            title={u.is_active ? t("settings:users.title_deactivate", "Nonaktifkan Akses Pengguna") : t("settings:users.title_reactivate", "Aktifkan Kembali Pengguna")}
                             className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                           >
                             {u.is_active ? (
@@ -452,7 +445,7 @@ export function UsersManagementPage() {
                               <UserCheckIcon className="size-4 text-emerald-500" />
                             )}
                             <span className="sr-only">
-                              {u.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
+                              {u.is_active ? t("settings:users.title_deactivate", "Nonaktifkan Akses Pengguna") : t("settings:users.title_reactivate", "Aktifkan Kembali Pengguna")}
                             </span>
                           </Button>
 
@@ -464,10 +457,10 @@ export function UsersManagementPage() {
                             disabled={isSelf}
                             onClick={() => setDeleteTarget(u)}
                             className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                            title="Hapus akun permanen"
+                            title={t("settings:users.title_delete_user", "Hapus Akun Pengguna Secara Permanen")}
                           >
                             <Trash2Icon className="size-4" />
-                            <span className="sr-only">Hapus akun permanen</span>
+                            <span className="sr-only">{t("settings:users.title_delete_user", "Hapus Akun Pengguna Secara Permanen")}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -484,18 +477,18 @@ export function UsersManagementPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{isEn ? "Create New Internal Account" : "Buat Akun Internal Baru"}</DialogTitle>
+            <DialogTitle>{t("settings:users.modal_create_title", "Buat Akun Internal Baru")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreateUser} className="space-y-4">
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="u-name" required className="text-xs font-semibold">
-                  {isEn ? "Full Name" : "Nama Lengkap"}
+                  {t("settings:users.modal_full_name", "Nama Lengkap")}
                 </FieldLabel>
                 <Input
                   id="u-name"
                   required
-                  placeholder={isEn ? "e.g. Nadia Putri" : "Contoh: Nadia Putri"}
+                  placeholder="e.g. Nadia Putri"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="text-xs h-9"
@@ -503,7 +496,7 @@ export function UsersManagementPage() {
               </Field>
               <Field>
                 <FieldLabel htmlFor="u-email" required className="text-xs font-semibold">
-                  {isEn ? "Altvira Email" : "Email Altvira"}
+                  {t("settings:users.modal_email", "Email Altvira")}
                 </FieldLabel>
                 <Input
                   id="u-email"
@@ -517,27 +510,25 @@ export function UsersManagementPage() {
               </Field>
               <Field>
                 <FieldLabel htmlFor="u-pwd" required className="text-xs font-semibold">
-                  {isEn ? "Initial Password" : "Kata Sandi Awal"}
+                  {t("settings:users.modal_password", "Kata Sandi Awal")}
                 </FieldLabel>
                 <Input
                   id="u-pwd"
                   type="password"
                   required
                   minLength={8}
-                  placeholder={isEn ? "Minimum 8 characters..." : "Minimal 8 karakter..."}
+                  placeholder="Minimum 8 characters..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="text-xs h-9"
                 />
                 <FieldDescription className="text-[11px]">
-                  {isEn
-                    ? "Users can change their password after signing into the system."
-                    : "Pengguna dapat mengganti kata sandi setelah masuk ke sistem."}
+                  {t("settings:users.modal_pwd_desc", "Pengguna dapat mengganti kata sandi setelah masuk ke sistem.")}
                 </FieldDescription>
               </Field>
               <Field>
                 <FieldLabel required className="text-xs font-semibold">
-                  {isEn ? "Initial Primary Role" : "Peran Utama Awal"}
+                  {t("settings:users.modal_role", "Peran Utama Awal")}
                 </FieldLabel>
                 <Select
                   value={newRole}
@@ -548,9 +539,9 @@ export function UsersManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="user">{isEn ? "User (Project Team)" : "User (Tim Proyek)"}</SelectItem>
-                      <SelectItem value="admin">{isEn ? "Admin (Treasurer)" : "Admin (Bendahara)"}</SelectItem>
-                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                      <SelectItem value="user">{t("settings:users.filter_role_user", "User (Tim Proyek)")}</SelectItem>
+                      <SelectItem value="admin">{t("settings:users.filter_role_admin", "Admin (Bendahara)")}</SelectItem>
+                      <SelectItem value="super_admin">{t("settings:users.filter_role_super_admin", "Super Admin")}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -566,10 +557,10 @@ export function UsersManagementPage() {
                 onClick={() => setCreateOpen(false)}
                 className="rounded-2xl text-xs h-9"
               >
-                {isEn ? "Cancel" : "Batal"}
+                {t("action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={creating} className="rounded-2xl text-xs h-9 shadow-2xs">
-                {creating ? (isEn ? "Creating..." : "Membuat...") : (isEn ? "Create Account" : "Buat Akun")}
+                {creating ? t("settings:users.modal_creating", "Membuat...") : t("settings:users.modal_btn_create", "Buat Akun")}
               </Button>
             </div>
           </form>
@@ -585,22 +576,18 @@ export function UsersManagementPage() {
           }}
           title={
             toggleTarget.is_active
-              ? isEn ? "Deactivate User Access" : "Nonaktifkan Akses Pengguna"
-              : isEn ? "Reactivate User" : "Aktifkan Kembali Pengguna"
+              ? t("settings:users.title_deactivate", "Nonaktifkan Akses Pengguna")
+              : t("settings:users.title_reactivate", "Aktifkan Kembali Pengguna")
           }
-          description={
-            isEn
-              ? `Are you sure you want to ${
-                  toggleTarget.is_active ? "deactivate" : "reactivate"
-                } the account for ${toggleTarget.full_name} (${toggleTarget.email})?`
-              : `Apakah Anda yakin ingin ${
-                  toggleTarget.is_active ? "menonaktifkan" : "mengaktifkan kembali"
-                } akun ${toggleTarget.full_name} (${toggleTarget.email})?`
-          }
+          description={t("settings:users.desc_confirm_toggle", {
+            action: toggleTarget.is_active ? t("settings:users.btn_deactivate", "menonaktifkan").toLowerCase() : t("settings:users.btn_reactivate", "mengaktifkan kembali").toLowerCase(),
+            name: toggleTarget.full_name,
+            email: toggleTarget.email,
+          })}
           confirmLabel={
             toggleTarget.is_active
-              ? isEn ? "Deactivate" : "Nonaktifkan"
-              : isEn ? "Reactivate" : "Aktifkan"
+              ? t("settings:users.btn_deactivate", "Nonaktifkan")
+              : t("settings:users.btn_reactivate", "Aktifkan")
           }
           destructive={toggleTarget.is_active}
           onConfirm={async () => {
@@ -611,13 +598,10 @@ export function UsersManagementPage() {
                 !toggleTarget.is_active,
               );
               toast.success(
-                isEn
-                  ? `Account ${toggleTarget.full_name} successfully ${
-                      toggleTarget.is_active ? "deactivated" : "reactivated"
-                    }.`
-                  : `Akun ${toggleTarget.full_name} berhasil ${
-                      toggleTarget.is_active ? "dinonaktifkan" : "diaktifkan"
-                    }.`,
+                t("settings:users.toast_toggle_success", {
+                  name: toggleTarget.full_name,
+                  action: toggleTarget.is_active ? t("settings:users.status_deactivated", "dinonaktifkan") : t("settings:users.status_reactivated", "diaktifkan"),
+                }),
               );
               setToggleTarget(null);
               await reload();
@@ -625,7 +609,7 @@ export function UsersManagementPage() {
               toast.error(
                 err instanceof Error
                   ? err.message
-                  : isEn ? "Failed to update status." : "Gagal memperbarui status.",
+                  : t("error", "Gagal memperbarui status."),
               );
             }
           }}
@@ -639,13 +623,12 @@ export function UsersManagementPage() {
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}
-          title={isEn ? "Permanently Delete User Account" : "Hapus Akun Pengguna Secara Permanen"}
-          description={
-            isEn
-              ? `Are you sure you want to permanently delete account ${deleteTarget.full_name} (${deleteTarget.email}) from the system? This action cannot be undone. If the user has financial/bookkeeping history, deletion will be rejected for audit integrity and deactivation is recommended.`
-              : `Apakah Anda yakin ingin menghapus akun ${deleteTarget.full_name} (${deleteTarget.email}) secara permanen dari sistem? Tindakan ini tidak dapat dibatalkan. Jika pengguna sudah memiliki riwayat data keuangan/pembukuan, penghapusan akan ditolak demi integritas audit dan disarankan untuk dinonaktifkan.`
-          }
-          confirmLabel={isEn ? "Permanently Delete" : "Hapus Permanen"}
+          title={t("settings:users.title_delete_user", "Hapus Akun Pengguna Secara Permanen")}
+          description={t("settings:users.desc_delete_user", {
+            name: deleteTarget.full_name,
+            email: deleteTarget.email,
+          })}
+          confirmLabel={t("settings:users.btn_delete_confirm", "Hapus Permanen")}
           destructive={true}
           confirmText="DELETE"
           onConfirm={handleDeleteUser}

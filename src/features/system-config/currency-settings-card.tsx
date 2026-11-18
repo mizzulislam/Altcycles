@@ -29,8 +29,7 @@ import {
  * 2. Card Kurs Konversi Valas ke Rupiah (IDR)
  */
 export function CurrencySettingsCard() {
-  const { language } = useLanguage();
-  const isEn = language === "en";
+  const { t } = useLanguage();
   const [functionalCurrency, setFunctionalCurrencyState] = React.useState<string>(
     () => getFunctionalCurrency(),
   );
@@ -42,7 +41,7 @@ export function CurrencySettingsCard() {
   function handleSelectFunctionalCurrency(curr: string) {
     setFunctionalCurrency(curr);
     setFunctionalCurrencyState(curr);
-    toast.success(`Mata uang fungsional sistem diubah ke ${curr}.`);
+    toast.success(t("settings:currency.toast_curr_saved", { code: curr, defaultValue: `Mata uang fungsional sistem diubah ke ${curr}.` }));
   }
 
   function handleRateChange(currencyCode: string, newRate: number) {
@@ -56,7 +55,7 @@ export function CurrencySettingsCard() {
     setSavingRates(true);
     try {
       saveExchangeRatesToIdr(exchangeRates);
-      toast.success("Kurs konversi valuta asing ke Rupiah (IDR) berhasil disimpan.");
+      toast.success(t("settings:currency.toast_rates_saved", "Kurs konversi valuta asing ke Rupiah (IDR) berhasil disimpan."));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan kurs.");
     } finally {
@@ -75,30 +74,31 @@ export function CurrencySettingsCard() {
             </div>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
-                {isEn ? "Functional Currency" : "Mata Uang Fungsional"}
+                {t("settings:currency.functional_title", "Mata Uang Fungsional")}
               </h2>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                {isEn ? "Entity accounting reporting standard" : "Standar pelaporan akuntansi entitas"}
+                {t("settings:currency.functional_desc", "Standar pelaporan akuntansi entitas")}
               </p>
             </div>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {isEn
-              ? "The primary currency of the primary economic environment in which Altvira operates (compliant with PSAK 10 / IAS 21). Foreign currency transactions will be translated into this functional currency."
-              : "Mata uang utama dari lingkungan ekonomi utama tempat Altvira beroperasi (sesuai ketentuan PSAK 10 / IAS 21). Transaksi dalam mata uang asing akan ditranslasikan ke mata uang fungsional ini."}
+            {t(
+              "settings:currency.functional_desc",
+              "Mata uang utama dari lingkungan ekonomi utama tempat Altvira beroperasi (sesuai ketentuan PSAK 10 / IAS 21). Transaksi dalam mata uang asing akan ditranslasikan ke mata uang fungsional ini.",
+            )}
           </p>
 
           <div className="space-y-2 pt-1">
             <label className="text-xs font-semibold text-foreground">
-              {isEn ? "Select Primary Currency:" : "Pilih Mata Uang Utama:"}
+              {t("settings:currency.functional_title", "Pilih Mata Uang Utama:")}
             </label>
             <Select
               value={functionalCurrency}
               onValueChange={handleSelectFunctionalCurrency}
             >
               <SelectTrigger className="w-full h-9 rounded-xl bg-background">
-                <SelectValue placeholder={isEn ? "Select currency" : "Pilih mata uang"} />
+                <SelectValue placeholder={functionalCurrency} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -119,8 +119,8 @@ export function CurrencySettingsCard() {
         </div>
 
         <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">{isEn ? "Active Status:" : "Status Aktif:"}</span>
-          <StatusBadge tone="success" label={`${functionalCurrency} (${isEn ? "Functional" : "Fungsional"})`} />
+          <span className="text-xs text-muted-foreground">{t("table.status", "Status Aktif:")}</span>
+          <StatusBadge tone="success" label={`${functionalCurrency} (Fungsional)`} />
         </div>
       </Card>
 
@@ -134,12 +134,10 @@ export function CurrencySettingsCard() {
               </div>
               <div className="min-w-0">
                 <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
-                  {isEn ? "Foreign Exchange Rates to Rupiah (IDR)" : "Kurs Valuta Asing ke Rupiah (IDR)"}
+                  {t("settings:currency.rates_title", "Kurs Valuta Asing ke Rupiah (IDR)")}
                 </h2>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {isEn
-                    ? "10 most popular currencies in global economic transactions"
-                    : "10 mata uang terpopuler dalam transaksi ekonomi global"}
+                  {t("settings:currency.rates_desc", "10 mata uang terpopuler dalam transaksi ekonomi global")}
                 </p>
               </div>
             </div>
@@ -152,14 +150,15 @@ export function CurrencySettingsCard() {
               className="h-8.5 rounded-xl px-3.5 text-xs font-semibold cursor-pointer shadow-xs gap-1.5 shrink-0 self-start sm:self-center"
             >
               <SaveIcon className="size-3.5" />
-              <span>{isEn ? "Save FX Rates" : "Simpan Kurs Valas"}</span>
+              <span>{t("settings:currency.btn_save_rates", "Simpan Kurs Valas")}</span>
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {isEn
-              ? "Set foreign currency conversion rates against Rupiah (IDR) for contract estimates, invoice billing, or overseas procurement."
-              : "Tentukan nilai kurs konversi mata uang asing terhadap Rupiah (IDR) untuk perhitungan estimasi kontrak, penagihan invoice, atau pengadaan luar negeri."}
+            {t(
+              "settings:currency.rates_desc",
+              "Tentukan nilai kurs konversi mata uang asing terhadap Rupiah (IDR) untuk perhitungan estimasi kontrak, penagihan invoice, atau pengadaan luar negeri.",
+            )}
           </p>
 
           {/* Grid 9 Valuta Asing Terpopuler Dunia */}

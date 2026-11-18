@@ -77,8 +77,7 @@ function previewSequenceFormat(seq: Pick<DocSequenceRow, "prefix_pattern" | "pad
 }
 
 export function AdminSettingsPage() {
-  const { language } = useLanguage();
-  const isEn = language === "en";
+  const { t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [sequences, setSequences] = React.useState<DocSequenceRow[]>([]);
   const [counters, setCounters] = React.useState<DocSequenceCounterRow[]>([]);
@@ -400,15 +399,15 @@ export function AdminSettingsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{isEn ? "Code" : "Kode"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Document Type" : "Jenis Dokumen"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Number Pattern" : "Pola Nomor"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Sample Output" : "Contoh Output"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Digits" : "Digit"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Reset Period" : "Periode Reset"}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{isEn ? "Last Sequence" : "Urutan Terakhir"}</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type", "Jenis Dokumen")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_pattern", "Pola Nomor")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_sample_output", "Contoh Output")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_digits", "Digit")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_reset", "Periode Reset")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_last_sequence", "Urutan Terakhir")}</TableHead>
                 {isEditingSeq && (
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{isEn ? "Actions" : "Aksi"}</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions", "Aksi")}</TableHead>
                 )}
               </TableRow>
             </TableHeader>

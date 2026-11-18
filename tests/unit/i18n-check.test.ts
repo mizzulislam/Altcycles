@@ -90,6 +90,10 @@ describe("i18n navigation and layout checks", () => {
     const profitSharingEn = (await import("@/locales/en/profit_sharing.json")).default;
     const dashboardId = (await import("@/locales/id/dashboard.json")).default;
     const dashboardEn = (await import("@/locales/en/dashboard.json")).default;
+    const partiesId = (await import("@/locales/id/parties.json")).default;
+    const partiesEn = (await import("@/locales/en/parties.json")).default;
+    const settingsId = (await import("@/locales/id/settings.json")).default;
+    const settingsEn = (await import("@/locales/en/settings.json")).default;
 
     const accountingId = (await import("@/locales/id/accounting.json")).default;
     const accountingEn = (await import("@/locales/en/accounting.json")).default;
@@ -139,11 +143,36 @@ describe("i18n navigation and layout checks", () => {
     expect(dashIdKeys).toEqual(dashEnKeys);
     expect(dashIdKeys.length).toBeGreaterThan(40);
 
-    // Ensure no empty translation values in dashboard
-    for (const key of dashIdKeys) {
+    // Check parties.json deep keys
+    const partiesIdKeys = getDeepKeys(partiesId).sort();
+    const partiesEnKeys = getDeepKeys(partiesEn).sort();
+    expect(partiesIdKeys).toEqual(partiesEnKeys);
+    expect(partiesIdKeys.length).toBeGreaterThan(60);
+
+    // Check settings.json deep keys
+    const settingsIdKeys = getDeepKeys(settingsId).sort();
+    const settingsEnKeys = getDeepKeys(settingsEn).sort();
+    expect(settingsIdKeys).toEqual(settingsEnKeys);
+    expect(settingsIdKeys.length).toBeGreaterThan(60);
+
+    for (const key of settingsIdKeys) {
       const parts = key.split(".");
-      let valId: any = dashboardId;
-      let valEn: any = dashboardEn;
+      let valId: any = settingsId;
+      let valEn: any = settingsEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
+
+    for (const key of partiesIdKeys) {
+      const parts = key.split(".");
+      let valId: any = partiesId;
+      let valEn: any = partiesEn;
       for (const p of parts) {
         valId = valId[p];
         valEn = valEn[p];

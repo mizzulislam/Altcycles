@@ -87,7 +87,7 @@ export function PartiesMasterPage() {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat master vendor, pelanggan, &amp; produk layanan...</span>
+        <span>{t("parties:common.loading")}</span>
       </div>
     );
   }
@@ -211,15 +211,19 @@ export function PartiesMasterPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title={`Hapus Data ${
-          deleteTarget?.type === "vendor"
-            ? "Vendor"
-            : deleteTarget?.type === "customer"
-              ? "Pelanggan"
-              : "Produk / Layanan"
-        }?`}
-        description={`Apakah Anda yakin ingin menghapus data master ${deleteTarget?.name ?? ""} (${deleteTarget?.code ?? ""})? Data yang dihapus tidak dapat dipulihkan.`}
-        confirmLabel="Ya, Hapus Data"
+        title={t("parties:common.delete_title", {
+          type:
+            deleteTarget?.type === "vendor"
+              ? t("parties:tab_vendors", "Vendor")
+              : deleteTarget?.type === "customer"
+                ? t("parties:tab_customers", "Pelanggan")
+                : t("parties:tab_products", "Produk / Layanan"),
+        })}
+        description={t("parties:common.delete_desc", {
+          name: deleteTarget?.name ?? "",
+          code: deleteTarget?.code ?? "",
+        })}
+        confirmLabel={t("parties:common.delete_btn", "Ya, Hapus Data")}
         destructive
         onConfirm={confirmDelete}
       />

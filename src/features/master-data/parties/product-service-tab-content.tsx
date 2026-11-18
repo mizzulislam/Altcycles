@@ -33,12 +33,13 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile } from "@/lib/data-service";
-import { useLanguage, getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import { saveServiceProduct } from "@/lib/services/products-services-service";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
+import { formatRupiah } from "@/lib/formatters";
 import type { ServiceProductRow } from "@/types/database.types";
 
 export interface ProductServiceTabContentProps {
@@ -74,7 +75,7 @@ export function ProductServiceTabContent({
     e.preventDefault();
     try {
       await saveServiceProduct(prdForm);
-      toast.success("Data produk/layanan berhasil disimpan.");
+      toast.success(t("parties:products.toast_saved", "Data produk/layanan berhasil disimpan."));
       setPrdOpen(false);
       await onReload();
     } catch (err) {
@@ -85,33 +86,22 @@ export function ProductServiceTabContent({
   }
 
   async function handleExportProductsExcel() {
-    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(t("parties:products.export_toast_no_data", "Tidak ada data produk/layanan untuk diekspor."));
       return;
     }
     await downloadExcelSheet({
-      sheetName: isEn ? "Products & Services" : "Katalog Produk & Layanan",
-      fileName: isEn ? "Master_Products_Services_Altcycles.xlsx" : "Master_Produk_Layanan_Altcycles.xlsx",
-      columns: isEn
-        ? [
-            { header: "Code", width: 14 },
-            { header: "Product / Service Name", width: 32 },
-            { header: "Category", width: 22 },
-            { header: "Unit", width: 16 },
-            { header: "Base Rate / Price (IDR)", width: 24 },
-            { header: "Description", width: 44 },
-            { header: "Status", width: 14 },
-          ]
-        : [
-            { header: "Kode", width: 14 },
-            { header: "Nama Produk / Layanan", width: 32 },
-            { header: "Kategori", width: 22 },
-            { header: "Satuan", width: 16 },
-            { header: "Tarif / Harga Dasar (IDR)", width: 24 },
-            { header: "Deskripsi", width: 44 },
-            { header: "Status", width: 14 },
-          ],
+      sheetName: t("parties:products.export_excel_sheet", "Katalog Produk & Layanan"),
+      fileName: t("parties:products.export_excel_filename", "Master_Produk_Layanan_Altcycles.xlsx"),
+      columns: [
+        { header: t("parties:products.col_code", "Kode"), width: 14 },
+        { header: t("parties:products.col_name", "Nama Layanan / Produk"), width: 32 },
+        { header: t("parties:products.col_category", "Kategori"), width: 22 },
+        { header: t("parties:products.col_unit", "Satuan"), width: 16 },
+        { header: t("parties:products.modal_price", "Tarif / Harga Dasar (IDR)"), width: 24 },
+        { header: t("parties:products.col_desc", "Deskripsi"), width: 44 },
+        { header: t("parties:products.col_status", "Status"), width: 14 },
+      ],
       rows: products.map((p) => [
         p.code,
         p.name,
@@ -119,94 +109,74 @@ export function ProductServiceTabContent({
         p.unit,
         p.price,
         p.description ?? "-",
-        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
-    toast.success(isEn ? "Products/services catalog successfully exported to Excel (.xlsx)." : "Katalog produk/layanan berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("parties:products.export_toast_excel", "Katalog produk/layanan berhasil diekspor ke Excel (.xlsx)."));
   }
 
   async function handleExportProductsPdf() {
-    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(t("parties:products.export_toast_no_data", "Tidak ada data produk/layanan untuk diekspor."));
       return;
     }
     const comp = await getCompanyProfile();
+    const activeCount = products.filter((p) => p.is_active).length;
+    const inactiveCount = products.filter((p) => !p.is_active).length;
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "ALTVIRA OFFICIAL PRODUCTS & SERVICES CATALOG" : "KATALOG PRODUK & LAYANAN RESMI ALTVIRA",
-      docSubtitle: isEn
-        ? "Summary of Digital Solutions, Software Products, & Professional Service Offerings"
-        : "Rekapitulasi Penawaran Solusi Digital, Software, & Layanan Profesional",
+      docTitle: t("parties:products.export_pdf_title", "KATALOG RESMI PRODUK & LAYANAN ALTVIRA"),
+      docSubtitle: t("parties:products.export_pdf_subtitle", "Daftar Paket Solusi Teknologi & Layanan Profesional"),
       docNumber: `KATALOG-SRV-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
-        { label: isEn ? "Total Services / Products" : "Total Layanan / Produk", value: isEn ? `${products.length} items` : `${products.length} item` },
         {
-          label: isEn ? "Service Status" : "Status Layanan",
-          value: isEn
-            ? `${products.filter((p) => p.is_active).length} Active, ${products.filter((p) => !p.is_active).length} Inactive`
-            : `${products.filter((p) => p.is_active).length} Aktif, ${products.filter((p) => !p.is_active).length} Nonaktif`,
+          label: t("parties:products.export_pdf_total_label", "Total Layanan"),
+          value: `${products.length} ${t("parties:products.export_pdf_total_unit", "layanan/produk")}`,
+        },
+        {
+          label: t("parties:products.export_pdf_status_label", "Status Layanan"),
+          value: `${activeCount} ${t("common:status.active", "Aktif")}, ${inactiveCount} ${t("common:status.inactive", "Nonaktif")}`,
         },
       ],
-      tableColumns: isEn
-        ? [
-            { header: "Code", widthRatio: 1.5 },
-            { header: "Service / Product Name", widthRatio: 3.5 },
-            { header: "Category", widthRatio: 2 },
-            { header: "Unit", widthRatio: 1.5 },
-            { header: "Base Rate", widthRatio: 2.5 },
-            { header: "Status", widthRatio: 1.5 },
-          ]
-        : [
-            { header: "Kode", widthRatio: 1.5 },
-            { header: "Nama Layanan / Produk", widthRatio: 3.5 },
-            { header: "Kategori", widthRatio: 2 },
-            { header: "Satuan", widthRatio: 1.5 },
-            { header: "Tarif Dasar", widthRatio: 2.5 },
-            { header: "Status", widthRatio: 1.5 },
-          ],
+      tableColumns: [
+        { header: t("parties:products.col_code", "Kode"), widthRatio: 1.5 },
+        { header: t("parties:products.col_name", "Nama Layanan / Produk"), widthRatio: 3.5 },
+        { header: t("parties:products.col_category", "Kategori"), widthRatio: 2 },
+        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 1.5 },
+        { header: t("parties:products.col_base_rate", "Tarif Dasar"), widthRatio: 2.5 },
+        { header: t("parties:products.col_status", "Status"), widthRatio: 1.5 },
+      ],
       tableRows: products.map((p) => [
         p.code,
         p.name,
         p.category,
         p.unit,
-        new Intl.NumberFormat(isEn ? "en-US" : "id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p.price),
-        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        formatRupiah(p.price),
+        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
-    downloadPdfBytes(bytes, isEn ? "Master_Products_Services_Altcycles.pdf" : "Master_Produk_Layanan_Altcycles.pdf");
+    downloadPdfBytes(bytes, "Master_Produk_Layanan_Altcycles.pdf");
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
   async function handleExportProductsCsv() {
-    const isEn = getActiveLanguage() === "en";
     if (products.length === 0) {
-      toast.error(isEn ? "No product/service data to export." : "Tidak ada data produk/layanan untuk diekspor.");
+      toast.error(t("parties:products.export_toast_no_data", "Tidak ada data produk/layanan untuk diekspor."));
       return;
     }
     downloadCsvFile(
-      isEn ? "Master_Products_Services_Altcycles.csv" : "Master_Produk_Layanan_Altcycles.csv",
-      isEn
-        ? [
-            "Code",
-            "Service / Product Name",
-            "Category",
-            "Unit",
-            "Base Rate",
-            "Description",
-            "Status",
-          ]
-        : [
-            "Kode",
-            "Nama Layanan / Produk",
-            "Kategori",
-            "Satuan",
-            "Tarif Dasar",
-            "Deskripsi",
-            "Status",
-          ],
+      "Master_Produk_Layanan_Altcycles.csv",
+      [
+        t("parties:products.col_code", "Kode"),
+        t("parties:products.col_name", "Nama Layanan / Produk"),
+        t("parties:products.col_category", "Kategori"),
+        t("parties:products.col_unit", "Satuan"),
+        t("parties:products.col_base_rate", "Tarif Dasar"),
+        t("parties:products.col_desc", "Deskripsi"),
+        t("parties:products.col_status", "Status"),
+      ],
       products.map((p) => [
         p.code,
         p.name,
@@ -214,11 +184,11 @@ export function ProductServiceTabContent({
         p.unit,
         String(p.price),
         p.description ?? "-",
-        p.is_active ? (isEn ? "Active" : "Aktif") : (isEn ? "Inactive" : "Nonaktif"),
+        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
-    toast.success(isEn ? "Products/services catalog successfully exported to CSV (.csv)." : "Katalog produk/layanan berhasil diekspor ke CSV (.csv).");
+    toast.success(t("parties:products.export_toast_csv", "Katalog produk/layanan berhasil diekspor ke CSV (.csv)."));
   }
 
   return (
@@ -226,14 +196,14 @@ export function ProductServiceTabContent({
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties.services_title", "Katalog Produk & Layanan Altvira")}</CardTitle>
+            <CardTitle>{t("parties:products.title", "Katalog Produk & Layanan Altvira")}</CardTitle>
             <CardDescription>
-              {t("parties.services_desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
+              {t("parties:products.desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportProductsExcel}
               onExportPdf={handleExportProductsPdf}
               onExportCsv={handleExportProductsCsv}
@@ -257,7 +227,7 @@ export function ProductServiceTabContent({
               }}
             >
               <PlusIcon data-icon="inline-start" />
-              {t("parties.add_service", "Tambah Layanan / Produk")}
+              {t("parties:products.add_btn", "Tambah Layanan / Produk")}
             </Button>
           </div>
         </CardHeader>
@@ -265,14 +235,14 @@ export function ProductServiceTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("table.code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_service_name", "Nama Layanan / Produk")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_category", "Kategori")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_desc", "Deskripsi")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties.col_unit", "Satuan")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[140px]">{t("parties.col_base_rate", "Tarif Dasar")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("table.actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_name", "Nama Layanan / Produk")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_category", "Kategori")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_desc", "Deskripsi")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_unit", "Satuan")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[140px]">{t("parties:products.col_base_rate", "Tarif Dasar")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:products.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -284,10 +254,10 @@ export function ProductServiceTabContent({
                         <BriefcaseIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        {t("parties.no_service", "Belum Ada Data Produk / Layanan")}
+                        {t("parties:products.empty_title", "Belum Ada Data Produk / Layanan")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                        {t("parties.no_service_desc", "Katalog produk dan layanan Altvira masih kosong. Tambahkan paket atau penawaran baru untuk referensi transaksi & SPK proyek.")}
+                        {t("parties:products.empty_desc", "Katalog produk dan layanan Altvira masih kosong. Tambahkan paket atau penawaran baru untuk referensi transaksi & SPK proyek.")}
                       </p>
                     </div>
                   </TableCell>
@@ -321,7 +291,7 @@ export function ProductServiceTabContent({
                       <div className="-my-px inline-flex justify-center">
                         <StatusBadge
                           tone={p.is_active ? "success" : "secondary"}
-                          label={p.is_active ? "Aktif" : "Nonaktif"}
+                          label={p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif")}
                         />
                       </div>
                     </TableCell>
@@ -345,11 +315,11 @@ export function ProductServiceTabContent({
                             setPrdOpen(true);
                           }}
                           className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
-                          title="Ubah data layanan/produk"
-                          aria-label="Ubah data layanan/produk"
+                          title={t("common:action.edit", "Edit")}
+                          aria-label={t("common:action.edit", "Edit")}
                         >
                           <PencilIcon className="size-4" />
-                          <span className="sr-only">Ubah</span>
+                          <span className="sr-only">{t("common:action.edit", "Edit")}</span>
                         </Button>
                         <Button
                           type="button"
@@ -364,11 +334,11 @@ export function ProductServiceTabContent({
                             })
                           }
                           className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                          title="Hapus data layanan/produk"
-                          aria-label="Hapus data layanan/produk"
+                          title={t("common:action.delete", "Hapus")}
+                          aria-label={t("common:action.delete", "Hapus")}
                         >
                           <Trash2Icon className="size-4" />
-                          <span className="sr-only">Hapus</span>
+                          <span className="sr-only">{t("common:action.delete", "Hapus")}</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -386,8 +356,8 @@ export function ProductServiceTabContent({
           <DialogHeader>
             <DialogTitle>
               {prdForm.id
-                ? t("products.modal_edit_title", "Ubah Produk / Layanan")
-                : t("products.modal_add_title", "Tambah Layanan / Produk")}
+                ? t("parties:products.modal_edit_title", "Ubah Produk / Layanan")
+                : t("parties:products.modal_create_title", "Tambah Layanan / Produk")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitProduct}>
@@ -395,7 +365,7 @@ export function ProductServiceTabContent({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="p-code" required>
-                    {t("products.code", "Kode Layanan")}
+                    {t("parties:products.modal_code", "Kode Layanan")}
                   </FieldLabel>
                   <Input
                     id="p-code"
@@ -409,7 +379,7 @@ export function ProductServiceTabContent({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="p-cat" required>
-                    {t("products.category", "Kategori")}
+                    {t("parties:products.modal_category", "Kategori")}
                   </FieldLabel>
                   <Input
                     id="p-cat"
@@ -424,7 +394,7 @@ export function ProductServiceTabContent({
               </div>
               <Field>
                 <FieldLabel htmlFor="p-name" required>
-                  {t("products.name", "Nama Layanan / Produk")}
+                  {t("parties:products.modal_name", "Nama Layanan / Produk")}
                 </FieldLabel>
                 <Input
                   id="p-name"
@@ -433,13 +403,13 @@ export function ProductServiceTabContent({
                   onChange={(e) =>
                     setPrdForm({ ...prdForm, name: e.target.value })
                   }
-                  placeholder={t("products.name_placeholder", "e.g. Pengembangan Portal Web Perusahaan")}
+                  placeholder={t("parties:products.name_placeholder", "e.g. Pengembangan Portal Web Perusahaan")}
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="p-unit" required>
-                    {t("products.unit", "Satuan")}
+                    {t("parties:products.modal_unit", "Satuan")}
                   </FieldLabel>
                   <Input
                     id="p-unit"
@@ -448,12 +418,12 @@ export function ProductServiceTabContent({
                     onChange={(e) =>
                       setPrdForm({ ...prdForm, unit: e.target.value })
                     }
-                    placeholder={t("products.unit_placeholder", "Proyek / Paket / Bulan")}
+                    placeholder={t("parties:products.unit_placeholder", "Proyek / Paket / Bulan")}
                   />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="p-price" required>
-                    {t("products.price", "Tarif / Harga Dasar (IDR)")}
+                    {t("parties:products.modal_price", "Tarif / Harga Dasar (IDR)")}
                   </FieldLabel>
                   <NumberInput
                     id="p-price"
@@ -469,7 +439,7 @@ export function ProductServiceTabContent({
               </div>
               <Field>
                 <FieldLabel htmlFor="p-desc">
-                  {t("products.description", "Deskripsi Ringkas")}
+                  {t("parties:products.modal_description", "Deskripsi Ringkas")}
                 </FieldLabel>
                 <Textarea
                   id="p-desc"
@@ -478,12 +448,12 @@ export function ProductServiceTabContent({
                   onChange={(e) =>
                     setPrdForm({ ...prdForm, description: e.target.value })
                   }
-                  placeholder={t("products.desc_placeholder", "Keterangan cakupan penawaran solusi atau layanan...")}
+                  placeholder={t("parties:products.desc_placeholder", "Keterangan cakupan penawaran solusi atau layanan...")}
                 />
               </Field>
               <Field orientation="horizontal">
                 <FieldLabel htmlFor="p-act">
-                  {t("products.status_active", "Status Layanan Aktif")}
+                  {t("parties:products.modal_status_active", "Status Layanan Aktif")}
                 </FieldLabel>
                 <Switch
                   id="p-act"
@@ -499,10 +469,10 @@ export function ProductServiceTabContent({
                   variant="outline"
                   onClick={() => setPrdOpen(false)}
                 >
-                  {t("action.cancel", "Batal")}
+                  {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button type="submit">
-                  {t("products.btn_save", "Simpan Layanan / Produk")}
+                  {t("parties:products.modal_btn_save", "Simpan Layanan / Produk")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

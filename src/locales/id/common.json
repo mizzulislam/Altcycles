@@ -31,6 +31,7 @@
     "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan"
   },
   "loading": "Memuat data...",
+  "error": "Terjadi kesalahan",
   "time": {
     "days": "Hari"
   },
