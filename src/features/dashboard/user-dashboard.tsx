@@ -121,7 +121,7 @@ export function UserDashboardPage() {
     return (
       <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat ringkasan portal anggota tim...</span>
+        <span>{t("dashboard:user_dashboard.loading", "Memuat ringkasan portal anggota tim...")}</span>
       </div>
     );
   }
@@ -192,14 +192,14 @@ export function UserDashboardPage() {
 
   const claimStatusSlices = [
     {
-      label: "Lunas Dicairkan",
+      label: t("dashboard:user_dashboard.status_paid", "Lunas Dicairkan"),
       value: totalPaidNominal,
       count: paidPa,
       color: "#10b981",
       dotClass: "bg-emerald-500",
     },
     {
-      label: "Disetujui / Siap Cair",
+      label: t("dashboard:user_dashboard.status_approved", "Disetujui / Siap Cair"),
       value: requests
         .filter((r) => r.status === "approved")
         .reduce((s, r) => s + r.amount, 0),
@@ -208,7 +208,7 @@ export function UserDashboardPage() {
       dotClass: "bg-amber-500",
     },
     {
-      label: "Menunggu Admin",
+      label: t("dashboard:user_dashboard.status_submitted", "Menunggu Admin"),
       value: requests
         .filter((r) => r.status === "submitted")
         .reduce((s, r) => s + r.amount, 0),
@@ -217,7 +217,7 @@ export function UserDashboardPage() {
       dotClass: "bg-sky-500",
     },
     {
-      label: "Perlu Revisi",
+      label: t("dashboard:user_dashboard.status_rejected", "Perlu Revisi"),
       value: requests
         .filter((r) => r.status === "rejected")
         .reduce((s, r) => s + r.amount, 0),
@@ -243,7 +243,9 @@ export function UserDashboardPage() {
       dotClass: "bg-emerald-500",
     };
     return {
-      label: prj ? `${prj.code} — ${prj.name}` : `Proyek #${idx + 1}`,
+      label: prj
+        ? `${prj.code} — ${prj.name}`
+        : `${t("projects:title", "Proyek")} #${idx + 1}`,
       value: line.share_amount,
       color: palette.color,
       dotClass: palette.dotClass,
@@ -253,27 +255,35 @@ export function UserDashboardPage() {
   const shortcuts = [
     {
       to: "/user/po",
-      label: "PO Pembelian Vendor",
-      desc: "Buat & pantau dokumen PO",
+      label: t("nav.vendor_po", "PO Pembelian Vendor"),
+      desc: t("dashboard:user_dashboard.shortcut_po_desc", "Buat & pantau dokumen PO"),
       icon: ShoppingCartIcon,
       tone: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
       badge: pos.length > 0 ? `${pos.length} PO` : null,
     },
     {
       to: "/user/pembayaran",
-      label: "Pengajuan Pembayaran",
-      desc: "Kirim klaim & lampiran bukti",
+      label: t("nav.my_payments", "Pengajuan Pembayaran"),
+      desc: t("dashboard:user_dashboard.shortcut_pay_desc", "Kirim klaim & lampiran bukti"),
       icon: HandCoinsIcon,
       tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
-      badge: rejectedPa > 0 ? `${rejectedPa} Perlu Revisi` : pendingPa > 0 ? `${pendingPa} Proses` : null,
+      badge:
+        rejectedPa > 0
+          ? `${rejectedPa} ${t("dashboard:user_dashboard.needs_revision", "Perlu Revisi")}`
+          : pendingPa > 0
+            ? `${pendingPa} ${t("dashboard:user_dashboard.processing", "Proses")}`
+            : null,
     },
     {
       to: "/user/anggaran",
-      label: "Anggaran vs Realisasi",
-      desc: "Pantau sisa pagu proyek",
+      label: t("dashboard:user_dashboard.budget_vs_realization", "Anggaran vs Realisasi"),
+      desc: t("dashboard:user_dashboard.shortcut_budget_desc", "Pantau sisa pagu proyek"),
       icon: PiggyBankIcon,
       tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-      badge: projects.length > 0 ? `${projects.length} Proyek` : null,
+      badge:
+        projects.length > 0
+          ? `${projects.length} ${t("dashboard:user_dashboard.projects_count", "Proyek")}`
+          : null,
     },
   ];
 
@@ -380,7 +390,7 @@ export function UserDashboardPage() {
             <p className="text-[11px] text-muted-foreground mt-1">
               {sharingLines.length > 0
                 ? `${t("user_portal.from", "Dari")} ${sharingLines.length} ${t("user_portal.projects_completed", "proyek diselesaikan")}`
-                : "Belum ada alokasi bagi hasil"}
+                : t("dashboard:user_dashboard.no_sharing_allocation", "Belum ada alokasi bagi hasil")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -434,26 +444,28 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1 min-w-0">
-              <CardTitle>Aktivitas PO &amp; Pengajuan Pembayaran</CardTitle>
+              <CardTitle>
+                {t("dashboard:user_dashboard.chart_activity_title", "Aktivitas PO & Pengajuan Pembayaran")}
+              </CardTitle>
               <CardDescription>
                 {activityChartType === "histogram"
-                  ? "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda."
-                  : "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan."}
+                  ? t("dashboard:user_dashboard.chart_histogram_desc", "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda.")
+                  : t("dashboard:user_dashboard.chart_activity_desc", "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan.")}
               </CardDescription>
             </div>
             {activityChartType !== "histogram" ? (
               <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-violet-500" />
-                  PO Pembelian
+                  {t("dashboard:user_dashboard.legend_po", "PO Pembelian")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-amber-500" />
-                  Pengajuan Dana
+                  {t("dashboard:user_dashboard.legend_req", "Pengajuan Dana")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-emerald-500" />
-                  Dana Dicairkan
+                  {t("dashboard:user_dashboard.legend_paid", "Dana Dicairkan")}
                 </span>
               </div>
             ) : null}
@@ -465,10 +477,10 @@ export function UserDashboardPage() {
                 average={userTxHistogram.average}
                 median={userTxHistogram.median}
                 totalCount={userTxHistogram.totalCount}
-                unitLabel="Dokumen"
+                unitLabel={t("dashboard:user_dashboard.unit_docs", "Dokumen")}
                 accentColor="#0B43C8"
-                emptyTitle="Belum Ada Transaksi Pengajuan"
-                emptySubtitle="Histogram distribusi nominal otomatis muncul setelah Anda membuat PO pembelian atau pengajuan pembayaran."
+                emptyTitle={t("dashboard:user_dashboard.no_claims_tx", "Belum Ada Transaksi Pengajuan")}
+                emptySubtitle={t("dashboard:user_dashboard.no_claims_tx_desc", "Histogram distribusi nominal otomatis muncul setelah Anda membuat PO pembelian atau pengajuan pembayaran.")}
               />
             ) : (
               <MultiSeriesChart
@@ -477,45 +489,45 @@ export function UserDashboardPage() {
                 series={[
                   {
                     key: "poTotal",
-                    label: "PO Pembelian",
+                    label: t("dashboard:user_dashboard.legend_po", "PO Pembelian"),
                     color: "#8b5cf6",
                     textClass: "text-violet-600 dark:text-violet-400",
                   },
                   {
                     key: "reqTotal",
-                    label: "Pengajuan Dana",
+                    label: t("dashboard:user_dashboard.legend_req", "Pengajuan Dana"),
                     color: "#f59e0b",
                     textClass: "text-amber-600 dark:text-amber-400",
                   },
                   {
                     key: "paidTotal",
-                    label: "Dicairkan",
+                    label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
                     color: "#10b981",
                     textClass: "text-emerald-600 dark:text-emerald-400",
                   },
                 ]}
                 formatValue={formatRupiah}
                 formatShortValue={formatCompactRupiah}
-                emptyTitle="Belum Ada Riwayat Pengajuan"
-                emptySubtitle="Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat."
+                emptyTitle={t("dashboard:user_dashboard.no_claims_history", "Belum Ada Riwayat Pengajuan")}
+                emptySubtitle={t("dashboard:user_dashboard.no_claims_history_desc", "Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat.")}
               />
             )}
 
             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
               <div>
-                <p className="text-[11px] text-muted-foreground">Total Nilai PO</p>
+                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_po_val", "Total Nilai PO")}</p>
                 <p className="text-xs sm:text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums mt-0.5">
                   {formatRupiah(totalPoNominal)}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Total Diajukan</p>
+                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_req_val", "Total Diajukan")}</p>
                 <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
                   {formatRupiah(totalReqNominal)}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Sudah Dicairkan</p>
+                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan")}</p>
                 <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
                   {formatRupiah(totalPaidNominal)}
                 </p>
@@ -541,11 +553,13 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
-              <CardTitle>Status Klaim &amp; Bagi Hasil</CardTitle>
+              <CardTitle>
+                {t("dashboard:user_dashboard.chart_claims_sharing_title", "Status Klaim & Bagi Hasil")}
+              </CardTitle>
               <CardDescription>
                 {compDataset === "claims"
-                  ? "Proporsi nominal pengajuan pembayaran per status."
-                  : "Alokasi nominal hak bagi hasil per proyek."}
+                  ? t("dashboard:user_dashboard.chart_claims_desc", "Proporsi nominal pengajuan pembayaran per status.")
+                  : t("dashboard:user_dashboard.chart_sharing_desc", "Alokasi nominal hak bagi hasil per proyek.")}
               </CardDescription>
             </div>
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
@@ -559,7 +573,7 @@ export function UserDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Klaim
+                {t("dashboard:user_dashboard.tab_claims", "Klaim")}
               </button>
               <button
                 type="button"
@@ -571,7 +585,7 @@ export function UserDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Bagi Hasil
+                {t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil")}
               </button>
             </div>
           </CardHeader>
@@ -580,7 +594,9 @@ export function UserDashboardPage() {
               chartType={compChartType}
               slices={compDataset === "claims" ? claimStatusSlices : sharingSlices}
               centerLabel={
-                compDataset === "claims" ? "Total Klaim" : "Total Bagi Hasil"
+                compDataset === "claims"
+                  ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
+                  : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")
               }
               centerValue={formatCompactRupiah(
                 compDataset === "claims" ? totalReqNominal : totalMyShare,
@@ -588,13 +604,13 @@ export function UserDashboardPage() {
               formatValue={formatRupiah}
               emptyTitle={
                 compDataset === "claims"
-                  ? "Belum Ada Pengajuan Pembayaran"
-                  : "Belum Ada Alokasi Bagi Hasil"
+                  ? t("dashboard:user_dashboard.no_claims_empty", "Belum Ada Pengajuan Pembayaran")
+                  : t("dashboard:user_dashboard.no_sharing_empty", "Belum Ada Alokasi Bagi Hasil")
               }
               emptySubtitle={
                 compDataset === "claims"
-                  ? "Proporsi status pengajuan dana tampil setelah Anda mengajukan klaim pembayaran."
-                  : "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi."
+                  ? t("dashboard:user_dashboard.no_claims_empty_desc", "Proporsi status pengajuan dana tampil setelah Anda mengajukan klaim pembayaran.")
+                  : t("dashboard:user_dashboard.no_sharing_empty_desc", "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi.")
               }
             />
           </CardContent>
@@ -617,13 +633,16 @@ export function UserDashboardPage() {
         <Card className="rounded-2xl border-border/80 bg-card px-6 py-4 shadow-2xs space-y-3">
           <div className="flex items-center justify-between gap-2 text-xs">
             <span className="font-semibold text-foreground">
-              Progres Pengajuan Pembayaran Anda ({requests.length} total)
+              {t("dashboard:user_dashboard.claims_progress", {
+                count: requests.length,
+                defaultValue: `Progres Pengajuan Pembayaran Anda (${requests.length} total)`,
+              })}
             </span>
             <Link
               to="/user/pembayaran"
               className="font-semibold text-primary dark:text-cyan-400 hover:underline"
             >
-              Lihat Riwayat
+              {t("dashboard:user_dashboard.view_history", "Lihat Riwayat")}
             </Link>
           </div>
           <div className="flex h-2.5 w-full rounded-full bg-muted/50 overflow-hidden gap-0.5">
@@ -631,47 +650,47 @@ export function UserDashboardPage() {
               <div
                 style={{ width: `${(paidPa / requests.length) * 100}%` }}
                 className="h-full bg-emerald-500"
-                title={`Dibayar Lunas: ${paidPa}`}
+                title={`${t("dashboard:user_dashboard.status_paid", "Dibayar Lunas")}: ${paidPa}`}
               />
             ) : null}
             {approvedPa > 0 ? (
               <div
                 style={{ width: `${(approvedPa / requests.length) * 100}%` }}
                 className="h-full bg-amber-500"
-                title={`Disetujui / Siap Cair: ${approvedPa}`}
+                title={`${t("dashboard:user_dashboard.status_approved", "Disetujui / Siap Cair")}: ${approvedPa}`}
               />
             ) : null}
             {pendingPa > 0 ? (
               <div
                 style={{ width: `${(pendingPa / requests.length) * 100}%` }}
                 className="h-full bg-sky-500"
-                title={`Menunggu Admin: ${pendingPa}`}
+                title={`${t("dashboard:user_dashboard.status_submitted", "Menunggu Admin")}: ${pendingPa}`}
               />
             ) : null}
             {rejectedPa > 0 ? (
               <div
                 style={{ width: `${(rejectedPa / requests.length) * 100}%` }}
                 className="h-full bg-rose-500"
-                title={`Perlu Revisi: ${rejectedPa}`}
+                title={`${t("dashboard:user_dashboard.status_rejected", "Perlu Revisi")}: ${rejectedPa}`}
               />
             ) : null}
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-muted-foreground tabular-nums">
             <span className="inline-flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-emerald-500" />
-              Lunas: <strong className="text-foreground">{paidPa}</strong>
+              {t("dashboard:user_dashboard.badge_paid", "Lunas:")} <strong className="text-foreground">{paidPa}</strong>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-amber-500" />
-              Siap Cair: <strong className="text-foreground">{approvedPa}</strong>
+              {t("dashboard:user_dashboard.badge_approved", "Siap Cair:")} <strong className="text-foreground">{approvedPa}</strong>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-sky-500" />
-              Menunggu: <strong className="text-foreground">{pendingPa}</strong>
+              {t("dashboard:user_dashboard.badge_submitted", "Menunggu:")} <strong className="text-foreground">{pendingPa}</strong>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-rose-500" />
-              Perlu Revisi: <strong className="text-foreground">{rejectedPa}</strong>
+              {t("dashboard:user_dashboard.badge_rejected", "Perlu Revisi:")} <strong className="text-foreground">{rejectedPa}</strong>
             </span>
           </div>
         </Card>
@@ -680,19 +699,29 @@ export function UserDashboardPage() {
       {/* Daftar Proyek Aktif Saya */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70">
-          <CardTitle>Proyek Aktif Saya</CardTitle>
+          <CardTitle>
+            {t("dashboard:user_dashboard.my_active_projects", "Proyek Aktif Saya")}
+          </CardTitle>
           <CardDescription>
-            Daftar proyek di mana Anda terdaftar aktif sebagai pelaksana tugas.
+            {t("dashboard:user_dashboard.my_active_projects_desc", "Daftar proyek di mana Anda terdaftar aktif sebagai pelaksana tugas.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode Proyek</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Proyek</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Jadwal Pelaksanaan</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Status</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                  {t("projects:col_code", "Kode Proyek")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("projects:col_name", "Nama Proyek")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("dashboard:user_dashboard.execution_schedule", "Jadwal Pelaksanaan")}
+                </TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                  {t("common:table.status", "Status")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -704,10 +733,10 @@ export function UserDashboardPage() {
                         <FolderKanbanIcon className="size-6" />
                       </div>
                       <h3 className="text-sm font-semibold text-foreground">
-                        Belum Ada Penugasan Proyek
+                        {t("dashboard:user_dashboard.no_projects_assigned", "Belum Ada Penugasan Proyek")}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                        Anda belum terdaftar dalam proyek aktif mana pun. Hubungi Admin atau manajer proyek untuk penugasan tim.
+                        {t("dashboard:user_dashboard.no_projects_assigned_desc", "Anda belum terdaftar dalam proyek aktif mana pun. Hubungi Admin atau manajer proyek untuk penugasan tim.")}
                       </p>
                     </div>
                   </TableCell>
@@ -748,19 +777,29 @@ export function UserDashboardPage() {
       {sharingLines.length > 0 ? (
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
           <CardHeader className="px-6 py-4 border-b border-border/70">
-            <CardTitle>Rincian Hak Bagi Hasil Saya</CardTitle>
+            <CardTitle>
+              {t("dashboard:user_dashboard.my_sharing_detail", "Rincian Hak Bagi Hasil Saya")}
+            </CardTitle>
             <CardDescription>
-              Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.
+              {t("dashboard:user_dashboard.my_sharing_detail_desc", "Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Proyek</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Porsi (%)</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Nominal Hak Bagi Hasil</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">Status Perhitungan</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                    {t("projects:title", "Proyek")}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    {t("dashboard:user_dashboard.portion_pct", "Porsi (%)")}
+                  </TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                    {t("dashboard:user_dashboard.sharing_amount", "Nominal Hak Bagi Hasil")}
+                  </TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                    {t("dashboard:user_dashboard.calc_status", "Status Perhitungan")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -770,7 +809,7 @@ export function UserDashboardPage() {
                   return (
                     <TableRow key={line.id}>
                       <TableCell className="align-top pl-6 pr-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
-                        {prj ? `${prj.code}: ${prj.name}` : "Proyek"}
+                        {prj ? `${prj.code}: ${prj.name}` : t("projects:title", "Proyek")}
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 tabular-nums whitespace-nowrap">
                         {line.percentage}%
@@ -784,8 +823,8 @@ export function UserDashboardPage() {
                             tone={res?.status === "finalized" ? "success" : "warning"}
                             label={
                               res?.status === "finalized"
-                                ? "Difinalisasi & Terkunci"
-                                : "Simulasi Draf"
+                                ? t("profit_sharing:badge_finalized", "Difinalisasi & Terkunci")
+                                : t("profit_sharing:badge_draft", "Simulasi Draf")
                             }
                           />
                         </div>

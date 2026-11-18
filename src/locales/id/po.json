@@ -71,5 +71,30 @@
     "csv_filename": "Daftar_Purchase_Order_Altcycles.csv",
     "toast_excel_success": "Daftar PO berhasil diekspor ke Excel (.xlsx).",
     "toast_csv_success": "Daftar PO berhasil diekspor ke CSV (.csv)."
+  },
+  "doc_spec": {
+    "title": "PURCHASE ORDER (PO PEMBELIAN VENDOR)",
+    "subtitle": "Dokumen resmi pemesanan pengadaan barang / jasa operasional proyek Altvira.",
+    "total_order_value": "TOTAL NILAI PESANAN (PO)",
+    "payment_terms_standard": "Pembayaran 14 hari kalender setelah barang/jasa diterima & invoice diverifikasi.",
+    "recipient_title": "Kepada Vendor / Pemasok",
+    "default_vendor_name": "Vendor Mitra",
+    "issue_date": "Tanggal Terbit",
+    "po_number": "Nomor PO",
+    "related_project": "Proyek Terkait",
+    "delivery_address": "Alamat Pengiriman",
+    "receiving_contact": "Kontak Penerima",
+    "additional_notes": "Catatan Tambahan",
+    "item_desc": "Deskripsi Barang / Jasa",
+    "unit_price": "Harga Satuan",
+    "total_po_value": "Total Nilai PO",
+    "notes_standard": "Barang/jasa yang dikirim wajib sesuai spesifikasi dalam lampiran penawaran rekanan.",
+    "sig_prepared_by": "Dibuat Oleh,",
+    "sig_reviewed_by": "Diverifikasi & Disetujui,",
+    "sig_finance_director": "Direktur Keuangan",
+    "sig_vendor_accepted": "Disetujui Rekanan,",
+    "sig_vendor_rep": "Perwakilan Vendor",
+    "user_cancelled_short": "Dibatalkan",
+    "toast_word_success": "Dokumen PO {{number}} (Word) berhasil diunduh."
   }
 }

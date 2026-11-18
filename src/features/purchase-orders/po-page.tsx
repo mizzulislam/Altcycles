@@ -252,7 +252,6 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   function makePoDocSpec(po: PurchaseOrderRow): PdfDocumentSpec | null {
     if (!company) return null;
     const lang = getActiveLanguage();
-    const isEn = lang === "en";
 
     const vendor = vendors.find((v) => v.id === po.vendor_id);
     const prj = projects.find((p) => p.id === po.project_id);
@@ -267,21 +266,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
             ? "danger"
             : "neutral";
 
-    const statusText = isEn
-      ? po.status === "completed"
-        ? "COMPLETED"
-        : po.status === "issued"
-          ? "ISSUED"
-          : po.status === "cancelled"
-            ? "CANCELLED"
-            : "DRAFT"
-      : PO_STATUS_META[po.status].label.toUpperCase();
+    const statusText = t(`po:status_${po.status}`).toUpperCase();
 
     return {
-      docTitle: isEn ? "VENDOR PURCHASE ORDER" : "PURCHASE ORDER (PO PEMBELIAN VENDOR)",
-      docSubtitle: isEn
-        ? "INTERNAL PROCUREMENT ORDER FOR GOODS / SERVICES"
-        : "PESANAN PENGADAAN BARANG / JASA INTERNAL",
+      docTitle: t("po:doc_spec.title", "PURCHASE ORDER (PO PEMBELIAN VENDOR)"),
+      docSubtitle: t("po:doc_spec.subtitle", "PESANAN PENGADAAN BARANG / JASA INTERNAL"),
       docNumber: po.po_number,
       docDate: po.po_date,
       statusBadge: {
@@ -289,53 +278,49 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         variant: statusTone,
       },
       balanceDueBox: {
-        label: isEn ? "TOTAL ORDER VALUE (PO)" : "TOTAL NILAI PESANAN (PO)",
+        label: t("po:doc_spec.total_order_value", "TOTAL NILAI PESANAN (PO)"),
         amountText: formatDocRupiah(po.total_amount),
-        dueDateText: isEn
-          ? "Payment Terms: Official Bank Transfer"
-          : "Syarat Pembayaran: Transfer Bank Resmi",
+        dueDateText: t("po:doc_spec.payment_terms_standard", "Syarat Pembayaran: Transfer Bank Resmi"),
       },
       company,
-      recipientTitle: isEn ? "To Vendor / Supplier" : "Kepada Vendor / Pemasok",
+      recipientTitle: t("po:doc_spec.recipient_title", "Kepada Vendor / Pemasok"),
       recipientLines: [
-        vendor?.name ?? (isEn ? "Partner Vendor" : "Vendor Mitra"),
+        vendor?.name ?? t("po:doc_spec.default_vendor_name", "Vendor Mitra"),
         vendor?.address ?? "-",
-        isEn
-          ? `Contact: ${vendor?.contact_name ?? "-"} · Tel: ${vendor?.phone ?? "-"}`
-          : `Kontak: ${vendor?.contact_name ?? "-"} · Telp: ${vendor?.phone ?? "-"}`,
+        `${t("parties:vendors.col_pic", "Kontak")}: ${vendor?.contact_name ?? "-"} · Telp: ${vendor?.phone ?? "-"}`,
       ],
       metaRows: [
         {
-          label: isEn ? "Issue Date" : "Tanggal Terbit",
+          label: t("po:doc_spec.issue_date", "Tanggal Terbit"),
           value: formatDocDateLong(po.po_date, lang),
         },
-        { label: isEn ? "PO Number" : "Nomor PO", value: po.po_number },
+        { label: t("po:doc_spec.po_number", "Nomor PO"), value: po.po_number },
         {
-          label: isEn ? "Related Project" : "Proyek Terkait",
+          label: t("po:doc_spec.related_project", "Proyek Terkait"),
           value: prj ? `${prj.code} - ${prj.name}` : "-",
         },
         {
-          label: isEn ? "Delivery Address" : "Alamat Pengiriman",
+          label: t("po:doc_spec.delivery_address", "Alamat Pengiriman"),
           value: company.address,
         },
         {
-          label: isEn ? "Receiving Contact" : "Kontak Penerima",
+          label: t("po:doc_spec.receiving_contact", "Kontak Penerima"),
           value: `${company.signer_name} (${company.phone})`,
         },
         {
-          label: isEn ? "Additional Notes" : "Catatan Tambahan",
+          label: t("po:doc_spec.additional_notes", "Catatan Tambahan"),
           value: po.notes ?? "-",
         },
       ],
       tableColumns: [
         { header: "No", widthRatio: 0.07, align: "center" },
         {
-          header: isEn ? "Goods / Services Description" : "Deskripsi Barang / Jasa",
+          header: t("po:doc_spec.item_desc", "Deskripsi Barang / Jasa"),
           widthRatio: 0.43,
         },
         { header: "Qty", widthRatio: 0.12, align: "center" },
         {
-          header: isEn ? "Unit Price" : "Harga Satuan",
+          header: t("po:doc_spec.unit_price", "Harga Satuan"),
           widthRatio: 0.19,
           align: "right",
         },
@@ -350,34 +335,20 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       ]),
       summaryRows: [
         {
-          label: isEn ? "Total PO Value" : "Total Nilai PO",
+          label: t("po:doc_spec.total_po_value", "Total Nilai PO"),
           value: formatDocRupiah(po.total_amount),
         },
       ],
       terbilangAmount: po.total_amount,
-      notes: isEn
-        ? [
-            "Please include this PO Number on all delivery receipts, waybills, and vendor invoices.",
-            "Delivered goods or services must strictly meet agreed technical specifications and be in good condition.",
-            "This PO document is officially generated by Altvira Altcycles Financial ERP and valid without manual signature.",
-          ]
-        : [
-            "Harap cantumkan Nomor PO ini pada setiap surat jalan, tanda terima, dan tagihan/invoice vendor.",
-            "Barang atau jasa yang dikirim harus sesuai dengan spesifikasi dan dalam kondisi baik saat diterima.",
-            "Dokumen PO ini diterbitkan secara resmi melalui sistem Altcycles ERP Keuangan Altvira dan sah tanpa tanda tangan basah.",
-          ],
-      leftSignatureLabel: isEn
-        ? "Issued By (Procurement),"
-        : "Dibuat Oleh (Staff Pengadaan),",
+      notes: [
+        t("po:doc_spec.notes_standard", "Harap cantumkan Nomor PO ini pada setiap surat jalan, tanda terima, dan tagihan/invoice vendor."),
+      ],
+      leftSignatureLabel: t("po:doc_spec.sig_prepared_by", "Dibuat Oleh,"),
       leftSignatureName: company.signer_name,
-      thirdSignatureLabel: isEn
-        ? "Approved By (Finance / Admin),"
-        : "Disetujui Oleh (Finance / Admin),",
-      thirdSignatureName: isEn ? "Finance Director" : "Direktur Keuangan",
-      rightSignatureLabel: isEn
-        ? `Received & Confirmed By, ${vendor?.name ?? "Vendor"}`
-        : `Diterima & Dikonfirmasi Oleh, ${vendor?.name ?? "Pihak Vendor"}`,
-      rightSignatureName: vendor?.contact_name ?? (isEn ? "Vendor Representative" : "Perwakilan Vendor"),
+      thirdSignatureLabel: t("po:doc_spec.sig_reviewed_by", "Diverifikasi & Disetujui,"),
+      thirdSignatureName: t("po:doc_spec.sig_finance_director", "Direktur Keuangan"),
+      rightSignatureLabel: `${t("po:doc_spec.sig_vendor_accepted", "Disetujui Rekanan,")} ${vendor?.name ?? ""}`,
+      rightSignatureName: vendor?.contact_name ?? t("po:doc_spec.sig_vendor_rep", "Perwakilan Vendor"),
       footerDocNumber: po.po_number,
     };
   }
@@ -396,23 +367,27 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     const blob = await generateDocumentWord(spec);
     downloadWordBlob(blob, `${po.po_number.replace(/\//g, "-")}.docx`);
     await recordExportLog("PO_INTERNAL", "PDF");
-    toast.success(`Word ${po.po_number} berhasil diunduh.`);
+    toast.success(
+      t("po:doc_spec.toast_word_success", {
+        number: po.po_number,
+        defaultValue: `Dokumen PO ${po.po_number} (Word) berhasil diunduh.`,
+      }),
+    );
   }
 
   async function handleExportExcel() {
-    const isEn = getActiveLanguage() === "en";
     const vendorMap = new Map(vendors.map((v) => [v.id, v.name]));
     const projectMap = new Map(projects.map((p) => [p.id, p.code]));
     await downloadExcelSheet({
-      fileName: isEn ? "Internal_Purchase_Orders_Altcycles.xlsx" : "Daftar-PO-Pembelian-Internal.xlsx",
-      sheetName: isEn ? "Purchase Orders" : "PO Pembelian",
+      fileName: t("po:export.excel_filename", "Daftar-PO-Pembelian-Internal.xlsx"),
+      sheetName: t("po:export.excel_sheet", "PO Pembelian"),
       columns: [
-        { header: isEn ? "PO Number" : "Nomor PO", width: 22 },
-        { header: isEn ? "Date" : "Tanggal", width: 14 },
-        { header: isEn ? "Vendor" : "Vendor", width: 28 },
-        { header: isEn ? "Project Code" : "Kode Proyek", width: 18 },
-        { header: isEn ? "Total (IDR)" : "Total (IDR)", width: 18 },
-        { header: isEn ? "Status" : "Status", width: 16 },
+        { header: t("po:col_po_number", "Nomor PO"), width: 22 },
+        { header: t("po:col_date", "Tanggal"), width: 14 },
+        { header: t("po:col_vendor", "Vendor"), width: 28 },
+        { header: t("po:col_project", "Kode Proyek"), width: 18 },
+        { header: t("po:col_total", "Total (IDR)"), width: 18 },
+        { header: t("po:col_status", "Status"), width: 16 },
       ],
       rows: filtered.map((o) => [
         o.po_number,
@@ -420,45 +395,32 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         vendorMap.get(o.vendor_id) ?? "-",
         projectMap.get(o.project_id) ?? "-",
         o.total_amount,
-        isEn
-          ? o.status === "completed"
-            ? "Completed"
-            : o.status === "issued"
-              ? "Issued"
-              : o.status === "cancelled"
-                ? "Cancelled"
-                : "Draft"
-          : PO_STATUS_META[o.status].label,
+        t(`po:status_${o.status}`, PO_STATUS_META[o.status].label),
       ]),
     });
     await recordExportLog("PO_INTERNAL", "EXCEL");
     toast.success(
-      isEn
-        ? "Purchase orders list exported to Excel (.xlsx) successfully."
-        : "Daftar PO berhasil diekspor ke Excel (.xlsx).",
+      t("po:export.toast_excel_success", "Daftar PO berhasil diekspor ke Excel (.xlsx)."),
     );
   }
 
   async function handleExportPdf() {
-    const isEn = getActiveLanguage() === "en";
     const vendorMap = new Map(vendors.map((v) => [v.id, v.name]));
     const projectMap = new Map(projects.map((p) => [p.id, p.code]));
     const comp = company ?? (await getCompanyProfile());
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "ALL VENDOR PURCHASE ORDERS" : "DAFTAR PURCHASE ORDER PEMBELIAN VENDOR",
-      docSubtitle: isEn
-        ? `Total PO Displayed: ${filtered.length} documents`
-        : `Total PO Ditampilkan: ${filtered.length} dokumen`,
+      docTitle: t("po:export.pdf_title", "DAFTAR PURCHASE ORDER PEMBELIAN VENDOR"),
+      docSubtitle: t("po:export.pdf_subtitle", "Daftar riwayat penerbitan PO pengadaan barang dan jasa vendor Altvira."),
       docNumber: `PO-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       tableColumns: [
-        { header: isEn ? "PO Number" : "Nomor PO", widthRatio: 0.20 },
-        { header: isEn ? "Date" : "Tanggal", widthRatio: 0.14 },
-        { header: isEn ? "Vendor" : "Vendor", widthRatio: 0.24 },
-        { header: isEn ? "Project" : "Proyek", widthRatio: 0.14 },
-        { header: isEn ? "Total (IDR)" : "Total (Rp)", widthRatio: 0.16, align: "right" },
-        { header: isEn ? "Status" : "Status", widthRatio: 0.12 },
+        { header: t("po:col_po_number", "Nomor PO"), widthRatio: 0.20 },
+        { header: t("po:col_date", "Tanggal"), widthRatio: 0.14 },
+        { header: t("po:col_vendor", "Vendor"), widthRatio: 0.24 },
+        { header: t("po:col_project", "Proyek"), widthRatio: 0.14 },
+        { header: t("po:col_total", "Total (IDR)"), widthRatio: 0.16, align: "right" },
+        { header: t("po:col_status", "Status"), widthRatio: 0.12 },
       ],
       tableRows: filtered.map((o) => [
         o.po_number,
@@ -466,56 +428,42 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         vendorMap.get(o.vendor_id) ?? "-",
         projectMap.get(o.project_id) ?? "-",
         formatRupiah(o.total_amount),
-        isEn
-          ? o.status === "completed"
-            ? "Completed"
-            : o.status === "issued"
-              ? "Issued"
-              : o.status === "cancelled"
-                ? "Cancelled"
-                : "Draft"
-          : PO_STATUS_META[o.status].label,
+        t(`po:status_${o.status}`, PO_STATUS_META[o.status].label),
       ]),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
     downloadPdfBytes(
       bytes,
-      isEn ? "All_Purchase_Orders_Altcycles.pdf" : "Daftar_Purchase_Order_Altcycles.pdf",
+      t("po:export.pdf_filename", "Daftar_Purchase_Order_Altcycles.pdf"),
     );
     await recordExportLog("PO_INTERNAL", "PDF");
   }
 
   async function handleExportCsv() {
-    const isEn = getActiveLanguage() === "en";
     const vendorMap = new Map(vendors.map((v) => [v.id, v.name]));
     const projectMap = new Map(projects.map((p) => [p.id, p.code]));
     downloadCsvFile(
-      isEn ? "All_Purchase_Orders_Altcycles.csv" : "Daftar_Purchase_Order_Altcycles.csv",
-      isEn
-        ? ["PO Number", "Date", "Vendor", "Project Code", "Total (IDR)", "Status"]
-        : ["Nomor PO", "Tanggal", "Vendor", "Kode Proyek", "Total (IDR)", "Status"],
+      t("po:export.csv_filename", "Daftar_Purchase_Order_Altcycles.csv"),
+      [
+        t("po:col_po_number", "Nomor PO"),
+        t("po:col_date", "Tanggal"),
+        t("po:col_vendor", "Vendor"),
+        t("po:col_project", "Kode Proyek"),
+        t("po:col_total", "Total (IDR)"),
+        t("po:col_status", "Status"),
+      ],
       filtered.map((o) => [
         o.po_number,
         o.po_date,
         vendorMap.get(o.vendor_id) ?? "-",
         projectMap.get(o.project_id) ?? "-",
         o.total_amount,
-        isEn
-          ? o.status === "completed"
-            ? "Completed"
-            : o.status === "issued"
-              ? "Issued"
-              : o.status === "cancelled"
-                ? "Cancelled"
-                : "Draft"
-          : PO_STATUS_META[o.status].label,
+        t(`po:status_${o.status}`, PO_STATUS_META[o.status].label),
       ]),
     );
     await recordExportLog("PO_INTERNAL", "CSV");
     toast.success(
-      isEn
-        ? "Purchase orders list exported to CSV (.csv) successfully."
-        : "Daftar PO berhasil diekspor ke CSV (.csv).",
+      t("po:export.toast_csv_success", "Daftar PO berhasil diekspor ke CSV (.csv)."),
     );
   }
 

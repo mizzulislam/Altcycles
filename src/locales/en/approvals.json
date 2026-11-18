@@ -186,5 +186,14 @@
     "user_csv_filename": "My_Payment_Requests.csv",
     "toast_excel_success": "Payment requests list exported to Excel (.xlsx) successfully.",
     "toast_csv_success": "Payment requests list exported to CSV (.csv) successfully."
-  }
+  },
+  "doc_requester": "Requester",
+  "doc_project_ops": "Project Operations",
+  "doc_general_ops": "General Operations",
+  "doc_financial_admin": "Financial Admin",
+  "word_download_success": "PA Form {{number}} (Word) downloaded successfully.",
+  "submit_success": "Payment request {{number}} successfully submitted to Admin queue.",
+  "resubmit_success": "Payment request {{number}} successfully resubmitted.",
+  "load_error": "Failed to load payment requests.",
+  "submit_error": "Failed to submit payment request."
 }

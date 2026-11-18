@@ -71,5 +71,30 @@
     "csv_filename": "All_Purchase_Orders_Altcycles.csv",
     "toast_excel_success": "Purchase orders list exported to Excel (.xlsx) successfully.",
     "toast_csv_success": "Purchase orders list exported to CSV (.csv) successfully."
+  },
+  "doc_spec": {
+    "title": "VENDOR PURCHASE ORDER",
+    "subtitle": "Official operational procurement order for Altvira project goods/services.",
+    "total_order_value": "TOTAL ORDER VALUE (PO)",
+    "payment_terms_standard": "Payment within 14 calendar days upon receipt of goods/services & invoice verification.",
+    "recipient_title": "To Vendor / Supplier",
+    "default_vendor_name": "Partner Vendor",
+    "issue_date": "Issue Date",
+    "po_number": "PO Number",
+    "related_project": "Related Project",
+    "delivery_address": "Delivery Address",
+    "receiving_contact": "Receiving Contact",
+    "additional_notes": "Additional Notes",
+    "item_desc": "Goods / Services Description",
+    "unit_price": "Unit Price",
+    "total_po_value": "Total PO Value",
+    "notes_standard": "Delivered goods/services must match specifications in vendor's proposal attachment.",
+    "sig_prepared_by": "Prepared By,",
+    "sig_reviewed_by": "Reviewed & Approved,",
+    "sig_finance_director": "Finance Director",
+    "sig_vendor_accepted": "Accepted By Partner,",
+    "sig_vendor_rep": "Vendor Representative",
+    "user_cancelled_short": "Cancelled",
+    "toast_word_success": "PO document {{number}} (Word) downloaded successfully."
   }
 }

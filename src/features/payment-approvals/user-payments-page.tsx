@@ -203,12 +203,14 @@ export function UserPaymentsPage() {
       if (!expenseAccountId && expOnly[0]) setExpenseAccountId(expOnly[0].id);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal memuat pengajuan pembayaran.",
+        err instanceof Error
+          ? err.message
+          : t("approvals:load_error", "Gagal memuat pengajuan pembayaran."),
       );
     } finally {
       setLoading(false);
     }
-  }, [projectId, expenseAccountId]);
+  }, [projectId, expenseAccountId, t]);
 
   React.useEffect(() => {
     void reload();
@@ -281,7 +283,10 @@ export function UserPaymentsPage() {
         budgetWarningAcknowledged: ackWarning,
       });
       toast.success(
-        `Pengajuan ${created.request_number} berhasil dikirim ke antrean Admin.`,
+        t("approvals:submit_success", {
+          number: created.request_number,
+          defaultValue: `Pengajuan ${created.request_number} berhasil dikirim ke antrean Admin.`,
+        }),
       );
       setCreateOpen(false);
       setPurpose("");
@@ -293,7 +298,11 @@ export function UserPaymentsPage() {
       setAckWarning(false);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal mengirim pengajuan.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("approvals:submit_error", "Gagal mengirim pengajuan."),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -311,12 +320,15 @@ export function UserPaymentsPage() {
         amount: revAmount,
       });
       toast.success(
-        `Pengajuan ${reviseTarget.request_number} berhasil diajukan ulang.`,
+        t("approvals:resubmit_success", {
+          number: reviseTarget.request_number,
+          defaultValue: `Pengajuan ${reviseTarget.request_number} berhasil diajukan ulang.`,
+        }),
       );
       setReviseTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal mengajukan ulang.");
+      toast.error(err instanceof Error ? err.message : t("approvals:submit_error", "Gagal mengajukan ulang."));
     } finally {
       setSubmitting(false);
     }
@@ -339,10 +351,10 @@ export function UserPaymentsPage() {
       requestNumber: req.request_number,
       revisionNo: req.revision_no,
       requestDate: (req.submitted_at ?? req.created_at).slice(0, 10),
-      requesterName: language === "en" ? "Requester" : "Pengaju",
+      requesterName: t("approvals:doc_requester", "Pengaju"),
       projectName: req.project_id
-        ? projectMap.get(req.project_id) ?? (language === "en" ? "Project Operations" : "Operasional Proyek")
-        : (language === "en" ? "General Operations" : "Operasional Umum"),
+        ? projectMap.get(req.project_id) ?? t("approvals:doc_project_ops", "Operasional Proyek")
+        : t("approvals:doc_general_ops", "Operasional Umum"),
       expenseAccountName: req.expense_account_id
         ? accountMap.get(req.expense_account_id) ?? "-"
         : "-",
@@ -352,7 +364,7 @@ export function UserPaymentsPage() {
       amount: req.amount,
       status: req.status,
       statusLabel: getPaUserStatusMeta(req.status, t).label,
-      approverName: req.approver_id ? (language === "en" ? "Financial Admin" : "Admin Keuangan") : null,
+      approverName: req.approver_id ? t("approvals:doc_financial_admin", "Admin Keuangan") : null,
       approvedAt: req.decided_at ?? null,
       paidDate: req.paid_date ?? null,
       rejectionReason: req.rejection_reason ?? null,
@@ -373,9 +385,10 @@ export function UserPaymentsPage() {
     downloadWordBlob(blob, `PA_${req.request_number.replace(/\//g, "-")}.docx`);
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
     toast.success(
-      language === "en"
-        ? `PA Form ${req.request_number} (Word) downloaded successfully.`
-        : `Form PA ${req.request_number} (Word) berhasil diunduh.`,
+      t("approvals:word_download_success", {
+        number: req.request_number,
+        defaultValue: `Form PA ${req.request_number} (Word) berhasil diunduh.`,
+      }),
     );
   }
 

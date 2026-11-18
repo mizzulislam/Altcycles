@@ -186,5 +186,14 @@
     "user_csv_filename": "Pengajuan_Pembayaran_Saya.csv",
     "toast_excel_success": "Daftar pengajuan berhasil diekspor ke Excel (.xlsx).",
     "toast_csv_success": "Daftar pengajuan berhasil diekspor ke CSV (.csv)."
-  }
+  },
+  "doc_requester": "Pengaju",
+  "doc_project_ops": "Operasional Proyek",
+  "doc_general_ops": "Operasional Umum",
+  "doc_financial_admin": "Admin Keuangan",
+  "word_download_success": "Form PA {{number}} (Word) berhasil diunduh.",
+  "submit_success": "Pengajuan {{number}} berhasil dikirim ke antrean Admin.",
+  "resubmit_success": "Pengajuan {{number}} berhasil diajukan ulang.",
+  "load_error": "Gagal memuat pengajuan pembayaran.",
+  "submit_error": "Gagal mengirim pengajuan."
 }
