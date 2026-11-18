@@ -303,43 +303,26 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
     expect(catalogEnAlias.fullTitleBar).toBe("ALTVIRA OFFICIAL PRODUCT & SERVICE CATALOG");
   });
 
-  it("(k) Tahap 2: Validasi menu pilihan format unduh (maks 3 kata, teks tepat di ID dan EN) (Bagian B Item 4)", async () => {
+  it("(k) Validasi menu pilihan format unduh (teks tepat di ID dan EN sesuai Gambar 1)", async () => {
     const idLocale = await import("@/locales/id/common.json");
     const enLocale = await import("@/locales/en/common.json");
 
-    expect(idLocale.default.export.excel_desc).toBe("Data & rumus");
-    expect(enLocale.default.export.excel_desc).toBe("Spreadsheet");
+    expect(idLocale.default.export.pdf).toBe("PDF Dokumen (.pdf)");
+    expect(idLocale.default.export.pdf_desc).toBe("Format cetak & laporan resmi");
 
-    expect(idLocale.default.export.pdf_desc).toBe("Siap cetak");
-    expect(enLocale.default.export.pdf_desc).toBe("Print-ready");
-
-    expect(idLocale.default.export.csv_desc).toBe("Data mentah");
-    expect(enLocale.default.export.csv_desc).toBe("Raw data");
-
+    expect(idLocale.default.export.word).toBe("Word Dokumen (.docx)");
     expect(idLocale.default.export.word_desc).toBe("Dapat disunting");
-    expect(enLocale.default.export.word_desc).toBe("Editable");
 
-    const idDescs = [
-      idLocale.default.export.excel_desc,
-      idLocale.default.export.pdf_desc,
-      idLocale.default.export.csv_desc,
-      idLocale.default.export.word_desc,
-    ];
-    for (const desc of idDescs) {
-      const words = desc.trim().split(/\s+/);
-      expect(words.length, `Deskripsi ID '${desc}' harus <= 3 kata`).toBeLessThanOrEqual(3);
-    }
+    expect(idLocale.default.export.excel).toBe("Excel Spreadsheet (.xlsx)");
+    expect(idLocale.default.export.excel_desc).toBe("Buku kerja spreadsheet lengkap");
 
-    const enDescs = [
-      enLocale.default.export.excel_desc,
-      enLocale.default.export.pdf_desc,
-      enLocale.default.export.csv_desc,
-      enLocale.default.export.word_desc,
-    ];
-    for (const desc of enDescs) {
-      const words = desc.trim().split(/\s+/);
-      expect(words.length, `Deskripsi EN '${desc}' harus <= 3 kata`).toBeLessThanOrEqual(3);
-    }
+    expect(idLocale.default.export.csv).toBe("Format CSV (.csv)");
+    expect(idLocale.default.export.csv_desc).toBe("Tabel data pemisah koma");
+
+    expect(enLocale.default.export.pdf).toBe("PDF Document (.pdf)");
+    expect(enLocale.default.export.word).toBe("Word Document (.docx)");
+    expect(enLocale.default.export.excel).toBe("Excel Spreadsheet (.xlsx)");
+    expect(enLocale.default.export.csv).toBe("CSV Format (.csv)");
   });
 
   it("(l) Validasi footer PDF: ikon medsos memiliki Link Annotation aktif (URI action, F=4, H=I) dan tersinkronisasi", async () => {

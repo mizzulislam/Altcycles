@@ -53,7 +53,7 @@ export function ExportDownloadMenu({
   const activeItemCount =
     (onExportExcel ? 1 : 0) + (onExportPdf ? 1 : 0) + (onExportCsv ? 1 : 0);
   const estimatedMenuHeight = Math.max(64, activeItemCount * 54 + 12);
-  const menuWidth = 240; // w-60
+  const menuWidth = 260; // w-[260px] (sesuai standar tata letak Gambar 1)
 
   const updatePosition = React.useCallback(() => {
     const btn = triggerRef.current;
@@ -165,7 +165,7 @@ export function ExportDownloadMenu({
             ref={menuRef}
             role="menu"
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none"
+            className="fixed z-[99999] w-[260px] rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none"
           >
             {onExportExcel && (
               <button
@@ -189,7 +189,7 @@ export function ExportDownloadMenu({
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground whitespace-nowrap">{t("export.excel", "Excel (.xlsx)")}</span>
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                    {t("export.excel_desc", "Data & rumus")}
+                    {t("export.excel_desc", "Buku kerja spreadsheet lengkap")}
                   </span>
                 </div>
               </button>
@@ -216,10 +216,10 @@ export function ExportDownloadMenu({
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground whitespace-nowrap">
-                    {t("export.pdf", "PDF (.pdf)")}
+                    {t("export.pdf", "PDF Dokumen (.pdf)")}
                   </span>
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                    {t("export.pdf_desc", "Siap cetak")}
+                    {t("export.pdf_desc", "Format cetak & laporan resmi")}
                   </span>
                 </div>
               </button>
@@ -246,10 +246,10 @@ export function ExportDownloadMenu({
                 </div>
                 <div className="flex flex-col min-w-0 text-left">
                   <span className="font-semibold text-foreground whitespace-nowrap">
-                    {t("export.csv", "CSV (.csv)")}
+                    {t("export.csv", "Format CSV (.csv)")}
                   </span>
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                    {t("export.csv_desc", "Data mentah")}
+                    {t("export.csv_desc", "Tabel data pemisah koma")}
                   </span>
                 </div>
               </button>

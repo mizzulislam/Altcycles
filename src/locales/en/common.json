@@ -129,14 +129,14 @@
     "next_page": "Next page"
   },
   "export": {
-    "excel": "Excel (.xlsx)",
-    "excel_desc": "Spreadsheet",
-    "pdf": "PDF (.pdf)",
-    "pdf_desc": "Print-ready",
-    "csv": "CSV (.csv)",
-    "csv_desc": "Raw data",
-    "word": "Word (.docx)",
-    "word_desc": "Editable"
+    "excel": "Excel Spreadsheet (.xlsx)",
+    "excel_desc": "Complete spreadsheet workbook",
+    "pdf": "PDF Document (.pdf)",
+    "pdf_desc": "Print format & official report",
+    "csv": "CSV Format (.csv)",
+    "csv_desc": "Comma-separated table data",
+    "word": "Word Document (.docx)",
+    "word_desc": "Editable document"
   },
   "status": {
     "active": "Active",

@@ -128,13 +128,13 @@
     "next_page": "Halaman berikutnya"
   },
   "export": {
-    "excel": "Excel (.xlsx)",
-    "excel_desc": "Data & rumus",
-    "pdf": "PDF (.pdf)",
-    "pdf_desc": "Siap cetak",
-    "csv": "CSV (.csv)",
-    "csv_desc": "Data mentah",
-    "word": "Word (.docx)",
+    "excel": "Excel Spreadsheet (.xlsx)",
+    "excel_desc": "Buku kerja spreadsheet lengkap",
+    "pdf": "PDF Dokumen (.pdf)",
+    "pdf_desc": "Format cetak & laporan resmi",
+    "csv": "Format CSV (.csv)",
+    "csv_desc": "Tabel data pemisah koma",
+    "word": "Word Dokumen (.docx)",
     "word_desc": "Dapat disunting"
   },
   "status": {

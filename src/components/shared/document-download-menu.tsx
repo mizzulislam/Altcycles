@@ -48,7 +48,7 @@ export function DocumentDownloadMenu({
     const btn = triggerRef.current;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const menuWidth = 240; // w-60 (sama dengan ExportDownloadMenu)
+    const menuWidth = 260; // w-[260px] (sesuai standar tata letak Gambar 1)
     const menuHeight = 124;
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUpward = spaceBelow < menuHeight + 12 && rect.top > menuHeight + 12;
@@ -172,7 +172,7 @@ export function DocumentDownloadMenu({
             ref={menuRef}
             role="menu"
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-[99999] w-60 rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none"
+            className="fixed z-[99999] w-[260px] rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 text-left animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none"
           >
             <button
               type="button"
@@ -193,8 +193,8 @@ export function DocumentDownloadMenu({
                 )}
               </div>
               <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.pdf", "PDF (.pdf)")}</span>
-                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{t("export.pdf_desc", "Siap cetak")}</span>
+                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.pdf", "PDF Dokumen (.pdf)")}</span>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">{t("export.pdf_desc", "Format cetak & laporan resmi")}</span>
               </div>
             </button>
 
@@ -217,7 +217,7 @@ export function DocumentDownloadMenu({
                 )}
               </div>
               <div className="flex flex-col min-w-0 text-left">
-                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.word", "Word (.docx)")}</span>
+                <span className="font-semibold text-foreground whitespace-nowrap">{t("export.word", "Word Dokumen (.docx)")}</span>
                 <span className="text-[11px] text-muted-foreground whitespace-nowrap">{t("export.word_desc", "Dapat disunting")}</span>
               </div>
             </button>
