@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AltviraLogo } from "@/components/shared/altvira-logo";
+import { LanguageToggle } from "@/components/shared/language-toggle";
 import { OAuthLoadingCard } from "@/components/shared/oauth-loading-card";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -35,6 +36,7 @@ import {
   listActiveLoginMedia,
 } from "@/lib/data-service";
 import { useTheme } from "@/lib/theme-context";
+import { useLanguage } from "@/lib/i18n";
 import type { LoginMediaItemRow } from "@/types/database.types";
 
 type AuthMode = "signin" | "signup";
@@ -87,6 +89,7 @@ interface LoginPageProps {
 export function LoginPage({ bannerSrc }: LoginPageProps) {
   const { signIn, signInWithGoogle, signUp, profile, isDemoMode } = useAuth();
   const { resolvedTheme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [mode, setMode] = React.useState<AuthMode>("signin");
@@ -415,26 +418,28 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
   return (
     <div className="relative min-h-screen w-full bg-muted/30 dark:bg-background transition-colors duration-300">
-      {/* Tombol Pengalih Mode Gelap & Terang di Ujung Kanan Atas Halaman */}
-      <ThemeToggle variant="floating" />
+      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Gelap/Terang */}
+      <div className="fixed top-4 right-4 sm:top-5 sm:right-6 z-[9999] flex items-center gap-2">
+        <LanguageToggle
+          size="default"
+          className="size-10 rounded-2xl shadow-md border-border/80 bg-card/95 backdrop-blur-md"
+        />
+        <ThemeToggle variant="inline" size="default" />
+      </div>
 
       {/* Grid 2 Kolom Murni: Kolom Kiri (Banner) & Kolom Kanan (Form) */}
       <div className="min-h-screen w-full grid lg:grid-cols-2">
         {/* =====================================================================
             KOLOM KIRI: Area Banner Informasi (Full-Bleed, CMS-Ready)
-          Struktur Layering Sesuai Arahan:
-          1. Layer Belakang (z-0): Banner visual (gambar/grafis dari CMS)
-          2. Layer Depan (z-10): Elemen kotak biru gradasi Altvira yang MENUTUPI
-             PENUH seluruh area kotak hitam (full-bleed, edge-to-edge tanpa
-             padding/margin sisa) dengan transparansi 20%.
-             Fungsi: Menjadi highlight kebiruan Altvira dan menimbulkan efek
-             fade yang menyatu dengan banner di belakangnya.
+            Mengunci tinggi pada h-screen dengan sticky top-0 & self-start
+            agar tampilan & skala banner pada tab Buat Akun identik persis
+            dengan tab Masuk tanpa terjadi peregangan/pemotongan (anti-zoom/crop).
           ===================================================================== */}
-      <div
-        className="group relative hidden lg:block w-full h-full min-h-screen bg-slate-950 overflow-hidden select-none"
-        onMouseEnter={() => setIsBannerHovered(true)}
-        onMouseLeave={() => setIsBannerHovered(false)}
-      >
+        <div
+          className="group relative hidden lg:block w-full h-screen max-h-screen sticky top-0 self-start bg-slate-950 overflow-hidden select-none"
+          onMouseEnter={() => setIsBannerHovered(true)}
+          onMouseLeave={() => setIsBannerHovered(false)}
+        >
         {/* LAYER 1 (BELAKANG): Banner / Flyer / Konten Medsos dari Super Admin */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
           {mediaSlides.length > 0 ? (
@@ -622,10 +627,10 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             >
               <ShieldCheckIcon className="text-primary dark:text-sky-400" />
               <AlertTitle className="text-primary dark:text-sky-400 font-bold">
-                Mode Pratinjau Lokal Aktif
+                {t("auth.demo_mode_title", "Mode Pratinjau Lokal Aktif")}
               </AlertTitle>
               <AlertDescription className="text-xs text-muted-foreground">
-                Pilih akun contoh untuk menguji masing-masing portal peran:
+                {t("auth.demo_mode_desc", "Pilih akun contoh untuk menguji masing-masing portal peran:")}
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   <Button
                     type="button"
@@ -676,7 +681,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                 }`}
               >
                 <LogInIcon className="size-4" />
-                <span>Masuk</span>
+                <span>{t("auth.signin_tab", "Masuk")}</span>
               </button>
               <button
                 type="button"
@@ -691,7 +696,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                 }`}
               >
                 <UserPlusIcon className="size-4" />
-                <span>Buat Akun</span>
+                <span>{t("auth.signup_tab", "Buat Akun")}</span>
               </button>
             </div>
 
@@ -699,12 +704,14 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
               {/* Form Title & Subtitle (Mengikuti Referensi Splitz) */}
               <div className="space-y-1.5">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                  {mode === "signin" ? "Masuk ke Sistem" : "Buat Akun Baru"}
+                  {mode === "signin"
+                    ? t("auth.signin_title", "Masuk ke Sistem")
+                    : t("auth.signup_title", "Buat Akun Baru")}
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {mode === "signin"
-                    ? "Silakan masukkan username dan kata sandi Anda"
-                    : "Daftarkan akun internal Altvira untuk mengakses portal kerja"}
+                    ? t("auth.signin_subtitle", "Silakan masukkan username dan kata sandi Anda")
+                    : t("auth.signup_subtitle", "Daftarkan akun internal Altvira untuk mengakses portal kerja")}
                 </p>
               </div>
 
@@ -723,7 +730,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         required
                         className="text-xs font-semibold text-foreground"
                       >
-                        Nama Lengkap
+                        {t("auth.full_name", "Nama Lengkap")}
                       </FieldLabel>
                       <div className="relative">
                         <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -732,7 +739,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           type="text"
                           required
                           autoComplete="name"
-                          placeholder="Nama lengkap Anda"
+                          placeholder={t("auth.full_name_placeholder", "Nama lengkap Anda")}
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           className="pl-10 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
@@ -748,7 +755,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       required
                       className="text-xs font-semibold text-foreground"
                     >
-                      Username
+                      {t("auth.username", "Username")}
                     </FieldLabel>
                     <div className="relative">
                       <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -759,8 +766,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         required
                         placeholder={
                           mode === "signin"
-                            ? "nama@altvira.id atau username"
-                            : "contoh: izzul atau nama@altvira.id"
+                            ? t("auth.username_placeholder_signin", "nama@altvira.id atau username")
+                            : t("auth.username_placeholder_signup", "contoh: izzul atau nama@altvira.id")
                         }
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
@@ -778,14 +785,14 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         required
                         className="text-xs font-semibold text-foreground"
                       >
-                        Kata Sandi
+                        {t("auth.password", "Kata Sandi")}
                       </FieldLabel>
                       {mode === "signin" && (
                         <Link
                           to="/lupa-kata-sandi"
                           className="text-xs font-medium text-primary hover:underline transition-colors"
                         >
-                          Lupa kata sandi?
+                          {t("auth.forgot_password", "Lupa kata sandi?")}
                         </Link>
                       )}
                     </div>
@@ -802,8 +809,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         required
                         placeholder={
                           mode === "signin"
-                            ? "Masukkan kata sandi"
-                            : "Minimal 6 karakter"
+                            ? t("auth.password_placeholder_signin", "Masukkan kata sandi")
+                            : t("auth.password_placeholder_signup", "Minimal 6 karakter")
                         }
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -835,7 +842,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-[11px]">
                             <span className="text-muted-foreground font-medium">
-                              Kekuatan Kata Sandi:
+                              {t("auth.password_strength", "Kekuatan Kata Sandi:")}
                             </span>
                             <span
                               className={`font-bold transition-colors ${
@@ -847,10 +854,10 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                               }`}
                             >
                               {pwdScore === 5
-                                ? "Kuat"
+                                ? t("auth.strength_strong", "Kuat")
                                 : pwdScore >= 3
-                                  ? "Sedang"
-                                  : "Lemah"}
+                                  ? t("auth.strength_medium", "Sedang")
+                                  : t("auth.strength_weak", "Lemah")}
                             </span>
                           </div>
                           <div className="grid grid-cols-5 gap-1.5 h-1.5 w-full bg-muted rounded-full overflow-hidden">
@@ -876,7 +883,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           <div className="p-2.5 rounded-xl bg-muted/40 border border-border/80 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
                               <ShieldCheckIcon className="size-3.5 text-primary" />
-                              <span>Ketentuan Kata Sandi:</span>
+                              <span>{t("auth.password_criteria", "Ketentuan Kata Sandi:")}</span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
                               <div
@@ -891,7 +898,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 ) : (
                                   <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
                                 )}
-                                <span>Minimal 8 karakter</span>
+                                <span>{t("auth.criteria_min_length", "Minimal 8 karakter")}</span>
                               </div>
 
                               <div
@@ -906,7 +913,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 ) : (
                                   <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
                                 )}
-                                <span>Huruf kapital (A-Z)</span>
+                                <span>{t("auth.criteria_upper", "Huruf kapital (A-Z)")}</span>
                               </div>
 
                               <div
@@ -921,7 +928,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 ) : (
                                   <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
                                 )}
-                                <span>Huruf kecil (a-z)</span>
+                                <span>{t("auth.criteria_lower", "Huruf kecil (a-z)")}</span>
                               </div>
 
                               <div
@@ -936,7 +943,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 ) : (
                                   <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
                                 )}
-                                <span>Angka (0-9)</span>
+                                <span>{t("auth.criteria_number", "Angka (0-9)")}</span>
                               </div>
 
                               <div
@@ -951,7 +958,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                                 ) : (
                                   <div className="size-3.5 rounded-full border border-current shrink-0 opacity-60" />
                                 )}
-                                <span>Simbol khusus (!@#$%^&* dll)</span>
+                                <span>{t("auth.criteria_symbol", "Simbol khusus (!@#$%^&* dll)")}</span>
                               </div>
                             </div>
                           </div>
@@ -968,7 +975,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         required
                         className="text-xs font-semibold text-foreground"
                       >
-                        Konfirmasi Kata Sandi
+                        {t("auth.confirm_password", "Konfirmasi Kata Sandi")}
                       </FieldLabel>
                       <div className="relative">
                         <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -977,7 +984,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           type={showConfirmPassword ? "text" : "password"}
                           autoComplete="new-password"
                           required
-                          placeholder="Ulangi kata sandi"
+                          placeholder={t("auth.confirm_password_placeholder", "Ulangi kata sandi")}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="pl-10 pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
@@ -1026,8 +1033,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       <CheckCircle2Icon className="mr-2 size-4" />
                     )}
                     {mode === "signin"
-                      ? "Masuk ke Sistem"
-                      : "Buat Akun Sekarang"}
+                      ? t("auth.signin_button", "Masuk ke Sistem")
+                      : t("auth.signup_button", "Buat Akun Sekarang")}
                   </Button>
 
                   {/* Pembatas "atau lanjutkan dengan" */}
@@ -1037,7 +1044,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     </div>
                     <div className="relative flex justify-center text-[11px] uppercase">
                       <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
-                        atau lanjutkan dengan
+                        {t("auth.or_continue_with", "atau lanjutkan dengan")}
                       </span>
                     </div>
                   </div>
@@ -1055,7 +1062,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     ) : (
                       <GoogleIcon className="size-4 shrink-0" />
                     )}
-                    <span>Masuk dengan Google</span>
+                    <span>{t("auth.signin_google", "Masuk dengan Google")}</span>
                   </Button>
                 </FieldGroup>
               </form>
@@ -1064,7 +1071,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
               <div className="text-center text-xs text-muted-foreground">
                 {mode === "signin" ? (
                   <>
-                    Belum memiliki akun internal?{" "}
+                    {t("auth.no_account", "Belum memiliki akun internal?")}{" "}
                     <button
                       type="button"
                       onClick={() => {
@@ -1073,12 +1080,12 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       }}
                       className="font-bold text-primary hover:underline transition-colors"
                     >
-                      Buat Akun di sini
+                      {t("auth.signup_here", "Buat Akun di sini")}
                     </button>
                   </>
                 ) : (
                   <>
-                    Sudah memiliki akun terdaftar?{" "}
+                    {t("auth.has_account", "Sudah memiliki akun terdaftar?")}{" "}
                     <button
                       type="button"
                       onClick={() => {
@@ -1087,7 +1094,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       }}
                       className="font-bold text-primary hover:underline transition-colors"
                     >
-                      Masuk ke Sistem
+                      {t("auth.signin_here", "Masuk ke Sistem")}
                     </button>
                   </>
                 )}
@@ -1099,7 +1106,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             {/* Buyer Portal Client Quick Access */}
             <div className="p-4 sm:p-5 bg-muted/30 flex flex-col gap-2">
               <span className="text-[11px] text-muted-foreground">
-                Klien / Pembeli Proyek Altvira tidak memerlukan akun login:
+                {t("auth.buyer_portal_info", "Klien / Pembeli Proyek Altvira tidak memerlukan akun login:")}
               </span>
               <Button
                 variant="outline"
@@ -1108,7 +1115,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                 className="w-full h-9 text-xs border-border text-foreground bg-card hover:bg-muted hover:text-primary rounded-xl transition-all"
               >
                 <Link to="/portal-pembeli">
-                  <span>Buka Portal Pembeli (Akses via Nomor PO)</span>
+                  <span>{t("auth.buyer_portal_link", "Buka Portal Pembeli (Akses via Nomor PO)")}</span>
                   <ExternalLinkIcon className="ml-1.5 size-3.5 text-muted-foreground" />
                 </Link>
               </Button>

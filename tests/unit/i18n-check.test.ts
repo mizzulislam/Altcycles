@@ -26,4 +26,28 @@ describe("i18n navigation and layout checks", () => {
     expect(crumbs[0]?.label).toBe("Home");
     expect(crumbs[1]?.label).toBe("Financial Dashboard");
   });
+
+  it("contains complete auth i18n dictionary for login and register", () => {
+    const authKeys = [
+      "auth.signin_tab",
+      "auth.signup_tab",
+      "auth.signin_title",
+      "auth.signup_title",
+      "auth.username",
+      "auth.password",
+      "auth.signin_button",
+      "auth.signup_button",
+      "auth.signin_google",
+    ];
+
+    for (const key of authKeys) {
+      expect(DICTIONARY.id[key]).toBeDefined();
+      expect(DICTIONARY.en[key]).toBeDefined();
+    }
+
+    expect(DICTIONARY.en["auth.signin_tab"]).toBe("Sign In");
+    expect(DICTIONARY.en["auth.signup_tab"]).toBe("Create Account");
+    expect(DICTIONARY.id["auth.signin_tab"]).toBe("Masuk");
+    expect(DICTIONARY.id["auth.signup_tab"]).toBe("Buat Akun");
+  });
 });
