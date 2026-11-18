@@ -401,14 +401,18 @@ export function CustomerTabContent({
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {cstForm.id ? "Ubah Data Pelanggan" : "Tambah Pelanggan Baru"}
+              {cstForm.id
+                ? t("customers.modal_edit_title", "Ubah Data Pelanggan")
+                : t("customers.modal_add_title", "Tambah Pelanggan Baru")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitCustomer}>
             <FieldGroup>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="c-code" required>Kode Pelanggan</FieldLabel>
+                  <FieldLabel htmlFor="c-code" required>
+                    {t("customers.code", "Kode Pelanggan")}
+                  </FieldLabel>
                   <Input
                     id="c-code"
                     required
@@ -419,7 +423,9 @@ export function CustomerTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="c-name" required>Nama Klien / Instansi</FieldLabel>
+                  <FieldLabel htmlFor="c-name" required>
+                    {t("customers.name", "Nama Klien / Instansi")}
+                  </FieldLabel>
                   <Input
                     id="c-name"
                     required
@@ -432,7 +438,9 @@ export function CustomerTabContent({
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field>
-                  <FieldLabel htmlFor="c-comp">Nama Perusahaan</FieldLabel>
+                  <FieldLabel htmlFor="c-comp">
+                    {t("customers.company_name", "Nama Perusahaan")}
+                  </FieldLabel>
                   <Input
                     id="c-comp"
                     value={cstForm.company_name}
@@ -442,7 +450,9 @@ export function CustomerTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="c-pic">PIC / Pejabat</FieldLabel>
+                  <FieldLabel htmlFor="c-pic">
+                    {t("customers.pic", "PIC / Pejabat")}
+                  </FieldLabel>
                   <Input
                     id="c-pic"
                     value={cstForm.contact_person}
@@ -452,7 +462,9 @@ export function CustomerTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="c-title">Jabatan PIC</FieldLabel>
+                  <FieldLabel htmlFor="c-title">
+                    {t("customers.pic_title", "Jabatan PIC")}
+                  </FieldLabel>
                   <Input
                     id="c-title"
                     value={cstForm.contact_title}
@@ -464,7 +476,9 @@ export function CustomerTabContent({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="c-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="c-email">
+                    {t("customers.email", "Email")}
+                  </FieldLabel>
                   <Input
                     id="c-email"
                     type="email"
@@ -475,7 +489,9 @@ export function CustomerTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="c-phone">Telepon</FieldLabel>
+                  <FieldLabel htmlFor="c-phone">
+                    {t("customers.phone", "Telepon")}
+                  </FieldLabel>
                   <Input
                     id="c-phone"
                     value={cstForm.phone}
@@ -486,7 +502,9 @@ export function CustomerTabContent({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="c-addr">Alamat Lengkap</FieldLabel>
+                <FieldLabel htmlFor="c-addr">
+                  {t("customers.address", "Alamat Lengkap")}
+                </FieldLabel>
                 <Textarea
                   id="c-addr"
                   value={cstForm.address}
@@ -497,7 +515,7 @@ export function CustomerTabContent({
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">
                 <ImageAssetUploadBox
-                  label="Logo Klien"
+                  label={t("customers.logo", "Logo Klien")}
                   emptyTitle="Upload Logo"
                   emptySubtitle="PNG / JPG"
                   value={cstForm.logo_storage_path}
@@ -506,7 +524,7 @@ export function CustomerTabContent({
                   }
                 />
                 <ImageAssetUploadBox
-                  label="TTD Klien"
+                  label={t("customers.signature", "TTD Klien")}
                   emptyTitle="Upload TTD"
                   emptySubtitle="PNG transparan"
                   value={cstForm.signature_storage_path}
@@ -515,7 +533,7 @@ export function CustomerTabContent({
                   }
                 />
                 <ImageAssetUploadBox
-                  label="Paraf Klien"
+                  label={t("customers.paraf", "Paraf Klien")}
                   emptyTitle="Upload Paraf"
                   emptySubtitle="PNG transparan"
                   value={cstForm.paraf_storage_path}
@@ -525,7 +543,9 @@ export function CustomerTabContent({
                 />
               </div>
               <Field orientation="horizontal">
-                <FieldLabel htmlFor="c-act">Status Pelanggan Aktif</FieldLabel>
+                <FieldLabel htmlFor="c-act">
+                  {t("customers.status_active", "Status Pelanggan Aktif")}
+                </FieldLabel>
                 <Switch
                   id="c-act"
                   checked={cstForm.is_active}
@@ -540,9 +560,11 @@ export function CustomerTabContent({
                   variant="outline"
                   onClick={() => setCstOpen(false)}
                 >
-                  Batal
+                  {t("action.cancel", "Batal")}
                 </Button>
-                <Button type="submit">Simpan Pelanggan</Button>
+                <Button type="submit">
+                  {t("customers.btn_save", "Simpan Pelanggan")}
+                </Button>
               </DialogFooter>
             </FieldGroup>
           </form>

@@ -260,13 +260,17 @@ export function AccountingPage() {
                 ? t("accounting.tab_journals", tab.label)
                 : tab.id === "buku_besar"
                   ? t("accounting.tab_ledger", tab.label)
-                  : tab.id === "laporan"
-                    ? t("accounting.tab_reports", tab.label)
-                    : tab.id === "tutup_buku"
-                      ? t("accounting.tab_periods", tab.label)
-                      : tab.id === "coa"
-                        ? t("accounting.tab_coa", tab.label)
-                        : tab.label;
+                  : tab.id === "neraca_saldo"
+                    ? t("accounting.tab_trial_balance", tab.label)
+                    : tab.id === "penyesuaian"
+                      ? t("accounting.tab_adjusting", tab.label)
+                      : tab.id === "laporan"
+                        ? t("accounting.tab_reports", tab.label)
+                        : tab.id === "tutup_buku"
+                          ? t("accounting.tab_periods", tab.label)
+                          : tab.id === "coa"
+                            ? t("accounting.tab_coa", tab.label)
+                            : tab.label;
 
             return (
               <button
@@ -310,7 +314,17 @@ export function AccountingPage() {
                 <CalendarDaysIcon className="size-3.5" />
               </span>
               <span className="text-muted-foreground text-xs font-normal">Filter:</span>
-              <span className="font-semibold text-foreground truncate">{periodFilter.label}</span>
+              <span className="font-semibold text-foreground truncate">
+                {periodFilter.preset === "all"
+                  ? t("accounting.filter_all_periods", "Semua Periode")
+                  : periodFilter.preset === "this_month"
+                    ? t("accounting.filter_this_month", "Bulan Ini")
+                    : periodFilter.preset === "last_month"
+                      ? t("accounting.filter_last_month", "Bulan Lalu")
+                      : periodFilter.preset === "this_year"
+                        ? t("accounting.filter_this_year", "Tahun Ini")
+                        : periodFilter.label}
+              </span>
               {activeExtraFiltersCount > 0 && (
                 <span className="rounded-full bg-primary/15 text-primary dark:text-cyan-400 px-1.5 py-0.5 text-[10px] font-bold">
                   +{activeExtraFiltersCount}
@@ -324,21 +338,21 @@ export function AccountingPage() {
           <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Saring Data Akuntansi &amp; Periode</DialogTitle>
+                <DialogTitle>{t("accounting.filter_modal_title", "Saring Data Akuntansi & Periode")}</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6 pt-1 pb-1">
                 {/* 1. Preset Waktu Cepat */}
                 <div className="space-y-2.5">
                   <label className="text-xs sm:text-sm font-semibold text-foreground block">
-                    Preset Waktu Cepat
+                    {t("accounting.filter_quick_preset", "Preset Waktu Cepat")}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {[
-                      { label: "Semua Periode", value: "all" },
-                      { label: "Bulan Ini", value: "this_month" },
-                      { label: "Bulan Lalu", value: "last_month" },
-                      { label: "Tahun Ini", value: "this_year" },
+                      { label: t("accounting.filter_all_periods", "Semua Periode"), value: "all" },
+                      { label: t("accounting.filter_this_month", "Bulan Ini"), value: "this_month" },
+                      { label: t("accounting.filter_last_month", "Bulan Lalu"), value: "last_month" },
+                      { label: t("accounting.filter_this_year", "Tahun Ini"), value: "this_year" },
                     ].map((item) => (
                       <button
                         key={item.value}

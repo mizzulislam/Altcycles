@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/lib/i18n";
 
 interface ConfirmActionDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface ConfirmActionDialogProps {
   title: string;
   description: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   destructive?: boolean;
   requireReason?: boolean;
   reasonLabel?: string;
@@ -34,15 +36,24 @@ export function ConfirmActionDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Ya, Lanjutkan",
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   requireReason = false,
-  reasonLabel = "Alasan Tindakan",
-  reasonPlaceholder = "Tuliskan alasan secara jelas (minimal 5 karakter)...",
+  reasonLabel,
+  reasonPlaceholder,
   confirmText,
   confirmTextLabel,
   onConfirm,
 }: ConfirmActionDialogProps) {
+  const { t } = useLanguage();
+  const effectiveConfirmLabel = confirmLabel ?? t("action.confirm_continue", "Ya, Lanjutkan");
+  const effectiveCancelLabel = cancelLabel ?? t("action.cancel", "Batal");
+  const effectiveReasonLabel = reasonLabel ?? t("action.reason", "Alasan Tindakan");
+  const effectiveReasonPlaceholder =
+    reasonPlaceholder ??
+    t("action.reason_placeholder", "Tuliskan alasan secara jelas (minimal 5 karakter)...");
+
   const [reason, setReason] = React.useState("");
   const [typedConfirm, setTypedConfirm] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
@@ -133,12 +144,12 @@ export function ConfirmActionDialog({
 
           {requireReason ? (
             <Field data-invalid={Boolean(error)}>
-              <FieldLabel htmlFor="confirm-reason" required>{reasonLabel}</FieldLabel>
+              <FieldLabel htmlFor="confirm-reason" required>{effectiveReasonLabel}</FieldLabel>
               <Textarea
                 id="confirm-reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder={reasonPlaceholder}
+                placeholder={effectiveReasonPlaceholder}
                 aria-invalid={Boolean(error)}
               />
               {error ? <FieldDescription>{error}</FieldDescription> : null}
@@ -149,7 +160,7 @@ export function ConfirmActionDialog({
         </div>
 
         <AlertDialogFooter className="pt-4 border-t border-border/70 dark:border-white/10">
-          <AlertDialogCancel disabled={submitting}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={submitting}>{effectiveCancelLabel}</AlertDialogCancel>
           <Button
             type="button"
             variant={destructive ? "destructive" : "default"}
@@ -157,7 +168,7 @@ export function ConfirmActionDialog({
             onClick={handleConfirm}
           >
             {submitting ? <Spinner data-icon="inline-start" /> : null}
-            {confirmLabel}
+            {effectiveConfirmLabel}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

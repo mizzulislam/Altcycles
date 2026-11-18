@@ -386,14 +386,18 @@ export function VendorTabContent({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {vndForm.id ? "Ubah Data Vendor" : "Tambah Vendor Baru"}
+              {vndForm.id
+                ? t("vendors.modal_edit_title", "Ubah Data Vendor")
+                : t("vendors.modal_add_title", "Tambah Vendor Baru")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitVendor}>
             <FieldGroup>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="v-code" required>Kode Vendor</FieldLabel>
+                  <FieldLabel htmlFor="v-code" required>
+                    {t("vendors.code", "Kode Vendor")}
+                  </FieldLabel>
                   <Input
                     id="v-code"
                     required
@@ -404,7 +408,9 @@ export function VendorTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="v-name" required>Nama Vendor</FieldLabel>
+                  <FieldLabel htmlFor="v-name" required>
+                    {t("vendors.name", "Nama Vendor")}
+                  </FieldLabel>
                   <Input
                     id="v-name"
                     required
@@ -416,7 +422,9 @@ export function VendorTabContent({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="v-contact">Nama Kontak / PIC</FieldLabel>
+                <FieldLabel htmlFor="v-contact">
+                  {t("vendors.pic", "Nama Kontak / PIC")}
+                </FieldLabel>
                 <Input
                   id="v-contact"
                   value={vndForm.contact_name}
@@ -427,7 +435,9 @@ export function VendorTabContent({
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="v-email">Email</FieldLabel>
+                  <FieldLabel htmlFor="v-email">
+                    {t("vendors.email", "Email")}
+                  </FieldLabel>
                   <Input
                     id="v-email"
                     type="email"
@@ -438,7 +448,9 @@ export function VendorTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="v-phone">Telepon</FieldLabel>
+                  <FieldLabel htmlFor="v-phone">
+                    {t("vendors.phone", "Telepon")}
+                  </FieldLabel>
                   <Input
                     id="v-phone"
                     value={vndForm.phone}
@@ -450,7 +462,9 @@ export function VendorTabContent({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="v-bank">Nama Bank</FieldLabel>
+                  <FieldLabel htmlFor="v-bank">
+                    {t("vendors.bank_name", "Nama Bank")}
+                  </FieldLabel>
                   <Input
                     id="v-bank"
                     value={vndForm.bank_name}
@@ -460,7 +474,9 @@ export function VendorTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="v-acc">Nomor Rekening</FieldLabel>
+                  <FieldLabel htmlFor="v-acc">
+                    {t("vendors.account_number", "Nomor Rekening")}
+                  </FieldLabel>
                   <Input
                     id="v-acc"
                     value={vndForm.bank_account_number}
@@ -474,7 +490,9 @@ export function VendorTabContent({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="v-addr">Alamat Lengkap</FieldLabel>
+                <FieldLabel htmlFor="v-addr">
+                  {t("customers.address", "Alamat Lengkap")}
+                </FieldLabel>
                 <Textarea
                   id="v-addr"
                   value={vndForm.address}
@@ -484,7 +502,9 @@ export function VendorTabContent({
                 />
               </Field>
               <Field orientation="horizontal">
-                <FieldLabel htmlFor="v-act">Status Vendor Aktif</FieldLabel>
+                <FieldLabel htmlFor="v-act">
+                  {t("vendors.status_active", "Status Vendor Aktif")}
+                </FieldLabel>
                 <Switch
                   id="v-act"
                   checked={vndForm.is_active}
@@ -499,9 +519,11 @@ export function VendorTabContent({
                   variant="outline"
                   onClick={() => setVndOpen(false)}
                 >
-                  Batal
+                  {t("action.cancel", "Batal")}
                 </Button>
-                <Button type="submit">Simpan Vendor</Button>
+                <Button type="submit">
+                  {t("vendors.btn_save", "Simpan Vendor")}
+                </Button>
               </DialogFooter>
             </FieldGroup>
           </form>

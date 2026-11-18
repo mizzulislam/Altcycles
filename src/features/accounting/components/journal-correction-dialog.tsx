@@ -15,6 +15,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/lib/i18n";
 import type { JournalRow } from "@/types/database.types";
 
 interface JournalCorrectionDialogProps {
@@ -42,19 +43,21 @@ export function JournalCorrectionDialog({
   onSubmit,
   onCancel,
 }: JournalCorrectionDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            Buat Jurnal Koreksi atas {correctTarget?.journal_number}
+            {t("journal.correction_title", "Buat Jurnal Koreksi atas")} {correctTarget?.journal_number}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="corr-date" required>
-                Tanggal Jurnal Koreksi
+                {t("journal.correction_date", "Tanggal Jurnal Koreksi")}
               </FieldLabel>
               <DatePicker
                 id="corr-date"
@@ -65,23 +68,23 @@ export function JournalCorrectionDialog({
             </Field>
             <Field>
               <FieldLabel htmlFor="corr-reason" required>
-                Alasan Koreksi (Minimal 5 Karakter)
+                {t("journal.correction_reason", "Alasan Koreksi (Minimal 5 Karakter)")}
               </FieldLabel>
               <Textarea
                 id="corr-reason"
                 required
                 value={correctionReason}
                 onChange={(e) => setCorrectionReason(e.target.value)}
-                placeholder="Contoh: Koreksi salah pilih akun beban pada pencatatan sebelumnya..."
+                placeholder={t("journal.correction_reason_placeholder", "Contoh: Koreksi salah pilih akun beban pada pencatatan sebelumnya...")}
               />
             </Field>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onCancel}>
-                Batal
+                {t("action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={correcting}>
                 {correcting ? <Spinner data-icon="inline-start" /> : null}
-                Posting Jurnal Koreksi
+                {t("journal.btn_post_correction", "Posting Jurnal Koreksi")}
               </Button>
             </DialogFooter>
           </FieldGroup>

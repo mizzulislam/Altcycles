@@ -19,6 +19,7 @@ import {
   listAccounts,
   listProjects,
 } from "@/lib/data-service";
+import { useLanguage } from "@/lib/i18n";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { listJournalsWithLines } from "@/lib/operations-service";
 import type {
@@ -79,6 +80,7 @@ export function AccountingReportsPage({
   externalEndDate,
   externalProjectFilter,
 }: AccountingReportsPageProps = {}) {
+  const { t } = useLanguage();
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [journals, setJournals] = React.useState<JournalRow[]>([]);
   const [lines, setLines] = React.useState<JournalLineRow[]>([]);
@@ -381,14 +383,18 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0 max-w-xl">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Laporan Keuangan Akrual
+              {t("reports.accrual_title", "Laporan Keuangan Akrual")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.
+              {t(
+                "reports.accrual_subtitle",
+                "Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.",
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
             <ExportDownloadMenu
+              label={t("action.download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
@@ -401,15 +407,18 @@ export function AccountingReportsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Laporan Keuangan
+              {t("reports.title", "Laporan Keuangan")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-              Laporan Laba/Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas.
+              {t(
+                "reports.subtitle",
+                "Laporan Laba/Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas.",
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
             <ExportDownloadMenu
-              label="Unduh / Ekspor"
+              label={t("action.download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
@@ -427,10 +436,10 @@ export function AccountingReportsPage({
                 <div className="flex items-center gap-1.5 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
                   <div className="flex items-center gap-1 px-1">
                     {[
-                      { label: "Laba Rugi", value: "laba_rugi" },
-                      { label: "Perubahan Ekuitas", value: "ekuitas" },
-                      { label: "Neraca", value: "neraca" },
-                      { label: "Arus Kas", value: "arus_kas" },
+                      { label: t("reports.tab_income", "Laba Rugi"), value: "laba_rugi" },
+                      { label: t("reports.tab_equity", "Perubahan Ekuitas"), value: "ekuitas" },
+                      { label: t("reports.tab_balance", "Neraca"), value: "neraca" },
+                      { label: t("reports.tab_cashflow", "Arus Kas"), value: "arus_kas" },
                     ].map((tab) => (
                       <button
                         key={tab.value}

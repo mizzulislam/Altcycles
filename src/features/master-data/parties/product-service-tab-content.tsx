@@ -385,14 +385,18 @@ export function ProductServiceTabContent({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {prdForm.id ? "Ubah Produk / Layanan" : "Tambah Layanan / Produk"}
+              {prdForm.id
+                ? t("products.modal_edit_title", "Ubah Produk / Layanan")
+                : t("products.modal_add_title", "Tambah Layanan / Produk")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitProduct}>
             <FieldGroup>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="p-code" required>Kode Layanan</FieldLabel>
+                  <FieldLabel htmlFor="p-code" required>
+                    {t("products.code", "Kode Layanan")}
+                  </FieldLabel>
                   <Input
                     id="p-code"
                     required
@@ -404,7 +408,9 @@ export function ProductServiceTabContent({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="p-cat" required>Kategori</FieldLabel>
+                  <FieldLabel htmlFor="p-cat" required>
+                    {t("products.category", "Kategori")}
+                  </FieldLabel>
                   <Input
                     id="p-cat"
                     required
@@ -417,7 +423,9 @@ export function ProductServiceTabContent({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="p-name" required>Nama Layanan / Produk</FieldLabel>
+                <FieldLabel htmlFor="p-name" required>
+                  {t("products.name", "Nama Layanan / Produk")}
+                </FieldLabel>
                 <Input
                   id="p-name"
                   required
@@ -425,12 +433,14 @@ export function ProductServiceTabContent({
                   onChange={(e) =>
                     setPrdForm({ ...prdForm, name: e.target.value })
                   }
-                  placeholder="e.g. Pengembangan Portal Web Perusahaan"
+                  placeholder={t("products.name_placeholder", "e.g. Pengembangan Portal Web Perusahaan")}
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="p-unit" required>Satuan</FieldLabel>
+                  <FieldLabel htmlFor="p-unit" required>
+                    {t("products.unit", "Satuan")}
+                  </FieldLabel>
                   <Input
                     id="p-unit"
                     required
@@ -438,11 +448,13 @@ export function ProductServiceTabContent({
                     onChange={(e) =>
                       setPrdForm({ ...prdForm, unit: e.target.value })
                     }
-                    placeholder="Proyek / Paket / Bulan"
+                    placeholder={t("products.unit_placeholder", "Proyek / Paket / Bulan")}
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="p-price" required>Tarif / Harga Dasar (IDR)</FieldLabel>
+                  <FieldLabel htmlFor="p-price" required>
+                    {t("products.price", "Tarif / Harga Dasar (IDR)")}
+                  </FieldLabel>
                   <NumberInput
                     id="p-price"
                     value={prdForm.price}
@@ -456,7 +468,9 @@ export function ProductServiceTabContent({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="p-desc">Deskripsi Ringkas</FieldLabel>
+                <FieldLabel htmlFor="p-desc">
+                  {t("products.description", "Deskripsi Ringkas")}
+                </FieldLabel>
                 <Textarea
                   id="p-desc"
                   rows={3}
@@ -464,11 +478,13 @@ export function ProductServiceTabContent({
                   onChange={(e) =>
                     setPrdForm({ ...prdForm, description: e.target.value })
                   }
-                  placeholder="Keterangan cakupan penawaran solusi atau layanan..."
+                  placeholder={t("products.desc_placeholder", "Keterangan cakupan penawaran solusi atau layanan...")}
                 />
               </Field>
               <Field orientation="horizontal">
-                <FieldLabel htmlFor="p-act">Status Layanan Aktif</FieldLabel>
+                <FieldLabel htmlFor="p-act">
+                  {t("products.status_active", "Status Layanan Aktif")}
+                </FieldLabel>
                 <Switch
                   id="p-act"
                   checked={prdForm.is_active}
@@ -483,9 +499,11 @@ export function ProductServiceTabContent({
                   variant="outline"
                   onClick={() => setPrdOpen(false)}
                 >
-                  Batal
+                  {t("action.cancel", "Batal")}
                 </Button>
-                <Button type="submit">Simpan Layanan / Produk</Button>
+                <Button type="submit">
+                  {t("products.btn_save", "Simpan Layanan / Produk")}
+                </Button>
               </DialogFooter>
             </FieldGroup>
           </form>

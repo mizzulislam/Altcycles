@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { AccountRow, JournalRow } from "@/types/database.types";
 
@@ -103,16 +104,18 @@ export function JournalEntryDialog({
   onSubmit,
   onCancel,
 }: JournalEntryDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {editingJournal
-              ? `Edit Transaksi Jurnal (${editingJournal.journal_number})`
+              ? `${t("journal.modal_edit_title", "Edit Transaksi Jurnal")} (${editingJournal.journal_number})`
               : filterMode === "adjusting"
-                ? "Buat & Posting Jurnal Penyesuaian (AJP)"
-                : "Buat & Posting Jurnal Baru"}
+                ? t("journal.modal_create_adj_title", "Buat & Posting Jurnal Penyesuaian (AJP)")
+                : t("journal.modal_create_title", "Buat & Posting Jurnal Baru")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit}>
@@ -120,7 +123,7 @@ export function JournalEntryDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="j-date" required>
-                  Tanggal Jurnal
+                  {t("journal.date", "Tanggal Jurnal")}
                 </FieldLabel>
                 <DatePicker
                   id="j-date"
@@ -130,7 +133,7 @@ export function JournalEntryDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel required>Jenis Jurnal</FieldLabel>
+                <FieldLabel required>{t("journal.type", "Jenis Jurnal")}</FieldLabel>
                 <Select
                   value={journalType}
                   onValueChange={(v) =>
@@ -142,9 +145,9 @@ export function JournalEntryDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="general">Jurnal Umum</SelectItem>
+                      <SelectItem value="general">{t("journal.type_general", "Jurnal Umum")}</SelectItem>
                       <SelectItem value="adjustment">
-                        Jurnal Penyesuaian (AJP)
+                        {t("journal.type_adjustment", "Jurnal Penyesuaian (AJP)")}
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -154,14 +157,14 @@ export function JournalEntryDialog({
 
             <Field>
               <FieldLabel htmlFor="j-desc" required>
-                Keterangan
+                {t("journal.description", "Keterangan")}
               </FieldLabel>
               <Input
                 id="j-desc"
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Contoh: Penyesuaian beban sewa kantor bersama bulan berjalan"
+                placeholder={t("journal.desc_placeholder", "Contoh: Penyesuaian beban sewa kantor bersama bulan berjalan")}
               />
             </Field>
 
@@ -169,10 +172,10 @@ export function JournalEntryDialog({
               <Field orientation="horizontal">
                 <div className="flex flex-col gap-0.5">
                   <FieldLabel htmlFor="j-rev">
-                    Tandai untuk Jurnal Pembalik Awal Periode Berikutnya (Opsional)
+                    {t("journal.auto_reverse", "Tandai untuk Jurnal Pembalik Awal Periode Berikutnya (Opsional)")}
                   </FieldLabel>
                   <FieldDescription>
-                    Diterapkan otomatis pada saat proses Tutup Buku periode berjalan.
+                    {t("journal.auto_reverse_desc", "Diterapkan otomatis pada saat proses Tutup Buku periode berjalan.")}
                   </FieldDescription>
                 </div>
                 <Switch
@@ -191,7 +194,7 @@ export function JournalEntryDialog({
                   <div className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
                     <span className="text-xs font-bold text-foreground tracking-wide">
-                      Sisi Debit
+                      {t("journal.debit_side", "Sisi Debit")}
                     </span>
                   </div>
                   <Button
@@ -202,7 +205,7 @@ export function JournalEntryDialog({
                     className="text-xs h-7 px-2.5 rounded-lg text-cyan-600 dark:text-cyan-300 hover:text-cyan-500 dark:hover:text-cyan-200 border-cyan-500/30 dark:border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 font-medium transition-colors cursor-pointer"
                   >
                     <PlusIcon data-icon="inline-start" className="size-3.5 mr-1" />
-                    Tambah Akun
+                    {t("journal.add_account", "Tambah Akun")}
                   </Button>
                 </div>
 
@@ -214,7 +217,7 @@ export function JournalEntryDialog({
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                          Akun {draftDebits.length > 1 ? `#${idx + 1}` : "Debit"}
+                          {t("accounting.th_account", "Akun")} {draftDebits.length > 1 ? `#${idx + 1}` : t("accounting.th_debit", "Debit")}
                         </span>
                         {draftDebits.length > 1 && (
                           <Button
@@ -238,7 +241,7 @@ export function JournalEntryDialog({
                           }
                         >
                           <SelectTrigger className="w-full text-xs sm:text-sm">
-                            <SelectValue placeholder="-- Pilih Akun Debit --" />
+                            <SelectValue placeholder={t("journal.select_debit", "-- Pilih Akun Debit --")} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
@@ -275,7 +278,7 @@ export function JournalEntryDialog({
 
                 <div className="pt-2.5 mt-auto border-t border-border/50 dark:border-white/5 flex items-center justify-between text-xs">
                   <span className="text-muted-foreground text-[11px] font-medium">
-                    Total Debit
+                    {t("journal.total_debit", "Total Debit")}
                   </span>
                   <span className="font-bold text-cyan-600 dark:text-cyan-400 text-sm">
                     {formatRupiah(totalDraftDebit)}
@@ -289,7 +292,7 @@ export function JournalEntryDialog({
                   <div className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                     <span className="text-xs font-bold text-foreground tracking-wide">
-                      Sisi Kredit
+                      {t("journal.credit_side", "Sisi Kredit")}
                     </span>
                   </div>
                   <Button
@@ -300,7 +303,7 @@ export function JournalEntryDialog({
                     className="text-xs h-7 px-2.5 rounded-lg text-blue-600 dark:text-blue-300 hover:text-blue-500 dark:hover:text-blue-200 border-blue-500/30 dark:border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 font-medium transition-colors cursor-pointer"
                   >
                     <PlusIcon data-icon="inline-start" className="size-3.5 mr-1" />
-                    Tambah Akun
+                    {t("journal.add_account", "Tambah Akun")}
                   </Button>
                 </div>
 
@@ -312,7 +315,7 @@ export function JournalEntryDialog({
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                          Akun {draftCredits.length > 1 ? `#${idx + 1}` : "Kredit"}
+                          {t("accounting.th_account", "Akun")} {draftCredits.length > 1 ? `#${idx + 1}` : t("accounting.th_credit", "Kredit")}
                         </span>
                         {draftCredits.length > 1 && (
                           <Button
@@ -336,7 +339,7 @@ export function JournalEntryDialog({
                           }
                         >
                           <SelectTrigger className="w-full text-xs sm:text-sm">
-                            <SelectValue placeholder="-- Pilih Akun Kredit --" />
+                            <SelectValue placeholder={t("journal.select_credit", "-- Pilih Akun Kredit --")} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
@@ -373,7 +376,7 @@ export function JournalEntryDialog({
 
                 <div className="pt-2.5 mt-auto border-t border-border/50 dark:border-white/5 flex items-center justify-between text-xs">
                   <span className="text-muted-foreground text-[11px] font-medium">
-                    Total Kredit
+                    {t("journal.total_credit", "Total Kredit")}
                   </span>
                   <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">
                     {formatRupiah(totalDraftCredit)}
@@ -416,25 +419,25 @@ export function JournalEntryDialog({
               {isDraftBalanced ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30">
                   <CheckCircle2Icon className="size-3.5" />
-                  SEIMBANG
+                  {t("journal.balanced", "SEIMBANG")}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                   <AlertTriangleIcon className="size-3.5" />
                   {totalDraftDebit === 0 && totalDraftCredit === 0
-                    ? "NOMINAL KOSONG"
-                    : `SELISIH: ${formatRupiah(balanceDiff)}`}
+                    ? t("journal.empty_amount", "NOMINAL KOSONG")
+                    : `${t("journal.difference", "SELISIH")}: ${formatRupiah(balanceDiff)}`}
                 </span>
               )}
             </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onCancel}>
-                Batal
+                {t("action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={posting || !isDraftBalanced}>
                 {posting ? <Spinner data-icon="inline-start" /> : null}
-                {editingJournal ? "Simpan Perubahan" : "Rekam Transaksi"}
+                {editingJournal ? t("action.save", "Simpan Perubahan") : t("journal.btn_post", "Rekam Transaksi")}
               </Button>
             </DialogFooter>
           </FieldGroup>

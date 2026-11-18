@@ -29,7 +29,12 @@ export function OverlayPageScrollbar() {
     const clientHeight = window.innerHeight;
     const maxScroll = scrollHeight - clientHeight;
 
-    if (maxScroll <= 2) {
+    const isModalOpen =
+      docEl.hasAttribute("data-scroll-locked") ||
+      document.body?.hasAttribute("data-scroll-locked") ||
+      Boolean(document.querySelector('[role="dialog"], [data-radix-portal] [role="dialog"]'));
+
+    if (isModalOpen || maxScroll <= 2) {
       setIsVisible(false);
       return;
     }
@@ -72,10 +77,21 @@ export function OverlayPageScrollbar() {
       observer.observe(document.body);
     }
 
+    const mutationObserver = new MutationObserver(() => {
+      updateScroll();
+    });
+
+    mutationObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-scroll-locked", "style", "class"],
+      childList: true,
+    });
+
     return () => {
       window.removeEventListener("scroll", updateScroll);
       window.removeEventListener("resize", updateScroll);
       observer.disconnect();
+      mutationObserver.disconnect();
       if (hideTimeoutRef.current) {
         window.clearTimeout(hideTimeoutRef.current);
       }
