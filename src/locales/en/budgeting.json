@@ -1,0 +1,71 @@
+{
+  "admin": {
+    "page_title": "Project Budgeting & Spending Controls",
+    "page_desc": "Control expense ceilings and monitor project actual expenditure.",
+    "btn_set_budget": "+ Set Budget Allocation",
+    "empty_desc": "Click the Set Budget Allocation button in the top right to define ceilings per expense account."
+  },
+  "user": {
+    "page_title": "My Project Budget vs Realization",
+    "page_desc": "Monitor expense budget ceilings and actual spending for assigned projects.",
+    "empty_desc": "Administrator has not yet set the budget ceiling for this project."
+  },
+  "common": {
+    "active_project": "Active Project",
+    "select_project_placeholder": "Select project",
+    "total_absorption_label": "Total Absorption:",
+    "warning_threshold_title": "Budget Absorption Threshold Warning",
+    "warning_threshold_desc": "There are {{count}} expense items that have exceeded the budget warning threshold.",
+    "kpi_ceiling": "Total Budget Ceiling",
+    "kpi_ceiling_desc_active": "Spread across {{count}} project expense accounts",
+    "kpi_ceiling_desc_empty": "No budget items set yet",
+    "kpi_realization": "Posted Expense Realization",
+    "kpi_realization_desc": "Absorption {{pct}}% of active ceiling",
+    "kpi_remaining": "Remaining Available Budget",
+    "kpi_remaining_desc_negative": "Realization exceeds budget ceiling",
+    "kpi_remaining_desc_positive": "Budget balance available for use",
+    "card_title": "Budget vs Realization Comparison by Expense Account",
+    "card_desc": "Absorption percentage and warning threshold status for each account.",
+    "loading": "Loading budget data...",
+    "col_account": "Account Code & Name",
+    "col_ceiling": "Budget Ceiling",
+    "col_realization": "Posted Realization",
+    "col_remaining": "Remaining Budget",
+    "col_absorption": "Absorption (%)",
+    "col_status": "Status",
+    "empty_title": "Project Budget Not Yet Formulated",
+    "status_exceeds": "Exceeds Ceiling",
+    "status_threshold": ">= {{pct}}% Threshold",
+    "status_safe": "Safe"
+  },
+  "modal_editor": {
+    "title": "Set / Update Project Budget",
+    "threshold_label": "Absorption Warning Threshold (%)",
+    "threshold_desc": "System warns automatically when expense realization hits this threshold.",
+    "planned_total_label": "Total Planned Budget Ceiling",
+    "section_title": "Allocation per Expense Account",
+    "section_ceiling_label": "Ceiling (Rp)",
+    "no_expense_accounts": "No active expense accounts in Chart of Accounts.",
+    "btn_cancel": "Cancel",
+    "btn_save": "Save Budget Allocation",
+    "saving": "Saving...",
+    "toast_saved": "Project budget saved successfully."
+  },
+  "export": {
+    "excel_filename": "Project_Budget_{{code}}.xlsx",
+    "excel_sheet": "Budget vs Actual",
+    "excel_col_code": "Account Code",
+    "excel_col_name": "Expense Account Name",
+    "excel_col_ceiling": "Budget Ceiling (IDR)",
+    "excel_col_realization": "Posted Realization (IDR)",
+    "excel_col_remaining": "Remaining Budget (IDR)",
+    "excel_col_absorption": "Absorption (%)",
+    "excel_col_status": "Status",
+    "pdf_title": "PROJECT BUDGETING REPORT",
+    "pdf_subtitle": "Project: {{project}}",
+    "pdf_filename": "Project_Budget_{{code}}.pdf",
+    "csv_filename": "Project_Budget_{{code}}.csv",
+    "toast_excel_success": "Project budget comparison exported to Excel (.xlsx) successfully.",
+    "toast_csv_success": "Project budget comparison exported to CSV (.csv) successfully."
+  }
+}

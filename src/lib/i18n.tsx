@@ -14,6 +14,10 @@ import poId from "@/locales/id/po.json";
 import poEn from "@/locales/en/po.json";
 import approvalsId from "@/locales/id/approvals.json";
 import approvalsEn from "@/locales/en/approvals.json";
+import budgetingId from "@/locales/id/budgeting.json";
+import budgetingEn from "@/locales/en/budgeting.json";
+import profitSharingId from "@/locales/id/profit_sharing.json";
+import profitSharingEn from "@/locales/en/profit_sharing.json";
 
 export type Language = "id" | "en";
 
@@ -47,6 +51,8 @@ if (!i18n.isInitialized) {
         accounting: accountingId,
         po: poId,
         approvals: approvalsId,
+        budgeting: budgetingId,
+        profit_sharing: profitSharingId,
       },
       en: {
         common: commonEn,
@@ -55,6 +61,8 @@ if (!i18n.isInitialized) {
         accounting: accountingEn,
         po: poEn,
         approvals: approvalsEn,
+        budgeting: budgetingEn,
+        profit_sharing: profitSharingEn,
       },
     },
     lng: getActiveLanguage(),
@@ -1046,7 +1054,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
       // Normalisasi namespace: ubah "projects.milestones" -> "projects:milestones" jika diawali nama namespace
       let normalizedKey = key;
-      const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals"];
+      const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals", "budgeting", "profit_sharing"];
       if (!normalizedKey.includes(":")) {
         for (const ns of knownNamespaces) {
           if (normalizedKey.startsWith(`${ns}.`)) {
@@ -1118,7 +1126,7 @@ export function useLanguage(): LanguageContextValue {
         const callOpts: TOptions = { lng: lang, ...opts };
 
         let normalizedKey = key;
-        const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals"];
+        const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals", "budgeting", "profit_sharing"];
         if (!normalizedKey.includes(":")) {
           for (const ns of knownNamespaces) {
             if (normalizedKey.startsWith(`${ns}.`)) {

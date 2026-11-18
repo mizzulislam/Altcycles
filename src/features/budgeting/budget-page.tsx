@@ -49,6 +49,7 @@ import {
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { getCompanyProfile, listAccounts, listProjects } from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
+import { getLocalizedAccountName } from "@/lib/glossary";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatRupiah } from "@/lib/formatters";
 import {
@@ -65,7 +66,6 @@ import type {
 
 export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
   const [expenseAccounts, setExpenseAccounts] = React.useState<AccountRow[]>([]);
@@ -164,28 +164,28 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
   function budgetStatusLabel(r: BudgetComparisonRow): string {
-    if (r.remaining_amount < 0) return "Melebihi Pagu";
-    if (r.is_over_threshold) return `>= ${r.alert_threshold_pct}% Ambang`;
-    return "Aman";
+    if (r.remaining_amount < 0) return t("budgeting:common.status_exceeds");
+    if (r.is_over_threshold) return t("budgeting:common.status_threshold", { pct: r.alert_threshold_pct });
+    return t("budgeting:common.status_safe");
   }
 
   async function handleExportExcel() {
     const projectCode = (selectedProject?.code ?? "PRJ").replace(/\//g, "-");
     await downloadExcelSheet({
-      fileName: `Anggaran_Proyek_${projectCode}.xlsx`,
-      sheetName: "Anggaran vs Realisasi",
+      fileName: t("budgeting:export.excel_filename", { code: projectCode }),
+      sheetName: t("budgeting:export.excel_sheet"),
       columns: [
-        { header: "Kode Akun", width: 16 },
-        { header: "Nama Akun Beban", width: 34 },
-        { header: "Pagu Anggaran (Rp)", width: 22 },
-        { header: "Realisasi Terposting (Rp)", width: 22 },
-        { header: "Sisa Anggaran (Rp)", width: 22 },
-        { header: "Serapan (%)", width: 14 },
-        { header: "Status", width: 20 },
+        { header: t("budgeting:export.excel_col_code"), width: 16 },
+        { header: t("budgeting:export.excel_col_name"), width: 34 },
+        { header: t("budgeting:export.excel_col_ceiling"), width: 22 },
+        { header: t("budgeting:export.excel_col_realization"), width: 22 },
+        { header: t("budgeting:export.excel_col_remaining"), width: 22 },
+        { header: t("budgeting:export.excel_col_absorption"), width: 14 },
+        { header: t("budgeting:export.excel_col_status"), width: 20 },
       ],
       rows: rows.map((r) => [
         r.account_code,
-        r.account_name,
+        getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language),
         r.allocated_amount,
         r.realized_amount,
         r.remaining_amount,
@@ -194,7 +194,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ]),
     });
     await recordExportLog("PROJECT_BUDGET", "EXCEL", selectedProject?.code);
-    toast.success("Perbandingan anggaran proyek berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("budgeting:export.toast_excel_success"));
   }
 
   async function handleExportPdf() {
@@ -204,35 +204,35 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       : "-";
     const projectCode = (selectedProject?.code ?? "PRJ").replace(/\//g, "-");
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "PROJECT BUDGETING REPORT" : "LAPORAN ANGGARAN VS REALISASI PROYEK",
-      docSubtitle: isEn ? `Project: ${projectLabel}` : `Proyek: ${projectLabel}`,
+      docTitle: t("budgeting:export.pdf_title"),
+      docSubtitle: t("budgeting:export.pdf_subtitle", { project: projectLabel }),
       docNumber: `BDG-${projectCode}/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
         {
-          label: isEn ? "Total Budget Ceiling" : "Total Pagu Anggaran",
+          label: t("budgeting:common.kpi_ceiling"),
           value: formatRupiah(totalBudget),
         },
         {
-          label: isEn ? "Posted Realization" : "Realisasi Terposting",
+          label: t("budgeting:common.kpi_realization"),
           value: formatRupiah(totalActual),
         },
         {
-          label: isEn ? "Remaining Budget" : "Sisa Anggaran",
+          label: t("budgeting:common.kpi_remaining"),
           value: formatRupiah(totalRemaining),
         },
       ],
       tableColumns: [
-        { header: isEn ? "Expense Account" : "Akun Beban", widthRatio: 0.34 },
-        { header: isEn ? "Ceiling" : "Pagu", widthRatio: 0.16, align: "right" },
-        { header: isEn ? "Actual" : "Realisasi", widthRatio: 0.16, align: "right" },
-        { header: isEn ? "Remaining" : "Sisa", widthRatio: 0.16, align: "right" },
-        { header: isEn ? "Absorption" : "Serapan", widthRatio: 0.08, align: "right" },
-        { header: isEn ? "Status" : "Status", widthRatio: 0.10 },
+        { header: t("budgeting:export.excel_col_name"), widthRatio: 0.34 },
+        { header: t("budgeting:common.col_ceiling"), widthRatio: 0.16, align: "right" },
+        { header: t("budgeting:common.col_realization"), widthRatio: 0.16, align: "right" },
+        { header: t("budgeting:common.col_remaining"), widthRatio: 0.16, align: "right" },
+        { header: t("budgeting:common.col_absorption"), widthRatio: 0.08, align: "right" },
+        { header: t("budgeting:common.col_status"), widthRatio: 0.10 },
       ],
       tableRows: rows.map((r) => [
-        `${r.account_code} - ${r.account_name}`,
+        `${r.account_code} - ${getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language)}`,
         formatRupiah(r.allocated_amount),
         formatRupiah(r.realized_amount),
         formatRupiah(r.remaining_amount),
@@ -243,7 +243,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
     });
     downloadPdfBytes(
       bytes,
-      isEn ? `Project_Budget_${projectCode}.pdf` : `Anggaran_Proyek_${projectCode}.pdf`,
+      t("budgeting:export.pdf_filename", { code: projectCode }),
     );
     await recordExportLog("PROJECT_BUDGET", "PDF", selectedProject?.code);
   }
@@ -251,29 +251,19 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   async function handleExportCsv() {
     const projectCode = (selectedProject?.code ?? "PRJ").replace(/\//g, "-");
     downloadCsvFile(
-      isEn ? `Project_Budget_${projectCode}.csv` : `Anggaran_Proyek_${projectCode}.csv`,
-      isEn
-        ? [
-            "Account Code",
-            "Expense Account Name",
-            "Budget Ceiling (IDR)",
-            "Posted Realization (IDR)",
-            "Remaining Budget (IDR)",
-            "Absorption (%)",
-            "Status",
-          ]
-        : [
-            "Kode Akun",
-            "Nama Akun Beban",
-            "Pagu Anggaran (Rp)",
-            "Realisasi Terposting (Rp)",
-            "Sisa Anggaran (Rp)",
-            "Serapan (%)",
-            "Status",
-          ],
+      t("budgeting:export.csv_filename", { code: projectCode }),
+      [
+        t("budgeting:export.excel_col_code"),
+        t("budgeting:export.excel_col_name"),
+        t("budgeting:export.excel_col_ceiling"),
+        t("budgeting:export.excel_col_realization"),
+        t("budgeting:export.excel_col_remaining"),
+        t("budgeting:export.excel_col_absorption"),
+        t("budgeting:export.excel_col_status"),
+      ],
       rows.map((r) => [
         r.account_code,
-        r.account_name,
+        getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language),
         r.allocated_amount,
         r.realized_amount,
         r.remaining_amount,
@@ -282,11 +272,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ]),
     );
     await recordExportLog("PROJECT_BUDGET", "CSV", selectedProject?.code);
-    toast.success(
-      isEn
-        ? "Project budget comparison exported to CSV (.csv) successfully."
-        : "Perbandingan anggaran proyek berhasil diekspor ke CSV (.csv).",
-    );
+    toast.success(t("budgeting:export.toast_csv_success"));
   }
 
   return (
@@ -295,19 +281,19 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {mode === "admin"
-              ? t("budget.title", "Budgeting & Pengendalian Anggaran Proyek")
-              : t("budget.my_title", "Anggaran vs Realisasi Proyek Saya")}
+              ? t("budgeting:admin.page_title")
+              : t("budgeting:user.page_title")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {mode === "admin"
-              ? t("budget.subtitle", "Kendalikan pagu anggaran belanja dan pantau realisasi pengeluaran proyek.")
-              : t("budget.my_subtitle", "Pantau pagu anggaran belanja dan realisasi pengeluaran proyek yang ditugaskan.")}
+              ? t("budgeting:admin.page_desc")
+              : t("budgeting:user.page_desc")}
           </p>
         </div>
         {mode === "admin" && selectedProjectId ? (
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
@@ -318,7 +304,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               className="shrink-0 cursor-pointer shadow-2xs"
             >
               <PlusIcon className="size-4" />
-              <span>{isEn ? "+ Set Budget Allocation" : "+ Atur Alokasi Anggaran"}</span>
+              <span>{t("budgeting:admin.btn_set_budget")}</span>
             </Button>
           </div>
         ) : null}
@@ -333,7 +319,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                 <span className="text-xs sm:text-sm font-semibold text-foreground shrink-0">
-                  {isEn ? "Active Project" : "Proyek Aktif"}
+                  {t("budgeting:common.active_project")}
                 </span>
                 <div className="w-full sm:max-w-lg min-w-0">
                   <Select
@@ -341,7 +327,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     onValueChange={setSelectedProjectId}
                   >
                     <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                      <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
+                      <SelectValue placeholder={t("budgeting:common.select_project_placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -358,7 +344,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             </div>
             {rows.length > 0 ? (
               <div className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                {isEn ? "Total Absorption: " : "Total Serapan: "}
+                {t("budgeting:common.total_absorption_label")}{" "}
                 <span className="font-semibold text-foreground">
                   {totalAbsorptionPct}%
                 </span>
@@ -371,11 +357,9 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       {overThresholdRows.length > 0 ? (
         <Alert variant="destructive" className="rounded-2xl">
           <AlertTriangleIcon className="size-4" />
-          <AlertTitle>{isEn ? "Budget Absorption Threshold Warning" : "Peringatan Ambang Serapan Anggaran"}</AlertTitle>
+          <AlertTitle>{t("budgeting:common.warning_threshold_title")}</AlertTitle>
           <AlertDescription>
-            {isEn
-              ? `There are ${overThresholdRows.length} expense items that have exceeded the budget warning threshold.`
-              : `Terdapat ${overThresholdRows.length} pos beban yang telah melampaui ambang peringatan serapan anggaran.`}
+            {t("budgeting:common.warning_threshold_desc", { count: overThresholdRows.length })}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -385,15 +369,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Total Budget Ceiling" : "Total Pagu Anggaran"}
+              {t("budgeting:common.kpi_ceiling")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalBudget)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {rows.length > 0
-                ? (isEn ? `Spread across ${rows.length} project expense accounts` : `Tersebar pada ${rows.length} akun beban proyek`)
-                : (isEn ? "No budget items set yet" : "Belum ada pos anggaran ditetapkan")}
+                ? t("budgeting:common.kpi_ceiling_desc_active", { count: rows.length })
+                : t("budgeting:common.kpi_ceiling_desc_empty")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -404,13 +388,13 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Posted Expense Realization" : "Realisasi Beban Terposting"}
+              {t("budgeting:common.kpi_realization")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalActual)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
-              {isEn ? `Absorption ${totalAbsorptionPct}% of active ceiling` : `Serapan ${totalAbsorptionPct}% dari pagu berjalan`}
+              {t("budgeting:common.kpi_realization_desc", { pct: totalAbsorptionPct })}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -421,7 +405,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Remaining Available Budget" : "Sisa Anggaran Tersedia"}
+              {t("budgeting:common.kpi_remaining")}
             </p>
             <p
               className={`text-xl sm:text-2xl font-bold tracking-tight mt-1 tabular-nums ${
@@ -434,8 +418,8 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {totalRemaining < 0
-                ? (isEn ? "Realization exceeds budget ceiling" : "Realisasi melebihi pagu anggaran")
-                : (isEn ? "Budget balance available for use" : "Saldo anggaran yang masih dapat digunakan")}
+                ? t("budgeting:common.kpi_remaining_desc_negative")
+                : t("budgeting:common.kpi_remaining_desc_positive")}
             </p>
           </div>
           <div
@@ -453,41 +437,39 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70">
           <CardTitle>
-            {isEn ? "Budget vs Realization Comparison by Expense Account" : "Perbandingan Anggaran vs Realisasi per Akun Beban"}
+            {t("budgeting:common.card_title")}
           </CardTitle>
           <CardDescription>
-            {isEn
-              ? "Absorption percentage and warning threshold status for each account."
-              : "Persentase serapan dan status ambang batas peringatan setiap akun."}
+            {t("budgeting:common.card_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>{isEn ? "Loading budget data..." : "Memuat data anggaran..."}</span>
+              <span>{t("budgeting:common.loading")}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Account Code & Name" : "Kode & Nama Akun"}
+                    {t("budgeting:common.col_account")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
-                    {isEn ? "Budget Ceiling" : "Pagu Anggaran"}
+                    {t("budgeting:common.col_ceiling")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
-                    {isEn ? "Posted Realization" : "Realisasi Terposting"}
+                    {t("budgeting:common.col_realization")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
-                    {isEn ? "Remaining Budget" : "Sisa Anggaran"}
+                    {t("budgeting:common.col_remaining")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-28">
-                    {isEn ? "Absorption (%)" : "Serapan (%)"}
+                    {t("budgeting:common.col_absorption")}
                   </TableHead>
                   <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-36">
-                    {isEn ? "Status" : "Status"}
+                    {t("budgeting:common.col_status")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -500,16 +482,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                           <PiggyBankIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "Project Budget Not Yet Formulated" : "Anggaran Proyek Belum Disusun"}
+                          {t("budgeting:common.empty_title")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          {isEn
-                            ? (mode === "admin"
-                                ? "Click the Set Budget Allocation button on the top right to define ceilings per expense account."
-                                : "Administrator has not yet set the budget ceiling for this project.")
-                            : (mode === "admin"
-                                ? "Klik tombol Atur Alokasi Anggaran di kanan atas untuk menetapkan pagu per akun beban."
-                                : "Admin belum menetapkan pagu anggaran untuk proyek ini.")}
+                          {mode === "admin"
+                            ? t("budgeting:admin.empty_desc")
+                            : t("budgeting:user.empty_desc")}
                         </p>
                       </div>
                     </TableCell>
@@ -521,7 +499,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                         <span className="font-mono font-semibold text-muted-foreground">
                           {r.account_code}
                         </span>{" "}
-                        &mdash; {r.account_name}
+                        &mdash; {getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language)}
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
                         <MonetaryCell amount={r.allocated_amount} />
@@ -538,14 +516,14 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           {r.remaining_amount < 0 ? (
-                            <StatusBadge tone="destructive" label={isEn ? "Exceeds Ceiling" : "Melebihi Pagu"} />
+                            <StatusBadge tone="destructive" label={t("budgeting:common.status_exceeds")} />
                           ) : r.is_over_threshold ? (
                             <StatusBadge
                               tone="warning"
-                              label={`>= ${r.alert_threshold_pct}% ${isEn ? "Threshold" : "Ambang"}`}
+                              label={t("budgeting:common.status_threshold", { pct: r.alert_threshold_pct })}
                             />
                           ) : (
-                            <StatusBadge tone="success" label={isEn ? "Safe" : "Aman"} />
+                            <StatusBadge tone="success" label={t("budgeting:common.status_safe")} />
                           )}
                         </div>
                       </TableCell>
@@ -561,14 +539,14 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{isEn ? "Set / Update Project Budget" : "Susun / Perbarui Anggaran Proyek"}</DialogTitle>
+            <DialogTitle>{t("budgeting:modal_editor.title")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveBudget} className="min-w-0">
             <FieldGroup className="gap-4">
               <div className="grid gap-3.5 sm:grid-cols-2 sm:items-end">
                 <Field>
                   <FieldLabel htmlFor="bdg-thr" required>
-                    {isEn ? "Absorption Warning Threshold (%)" : "Ambang Peringatan Serapan (%)"}
+                    {t("budgeting:modal_editor.threshold_label")}
                   </FieldLabel>
                   <NumberInput
                     id="bdg-thr"
@@ -580,14 +558,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     onValueChange={setThresholdPct}
                   />
                   <FieldDescription>
-                    {isEn
-                      ? "System warns automatically when expense realization hits this threshold."
-                      : "Sistem memberi peringatan otomatis saat realisasi mencapai ambang ini."}
+                    {t("budgeting:modal_editor.threshold_desc")}
                   </FieldDescription>
                 </Field>
                 <div className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5">
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    {isEn ? "Total Planned Budget Ceiling" : "Total Pagu Anggaran Disusun"}
+                    {t("budgeting:modal_editor.planned_total_label")}
                   </p>
                   <p className="text-base sm:text-lg font-bold tracking-tight text-foreground tabular-nums mt-0.5">
                     {formatRupiah(draftAllocatedTotal)}
@@ -597,13 +573,13 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
 
               <div className="flex flex-col gap-2 rounded-xl border border-border/80 bg-muted/15 p-3.5">
                 <div className="flex items-center justify-between text-xs font-semibold text-foreground pb-1 border-b border-border/60">
-                  <span>{isEn ? "Allocation per Expense Account" : "Alokasi per Akun Beban"}</span>
-                  <span className="text-muted-foreground font-medium">{isEn ? "Ceiling (Rp)" : "Pagu (Rp)"}</span>
+                  <span>{t("budgeting:modal_editor.section_title")}</span>
+                  <span className="text-muted-foreground font-medium">{t("budgeting:modal_editor.section_ceiling_label")}</span>
                 </div>
                 <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
                   {expenseAccounts.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">
-                      {isEn ? "No active expense accounts in Chart of Accounts." : "Belum ada akun beban aktif pada Bagan Akun."}
+                      {t("budgeting:modal_editor.no_expense_accounts")}
                     </p>
                   ) : (
                     expenseAccounts.map((acc) => (
@@ -614,12 +590,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                         <label
                           htmlFor={`alloc-${acc.id}`}
                           className="sm:col-span-7 text-xs sm:text-sm font-medium text-foreground truncate"
-                          title={`${acc.code}: ${acc.name}`}
+                          title={`${acc.code}: ${getLocalizedAccountName(acc, language)}`}
                         >
                           <span className="font-mono text-xs text-muted-foreground">
                             {acc.code}
                           </span>{" "}
-                          &mdash; {acc.name}
+                          &mdash; {getLocalizedAccountName(acc, language)}
                         </label>
                         <div className="sm:col-span-5">
                           <NumberInput
@@ -647,11 +623,11 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                   variant="outline"
                   onClick={() => setEditOpen(false)}
                 >
-                  {isEn ? "Cancel" : "Batal"}
+                  {t("budgeting:modal_editor.btn_cancel")}
                 </Button>
                 <Button type="submit" disabled={saving}>
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Save Budget Allocation" : "Simpan Anggaran"}
+                  {t("budgeting:modal_editor.btn_save")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

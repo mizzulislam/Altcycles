@@ -58,7 +58,7 @@ import { getCompanyProfile, listProfiles, listProjects } from "@/lib/data-servic
 import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateTimeID, formatRupiah } from "@/lib/formatters";
+import { formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
 import {
   getProfitSharingBundle,
   recordExportLog,
@@ -82,7 +82,6 @@ interface DraftRecipient {
 
 export function ProfitSharingPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
   const [selectedProjectId, setSelectedProjectId] = React.useState("");
@@ -241,23 +240,23 @@ export function ProfitSharingPage() {
   async function handleExportExcel() {
     if (!result || !selectedProject) return;
     await downloadExcelSheet({
-      fileName: `Bagi_Hasil_${selectedProject.code}.xlsx`,
-      sheetName: "Bagi Hasil",
+      fileName: t("profit_sharing:export.excel_filename", { code: selectedProject.code }),
+      sheetName: t("profit_sharing:export.excel_sheet"),
       columns: [
-        { header: "Penerima Bagi Hasil", width: 32 },
-        { header: "Persentase (%)", width: 16 },
-        { header: "Nominal Hak Bagi Hasil (Rp)", width: 24 },
+        { header: t("profit_sharing:export.excel_col_recipient"), width: 32 },
+        { header: t("profit_sharing:export.excel_col_pct"), width: 16 },
+        { header: t("profit_sharing:export.excel_col_amount"), width: 24 },
       ],
       rows: [
-        ["Pendapatan Proyek Diakui", 0, result.recognized_revenue],
-        ["Biaya Langsung Proyek", 0, -result.direct_cost],
-        ["Alokasi Biaya Bersama", 0, -result.allocated_shared_cost],
-        ["LABA KOTOR DASAR BAGI HASIL", 100, result.gross_profit],
+        [t("profit_sharing:export.recognized_revenue_label"), 0, result.recognized_revenue],
+        [t("profit_sharing:export.direct_cost_label"), 0, -result.direct_cost],
+        [t("profit_sharing:export.shared_cost_label"), 0, -result.allocated_shared_cost],
+        [t("profit_sharing:export.gross_profit_label"), 100, result.gross_profit],
         ...lines.map((l) => [l.recipient_name, l.percentage, l.share_amount]),
       ],
     });
     await recordExportLog("PROFIT_SHARING", "EXCEL");
-    toast.success("Rincian bagi hasil berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("profit_sharing:export.toast_excel_success"));
   }
 
   async function handleExportPdf() {
@@ -265,54 +264,44 @@ export function ProfitSharingPage() {
     const comp = await getCompanyProfile();
     const tableRows: string[][] = [
       [
-        isEn ? "Recognized Project Revenue" : "Pendapatan Proyek Diakui",
+        t("profit_sharing:export.recognized_revenue_label"),
         "-",
         formatRupiah(result.recognized_revenue),
       ],
       [
-        isEn ? "Direct Project Costs" : "Biaya Langsung Proyek",
+        t("profit_sharing:export.direct_cost_label"),
         "-",
         `(${formatRupiah(result.direct_cost)})`,
       ],
       [
-        isEn ? "Allocated Shared Costs" : "Alokasi Biaya Bersama",
+        t("profit_sharing:export.shared_cost_label"),
         "-",
         `(${formatRupiah(result.allocated_shared_cost)})`,
       ],
       [
-        isEn ? "Gross Profit Subject to Sharing" : "Laba Kotor Dasar Bagi Hasil",
+        t("profit_sharing:export.gross_profit_label"),
         "100%",
         formatRupiah(result.gross_profit),
       ],
       ...lines.map((l) => [l.recipient_name, `${l.percentage}%`, formatRupiah(l.share_amount)]),
     ];
     const bytes = await generateDocumentPdf({
-      docTitle: isEn
-        ? `PROJECT PROFIT SHARING ${selectedProject.code}`
-        : `PERHITUNGAN BAGI HASIL PROYEK ${selectedProject.code}`,
-      docSubtitle: `${selectedProject.name} (${isFinalized ? (isEn ? "Finalized" : "Difinalisasi") : (isEn ? "Draft Simulation" : "Simulasi Draf")})`,
+      docTitle: t("profit_sharing:export.pdf_title", { code: selectedProject.code }),
+      docSubtitle: `${selectedProject.name} (${isFinalized ? t("profit_sharing:badge_finalized") : t("profit_sharing:badge_draft")})`,
       docNumber: `BH/${selectedProject.code}`,
       docDate: postingDate || new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: isEn
-        ? [
-            { header: "Component / Recipient", widthRatio: 0.52 },
-            { header: "Share (%)", widthRatio: 0.16, align: "right" },
-            { header: "Amount (IDR)", widthRatio: 0.32, align: "right" },
-          ]
-        : [
-            { header: "Komponen / Penerima", widthRatio: 0.52 },
-            { header: "Porsi (%)", widthRatio: 0.16, align: "right" },
-            { header: "Nominal (Rp)", widthRatio: 0.32, align: "right" },
-          ],
+      tableColumns: [
+        { header: t("profit_sharing:export.pdf_col_component"), widthRatio: 0.52 },
+        { header: t("profit_sharing:export.pdf_col_portion"), widthRatio: 0.16, align: "right" },
+        { header: t("profit_sharing:export.pdf_col_amount"), widthRatio: 0.32, align: "right" },
+      ],
       tableRows,
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
     downloadPdfBytes(
       bytes,
-      isEn
-        ? `Profit_Sharing_${selectedProject.code}.pdf`
-        : `Bagi_Hasil_${selectedProject.code}.pdf`,
+      t("profit_sharing:export.pdf_filename", { code: selectedProject.code }),
     );
     await recordExportLog("PROFIT_SHARING", "PDF");
   }
@@ -320,30 +309,30 @@ export function ProfitSharingPage() {
   async function handleExportCsv() {
     if (!result || !selectedProject) return;
     downloadCsvFile(
-      isEn
-        ? `Profit_Sharing_${selectedProject.code}.csv`
-        : `Bagi_Hasil_${selectedProject.code}.csv`,
-      isEn
-        ? ["Profit Sharing Recipient", "Percentage (%)", "Entitled Amount (IDR)"]
-        : ["Penerima Bagi Hasil", "Persentase (%)", "Nominal Hak Bagi Hasil (Rp)"],
+      t("profit_sharing:export.csv_filename", { code: selectedProject.code }),
+      [
+        t("profit_sharing:export.csv_col_recipient"),
+        t("profit_sharing:export.csv_col_pct"),
+        t("profit_sharing:export.csv_col_amount"),
+      ],
       [
         [
-          isEn ? "Recognized Project Revenue" : "Pendapatan Proyek Diakui",
+          t("profit_sharing:export.recognized_revenue_label"),
           0,
           result.recognized_revenue,
         ],
         [
-          isEn ? "Direct Project Costs" : "Biaya Langsung Proyek",
+          t("profit_sharing:export.direct_cost_label"),
           0,
           -result.direct_cost,
         ],
         [
-          isEn ? "Allocated Shared Costs" : "Alokasi Biaya Bersama",
+          t("profit_sharing:export.shared_cost_label"),
           0,
           -result.allocated_shared_cost,
         ],
         [
-          isEn ? "Gross Profit Subject to Sharing" : "Laba Kotor Dasar Bagi Hasil",
+          t("profit_sharing:export.gross_profit_label"),
           100,
           result.gross_profit,
         ],
@@ -351,11 +340,7 @@ export function ProfitSharingPage() {
       ],
     );
     await recordExportLog("PROFIT_SHARING", "CSV");
-    toast.success(
-      isEn
-        ? "Profit sharing breakdown exported to CSV (.csv) successfully."
-        : "Rincian bagi hasil berhasil diekspor ke CSV (.csv).",
-    );
+    toast.success(t("profit_sharing:export.toast_csv_success"));
   }
 
   return (
@@ -363,16 +348,16 @@ export function ProfitSharingPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("profit_sharing.title", "Perhitungan & Finalisasi Bagi Hasil Proyek")}
+            {t("profit_sharing:page_title")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("profit_sharing.subtitle", "Hitung pembagian laba bersih proyek bagi anggota tim dan finalisasi pencairan hak bagi hasil.")}
+            {t("profit_sharing:page_desc")}
           </p>
         </div>
         {result ? (
           <div className="flex items-center gap-2.5 shrink-0">
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
@@ -387,14 +372,14 @@ export function ProfitSharingPage() {
             <div className="w-full @[720px]:flex-1 @[720px]:min-w-0">
               <Field className="min-w-0">
                 <FieldLabel className="text-xs font-semibold text-foreground">
-                  Pilih Proyek Klien
+                  {t("profit_sharing:select_client_project")}
                 </FieldLabel>
                 <Select
                   value={selectedProjectId}
                   onValueChange={setSelectedProjectId}
                 >
                   <SelectTrigger className="w-full min-w-0 h-10 rounded-xl text-xs sm:text-sm gap-2">
-                    <SelectValue placeholder="Pilih proyek" />
+                    <SelectValue placeholder={t("profit_sharing:select_project_placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -418,7 +403,7 @@ export function ProfitSharingPage() {
                 className="h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer gap-1.5"
               >
                 <PlusIcon className="size-3.5 shrink-0" />
-                <span>Atur Skema 100%</span>
+                <span>{t("profit_sharing:btn_open_scheme")}</span>
               </Button>
               <Button
                 type="button"
@@ -433,7 +418,7 @@ export function ProfitSharingPage() {
                 ) : (
                   <CalculatorIcon className="size-3.5 shrink-0" />
                 )}
-                <span>Hitung Simulasi Draf</span>
+                <span>{t("profit_sharing:btn_run_simulation")}</span>
               </Button>
               <Button
                 type="button"
@@ -443,7 +428,7 @@ export function ProfitSharingPage() {
                 className="h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer gap-1.5 shadow-2xs"
               >
                 <LockIcon className="size-3.5 shrink-0" />
-                <span>Finalisasi &amp; Kunci Bagi Hasil</span>
+                <span>{t("profit_sharing:btn_finalize")}</span>
               </Button>
             </div>
           </div>
@@ -451,7 +436,7 @@ export function ProfitSharingPage() {
         <CardContent className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
           <Field>
             <FieldLabel htmlFor="ps-date" className="text-xs font-semibold text-foreground">
-              Tanggal Posting Jurnal Saat Finalisasi
+              {t("profit_sharing:field_posting_date")}
             </FieldLabel>
             <DatePicker
               id="ps-date"
@@ -460,17 +445,17 @@ export function ProfitSharingPage() {
               onChange={setPostingDate}
             />
             <FieldDescription className="text-[11px] leading-relaxed">
-              Tanggal efektif pencatatan jurnal bagi hasil ke Buku Besar.
+              {t("profit_sharing:field_posting_date_desc")}
             </FieldDescription>
           </Field>
 
           <Field>
             <FieldLabel htmlFor="ps-man" className="text-xs font-semibold text-foreground">
-              Override Manual Biaya Bersama
+              {t("profit_sharing:field_override_shared_cost")}
             </FieldLabel>
             <div className="flex h-9 w-full items-center justify-between rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] px-3 shadow-xs">
               <span className="text-xs sm:text-sm font-medium text-foreground">
-                {useManualSharedCost ? "Input Manual Aktif" : "Alokasi Otomatis"}
+                {useManualSharedCost ? t("profit_sharing:override_active") : t("profit_sharing:override_auto")}
               </span>
               <Switch
                 id="ps-man"
@@ -480,13 +465,13 @@ export function ProfitSharingPage() {
               />
             </div>
             <FieldDescription className="text-[11px] leading-relaxed">
-              Aktifkan untuk menentukan nominal biaya bersama secara manual.
+              {t("profit_sharing:field_override_desc")}
             </FieldDescription>
           </Field>
 
           <Field>
             <FieldLabel htmlFor="ps-man-val" className="text-xs font-semibold text-foreground">
-              Nominal Biaya Bersama Manual (Rp)
+              {t("profit_sharing:field_manual_shared_cost")}
             </FieldLabel>
             <NumberInput
               id="ps-man-val"
@@ -498,7 +483,7 @@ export function ProfitSharingPage() {
               className="h-9 rounded-xl"
             />
             <FieldDescription className="text-[11px] leading-relaxed">
-              Jika nonaktif, dialokasikan secara proporsional otomatis berdasarkan pendapatan proyek.
+              {t("profit_sharing:field_manual_shared_cost_desc")}
             </FieldDescription>
           </Field>
         </CardContent>
@@ -507,25 +492,25 @@ export function ProfitSharingPage() {
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
           <Spinner />
-          <span>Memuat data bagi hasil...</span>
+          <span>{t("profit_sharing:loading")}</span>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2 items-stretch">
           <Card className="overflow-hidden flex flex-col">
             <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Skema Porsi Penerima (Wajib 100%)
+                {t("profit_sharing:scheme_card_title")}
               </CardTitle>
               <CardDescription>
-                Anggota tim pelaksana proyek dapat memantau porsi hak bagi hasil masing-masing secara transparan.
+                {t("profit_sharing:scheme_card_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 flex-1 flex flex-col">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold">Nama Penerima</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold w-32">Porsi (%)</TableHead>
+                    <TableHead className="pl-6 pr-3 text-center font-semibold">{t("profit_sharing:col_recipient_name")}</TableHead>
+                    <TableHead className="pl-2 pr-6 text-center font-semibold w-32">{t("profit_sharing:col_share_pct")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -537,10 +522,10 @@ export function ProfitSharingPage() {
                             <UsersIcon className="size-6" />
                           </div>
                           <h3 className="text-sm font-semibold text-foreground">
-                            Skema Belum Ditetapkan
+                            {t("profit_sharing:scheme_empty_title")}
                           </h3>
                           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                            Klik Atur Skema 100% untuk mendaftarkan penerima dan persentase bagi hasil.
+                            {t("profit_sharing:scheme_empty_desc")}
                           </p>
                         </div>
                       </TableCell>
@@ -566,12 +551,12 @@ export function ProfitSharingPage() {
             <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1 min-w-0">
                 <CardTitle className="text-base sm:text-lg font-bold">
-                  Hasil Perhitungan Laba Kotor &amp; Distribusi
+                  {t("profit_sharing:result_card_title")}
                 </CardTitle>
                 <CardDescription>
                   {result?.finalized_at
-                    ? `Difinalisasi pada ${formatDateTimeID(result.finalized_at)}`
-                    : "Simulasi draf dapat diperbarui sebelum difinalisasi."}
+                    ? t("profit_sharing:finalized_at_label", { date: formatDateTimeI18n(result.finalized_at, language) })
+                    : t("profit_sharing:draft_simulation_desc")}
                 </CardDescription>
               </div>
               {result ? (
@@ -579,7 +564,7 @@ export function ProfitSharingPage() {
                   <StatusBadge
                     tone={isFinalized ? "success" : "warning"}
                     label={
-                      isFinalized ? "Difinalisasi & Terkunci" : "Simulasi Draf"
+                      isFinalized ? t("profit_sharing:badge_finalized") : t("profit_sharing:badge_draft")
                     }
                   />
                 </div>
@@ -592,10 +577,10 @@ export function ProfitSharingPage() {
                     <CoinsIcon className="size-6" />
                   </div>
                   <h3 className="text-sm font-semibold text-foreground">
-                    Belum Ada Perhitungan
+                    {t("profit_sharing:result_empty_title")}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                    Susun skema 100% lalu klik Hitung Simulasi Draf.
+                    {t("profit_sharing:result_empty_desc")}
                   </p>
                 </div>
               ) : (
@@ -604,7 +589,7 @@ export function ProfitSharingPage() {
                     <TableBody>
                       <TableRow>
                         <TableCell className="pl-6 pr-3 text-foreground">
-                          Pendapatan Proyek Diakui (Jurnal Terposting)
+                          {t("profit_sharing:comp_revenue")}
                         </TableCell>
                         <TableCell className="pl-3 pr-6 w-48 whitespace-nowrap">
                           <MonetaryCell amount={result.recognized_revenue} />
@@ -612,7 +597,7 @@ export function ProfitSharingPage() {
                       </TableRow>
                       <TableRow>
                         <TableCell className="pl-6 pr-3 text-foreground">
-                          Biaya Langsung Proyek
+                          {t("profit_sharing:comp_direct_cost")}
                         </TableCell>
                         <TableCell className="pl-3 pr-6 w-48 whitespace-nowrap">
                           <MonetaryCell amount={-result.direct_cost} />
@@ -620,7 +605,7 @@ export function ProfitSharingPage() {
                       </TableRow>
                       <TableRow>
                         <TableCell className="pl-6 pr-3 text-foreground">
-                          Alokasi Biaya Bersama
+                          {t("profit_sharing:comp_shared_cost")}
                         </TableCell>
                         <TableCell className="pl-3 pr-6 w-48 whitespace-nowrap">
                           <MonetaryCell amount={-result.allocated_shared_cost} />
@@ -628,7 +613,7 @@ export function ProfitSharingPage() {
                       </TableRow>
                       <TableRow className="bg-muted/40 font-bold border-t border-border/80">
                         <TableCell className="pl-6 pr-3 font-bold text-foreground">
-                          Laba Kotor Proyek
+                          {t("profit_sharing:comp_gross_profit")}
                         </TableCell>
                         <TableCell className="pl-3 pr-6 w-48 whitespace-nowrap">
                           <MonetaryCell
@@ -643,9 +628,9 @@ export function ProfitSharingPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="pl-6 pr-3 text-center font-semibold">Penerima</TableHead>
-                        <TableHead className="px-3 text-center font-semibold w-28">Persentase</TableHead>
-                        <TableHead className="pl-3 pr-6 text-center font-semibold w-48">Hak Bagi Hasil</TableHead>
+                        <TableHead className="pl-6 pr-3 text-center font-semibold">{t("profit_sharing:col_recipient")}</TableHead>
+                        <TableHead className="px-3 text-center font-semibold w-28">{t("profit_sharing:col_percentage")}</TableHead>
+                        <TableHead className="pl-3 pr-6 text-center font-semibold w-48">{t("profit_sharing:col_share_entitlement")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -675,13 +660,13 @@ export function ProfitSharingPage() {
       <Dialog open={schemeOpen} onOpenChange={setSchemeOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Atur Skema Bagi Hasil Proyek (Wajib 100%)</DialogTitle>
+            <DialogTitle>{t("profit_sharing:modals.scheme_title")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveScheme} className="space-y-4">
             <FieldGroup>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5">
                 <span className="text-xs text-muted-foreground leading-relaxed">
-                  Tautkan baris ke akun User jika penerima merupakan anggota tim internal.
+                  {t("profit_sharing:modals.scheme_hint")}
                 </span>
                 <Button
                   type="button"
@@ -700,14 +685,14 @@ export function ProfitSharingPage() {
                   className="h-8 px-3 rounded-xl text-xs font-semibold shrink-0 self-start sm:self-center cursor-pointer gap-1.5"
                 >
                   <PlusIcon className="size-3.5" />
-                  <span>Tambah Penerima</span>
+                  <span>{t("profit_sharing:modals.btn_add_recipient")}</span>
                 </Button>
               </div>
 
               <div className="hidden sm:grid sm:grid-cols-12 gap-2.5 px-1 text-xs font-semibold text-muted-foreground">
-                <div className="sm:col-span-5">Nama Penerima</div>
-                <div className="sm:col-span-4">Akun Tim</div>
-                <div className="sm:col-span-3">Porsi (%)</div>
+                <div className="sm:col-span-5">{t("profit_sharing:modals.header_recipient_name")}</div>
+                <div className="sm:col-span-4">{t("profit_sharing:modals.header_team_account")}</div>
+                <div className="sm:col-span-3">{t("profit_sharing:modals.header_portion")}</div>
               </div>
 
               <div className="flex max-h-64 flex-col gap-3 overflow-y-auto pr-1">
@@ -719,7 +704,7 @@ export function ProfitSharingPage() {
                     <div className="sm:col-span-5">
                       <Input
                         required
-                        placeholder="Nama penerima / kas perusahaan"
+                        placeholder={t("profit_sharing:modals.placeholder_recipient")}
                         value={r.recipientName}
                         onChange={(e) =>
                           setDraftRecipients((prev) =>
@@ -759,7 +744,7 @@ export function ProfitSharingPage() {
                         <SelectContent>
                           <SelectGroup>
                             <SelectItem value="none">
-                              Porsi Perusahaan / Internal
+                              {t("profit_sharing:modals.company_internal_share")}
                             </SelectItem>
                             {profiles
                               .filter((p) => p.role === "user")
@@ -799,7 +784,7 @@ export function ProfitSharingPage() {
                             )
                           }
                           className="shrink-0 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                          title="Hapus penerima"
+                          title={t("profit_sharing:modals.tooltip_delete_recipient")}
                         >
                           <Trash2Icon className="size-4" />
                         </Button>
@@ -809,10 +794,10 @@ export function ProfitSharingPage() {
                 ))}
               </div>
               <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs font-semibold">
-                <span className="text-foreground">Total Porsi: {sumPct}%</span>
+                <span className="text-foreground">{t("profit_sharing:modals.total_portion_label", { pct: sumPct })}</span>
                 <StatusBadge
                   tone={sumPct === 100 ? "success" : "destructive"}
-                  label={sumPct === 100 ? "Tepat 100%" : "Wajib 100%"}
+                  label={sumPct === 100 ? t("profit_sharing:modals.badge_exact_100") : t("profit_sharing:modals.badge_must_be_100")}
                 />
               </div>
               <DialogFooter className="pt-2">
@@ -821,14 +806,14 @@ export function ProfitSharingPage() {
                   variant="outline"
                   onClick={() => setSchemeOpen(false)}
                 >
-                  Batal
+                  {t("profit_sharing:modals.btn_cancel")}
                 </Button>
                 <Button
                   type="submit"
                   disabled={savingScheme || sumPct !== 100}
                 >
                   {savingScheme ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Skema
+                  {t("profit_sharing:modals.btn_save_scheme")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -840,10 +825,10 @@ export function ProfitSharingPage() {
       <ConfirmActionDialog
         open={finalizeConfirmOpen}
         onOpenChange={setFinalizeConfirmOpen}
-        title="Finalisasi & Kunci Bagi Hasil Proyek Ini?"
-        description="Setelah difinalisasi, skema dan nominal terkunci permanen serta sistem otomatis menerbitkan jurnal Beban Bagi Hasil pada Utang Bagi Hasil."
+        title={t("profit_sharing:modals.finalize_confirm_title")}
+        description={t("profit_sharing:modals.finalize_confirm_desc")}
         destructive
-        confirmLabel="Ya, Finalisasi & Posting Jurnal"
+        confirmLabel={t("profit_sharing:modals.finalize_confirm_btn")}
         onConfirm={async () => {
           await runProjectProfitSharing({
             projectId: selectedProjectId,

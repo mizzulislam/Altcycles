@@ -82,6 +82,10 @@ describe("i18n navigation and layout checks", () => {
     const poEn = (await import("@/locales/en/po.json")).default;
     const approvalsId = (await import("@/locales/id/approvals.json")).default;
     const approvalsEn = (await import("@/locales/en/approvals.json")).default;
+    const budgetingId = (await import("@/locales/id/budgeting.json")).default;
+    const budgetingEn = (await import("@/locales/en/budgeting.json")).default;
+    const profitSharingId = (await import("@/locales/id/profit_sharing.json")).default;
+    const profitSharingEn = (await import("@/locales/en/profit_sharing.json")).default;
 
     const accountingId = (await import("@/locales/id/accounting.json")).default;
     const accountingEn = (await import("@/locales/en/accounting.json")).default;
@@ -112,6 +116,47 @@ describe("i18n navigation and layout checks", () => {
     const apprvEnKeys = getDeepKeys(approvalsEn).sort();
     expect(apprvIdKeys).toEqual(apprvEnKeys);
     expect(apprvIdKeys.length).toBeGreaterThan(40);
+
+    // Check budgeting.json deep keys
+    const budgetIdKeys = getDeepKeys(budgetingId).sort();
+    const budgetEnKeys = getDeepKeys(budgetingEn).sort();
+    expect(budgetIdKeys).toEqual(budgetEnKeys);
+    expect(budgetIdKeys.length).toBeGreaterThan(40);
+
+    // Check profit_sharing.json deep keys
+    const profitIdKeys = getDeepKeys(profitSharingId).sort();
+    const profitEnKeys = getDeepKeys(profitSharingEn).sort();
+    expect(profitIdKeys).toEqual(profitEnKeys);
+    expect(profitIdKeys.length).toBeGreaterThan(50);
+
+    // Ensure no empty translation values in budgeting and profit sharing
+    for (const key of budgetIdKeys) {
+      const parts = key.split(".");
+      let valId: any = budgetingId;
+      let valEn: any = budgetingEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
+
+    for (const key of profitIdKeys) {
+      const parts = key.split(".");
+      let valId: any = profitSharingId;
+      let valEn: any = profitSharingEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
 
     // Ensure no empty translation values in po and approvals
     for (const key of poIdKeys) {

@@ -1,0 +1,71 @@
+{
+  "admin": {
+    "page_title": "Budgeting & Pengendalian Anggaran Proyek",
+    "page_desc": "Kendalikan pagu anggaran belanja dan pantau realisasi pengeluaran proyek.",
+    "btn_set_budget": "+ Atur Alokasi Anggaran",
+    "empty_desc": "Klik tombol Atur Alokasi Anggaran di kanan atas untuk menetapkan pagu per akun beban."
+  },
+  "user": {
+    "page_title": "Anggaran vs Realisasi Proyek Saya",
+    "page_desc": "Pantau pagu anggaran belanja dan realisasi pengeluaran proyek yang ditugaskan.",
+    "empty_desc": "Admin belum menetapkan pagu anggaran untuk proyek ini."
+  },
+  "common": {
+    "active_project": "Proyek Aktif",
+    "select_project_placeholder": "Pilih proyek",
+    "total_absorption_label": "Total Serapan:",
+    "warning_threshold_title": "Peringatan Ambang Serapan Anggaran",
+    "warning_threshold_desc": "Terdapat {{count}} pos beban yang telah melampaui ambang peringatan serapan anggaran.",
+    "kpi_ceiling": "Total Pagu Anggaran",
+    "kpi_ceiling_desc_active": "Tersebar pada {{count}} akun beban proyek",
+    "kpi_ceiling_desc_empty": "Belum ada pos anggaran ditetapkan",
+    "kpi_realization": "Realisasi Beban Terposting",
+    "kpi_realization_desc": "Serapan {{pct}}% dari pagu berjalan",
+    "kpi_remaining": "Sisa Anggaran Tersedia",
+    "kpi_remaining_desc_negative": "Realisasi melebihi pagu anggaran",
+    "kpi_remaining_desc_positive": "Saldo anggaran yang masih dapat digunakan",
+    "card_title": "Perbandingan Anggaran vs Realisasi per Akun Beban",
+    "card_desc": "Persentase serapan dan status ambang batas peringatan setiap akun.",
+    "loading": "Memuat data anggaran...",
+    "col_account": "Kode & Nama Akun",
+    "col_ceiling": "Pagu Anggaran",
+    "col_realization": "Realisasi Terposting",
+    "col_remaining": "Sisa Anggaran",
+    "col_absorption": "Serapan (%)",
+    "col_status": "Status",
+    "empty_title": "Anggaran Proyek Belum Disusun",
+    "status_exceeds": "Melebihi Pagu",
+    "status_threshold": ">= {{pct}}% Ambang",
+    "status_safe": "Aman"
+  },
+  "modal_editor": {
+    "title": "Susun / Perbarui Anggaran Proyek",
+    "threshold_label": "Ambang Peringatan Serapan (%)",
+    "threshold_desc": "Sistem memberi peringatan otomatis saat realisasi mencapai ambang ini.",
+    "planned_total_label": "Total Pagu Anggaran Disusun",
+    "section_title": "Alokasi per Akun Beban",
+    "section_ceiling_label": "Pagu (Rp)",
+    "no_expense_accounts": "Belum ada akun beban aktif pada Bagan Akun.",
+    "btn_cancel": "Batal",
+    "btn_save": "Simpan Anggaran",
+    "saving": "Menyimpan...",
+    "toast_saved": "Anggaran proyek berhasil disimpan."
+  },
+  "export": {
+    "excel_filename": "Anggaran_Proyek_{{code}}.xlsx",
+    "excel_sheet": "Anggaran vs Realisasi",
+    "excel_col_code": "Kode Akun",
+    "excel_col_name": "Nama Akun Beban",
+    "excel_col_ceiling": "Pagu Anggaran (Rp)",
+    "excel_col_realization": "Realisasi Terposting (Rp)",
+    "excel_col_remaining": "Sisa Anggaran (Rp)",
+    "excel_col_absorption": "Serapan (%)",
+    "excel_col_status": "Status",
+    "pdf_title": "LAPORAN ANGGARAN VS REALISASI PROYEK",
+    "pdf_subtitle": "Proyek: {{project}}",
+    "pdf_filename": "Anggaran_Proyek_{{code}}.pdf",
+    "csv_filename": "Anggaran_Proyek_{{code}}.csv",
+    "toast_excel_success": "Perbandingan anggaran proyek berhasil diekspor ke Excel (.xlsx).",
+    "toast_csv_success": "Perbandingan anggaran proyek berhasil diekspor ke CSV (.csv)."
+  }
+}
