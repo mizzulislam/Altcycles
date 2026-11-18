@@ -1,8 +1,10 @@
 import * as React from "react";
 import {
+  ArrowUpDownIcon,
   BanIcon,
   CheckCircle2Icon,
   FileTextIcon,
+  PencilIcon,
   PlusIcon,
   SendIcon,
   Trash2Icon,
@@ -14,6 +16,7 @@ import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-c
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { SectionEditControls } from "@/features/client-projects/components/project-detail-shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -73,9 +76,11 @@ import {
 import { getActiveLanguage, useLanguage } from "@/lib/i18n";
 import {
   createPurchaseOrder,
+  deletePurchaseOrders,
   getProjectBudgetComparison,
   listPurchaseOrders,
   recordExportLog,
+  updatePurchaseOrder,
   updatePurchaseOrderStatus,
 } from "@/lib/operations-service";
 import {
@@ -128,6 +133,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editingPo, setEditingPo] = React.useState<PurchaseOrderRow | null>(null);
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [selectedPoIds, setSelectedPoIds] = React.useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+
   const [poDate, setPoDate] = React.useState(() =>
     new Date().toLocaleDateString("en-CA"),
   );
@@ -211,7 +222,41 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     });
   }, [selectedVendor, poDate, formItems, exceedsBudget, ackBudgetWarning, issueNow]);
 
-  async function handleCreatePo(e: React.FormEvent) {
+  function handleOpenCreate() {
+    setEditingPo(null);
+    setPoDate(new Date().toLocaleDateString("en-CA"));
+    setVendorId(vendors[0]?.id || "");
+    setProjectId(projects[0]?.id || "");
+    setNotes("");
+    setIssueNow(true);
+    setFormItems([{ description: "", quantity: 1, unit: "Unit", unitPrice: 0 }]);
+    setAckBudgetWarning(false);
+    setDialogOpen(true);
+  }
+
+  function handleOpenEditPo(po: PurchaseOrderRow) {
+    const poLines = items.filter((i) => i.po_id === po.id);
+    setEditingPo(po);
+    setPoDate(po.po_date);
+    setVendorId(po.vendor_id);
+    setProjectId(po.project_id);
+    setNotes(po.notes || "");
+    setIssueNow(false);
+    setFormItems(
+      poLines.length > 0
+        ? poLines.map((l) => ({
+            description: l.description,
+            quantity: l.quantity,
+            unit: l.unit,
+            unitPrice: l.unit_price,
+          }))
+        : [{ description: "", quantity: 1, unit: "Unit", unitPrice: 0 }],
+    );
+    setAckBudgetWarning(Boolean(po.budget_warning_acknowledged));
+    setDialogOpen(true);
+  }
+
+  async function handleSavePo(e: React.FormEvent) {
     e.preventDefault();
     if (issueNow && draftTotal <= 0) {
       toast.error(
@@ -234,25 +279,73 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     }
     setSaving(true);
     try {
-      const created = await createPurchaseOrder({
-        poDate,
-        vendorId,
-        projectId,
-        notes,
-        issueImmediately: issueNow,
-        budgetWarningAcknowledged: ackBudgetWarning,
-        items: formItems,
-      });
-      toast.success(`PO ${created.po_number} berhasil disimpan.`);
+      if (editingPo) {
+        const updated = await updatePurchaseOrder(editingPo.id, {
+          poDate,
+          vendorId,
+          projectId,
+          notes,
+          issueImmediately: issueNow,
+          budgetWarningAcknowledged: ackBudgetWarning,
+          items: formItems,
+        });
+        toast.success(
+          t("po:toast_updated", {
+            number: updated.po_number,
+            defaultValue: `PO ${updated.po_number} berhasil diperbarui.`,
+          }),
+        );
+      } else {
+        const created = await createPurchaseOrder({
+          poDate,
+          vendorId,
+          projectId,
+          notes,
+          issueImmediately: issueNow,
+          budgetWarningAcknowledged: ackBudgetWarning,
+          items: formItems,
+        });
+        toast.success(
+          t("po:toast_created", {
+            number: created.po_number,
+            defaultValue: `PO ${created.po_number} berhasil disimpan.`,
+          }),
+        );
+      }
       setDialogOpen(false);
+      setEditingPo(null);
       setFormItems([{ description: "", quantity: 1, unit: "Unit", unitPrice: 0 }]);
       setNotes("");
       setAckBudgetWarning(false);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuat PO.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : editingPo
+            ? "Gagal memperbarui PO."
+            : "Gagal membuat PO.",
+      );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteSelectedPos() {
+    try {
+      await deletePurchaseOrders(selectedPoIds);
+      toast.success(
+        t("po:toast_deleted", {
+          count: selectedPoIds.length,
+          defaultValue: `${selectedPoIds.length} PO draf berhasil dihapus.`,
+        }),
+      );
+      setSelectedPoIds([]);
+      setDeleteConfirmOpen(false);
+      setIsEditing(false);
+      await reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus PO.");
     }
   }
 
@@ -478,6 +571,26 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
     (o) => statusFilter === "ALL" || o.status === statusFilter,
   );
 
+  const sortedOrders = React.useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      if (sortOrder === "asc") {
+        return (
+          a.po_date.localeCompare(b.po_date) ||
+          a.po_number.localeCompare(b.po_number)
+        );
+      }
+      return (
+        b.po_date.localeCompare(a.po_date) ||
+        b.po_number.localeCompare(a.po_number)
+      );
+    });
+  }, [filtered, sortOrder]);
+
+  const draftOrders = React.useMemo(
+    () => sortedOrders.filter((p) => p.status === "draft"),
+    [sortedOrders],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -505,7 +618,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           <Button
             type="button"
             size="sm"
-            onClick={() => setDialogOpen(true)}
+            onClick={handleOpenCreate}
             className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
           >
             <PlusIcon className="size-4" />
@@ -522,21 +635,49 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               {t("po:card_desc", "Pantau riwayat penerbitan PO internal dan status konfirmasi rekanan.")}
             </CardDescription>
           </div>
-          <div className="w-full sm:w-52 shrink-0">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="ALL">{t("po:status_all", "Semua Status")}</SelectItem>
-                  <SelectItem value="draft">{t("po:status_draft", "Draf")}</SelectItem>
-                  <SelectItem value="issued">{t("po:status_issued", "Diterbitkan")}</SelectItem>
-                  <SelectItem value="completed">{t("po:status_completed", "Selesai")}</SelectItem>
-                  <SelectItem value="cancelled">{t("po:status_cancelled", "Dibatalkan")}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="w-full sm:w-44 shrink-0">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t("po:status_all", "Semua Status")}</SelectItem>
+                    <SelectItem value="draft">{t("po:status_draft", "Draf")}</SelectItem>
+                    <SelectItem value="issued">{t("po:status_issued", "Diterbitkan")}</SelectItem>
+                    <SelectItem value="completed">{t("po:status_completed", "Selesai")}</SelectItem>
+                    <SelectItem value="cancelled">{t("po:status_cancelled", "Dibatalkan")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+              className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
+            >
+              <ArrowUpDownIcon className="size-3.5" />
+              <span>
+                {t("common:action.order", "Urutan")}:{" "}
+                {sortOrder === "asc"
+                  ? t("common:action.oldest", "Terlama")
+                  : t("common:action.newest", "Terbaru")}
+              </span>
+            </Button>
+            <SectionEditControls
+              hasItems={sortedOrders.length > 0}
+              isEditing={isEditing}
+              selectedCount={selectedPoIds.length}
+              onStartEdit={() => setIsEditing(true)}
+              onCancelEdit={() => {
+                setIsEditing(false);
+                setSelectedPoIds([]);
+              }}
+              onDeleteSelected={() => setDeleteConfirmOpen(true)}
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -549,6 +690,30 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
+                  {isEditing && (
+                    <TableHead className="w-12 text-center align-middle px-3">
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={
+                            draftOrders.length > 0 &&
+                            selectedPoIds.length === draftOrders.length
+                          }
+                          indeterminate={
+                            selectedPoIds.length > 0 &&
+                            selectedPoIds.length < draftOrders.length
+                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedPoIds(draftOrders.map((p) => p.id));
+                            } else {
+                              setSelectedPoIds([]);
+                            }
+                          }}
+                          aria-label="Pilih semua PO Draf"
+                        />
+                      </div>
+                    </TableHead>
+                  )}
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
                     {t("po:col_po_number", "Nomor PO")}
                   </TableHead>
@@ -573,9 +738,9 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedOrders.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={isEditing ? 8 : 7} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
                         <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
                           <FileTextIcon className="size-6" />
@@ -590,12 +755,28 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((po) => {
+                  sortedOrders.map((po) => {
                   const vnd = vendors.find((v) => v.id === po.vendor_id);
                   const prj = projects.find((p) => p.id === po.project_id);
                   const meta = getPoStatusMeta(po.status, t);
                   return (
                     <TableRow key={po.id}>
+                      {isEditing && (
+                        <TableCell className="align-top text-center px-3 py-3.5">
+                          <Checkbox
+                            checked={selectedPoIds.includes(po.id)}
+                            disabled={po.status !== "draft"}
+                            onCheckedChange={(checked) => {
+                              if (checked === true) {
+                                setSelectedPoIds((prev) => [...prev, po.id]);
+                              } else {
+                                setSelectedPoIds((prev) => prev.filter((id) => id !== po.id));
+                              }
+                            }}
+                            aria-label={`Pilih PO ${po.po_number}`}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="align-top pl-6 pr-3 py-3.5 text-center font-mono text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
                         {po.po_number}
                       </TableCell>
@@ -618,6 +799,19 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
+                          {po.status === "draft" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              title={t("po:action_edit_po", "Edit PO")}
+                              onClick={() => handleOpenEditPo(po)}
+                              className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
+                            >
+                              <PencilIcon className="size-4" />
+                              <span className="sr-only">{t("po:action_edit_po", "Edit PO")}</span>
+                            </Button>
+                          ) : null}
                           <DocumentDownloadMenu
                             title={t("po:action_view_pdf", "Lihat / Unduh Dokumen PO")}
                             onDownloadPdf={() => void handleDownloadPdf(po)}
@@ -681,12 +875,24 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingPo(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{t("po:modal_create.title", "Buat Purchase Order Pembelian Vendor")}</DialogTitle>
+            <DialogTitle>
+              {editingPo
+                ? t("po:modal_edit.title", "Edit Purchase Order Pembelian Vendor")
+                : t("po:modal_create.title", "Buat Purchase Order Pembelian Vendor")}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreatePo} className="min-w-0">
+          <form onSubmit={handleSavePo} className="min-w-0">
             <FieldGroup className="gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
@@ -920,7 +1126,10 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setDialogOpen(false)}
+                  onClick={() => {
+                    setDialogOpen(false);
+                    setEditingPo(null);
+                  }}
                 >
                   {t("po:modal_create.btn_cancel", "Batal")}
                 </Button>
@@ -931,13 +1140,30 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   }
                 >
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {saving ? t("po:modal_create.saving", "Menyimpan...") : t("po:modal_create.btn_save", "Simpan PO")}
+                  {saving
+                    ? t("po:modal_create.saving", "Menyimpan...")
+                    : editingPo
+                      ? t("po:modal_edit.btn_save", "Simpan Perubahan")
+                      : t("po:modal_create.btn_save", "Simpan PO")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={t("po:modal_delete.title", "Hapus Purchase Order Draf?")}
+        description={t(
+          "po:modal_delete.desc",
+          `Apakah Anda yakin ingin menghapus ${selectedPoIds.length} dokumen Purchase Order draf terpilih? Tindakan ini tidak dapat dibatalkan.`,
+        )}
+        destructive
+        confirmLabel={t("common:action.delete", "Hapus")}
+        onConfirm={handleDeleteSelectedPos}
+      />
 
       <ConfirmActionDialog
         open={Boolean(cancelTarget)}

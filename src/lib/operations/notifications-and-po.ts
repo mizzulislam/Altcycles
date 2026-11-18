@@ -229,6 +229,153 @@ export async function createPurchaseOrder(input: {
   return draftPo;
 }
 
+export async function updatePurchaseOrder(
+  poId: string,
+  input: {
+    poDate: string;
+    vendorId: string;
+    projectId: string;
+    notes?: string;
+    issueImmediately?: boolean;
+    budgetWarningAcknowledged?: boolean;
+    items: Array<{
+      description: string;
+      quantity: number;
+      unit: string;
+      unitPrice: number;
+    }>;
+  },
+): Promise<PurchaseOrderRow> {
+  if (input.items.length === 0) {
+    throw new Error("Minimal harus ada 1 baris item barang/jasa pada PO.");
+  }
+  const computedItems = input.items.map((item, idx) => ({
+    line_no: idx + 1,
+    description: item.description.trim(),
+    quantity: item.quantity,
+    unit: item.unit.trim() || "Unit",
+    unit_price: roundRupiah(item.unitPrice),
+    line_total: roundRupiah(item.quantity * item.unitPrice),
+  }));
+  const subtotal = computedItems.reduce((s, i) => s + i.line_total, 0);
+
+  if (input.issueImmediately && subtotal <= 0) {
+    throw new Error(
+      "Purchase Order yang langsung diterbitkan wajib memiliki total nilai lebih dari Rp 0.",
+    );
+  }
+
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    const po = demoStore.purchaseOrders.find((p) => p.id === poId);
+    if (!po) throw new Error("PO tidak ditemukan.");
+    if (po.status !== "draft") {
+      throw new Error("Hanya PO berstatus Draf yang dapat diubah rinciannya (BR-7).");
+    }
+    const before = structuredClone(po);
+    const now = new Date().toISOString();
+    po.po_date = input.poDate;
+    po.vendor_id = input.vendorId;
+    po.project_id = input.projectId;
+    po.notes = input.notes?.trim() || null;
+    po.subtotal = subtotal;
+    po.total_amount = subtotal;
+    po.updated_at = now;
+    if (input.issueImmediately) {
+      po.status = "issued";
+      po.issued_at = now;
+    }
+
+    demoStore.poItems = demoStore.poItems.filter((i) => i.po_id !== poId);
+    for (const ci of computedItems) {
+      demoStore.poItems.push({
+        id: crypto.randomUUID(),
+        po_id: poId,
+        ...ci,
+      });
+    }
+    appendDemoAudit(actor, "UPDATE", "purchase_orders", po.id, before, po);
+    invalidateAndNotifyDataChange("purchase_orders");
+    return structuredClone(po);
+  }
+
+  const { data: currentPo, error: getErr } = await supabase
+    .from("purchase_orders")
+    .select("status")
+    .eq("id", poId)
+    .single();
+  if (getErr) throw new Error(getErr.message);
+  if (currentPo.status !== "draft") {
+    throw new Error("Hanya PO berstatus Draf yang dapat diubah rinciannya (BR-7).");
+  }
+
+  const { error: delItemsErr } = await supabase
+    .from("po_items")
+    .delete()
+    .eq("po_id", poId);
+  if (delItemsErr) throw new Error(delItemsErr.message);
+
+  const { error: insItemsErr } = await supabase.from("po_items").insert(
+    computedItems.map((ci) => ({
+      po_id: poId,
+      ...ci,
+    })),
+  );
+  if (insItemsErr) throw new Error(insItemsErr.message);
+
+  const { data: updated, error: updErr } = await supabase
+    .from("purchase_orders")
+    .update({
+      po_date: input.poDate,
+      vendor_id: input.vendorId,
+      project_id: input.projectId,
+      notes: input.notes?.trim() || null,
+      subtotal,
+      total_amount: subtotal,
+      status: input.issueImmediately ? "issued" : "draft",
+      issued_at: input.issueImmediately ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", poId)
+    .select("*")
+    .single();
+  if (updErr) throw new Error(updErr.message);
+
+  invalidateAndNotifyDataChange("purchase_orders");
+  return updated;
+}
+
+export async function deletePurchaseOrders(poIds: string[]): Promise<void> {
+  if (poIds.length === 0) return;
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    const idSet = new Set(poIds);
+    const nonDraft = demoStore.purchaseOrders.filter(
+      (p) => idSet.has(p.id) && p.status !== "draft",
+    );
+    if (nonDraft.length > 0) {
+      throw new Error(
+        "Hanya PO berstatus Draf yang dapat dihapus. PO yang sudah diterbitkan atau selesai terkunci oleh sistem (BR-7).",
+      );
+    }
+    demoStore.poItems = demoStore.poItems.filter((i) => !idSet.has(i.po_id));
+    demoStore.purchaseOrders = demoStore.purchaseOrders.filter((p) => !idSet.has(p.id));
+    for (const id of poIds) {
+      appendDemoAudit(actor, "DELETE", "purchase_orders", id, null, null);
+    }
+    invalidateAndNotifyDataChange("purchase_orders");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("purchase_orders")
+    .delete()
+    .in("id", poIds)
+    .eq("status", "draft");
+  if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("purchase_orders");
+}
+
 export async function updatePurchaseOrderStatus(
   poId: string,
   nextStatus: "issued" | "completed" | "cancelled",

@@ -56,6 +56,17 @@
     "btn_save": "Save PO",
     "saving": "Saving..."
   },
+  "modal_edit": {
+    "title": "Edit Vendor Purchase Order",
+    "btn_save": "Save Changes"
+  },
+  "modal_delete": {
+    "title": "Delete Draft Purchase Order?",
+    "desc": "Are you sure you want to delete the selected draft Purchase Order documents? This action cannot be undone."
+  },
+  "action_edit_po": "Edit PO",
+  "toast_updated": "PO {{number}} successfully updated.",
+  "toast_deleted": "{{count}} draft POs successfully deleted.",
   "modal_cancel": {
     "title": "Cancel document {{number}}?",
     "desc": "This PO cancellation will be recorded in the system audit trail. Enter the reason for cancelling this official document.",

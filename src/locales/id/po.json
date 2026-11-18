@@ -56,6 +56,17 @@
     "btn_save": "Simpan PO",
     "saving": "Menyimpan..."
   },
+  "modal_edit": {
+    "title": "Edit Purchase Order Pembelian Vendor",
+    "btn_save": "Simpan Perubahan"
+  },
+  "modal_delete": {
+    "title": "Hapus Purchase Order Draf?",
+    "desc": "Apakah Anda yakin ingin menghapus dokumen Purchase Order draf terpilih? Tindakan ini tidak dapat dibatalkan."
+  },
+  "action_edit_po": "Edit PO",
+  "toast_updated": "PO {{number}} berhasil diperbarui.",
+  "toast_deleted": "{{count}} PO draf berhasil dihapus.",
   "modal_cancel": {
     "title": "Batalkan dokumen {{number}}?",
     "desc": "Pembatalan PO ini akan dicatat dalam riwayat audit trail sistem. Masukkan alasan pembatalan dokumen resmi ini.",
