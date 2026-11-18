@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
+import { Trans } from "react-i18next";
 import {
   BellIcon,
   CheckCircle2Icon,
@@ -35,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { AvatarUploadDialog } from "@/components/shared/avatar-upload-dialog";
 import { useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 import { updateMyProfile, uploadProfileAvatar } from "@/lib/data-service";
 import { ROLE_LABELS } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ import { cn } from "@/lib/utils";
 type SettingsTab = "profil" | "personal" | "account" | "notifications";
 
 export function ProfileSettingsPage() {
+  const { t } = useLanguage();
   const { profile, updatePassword, refreshProfile, availableRoles } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -111,10 +114,10 @@ export function ProfileSettingsPage() {
         avatarUrl: uploadedUrl,
       });
       await refreshProfile();
-      toast.success("Foto profil berhasil diperbarui!");
+      toast.success(t("settings:profile.toast_photo_updated"));
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengunggah foto profil.",
+        err instanceof Error ? err.message : t("settings:profile.toast_photo_upload_fail"),
       );
       throw err;
     } finally {
@@ -136,12 +139,12 @@ export function ProfileSettingsPage() {
         avatarUrl: driveDirectUrl,
       });
       await refreshProfile();
-      toast.success("Foto profil dari Google Drive berhasil diterapkan!");
+      toast.success(t("settings:profile.toast_photo_drive_applied"));
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Gagal menerapkan foto profil dari Google Drive.",
+          : t("settings:profile.toast_photo_drive_fail"),
       );
       throw err;
     } finally {
@@ -164,10 +167,10 @@ export function ProfileSettingsPage() {
         avatarUrl: null,
       });
       await refreshProfile();
-      toast.success("Foto profil dihapus, kembali menggunakan avatar inisial.");
+      toast.success(t("settings:profile.toast_photo_removed"));
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menghapus foto profil.",
+        err instanceof Error ? err.message : t("settings:profile.toast_photo_remove_fail"),
       );
     } finally {
       setIsUploadingAvatar(false);
@@ -178,12 +181,12 @@ export function ProfileSettingsPage() {
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!fullName.trim()) {
-      toast.error("Nama lengkap wajib diisi.");
+      toast.error(t("settings:profile.toast_name_required"));
       return;
     }
     if (username.trim() && !/^[a-zA-Z0-9._-]+$/.test(username.trim())) {
       toast.error(
-        "Username hanya boleh memuat huruf, angka, titik, strip, atau garis bawah.",
+        t("settings:profile.toast_username_invalid"),
       );
       return;
     }
@@ -199,10 +202,10 @@ export function ProfileSettingsPage() {
         avatarUrl: avatarUrl || null,
       });
       await refreshProfile();
-      toast.success("Profil Anda berhasil diperbarui dan dicatat ke Audit Trail!");
+      toast.success(t("settings:profile.toast_profile_updated"));
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal memperbarui profil.",
+        err instanceof Error ? err.message : t("settings:profile.toast_profile_update_fail"),
       );
     } finally {
       setIsSavingProfile(false);
@@ -213,11 +216,11 @@ export function ProfileSettingsPage() {
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
     if (newPassword.length < 8) {
-      toast.error("Kata sandi baru minimal 8 karakter.");
+      toast.error(t("settings:profile.toast_pwd_min_length"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Konfirmasi kata sandi tidak cocok.");
+      toast.error(t("settings:profile.toast_pwd_mismatch"));
       return;
     }
 
@@ -226,10 +229,10 @@ export function ProfileSettingsPage() {
       await updatePassword(newPassword);
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Kata sandi akun Anda berhasil diperbarui!");
+      toast.success(t("settings:profile.toast_pwd_updated"));
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal memperbarui kata sandi.",
+        err instanceof Error ? err.message : t("settings:profile.toast_pwd_update_fail"),
       );
     } finally {
       setIsSavingPassword(false);
@@ -241,10 +244,10 @@ export function ProfileSettingsPage() {
       {/* Header Halaman */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Pengaturan Pengguna
+          {t("settings:profile.title")}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          Kelola informasi identitas, kontak pribadi, keamanan kata sandi, dan preferensi notifikasi Anda.
+          {t("settings:profile.subtitle")}
         </p>
       </div>
 
@@ -263,7 +266,7 @@ export function ProfileSettingsPage() {
           )}
         >
           <UserIcon className="size-4 shrink-0" />
-          <span className="truncate">Profil Pengguna</span>
+          <span className="truncate">{t("settings:profile.tab_profil")}</span>
         </button>
 
         <button
@@ -277,7 +280,7 @@ export function ProfileSettingsPage() {
           )}
         >
           <PhoneIcon className="size-4 shrink-0" />
-          <span className="truncate">Data Pribadi</span>
+          <span className="truncate">{t("settings:profile.tab_personal")}</span>
         </button>
 
         <button
@@ -291,7 +294,7 @@ export function ProfileSettingsPage() {
           )}
         >
           <KeyRoundIcon className="size-4 shrink-0" />
-          <span className="truncate">Akun &amp; Kata Sandi</span>
+          <span className="truncate">{t("settings:profile.tab_account")}</span>
         </button>
 
         <button
@@ -305,7 +308,7 @@ export function ProfileSettingsPage() {
           )}
         >
           <BellIcon className="size-4 shrink-0" />
-          <span className="truncate">Notifikasi</span>
+          <span className="truncate">{t("settings:profile.tab_notifications")}</span>
         </button>
       </div>
 
@@ -318,10 +321,10 @@ export function ProfileSettingsPage() {
           <Card>
             <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Profil Pengguna
+                {t("settings:profile.card_profile_title")}
               </CardTitle>
               <CardDescription>
-                Foto diri, nama tampilan, username, dan deskripsi ringkas profil Anda.
+                {t("settings:profile.card_profile_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-5 space-y-6">
@@ -331,7 +334,7 @@ export function ProfileSettingsPage() {
                   {/* Kolom Kiri: Box Upload Foto Diri (Saat Terisi: Gambar Memenuhi Box & Tombol Icon Ganti/Hapus Muncul secara Hover) */}
                   <div className="p-4 rounded-xl bg-muted/20 border border-border/60 flex flex-col justify-between gap-2.5">
                     <FieldLabel className="text-xs font-semibold">
-                      Foto Diri
+                      {t("settings:profile.photo_label")}
                     </FieldLabel>
 
                     {avatarUrl ? (
@@ -339,13 +342,13 @@ export function ProfileSettingsPage() {
                       <div className="group relative w-full h-[96px] rounded-2xl overflow-hidden border border-border/80 shadow-xs bg-muted">
                         <img
                           src={avatarUrl}
-                          alt="Foto Profil"
+                          alt={t("settings:profile.photo_label")}
                           className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
 
                         {/* Overlay Hover Gelap Tipis dengan Icon Button Ganti & Hapus */}
                         <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-3">
-                          <ActionTooltip content="Ganti Foto (Lokal / Google Drive)" side="top">
+                          <ActionTooltip content={t("settings:profile.photo_change_tooltip")} side="top">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -353,19 +356,19 @@ export function ProfileSettingsPage() {
                                 setIsUploadDialogOpen(true);
                               }}
                               disabled={isUploadingAvatar}
-                              aria-label="Ganti Foto"
+                              aria-label={t("settings:profile.photo_change_aria")}
                               className="size-9 rounded-xl bg-white/20 hover:bg-white/35 text-white backdrop-blur-md border border-white/30 flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95 cursor-pointer"
                             >
                               <PencilIcon className="size-4" />
                             </button>
                           </ActionTooltip>
 
-                          <ActionTooltip content="Hapus Foto Profil" side="top">
+                          <ActionTooltip content={t("settings:profile.photo_delete_tooltip")} side="top">
                             <button
                               type="button"
                               onClick={handleRemoveAvatar}
                               disabled={isUploadingAvatar}
-                              aria-label="Hapus Foto"
+                              aria-label={t("settings:profile.photo_delete_aria")}
                               className="size-9 rounded-xl bg-destructive/80 hover:bg-destructive text-white backdrop-blur-md border border-white/30 flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95 cursor-pointer"
                             >
                               <Trash2Icon className="size-4" />
@@ -392,10 +395,10 @@ export function ProfileSettingsPage() {
                           <UploadCloudIcon className="size-4.5" />
                         </div>
                         <p className="text-xs font-semibold text-foreground">
-                          Upload Foto Diri
+                          {t("settings:profile.photo_upload_btn")}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Mendukung format JPG, PNG, WEBP (maks. 2MB)
+                          {t("settings:profile.photo_upload_hint")}
                         </p>
                       </button>
                     )}
@@ -404,18 +407,18 @@ export function ProfileSettingsPage() {
                   {/* Kolom Kanan: Tentang Saya (Sejajar Presisi dengan Kolom Kiri) */}
                   <div className="p-4 rounded-xl bg-muted/20 border border-border/60 flex flex-col justify-between gap-2.5">
                     <FieldLabel className="text-xs font-semibold">
-                      Tentang Saya
+                      {t("settings:profile.about_me")}
                     </FieldLabel>
                     <div className="flex flex-col justify-between h-[96px]">
                       <Textarea
                         rows={2}
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
-                        placeholder="Tuliskan catatan singkat mengenai peran, tanggung jawab, atau keahlian Anda..."
+                        placeholder={t("settings:profile.about_me_ph")}
                         className="text-xs resize-none h-[60px] min-h-[60px] bg-background"
                       />
                       <p className="text-[11px] text-muted-foreground leading-normal truncate">
-                        Catatan ringkas yang tampil pada profil publik akun Anda.
+                        {t("settings:profile.about_me_desc")}
                       </p>
                     </div>
                   </div>
@@ -425,35 +428,35 @@ export function ProfileSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <Field>
                     <FieldLabel required className="text-xs font-semibold">
-                      Nama Lengkap
+                      {t("settings:profile.full_name")}
                     </FieldLabel>
                     <Input
                       type="text"
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Nama lengkap Anda"
+                      placeholder={t("settings:profile.full_name_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Nama lengkap resmi yang tampil di dokumen sistem.
+                      {t("settings:profile.full_name_desc")}
                     </FieldDescription>
                   </Field>
 
                   <Field>
                     <FieldLabel required className="text-xs font-semibold">
-                      Username
+                      {t("settings:profile.username")}
                     </FieldLabel>
                     <Input
                       type="text"
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="username_anda"
+                      placeholder={t("settings:profile.username_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Identitas unik panggilan akun sistem.
+                      {t("settings:profile.username_desc")}
                     </FieldDescription>
                   </Field>
                 </div>
@@ -463,10 +466,10 @@ export function ProfileSettingsPage() {
                   <Field>
                     <div className="flex items-center justify-between">
                       <FieldLabel className="text-xs font-semibold">
-                        Email Akun
+                        {t("settings:profile.email")}
                       </FieldLabel>
                       <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
-                        Hanya Baca (Terkunci)
+                        {t("settings:profile.email_readonly")}
                       </span>
                     </div>
                     <Input
@@ -476,27 +479,27 @@ export function ProfileSettingsPage() {
                       className="text-xs h-9 bg-muted/40 cursor-not-allowed opacity-90"
                     />
                     <FieldDescription className="text-[11px]">
-                      Email terdaftar pada autentikasi dan tidak dapat diubah sembarangan demi keamanan.
+                      {t("settings:profile.email_desc")}
                     </FieldDescription>
                   </Field>
 
                   <Field>
                     <div className="flex items-center justify-between">
                       <FieldLabel className="text-xs font-semibold">
-                        Peran Aktif Saat Ini
+                        {t("settings:profile.current_role")}
                       </FieldLabel>
                       <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                        Sistem Otorisasi
+                        {t("settings:profile.role_auth_system")}
                       </span>
                     </div>
                     <Input
                       type="text"
                       disabled
-                      value={ROLE_LABELS[profile.role] || profile.role}
+                      value={t(`common:role.${profile.role}`) || ROLE_LABELS[profile.role] || profile.role}
                       className="text-xs h-9 bg-muted/40 cursor-not-allowed opacity-90"
                     />
                     <FieldDescription className="text-[11px]">
-                      Peran aktif dapat diganti secara langsung via dropdown Mode Aktif di header atas.
+                      {t("settings:profile.current_role_desc")}
                     </FieldDescription>
                   </Field>
                 </div>
@@ -510,12 +513,12 @@ export function ProfileSettingsPage() {
                     {isSavingProfile ? (
                       <>
                         <Loader2Icon className="size-3.5 animate-spin" />
-                        <span>Menyimpan...</span>
+                        <span>{t("settings:profile.btn_saving")}</span>
                       </>
                     ) : (
                       <>
                         <SaveIcon className="size-3.5" />
-                        <span>Simpan Perubahan</span>
+                        <span>{t("settings:profile.btn_save_profile")}</span>
                       </>
                     )}
                   </Button>
@@ -530,10 +533,10 @@ export function ProfileSettingsPage() {
           <Card>
             <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Data Pribadi &amp; Kepegawaian
+                {t("settings:profile.card_personal_title")}
               </CardTitle>
               <CardDescription>
-                Informasi kontak komunikasi dan jabatan kerja di Altvira.
+                {t("settings:profile.card_personal_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-5 space-y-6">
@@ -542,33 +545,33 @@ export function ProfileSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <Field>
                     <FieldLabel className="text-xs font-semibold">
-                      Nomor Telepon / WhatsApp
+                      {t("settings:profile.phone_number")}
                     </FieldLabel>
                     <Input
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="Contoh: 081234567890"
+                      placeholder={t("settings:profile.phone_number_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Nomor aktif untuk konfirmasi pengajuan dan koordinasi termin.
+                      {t("settings:profile.phone_number_desc")}
                     </FieldDescription>
                   </Field>
 
                   <Field>
                     <FieldLabel className="text-xs font-semibold">
-                      Jabatan / Divisi Pekerjaan
+                      {t("settings:profile.job_title")}
                     </FieldLabel>
                     <Input
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
-                      placeholder="Contoh: Lead Frontend Engineer"
+                      placeholder={t("settings:profile.job_title_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Spesialisasi posisi pekerjaan internal di Altvira.
+                      {t("settings:profile.job_title_desc")}
                     </FieldDescription>
                   </Field>
                 </div>
@@ -578,11 +581,14 @@ export function ProfileSettingsPage() {
                   <div className="flex items-center gap-2">
                     <UserCheckIcon className="size-4 text-primary" />
                     <h4 className="text-xs font-bold text-foreground">
-                      Hak Peran Multi Role Pengguna
+                      {t("settings:profile.multi_role_title")}
                     </h4>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Satu akun dapat memiliki lebih dari satu peran yang sah di sistem Altcycles. Anda dapat beralih peran aktif kapan pun melalui dropdown <strong>Mode Aktif</strong> di header kanan atas.
+                    <Trans
+                      i18nKey="settings:profile.multi_role_desc"
+                      components={[<span key="0" />, <strong key="1" />]}
+                    />
                   </p>
                   <div className="flex flex-wrap gap-2 pt-1">
                     {availableRoles.map((role) => (
@@ -591,7 +597,7 @@ export function ProfileSettingsPage() {
                         className="px-3 py-1.5 rounded-lg border text-xs font-medium bg-card flex items-center gap-2"
                       >
                         <CheckCircle2Icon className="size-3.5 text-primary" />
-                        <span>{ROLE_LABELS[role] || role}</span>
+                        <span>{t(`common:role.${role}`) || ROLE_LABELS[role] || role}</span>
                       </div>
                     ))}
                   </div>
@@ -606,12 +612,12 @@ export function ProfileSettingsPage() {
                     {isSavingProfile ? (
                       <>
                         <Loader2Icon className="size-3.5 animate-spin" />
-                        <span>Menyimpan...</span>
+                        <span>{t("settings:profile.btn_saving")}</span>
                       </>
                     ) : (
                       <>
                         <SaveIcon className="size-3.5" />
-                        <span>Simpan Data Pribadi</span>
+                        <span>{t("settings:profile.btn_save_personal")}</span>
                       </>
                     )}
                   </Button>
@@ -626,10 +632,10 @@ export function ProfileSettingsPage() {
           <Card>
             <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Keamanan Akun &amp; Ganti Kata Sandi
+                {t("settings:profile.card_account_title")}
               </CardTitle>
               <CardDescription>
-                Perbarui kata sandi untuk melindungi akun Anda dari akses yang tidak berwenang.
+                {t("settings:profile.card_account_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-5 space-y-6">
@@ -638,7 +644,7 @@ export function ProfileSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <Field>
                     <FieldLabel required className="text-xs font-semibold">
-                      Kata Sandi Baru
+                      {t("settings:profile.new_password")}
                     </FieldLabel>
                     <Input
                       type="password"
@@ -646,17 +652,17 @@ export function ProfileSettingsPage() {
                       minLength={8}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Minimal 8 karakter acak kuat"
+                      placeholder={t("settings:profile.new_password_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Gunakan kombinasi huruf besar, kecil, angka, dan simbol.
+                      {t("settings:profile.new_password_desc")}
                     </FieldDescription>
                   </Field>
 
                   <Field>
                     <FieldLabel required className="text-xs font-semibold">
-                      Konfirmasi Kata Sandi Baru
+                      {t("settings:profile.confirm_password")}
                     </FieldLabel>
                     <Input
                       type="password"
@@ -664,11 +670,11 @@ export function ProfileSettingsPage() {
                       minLength={8}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Ketik ulang kata sandi baru"
+                      placeholder={t("settings:profile.confirm_password_ph")}
                       className="text-xs h-9"
                     />
                     <FieldDescription className="text-[11px]">
-                      Pastikan sama persis dengan kolom kata sandi baru.
+                      {t("settings:profile.confirm_password_desc")}
                     </FieldDescription>
                   </Field>
                 </div>
@@ -676,7 +682,7 @@ export function ProfileSettingsPage() {
                 <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
                   <ShieldAlertIcon className="size-4 shrink-0 mt-0.5" />
                   <span>
-                    Setiap pergantian kata sandi akan terekam ke dalam Audit Trail dan sesi aktif lainnya akan diverifikasi ulang demi integritas akun keuangan.
+                    {t("settings:profile.password_audit_warning")}
                   </span>
                 </div>
 
@@ -689,12 +695,12 @@ export function ProfileSettingsPage() {
                     {isSavingPassword ? (
                       <>
                         <Loader2Icon className="size-3.5 animate-spin" />
-                        <span>Memperbarui...</span>
+                        <span>{t("settings:profile.btn_saving_password")}</span>
                       </>
                     ) : (
                       <>
                         <LockIcon className="size-3.5" />
-                        <span>Perbarui Kata Sandi</span>
+                        <span>{t("settings:profile.btn_save_password")}</span>
                       </>
                     )}
                   </Button>
@@ -709,10 +715,10 @@ export function ProfileSettingsPage() {
           <Card>
             <CardHeader className="px-6 py-4 border-b border-border/70">
               <CardTitle className="text-base sm:text-lg font-bold">
-                Preferensi Notifikasi
+                {t("settings:profile.card_notif_title")}
               </CardTitle>
               <CardDescription>
-                Atur jenis peringatan sistem yang ingin Anda terima secara langsung dalam aplikasi.
+                {t("settings:profile.card_notif_desc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-5 space-y-4">
@@ -720,17 +726,17 @@ export function ProfileSettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                   <div className="space-y-0.5 pr-4">
                     <p className="text-xs font-bold text-foreground">
-                      Pengajuan & Pembayaran Vendor
+                      {t("settings:profile.notif_payment_title")}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      Pemberitahuan saat ada pengajuan pembayaran baru atau persetujuan termin.
+                      {t("settings:profile.notif_payment_desc")}
                     </p>
                   </div>
                   <Switch
                     checked={notifPayment}
                     onCheckedChange={(checked) => {
                       setNotifPayment(checked);
-                      toast.success("Preferensi notifikasi disimpan.");
+                      toast.success(t("settings:profile.toast_notif_saved"));
                     }}
                   />
                 </div>
@@ -738,17 +744,17 @@ export function ProfileSettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                   <div className="space-y-0.5 pr-4">
                     <p className="text-xs font-bold text-foreground">
-                      Invoice & Penagihan Klien
+                      {t("settings:profile.notif_invoice_title")}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      Status verifikasi PO klien dan pembayaran termin piutang.
+                      {t("settings:profile.notif_invoice_desc")}
                     </p>
                   </div>
                   <Switch
                     checked={notifInvoice}
                     onCheckedChange={(checked) => {
                       setNotifInvoice(checked);
-                      toast.success("Preferensi notifikasi disimpan.");
+                      toast.success(t("settings:profile.toast_notif_saved"));
                     }}
                   />
                 </div>
@@ -757,17 +763,17 @@ export function ProfileSettingsPage() {
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
                 <div className="space-y-0.5 pr-4">
                   <p className="text-xs font-bold text-foreground">
-                    Tutup Buku & Pelaporan Periode
+                    {t("settings:profile.notif_closing_title")}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    Pemberitahuan resmi terkait pembekuan jurnal dan finalisasi laporan keuangan.
+                    {t("settings:profile.notif_closing_desc")}
                   </p>
                 </div>
                 <Switch
                   checked={notifClosing}
                   onCheckedChange={(checked) => {
                     setNotifClosing(checked);
-                    toast.success("Preferensi notifikasi disimpan.");
+                    toast.success(t("settings:profile.toast_notif_saved"));
                   }}
                 />
               </div>

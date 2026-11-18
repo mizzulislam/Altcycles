@@ -8,16 +8,16 @@
       "/user/pembayaran",
       "/user/anggaran"
     ],
-    "totalIssues": 2,
+    "totalIssues": 1,
     "files": [
       {
         "file": "src/features/dashboard/user-dashboard.tsx",
         "count": 1,
         "items": [
           {
-            "line": 173,
+            "line": 172,
             "type": "ternary",
-            "text": "const monthsArr = language === \"en\" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;"
+            "text": "? new Intl.DateTimeFormat(language === \"en\" ? \"en-US\" : \"id-ID\", {"
           }
         ]
       },
@@ -28,15 +28,8 @@
       },
       {
         "file": "src/features/purchase-orders/po-page.tsx",
-        "count": 1,
-        "items": [
-          {
-            "line": 822,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Harga Rp"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/budgeting/budget-page.tsx",
@@ -149,7 +142,7 @@
       "/admin/bagi-hasil",
       "/admin/master"
     ],
-    "totalIssues": 2,
+    "totalIssues": 1,
     "files": [
       {
         "file": "src/features/master-data/admin-dashboard.tsx",
@@ -169,15 +162,8 @@
       },
       {
         "file": "src/features/purchase-orders/po-page.tsx",
-        "count": 1,
-        "items": [
-          {
-            "line": 822,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Harga Rp"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/master-data/projects-page.tsx",
@@ -227,130 +213,22 @@
       "/profil",
       "/pengaturan/profil"
     ],
-    "totalIssues": 55,
+    "totalIssues": 0,
     "files": [
       {
         "file": "src/features/auth/login-page.tsx",
-        "count": 4,
-        "items": [
-          {
-            "line": 553,
-            "type": "raw_jsx_text",
-            "text": "Selengkapnya"
-          },
-          {
-            "line": 570,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Banner sebelumnya"
-          },
-          {
-            "line": 582,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Banner berikutnya"
-          },
-          {
-            "line": 618,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "FINANCIAL ERP"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/auth/password-reset-pages.tsx",
-        "count": 5,
-        "items": [
-          {
-            "line": 52,
-            "type": "raw_jsx_text",
-            "text": "Pemulihan Kata Sandi"
-          },
-          {
-            "line": 68,
-            "type": "raw_jsx_text",
-            "text": "Email Kerja"
-          },
-          {
-            "line": 73,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "nama@altvira.id"
-          },
-          {
-            "line": 135,
-            "type": "raw_jsx_text",
-            "text": "Tetapkan Kata Sandi Baru"
-          },
-          {
-            "line": 144,
-            "type": "raw_jsx_text",
-            "text": "Kata Sandi Baru"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/buyer-portal/buyer-portal-page.tsx",
-        "count": 24,
-        "items": [
-          {
-            "line": 370,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Breadcrumb"
-          },
-          {
-            "line": 412,
-            "type": "raw_jsx_text",
-            "text": "Lacak Progres &amp; Unduh Dokumen PO"
-          },
-          {
-            "line": 416,
-            "type": "raw_jsx_text",
-            "text": "Ajukan Purchase Order (PO) Baru"
-          },
-          {
-            "line": 443,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Contoh: PO-202611-SN8K4P"
-          },
-          {
-            "line": 456,
-            "type": "raw_jsx_text",
-            "text": "Cek Status Proyek"
-          },
-          {
-            "line": 479,
-            "type": "raw_jsx_text",
-            "text": "Nama"
-          },
-          {
-            "line": 599,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Jadwal termin belum tersedia"
-          },
-          {
-            "line": 680,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Belum ada dokumen terbit"
-          },
-          {
-            "line": 709,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Unduh Dokumen (PDF / Word)"
-          },
-          {
-            "line": 762,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Contoh: Hendra Wijaya"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/profile/profile-overview-page.tsx",
@@ -359,82 +237,13 @@
       },
       {
         "file": "src/features/profile/profile-settings-page.tsx",
-        "count": 20,
-        "items": [
-          {
-            "line": 266,
-            "type": "raw_jsx_text",
-            "text": "Profil Pengguna"
-          },
-          {
-            "line": 280,
-            "type": "raw_jsx_text",
-            "text": "Data Pribadi"
-          },
-          {
-            "line": 294,
-            "type": "raw_jsx_text",
-            "text": "Akun &amp; Kata Sandi"
-          },
-          {
-            "line": 308,
-            "type": "raw_jsx_text",
-            "text": "Notifikasi"
-          },
-          {
-            "line": 356,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Ganti Foto"
-          },
-          {
-            "line": 368,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Hapus Foto"
-          },
-          {
-            "line": 414,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Tuliskan catatan singkat mengenai peran, tanggung jawab, atau keahlian Anda..."
-          },
-          {
-            "line": 435,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "Nama lengkap Anda"
-          },
-          {
-            "line": 452,
-            "type": "raw_prop",
-            "prop": "placeholder",
-            "text": "username_anda"
-          },
-          {
-            "line": 513,
-            "type": "raw_jsx_text",
-            "text": "Menyimpan..."
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/components/layout/portal-shell.tsx",
-        "count": 2,
-        "items": [
-          {
-            "line": 329,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Breadcrumb"
-          },
-          {
-            "line": 427,
-            "type": "raw_prop",
-            "prop": "aria-label",
-            "text": "Buka notifikasi"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/components/layout/header.tsx",

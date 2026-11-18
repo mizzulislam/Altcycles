@@ -326,7 +326,7 @@ export function PortalShell() {
         <header className="hidden md:flex h-16 border-b border-border/80 bg-card/90 backdrop-blur-md px-6 items-center justify-between sticky top-0 z-30">
           {/* Breadcrumb Navigasi Halaman */}
           <nav
-            aria-label="Breadcrumb"
+            aria-label={t("common:nav.breadcrumb", "Breadcrumb")}
             className="flex items-center gap-2 text-xs text-muted-foreground min-w-0"
           >
             {getHeaderBreadcrumbs(location.pathname, t).map((crumb, idx, arr) => {
@@ -424,7 +424,7 @@ export function PortalShell() {
                 size="icon"
                 onClick={() => void handleOpenNotifications()}
                 className="relative size-9 rounded-2xl border-border bg-card hover:bg-muted/60 shadow-2xs cursor-pointer"
-                aria-label="Buka notifikasi"
+                aria-label={t("common:header.notifications", "Notifikasi sistem")}
               >
                 <BellIcon className="size-4 text-muted-foreground" />
                 {unreadCount > 0 && (

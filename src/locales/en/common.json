@@ -30,13 +30,34 @@
     "locked": "Locked",
     "acknowledge_warning": "I Understand Risks & Proceed Anyway"
   },
+  "app": {
+    "name": "Altcycles",
+    "tagline": "Altvira Financial Administration & Accounting System"
+  },
   "loading": "Loading data...",
   "empty": "No data available",
   "error": "An error occurred",
+  "auth": {
+    "reset_title": "Password Recovery",
+    "reset_desc": "Enter your internal work account email address to receive password reset instructions.",
+    "reset_sent": "If your email is registered as an active Altvira account, password recovery instructions have been sent.",
+    "work_email": "Work Email",
+    "email_ph": "name@altvira.id",
+    "btn_send_link": "Send Reset Link",
+    "btn_sending": "Sending Link...",
+    "back_to_login": "Back to Sign In",
+    "set_new_pwd_title": "Set New Password",
+    "set_new_pwd_desc": "Use a new password with at least 8 characters.",
+    "new_password": "New Password",
+    "confirm_new_password": "Confirm New Password",
+    "btn_save_pwd": "Save New Password",
+    "btn_saving_pwd": "Saving Password..."
+  },
   "time": {
     "days": "Days"
   },
   "nav": {
+    "breadcrumb": "Breadcrumb navigation",
     "home": "Home",
     "dashboard": "Financial Dashboard",
     "dashboard_system": "System Dashboard",

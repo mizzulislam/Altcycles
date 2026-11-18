@@ -30,13 +30,34 @@
     "locked": "Terkunci",
     "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan"
   },
+  "app": {
+    "name": "Altcycles",
+    "tagline": "Sistem Administrasi Keuangan & Akuntansi Altvira"
+  },
   "loading": "Memuat data...",
   "empty": "Tidak ada data yang tersedia",
   "error": "Terjadi kesalahan",
+  "auth": {
+    "reset_title": "Pemulihan Kata Sandi",
+    "reset_desc": "Masukkan alamat email akun internal Anda untuk menerima tautan atur ulang kata sandi.",
+    "reset_sent": "Jika email terdaftar sebagai akun aktif Altvira, instruksi pemulihan kata sandi telah dikirimkan.",
+    "work_email": "Email Kerja",
+    "email_ph": "nama@altvira.id",
+    "btn_send_link": "Kirim Tautan Atur Ulang",
+    "btn_sending": "Mengirim Tautan...",
+    "back_to_login": "Kembali ke Halaman Masuk",
+    "set_new_pwd_title": "Tetapkan Kata Sandi Baru",
+    "set_new_pwd_desc": "Gunakan kata sandi baru minimal 8 karakter.",
+    "new_password": "Kata Sandi Baru",
+    "confirm_new_password": "Ulangi Kata Sandi Baru",
+    "btn_save_pwd": "Simpan Kata Sandi Baru",
+    "btn_saving_pwd": "Menyimpan Kata Sandi..."
+  },
   "time": {
     "days": "Hari"
   },
   "nav": {
+    "breadcrumb": "Navigasi rekam jejak",
     "home": "Beranda",
     "dashboard": "Dashboard Keuangan",
     "dashboard_system": "Dashboard Sistem",
@@ -94,7 +115,6 @@
     "amount": "Nominal",
     "total": "Total",
     "loading": "Memuat data...",
-  "empty": "Tidak ada data yang tersedia",
     "empty": "Tidak ada data yang tersedia",
     "rows_per_page": "Jumlah baris per halaman",
     "pagination_info": "{{start}}–{{end}} dari {{total}}",

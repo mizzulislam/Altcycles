@@ -21,8 +21,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 
 export function ForgotPasswordPage() {
+  const { t } = useLanguage();
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
@@ -49,28 +51,26 @@ export function ForgotPasswordPage() {
       <ThemeToggle variant="floating" />
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Pemulihan Kata Sandi</CardTitle>
+          <CardTitle>{t("common:auth.reset_title")}</CardTitle>
           <CardDescription>
-            Masukkan alamat email akun internal Anda untuk menerima tautan atur
-            ulang kata sandi.
+            {t("common:auth.reset_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sent ? (
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Jika email <strong>{email}</strong> terdaftar sebagai akun aktif
-              Altvira, instruksi pemulihan kata sandi telah dikirimkan.
+              {t("common:auth.reset_sent")}
             </p>
           ) : (
             <form onSubmit={handleSubmit}>
               <FieldGroup>
                 <Field data-invalid={Boolean(error)}>
-                  <FieldLabel htmlFor="reset-email" required>Email Kerja</FieldLabel>
+                  <FieldLabel htmlFor="reset-email" required>{t("common:auth.work_email")}</FieldLabel>
                   <Input
                     id="reset-email"
                     type="email"
                     required
-                    placeholder="nama@altvira.id"
+                    placeholder={t("common:auth.email_ph")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     aria-invalid={Boolean(error)}
@@ -79,7 +79,7 @@ export function ForgotPasswordPage() {
                 </Field>
                 <Button type="submit" disabled={submitting}>
                   {submitting ? <Spinner data-icon="inline-start" /> : null}
-                  Kirim Tautan Pemulihan
+                  {submitting ? t("common:auth.btn_sending") : t("common:auth.btn_send_link")}
                 </Button>
               </FieldGroup>
             </form>
@@ -89,7 +89,7 @@ export function ForgotPasswordPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link to="/login">
               <ArrowLeftIcon data-icon="inline-start" />
-              Kembali ke Halaman Masuk
+              {t("common:auth.back_to_login")}
             </Link>
           </Button>
         </CardFooter>
@@ -99,6 +99,7 @@ export function ForgotPasswordPage() {
 }
 
 export function ResetPasswordPage() {
+  const { t } = useLanguage();
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
   const [password, setPassword] = React.useState("");
@@ -132,16 +133,16 @@ export function ResetPasswordPage() {
       <ThemeToggle variant="floating" />
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Tetapkan Kata Sandi Baru</CardTitle>
+          <CardTitle>{t("common:auth.set_new_pwd_title")}</CardTitle>
           <CardDescription>
-            Gunakan kata sandi baru minimal 8 karakter.
+            {t("common:auth.set_new_pwd_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field data-invalid={Boolean(error)}>
-                <FieldLabel htmlFor="new-pass" required>Kata Sandi Baru</FieldLabel>
+                <FieldLabel htmlFor="new-pass" required>{t("common:auth.new_password")}</FieldLabel>
                 <Input
                   id="new-pass"
                   type="password"
@@ -154,7 +155,7 @@ export function ResetPasswordPage() {
               </Field>
               <Field data-invalid={Boolean(error)}>
                 <FieldLabel htmlFor="confirm-pass" required>
-                  Ulangi Kata Sandi Baru
+                  {t("common:auth.confirm_new_password")}
                 </FieldLabel>
                 <Input
                   id="confirm-pass"
@@ -169,7 +170,7 @@ export function ResetPasswordPage() {
               </Field>
               <Button type="submit" disabled={submitting}>
                 {submitting ? <Spinner data-icon="inline-start" /> : null}
-                Simpan Kata Sandi Baru
+                {submitting ? t("common:auth.btn_saving_pwd") : t("common:auth.btn_save_pwd")}
               </Button>
             </FieldGroup>
           </form>

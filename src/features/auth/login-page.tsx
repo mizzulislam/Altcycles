@@ -550,7 +550,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     rel="noreferrer"
                     className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/25 px-4 text-xs sm:text-sm font-semibold transition-colors shrink-0"
                   >
-                    <span>Selengkapnya</span>
+                    <span>{t("common:action.view", "Selengkapnya")}</span>
                     <ExternalLinkIcon className="size-3.5 shrink-0" />
                   </a>
                 ) : null}
@@ -567,7 +567,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         (prev - 1 + mediaSlides.length) % mediaSlides.length,
                     )
                   }
-                  aria-label="Banner sebelumnya"
+                  aria-label={t("common:table.previous_page", "Banner sebelumnya")}
                   className="absolute left-4 top-1/2 -translate-y-1/2 z-20 size-9 rounded-xl bg-black/35 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   <ChevronLeftIcon className="size-4" />
@@ -579,7 +579,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       (prev) => (prev + 1) % mediaSlides.length,
                     )
                   }
-                  aria-label="Banner berikutnya"
+                  aria-label={t("common:table.next_page", "Banner berikutnya")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 z-20 size-9 rounded-xl bg-black/35 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   <ChevronRightIcon className="size-4" />
@@ -590,7 +590,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       key={slide.id}
                       type="button"
                       onClick={() => setActiveSlideIndex(idx)}
-                      aria-label={`Tampilkan slide ${idx + 1}`}
+                      aria-label={`${t("common:action.view", "Slide")} ${idx + 1}`}
                       className={`h-1.5 rounded-full transition-all cursor-pointer ${
                         idx === safeSlideIndex
                           ? "w-6 bg-white"
@@ -615,7 +615,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             <AltviraLogo
               size={38}
               variant={resolvedTheme === "dark" ? "light" : "dark"}
-              subtitle="FINANCIAL ERP"
+              subtitle={t("common:app.tagline", "ERP Keuangan")}
             />
           </div>
 

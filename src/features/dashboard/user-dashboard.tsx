@@ -49,8 +49,6 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
 import { listProjects } from "@/lib/data-service";
 import {
-  SHORT_MONTHS_EN,
-  SHORT_MONTHS_ID,
   formatCompactRupiah,
   formatDateI18n,
   formatRupiah,
@@ -169,9 +167,12 @@ export function UserDashboardPage() {
     .slice(-6)
     .map(([monthKey, values]) => {
       const [yStr = "", mStr = ""] = monthKey.split("-");
-      const mIdx = Number(mStr) - 1;
-      const monthsArr = language === "en" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;
-      const monthName = monthsArr[mIdx] ?? mStr;
+      const monthDate = new Date(Number(yStr), Number(mStr) - 1, 1);
+      const monthName = !Number.isNaN(monthDate.getTime())
+        ? new Intl.DateTimeFormat(language === "en" ? "en-US" : "id-ID", {
+            month: "short",
+          }).format(monthDate)
+        : mStr;
       return {
         key: monthKey,
         label: `${monthName} ${yStr.slice(2)}`,

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { Trans } from "react-i18next";
 import {
   CheckCircle2Icon,
   CheckIcon,
@@ -12,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { LanguageToggle } from "@/components/shared/language-toggle";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -49,7 +51,8 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DEMO_COMPANY } from "@/lib/demo-seed";
-import { formatDateID, formatDateTimeID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   publicBuyerLookupPo,
@@ -94,6 +97,7 @@ interface SubmittedPoDialogState {
 }
 
 export function BuyerPortalPage() {
+  const { t, language } = useLanguage();
   const turnstileSiteKey =
     (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim() ??
     "";
@@ -185,7 +189,7 @@ export function BuyerPortalPage() {
     } catch (err) {
       setLookupResult(null);
       toast.error(
-        err instanceof Error ? err.message : "Nomor PO tidak ditemukan.",
+        err instanceof Error ? err.message : t("projects:buyer_portal.toast_po_not_found"),
       );
     } finally {
       setSearching(false);
@@ -196,7 +200,7 @@ export function BuyerPortalPage() {
     e.preventDefault();
     if (turnstileSiteKey && !isDemoMode && !turnstileToken) {
       toast.error(
-        "Silakan selesaikan verifikasi keamanan Cloudflare Turnstile terlebih dahulu.",
+        t("projects:buyer_portal.toast_turnstile_required"),
       );
       return;
     }
@@ -236,11 +240,11 @@ export function BuyerPortalPage() {
       });
       setPoQuery(res.po_number);
       toast.success(
-        `PO Klien berhasil diajukan dengan kode ${res.po_number}.`,
+        t("projects:buyer_portal.toast_submit_success", { poNumber: res.po_number }),
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengirimkan PO Klien.",
+        err instanceof Error ? err.message : t("projects:buyer_portal.toast_submit_failed"),
       );
     } finally {
       setSubmittingPo(false);
@@ -259,7 +263,7 @@ export function BuyerPortalPage() {
         clientEmail: submittedPoModal.clientEmail,
         clientPhone: submittedPoModal.clientPhone,
         quotationReference: submittedPoModal.quotationReference,
-        statusLabel: "Menunggu Verifikasi Admin",
+        statusLabel: t("projects:buyer_portal.status_pending"),
         items: submittedPoModal.items,
         poValue: submittedPoModal.totalAmount,
       });
@@ -270,7 +274,7 @@ export function BuyerPortalPage() {
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengunduh dokumen PO.",
+        err instanceof Error ? err.message : t("projects:buyer_portal.toast_download_pdf_fail"),
       );
     }
   }
@@ -287,7 +291,7 @@ export function BuyerPortalPage() {
         clientEmail: submittedPoModal.clientEmail,
         clientPhone: submittedPoModal.clientPhone,
         quotationReference: submittedPoModal.quotationReference,
-        statusLabel: "Menunggu Verifikasi Admin",
+        statusLabel: t("projects:buyer_portal.status_pending"),
         items: submittedPoModal.items,
         poValue: submittedPoModal.totalAmount,
       });
@@ -298,7 +302,7 @@ export function BuyerPortalPage() {
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengunduh dokumen PO Word.",
+        err instanceof Error ? err.message : t("projects:buyer_portal.toast_download_word_fail"),
       );
     }
   }
@@ -306,28 +310,28 @@ export function BuyerPortalPage() {
   function makeBuyerDocSpec(doc: BuyerPortalLookupDto["documents"][number]) {
     if (!lookupResult) return null;
     return {
-      docTitle: `DOKUMEN PROYEK — ${doc.category.toUpperCase()}`,
-      docSubtitle: `Referensi PO: ${lookupResult.po_number}`,
+      docTitle: t("projects:buyer_portal.doc_pdf_title", { category: doc.category.toUpperCase() }),
+      docSubtitle: t("projects:buyer_portal.doc_pdf_po_ref", { poNumber: lookupResult.po_number }),
       docNumber: doc.doc_number,
       docDate: doc.doc_date,
       company: DEMO_COMPANY,
-      recipientTitle: "Diterbitkan Untuk Klien:",
+      recipientTitle: t("projects:buyer_portal.doc_pdf_recipient_title"),
       recipientLines: [
         lookupResult.client_name,
         lookupResult.client_company ?? "-",
       ],
       metaRows: [
         {
-          label: "Proyek",
+          label: t("projects:buyer_portal.doc_pdf_label_project"),
           value: lookupResult.project
             ? `${lookupResult.project.code} - ${lookupResult.project.name}`
-            : "Menunggu Tautan Proyek",
+            : t("projects:buyer_portal.project_waiting_link"),
         },
-        { label: "Kategori Dokumen", value: doc.category },
-        { label: "Status Dokumen", value: doc.status },
+        { label: t("projects:buyer_portal.doc_pdf_label_category"), value: doc.category },
+        { label: t("projects:buyer_portal.doc_pdf_label_status"), value: doc.status },
       ],
       paragraphsBefore: [
-        "Salinan dokumen resmi ini diunduh melalui Portal Pembeli Altcycles menggunakan verifikasi Nomor PO unik klien tanpa menampilkan data biaya internal perusahaan.",
+        t("projects:buyer_portal.doc_pdf_notice"),
       ],
       rightSignatureName: `${DEMO_COMPANY.signer_name} - ${DEMO_COMPANY.signer_title}`,
     };
@@ -364,28 +368,34 @@ export function BuyerPortalPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top Header Bar sejajar sistem internal: Breadcrumb di kiri, Toggle Tema di ujung kanan atas */}
+      {/* Top Header Bar sejajar sistem internal: Breadcrumb di kiri, Toggle Tema & Bahasa di ujung kanan atas */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/80 bg-card/90 px-4 sm:px-6 backdrop-blur-md">
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t("common:nav.breadcrumb")}
           className="flex items-center gap-2 text-xs text-muted-foreground min-w-0"
         >
           <Link
             to="/login"
             className="hover:text-foreground transition-colors font-medium whitespace-nowrap"
           >
-            Beranda
+            {t("projects:buyer_portal.home")}
           </Link>
           <span className="text-muted-foreground/60 select-none">/</span>
           <span className="text-foreground font-semibold truncate">
-            Portal Pembeli
+            {t("projects:buyer_portal.portal_name")}
           </span>
         </nav>
 
-        <ThemeToggle
-          size="sm"
-          className="size-9 rounded-2xl border border-border shadow-2xs shrink-0"
-        />
+        <div className="flex items-center gap-2 shrink-0">
+          <LanguageToggle
+            size="sm"
+            className="size-9 rounded-2xl border border-border shadow-2xs shrink-0"
+          />
+          <ThemeToggle
+            size="sm"
+            className="size-9 rounded-2xl border border-border shadow-2xs shrink-0"
+          />
+        </div>
       </header>
 
       <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
@@ -397,10 +407,10 @@ export function BuyerPortalPage() {
             </div>
             <div className="flex flex-col justify-between min-w-0 sm:min-h-14 py-0.5">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight sm:leading-none text-foreground">
-                Portal Pelanggan Altvira Technology
+                {t("projects:buyer_portal.page_title")}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-0 leading-relaxed sm:leading-snug">
-                Lacak progres proyek, unduh dokumen tagihan resmi, dan ajukan purchase order secara mandiri.
+                {t("projects:buyer_portal.page_subtitle")}
               </p>
             </div>
           </div>
@@ -409,11 +419,11 @@ export function BuyerPortalPage() {
             <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
               <TabsTrigger value="lookup" className="w-full">
                 <SearchIcon className="size-4 shrink-0" />
-                <span>Lacak Progres &amp; Unduh Dokumen PO</span>
+                <span>{t("projects:buyer_portal.tab_lookup")}</span>
               </TabsTrigger>
               <TabsTrigger value="submit" className="w-full">
                 <PlusIcon className="size-4 shrink-0" />
-                <span>Ajukan Purchase Order (PO) Baru</span>
+                <span>{t("projects:buyer_portal.tab_submit")}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -422,12 +432,12 @@ export function BuyerPortalPage() {
             <Card className="overflow-hidden">
               <CardHeader className="px-6 py-4 border-b border-border/70">
                 <CardTitle className="text-base sm:text-lg font-bold">
-                  Masukkan Nomor Akses PO Anda
+                  {t("projects:buyer_portal.card_lookup_title")}
                 </CardTitle>
                 <CardDescription>
-                  Demi kerahasiaan antar klien, pencocokan dilakukan di sisi server dan hanya menampilkan satu proyek yang cocok beserta pembatasan percobaan per IP.
+                  {t("projects:buyer_portal.card_lookup_desc")}
                   {isDemoMode
-                    ? " (Contoh pratinjau Mode Lokal: PO-202611-SN8K4P)"
+                    ? t("projects:buyer_portal.demo_hint")
                     : ""}
                 </CardDescription>
               </CardHeader>
@@ -440,7 +450,7 @@ export function BuyerPortalPage() {
                     required
                     value={poQuery}
                     onChange={(e) => setPoQuery(e.target.value.toUpperCase())}
-                    placeholder="Contoh: PO-202611-SN8K4P"
+                    placeholder={t("projects:buyer_portal.lookup_ph")}
                     className="flex-1 font-mono placeholder:font-sans"
                   />
                   <Button
@@ -453,7 +463,7 @@ export function BuyerPortalPage() {
                     ) : (
                       <SearchIcon className="size-4" />
                     )}
-                    <span>Cek Status Proyek</span>
+                    <span>{t("projects:buyer_portal.btn_check_status")}</span>
                   </Button>
                 </form>
               </CardContent>
@@ -465,7 +475,7 @@ export function BuyerPortalPage() {
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
                     <p className="text-[11px] font-medium text-muted-foreground">
-                      Nomor Purchase Order
+                      {t("projects:buyer_portal.po_number_label")}
                     </p>
                     <CardTitle className="font-mono text-lg sm:text-xl font-bold">
                       {lookupResult.po_number}
@@ -476,7 +486,9 @@ export function BuyerPortalPage() {
                       {/* Kolom Kiri */}
                       <div className="space-y-5 min-w-0 flex-1">
                         <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground">Nama</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("projects:buyer_portal.client_name_label")}
+                          </p>
                           <p className="text-sm font-semibold text-foreground mt-1 break-words">
                             {lookupResult.client_name}
                           </p>
@@ -484,7 +496,7 @@ export function BuyerPortalPage() {
 
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Perusahaan
+                            {t("projects:buyer_portal.client_company_label")}
                           </p>
                           <p className="text-sm font-semibold text-foreground mt-1 break-words">
                             {lookupResult.client_company || "-"}
@@ -493,10 +505,10 @@ export function BuyerPortalPage() {
 
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Tanggal Pengajuan
+                            {t("projects:buyer_portal.submitted_date_label")}
                           </p>
                           <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
-                            {formatDateTimeID(lookupResult.submitted_at)}
+                            {formatDateTimeI18n(lookupResult.submitted_at, language)}
                           </p>
                         </div>
                       </div>
@@ -505,7 +517,7 @@ export function BuyerPortalPage() {
                       <div className="space-y-5 shrink-0 sm:w-64 md:w-72 min-w-0">
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Status Verifikasi
+                            {t("projects:buyer_portal.verification_status_label")}
                           </p>
                           <p
                             className={cn(
@@ -518,16 +530,16 @@ export function BuyerPortalPage() {
                             )}
                           >
                             {lookupResult.verification_status === "verified"
-                              ? "PO Terverifikasi Admin"
+                              ? t("projects:buyer_portal.status_verified")
                               : lookupResult.verification_status === "rejected"
-                                ? "PO Ditolak"
-                                : "Menunggu Verifikasi Admin"}
+                                ? t("projects:buyer_portal.status_rejected")
+                                : t("projects:buyer_portal.status_pending")}
                           </p>
                         </div>
 
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Nilai Purchase Order
+                            {t("projects:buyer_portal.po_value_label")}
                           </p>
                           <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
                             {formatRupiah(lookupResult.po_value)}
@@ -536,7 +548,7 @@ export function BuyerPortalPage() {
 
                         <div className="min-w-0">
                           <p className="text-xs text-muted-foreground">
-                            Capaian Penyelesaian
+                            {t("projects:buyer_portal.progress_label")}
                           </p>
                           <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
                             {lookupResult.project?.cumulative_progress_pct ?? 0}%
@@ -548,12 +560,12 @@ export function BuyerPortalPage() {
                     {/* Proyek Terkait: Lebar penuh hingga ujung kanan div */}
                     <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">
-                        Proyek Terkait
+                        {t("projects:buyer_portal.project_label")}
                       </p>
                       <p className="text-sm font-semibold text-foreground mt-1 leading-relaxed break-words">
                         {lookupResult.project
                           ? `${lookupResult.project.code}: ${lookupResult.project.name}`
-                          : "Sedang Disiapkan Admin"}
+                          : t("projects:buyer_portal.project_pending")}
                       </p>
                     </div>
                   </CardContent>
@@ -563,10 +575,10 @@ export function BuyerPortalPage() {
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
                     <CardTitle className="text-base sm:text-lg font-bold">
-                      Jadwal &amp; Status Termin Proyek
+                      {t("projects:buyer_portal.milestones_title")}
                     </CardTitle>
                     <CardDescription>
-                      Informasi baca-saja tahapan penyelesaian dan penagihan kontrak Anda.
+                      {t("projects:buyer_portal.milestones_desc")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -574,19 +586,19 @@ export function BuyerPortalPage() {
                       <TableHeader>
                         <TableRow className="bg-muted/20 hover:bg-muted/20">
                           <TableHead className="pl-6 pr-3 text-center text-xs sm:text-sm font-semibold w-16 whitespace-nowrap">
-                            No
+                            {t("projects:buyer_portal.col_no")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
-                            Nama Termin
+                            {t("projects:buyer_portal.col_milestone_name")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-24 whitespace-nowrap">
-                            Porsi
+                            {t("projects:buyer_portal.col_portion")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-44 whitespace-nowrap">
-                            Nominal
+                            {t("projects:buyer_portal.col_amount")}
                           </TableHead>
                           <TableHead className="pl-2 pr-6 text-center text-xs sm:text-sm font-semibold w-36 whitespace-nowrap">
-                            Status
+                            {t("projects:buyer_portal.col_status")}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -596,8 +608,8 @@ export function BuyerPortalPage() {
                             <TableCell colSpan={5} className="p-0">
                               <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                                 <EmptyState
-                                  title="Jadwal termin belum tersedia"
-                                  description="Jadwal termin akan tampil setelah PO diverifikasi dan proyek diaktifkan."
+                                  title={t("projects:buyer_portal.empty_milestones_title")}
+                                  description={t("projects:buyer_portal.empty_milestones_desc")}
                                 />
                               </div>
                             </TableCell>
@@ -628,7 +640,7 @@ export function BuyerPortalPage() {
                                     tone={
                                       m.status === "paid" ? "success" : "info"
                                     }
-                                    label={m.status}
+                                    label={t(`projects:status.${m.status}`) || m.status}
                                   />
                                 </div>
                               </TableCell>
@@ -644,10 +656,10 @@ export function BuyerPortalPage() {
                 <Card className="overflow-hidden">
                   <CardHeader className="px-6 py-4 border-b border-border/70">
                     <CardTitle className="text-base sm:text-lg font-bold">
-                      Dokumen Resmi Proyek
+                      {t("projects:buyer_portal.docs_title")}
                     </CardTitle>
                     <CardDescription>
-                      Quotation, SoW, SPK, BAKP, UAT, BAST, Invoice, dan Kuitansi yang terkait dengan Nomor PO ini.
+                      {t("projects:buyer_portal.docs_desc")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -655,19 +667,19 @@ export function BuyerPortalPage() {
                       <TableHeader>
                         <TableRow className="bg-muted/20 hover:bg-muted/20">
                           <TableHead className="pl-6 pr-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
-                            Kategori
+                            {t("projects:buyer_portal.col_category")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
-                            Nomor Dokumen
+                            {t("projects:buyer_portal.col_doc_number")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
-                            Tanggal
+                            {t("projects:buyer_portal.col_date")}
                           </TableHead>
                           <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold whitespace-nowrap">
-                            Status
+                            {t("projects:buyer_portal.col_doc_status")}
                           </TableHead>
                           <TableHead className="pl-2 pr-6 text-center text-xs sm:text-sm font-semibold w-28 whitespace-nowrap">
-                            Aksi
+                            {t("projects:buyer_portal.col_actions")}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -677,8 +689,8 @@ export function BuyerPortalPage() {
                             <TableCell colSpan={5} className="p-0">
                               <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                                 <EmptyState
-                                  title="Belum ada dokumen terbit"
-                                  description="Dokumen resmi akan muncul secara otomatis seiring tahapan proyek berjalan."
+                                  title={t("projects:buyer_portal.empty_docs_title")}
+                                  description={t("projects:buyer_portal.empty_docs_desc")}
                                 />
                               </div>
                             </TableCell>
@@ -698,15 +710,15 @@ export function BuyerPortalPage() {
                                 {doc.doc_number}
                               </TableCell>
                               <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 tabular-nums whitespace-nowrap">
-                                {formatDateID(doc.doc_date)}
+                                {formatDateI18n(doc.doc_date, language)}
                               </TableCell>
                               <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                                {doc.status}
+                                {t(`projects:status.${doc.status}`) || doc.status}
                               </TableCell>
                               <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                                 <div className="-my-1.5 inline-flex justify-center">
                                   <DocumentDownloadMenu
-                                    title="Unduh Dokumen (PDF / Word)"
+                                    title={t("projects:buyer_portal.download_tooltip")}
                                     onDownloadPdf={() =>
                                       void handleDownloadBuyerDoc(doc)
                                     }
@@ -732,14 +744,16 @@ export function BuyerPortalPage() {
             <Card className="overflow-hidden">
               <CardHeader className="px-6 py-4 border-b border-border/70">
                 <CardTitle className="text-base sm:text-lg font-bold">
-                  Formulir Pengajuan Purchase Order (PO) Klien
+                  {t("projects:buyer_portal.form_title")}
                 </CardTitle>
                 <CardDescription>
-                  Setelah dikirim, sistem menerbitkan Nomor PO dengan kode unik{" "}
-                  <span className="font-semibold text-foreground">
-                    PO-YYYYMM-XXXXXX
-                  </span>
-                  .
+                  <Trans i18nKey="projects:buyer_portal.form_desc">
+                    Setelah dikirim, sistem menerbitkan Nomor PO dengan kode unik{" "}
+                    <span className="font-semibold text-foreground">
+                      PO-YYYYMM-XXXXXX
+                    </span>
+                    .
+                  </Trans>
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 flex flex-col gap-6">
@@ -752,14 +766,14 @@ export function BuyerPortalPage() {
                           required
                           className="text-xs sm:text-sm font-medium"
                         >
-                          Nama Lengkap Penanggung Jawab
+                          {t("projects:buyer_portal.field_pic_name")}
                         </FieldLabel>
                         <Input
                           id="bp-name"
                           required
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
-                          placeholder="Contoh: Hendra Wijaya"
+                          placeholder={t("projects:buyer_portal.field_pic_name_ph")}
                           className="text-xs sm:text-sm"
                         />
                       </Field>
@@ -769,14 +783,14 @@ export function BuyerPortalPage() {
                           required
                           className="text-xs sm:text-sm font-medium"
                         >
-                          Nama Perusahaan / Instansi
+                          {t("projects:buyer_portal.field_company")}
                         </FieldLabel>
                         <Input
                           id="bp-comp"
                           required
                           value={clientCompany}
                           onChange={(e) => setClientCompany(e.target.value)}
-                          placeholder="Contoh: PT Sinar Niaga Distribusi"
+                          placeholder={t("projects:buyer_portal.field_company_ph")}
                           className="text-xs sm:text-sm"
                         />
                       </Field>
@@ -789,7 +803,7 @@ export function BuyerPortalPage() {
                           required
                           className="text-xs sm:text-sm font-medium"
                         >
-                          Email Resmi
+                          {t("projects:buyer_portal.field_email")}
                         </FieldLabel>
                         <Input
                           id="bp-mail"
@@ -797,7 +811,7 @@ export function BuyerPortalPage() {
                           required
                           value={clientEmail}
                           onChange={(e) => setClientEmail(e.target.value)}
-                          placeholder="Contoh: finance@perusahaan.co.id"
+                          placeholder={t("projects:buyer_portal.field_email_ph")}
                           className="text-xs sm:text-sm"
                         />
                       </Field>
@@ -806,13 +820,13 @@ export function BuyerPortalPage() {
                           htmlFor="bp-phone"
                           className="text-xs sm:text-sm font-medium"
                         >
-                          Nomor Telepon
+                          {t("projects:buyer_portal.field_phone")}
                         </FieldLabel>
                         <Input
                           id="bp-phone"
                           value={clientPhone}
                           onChange={(e) => setClientPhone(e.target.value)}
-                          placeholder="Contoh: 0812-3456-7890"
+                          placeholder={t("projects:buyer_portal.field_phone_ph")}
                           className="text-xs sm:text-sm"
                         />
                       </Field>
@@ -821,7 +835,7 @@ export function BuyerPortalPage() {
                           htmlFor="bp-qt"
                           className="text-xs sm:text-sm font-medium"
                         >
-                          Nomor Referensi Quotation Altvira
+                          {t("projects:buyer_portal.field_qt_ref")}
                         </FieldLabel>
                         <Input
                           id="bp-qt"
@@ -829,7 +843,7 @@ export function BuyerPortalPage() {
                           onChange={(e) =>
                             setQuotationReference(e.target.value)
                           }
-                          placeholder="Contoh: QT/ALT/2026/11/001"
+                          placeholder={t("projects:buyer_portal.field_qt_ref_ph")}
                           className="text-xs sm:text-sm"
                         />
                       </Field>
@@ -843,10 +857,10 @@ export function BuyerPortalPage() {
                             required
                             className="text-xs sm:text-sm font-semibold text-foreground"
                           >
-                            Rincian Pekerjaan / Layanan yang Dipesan
+                            {t("projects:buyer_portal.items_box_title")}
                           </FieldLabel>
                           <p className="text-xs text-muted-foreground leading-relaxed">
-                            Tambahkan daftar paket pekerjaan beserta kuantitas dan estimasi harga satuan.
+                            {t("projects:buyer_portal.items_box_desc")}
                           </p>
                         </div>
                         <Button
@@ -862,7 +876,7 @@ export function BuyerPortalPage() {
                           }
                         >
                           <PlusIcon className="size-3.5" />
-                          <span>Tambah Item</span>
+                          <span>{t("projects:buyer_portal.btn_add_item")}</span>
                         </Button>
                       </div>
 
@@ -872,31 +886,31 @@ export function BuyerPortalPage() {
                           <TableHeader>
                             <TableRow className="bg-muted/25 hover:bg-muted/25">
                               <TableHead className="pl-5 pr-2 text-center text-xs sm:text-sm font-semibold w-12 whitespace-nowrap">
-                                No
+                                {t("projects:buyer_portal.col_no")}
                               </TableHead>
                               <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold">
-                                Deskripsi Paket / Pekerjaan
+                                {t("projects:buyer_portal.col_item_desc")}
                                 <span className="text-destructive ml-1" aria-hidden="true">
                                   *
                                 </span>
                               </TableHead>
                               <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold w-24 whitespace-nowrap">
-                                Qty
+                                {t("projects:buyer_portal.col_qty")}
                                 <span className="text-destructive ml-1" aria-hidden="true">
                                   *
                                 </span>
                               </TableHead>
                               <TableHead className="px-2.5 text-center text-xs sm:text-sm font-semibold w-48 whitespace-nowrap">
-                                Harga Satuan
+                                {t("projects:buyer_portal.col_unit_price")}
                                 <span className="text-destructive ml-1" aria-hidden="true">
                                   *
                                 </span>
                               </TableHead>
                               <TableHead className="px-3 text-center text-xs sm:text-sm font-semibold w-44 whitespace-nowrap">
-                                Subtotal
+                                {t("projects:buyer_portal.col_subtotal")}
                               </TableHead>
                               <TableHead className="pl-2 pr-5 text-center text-xs sm:text-sm font-semibold w-16 whitespace-nowrap">
-                                Aksi
+                                {t("projects:buyer_portal.col_actions")}
                               </TableHead>
                             </TableRow>
                           </TableHeader>
@@ -911,7 +925,7 @@ export function BuyerPortalPage() {
                                   <TableCell className="align-middle px-2.5 py-3">
                                     <Input
                                       required
-                                      placeholder="Deskripsi paket/pekerjaan"
+                                      placeholder={t("projects:buyer_portal.col_item_desc_ph")}
                                       className="h-9 text-xs sm:text-sm"
                                       value={it.item}
                                       onChange={(e) =>
@@ -974,8 +988,8 @@ export function BuyerPortalPage() {
                                       disabled={items.length === 1}
                                       title={
                                         items.length === 1
-                                          ? "Minimal harus terdapat 1 item"
-                                          : "Hapus Baris Item"
+                                          ? t("projects:buyer_portal.min_item_warning")
+                                          : t("projects:buyer_portal.delete_item_row")
                                       }
                                       className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-35"
                                       onClick={() =>
@@ -986,7 +1000,7 @@ export function BuyerPortalPage() {
                                     >
                                       <Trash2Icon className="size-4" />
                                       <span className="sr-only">
-                                        Hapus Baris
+                                        {t("projects:buyer_portal.delete_row_sr")}
                                       </span>
                                     </Button>
                                   </TableCell>
@@ -1005,14 +1019,14 @@ export function BuyerPortalPage() {
                             <div key={idx} className="p-4 space-y-3">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                                  Item #{idx + 1}
+                                  {t("projects:buyer_portal.item_prefix", { index: idx + 1 })}
                                 </span>
                                 {items.length > 1 ? (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    title="Hapus Baris Item"
+                                    title={t("projects:buyer_portal.delete_item_row")}
                                     className="size-8 rounded-lg text-destructive hover:bg-destructive/10"
                                     onClick={() =>
                                       setItems((prev) =>
@@ -1021,18 +1035,18 @@ export function BuyerPortalPage() {
                                     }
                                   >
                                     <Trash2Icon className="size-4" />
-                                    <span className="sr-only">Hapus Baris</span>
+                                    <span className="sr-only">{t("projects:buyer_portal.delete_row_sr")}</span>
                                   </Button>
                                 ) : null}
                               </div>
                               <div className="space-y-1.5">
                                 <span className="block text-xs font-medium text-muted-foreground">
-                                  Deskripsi Paket / Pekerjaan{" "}
+                                  {t("projects:buyer_portal.col_item_desc")}{" "}
                                   <span className="text-destructive">*</span>
                                 </span>
                                 <Input
                                   required
-                                  placeholder="Deskripsi paket/pekerjaan"
+                                  placeholder={t("projects:buyer_portal.col_item_desc_ph")}
                                   className="text-xs sm:text-sm"
                                   value={it.item}
                                   onChange={(e) =>
@@ -1049,7 +1063,7 @@ export function BuyerPortalPage() {
                               <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-1 space-y-1.5">
                                   <span className="block text-xs font-medium text-muted-foreground">
-                                    Qty{" "}
+                                    {t("projects:buyer_portal.col_qty")}{" "}
                                     <span className="text-destructive">*</span>
                                   </span>
                                   <NumberInput
@@ -1069,7 +1083,7 @@ export function BuyerPortalPage() {
                                 </div>
                                 <div className="col-span-2 space-y-1.5">
                                   <span className="block text-xs font-medium text-muted-foreground">
-                                    Harga Satuan{" "}
+                                    {t("projects:buyer_portal.col_unit_price")}{" "}
                                     <span className="text-destructive">*</span>
                                   </span>
                                   <div className="relative flex items-center">
@@ -1096,7 +1110,7 @@ export function BuyerPortalPage() {
                               </div>
                               <div className="flex items-center justify-between pt-2 border-t border-border/50">
                                 <span className="text-xs font-medium text-muted-foreground">
-                                  Subtotal
+                                  {t("projects:buyer_portal.col_subtotal")}
                                 </span>
                                 <span className="text-xs sm:text-sm font-semibold text-foreground tabular-nums">
                                   {formatRupiah(rowSubtotal)}
@@ -1110,7 +1124,7 @@ export function BuyerPortalPage() {
                       {/* Ringkasan Total Estimasi PO */}
                       <div className="px-5 py-3.5 border-t border-border/70 bg-muted/15 flex items-center justify-between gap-4">
                         <span className="text-xs sm:text-sm font-semibold text-muted-foreground">
-                          Total Estimasi Nilai Purchase Order
+                          {t("projects:buyer_portal.total_po_estimate")}
                         </span>
                         <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
                           {formatRupiah(totalDraftPo)}
@@ -1121,11 +1135,11 @@ export function BuyerPortalPage() {
                     {turnstileSiteKey && !isDemoMode ? (
                       <Field>
                         <FieldLabel required className="text-xs sm:text-sm font-medium">
-                          Verifikasi Keamanan Anti-Bot
+                          {t("projects:buyer_portal.turnstile_label")}
                         </FieldLabel>
                         <div ref={turnstileContainerRef} />
                         <FieldDescription>
-                          Dilindungi oleh verifikasi Cloudflare Turnstile.
+                          {t("projects:buyer_portal.turnstile_desc")}
                         </FieldDescription>
                       </Field>
                     ) : null}
@@ -1135,7 +1149,7 @@ export function BuyerPortalPage() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 leading-relaxed">
                         <ShieldCheckIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
                         <span>
-                          Endpoint publik dilindungi verifikasi Cloudflare Turnstile &amp; pembatasan laju pada server produksi.
+                          {t("projects:buyer_portal.security_footer_notice")}
                         </span>
                       </div>
                       <Button
@@ -1148,7 +1162,7 @@ export function BuyerPortalPage() {
                         ) : (
                           <CheckCircle2Icon className="size-4" />
                         )}
-                        <span>Kirim Purchase Order (PO) Klien</span>
+                        <span>{t("projects:buyer_portal.btn_submit_po")}</span>
                       </Button>
                     </div>
                   </FieldGroup>
@@ -1169,7 +1183,7 @@ export function BuyerPortalPage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Purchase Order (PO) Berhasil Dikirim</DialogTitle>
+            <DialogTitle>{t("projects:buyer_portal.modal_success_title")}</DialogTitle>
           </DialogHeader>
 
           {submittedPoModal ? (
@@ -1178,7 +1192,7 @@ export function BuyerPortalPage() {
               <div className="rounded-2xl border border-primary/25 bg-primary/10 p-4 flex items-center justify-between gap-4">
                 <div className="flex flex-col justify-between min-h-11 py-0.5 min-w-0">
                   <p className="text-xs font-medium text-muted-foreground leading-none">
-                    Kode / Nomor Purchase Order
+                    {t("projects:buyer_portal.modal_po_number_label")}
                   </p>
                   <p className="text-lg sm:text-xl font-bold font-mono tracking-wide leading-none text-primary dark:text-sky-400 select-all break-all mt-1.5">
                     {submittedPoModal.poNumber}
@@ -1188,14 +1202,14 @@ export function BuyerPortalPage() {
                   type="button"
                   size="icon"
                   variant="outline"
-                  title={copiedModalPo ? "Kode PO Tersalin" : "Salin Kode PO"}
+                  title={copiedModalPo ? t("projects:buyer_portal.modal_copied_po") : t("projects:buyer_portal.modal_copy_po")}
                   className="size-11 rounded-xl border-primary/25 bg-background/80 text-primary dark:text-sky-400 hover:bg-primary/15 shrink-0"
                   onClick={() => {
                     void navigator.clipboard?.writeText(
                       submittedPoModal.poNumber,
                     );
                     setCopiedModalPo(true);
-                    toast.success("Kode PO disalin ke papan klip.");
+                    toast.success(t("projects:buyer_portal.toast_copied"));
                   }}
                 >
                   {copiedModalPo ? (
@@ -1203,7 +1217,7 @@ export function BuyerPortalPage() {
                   ) : (
                     <CopyIcon className="size-5" />
                   )}
-                  <span className="sr-only">Salin Kode PO</span>
+                  <span className="sr-only">{t("projects:buyer_portal.modal_copy_po")}</span>
                 </Button>
               </div>
 
@@ -1211,12 +1225,12 @@ export function BuyerPortalPage() {
               <div className="rounded-2xl border border-border/80 bg-muted/15 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-border/70 bg-muted/20 flex items-center justify-between gap-3 text-xs">
                   <span className="font-semibold text-foreground shrink-0">
-                    Rincian Pesanan
+                    {t("projects:buyer_portal.modal_order_details")}
                   </span>
                   <span className="text-muted-foreground truncate text-right">
                     {submittedPoModal.clientName}
                     {submittedPoModal.clientCompany
-                      ? ` dari ${submittedPoModal.clientCompany}`
+                      ? t("projects:buyer_portal.modal_from", { company: submittedPoModal.clientCompany })
                       : ""}
                   </span>
                 </div>
@@ -1246,7 +1260,7 @@ export function BuyerPortalPage() {
                 </div>
                 <div className="px-4 py-2.5 border-t border-border/70 bg-muted/20 flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">
-                    Total Estimasi Nilai PO
+                    {t("projects:buyer_portal.modal_total_label")}
                   </span>
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {formatRupiah(submittedPoModal.totalAmount)}
@@ -1256,10 +1270,7 @@ export function BuyerPortalPage() {
 
               {/* Instruksi Penyimpanan Kode PO & Reset Formulir */}
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[11px] text-foreground/90 leading-relaxed">
-                Harap simpan dan salin kode/nomor PO di atas dengan baik untuk
-                memantau progres pekerjaan maupun mengunduh dokumen resmi.
-                Setelah dialog ini ditutup, seluruh kolom formulir pengajuan
-                akan direset menjadi kosong kembali.
+                {t("projects:buyer_portal.modal_save_instruction")}
               </div>
             </div>
           ) : null}
@@ -1267,14 +1278,14 @@ export function BuyerPortalPage() {
           <DialogFooter className="pt-2">
             <DocumentDownloadMenu
               variant="button"
-              label="Unduh / Ekspor"
-              title="Unduh Salinan Dokumen PO"
+              label={t("projects:buyer_portal.modal_btn_export")}
+              title={t("projects:buyer_portal.modal_btn_export_title")}
               onDownloadPdf={() => void handleDownloadSubmittedPoPdf()}
               onDownloadWord={() => void handleDownloadSubmittedPoWord()}
             />
             <Button type="button" onClick={handleCloseSuccessModal}>
               <CheckCircle2Icon className="size-4" />
-              <span>Tutup &amp; Reset Formulir</span>
+              <span>{t("projects:buyer_portal.modal_btn_close")}</span>
             </Button>
           </DialogFooter>
         </DialogContent>
