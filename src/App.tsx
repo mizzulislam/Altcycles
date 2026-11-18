@@ -70,6 +70,10 @@ const LoginMediaPage = lazyPage(
   () => import("@/features/system-config/login-media-page"),
   "LoginMediaPage",
 );
+const ShortcutsManagementPage = lazyPage(
+  () => import("@/features/system-config/shortcuts-management-page"),
+  "ShortcutsManagementPage",
+);
 const AdminDashboardPage = lazyPage(
   () => import("@/features/master-data/admin-dashboard"),
   "AdminDashboardPage",
@@ -193,6 +197,14 @@ export function App() {
                   <Route
                     path="/super-admin/media-login"
                     element={<LoginMediaPage />}
+                  />
+                  <Route
+                    path="/super-admin/pintasan-keyboard"
+                    element={<ShortcutsManagementPage />}
+                  />
+                  <Route
+                    path="/super-admin/pintasan"
+                    element={<Navigate to="/super-admin/pintasan-keyboard" replace />}
                   />
                 </Route>
 

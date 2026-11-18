@@ -354,7 +354,7 @@ export function ProjectsPage() {
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <ExportDownloadMenu
-            label={t("action.download", "Unduh / Ekspor")}
+            label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}

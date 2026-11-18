@@ -7,6 +7,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   MenuIcon,
+  SearchIcon,
   XIcon,
 } from "lucide-react";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
@@ -24,6 +25,13 @@ import {
 } from "@/lib/operations-service";
 import { cn } from "@/lib/utils";
 import type { NotificationRow, UserRole } from "@/types/database.types";
+import {
+  NAVIGATION_SHORTCUTS_REGISTRY,
+} from "@/lib/navigation-shortcuts-registry";
+import { recordPageVisit } from "@/lib/navigation-history";
+import { CommandPaletteDialog } from "@/components/navigation/command-palette-dialog";
+import { ShortcutsSheet } from "@/components/navigation/shortcuts-sheet";
+import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import {
   NAV_STRUCTURE_BY_ROLE,
   SIDEBAR_STORAGE_KEY,
@@ -49,9 +57,10 @@ export function useSidebarCollapsed(): boolean {
 
 export function PortalShell() {
   const { profile, activeRole, availableRoles, switchRole, signOut } = useAuth();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const currentRole: UserRole = activeRole || profile?.role || "user";
 
   // State Sidebar Buka / Tutup
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(() => {
@@ -65,6 +74,23 @@ export function PortalShell() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<NotificationRow[]>([]);
+
+  // State Command Palette Modal (Pencarian Cepat)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
+
+  // State Panel Pintasan Keyboard (Drawer Samping Kanan)
+  const [isShortcutsPanelOpen, setIsShortcutsPanelOpen] = React.useState(false);
+
+  // Hook Pintasan Keyboard Global (Pemicu '/', '?', urutan "G lalu X", dan kombinasi modifier)
+  useGlobalShortcuts({
+    currentRole,
+    onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+    onOpenShortcutsPanel: () => {
+      setIsCommandPaletteOpen(false);
+      setIsShortcutsPanelOpen(true);
+    },
+    isModalOpen: isCommandPaletteOpen || isShortcutsPanelOpen || notifOpen,
+  });
 
   // State Dropdown Mode Aktif (Role Switcher)
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = React.useState(false);
@@ -197,12 +223,19 @@ export function PortalShell() {
     return null;
   }
 
-  const currentRole = activeRole || profile.role;
-  const navStructure = React.useMemo(
-    () => getNavStructureForRole(currentRole, t),
-    [currentRole, language, t],
-  );
+  const navStructure = getNavStructureForRole(currentRole, t);
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  // Otomatis catat riwayat kunjungan saat rute berubah
+  React.useEffect(() => {
+    const fullPath = location.pathname + location.search;
+    const match = NAVIGATION_SHORTCUTS_REGISTRY.find(
+      (item) => item.route === fullPath || item.route === location.pathname,
+    );
+    if (match) {
+      recordPageVisit(match.id, currentRole);
+    }
+  }, [location.pathname, location.search, currentRole]);
 
   async function handleLogout() {
     setIsUserMenuOpen(false);
@@ -260,6 +293,16 @@ export function PortalShell() {
           <span className="font-bold text-sm tracking-tight">Altcycles</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-9 rounded-xl relative"
+            aria-label={t("common:search.placeholder", "Cari halaman...")}
+            onClick={() => setIsCommandPaletteOpen(true)}
+          >
+            <SearchIcon className="size-4" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -327,7 +370,7 @@ export function PortalShell() {
           {/* Breadcrumb Navigasi Halaman */}
           <nav
             aria-label={t("common:nav.breadcrumb", "Breadcrumb")}
-            className="flex items-center gap-2 text-xs text-muted-foreground min-w-0"
+            className="flex items-center gap-2 text-xs text-muted-foreground min-w-0 flex-1 truncate mr-3"
           >
             {getHeaderBreadcrumbs(location.pathname, t).map((crumb, idx, arr) => {
               const isLast = idx === arr.length - 1;
@@ -353,21 +396,43 @@ export function PortalShell() {
             })}
           </nav>
 
-          {/* Sisi Kanan Header: Mode Aktif + Notifikasi + Tema */}
-          <div className="flex items-center space-x-3">
+          {/* Sisi Kanan Header: Pencarian Halaman + Mode Aktif + Notifikasi + Tema */}
+          <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
+            {/* Tombol Pemicu Command Palette (Field Search Header) */}
+            <div className="flex items-center">
+              <ActionTooltip content={t("common:search.placeholder", "Cari halaman...")} side="bottom">
+                <button
+                  type="button"
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  className="group flex items-center justify-center sm:justify-between h-9 rounded-2xl border border-border bg-card hover:bg-muted/60 px-2.5 sm:px-3 transition-all duration-200 cursor-pointer shadow-2xs text-muted-foreground hover:text-foreground text-xs w-9 sm:w-52 lg:w-64 shrink-0"
+                  aria-label={t("common:search.placeholder", "Cari halaman...")}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <SearchIcon className="size-3.5 shrink-0 text-muted-foreground group-hover:text-foreground" />
+                    <span className="hidden sm:inline truncate">
+                      {t("common:search.placeholder", "Cari halaman...")}
+                    </span>
+                  </div>
+                  <kbd className="hidden sm:inline-flex items-center justify-center font-mono text-[11px] font-semibold text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded-md border border-border/80 group-hover:text-foreground">
+                    /
+                  </kbd>
+                </button>
+              </ActionTooltip>
+            </div>
+
             {availableRoles.length >= 2 && (
-              <div className="relative" ref={roleDropdownRef}>
+              <div className="relative flex items-center" ref={roleDropdownRef}>
                 <ActionTooltip content={t("header.role_switch", "Ganti peran aktif sistem")} side="bottom">
                   <button
                     type="button"
                     onClick={() => setIsRoleDropdownOpen((prev) => !prev)}
-                    className="flex items-center bg-card hover:bg-muted/60 border border-border rounded-2xl px-3 py-1.5 transition-all duration-200 group cursor-pointer shadow-2xs"
+                    className="flex items-center h-9 bg-card hover:bg-muted/60 border border-border rounded-2xl px-3 transition-all duration-200 group cursor-pointer shadow-2xs shrink-0"
                   >
-                    <div className="size-6 rounded-xl bg-primary/10 text-primary flex items-center justify-center mr-2.5 shrink-0">
+                    <div className="size-5.5 rounded-lg bg-primary/10 text-primary flex items-center justify-center mr-2 shrink-0">
                       <ArrowRightLeftIcon className="size-3.5" />
                     </div>
-                    <div className="text-left hidden sm:block mr-2.5">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider leading-none mb-1">
+                    <div className="text-left hidden sm:flex flex-col justify-center mr-2">
+                      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider leading-none mb-0.5">
                         {t("header.active_mode", "Mode Aktif")}
                       </p>
                       <p className="text-xs font-bold text-foreground leading-none">
@@ -384,7 +449,7 @@ export function PortalShell() {
                 </ActionTooltip>
 
                 {isRoleDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">
                     <div className="px-3.5 py-1.5 border-b border-border/60 mb-1">
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                         {t("header.role_switch", "Pilih Mode Peran")}
@@ -434,16 +499,16 @@ export function PortalShell() {
             </ActionTooltip>
 
             {/* Tombol Pengalih Bahasa (Dual/Multi Bahasa) */}
-            <div>
+            <div className="flex items-center">
               <LanguageToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
             </div>
 
             {/* Tombol Mode Tema */}
-            <ActionTooltip content={t("header.theme", "Ganti mode tema")} side="bottom">
-              <div>
+            <div className="flex items-center">
+              <ActionTooltip content={t("header.theme", "Ganti mode tema")} side="bottom">
                 <ThemeToggle size="sm" className="size-9 rounded-2xl border border-border shadow-2xs" />
-              </div>
-            </ActionTooltip>
+              </ActionTooltip>
+            </div>
           </div>
         </header>
 
@@ -468,6 +533,24 @@ export function PortalShell() {
         unreadCount={unreadCount}
         onMarkAllRead={handleMarkRead}
         onNavigate={(path) => navigate(path)}
+      />
+
+      {/* Dialog Command Palette (Pencarian Halaman & Aksi Cepat) */}
+      <CommandPaletteDialog
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onOpenShortcutsPanel={() => {
+          setIsCommandPaletteOpen(false);
+          setIsShortcutsPanelOpen(true);
+        }}
+        currentRole={currentRole}
+      />
+
+      {/* Panel Pintasan Keyboard (Drawer Samping Kanan Penuh Tinggi) */}
+      <ShortcutsSheet
+        isOpen={isShortcutsPanelOpen}
+        onClose={() => setIsShortcutsPanelOpen(false)}
+        currentRole={currentRole}
       />
     </div>
   );

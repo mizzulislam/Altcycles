@@ -7,6 +7,7 @@
     "view": "View",
     "create": "Create",
     "download": "Download",
+    "download": "Download / Export",
     "export": "Export",
     "export_download": "Download / Export",
     "compare": "Compare",
@@ -32,12 +33,13 @@
   },
   "app": {
     "name": "Altcycles",
-    "tagline": "Altvira Financial Administration & Accounting System"
+    "tagline": "Financial ERP"
   },
   "loading": "Loading data...",
   "empty": "No data available",
   "error": "An error occurred",
   "auth": {
+    "brand_subtitle": "FINANCIAL ERP",
     "reset_title": "Password Recovery",
     "reset_desc": "Enter your internal work account email address to receive password reset instructions.",
     "reset_sent": "If your email is registered as an active Altvira account, password recovery instructions have been sent.",
@@ -51,7 +53,11 @@
     "new_password": "New Password",
     "confirm_new_password": "Confirm New Password",
     "btn_save_pwd": "Save New Password",
-    "btn_saving_pwd": "Saving Password..."
+    "btn_saving_pwd": "Saving Password...",
+    "pwd_mismatch": "Password confirmation does not match.",
+    "reset_success_toast": "Password updated successfully. Please sign in.",
+    "link_sent_toast": "Password recovery link has been sent.",
+    "email_sent_title": "Link Sent"
   },
   "time": {
     "days": "Days"
@@ -79,6 +85,7 @@
     "accounting_controls": "Accounting Controls & Setup",
     "audit_trail": "Audit Trail",
     "login_media": "Login Media & Banners",
+    "keyboard_shortcuts": "Keyboard Shortcuts",
     "group": {
       "operations": "Operations & PO",
       "projects": "Projects & Revenue"
@@ -145,5 +152,88 @@
     "verified": "Verified",
     "sent": "Sent",
     "signed": "Signed"
+  },
+  "search": {
+    "placeholder": "Search pages...",
+    "modal_placeholder": "Type a command, page name, or keyword...",
+    "open_palette": "Open Command Palette",
+    "frequently_visited": "Frequently Visited",
+    "shortcuts": "Quick Shortcuts",
+    "quick_actions": "Quick Actions",
+    "show_all_shortcuts": "Show all keyboard shortcuts",
+    "no_results": "No matching pages or actions found",
+    "navigation_hint": "Use arrow keys ↑↓ to navigate, Enter to select, Esc to close",
+    "modules": {
+      "general": "General",
+      "dashboard": "Dashboard",
+      "operations": "Operations & PO",
+      "projects": "Projects & Revenue",
+      "accounting": "Accounting & Reports",
+      "master": "Master Data",
+      "system": "Super Admin System"
+    },
+    "actions": {
+      "create_po": "Create New Purchase Order",
+      "create_invoice": "Create New Invoice"
+    }
+  },
+  "shortcuts": {
+    "panel_title": "Keyboard Shortcuts",
+    "search_placeholder": "Search shortcuts...",
+    "group_general": "General",
+    "group_navigation": "Navigation",
+    "group_quick_action": "Quick Actions",
+    "no_results": "No shortcuts matching your query",
+    "then": "then",
+    "hint": "Use keyboard shortcuts for rapid navigation",
+    "locked": "System default (locked)",
+    "customized": "Custom",
+    "reset_all": "Reset All to Default",
+    "reset_all_confirm": "Yes, Reset All",
+    "press_key": "Press key...",
+    "management_title": "Keyboard Shortcuts",
+    "management_desc": "Configure and manage global shortcut mappings across all portals and roles.",
+    "kpi_total": "Total Registered",
+    "kpi_total_desc": "Global shortcuts in registry",
+    "kpi_custom": "Custom Shortcuts",
+    "kpi_custom_desc": "Modified from defaults",
+    "kpi_locked": "System Locked",
+    "kpi_locked_desc": "Protected system core keys",
+    "kpi_coverage": "Portal Coverage",
+    "kpi_coverage_value": "3 Portals",
+    "kpi_coverage_desc": "Super Admin, Treasurer, User",
+    "card_title": "Shortcut Mapping List",
+    "card_desc": "Manage shortcut key combinations to trigger menu navigation and operational functions.",
+    "filter_all_groups": "All Groups",
+    "filter_all_roles": "All Roles",
+    "filter_all_statuses": "All Statuses",
+    "status_locked": "Locked",
+    "status_custom": "Custom",
+    "status_default": "Default",
+    "col_action": "Action & Module",
+    "col_roles": "Allowed Roles",
+    "col_default_keys": "Default Keys",
+    "col_effective_keys": "Effective Keys",
+    "col_status": "Status",
+    "col_action_btn": "Actions",
+    "edit_title": "Edit Keyboard Shortcut",
+    "edit_desc": "Record or specify a new key combination for this action or navigation.",
+    "current_shortcut": "Current Shortcut",
+    "new_shortcut": "New Key Combination",
+    "recording_prompt": "Click here and press key combination on your keyboard...",
+    "recording_active": "Recording keys... Press key combination now",
+    "clear_recorded": "Clear Recorded",
+    "conflict_warning": "Key conflict detected with",
+    "conflict_warning_desc": "This shortcut collides with another action having overlapping role access. Please choose a different key combination.",
+    "save_shortcut": "Save Changes",
+    "reset_shortcut": "Reset to Default",
+    "reset_all_title": "Reset All Shortcuts to Default?",
+    "reset_all_desc": "All custom keyboard shortcut overrides will be cleared and reverted to factory defaults.",
+    "toast_saved": "Keyboard shortcut successfully updated",
+    "toast_reset_single": "Shortcut successfully restored to default",
+    "toast_reset_all": "All shortcuts successfully restored to factory defaults",
+    "cannot_edit_locked": "This system shortcut is permanently locked for navigation stability.",
+    "rule_disallowed_single": "Invalid shortcut key. Use a combination with Ctrl/Alt/Shift or a sequence (e.g. G then [key]).",
+    "rule_browser_hijack": "This key combination is reserved by the browser/operating system and cannot be used."
   }
 }

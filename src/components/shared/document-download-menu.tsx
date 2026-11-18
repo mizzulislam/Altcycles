@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { ChevronDownIcon, DownloadIcon, FileTextIcon, Loader2Icon } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export interface DocumentDownloadMenuProps {
@@ -24,6 +25,15 @@ export function DocumentDownloadMenu({
   className,
   buttonClassName,
 }: DocumentDownloadMenuProps) {
+  const { t } = useLanguage();
+  const isDefaultOrSingleUnduh =
+    !label ||
+    label === "Unduh / Ekspor" ||
+    label === "Unduh" ||
+    label === "Download" ||
+    label === "Download / Export";
+  const displayLabel = isDefaultOrSingleUnduh ? t("action.export_download", "Unduh / Ekspor") : label;
+
   const [open, setOpen] = React.useState(false);
   const [loadingFmt, setLoadingFmt] = React.useState<"pdf" | "word" | null>(null);
   const [coords, setCoords] = React.useState<{
@@ -123,7 +133,7 @@ export function DocumentDownloadMenu({
             ) : (
               <DownloadIcon className="size-4 text-primary" />
             )}
-            <span>{label}</span>
+            <span>{displayLabel}</span>
           </span>
           <ChevronDownIcon
             className={cn(

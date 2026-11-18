@@ -6,7 +6,7 @@
     "edit": "Edit",
     "view": "Lihat",
     "create": "Tambah",
-    "download": "Unduh",
+    "download": "Unduh / Ekspor",
     "export": "Ekspor",
     "export_download": "Unduh / Ekspor",
     "compare": "Bandingkan",
@@ -32,12 +32,13 @@
   },
   "app": {
     "name": "Altcycles",
-    "tagline": "Sistem Administrasi Keuangan & Akuntansi Altvira"
+    "tagline": "ERP Keuangan"
   },
   "loading": "Memuat data...",
   "empty": "Tidak ada data yang tersedia",
   "error": "Terjadi kesalahan",
   "auth": {
+    "brand_subtitle": "FINANCIAL ERP",
     "reset_title": "Pemulihan Kata Sandi",
     "reset_desc": "Masukkan alamat email akun internal Anda untuk menerima tautan atur ulang kata sandi.",
     "reset_sent": "Jika email terdaftar sebagai akun aktif Altvira, instruksi pemulihan kata sandi telah dikirimkan.",
@@ -51,7 +52,11 @@
     "new_password": "Kata Sandi Baru",
     "confirm_new_password": "Ulangi Kata Sandi Baru",
     "btn_save_pwd": "Simpan Kata Sandi Baru",
-    "btn_saving_pwd": "Menyimpan Kata Sandi..."
+    "btn_saving_pwd": "Menyimpan Kata Sandi...",
+    "pwd_mismatch": "Konfirmasi kata sandi tidak cocok.",
+    "reset_success_toast": "Kata sandi berhasil diperbarui. Silakan masuk.",
+    "link_sent_toast": "Tautan pemulihan kata sandi telah dikirim.",
+    "email_sent_title": "Tautan Terkirim"
   },
   "time": {
     "days": "Hari"
@@ -79,6 +84,7 @@
     "accounting_controls": "Pengaturan & Kontrol Akuntansi",
     "audit_trail": "Audit Trail",
     "login_media": "Media & Banner Login",
+    "keyboard_shortcuts": "Pintasan Keyboard",
     "group": {
       "operations": "Operasional & PO",
       "projects": "Proyek & Pendapatan"
@@ -145,5 +151,88 @@
     "verified": "Terverifikasi",
     "sent": "Terkirim",
     "signed": "Ditandatangani"
+  },
+  "search": {
+    "placeholder": "Cari halaman...",
+    "modal_placeholder": "Ketik perintah, nama halaman, atau kata kunci...",
+    "open_palette": "Buka Command Palette",
+    "frequently_visited": "Sering Dikunjungi",
+    "shortcuts": "Pintasan Cepat",
+    "quick_actions": "Aksi Cepat",
+    "show_all_shortcuts": "Tampilkan semua pintasan keyboard",
+    "no_results": "Tidak ada halaman atau aksi yang cocok",
+    "navigation_hint": "Gunakan panah ↑↓ untuk memilih, Enter untuk membuka, Esc untuk menutup",
+    "modules": {
+      "general": "Umum",
+      "dashboard": "Dashboard",
+      "operations": "Operasional & PO",
+      "projects": "Proyek & Pendapatan",
+      "accounting": "Akuntansi & Laporan",
+      "master": "Master Data",
+      "system": "Sistem Super Admin"
+    },
+    "actions": {
+      "create_po": "Buat PO Pembelian Baru",
+      "create_invoice": "Buat Tagihan / Invoice Baru"
+    }
+  },
+  "shortcuts": {
+    "panel_title": "Pintasan Keyboard",
+    "search_placeholder": "Cari pintasan...",
+    "group_general": "Umum",
+    "group_navigation": "Navigasi",
+    "group_quick_action": "Aksi Cepat",
+    "no_results": "Tidak ada pintasan yang cocok",
+    "then": "lalu",
+    "hint": "Gunakan pintasan keyboard untuk mempercepat navigasi",
+    "locked": "Bawaan sistem (terkunci)",
+    "customized": "Kustom",
+    "reset_all": "Reset Semua ke Default",
+    "reset_all_confirm": "Ya, Reset Semua",
+    "press_key": "Tekan tombol...",
+    "management_title": "Pintasan Keyboard",
+    "management_desc": "Konfigurasi dan kelola pemetaan pintasan keyboard global untuk seluruh portal dan peran pengguna.",
+    "kpi_total": "Total Terdaftar",
+    "kpi_total_desc": "Pintasan global di registry",
+    "kpi_custom": "Pintasan Kustom",
+    "kpi_custom_desc": "Dimodifikasi dari bawaan",
+    "kpi_locked": "Sistem Terkunci",
+    "kpi_locked_desc": "Proteksi tombol inti sistem",
+    "kpi_coverage": "Cakupan Portal",
+    "kpi_coverage_value": "3 Portal",
+    "kpi_coverage_desc": "Super Admin, Bendahara, User",
+    "card_title": "Daftar Pemetaan Pintasan",
+    "card_desc": "Kelola kombinasi tombol cepat untuk membuka menu dan menjalankan fungsi operasional.",
+    "filter_all_groups": "Semua Grup",
+    "filter_all_roles": "Semua Peran",
+    "filter_all_statuses": "Semua Status",
+    "status_locked": "Terkunci",
+    "status_custom": "Kustom",
+    "status_default": "Bawaan",
+    "col_action": "Aksi & Modul",
+    "col_roles": "Peran Akses",
+    "col_default_keys": "Tombol Bawaan",
+    "col_effective_keys": "Tombol Efektif",
+    "col_status": "Status",
+    "col_action_btn": "Aksi",
+    "edit_title": "Ubah Pintasan Keyboard",
+    "edit_desc": "Rekam atau tentukan kombinasi tombol baru untuk aksi atau navigasi ini.",
+    "current_shortcut": "Pintasan Saat Ini",
+    "new_shortcut": "Kombinasi Tombol Baru",
+    "recording_prompt": "Klik di sini lalu tekan kombinasi tombol di keyboard...",
+    "recording_active": "Merekam tombol... Tekan tombol kombinasi sekarang",
+    "clear_recorded": "Hapus Rekaman",
+    "conflict_warning": "Konflik tombol terdeteksi dengan",
+    "conflict_warning_desc": "Pintasan ini bentrok dengan aksi lain yang memiliki peran akses yang sama. Harap gunakan kombinasi tombol lain.",
+    "save_shortcut": "Simpan Perubahan",
+    "reset_shortcut": "Reset ke Bawaan",
+    "reset_all_title": "Reset Semua Pintasan ke Bawaan?",
+    "reset_all_desc": "Seluruh konfigurasi pintasan keyboard kustom yang telah dibuat akan dihapus dan dikembalikan ke pengaturan bawaan pabrik sistem.",
+    "toast_saved": "Pintasan keyboard berhasil diperbarui",
+    "toast_reset_single": "Pintasan berhasil dikembalikan ke bawaan",
+    "toast_reset_all": "Semua pintasan berhasil dikembalikan ke bawaan pabrik",
+    "cannot_edit_locked": "Pintasan sistem ini terkunci dan tidak dapat diubah demi stabilitas navigasi.",
+    "rule_disallowed_single": "Kombinasi tombol tidak valid. Gunakan kombinasi dengan Ctrl/Alt/Shift atau urutan huruf (misal: G lalu [huruf]).",
+    "rule_browser_hijack": "Kombinasi tombol ini dilindungi oleh peramban/sistem operasi dan tidak dapat digunakan."
   }
 }

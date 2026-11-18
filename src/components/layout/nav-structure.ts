@@ -7,6 +7,7 @@ import {
   FolderKanbanIcon,
   HandCoinsIcon,
   ImageIcon,
+  KeyboardIcon,
   LayoutDashboardIcon,
   ReceiptTextIcon,
   ScaleIcon,
@@ -119,6 +120,13 @@ export function getNavStructureForRole(
           key: "nav.login_media",
           label: translate("nav.login_media", "Media & Banner Login"),
           icon: ImageIcon,
+        },
+        {
+          type: "item",
+          to: "/super-admin/pintasan-keyboard",
+          key: "nav.keyboard_shortcuts",
+          label: translate("nav.keyboard_shortcuts", "Pintasan Keyboard"),
+          icon: KeyboardIcon,
         },
       ];
 

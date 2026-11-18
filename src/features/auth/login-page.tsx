@@ -615,7 +615,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             <AltviraLogo
               size={38}
               variant={resolvedTheme === "dark" ? "light" : "dark"}
-              subtitle={t("common:app.tagline", "ERP Keuangan")}
+              subtitle={t("common:auth.brand_subtitle", "FINANCIAL ERP")}
             />
           </div>
 

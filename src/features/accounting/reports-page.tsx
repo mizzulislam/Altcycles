@@ -394,7 +394,7 @@ export function AccountingReportsPage({
           </div>
           <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
             <ExportDownloadMenu
-              label={t("common:action.download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
@@ -418,7 +418,7 @@ export function AccountingReportsPage({
           </div>
           <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
             <ExportDownloadMenu
-              label={t("common:action.download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}

@@ -657,7 +657,7 @@ export function AdminDashboardPage() {
         </div>
         <div className="shrink-0">
           <ExportDownloadMenu
-            label={t("action.download", "Unduh / Ekspor")}
+            label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleBackupExport}
             onExportPdf={handleBackupExportPdf}
             onExportCsv={handleBackupExportCsv}

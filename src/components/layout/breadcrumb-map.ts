@@ -50,6 +50,8 @@ export function getHeaderBreadcrumbs(
     "/super-admin/master-tinjau": translate("nav.accounting_controls", "Tinjauan Data Master"),
     "/super-admin/audit-trail": translate("nav.audit_trail", "Jejak Audit"),
     "/super-admin/media-login": translate("nav.login_media", "Media & Banner Login"),
+    "/super-admin/pintasan-keyboard": translate("nav.keyboard_shortcuts", "Pintasan Keyboard"),
+    "/super-admin/pintasan": translate("nav.keyboard_shortcuts", "Pintasan Keyboard"),
   };
 
   const title = staticTitles[pathname];

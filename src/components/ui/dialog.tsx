@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import { MOTION_CLASSES } from "@/lib/motion-tokens";
 import { cn } from "@/lib/utils";
+import { ModalOverlayScrollbar } from "./modal-overlay-scrollbar";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -35,36 +36,53 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-1/2 top-1/2 z-[101] grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-5 sm:p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] max-h-[90vh] overflow-y-auto overflow-x-hidden [&>*]:min-w-0 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.3)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/25 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50",
-        MOTION_CLASSES.dialogContent,
-        className,
-      )}
-      onPointerDownOutside={(e) => {
-        const target = e.target as HTMLElement | null;
-        if (target?.closest?.("[data-date-picker-popover], [data-radix-portal], [data-radix-popper-content-wrapper]")) {
-          e.preventDefault();
-        }
-        props.onPointerDownOutside?.(e);
-      }}
-      onInteractOutside={(e) => {
-        const target = e.target as HTMLElement | null;
-        if (target?.closest?.("[data-date-picker-popover], [data-radix-portal], [data-radix-popper-content-wrapper]")) {
-          e.preventDefault();
-        }
-        props.onInteractOutside?.(e);
-      }}
-      {...props}
-    >
-      {children}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+>(({ className, children, ...props }, forwardedRef) => {
+  const internalRef = React.useRef<HTMLDivElement | null>(null);
+
+  const handleRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      internalRef.current = node;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }
+    },
+    [forwardedRef],
+  );
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={handleRef}
+        className={cn(
+          "fixed left-1/2 top-1/2 z-[101] grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-5 sm:p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] max-h-[90vh] overflow-y-auto overflow-x-hidden scroll-smooth [&>*]:min-w-0 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          MOTION_CLASSES.dialogContent,
+          className,
+        )}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-date-picker-popover], [data-radix-portal], [data-radix-popper-content-wrapper]")) {
+            e.preventDefault();
+          }
+          props.onPointerDownOutside?.(e);
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement | null;
+          if (target?.closest?.("[data-date-picker-popover], [data-radix-portal], [data-radix-popper-content-wrapper]")) {
+            e.preventDefault();
+          }
+          props.onInteractOutside?.(e);
+        }}
+        {...props}
+      >
+        {children}
+        <ModalOverlayScrollbar containerRef={internalRef} />
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {

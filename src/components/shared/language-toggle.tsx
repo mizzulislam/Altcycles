@@ -8,6 +8,67 @@ export interface LanguageToggleProps extends React.ButtonHTMLAttributes<HTMLButt
 }
 
 /**
+ * Bendera Indonesia (Merah Putih) dalam format vektor SVG tajam
+ */
+function IndonesiaFlag({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 14"
+      className={cn(
+        "w-5 h-3.5 rounded-[3px] overflow-hidden border border-black/15 dark:border-white/20 shrink-0 shadow-2xs",
+        className,
+      )}
+      aria-hidden="true"
+    >
+      <rect width="20" height="7" fill="#E11424" />
+      <rect y="7" width="20" height="7" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
+/**
+ * Bendera Amerika Serikat (Stars & Stripes) dalam format vektor SVG tajam
+ */
+function UsaFlag({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 14"
+      className={cn(
+        "w-5 h-3.5 rounded-[3px] overflow-hidden border border-black/15 dark:border-white/20 shrink-0 shadow-2xs",
+        className,
+      )}
+      aria-hidden="true"
+    >
+      {/* 13 Garis Merah-Putih */}
+      <rect width="20" height="14" fill="#FFFFFF" />
+      <rect y="0" width="20" height="1.08" fill="#B22234" />
+      <rect y="2.15" width="20" height="1.08" fill="#B22234" />
+      <rect y="4.31" width="20" height="1.08" fill="#B22234" />
+      <rect y="6.46" width="20" height="1.08" fill="#B22234" />
+      <rect y="8.62" width="20" height="1.08" fill="#B22234" />
+      <rect y="10.77" width="20" height="1.08" fill="#B22234" />
+      <rect y="12.92" width="20" height="1.08" fill="#B22234" />
+      {/* Bidang Biru Kanton */}
+      <rect width="8" height="7.54" fill="#3C3B6E" />
+      {/* Konstelasi Bintang Vektor */}
+      <circle cx="1.6" cy="1.5" r="0.5" fill="#FFFFFF" />
+      <circle cx="4" cy="1.5" r="0.5" fill="#FFFFFF" />
+      <circle cx="6.4" cy="1.5" r="0.5" fill="#FFFFFF" />
+      <circle cx="2.8" cy="2.8" r="0.5" fill="#FFFFFF" />
+      <circle cx="5.2" cy="2.8" r="0.5" fill="#FFFFFF" />
+      <circle cx="1.6" cy="4.1" r="0.5" fill="#FFFFFF" />
+      <circle cx="4" cy="4.1" r="0.5" fill="#FFFFFF" />
+      <circle cx="6.4" cy="4.1" r="0.5" fill="#FFFFFF" />
+      <circle cx="2.8" cy="5.4" r="0.5" fill="#FFFFFF" />
+      <circle cx="5.2" cy="5.4" r="0.5" fill="#FFFFFF" />
+      <circle cx="1.6" cy="6.6" r="0.5" fill="#FFFFFF" />
+      <circle cx="4" cy="6.6" r="0.5" fill="#FFFFFF" />
+      <circle cx="6.4" cy="6.6" r="0.5" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
+/**
  * Tombol Pengalih Bahasa Sistem (Bilingual Dropdown)
  * Menampilkan simbol bahasa universal tanpa teks ID/EN di tombol.
  * Saat diklik memunculkan dropdown pilihan bahasa: Bahasa Indonesia (ID) & English (EN).
@@ -62,9 +123,9 @@ export function LanguageToggle({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Pilih Bahasa / Select Language"
+        aria-label={language === "en" ? "Select Language" : "Pilih Bahasa"}
         aria-expanded={isOpen}
-        title="Pilih Bahasa / Select Language"
+        title={language === "en" ? "Select Language" : "Pilih Bahasa"}
         style={style}
         className={cn(
           "inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border group",
@@ -81,14 +142,16 @@ export function LanguageToggle({
             isOpen && "text-primary scale-110",
           )}
         />
-        <span className="sr-only">Pilih Bahasa / Select Language</span>
+        <span className="sr-only">
+          {language === "en" ? "Select Language" : "Pilih Bahasa"}
+        </span>
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">
           <div className="px-3.5 py-1.5 border-b border-border/60 mb-1">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Pilih Bahasa / Language
+              {language === "en" ? "Select Language" : "Pilih Bahasa"}
             </p>
           </div>
 
@@ -107,7 +170,7 @@ export function LanguageToggle({
             )}
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-sm select-none" aria-hidden="true">🇮🇩</span>
+              <IndonesiaFlag />
               <div className="min-w-0">
                 <p className="leading-tight">Bahasa Indonesia</p>
                 <p className="text-[10px] text-muted-foreground font-normal">Indonesia (ID)</p>
@@ -131,7 +194,7 @@ export function LanguageToggle({
             )}
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-sm select-none" aria-hidden="true">🇬🇧</span>
+              <UsaFlag />
               <div className="min-w-0">
                 <p className="leading-tight">English</p>
                 <p className="text-[10px] text-muted-foreground font-normal">United States (EN)</p>

@@ -31,7 +31,13 @@ export function ExportDownloadMenu({
   align = "end",
 }: ExportDownloadMenuProps) {
   const { t } = useLanguage();
-  const displayLabel = !label || label === "Unduh / Ekspor" ? t("action.export_download", "Unduh / Ekspor") : label;
+  const isDefaultOrSingleUnduh =
+    !label ||
+    label === "Unduh / Ekspor" ||
+    label === "Unduh" ||
+    label === "Download" ||
+    label === "Download / Export";
+  const displayLabel = isDefaultOrSingleUnduh ? t("action.export_download", "Unduh / Ekspor") : label;
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [loadingType, setLoadingType] = React.useState<"excel" | "pdf" | "csv" | null>(null);

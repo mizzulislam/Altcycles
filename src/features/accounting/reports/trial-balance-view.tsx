@@ -57,7 +57,7 @@ export function TrialBalanceView({
         </div>
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
           <ExportDownloadMenu
-            label={t("action.download", "Unduh / Ekspor")}
+            label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={onExportExcel}
             onExportPdf={onExportPdf}
             onExportCsv={onExportCsv}

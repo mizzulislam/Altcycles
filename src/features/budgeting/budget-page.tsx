@@ -576,7 +576,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                   <span>{t("budgeting:modal_editor.section_title")}</span>
                   <span className="text-muted-foreground font-medium">{t("budgeting:modal_editor.section_ceiling_label")}</span>
                 </div>
-                <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {expenseAccounts.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">
                       {t("budgeting:modal_editor.no_expense_accounts")}
