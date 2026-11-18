@@ -1,0 +1,123 @@
+{
+  "title": "Invoicing, Accounts Receivable Aging, & Receipts",
+  "subtitle": "Manage project milestone invoices, monitor receivables aging, and issue official payment receipts.",
+  "page_title": "Invoicing, Accounts Receivable Aging, & Receipts",
+  "page_desc": "Manage project milestone invoices, receivables aging, and official payment receipts.",
+  "issue_invoice": "Issue Invoice",
+  "tab_invoices": "Client Invoices List",
+  "tab_aging": "AR Aging / Due Dates",
+  "tab_receipts": "Payment Receipts",
+  "invoice_kind": {
+    "down_payment": "Down Payment (DP)",
+    "milestone": "Progress Milestone (Requires BAKP)",
+    "final_settlement": "Final Settlement (Requires BAST)"
+  },
+  "action": {
+    "issue_invoice": "Issue Invoice",
+    "record_payment": "Record Payment",
+    "edit_invoice": "Edit Invoice",
+    "edit_receipt": "Edit Receipt",
+    "view_detail": "View Details",
+    "download_doc": "Download Document",
+    "filter_aging": "Calculate AR Aging by:"
+  },
+  "kpi": {
+    "total_invoiced": "Total Invoiced Amount",
+    "invoice_count": "{{count}} invoice documents issued",
+    "total_collected": "Total Payments Received",
+    "receipt_count": "{{count}} official payment receipts",
+    "total_outstanding": "Outstanding Accounts Receivable",
+    "pending_count": "{{count}} billings awaiting settlement"
+  },
+  "tabs": {
+    "invoices": "Client Invoices List",
+    "aging": "AR Aging / Due Dates",
+    "receipts": "Payment Receipts"
+  },
+  "table": {
+    "invoice_list_title": "Client Invoices List",
+    "invoice_list_desc": "Click the record payment icon on an invoice row when client funds arrive in the company bank account to issue official receipts automatically.",
+    "col_invoice_no": "Invoice No.",
+    "col_date_due": "Date & Due Date",
+    "col_project_client": "Project & Client",
+    "col_total_billing": "Total Billing",
+    "col_paid": "Paid",
+    "col_status": "Status",
+    "col_actions": "Actions",
+    "issued_date": "Issued: {{date}}",
+    "due_date": "Due: {{date}}",
+    "order_newest": "Order: Newest",
+    "empty_invoices_title": "No Invoices Issued Yet",
+    "empty_invoices_desc": "Issue your first client project sales invoice by clicking the + Issue Invoice button above."
+  },
+  "aging": {
+    "card_title": "Accounts Receivable Aging Schedule",
+    "card_desc": "Classification of client receivables based on due date delay for cash flow mitigation and periodic follow-ups.",
+    "col_client": "Client / Company Name",
+    "col_project": "Project Code",
+    "col_current": "Current / Not Due",
+    "col_1_30": "1–30 Days",
+    "col_31_60": "31–60 Days",
+    "col_gt_60": "> 60 Days",
+    "col_total": "Total Receivables",
+    "empty_title": "No Outstanding Receivables",
+    "empty_desc": "All issued client project invoices have been paid in full."
+  },
+  "receipts": {
+    "card_title": "Official Payment Receipts List",
+    "card_desc": "Issued automatically whenever client invoice payments are recorded and verified in company accounts.",
+    "col_receipt_no": "Receipt No.",
+    "col_payment_date": "Receipt Date",
+    "col_invoice_ref": "Invoice Reference",
+    "col_client": "Received From",
+    "col_amount": "Amount Received",
+    "col_actions": "Actions",
+    "empty_title": "No Official Receipts Yet",
+    "empty_desc": "Receipts are issued automatically when invoice payments are recorded via the action button in the invoices list."
+  },
+  "modal_create": {
+    "title": "Issue Client Sales Invoice",
+    "field_project": "Client Project",
+    "field_project_placeholder": "Select project",
+    "field_client_po": "Verified Client PO",
+    "field_client_po_placeholder": "Select client PO",
+    "field_billing_type": "Billing Type",
+    "field_milestone": "Select Milestone Payment",
+    "field_milestone_placeholder": "Select milestone",
+    "field_bakp": "Select BAKP Document",
+    "field_bakp_placeholder": "Select BAKP document",
+    "field_bast": "Select BAST Document",
+    "field_bast_placeholder": "Select BAST document",
+    "field_invoice_number": "Invoice Number",
+    "field_invoice_date": "Invoice Date",
+    "field_due_date": "Due Date",
+    "field_subtotal": "Gross Billing Amount (IDR)",
+    "field_destination_account": "Destination Cash / Bank Account",
+    "field_destination_account_placeholder": "Select destination account",
+    "field_notes": "Billing Notes (Shown on Document)",
+    "checklist_title": "Altvira Standard Invoice Validation Checklist",
+    "btn_submit": "Issue & Post Journal",
+    "btn_submitting": "Issuing Invoice..."
+  },
+  "modal_payment": {
+    "title": "Record Payment Receipt",
+    "label_total_invoiced": "Total Invoiced Amount",
+    "label_remaining_balance": "Remaining Balance",
+    "field_payment_date": "Payment Received Date",
+    "field_payment_amount": "Payment Amount Received (IDR)",
+    "field_destination_account": "Receiving Cash / Bank Account",
+    "field_destination_account_placeholder": "Select cash/bank account",
+    "field_notes": "Payment Description",
+    "field_notes_placeholder": "Example: Milestone 1 settlement via Bank Jago transfer",
+    "btn_submit": "Save Payment & Issue Receipt",
+    "btn_submitting": "Processing Payment..."
+  },
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent",
+    "partially_paid": "Partially Paid",
+    "paid": "Paid in Full",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled"
+  }
+}

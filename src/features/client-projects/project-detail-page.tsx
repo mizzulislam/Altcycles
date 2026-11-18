@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatDateID, formatRupiah, roundRupiah } from "@/lib/formatters";
+import { formatDateID, formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import {
   getCompanyProfile,
   listCustomers,
@@ -122,7 +122,7 @@ import { SowSpkTab } from "./tabs/sow-spk-tab";
 import { AcceptanceDocsTab } from "./tabs/acceptance-docs-tab";
 
 export function ProjectDetailPage() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isEn = language === "en";
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -780,19 +780,20 @@ export function ProjectDetailPage() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {isEn ? "Project Documents & Milestones" : "Dokumen & Termin Proyek"}
+              {t("projects:header.title", "Dokumen & Termin Proyek")}
             </h1>
             {project.is_eliminated ? (
               <StatusBadge
                 tone="success"
-                label={isEn ? "WIP & Billing Eliminated 100%" : "WIP & Penagihan Tereliminasi 100%"}
+                label={t("projects:summary.eliminated_badge", "WIP & Penagihan Tereliminasi 100%")}
               />
             ) : null}
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {isEn
-              ? "Manage milestone schedules, completion progress, and official project documents."
-              : "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek."}
+            {t(
+              "projects:header.subtitle",
+              "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek.",
+            )}
           </p>
         </div>
 
@@ -806,12 +807,12 @@ export function ProjectDetailPage() {
             }}
           >
             <SelectTrigger
-              aria-label={isEn ? "Switch to another project" : "Pindah ke proyek lain"}
+              aria-label={t("projects:header.switch_project", "Pindah ke proyek lain")}
               className="h-9 w-full sm:w-52 rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
             >
               <div className="flex items-center gap-2 truncate">
                 <FolderKanbanIcon className="size-4 text-primary shrink-0" />
-                <SelectValue placeholder={isEn ? "Select project code" : "Pilih kode proyek"} />
+                <SelectValue placeholder={t("projects:header.select_project", "Pilih kode proyek")} />
               </div>
             </SelectTrigger>
             <SelectContent align="end">
@@ -833,7 +834,7 @@ export function ProjectDetailPage() {
           <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                {isEn ? "Project Code" : "Kode Proyek"}
+                {t("projects:summary.code", "Kode Proyek")}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
                 {project.code}
@@ -841,7 +842,7 @@ export function ProjectDetailPage() {
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                {isEn ? "Project Name" : "Nama Proyek"}
+                {t("projects:summary.name", "Nama Proyek")}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug">
                 {project.name}
@@ -854,19 +855,19 @@ export function ProjectDetailPage() {
           <div className="shrink-0 md:min-w-[230px] lg:min-w-[260px] flex flex-col justify-between gap-3">
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                {isEn ? "Client" : "Klien"}
+                {t("projects:summary.client", "Klien")}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                {customer?.name ?? (isEn ? "Internal Project" : "Proyek Internal")}
+                {customer?.name ?? t("projects:summary.internal_project", "Proyek Internal")}
               </p>
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
-                {isEn ? "Execution Period" : "Periode Pelaksanaan"}
+                {t("projects:summary.period", "Periode Pelaksanaan")}
               </p>
               <p className="text-xs sm:text-sm font-semibold text-foreground whitespace-nowrap tabular-nums">
-                {formatDateID(project.start_date)} &minus;{" "}
-                {formatDateID(project.target_end_date)}
+                {formatDateI18n(project.start_date, language)} &minus;{" "}
+                {formatDateI18n(project.target_end_date, language)}
               </p>
             </div>
           </div>
@@ -878,13 +879,13 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Project Contract Value" : "Nilai Kontrak Proyek"}
+              {t("projects:summary.contract_value", "Nilai Kontrak Proyek")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(project.contract_value)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {customer?.name ?? (isEn ? "Internal Project" : "Proyek Internal")}
+              {customer?.name ?? t("projects:summary.internal_project", "Proyek Internal")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
@@ -895,13 +896,16 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Completion Progress" : "Progres Penyelesaian Proyek"}
+              {t("projects:summary.progress", "Progres Penyelesaian Proyek")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {maxProgressPct}%
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {bundle.milestones.length} {isEn ? "structured milestones" : "termin terstruktur"}
+              {t("projects:summary.structured_milestones", {
+                count: bundle.milestones.length,
+                defaultValue: `${bundle.milestones.length} termin terstruktur`,
+              })}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -912,13 +916,16 @@ export function ProjectDetailPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Documents & PO Completeness" : "Kelengkapan Dokumen & PO"}
+              {t("projects:summary.docs_completeness", "Kelengkapan Dokumen & PO")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {totalDocsCount} {isEn ? "Documents" : "Dokumen"}
+              {totalDocsCount} {t("projects:summary.docs_unit", "Dokumen")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {verifiedClientPosCount} {isEn ? "verified client POs" : "PO klien terverifikasi"}
+              {t("projects:summary.docs_verified", {
+                count: verifiedClientPosCount,
+                defaultValue: `${verifiedClientPosCount} PO klien terverifikasi`,
+              })}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -932,25 +939,25 @@ export function ProjectDetailPage() {
         {[
           {
             id: "termin" as const,
-            label: isEn ? "Milestones & Progress" : "Termin & Progres",
+            label: t("projects:tabs.milestones", "Termin & Progres"),
             badge: `${maxProgressPct}%`,
             icon: CalendarCheck2Icon,
           },
           {
             id: "quotation_po" as const,
-            label: isEn ? "Quotations & Client PO" : "Quotation & PO Klien",
+            label: t("projects:tabs.quotation_po", "Quotation & PO Klien"),
             badge: String(bundle.clientPos.length),
             icon: FileCheck2Icon,
           },
           {
             id: "sow_spk" as const,
-            label: isEn ? "SoW & SPK" : "SoW & SPK",
+            label: t("projects:tabs.sow_spk", "SoW & SPK"),
             badge: String(bundle.documents.length),
             icon: FileSignatureIcon,
           },
           {
             id: "bakp_uat_bast" as const,
-            label: isEn ? "BAKP, UAT, & BAST" : "BAKP, UAT, & BAST",
+            label: t("projects:tabs.bakp_uat_bast", "BAKP, UAT, & BAST"),
             badge: String(
               bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
             ),

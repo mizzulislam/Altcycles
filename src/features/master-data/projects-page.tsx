@@ -73,6 +73,7 @@ import {
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
   formatDateID,
+  formatDateI18n,
   formatRupiah,
   inferRevenueMethodFromTerms,
   REVENUE_METHOD_LABELS,
@@ -606,20 +607,20 @@ export function ProjectsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
-                        {formatDateID(p.start_date)} &minus;{" "}
-                        {formatDateID(p.target_end_date)}
+                        {formatDateI18n(p.start_date, language)} &minus;{" "}
+                        {formatDateI18n(p.target_end_date, language)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 whitespace-nowrap">
                         <MonetaryCell amount={p.contract_value} />
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
-                        {p.term_count} {t("projects.milestones_count", "Termin")}
+                        {p.term_count} {t("projects:milestones_count", "Termin")}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone="secondary"
-                            label={`${countMembers} ${t("projects.members_count", "Anggota")}`}
+                            label={`${countMembers} ${t("projects:members_count", "Anggota")}`}
                           />
                         </div>
                       </TableCell>
@@ -627,7 +628,7 @@ export function ProjectsPage() {
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={statusMeta.tone}
-                            label={t(`status.${p.status}`, statusMeta.label)}
+                            label={t(`projects:status.${p.status}`, statusMeta.label)}
                           />
                         </div>
                       </TableCell>

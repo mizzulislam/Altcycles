@@ -1,0 +1,123 @@
+{
+  "title": "Invoice, Umur Piutang (AR Aging), & Kuitansi",
+  "subtitle": "Kelola invoice termin proyek klien, pantau sebaran jatuh tempo piutang, dan terbitkan kuitansi pembayaran resmi.",
+  "page_title": "Invoice Penagihan, Umur Piutang, & Kuitansi",
+  "page_desc": "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.",
+  "issue_invoice": "Terbitkan Invoice",
+  "tab_invoices": "Daftar Invoice",
+  "tab_aging": "Umur Piutang / Jatuh Tempo",
+  "tab_receipts": "Kuitansi Pembayaran",
+  "invoice_kind": {
+    "down_payment": "Uang Muka (DP)",
+    "milestone": "Termin Progres (Wajib BAKP)",
+    "final_settlement": "Pelunasan Akhir (Wajib BAST)"
+  },
+  "action": {
+    "issue_invoice": "Terbitkan Invoice",
+    "record_payment": "Catat Bukti Bayar",
+    "edit_invoice": "Ubah Invoice",
+    "edit_receipt": "Ubah Kuitansi",
+    "view_detail": "Lihat Rincian",
+    "download_doc": "Unduh Dokumen",
+    "filter_aging": "Hitung Umur Piutang per:"
+  },
+  "kpi": {
+    "total_invoiced": "Total Nilai Invoice Diterbitkan",
+    "invoice_count": "{{count}} dokumen invoice terbit",
+    "total_collected": "Total Penerimaan Pembayaran",
+    "receipt_count": "{{count}} kuitansi pembayaran resmi",
+    "total_outstanding": "Saldo Piutang Usaha Belum Tertagih",
+    "pending_count": "{{count}} tagihan menunggu pelunasan"
+  },
+  "tabs": {
+    "invoices": "Daftar Invoice Klien",
+    "aging": "Umur Piutang (AR Aging)",
+    "receipts": "Kuitansi Pembayaran"
+  },
+  "table": {
+    "invoice_list_title": "Daftar Invoice Klien",
+    "invoice_list_desc": "Klik ikon catat bayar pada baris invoice ketika dana klien masuk ke rekening bank perusahaan untuk menerbitkan kuitansi otomatis.",
+    "col_invoice_no": "Nomor Invoice",
+    "col_date_due": "Tanggal & Jatuh Tempo",
+    "col_project_client": "Proyek & Klien",
+    "col_total_billing": "Total Tagihan",
+    "col_paid": "Terbayar",
+    "col_status": "Status",
+    "col_actions": "Aksi",
+    "issued_date": "Terbit: {{date}}",
+    "due_date": "Jatuh Tempo: {{date}}",
+    "order_newest": "Urutan: Terbaru",
+    "empty_invoices_title": "Belum Ada Invoice Diterbitkan",
+    "empty_invoices_desc": "Terbitkan invoice penjualan proyek klien pertama dengan mengklik tombol + Terbitkan Invoice di atas."
+  },
+  "aging": {
+    "card_title": "Tabel Distribusi Umur Piutang Usaha (AR Aging Schedule)",
+    "card_desc": "Klasifikasi piutang klien berdasarkan keterlambatan jatuh tempo untuk mitigasi arus kas dan penagihan berkala.",
+    "col_client": "Nama Klien / Perusahaan",
+    "col_project": "Kode Proyek",
+    "col_current": "Belum Jatuh Tempo",
+    "col_1_30": "1–30 Hari",
+    "col_31_60": "31–60 Hari",
+    "col_gt_60": "> 60 Hari",
+    "col_total": "Total Piutang",
+    "empty_title": "Tidak Ada Piutang Belum Tertagih",
+    "empty_desc": "Seluruh invoice proyek klien yang diterbitkan telah lunas tertagih."
+  },
+  "receipts": {
+    "card_title": "Daftar Kuitansi Resmi Penerimaan Dana",
+    "card_desc": "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat dan diverifikasi di rekening bank.",
+    "col_receipt_no": "Nomor Kuitansi",
+    "col_payment_date": "Tanggal Terima",
+    "col_invoice_ref": "Referensi Invoice",
+    "col_client": "Diterima Dari",
+    "col_amount": "Nominal Diterima",
+    "col_actions": "Aksi",
+    "empty_title": "Belum Ada Kuitansi Resmi",
+    "empty_desc": "Kuitansi diterbitkan otomatis saat pembayaran invoice dicatat melalui tombol aksi di daftar invoice."
+  },
+  "modal_create": {
+    "title": "Terbitkan Invoice Penagihan Klien",
+    "field_project": "Proyek Klien",
+    "field_project_placeholder": "Pilih proyek",
+    "field_client_po": "PO Klien Terverifikasi",
+    "field_client_po_placeholder": "Pilih PO klien",
+    "field_billing_type": "Jenis Tagihan",
+    "field_milestone": "Pilih Termin / Milestone",
+    "field_milestone_placeholder": "Pilih termin",
+    "field_bakp": "Pilih Dokumen BAKP",
+    "field_bakp_placeholder": "Pilih dokumen BAKP",
+    "field_bast": "Pilih Dokumen BAST",
+    "field_bast_placeholder": "Pilih dokumen BAST",
+    "field_invoice_number": "Nomor Invoice",
+    "field_invoice_date": "Tanggal Invoice",
+    "field_due_date": "Tanggal Jatuh Tempo",
+    "field_subtotal": "Nilai Tagihan Bruto (IDR)",
+    "field_destination_account": "Akun Kas / Bank Tujuan Pembayaran",
+    "field_destination_account_placeholder": "Pilih rekening tujuan",
+    "field_notes": "Catatan Tagihan (Tampil di Dokumen)",
+    "checklist_title": "Checklist Validasi Invoice Standar Altvira",
+    "btn_submit": "Terbitkan & Posting Jurnal",
+    "btn_submitting": "Menerbitkan Invoice..."
+  },
+  "modal_payment": {
+    "title": "Catat Bukti Penerimaan Pembayaran",
+    "label_total_invoiced": "Total Nilai Invoice",
+    "label_remaining_balance": "Sisa Belum Terbayar",
+    "field_payment_date": "Tanggal Penerimaan Dana",
+    "field_payment_amount": "Nominal Pembayaran Diterima (IDR)",
+    "field_destination_account": "Akun Kas / Bank Penerima",
+    "field_destination_account_placeholder": "Pilih akun kas/bank",
+    "field_notes": "Keterangan Pembayaran",
+    "field_notes_placeholder": "Contoh: Transfer pelunasan termin 1 via Bank Jago",
+    "btn_submit": "Simpan Pembayaran & Terbitkan Kuitansi",
+    "btn_submitting": "Memproses Pembayaran..."
+  },
+  "status": {
+    "draft": "Draf",
+    "sent": "Terkirim",
+    "partially_paid": "Sebagian Terbayar",
+    "paid": "Lunas",
+    "overdue": "Lewat Jatuh Tempo",
+    "cancelled": "Dibatalkan"
+  }
+}

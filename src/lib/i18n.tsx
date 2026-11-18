@@ -1,5 +1,13 @@
 import * as React from "react";
+import i18n, { type TOptions } from "i18next";
+import { initReactI18next, useTranslation as useI18nextTranslation } from "react-i18next";
 import { toast } from "sonner";
+import commonId from "@/locales/id/common.json";
+import commonEn from "@/locales/en/common.json";
+import projectsId from "@/locales/id/projects.json";
+import projectsEn from "@/locales/en/projects.json";
+import invoicingId from "@/locales/id/invoicing.json";
+import invoicingEn from "@/locales/en/invoicing.json";
 
 export type Language = "id" | "en";
 
@@ -7,7 +15,7 @@ export interface LanguageContextValue {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, optionsOrFallback?: string | TOptions, fallback?: string) => string;
 }
 
 export const STORAGE_KEY = "altcycles_language";
@@ -20,6 +28,30 @@ export function getActiveLanguage(): Language {
   } catch {
     return "id";
   }
+}
+
+// Inisialisasi i18next Engine terpusat dengan namespaces modular
+if (!i18n.isInitialized) {
+  void i18n.use(initReactI18next).init({
+    resources: {
+      id: {
+        common: commonId,
+        projects: projectsId,
+        invoicing: invoicingId,
+      },
+      en: {
+        common: commonEn,
+        projects: projectsEn,
+        invoicing: invoicingEn,
+      },
+    },
+    lng: getActiveLanguage(),
+    fallbackLng: "id",
+    defaultNS: "common",
+    interpolation: {
+      escapeValue: false,
+    },
+  });
 }
 
 export const DICTIONARY: Record<Language, Record<string, string>> = {
@@ -967,6 +999,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, nextLang);
       document.documentElement.setAttribute("lang", nextLang);
+      void i18n.changeLanguage(nextLang);
     } catch {
       // Abaikan jika storage tidak tersedia
     }
@@ -985,19 +1018,63 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     try {
       document.documentElement.setAttribute("lang", language);
+      if (i18n.language !== language) {
+        void i18n.changeLanguage(language);
+      }
     } catch {
       // Abaikan
     }
   }, [language]);
 
   const t = React.useCallback(
-    (key: string, fallback?: string): string => {
+    (key: string, optionsOrFallback?: string | TOptions, fallback?: string): string => {
+      const opts = typeof optionsOrFallback === "object" && optionsOrFallback !== null ? optionsOrFallback : {};
+      const explicitFallback = typeof optionsOrFallback === "string" ? optionsOrFallback : fallback;
+      const callOpts: TOptions = { lng: language, ...opts };
+
+      // Normalisasi namespace: ubah "projects.milestones" -> "projects:milestones" jika diawali nama namespace
+      let normalizedKey = key;
+      const knownNamespaces = ["common", "projects", "invoicing"];
+      if (!normalizedKey.includes(":")) {
+        for (const ns of knownNamespaces) {
+          if (normalizedKey.startsWith(`${ns}.`)) {
+            normalizedKey = normalizedKey.replace(`${ns}.`, `${ns}:`);
+            break;
+          }
+        }
+      }
+
+      // 1. Cek kunci i18next (dengan namespace yang dinormalisasi atau kunci asli)
+      if (i18n.exists(normalizedKey, callOpts)) {
+        return i18n.t(normalizedKey, callOpts);
+      }
+
+      if (normalizedKey.includes(":")) {
+        const translated = i18n.t(normalizedKey, callOpts);
+        if (translated && translated !== normalizedKey && translated !== key) {
+          return translated;
+        }
+      }
+
+      // 2. Cek kamus i18next pada default namespace
+      if (i18n.exists(key, callOpts)) {
+        return i18n.t(key, callOpts);
+      }
+
+      // 3. Cek kamus statis DICTIONARY
       const dict = DICTIONARY[language];
       const val = dict ? dict[key] : undefined;
       if (typeof val === "string") {
         return val;
       }
-      return fallback !== undefined ? fallback : key;
+
+      // 4. Jika bahasa Inggris dan tidak ada fallback khusus bahasa, coba cari padanan di dictionary en
+      if (language === "en") {
+        const enVal = DICTIONARY.en[key];
+        if (typeof enVal === "string") return enVal;
+      }
+
+      return explicitFallback !== undefined ? explicitFallback : key;
     },
     [language],
   );
@@ -1018,15 +1095,49 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage(): LanguageContextValue {
   const ctx = React.useContext(LanguageContext);
   if (!ctx) {
+    const lang = getActiveLanguage();
     return {
-      language: "id",
+      language: lang,
       setLanguage: () => {},
       toggleLanguage: () => {},
-      t: (_key: string, fallback?: string) => fallback ?? _key,
+      t: (key: string, optionsOrFallback?: string | TOptions, fallback?: string) => {
+        const opts = typeof optionsOrFallback === "object" && optionsOrFallback !== null ? optionsOrFallback : {};
+        const explicitFallback = typeof optionsOrFallback === "string" ? optionsOrFallback : fallback;
+        const callOpts: TOptions = { lng: lang, ...opts };
+
+        let normalizedKey = key;
+        const knownNamespaces = ["common", "projects", "invoicing"];
+        if (!normalizedKey.includes(":")) {
+          for (const ns of knownNamespaces) {
+            if (normalizedKey.startsWith(`${ns}.`)) {
+              normalizedKey = normalizedKey.replace(`${ns}.`, `${ns}:`);
+              break;
+            }
+          }
+        }
+
+        if (i18n.exists(normalizedKey, callOpts)) {
+          return i18n.t(normalizedKey, callOpts);
+        }
+        if (normalizedKey.includes(":")) {
+          const translated = i18n.t(normalizedKey, callOpts);
+          if (translated && translated !== normalizedKey && translated !== key) return translated;
+        }
+        if (i18n.exists(key, callOpts)) {
+          return i18n.t(key, callOpts);
+        }
+        const dict = DICTIONARY[lang];
+        if (dict && dict[key]) {
+          return dict[key];
+        }
+        return explicitFallback ?? key;
+      },
     };
   }
   return ctx;
 }
 
+export { i18n, useI18nextTranslation };
 export const useTranslation = useLanguage;
+export default i18n;
 

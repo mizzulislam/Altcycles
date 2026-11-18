@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateID, formatRupiah, formatDateI18n } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import {
   buildClientPoPdfSpec,
   downloadPdfBytes,
@@ -36,6 +37,8 @@ import {
   QUOTATION_STATUS_META,
   RowEditActionButtons,
   SectionEditControls,
+  getQuotationStatusMeta,
+  getCpoStatusMeta,
   type EditableRecord,
   type SectionKey,
   type ViewDetailState,
@@ -98,15 +101,17 @@ export function QuotationPoTab({
   onDownloadQuotationPdf,
   onDownloadQuotationWord,
 }: QuotationPoTabProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="flex flex-col gap-5">
       {/* Kartu 1: Quotation */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">Quotation Penawaran Harga (Lampiran A.1)</CardTitle>
+            <CardTitle className="text-base sm:text-lg font-bold">{t("projects:quotations.card_title")}</CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Terbitkan penawaran resmi proyek dan unduh dokumen PDF.
+              {t("projects:quotations.card_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -120,7 +125,7 @@ export function QuotationPoTab({
                 setDeleteConfirm({
                   section: "quotations",
                   ids: getSelectedIds("quotations"),
-                  label: "quotation terpilih",
+                  label: t("projects:quotations.select_all"),
                 })
               }
             />
@@ -130,7 +135,7 @@ export function QuotationPoTab({
               className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
             >
               <PlusIcon data-icon="inline-start" />
-              Buat Quotation
+              {t("projects:quotations.btn_create")}
             </Button>
           </div>
         </CardHeader>
@@ -157,16 +162,16 @@ export function QuotationPoTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua quotation"
+                        aria-label={t("projects:quotations.select_all")}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nomor Quotation</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal &amp; Berlaku</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">Nilai Penawaran</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects:quotations.col_number")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:quotations.col_date_valid")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">{t("projects:quotations.col_amount")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:quotations.col_status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:quotations.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,18 +180,15 @@ export function QuotationPoTab({
                   <TableCell colSpan={5 + (isSectionEditing("quotations") ? 1 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada Quotation"
-                        description="Buat Quotation penawaran harga sebagai dasar pengajuan PO oleh klien."
+                        title={t("projects:quotations.empty_title")}
+                        description={t("projects:quotations.empty_desc")}
                       />
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 bundle.quotations.map((q) => {
-                  const qtStatus = QUOTATION_STATUS_META[q.status] ?? {
-                    label: q.status,
-                    tone: "info" as SemanticTone,
-                  };
+                  const qtStatus = getQuotationStatusMeta(q.status, t);
                   const isChecked = getSelectedIds("quotations").includes(q.id);
                   return (
                     <TableRow key={q.id}>
@@ -206,8 +208,8 @@ export function QuotationPoTab({
                         {q.quotation_number}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateID(q.quotation_date)} (s.d.{" "}
-                        {formatDateID(q.valid_until)})
+                        {formatDateI18n(q.quotation_date, language)} ({language === "en" ? "until" : "s.d."}{" "}
+                        {formatDateI18n(q.valid_until, language)})
                       </TableCell>
                       <TableCell className="px-3 py-3.5 whitespace-nowrap">
                         <MonetaryCell amount={q.total_amount} />
@@ -225,14 +227,14 @@ export function QuotationPoTab({
                                 title: `Rincian ${q.quotation_number}`,
                                 subtitle: q.project_title,
                                 rows: [
-                                  { label: "Nomor Quotation", value: q.quotation_number },
-                                  { label: "Tanggal Terbit", value: formatDateID(q.quotation_date) },
-                                  { label: "Masa Berlaku", value: formatDateID(q.valid_until) },
-                                  { label: "Estimasi Durasi", value: `${q.estimated_weeks} Minggu` },
-                                  { label: "Batas Revisi", value: `${q.revision_limit}x` },
-                                  { label: "Nilai Penawaran", value: formatRupiah(q.total_amount) },
-                                  { label: "Ringkasan Kebutuhan", value: q.client_need_summary ?? "-" },
-                                  { label: "Status", value: qtStatus.label },
+                                  { label: t("projects:quotations.col_number"), value: q.quotation_number },
+                                  { label: language === "en" ? "Issued Date" : "Tanggal Terbit", value: formatDateI18n(q.quotation_date, language) },
+                                  { label: language === "en" ? "Validity Period" : "Masa Berlaku", value: formatDateI18n(q.valid_until, language) },
+                                  { label: language === "en" ? "Estimated Duration" : "Estimasi Durasi", value: `${q.estimated_weeks} ${language === "en" ? "Weeks" : "Minggu"}` },
+                                  { label: language === "en" ? "Revision Limit" : "Batas Revisi", value: `${q.revision_limit}x` },
+                                  { label: t("projects:quotations.col_amount"), value: formatRupiah(q.total_amount) },
+                                  { label: language === "en" ? "Needs Summary" : "Ringkasan Kebutuhan", value: q.client_need_summary ?? "-" },
+                                  { label: t("projects:quotations.col_status"), value: qtStatus.label },
                                 ],
                                 onDownloadPdf: () => void onDownloadQuotationPdf(q),
                                 onDownloadWord: () => void onDownloadQuotationWord(q),
@@ -250,7 +252,7 @@ export function QuotationPoTab({
                         ) : (
                           <div className="flex justify-center items-center -my-1.5">
                             <DocumentDownloadMenu
-                              title="Unduh Quotation (PDF / Word)"
+                              title={language === "en" ? "Download Quotation (PDF / Word)" : "Unduh Quotation (PDF / Word)"}
                               onDownloadPdf={() => onDownloadQuotationPdf(q)}
                               onDownloadWord={() => onDownloadQuotationWord(q)}
                             />
@@ -271,10 +273,10 @@ export function QuotationPoTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Verifikasi Purchase Order (PO) Masuk dari Klien
+              {t("projects:client_po.card_title")}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Verifikasi PO dari Portal Pembeli sebelum penagihan proyek.
+              {t("projects:client_po.card_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -288,7 +290,7 @@ export function QuotationPoTab({
                 setDeleteConfirm({
                   section: "clientPos",
                   ids: getSelectedIds("clientPos"),
-                  label: "PO klien terpilih",
+                  label: t("projects:client_po.select_all"),
                 })
               }
             />
@@ -317,17 +319,17 @@ export function QuotationPoTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua PO klien"
+                        aria-label={t("projects:client_po.select_all")}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Kode Akses PO</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Klien</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Perusahaan / Instansi</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nilai PO</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status Verifikasi</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects:client_po.col_access_code")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:client_po.col_client_name")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:client_po.col_company")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("projects:client_po.col_amount")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:client_po.col_verification_status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:client_po.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -336,18 +338,15 @@ export function QuotationPoTab({
                   <TableCell colSpan={6 + (isSectionEditing("clientPos") ? 1 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada PO Klien"
-                        description="Klien dapat mengirimkan PO tanpa login melalui halaman /portal-pembeli."
+                        title={t("projects:client_po.empty_title")}
+                        description={t("projects:client_po.empty_desc")}
                       />
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 bundle.clientPos.map((cpo) => {
-                  const cpoStatus = CPO_STATUS_META[cpo.status] ?? {
-                    label: cpo.status,
-                    tone: "info" as SemanticTone,
-                  };
+                  const cpoStatus = getCpoStatusMeta(cpo.status, t);
                   const isChecked = getSelectedIds("clientPos").includes(cpo.id);
                   return (
                     <TableRow key={cpo.id}>
@@ -390,12 +389,12 @@ export function QuotationPoTab({
                               setViewModal({
                                 title: `Rincian PO Klien ${cpo.po_number}`,
                                 rows: [
-                                  { label: "Kode Akses PO", value: cpo.po_number },
-                                  { label: "Nama Klien", value: cpo.client_name },
-                                  { label: "Perusahaan", value: cpo.client_company ?? "-" },
+                                  { label: t("projects:client_po.col_access_code"), value: cpo.po_number },
+                                  { label: t("projects:client_po.col_client_name"), value: cpo.client_name },
+                                  { label: t("projects:client_po.col_company"), value: cpo.client_company ?? "-" },
                                   { label: "Email Klien", value: cpo.client_email },
-                                  { label: "Nilai PO", value: formatRupiah(cpo.po_value) },
-                                  { label: "Status", value: cpoStatus.label },
+                                  { label: t("projects:client_po.col_amount"), value: formatRupiah(cpo.po_value) },
+                                  { label: t("projects:client_po.col_verification_status"), value: cpoStatus.label },
                                 ],
                               })
                             }
@@ -414,29 +413,29 @@ export function QuotationPoTab({
                               type="button"
                               size="icon"
                               variant="ghost"
-                              title="Verifikasi ke Proyek Ini"
+                              title={language === "en" ? "Verify into This Project" : "Verifikasi ke Proyek Ini"}
                               onClick={() => void onVerifyPo(cpo)}
                               className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                             >
                               <CheckCircle2Icon className="size-4" />
-                              <span className="sr-only">Verifikasi ke Proyek Ini</span>
+                              <span className="sr-only">{language === "en" ? "Verify into This Project" : "Verifikasi ke Proyek Ini"}</span>
                             </Button>
                             <Button
                               type="button"
                               size="icon"
                               variant="ghost"
-                              title="Tolak PO Klien"
+                              title={language === "en" ? "Reject Client PO" : "Tolak PO Klien"}
                               onClick={() => onRejectPo(cpo)}
                               className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                             >
                               <XCircleIcon className="size-4" />
-                              <span className="sr-only">Tolak</span>
+                              <span className="sr-only">{language === "en" ? "Reject" : "Tolak"}</span>
                             </Button>
                           </div>
                         ) : cpo.status === "verified" ? (
                           <div className="flex justify-center items-center -my-1.5">
                             <DocumentDownloadMenu
-                              title="Unduh Purchase Order Klien (PDF / Word)"
+                              title={language === "en" ? "Download Client Purchase Order (PDF / Word)" : "Unduh Purchase Order Klien (PDF / Word)"}
                               onDownloadPdf={async () => {
                                 if (!company) return;
                                 const spec = buildClientPoPdfSpec({

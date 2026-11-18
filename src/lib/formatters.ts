@@ -314,6 +314,24 @@ export function formatDateID(value: string | Date | null | undefined): string {
 }
 
 /**
+ * Memformat tanggal berbasis Intl mengikuti bahasa aktif (id / en).
+ * Pada mode EN: 12 Nov 2026; pada mode ID: 12 Nov 2026 / 12/11/2026.
+ */
+export function formatDateI18n(
+  value: string | Date | null | undefined,
+  lang: "id" | "en" = "id",
+): string {
+  if (!value) return "-";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+/**
  * Mengembalikan tanggal hari ini (atau offset hari) dalam format ISO YYYY-MM-DD sesuai zona waktu lokal.
  */
 export function todayIsoDate(offsetDays = 0): string {
@@ -344,6 +362,26 @@ export function formatDateTimeID(value: string | Date | null | undefined): strin
   const hh = String(date.getHours()).padStart(2, "0");
   const min = String(date.getMinutes()).padStart(2, "0");
   return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+}
+
+/**
+ * Memformat cap waktu berbasis Intl mengikuti bahasa aktif.
+ */
+export function formatDateTimeI18n(
+  value: string | Date | null | undefined,
+  lang: "id" | "en" = "id",
+): string {
+  if (!value) return "-";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
 }
 
 function terbilangInt(n: number): string {

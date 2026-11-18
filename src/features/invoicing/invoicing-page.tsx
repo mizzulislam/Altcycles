@@ -805,12 +805,10 @@ export function InvoicingPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1 min-w-0">
               <CardTitle className="text-base sm:text-lg font-bold">
-                {isEn ? "Client Invoices List" : "Daftar Invoice Klien"}
+                {t("invoicing:table.invoice_list_title", "Daftar Invoice Klien")}
               </CardTitle>
               <CardDescription>
-                {isEn
-                  ? "Click the record payment icon when funds arrive in company bank account to issue official receipts automatically."
-                  : "Klik ikon catat pembayaran saat dana masuk ke rekening perusahaan untuk menerbitkan Kuitansi otomatis."}
+                {t("invoicing:table.invoice_list_desc", "Klik ikon catat bayar pada baris invoice ketika dana klien masuk ke rekening bank perusahaan untuk menerbitkan kuitansi otomatis.")}
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -825,10 +823,10 @@ export function InvoicingPage() {
               >
                 <ArrowUpDownIcon className="size-3.5" />
                 <span>
-                  {isEn ? "Order: " : "Urutan: "}
+                  {t("common:action.order", "Urutan")}:{" "}
                   {invoiceSortOrder === "asc"
-                    ? (isEn ? "Oldest" : "Terlama")
-                    : (isEn ? "Newest" : "Terbaru")}
+                    ? t("common:action.oldest", "Terlama")
+                    : t("common:action.newest", "Terbaru")}
                 </span>
               </Button>
               <SectionEditControls
@@ -844,7 +842,7 @@ export function InvoicingPage() {
                   setDeleteConfirm({
                     section: "invoices",
                     ids: selectedInvoiceIds,
-                    label: isEn ? "selected invoices" : "invoice terpilih",
+                    label: t("invoicing:table.selected_invoices", "invoice terpilih"),
                   })
                 }
               />
@@ -854,7 +852,7 @@ export function InvoicingPage() {
             {loading ? (
               <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
                 <Spinner />
-                <span>{isEn ? "Loading invoices..." : "Memuat daftar invoice..."}</span>
+                <span>{t("common:action.loading", "Memuat...")}</span>
               </div>
             ) : (
               <Table>
@@ -879,31 +877,31 @@ export function InvoicingPage() {
                                 setSelectedInvoiceIds([]);
                               }
                             }}
-                            aria-label={isEn ? "Select all invoices" : "Pilih semua invoice"}
+                            aria-label={t("common:action.select_all", "Pilih Semua")}
                           />
                         </div>
                       </TableHead>
                     )}
                     <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Invoice No." : "No. Invoice"}
+                      {t("invoicing:table.col_invoice_no", "Nomor Invoice")}
                     </TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Date & Due Date" : "Tanggal & Jatuh Tempo"}
+                      {t("invoicing:table.col_date_due", "Tanggal & Jatuh Tempo")}
                     </TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Project & Client" : "Proyek & Klien"}
+                      {t("invoicing:table.col_project_client", "Proyek & Klien")}
                     </TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Total Billing" : "Total Tagihan"}
+                      {t("invoicing:table.col_total_billing", "Total Tagihan")}
                     </TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Paid" : "Terbayar"}
+                      {t("invoicing:table.col_paid", "Terbayar")}
                     </TableHead>
                     <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                      {isEn ? "Status" : "Status"}
+                      {t("invoicing:table.col_status", "Status")}
                     </TableHead>
                     <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                      {isEn ? "Actions" : "Aksi"}
+                      {t("invoicing:table.col_actions", "Aksi")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -916,12 +914,10 @@ export function InvoicingPage() {
                             <FileTextIcon className="size-6" />
                           </div>
                           <h3 className="text-sm font-semibold text-foreground">
-                            {isEn ? "No Invoices Issued Yet" : "Belum Ada Invoice Diterbitkan"}
+                            {t("invoicing:table.empty_invoices_title", "Belum Ada Invoice Diterbitkan")}
                           </h3>
                           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                            {isEn
-                              ? "Ensure client PO has been verified before issuing invoices."
-                              : "Pastikan PO Klien telah diverifikasi sebelum menerbitkan invoice."}
+                            {t("invoicing:table.empty_invoices_desc", "Terbitkan invoice penjualan proyek klien pertama dengan mengklik tombol + Terbitkan Invoice di atas.")}
                           </p>
                         </div>
                       </TableCell>
@@ -932,12 +928,7 @@ export function InvoicingPage() {
                       const cust = customerMap.get(inv.customer_id);
                       const remaining = inv.total_amount - inv.paid_amount;
                       const isChecked = selectedInvoiceIds.includes(inv.id);
-                      const statusLabel =
-                        inv.payment_status === "paid"
-                          ? (isEn ? "Paid" : "Lunas")
-                          : inv.payment_status === "partial"
-                            ? (isEn ? "Partially Paid" : "Dibayar Sebagian")
-                            : (isEn ? "Unpaid" : "Belum Dibayar");
+                      const statusLabel = t(`invoicing:status.${inv.payment_status}`, inv.payment_status === "paid" ? "Lunas" : inv.payment_status === "partial" ? "Sebagian Terbayar" : "Belum Lunas");
 
                       return (
                         <TableRow key={inv.id}>
@@ -961,9 +952,15 @@ export function InvoicingPage() {
                             {inv.invoice_number}
                           </TableCell>
                           <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                            <div className="text-foreground">{isEn ? "Issued: " : "Terbit: "}{formatDateID(inv.invoice_date)}</div>
+                            <div className="text-foreground">
+                              {t("invoicing:table.issued_date", {
+                                date: formatDateI18n(inv.invoice_date, language),
+                              })}
+                            </div>
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {isEn ? "Due: " : "Tempo: "}{formatDateID(inv.due_date)}
+                              {t("invoicing:table.due_date", {
+                                date: formatDateI18n(inv.due_date, language),
+                              })}
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
@@ -971,7 +968,7 @@ export function InvoicingPage() {
                               {prj ? `${prj.code} — ${prj.name}` : "-"}
                             </div>
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {cust?.name ?? (isEn ? "Client" : "Klien")}
+                              {cust?.name ?? t("common:nav.parties", "Klien")}
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-3.5 whitespace-nowrap">
@@ -999,20 +996,20 @@ export function InvoicingPage() {
                               <RowEditActionButtons
                                 onView={() =>
                                   setViewModal({
-                                    title: `${isEn ? "Details of" : "Rincian"} ${inv.invoice_number}`,
-                                    subtitle: prj ? `${prj.code} — ${prj.name}` : cust?.name ?? (isEn ? "Client" : "Klien"),
+                                    title: `${t("invoicing:action.view_detail", "Rincian")} ${inv.invoice_number}`,
+                                    subtitle: prj ? `${prj.code} — ${prj.name}` : cust?.name ?? "-",
                                     rows: [
-                                      { label: isEn ? "Invoice Number" : "Nomor Invoice", value: inv.invoice_number },
-                                      { label: isEn ? "Issue Date" : "Tanggal Terbit", value: formatDateID(inv.invoice_date) },
-                                      { label: isEn ? "Due Date" : "Tanggal Jatuh Tempo", value: formatDateID(inv.due_date) },
-                                      { label: isEn ? "Client" : "Klien", value: cust?.company_name ?? cust?.name ?? "-" },
-                                      { label: isEn ? "Invoice Kind" : "Jenis Tagihan", value: INVOICE_KIND_LABELS[inv.invoice_kind] ?? inv.invoice_kind },
-                                      { label: isEn ? "Subtotal" : "Subtotal", value: formatRupiah(inv.subtotal_amount) },
-                                      { label: isEn ? "VAT / PPN" : "PPN", value: formatRupiah(inv.ppn_amount) },
-                                      { label: isEn ? "Total Billing" : "Total Tagihan", value: formatRupiah(inv.total_amount) },
-                                      { label: isEn ? "Amount Paid" : "Telah Dibayar", value: formatRupiah(inv.paid_amount) },
-                                      { label: isEn ? "Payment Status" : "Status Pembayaran", value: statusLabel },
-                                      { label: isEn ? "Notes" : "Catatan", value: inv.notes ?? "-" },
+                                      { label: t("invoicing:table.col_invoice_no", "Nomor Invoice"), value: inv.invoice_number },
+                                      { label: t("invoicing:modal_create.field_invoice_date", "Tanggal Invoice"), value: formatDateI18n(inv.invoice_date, language) },
+                                      { label: t("invoicing:modal_create.field_due_date", "Tanggal Jatuh Tempo"), value: formatDateI18n(inv.due_date, language) },
+                                      { label: t("invoicing:modal_create.field_project", "Klien"), value: cust?.company_name ?? cust?.name ?? "-" },
+                                      { label: t("invoicing:modal_create.field_billing_type", "Jenis Tagihan"), value: t(`invoicing:invoice_kind.${inv.invoice_kind}`, INVOICE_KIND_LABELS[inv.invoice_kind] ?? inv.invoice_kind) },
+                                      { label: "Subtotal", value: formatRupiah(inv.subtotal_amount) },
+                                      { label: "PPN", value: formatRupiah(inv.ppn_amount) },
+                                      { label: t("invoicing:table.col_total_billing", "Total Tagihan"), value: formatRupiah(inv.total_amount) },
+                                      { label: t("invoicing:table.col_paid", "Terbayar"), value: formatRupiah(inv.paid_amount) },
+                                      { label: t("invoicing:table.col_status", "Status"), value: statusLabel },
+                                      { label: t("invoicing:modal_create.field_notes", "Catatan"), value: inv.notes ?? "-" },
                                     ],
                                     onDownloadPdf: () => void handleDownloadInvoicePdf(inv),
                                     onDownloadWord: () => void handleDownloadInvoiceWord(inv),
@@ -1036,7 +1033,7 @@ export function InvoicingPage() {
                                     type="button"
                                     size="icon"
                                     variant="ghost"
-                                    title={isEn ? "Receive Invoice Payment" : "Terima Pembayaran Invoice"}
+                                    title={t("invoicing:action.record_payment", "Catat Bukti Bayar")}
                                     onClick={() => {
                                       setPayDate(inv.invoice_date);
                                       setPayAmount(remaining);
@@ -1045,11 +1042,11 @@ export function InvoicingPage() {
                                     className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                                   >
                                     <BanknoteIcon className="size-4" />
-                                    <span className="sr-only">{isEn ? "Receive Payment" : "Terima Pembayaran Invoice"}</span>
+                                    <span className="sr-only">{t("invoicing:action.record_payment", "Catat Bukti Bayar")}</span>
                                   </Button>
                                 ) : null}
                                 <DocumentDownloadMenu
-                                  title={isEn ? "Download Invoice (PDF / Word)" : "Unduh Invoice (PDF / Word)"}
+                                  title={`${t("common:action.download", "Unduh")} Invoice (PDF / Word)`}
                                   onDownloadPdf={() => handleDownloadInvoicePdf(inv)}
                                   onDownloadWord={() => handleDownloadInvoiceWord(inv)}
                                 />
@@ -1071,18 +1068,16 @@ export function InvoicingPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1 min-w-0">
               <CardTitle className="text-base sm:text-lg font-bold">
-                {isEn ? "Accounts Receivable Aging & Overdue Tracking" : "Pemantauan Umur Piutang & Tagihan Jatuh Tempo"}
+                {t("invoicing:aging.card_title", "Tabel Distribusi Umur Piutang Usaha (AR Aging Schedule)")}
               </CardTitle>
               <CardDescription>
-                {isEn
-                  ? "Groups outstanding receivables by overdue days relative to reference date."
-                  : "Mengelompokkan sisa piutang berdasarkan keterlambatan hari terhadap tanggal acuan."}
+                {t("invoicing:aging.card_desc", "Klasifikasi piutang klien berdasarkan keterlambatan jatuh tempo untuk mitigasi arus kas dan penagihan berkala.")}
               </CardDescription>
             </div>
             <div className="w-full sm:w-60 shrink-0 space-y-1">
               <div className="h-6 flex items-center">
                 <span className="text-xs font-semibold text-foreground">
-                  {isEn ? "Calculation Reference Date" : "Tanggal Acuan Perhitungan"}
+                  {t("invoicing:action.filter_aging", "Tanggal Acuan Perhitungan")}
                 </span>
               </div>
               <DatePicker
@@ -1097,22 +1092,22 @@ export function InvoicingPage() {
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Invoice No." : "No. Invoice"}
+                    {t("invoicing:table.col_invoice_no", "No. Invoice")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Client & Project" : "Pelanggan & Proyek"}
+                    {t("invoicing:table.col_project_client", "Pelanggan & Proyek")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Due Date" : "Jatuh Tempo"}
+                    {t("invoicing:modal_create.field_due_date", "Jatuh Tempo")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Outstanding Balance" : "Sisa Tagihan"}
+                    {t("invoicing:aging.col_total", "Sisa Tagihan")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Overdue Days" : "Keterlambatan"}
+                    {t("invoicing:aging.overdue", "Keterlambatan")}
                   </TableHead>
                   <TableHead className="pl-3 pr-6 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Aging Bucket" : "Kelompok Umur"}
+                    {t("invoicing:aging.col_aging_bucket", "Kelompok Umur")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -1125,12 +1120,10 @@ export function InvoicingPage() {
                           <ClockIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "No Overdue Receivables" : "Tidak Ada Piutang Tertunggak"}
+                          {t("invoicing:aging.empty_title", "Tidak Ada Piutang Belum Tertagih")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          {isEn
-                            ? "All issued project invoices are currently settled in full."
-                            : "Seluruh invoice yang telah diterbitkan sudah lunas."}
+                          {t("invoicing:aging.empty_desc", "Seluruh invoice proyek klien yang diterbitkan telah lunas tertagih.")}
                         </p>
                       </div>
                     </TableCell>
@@ -1148,13 +1141,13 @@ export function InvoicingPage() {
                         </div>
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                        {formatDateID(row.dueDate)}
+                        {formatDateI18n(row.dueDate, language)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 whitespace-nowrap">
                         <MonetaryCell amount={row.outstandingAmount} />
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                        {row.daysOverdue} {isEn ? "Days" : "Hari"}
+                        {row.daysOverdue} {t("common:time.days", "Hari")}
                       </TableCell>
                       <TableCell className="pl-3 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
@@ -1167,15 +1160,13 @@ export function InvoicingPage() {
                                   : "success"
                             }
                             label={
-                              isEn
-                                ? row.agingBucket === "Belum Jatuh Tempo"
-                                  ? "Current / Not Due"
-                                  : row.agingBucket === "1–30 Hari"
-                                    ? "1–30 Days"
-                                    : row.agingBucket === "31–60 Hari"
-                                      ? "31–60 Days"
-                                      : "> 60 Days"
-                                : row.agingBucket
+                              row.agingBucket === "Belum Jatuh Tempo"
+                                ? t("invoicing:aging.col_current", "Belum Jatuh Tempo")
+                                : row.agingBucket === "1–30 Hari"
+                                  ? t("invoicing:aging.col_1_30", "1–30 Hari")
+                                  : row.agingBucket === "31–60 Hari"
+                                    ? t("invoicing:aging.col_31_60", "31–60 Hari")
+                                    : t("invoicing:aging.col_gt_60", "> 60 Hari")
                             }
                           />
                         </div>
@@ -1193,12 +1184,10 @@ export function InvoicingPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1 min-w-0">
               <CardTitle className="text-base sm:text-lg font-bold">
-                {isEn ? "Official Payment Receipts (Appendix A.6)" : "Kuitansi Bukti Pembayaran (Lampiran A.6)"}
+                {t("invoicing:receipts.card_title", "Daftar Kuitansi Resmi Penerimaan Dana")}
               </CardTitle>
               <CardDescription>
-                {isEn
-                  ? "Automatically issued whenever a client invoice payment is recorded."
-                  : "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat."}
+                {t("invoicing:receipts.card_desc", "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat dan diverifikasi di rekening bank.")}
               </CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -1213,10 +1202,10 @@ export function InvoicingPage() {
               >
                 <ArrowUpDownIcon className="size-3.5" />
                 <span>
-                  {isEn ? "Order: " : "Urutan: "}
+                  {t("common:action.order", "Urutan")}:{" "}
                   {receiptSortOrder === "asc"
-                    ? (isEn ? "Oldest" : "Terlama")
-                    : (isEn ? "Newest" : "Terbaru")}
+                    ? t("common:action.oldest", "Terlama")
+                    : t("common:action.newest", "Terbaru")}
                 </span>
               </Button>
               <SectionEditControls
@@ -1232,7 +1221,7 @@ export function InvoicingPage() {
                   setDeleteConfirm({
                     section: "receipts",
                     ids: selectedReceiptIds,
-                    label: isEn ? "selected receipts" : "kuitansi terpilih",
+                    label: t("invoicing:receipts.selected_receipts", "kuitansi terpilih"),
                   })
                 }
               />
@@ -1261,25 +1250,25 @@ export function InvoicingPage() {
                               setSelectedReceiptIds([]);
                             }
                           }}
-                          aria-label={isEn ? "Select all receipts" : "Pilih semua kuitansi"}
+                          aria-label={t("common:action.select_all", "Pilih Semua")}
                         />
                       </div>
                     </TableHead>
                   )}
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Receipt No." : "Nomor Kuitansi"}
+                    {t("invoicing:receipts.col_receipt_no", "Nomor Kuitansi")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Receipt Date" : "Tanggal Terima"}
+                    {t("invoicing:receipts.col_payment_date", "Tanggal Terima")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Received From" : "Diterima Dari"}
+                    {t("invoicing:receipts.col_client", "Diterima Dari")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Amount" : "Jumlah"}
+                    {t("invoicing:receipts.col_amount", "Nominal Diterima")}
                   </TableHead>
                   <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                    {isEn ? "Actions" : "Aksi"}
+                    {t("invoicing:receipts.col_actions", "Aksi")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -1292,12 +1281,10 @@ export function InvoicingPage() {
                           <ReceiptIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "No Receipts Yet" : "Belum Ada Kuitansi"}
+                          {t("invoicing:receipts.empty_title", "Belum Ada Kuitansi")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          {isEn
-                            ? "Receipts are automatically issued when an invoice payment is recorded."
-                            : "Kuitansi diterbitkan otomatis saat pembayaran invoice dicatat."}
+                          {t("invoicing:receipts.empty_desc", "Kuitansi diterbitkan otomatis saat pembayaran invoice dicatat.")}
                         </p>
                       </div>
                     </TableCell>
@@ -1328,7 +1315,7 @@ export function InvoicingPage() {
                           {kw.receipt_number}
                         </TableCell>
                         <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
-                          {formatDateID(kw.receipt_date)}
+                          {formatDateI18n(kw.receipt_date, language)}
                         </TableCell>
                         <TableCell className="px-3 py-3.5 font-medium text-xs sm:text-sm leading-5 text-foreground">
                           {kw.received_from}
@@ -1341,14 +1328,14 @@ export function InvoicingPage() {
                             <RowEditActionButtons
                               onView={() =>
                                 setViewModal({
-                                  title: `${isEn ? "Details of" : "Rincian"} ${kw.receipt_number}`,
+                                  title: `${t("invoicing:action.view_detail", "Rincian")} ${kw.receipt_number}`,
                                   subtitle: kw.received_from,
                                   rows: [
-                                    { label: isEn ? "Receipt Number" : "Nomor Kuitansi", value: kw.receipt_number },
-                                    { label: isEn ? "Date Received" : "Tanggal Terima", value: formatDateID(kw.receipt_date) },
-                                    { label: isEn ? "Received From" : "Diterima Dari", value: kw.received_from },
-                                    { label: isEn ? "Invoice Reference" : "Referensi Invoice", value: linkedInv?.invoice_number ?? "-" },
-                                    { label: isEn ? "Amount Received" : "Jumlah Diterima", value: formatRupiah(kw.amount) },
+                                    { label: t("invoicing:receipts.col_receipt_no", "Nomor Kuitansi"), value: kw.receipt_number },
+                                    { label: t("invoicing:receipts.col_payment_date", "Tanggal Terima"), value: formatDateI18n(kw.receipt_date, language) },
+                                    { label: t("invoicing:receipts.col_client", "Diterima Dari"), value: kw.received_from },
+                                    { label: t("invoicing:receipts.col_invoice_ref", "Referensi Invoice"), value: linkedInv?.invoice_number ?? "-" },
+                                    { label: t("invoicing:receipts.col_amount", "Jumlah Diterima"), value: formatRupiah(kw.amount) },
                                   ],
                                   onDownloadPdf: () => void handleDownloadReceiptPdf(kw),
                                   onDownloadWord: () => void handleDownloadReceiptWord(kw),
@@ -1368,7 +1355,7 @@ export function InvoicingPage() {
                           ) : (
                             <div className="flex justify-center items-center -my-1.5">
                               <DocumentDownloadMenu
-                                title={isEn ? "Download Receipt (PDF / Word)" : "Unduh Kuitansi (PDF / Word)"}
+                                title={`${t("common:action.download", "Unduh")} ${t("invoicing:tabs.receipts", "Kuitansi")} (PDF / Word)`}
                                 onDownloadPdf={() => handleDownloadReceiptPdf(kw)}
                                 onDownloadWord={() => handleDownloadReceiptWord(kw)}
                               />

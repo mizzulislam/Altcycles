@@ -1,5 +1,6 @@
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 import {
   Card,
   CardContent,
@@ -80,15 +81,17 @@ export function SowSpkTab({
   onDownloadDocPdf,
   onDownloadDocWord,
 }: SowSpkTabProps) {
+  const { t, language } = useLanguage();
+
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
       <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1 min-w-0">
           <CardTitle>
-            Statement of Work (SoW) &amp; Surat Perintah Kerja (SPK)
+            {t("projects:sow_spk.card_title")}
           </CardTitle>
           <CardDescription>
-            Kelola dokumen ruang lingkup kerja (SoW) dan kontrak SPK proyek.
+            {t("projects:sow_spk.card_desc")}
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -102,7 +105,7 @@ export function SowSpkTab({
               setDeleteConfirm({
                 section: "documents",
                 ids: getSelectedIds("documents"),
-                label: "dokumen terpilih",
+                label: t("projects:sow_spk.select_all"),
               })
             }
           />
@@ -112,7 +115,7 @@ export function SowSpkTab({
             className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
           >
             <PlusIcon data-icon="inline-start" />
-            Tambah SoW / SPK
+            {t("projects:sow_spk.btn_create")}
           </Button>
         </div>
       </CardHeader>
@@ -139,16 +142,16 @@ export function SowSpkTab({
                           checked,
                         )
                       }
-                      aria-label="Pilih semua dokumen"
+                      aria-label={t("projects:sow_spk.select_all")}
                     />
                   </div>
                 </TableHead>
               )}
-              <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Jenis</TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nomor Dokumen</TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Judul Dokumen</TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status Tanda Tangan</TableHead>
-              <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+              <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects:sow_spk.col_type")}</TableHead>
+              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:sow_spk.col_doc_number")}</TableHead>
+              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:sow_spk.col_title")}</TableHead>
+              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:sow_spk.col_signature_status")}</TableHead>
+              <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:sow_spk.col_actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -157,8 +160,8 @@ export function SowSpkTab({
                 <TableCell colSpan={5 + (isSectionEditing("documents") ? 1 : 0)} className="p-0">
                   <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                     <EmptyState
-                      title="Belum ada dokumen SoW atau SPK"
-                      description="Tambahkan dokumen SoW dan SPK proyek untuk diunduh oleh tim maupun klien."
+                      title={t("projects:sow_spk.empty_title")}
+                      description={t("projects:sow_spk.empty_desc")}
                     />
                   </div>
                 </TableCell>
@@ -167,6 +170,7 @@ export function SowSpkTab({
               bundle.documents.map((d) => {
                 const isChecked = getSelectedIds("documents").includes(d.id);
                 const contentObj = d.content_json as Record<string, unknown> | null;
+                const signatureLabel = d.is_signed ? t("projects:status.signed") : t("projects:status.draft");
                 return (
                   <TableRow key={d.id}>
                     {isSectionEditing("documents") && (
@@ -196,9 +200,7 @@ export function SowSpkTab({
                       <div className="inline-flex items-center min-h-5 -my-px">
                         <StatusBadge
                           tone={d.is_signed ? "success" : "warning"}
-                          label={
-                            d.is_signed ? "Ditandatangani" : "Draf Review"
-                          }
+                          label={signatureLabel}
                         />
                       </div>
                     </TableCell>
@@ -210,11 +212,11 @@ export function SowSpkTab({
                               title: `Rincian ${d.doc_number}`,
                               subtitle: d.title,
                               rows: [
-                                { label: "Jenis Dokumen", value: d.doc_type },
-                                { label: "Nomor Dokumen", value: d.doc_number },
-                                { label: "Judul", value: d.title },
-                                { label: "Status Tanda Tangan", value: d.is_signed ? "Ditandatangani" : "Draf Review" },
-                                { label: "Ringkasan Ruang Lingkup", value: String(contentObj?.summary ?? "-") },
+                                { label: t("projects:sow_spk.col_type"), value: d.doc_type },
+                                { label: t("projects:sow_spk.col_doc_number"), value: d.doc_number },
+                                { label: t("projects:sow_spk.col_title"), value: d.title },
+                                { label: t("projects:sow_spk.col_signature_status"), value: signatureLabel },
+                                { label: language === "en" ? "Scope Summary" : "Ringkasan Ruang Lingkup", value: String(contentObj?.summary ?? "-") },
                               ],
                               onDownloadPdf: () => void onDownloadDocPdf(d),
                               onDownloadWord: () => void onDownloadDocWord(d),
@@ -247,7 +249,7 @@ export function SowSpkTab({
                       ) : (
                         <div className="flex justify-center items-center -my-1.5">
                           <DocumentDownloadMenu
-                            title={`Unduh ${d.doc_type} (PDF / Word)`}
+                            title={language === "en" ? `Download ${d.doc_type} (PDF / Word)` : `Unduh ${d.doc_type} (PDF / Word)`}
                             onDownloadPdf={() => onDownloadDocPdf(d)}
                             onDownloadWord={() => onDownloadDocWord(d)}
                           />

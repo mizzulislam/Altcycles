@@ -20,13 +20,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateID, formatRupiah, formatDateI18n } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 import {
   BAKP_STATUS_META,
   BAST_STATUS_META,
   RowEditActionButtons,
   SectionEditControls,
   UAT_CONCLUSION_META,
+  getBakpStatusMeta,
+  getUatConclusionMeta,
+  getBastStatusMeta,
   type EditableRecord,
   type SectionKey,
   type ViewDetailState,
@@ -91,6 +95,8 @@ export function AcceptanceDocsTab({
   onDownloadBastPdf,
   onDownloadBastWord,
 }: AcceptanceDocsTabProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="flex flex-col gap-5">
       {/* Card 4A: BAKP */}
@@ -98,10 +104,10 @@ export function AcceptanceDocsTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Berita Acara Kemajuan Pekerjaan / BAKP (Lampiran A.4)
+              {t("projects:acceptance.bakp_title")}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Syarat wajib sebelum menerbitkan Invoice Termin Progres.
+              {t("projects:acceptance.bakp_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -115,7 +121,7 @@ export function AcceptanceDocsTab({
                 setDeleteConfirm({
                   section: "bakp",
                   ids: getSelectedIds("bakp"),
-                  label: "dokumen BAKP terpilih",
+                  label: t("projects:acceptance.select_all_bakp"),
                 })
               }
             />
@@ -124,14 +130,14 @@ export function AcceptanceDocsTab({
               disabled={bundle.milestones.length === 0}
               title={
                 bundle.milestones.length === 0
-                  ? "Susun jadwal termin 100% pada tab Termin & Progres terlebih dahulu sebelum membuat BAKP"
-                  : "Buat Berita Acara Kemajuan Pekerjaan (Lampiran A.4)"
+                  ? t("projects:acceptance.btn_bakp_disabled_title")
+                  : t("projects:acceptance.btn_create_bakp")
               }
               onClick={openBakpDialog}
               className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
             >
               <PlusIcon data-icon="inline-start" />
-              Buat BAKP
+              {t("projects:acceptance.btn_create_bakp")}
             </Button>
           </div>
         </CardHeader>
@@ -158,17 +164,17 @@ export function AcceptanceDocsTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua BAKP"
+                        aria-label={t("projects:acceptance.select_all_bakp")}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. BAKP</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Capaian</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nilai Tagih</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_bakp_no")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_date")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_progress")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("projects:acceptance.col_billing_value")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:acceptance.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,18 +183,15 @@ export function AcceptanceDocsTab({
                   <TableCell colSpan={6 + (isSectionEditing("bakp") ? 1 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada BAKP"
-                        description="Terbitkan BAKP saat capaian termin siap ditagihkan."
+                        title={t("projects:acceptance.empty_bakp_title")}
+                        description={t("projects:acceptance.empty_bakp_desc")}
                       />
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 bundle.bakpList.map((b) => {
-                  const bakpStatus = BAKP_STATUS_META[b.status] ?? {
-                    label: b.status,
-                    tone: "warning" as SemanticTone,
-                  };
+                  const bakpStatus = getBakpStatusMeta(b.status, t);
                   const isChecked = getSelectedIds("bakp").includes(b.id);
                   return (
                     <TableRow key={b.id}>
@@ -208,7 +211,7 @@ export function AcceptanceDocsTab({
                         {b.bakp_number}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateID(b.bakp_date)}
+                        {formatDateI18n(b.bakp_date, language)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-medium whitespace-nowrap tabular-nums">
                         {b.cumulative_percentage}%
@@ -231,12 +234,12 @@ export function AcceptanceDocsTab({
                               setViewModal({
                                 title: `Rincian ${b.bakp_number}`,
                                 rows: [
-                                  { label: "Nomor BAKP", value: b.bakp_number },
-                                  { label: "Tanggal BAKP", value: formatDateID(b.bakp_date) },
-                                  { label: "Capaian Kumulatif", value: `${b.cumulative_percentage}%` },
-                                  { label: "Nilai Tagih Termin", value: formatRupiah(b.billable_amount) },
-                                  { label: "Catatan Pemeriksaan", value: b.findings_notes ?? "-" },
-                                  { label: "Status", value: bakpStatus.label },
+                                  { label: t("projects:acceptance.col_bakp_no"), value: b.bakp_number },
+                                  { label: t("projects:acceptance.col_date"), value: formatDateI18n(b.bakp_date, language) },
+                                  { label: t("projects:acceptance.col_progress"), value: `${b.cumulative_percentage}%` },
+                                  { label: t("projects:acceptance.col_billing_value"), value: formatRupiah(b.billable_amount) },
+                                  { label: language === "en" ? "Findings Notes" : "Catatan Pemeriksaan", value: b.findings_notes ?? "-" },
+                                  { label: t("projects:acceptance.col_status"), value: bakpStatus.label },
                                 ],
                                 onDownloadPdf: () => void onDownloadBakpPdf(b),
                                 onDownloadWord: () => void onDownloadBakpWord(b),
@@ -258,16 +261,16 @@ export function AcceptanceDocsTab({
                                 type="button"
                                 size="icon"
                                 variant="ghost"
-                                title="Setujui BAKP oleh Klien"
+                                title={language === "en" ? "Approve BAKP by Client" : "Setujui BAKP oleh Klien"}
                                 onClick={() => void onApproveBakpByClient(b.id)}
                                 className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                               >
                                 <CheckCircle2Icon className="size-4" />
-                                <span className="sr-only">Setujui Klien</span>
+                                <span className="sr-only">{language === "en" ? "Approve Client" : "Setujui Klien"}</span>
                               </Button>
                             ) : null}
                             <DocumentDownloadMenu
-                              title="Unduh BAKP (PDF / Word)"
+                              title={language === "en" ? "Download BAKP (PDF / Word)" : "Unduh BAKP (PDF / Word)"}
                               onDownloadPdf={() => onDownloadBakpPdf(b)}
                               onDownloadWord={() => onDownloadBakpWord(b)}
                             />
@@ -288,10 +291,10 @@ export function AcceptanceDocsTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Checklist Pengujian UAT (Lampiran A.7)
+              {t("projects:acceptance.uat_title")}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              UAT wajib dinyatakan Diterima sebelum BAST dapat diterbitkan.
+              {t("projects:acceptance.uat_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -305,7 +308,7 @@ export function AcceptanceDocsTab({
                 setDeleteConfirm({
                   section: "uat",
                   ids: getSelectedIds("uat"),
-                  label: "dokumen UAT terpilih",
+                  label: t("projects:acceptance.select_all_uat"),
                 })
               }
             />
@@ -315,7 +318,7 @@ export function AcceptanceDocsTab({
               className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
             >
               <PlusIcon data-icon="inline-start" />
-              Catat UAT
+              {t("projects:acceptance.btn_record_uat")}
             </Button>
           </div>
         </CardHeader>
@@ -342,16 +345,16 @@ export function AcceptanceDocsTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua UAT"
+                        aria-label={t("projects:acceptance.select_all_uat")}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. UAT</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Uji</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Penguji Klien</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Kesimpulan</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_uat_no")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_test_date")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_client_tester")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_conclusion")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:acceptance.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -360,18 +363,15 @@ export function AcceptanceDocsTab({
                   <TableCell colSpan={5 + (isSectionEditing("uat") ? 1 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada pengujian UAT"
-                        description="Rekam hasil skenario uji bersama klien sebelum serah terima akhir."
+                        title={t("projects:acceptance.empty_uat_title")}
+                        description={t("projects:acceptance.empty_uat_desc")}
                       />
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 bundle.uatList.map((u) => {
-                  const uatMeta = UAT_CONCLUSION_META[u.conclusion] ?? {
-                    label: u.conclusion,
-                    tone: "info" as SemanticTone,
-                  };
+                  const uatMeta = getUatConclusionMeta(u.conclusion, t);
                   const isChecked = getSelectedIds("uat").includes(u.id);
                   return (
                     <TableRow key={u.id}>
@@ -391,7 +391,7 @@ export function AcceptanceDocsTab({
                         {u.uat_number}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateID(u.test_date)}
+                        {formatDateI18n(u.test_date, language)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
                         {u.client_tester_name}
@@ -411,12 +411,12 @@ export function AcceptanceDocsTab({
                               setViewModal({
                                 title: `Rincian ${u.uat_number}`,
                                 rows: [
-                                  { label: "Nomor UAT", value: u.uat_number },
-                                  { label: "Tanggal Uji", value: formatDateID(u.test_date) },
-                                  { label: "Lingkungan Uji", value: u.staging_url ?? "-" },
-                                  { label: "Penguji Klien", value: u.client_tester_name },
-                                  { label: "Pendamping Altvira", value: u.altvira_companion_name },
-                                  { label: "Kesimpulan", value: uatMeta.label },
+                                  { label: t("projects:acceptance.col_uat_no"), value: u.uat_number },
+                                  { label: t("projects:acceptance.col_test_date"), value: formatDateI18n(u.test_date, language) },
+                                  { label: language === "en" ? "Testing Environment" : "Lingkungan Uji", value: u.staging_url ?? "-" },
+                                  { label: t("projects:acceptance.col_client_tester"), value: u.client_tester_name },
+                                  { label: language === "en" ? "Altvira Companion" : "Pendamping Altvira", value: u.altvira_companion_name },
+                                  { label: t("projects:acceptance.col_conclusion"), value: uatMeta.label },
                                 ],
                                 onDownloadPdf: () => void onDownloadUatPdf(u),
                                 onDownloadWord: () => void onDownloadUatWord(u),
@@ -434,7 +434,7 @@ export function AcceptanceDocsTab({
                         ) : (
                           <div className="flex justify-center items-center -my-1.5">
                             <DocumentDownloadMenu
-                              title="Unduh UAT (PDF / Word)"
+                              title={language === "en" ? "Download UAT (PDF / Word)" : "Unduh UAT (PDF / Word)"}
                               onDownloadPdf={() => onDownloadUatPdf(u)}
                               onDownloadWord={() => onDownloadUatWord(u)}
                             />
@@ -455,10 +455,10 @@ export function AcceptanceDocsTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Berita Acara Serah Terima / BAST (Lampiran A.8)
+              {language === "en" ? "Official Handover Certificate / BAST (Attachment A.8)" : "Berita Acara Serah Terima / BAST (Lampiran A.8)"}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Syarat wajib penerbitan Invoice Pelunasan Akhir.
+              {language === "en" ? "Mandatory requirement for issuing Final Settlement Invoice." : "Syarat wajib penerbitan Invoice Pelunasan Akhir."}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -472,7 +472,7 @@ export function AcceptanceDocsTab({
                 setDeleteConfirm({
                   section: "bast",
                   ids: getSelectedIds("bast"),
-                  label: "dokumen BAST terpilih",
+                  label: language === "en" ? "selected BAST documents" : "dokumen BAST terpilih",
                 })
               }
             />
@@ -491,14 +491,14 @@ export function AcceptanceDocsTab({
                     u.conclusion === "accepted" ||
                     u.conclusion === "accepted_with_notes",
                 )
-                  ? "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)"
-                  : "Terbitkan BAST (Lampiran A.8)"
+                  ? (language === "en" ? "Ensure UAT is Accepted to issue BAST (FR-PK8)" : "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)")
+                  : (language === "en" ? "Issue BAST (Attachment A.8)" : "Terbitkan BAST (Lampiran A.8)")
               }
               onClick={openBastDialog}
               className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
             >
               <PlusIcon data-icon="inline-start" />
-              Terbitkan BAST
+              {language === "en" ? "Issue BAST" : "Terbitkan BAST"}
             </Button>
           </div>
         </CardHeader>
@@ -525,16 +525,16 @@ export function AcceptanceDocsTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua BAST"
+                        aria-label={language === "en" ? "Select all BAST" : "Pilih semua BAST"}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">No. BAST</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Tanggal Serah Terima</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Garansi Pemeliharaan</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{language === "en" ? "BAST No." : "No. BAST"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{language === "en" ? "Handover Date" : "Tanggal Serah Terima"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{language === "en" ? "Warranty Period" : "Garansi Pemeliharaan"}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects:acceptance.col_status")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("projects:acceptance.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -543,18 +543,15 @@ export function AcceptanceDocsTab({
                   <TableCell colSpan={5 + (isSectionEditing("bast") ? 1 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada BAST"
-                        description="Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST."
+                        title={language === "en" ? "No BAST Documents Yet" : "Belum ada BAST"}
+                        description={language === "en" ? "Ensure UAT is Accepted to issue official handover certificate." : "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST."}
                       />
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 bundle.bastList.map((h) => {
-                  const bastStatus = BAST_STATUS_META[h.status] ?? {
-                    label: h.status,
-                    tone: "warning" as SemanticTone,
-                  };
+                  const bastStatus = getBastStatusMeta(h.status ?? "signed", t);
                   const isChecked = getSelectedIds("bast").includes(h.id);
                   return (
                     <TableRow key={h.id}>
@@ -574,6 +571,66 @@ export function AcceptanceDocsTab({
                         {h.bast_number}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
+                        {formatDateI18n(h.handover_date, language)}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
+                        {h.warranty_period_months} {language === "en" ? "Months" : "Bulan"}
+                      </TableCell>
+                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center min-h-5 -my-px">
+                          <StatusBadge
+                            tone={bastStatus.tone}
+                            label={bastStatus.label}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                        {isSectionEditing("bast") ? (
+                          <RowEditActionButtons
+                            onView={() =>
+                              setViewModal({
+                                title: `Rincian ${h.bast_number}`,
+                                rows: [
+                                  { label: language === "en" ? "BAST No." : "Nomor BAST", value: h.bast_number },
+                                  { label: language === "en" ? "Handover Date" : "Tanggal Serah Terima", value: formatDateI18n(h.handover_date, language) },
+                                  { label: language === "en" ? "Warranty Period" : "Masa Garansi", value: `${h.warranty_period_months} ${language === "en" ? "Months" : "Bulan"}` },
+                                  { label: language === "en" ? "Project Deliverables" : "Pekerjaan Diserahterimakan", value: h.deliverables_summary ?? "-" },
+                                  { label: t("projects:acceptance.col_status"), value: bastStatus.label },
+                                ],
+                                onDownloadPdf: () => void onDownloadBastPdf(h),
+                                onDownloadWord: () => void onDownloadBastWord(h),
+                              })
+                            }
+                            onEdit={() => setEditRecord({ section: "bast", item: { ...h } })}
+                            onDelete={() =>
+                              setDeleteConfirm({
+                                section: "bast",
+                                ids: [h.id],
+                                label: h.bast_number,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center -my-1.5">
+                            <DocumentDownloadMenu
+                              title={language === "en" ? "Download BAST (PDF / Word)" : "Unduh BAST (PDF / Word)"}
+                              onDownloadPdf={() => onDownloadBastPdf(h)}
+                              onDownloadWord={() => onDownloadBastWord(h)}
+                            />
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
                         {formatDateID(h.bast_date)}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap tabular-nums">

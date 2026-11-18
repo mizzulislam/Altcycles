@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { useLanguage } from "@/lib/i18n";
 
 export interface ViewModalState {
   title: string;
@@ -25,6 +26,8 @@ export function InvoiceViewDetailDialog({
   viewModal,
   onClose,
 }: InvoiceViewDetailDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog
       open={Boolean(viewModal)}
@@ -34,7 +37,7 @@ export function InvoiceViewDetailDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{viewModal?.title ?? "Rincian Data"}</DialogTitle>
+          <DialogTitle>{viewModal?.title ?? t("common:action.view", "Rincian Data")}</DialogTitle>
         </DialogHeader>
         {viewModal ? (
           <div className="space-y-4">
@@ -65,13 +68,13 @@ export function InvoiceViewDetailDialog({
                 onClick={onClose}
                 className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
               >
-                Tutup
+                {t("common:action.close", "Tutup")}
               </Button>
               {viewModal.onDownloadPdf && viewModal.onDownloadWord ? (
                 <DocumentDownloadMenu
                   variant="button"
-                  label="Unduh / Ekspor"
-                  title={`Unduh ${viewModal.title} (PDF / Word)`}
+                  label={t("common:action.export_download", "Unduh / Ekspor")}
+                  title={`${t("common:action.download", "Unduh")} ${viewModal.title} (PDF / Word)`}
                   onDownloadPdf={viewModal.onDownloadPdf}
                   onDownloadWord={viewModal.onDownloadWord}
                 />

@@ -20,7 +20,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatRupiah } from "@/lib/formatters";
+import { getLocalizedMilestoneName, getLocalizedAchievementCriteria } from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import {
   MILESTONE_STATUS_META,
   RowEditActionButtons,
@@ -74,6 +76,8 @@ export function MilestonesTab({
   openMilestonesEditor,
   openRecordProgressDialog,
 }: MilestonesTabProps) {
+  const { t, language } = useLanguage();
+
   return (
     <div className="flex flex-col gap-5">
       {/* Card 1A: Jadwal Termin Penagihan */}
@@ -81,16 +85,16 @@ export function MilestonesTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Jadwal Termin Penagihan (Total 100%)
+              {t("projects:milestones.card_title")}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Atur porsi dan jadwal termin penagihan hingga tepat 100%.
+              {t("projects:milestones.card_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {bundle.milestones.length > 0 && (
               <ExportDownloadMenu
-                label="Unduh / Ekspor"
+                label={t("common:action.export_download")}
                 onExportExcel={onExportMilestonesExcel}
                 onExportPdf={onExportMilestonesPdf}
                 onExportCsv={onExportMilestonesCsv}
@@ -106,7 +110,7 @@ export function MilestonesTab({
                 setDeleteConfirm({
                   section: "milestones",
                   ids: getSelectedIds("milestones"),
-                  label: "termin terpilih",
+                  label: t("projects:milestones.delete_confirm_label"),
                 })
               }
             />
@@ -124,10 +128,10 @@ export function MilestonesTab({
                   disabled={isResetDisabled}
                   title={
                     isResetDisabled
-                      ? "Jadwal termin tidak dapat disusun ulang karena sebagian termin sudah dipakai di BAKP atau Invoice. Gunakan tombol Edit untuk mengubah rincian baris yang tersedia."
+                      ? t("projects:milestones.btn_reset_disabled_title")
                       : bundle.milestones.length > 0
-                        ? "Susun ulang seluruh struktur termin penagihan hingga tetap tepat 100%"
-                        : "Susun jadwal termin penagihan hingga tepat 100%"
+                        ? t("projects:milestones.btn_reset")
+                        : t("projects:milestones.btn_setup")
                   }
                   onClick={openMilestonesEditor}
                   className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
@@ -138,8 +142,8 @@ export function MilestonesTab({
                     <PlusIcon data-icon="inline-start" />
                   )}
                   {bundle.milestones.length > 0
-                    ? "Atur Ulang Termin"
-                    : "Susun Termin 100%"}
+                    ? t("projects:milestones.btn_reset")
+                    : t("projects:milestones.btn_setup")}
                 </Button>
               );
             })()}
@@ -168,19 +172,33 @@ export function MilestonesTab({
                             checked,
                           )
                         }
-                        aria-label="Pilih semua termin"
+                        aria-label={t("projects:milestones.select_all")}
                       />
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap w-16">No.</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Nama Termin</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Porsi (%)</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nominal</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Kriteria Pencapaian</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status</TableHead>
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap w-16">
+                  {t("projects:milestones.col_no")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_name")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_ratio")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">
+                  {t("projects:milestones.col_amount")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_criteria")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("common:table.status")}
+                </TableHead>
                 {isSectionEditing("milestones") && (
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                    {t("common:table.actions")}
+                  </TableHead>
                 )}
               </TableRow>
             </TableHeader>
@@ -190,8 +208,8 @@ export function MilestonesTab({
                   <TableCell colSpan={6 + (isSectionEditing("milestones") ? 2 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Jadwal termin belum disusun"
-                        description="Klik tombol Susun Termin 100% untuk menetapkan DP, termin progres, dan pelunasan."
+                        title={t("projects:milestones.empty_title", "Jadwal termin belum disusun")}
+                        description={t("projects:milestones.empty_desc", "Klik tombol Susun Termin 100% untuk menetapkan DP, termin progres, dan pelunasan.")}
                       />
                     </div>
                   </TableCell>
@@ -202,7 +220,11 @@ export function MilestonesTab({
                     label: m.status,
                     tone: "info" as SemanticTone,
                   };
+                  const statusLabel = t(`projects:status.${m.status}`, msStatus.label);
                   const isChecked = getSelectedIds("milestones").includes(m.id);
+                  const localizedName = getLocalizedMilestoneName(m.name, language);
+                  const localizedCriteria = getLocalizedAchievementCriteria(m.achievement_criteria, language);
+
                   return (
                     <TableRow key={m.id}>
                       {isSectionEditing("milestones") && (
@@ -213,7 +235,7 @@ export function MilestonesTab({
                               toggleRowSelection("milestones", m.id, checked)
                             }
                             className="mt-0.5"
-                            aria-label={`Pilih ${m.name}`}
+                            aria-label={`Pilih ${localizedName}`}
                           />
                         </TableCell>
                       )}
@@ -221,7 +243,7 @@ export function MilestonesTab({
                         {m.sequence_no}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
-                        {m.name}
+                        {localizedName}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap tabular-nums">
                         {m.percentage}%
@@ -230,13 +252,13 @@ export function MilestonesTab({
                         <MonetaryCell amount={m.amount} />
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-muted-foreground">
-                        {m.achievement_criteria ?? "-"}
+                        {localizedCriteria}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={msStatus.tone}
-                            label={msStatus.label}
+                            label={statusLabel}
                           />
                         </div>
                       </TableCell>
@@ -245,14 +267,14 @@ export function MilestonesTab({
                           <RowEditActionButtons
                             onView={() =>
                               setViewModal({
-                                title: `Rincian ${m.name}`,
+                                title: `Rincian ${localizedName}`,
                                 rows: [
-                                  { label: "Urutan", value: `#${m.sequence_no}` },
-                                  { label: "Nama Termin", value: m.name },
-                                  { label: "Porsi Persentase", value: `${m.percentage}%` },
-                                  { label: "Nominal Tagihan", value: formatRupiah(m.amount) },
-                                  { label: "Kriteria Pencapaian", value: m.achievement_criteria ?? "-" },
-                                  { label: "Status", value: msStatus.label },
+                                  { label: t("projects:milestones.col_no"), value: `#${m.sequence_no}` },
+                                  { label: t("projects:milestones.col_name"), value: localizedName },
+                                  { label: t("projects:milestones.col_ratio"), value: `${m.percentage}%` },
+                                  { label: t("projects:milestones.col_amount"), value: formatRupiah(m.amount) },
+                                  { label: t("projects:milestones.col_criteria"), value: localizedCriteria },
+                                  { label: t("common:table.status"), value: statusLabel },
                                 ],
                               })
                             }
@@ -261,7 +283,7 @@ export function MilestonesTab({
                               setDeleteConfirm({
                                 section: "milestones",
                                 ids: [m.id],
-                                label: m.name,
+                                label: localizedName,
                               })
                             }
                           />
@@ -281,10 +303,10 @@ export function MilestonesTab({
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
-              Pengakuan Pendapatan &amp; Persentase Penyelesaian Akhir Periode
+              {t("projects:milestones.progress_card_title")}
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              Catat progres kumulatif akhir periode untuk pengakuan pendapatan otomatis.
+              {t("projects:milestones.progress_card_desc")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -308,7 +330,7 @@ export function MilestonesTab({
               className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
             >
               <PlusIcon data-icon="inline-start" />
-              Catat Progres Penyelesaian
+              {t("projects:milestones.btn_record_progress")}
             </Button>
           </div>
         </CardHeader>
@@ -340,12 +362,22 @@ export function MilestonesTab({
                     </div>
                   </TableHead>
                 )}
-                <TableHead className="pl-6 pr-3 w-1/4 text-center font-semibold whitespace-nowrap">Tanggal Pengakuan</TableHead>
-                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">Progres Kumulatif</TableHead>
-                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">Pendapatan Periode Ini</TableHead>
-                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">Pendapatan Kumulatif</TableHead>
+                <TableHead className="pl-6 pr-3 w-1/4 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_progress_date")}
+                </TableHead>
+                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_progress_cumulative")}
+                </TableHead>
+                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_progress_period_rev")}
+                </TableHead>
+                <TableHead className="px-3 w-1/4 text-center font-semibold whitespace-nowrap">
+                  {t("projects:milestones.col_progress_cumulative_rev")}
+                </TableHead>
                 {isSectionEditing("progress") && (
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                    {t("common:table.actions")}
+                  </TableHead>
                 )}
               </TableRow>
             </TableHeader>
@@ -355,8 +387,8 @@ export function MilestonesTab({
                   <TableCell colSpan={4 + (isSectionEditing("progress") ? 2 : 0)} className="p-0">
                     <div className="py-10 px-6 bg-muted/10 border-t border-dashed border-border/70">
                       <EmptyState
-                        title="Belum ada pencatatan progres penyelesaian"
-                        description="Catat progres pada akhir periode buku untuk mengakui pendapatan akrual sesuai capaian proyek."
+                        title={t("projects:milestones.empty_progress_title")}
+                        description={t("projects:milestones.empty_progress_desc")}
                       />
                     </div>
                   </TableCell>
@@ -364,6 +396,7 @@ export function MilestonesTab({
               ) : (
                 bundle.progressEntries.map((pe) => {
                   const isChecked = getSelectedIds("progress").includes(pe.id);
+                  const formattedDate = formatDateI18n(pe.progress_date, language);
                   return (
                     <TableRow key={pe.id}>
                       {isSectionEditing("progress") && (
@@ -374,12 +407,12 @@ export function MilestonesTab({
                               toggleRowSelection("progress", pe.id, checked)
                             }
                             className="mt-0.5"
-                            aria-label={`Pilih progres ${formatDateID(pe.progress_date)}`}
+                            aria-label={`Pilih progres ${formattedDate}`}
                           />
                         </TableCell>
                       )}
                       <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateID(pe.progress_date)}
+                        {formattedDate}
                       </TableCell>
                       <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap tabular-nums">
                         {pe.cumulative_percentage}%
@@ -402,12 +435,12 @@ export function MilestonesTab({
                             onView={() =>
                               setViewModal({
                                 title: "Rincian Pengakuan Pendapatan",
-                                subtitle: `Tanggal ${formatDateID(pe.progress_date)}`,
+                                subtitle: `Tanggal ${formattedDate}`,
                                 rows: [
-                                  { label: "Tanggal Pengakuan", value: formatDateID(pe.progress_date) },
-                                  { label: "Progres Kumulatif", value: `${pe.cumulative_percentage}%` },
-                                  { label: "Pendapatan Periode Ini", value: formatRupiah(pe.period_recognized_revenue) },
-                                  { label: "Pendapatan Kumulatif", value: formatRupiah(pe.cumulative_recognized_revenue) },
+                                  { label: t("projects:milestones.col_progress_date"), value: formattedDate },
+                                  { label: t("projects:milestones.col_progress_cumulative"), value: `${pe.cumulative_percentage}%` },
+                                  { label: t("projects:milestones.col_progress_period_rev"), value: formatRupiah(pe.period_recognized_revenue) },
+                                  { label: t("projects:milestones.col_progress_cumulative_rev"), value: formatRupiah(pe.cumulative_recognized_revenue) },
                                 ],
                               })
                             }
@@ -416,7 +449,7 @@ export function MilestonesTab({
                               setDeleteConfirm({
                                 section: "progress",
                                 ids: [pe.id],
-                                label: `progres ${formatDateID(pe.progress_date)}`,
+                                label: `progres ${formattedDate}`,
                               })
                             }
                           />

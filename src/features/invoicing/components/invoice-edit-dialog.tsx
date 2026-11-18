@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/lib/i18n";
 import type {
   InvoicePaymentStatus,
   ReceiptRow,
@@ -44,6 +45,8 @@ export function InvoiceEditDialog({
   savingEditRecord,
   onSubmit,
 }: InvoiceEditDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog
       open={Boolean(editRecord)}
@@ -55,10 +58,10 @@ export function InvoiceEditDialog({
         <DialogHeader>
           <DialogTitle>
             {editRecord?.section === "invoices"
-              ? `Edit Invoice ${editRecord.item.invoice_number}`
+              ? `${t("common:action.edit", "Ubah")} Invoice ${editRecord.item.invoice_number}`
               : editRecord?.section === "receipts"
-                ? `Edit Kuitansi ${editRecord.item.receipt_number}`
-                : "Edit Data"}
+                ? `${t("common:action.edit", "Ubah")} Kuitansi ${editRecord.item.receipt_number}`
+                : t("common:action.edit", "Ubah Data")}
           </DialogTitle>
         </DialogHeader>
         {editRecord ? (
@@ -68,7 +71,7 @@ export function InvoiceEditDialog({
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel required>Tanggal Invoice</FieldLabel>
+                      <FieldLabel required>{t("invoicing:modal_create.field_invoice_date", "Tanggal Invoice")}</FieldLabel>
                       <DatePicker
                         required
                         value={editRecord.item.invoice_date}
@@ -81,7 +84,7 @@ export function InvoiceEditDialog({
                       />
                     </Field>
                     <Field>
-                      <FieldLabel required>Tanggal Jatuh Tempo</FieldLabel>
+                      <FieldLabel required>{t("invoicing:modal_create.field_due_date", "Tanggal Jatuh Tempo")}</FieldLabel>
                       <DatePicker
                         required
                         minDate={editRecord.item.invoice_date}
@@ -97,7 +100,7 @@ export function InvoiceEditDialog({
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel required>Nominal Subtotal (Rp)</FieldLabel>
+                      <FieldLabel required>{t("invoicing:modal_create.field_subtotal", "Nominal Subtotal (Rp)")}</FieldLabel>
                       <NumberInput
                         allowDecimal={false}
                         min={1}
@@ -115,7 +118,7 @@ export function InvoiceEditDialog({
                       />
                     </Field>
                     <Field>
-                      <FieldLabel required>Status Pembayaran</FieldLabel>
+                      <FieldLabel required>{t("invoicing:table.col_status", "Status Pembayaran")}</FieldLabel>
                       <Select
                         value={editRecord.item.payment_status}
                         onValueChange={(v) =>
@@ -133,16 +136,16 @@ export function InvoiceEditDialog({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="unpaid">Belum Dibayar</SelectItem>
-                            <SelectItem value="partial">Dibayar Sebagian</SelectItem>
-                            <SelectItem value="paid">Lunas</SelectItem>
+                            <SelectItem value="unpaid">{t("invoicing:status.unpaid", "Belum Dibayar")}</SelectItem>
+                            <SelectItem value="partial">{t("invoicing:status.partially_paid", "Dibayar Sebagian")}</SelectItem>
+                            <SelectItem value="paid">{t("invoicing:status.paid", "Lunas")}</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
                     </Field>
                   </div>
                   <Field>
-                    <FieldLabel>Catatan Invoice</FieldLabel>
+                    <FieldLabel>{t("invoicing:modal_create.field_notes", "Catatan Invoice")}</FieldLabel>
                     <Textarea
                       value={editRecord.item.notes ?? ""}
                       onChange={(e) =>
@@ -163,7 +166,7 @@ export function InvoiceEditDialog({
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel required>Tanggal Terima</FieldLabel>
+                      <FieldLabel required>{t("invoicing:receipts.col_payment_date", "Tanggal Terima")}</FieldLabel>
                       <DatePicker
                         required
                         value={editRecord.item.receipt_date}
@@ -176,7 +179,7 @@ export function InvoiceEditDialog({
                       />
                     </Field>
                     <Field>
-                      <FieldLabel required>Jumlah Diterima (Rp)</FieldLabel>
+                      <FieldLabel required>{t("invoicing:receipts.col_amount", "Jumlah Diterima (Rp)")}</FieldLabel>
                       <NumberInput
                         allowDecimal={false}
                         min={1}
@@ -195,7 +198,7 @@ export function InvoiceEditDialog({
                     </Field>
                   </div>
                   <Field>
-                    <FieldLabel required>Diterima Dari</FieldLabel>
+                    <FieldLabel required>{t("invoicing:receipts.col_client", "Diterima Dari")}</FieldLabel>
                     <Input
                       required
                       value={editRecord.item.received_from}
@@ -220,11 +223,11 @@ export function InvoiceEditDialog({
                   onClick={() => setEditRecord(null)}
                   className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
                 >
-                  Batal
+                  {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button type="submit" disabled={savingEditRecord} className="cursor-pointer">
                   {savingEditRecord ? <Spinner data-icon="inline-start" /> : null}
-                  Simpan Perubahan
+                  {t("common:action.save", "Simpan Perubahan")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

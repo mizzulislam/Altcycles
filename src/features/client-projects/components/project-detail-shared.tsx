@@ -1,5 +1,6 @@
 import { EyeIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 import type { SemanticTone } from "@/components/shared/status-badge";
 import type {
   ClientPurchaseOrderRow,
@@ -29,6 +30,14 @@ export const MILESTONE_STATUS_META: Record<string, { label: string; tone: Semant
   paid: { label: "Lunas", tone: "success" },
 };
 
+export function getMilestoneStatusMeta(status: string, t: (k: string, fb?: string) => string) {
+  const meta = MILESTONE_STATUS_META[status];
+  return {
+    label: t(`projects:status.${status}`, meta?.label ?? status),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
+
 export const QUOTATION_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
   draft: { label: "Draf", tone: "secondary" },
   sent: { label: "Terkirim", tone: "info" },
@@ -37,17 +46,41 @@ export const QUOTATION_STATUS_META: Record<string, { label: string; tone: Semant
   expired: { label: "Kedaluwarsa", tone: "secondary" },
 };
 
+export function getQuotationStatusMeta(status: string, t: (k: string, fb?: string) => string) {
+  const meta = QUOTATION_STATUS_META[status];
+  return {
+    label: t(`projects:status.${status}`, meta?.label ?? status),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
+
 export const CPO_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
   pending_verification: { label: "Menunggu Verifikasi", tone: "warning" },
   verified: { label: "Terverifikasi", tone: "success" },
   rejected: { label: "Ditolak", tone: "destructive" },
 };
 
+export function getCpoStatusMeta(status: string, t: (k: string, fb?: string) => string) {
+  const meta = CPO_STATUS_META[status];
+  return {
+    label: t(`projects:status.${status}`, meta?.label ?? status),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
+
 export const BAKP_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
   draft: { label: "Draf", tone: "secondary" },
   submitted_to_client: { label: "Diajukan ke Klien", tone: "warning" },
   approved_by_client: { label: "Disetujui Klien", tone: "success" },
 };
+
+export function getBakpStatusMeta(status: string, t: (k: string, fb?: string) => string) {
+  const meta = BAKP_STATUS_META[status];
+  return {
+    label: t(`projects:status.${status}`, meta?.label ?? status),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
 
 export const UAT_CONCLUSION_META: Record<string, { label: string; tone: SemanticTone }> = {
   pending: { label: "Menunggu Hasil", tone: "warning" },
@@ -56,10 +89,26 @@ export const UAT_CONCLUSION_META: Record<string, { label: string; tone: Semantic
   rejected: { label: "Ditolak / Revisi", tone: "destructive" },
 };
 
+export function getUatConclusionMeta(conclusion: string, t: (k: string, fb?: string) => string) {
+  const meta = UAT_CONCLUSION_META[conclusion];
+  return {
+    label: t(`projects:status.${conclusion}`, meta?.label ?? conclusion),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
+
 export const BAST_STATUS_META: Record<string, { label: string; tone: SemanticTone }> = {
   draft: { label: "Draf", tone: "secondary" },
   signed: { label: "Ditandatangani", tone: "success" },
 };
+
+export function getBastStatusMeta(status: string, t: (k: string, fb?: string) => string) {
+  const meta = BAST_STATUS_META[status];
+  return {
+    label: t(`projects:status.${status}`, meta?.label ?? status),
+    tone: meta?.tone ?? ("info" as SemanticTone),
+  };
+}
 
 export type SectionKey =
   | "milestones"
@@ -104,6 +153,7 @@ export function SectionEditControls({
   onCancelEdit: () => void;
   onDeleteSelected: () => void;
 }) {
+  const { t } = useLanguage();
   if (!hasItems) {
     return null;
   }
@@ -118,7 +168,7 @@ export function SectionEditControls({
         className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
       >
         <PencilIcon className="size-3.5" />
-        <span>Edit</span>
+        <span>{t("common:action.edit", "Edit")}</span>
       </Button>
     );
   }
@@ -132,7 +182,7 @@ export function SectionEditControls({
         onClick={onCancelEdit}
         className="h-9 rounded-xl text-xs font-medium cursor-pointer"
       >
-        Batal
+        {t("common:action.cancel", "Batal")}
       </Button>
       <Button
         type="button"
@@ -142,7 +192,7 @@ export function SectionEditControls({
         disabled={selectedCount === 0}
         className="h-9 rounded-xl text-xs font-medium cursor-pointer"
       >
-        Hapus Pilihan ({selectedCount})
+        {t("common:action.delete_selected", "Hapus Pilihan")} ({selectedCount})
       </Button>
     </div>
   );
@@ -157,6 +207,7 @@ export function RowEditActionButtons({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center justify-center gap-1 -my-1.5">
       <Button
@@ -165,11 +216,11 @@ export function RowEditActionButtons({
         size="icon"
         onClick={onView}
         className="size-8 rounded-lg text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-500/10"
-        title="Lihat rincian"
-        aria-label="Lihat rincian"
+        title={t("common:action.view", "Lihat rincian")}
+        aria-label={t("common:action.view", "Lihat rincian")}
       >
         <EyeIcon className="size-4" />
-        <span className="sr-only">Lihat rincian</span>
+        <span className="sr-only">{t("common:action.view", "Lihat rincian")}</span>
       </Button>
       <Button
         type="button"
@@ -177,11 +228,11 @@ export function RowEditActionButtons({
         size="icon"
         onClick={onEdit}
         className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10"
-        title="Edit data"
-        aria-label="Edit data"
+        title={t("common:action.edit", "Edit data")}
+        aria-label={t("common:action.edit", "Edit data")}
       >
         <PencilIcon className="size-4" />
-        <span className="sr-only">Edit data</span>
+        <span className="sr-only">{t("common:action.edit", "Edit data")}</span>
       </Button>
       <Button
         type="button"
@@ -189,11 +240,11 @@ export function RowEditActionButtons({
         size="icon"
         onClick={onDelete}
         className="size-8 rounded-lg text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-500/10"
-        title="Hapus data"
-        aria-label="Hapus data"
+        title={t("common:action.delete", "Hapus data")}
+        aria-label={t("common:action.delete", "Hapus data")}
       >
         <Trash2Icon className="size-4" />
-        <span className="sr-only">Hapus data</span>
+        <span className="sr-only">{t("common:action.delete", "Hapus data")}</span>
       </Button>
     </div>
   );
