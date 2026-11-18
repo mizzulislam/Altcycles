@@ -336,6 +336,32 @@ export function getLocalizedAccountType(
 }
 
 /**
+ * Menerjemahkan metode pengakuan pendapatan
+ */
+export function getLocalizedRevenueMethod(
+  method: string | null | undefined,
+  lang: "id" | "en",
+): string {
+  if (!method) return "-";
+  if (method === "single_term_deferral") {
+    return lang === "en"
+      ? "Single Term (Unearned Revenue Deferral)"
+      : "Satu Termin (Deferral Pendapatan Diterima di Muka)";
+  }
+  if (method === "two_term_accrual") {
+    return lang === "en"
+      ? "Two Terms (Year-End Accrual + Optional Reversing)"
+      : "Dua Termin (Akrual Akhir Tahun + Pembalik Opsional)";
+  }
+  if (method === "progress_billing") {
+    return lang === "en"
+      ? "Progress Billing (≥ 3 Terms: In-Progress Services & Contract Billing)"
+      : "Progress Billing (≥ 3 Termin: Jasa dalam Proses & Penagihan Kontrak)";
+  }
+  return method;
+}
+
+/**
  * Menerjemahkan saldo normal
  */
 export function getLocalizedNormalBalance(

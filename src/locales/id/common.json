@@ -31,6 +31,7 @@
     "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan"
   },
   "loading": "Memuat data...",
+  "empty": "Tidak ada data yang tersedia",
   "error": "Terjadi kesalahan",
   "time": {
     "days": "Hari"
@@ -93,6 +94,7 @@
     "amount": "Nominal",
     "total": "Total",
     "loading": "Memuat data...",
+  "empty": "Tidak ada data yang tersedia",
     "empty": "Tidak ada data yang tersedia",
     "rows_per_page": "Jumlah baris per halaman",
     "pagination_info": "{{start}}–{{end}} dari {{total}}",

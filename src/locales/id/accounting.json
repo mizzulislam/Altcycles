@@ -262,6 +262,8 @@
     "status_filter": "Status Filter",
     "active": "Aktif:",
     "period_active": "Aktif",
-    "period_closed": "Tutup"
+    "period_closed": "Tutup",
+    "start": "Awal",
+    "end": "Akhir"
   }
 }

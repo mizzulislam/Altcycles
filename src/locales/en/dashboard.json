@@ -96,6 +96,13 @@
     "sample_count": "Sample Count",
     "average_amount": "Average Amount",
     "median_amount": "Median Amount",
+    "chart_contract_vs_billed_title": "Contract vs Billed Comparison",
+    "chart_ar_aging_title": "AR Aging Distribution Pie Chart",
+    "chart_bubble_contract_billed_title": "Contract vs Billed Bubble Chart",
+    "chart_histogram_desc": "Histogram distribution of all posted journal transaction amounts.",
+    "chart_histogram_title": "Journal Amount Distribution Histogram",
+    "unit_journals": "Journals",
+    "loading": "Loading financial & accounting dashboard...",
     "types": {
       "column": "Column",
       "bar": "Bar",

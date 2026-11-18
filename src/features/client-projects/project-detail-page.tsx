@@ -742,7 +742,7 @@ export function ProjectDetailPage() {
     return (
       <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat ruang kerja proyek klien...</span>
+        <span>{t("projects:loading_workspace")}</span>
       </div>
     );
   }
@@ -750,8 +750,8 @@ export function ProjectDetailPage() {
   if (!project || !bundle) {
     return (
       <EmptyState
-        title="Proyek tidak ditemukan"
-        description="Kembali ke daftar Master Proyek untuk memilih proyek yang valid."
+        title={t("projects:not_found_title")}
+        description={t("projects:not_found_desc")}
       />
     );
   }

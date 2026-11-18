@@ -135,5 +135,24 @@
     "unpaid": "Unpaid",
     "overdue": "Overdue",
     "cancelled": "Cancelled"
+  },
+  "export": {
+    "excel_filename": "Invoices_and_Receivables_Altcycles.xlsx",
+    "excel_sheet": "Sales Invoices",
+    "toast_excel_success": "Invoices and receivables exported to Excel (.xlsx) successfully.",
+    "pdf_filename": "Invoices_and_Receivables_Altcycles.pdf",
+    "pdf_title": "INVOICES & RECEIVABLES LIST",
+    "pdf_subtitle": "Total Invoiced: {{invoiced}} | Outstanding: {{outstanding}}",
+    "csv_filename": "Invoices_and_Receivables_Altcycles.csv",
+    "toast_csv_success": "Invoices and receivables exported to CSV (.csv) successfully.",
+    "col_invoice_no": "Invoice No.",
+    "col_issue_date": "Issue Date",
+    "col_due_date": "Due Date",
+    "col_project": "Project",
+    "col_customer": "Customer",
+    "col_total_amount": "Total Amount",
+    "col_paid_amount": "Paid Amount",
+    "col_outstanding": "Outstanding Balance",
+    "col_payment_status": "Payment Status"
   }
 }

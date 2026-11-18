@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useLanguage, getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
+import { getLocalizedRevenueMethod } from "@/lib/glossary";
 import { useSidebarCollapsed } from "@/components/layout/portal-shell";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -72,11 +73,9 @@ import {
 } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
-  formatDateID,
   formatDateI18n,
   formatRupiah,
   inferRevenueMethodFromTerms,
-  REVENUE_METHOD_LABELS,
 } from "@/lib/formatters";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
@@ -102,7 +101,6 @@ const PROJECT_STATUS_META: Record<
 
 export function ProjectsPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const isSidebarCollapsed = useSidebarCollapsed();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [members, setMembers] = React.useState<ProjectMemberRow[]>([]);
@@ -239,87 +237,62 @@ export function ProjectsPage() {
   }, [projects, statusFilter, search]);
 
   async function handleExportExcel() {
-    const isEn = getActiveLanguage() === "en";
     await downloadExcelSheet({
-      fileName: isEn ? "Altvira_Projects_Master_Altcycles.xlsx" : "Daftar_Proyek_Altvira_Altcycles.xlsx",
-      sheetName: isEn ? "Projects List" : "Daftar Proyek",
-      columns: isEn
-        ? [
-            { header: "Code", width: 18 },
-            { header: "Project Name", width: 36 },
-            { header: "Start Date", width: 14 },
-            { header: "Target Completion", width: 14 },
-            { header: "Contract Value (IDR)", width: 20 },
-            { header: "Milestones", width: 14 },
-            { header: "Revenue Method", width: 32 },
-            { header: "Team Members", width: 14 },
-            { header: "Status", width: 14 },
-          ]
-        : [
-            { header: "Kode", width: 18 },
-            { header: "Nama Proyek", width: 36 },
-            { header: "Tanggal Mulai", width: 14 },
-            { header: "Target Selesai", width: 14 },
-            { header: "Nilai Kontrak (Rp)", width: 20 },
-            { header: "Jumlah Termin", width: 14 },
-            { header: "Metode Pengakuan", width: 32 },
-            { header: "Anggota Tim", width: 14 },
-            { header: "Status", width: 14 },
-          ],
+      fileName: t("projects:export.excel_filename"),
+      sheetName: t("projects:export.excel_sheet"),
+      columns: [
+        { header: t("projects:col_code"), width: 18 },
+        { header: t("projects:col_name"), width: 36 },
+        { header: t("projects:modal.field_start_date"), width: 14 },
+        { header: t("projects:modal.field_end_date"), width: 14 },
+        { header: t("projects:modal.field_contract_value"), width: 20 },
+        { header: t("projects:col_milestones"), width: 14 },
+        { header: t("projects:modal.field_revenue_method"), width: 32 },
+        { header: t("projects:col_team"), width: 14 },
+        { header: t("projects:col_status"), width: 14 },
+      ],
       rows: filteredProjects.map((p) => {
         const countMembers = members.filter((m) => m.project_id === p.id).length;
-        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
+        const statusLabel = t(`projects:status.${p.status}`, PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
-          formatDateID(p.start_date),
-          formatDateID(p.target_end_date),
+          formatDateI18n(p.start_date, language),
+          formatDateI18n(p.target_end_date, language),
           p.contract_value,
           p.term_count,
-          REVENUE_METHOD_LABELS[p.revenue_method],
-          isEn ? `${countMembers} Members` : `${countMembers} Anggota`,
+          getLocalizedRevenueMethod(p.revenue_method, language),
+          `${countMembers} ${t("projects:members_count")}`,
           statusLabel,
         ];
       }),
     });
     await recordExportLog("PROJECTS_MASTER", "EXCEL");
-    toast.success(isEn ? "Projects list successfully exported to Excel (.xlsx)." : "Daftar proyek berhasil diekspor ke Excel (.xlsx).");
+    toast.success(t("projects:export.toast_excel_success"));
   }
 
   async function handleExportPdf() {
-    const isEn = getActiveLanguage() === "en";
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "PROJECTS MASTER & TEAM ASSIGNMENTS" : "DAFTAR MASTER PROYEK & PENUGASAN TIM",
-      docSubtitle: isEn
-        ? `Total Displayed Projects: ${filteredProjects.length} projects`
-        : `Total Proyek Ditampilkan: ${filteredProjects.length} proyek`,
+      docTitle: t("projects:export.pdf_title"),
+      docSubtitle: t("projects:export.pdf_subtitle", { count: filteredProjects.length }),
       docNumber: `PRJ-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: isEn
-        ? [
-            { header: "Code", widthRatio: 0.16 },
-            { header: "Project Name", widthRatio: 0.30 },
-            { header: "Period", widthRatio: 0.20 },
-            { header: "Contract Value", widthRatio: 0.16, align: "right" },
-            { header: "Milestones", widthRatio: 0.08 },
-            { header: "Status", widthRatio: 0.10 },
-          ]
-        : [
-            { header: "Kode", widthRatio: 0.16 },
-            { header: "Nama Proyek", widthRatio: 0.30 },
-            { header: "Periode", widthRatio: 0.20 },
-            { header: "Nilai Kontrak", widthRatio: 0.16, align: "right" },
-            { header: "Termin", widthRatio: 0.08 },
-            { header: "Status", widthRatio: 0.10 },
-          ],
+      tableColumns: [
+        { header: t("projects:col_code"), widthRatio: 0.16 },
+        { header: t("projects:col_name"), widthRatio: 0.30 },
+        { header: t("projects:col_period"), widthRatio: 0.20 },
+        { header: t("projects:col_contract_val"), widthRatio: 0.16, align: "right" },
+        { header: t("projects:col_milestones"), widthRatio: 0.08 },
+        { header: t("projects:col_status"), widthRatio: 0.10 },
+      ],
       tableRows: filteredProjects.map((p) => {
-        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
+        const statusLabel = t(`projects:status.${p.status}`, PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
-          `${formatDateID(p.start_date)} - ${formatDateID(p.target_end_date)}`,
+          `${formatDateI18n(p.start_date, language)} - ${formatDateI18n(p.target_end_date, language)}`,
           formatRupiah(p.contract_value),
           `${p.term_count}`,
           statusLabel,
@@ -327,55 +300,42 @@ export function ProjectsPage() {
       }),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, isEn ? "Altvira_Projects_Master_Altcycles.pdf" : "Daftar_Proyek_Altvira_Altcycles.pdf");
+    downloadPdfBytes(bytes, t("projects:export.pdf_filename"));
     await recordExportLog("PROJECTS_MASTER", "PDF");
   }
 
   async function handleExportCsv() {
-    const isEn = getActiveLanguage() === "en";
     downloadCsvFile(
-      isEn ? "Altvira_Projects_Master_Altcycles.csv" : "Daftar_Proyek_Altvira_Altcycles.csv",
-      isEn
-        ? [
-            "Code",
-            "Project Name",
-            "Start Date",
-            "Target Completion",
-            "Contract Value (IDR)",
-            "Milestones",
-            "Revenue Method",
-            "Team Members",
-            "Status",
-          ]
-        : [
-            "Kode",
-            "Nama Proyek",
-            "Tanggal Mulai",
-            "Target Selesai",
-            "Nilai Kontrak (Rp)",
-            "Jumlah Termin",
-            "Metode Pengakuan",
-            "Anggota Tim",
-            "Status",
-          ],
+      t("projects:export.csv_filename"),
+      [
+        t("projects:col_code"),
+        t("projects:col_name"),
+        t("projects:modal.field_start_date"),
+        t("projects:modal.field_end_date"),
+        t("projects:modal.field_contract_value"),
+        t("projects:col_milestones"),
+        t("projects:modal.field_revenue_method"),
+        t("projects:col_team"),
+        t("projects:col_status"),
+      ],
       filteredProjects.map((p) => {
         const countMembers = members.filter((m) => m.project_id === p.id).length;
-        const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);
+        const statusLabel = t(`projects:status.${p.status}`, PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
-          p.start_date ?? "-",
-          p.target_end_date ?? "-",
+          p.start_date ? formatDateI18n(p.start_date, language) : "-",
+          p.target_end_date ? formatDateI18n(p.target_end_date, language) : "-",
           p.contract_value,
           p.term_count,
-          REVENUE_METHOD_LABELS[p.revenue_method],
+          getLocalizedRevenueMethod(p.revenue_method, language),
           countMembers,
           statusLabel,
         ];
       }),
     );
     await recordExportLog("PROJECTS_MASTER", "CSV");
-    toast.success(isEn ? "Projects list successfully exported to CSV (.csv)." : "Daftar proyek berhasil diekspor ke CSV (.csv).");
+    toast.success(t("projects:export.toast_csv_success"));
   }
 
   return (
@@ -489,7 +449,7 @@ export function ProjectsPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat daftar proyek...</span>
+              <span>{t("projects:loading_projects")}</span>
             </div>
           ) : (
             <Table>
@@ -514,7 +474,7 @@ export function ProjectsPage() {
                               setSelectedProjectIds([]);
                             }
                           }}
-                          aria-label="Pilih semua proyek"
+                          aria-label={t("projects:select_all_projects")}
                         />
                       </div>
                     </TableHead>
@@ -538,22 +498,10 @@ export function ProjectsPage() {
                           <FolderOpenIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn
-                            ? projects.length === 0
-                              ? "No Registered Projects"
-                              : "No Matching Projects"
-                            : projects.length === 0
-                              ? "Belum Ada Proyek Terdaftar"
-                              : "Tidak Ada Proyek yang Cocok"}
+                          {t("projects:empty_title")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                          {isEn
-                            ? projects.length === 0
-                              ? "Click the Add Project button on the top right to register the first project."
-                              : "Adjust your search keywords or project status filters."
-                            : projects.length === 0
-                              ? "Klik tombol Tambah Proyek di kanan atas untuk mendaftarkan proyek pertama."
-                              : "Sesuaikan kata kunci pencarian atau filter status proyek."}
+                          {t("projects:empty_desc")}
                         </p>
                       </div>
                     </TableCell>
@@ -639,8 +587,8 @@ export function ProjectsPage() {
                               type="button"
                               onClick={() => setViewProject(p)}
                               className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                              title="Lihat rincian proyek"
-                              aria-label="Lihat rincian proyek"
+                              title={t("common:action.view")}
+                              aria-label={t("common:action.view")}
                             >
                               <EyeIcon className="size-4" />
                             </button>
@@ -648,8 +596,8 @@ export function ProjectsPage() {
                               type="button"
                               onClick={() => openEdit(p)}
                               className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                              title="Edit proyek"
-                              aria-label="Edit proyek"
+                              title={t("common:action.edit")}
+                              aria-label={t("common:action.edit")}
                             >
                               <PencilIcon className="size-4" />
                             </button>
@@ -657,8 +605,8 @@ export function ProjectsPage() {
                               type="button"
                               onClick={() => setDeleteTargetIds([p.id])}
                               className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                              title="Hapus proyek"
-                              aria-label="Hapus proyek"
+                              title={t("common:action.delete")}
+                              aria-label={t("common:action.delete")}
                             >
                               <Trash2Icon className="size-4" />
                             </button>
@@ -669,12 +617,12 @@ export function ProjectsPage() {
                               variant="ghost"
                               size="icon"
                               asChild
-                              title="Dokumen & Termin"
+                              title={t("projects:modal.btn_open_workspace")}
                               className="size-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10"
                             >
                               <Link to={`/admin/proyek/${p.id}`}>
                                 <FolderOpenIcon className="size-4" />
-                                <span className="sr-only">Dokumen &amp; Termin</span>
+                                <span className="sr-only">{t("projects:modal.btn_open_workspace")}</span>
                               </Link>
                             </Button>
                           </div>
@@ -693,38 +641,30 @@ export function ProjectsPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {isEn
-                ? editingId
-                  ? "Manage Project & Team Members"
-                  : "Add New Project"
-                : editingId
-                  ? "Kelola Proyek & Anggota Tim"
-                  : "Tambah Proyek Baru"}
+              {editingId
+                ? t("projects:modal.edit_title")
+                : t("projects:modal.create_title")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="prj-name" required>
-                  {isEn ? "Project Name" : "Nama Proyek"}
+                  {t("projects:modal.field_name")}
                 </FieldLabel>
                 <Input
                   id="prj-name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={
-                    isEn
-                      ? "e.g. Nusantara Logistics ERP Development"
-                      : "Contoh: Pengembangan ERP Logistik Nusantara"
-                  }
+                  placeholder={t("projects:modal.field_name_ph")}
                 />
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel required>
-                    {isEn ? "Project Category" : "Kategori Proyek"}
+                    {t("projects:modal.field_category")}
                   </FieldLabel>
                   <Select
                     value={category}
@@ -736,10 +676,10 @@ export function ProjectsPage() {
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="client">
-                          {isEn ? "Client Project" : "Proyek Klien"}
+                          {t("projects:modal.cat_client")}
                         </SelectItem>
                         <SelectItem value="internal">
-                          {isEn ? "Altvira Internal Project" : "Proyek Internal Altvira"}
+                          {t("projects:modal.cat_internal")}
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
@@ -747,19 +687,19 @@ export function ProjectsPage() {
                 </Field>
 
                 <Field data-disabled={category !== "client"}>
-                  <FieldLabel>{isEn ? "Client / Customer" : "Pelanggan / Klien"}</FieldLabel>
+                  <FieldLabel>{t("projects:modal.field_client")}</FieldLabel>
                   <Select
                     value={customerId}
                     disabled={category !== "client"}
                     onValueChange={setCustomerId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={isEn ? "Select client" : "Pilih pelanggan"} />
+                      <SelectValue placeholder={t("projects:modal.client_ph")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="none">
-                          {isEn ? "— Unassigned —" : "— Belum Dipilih —"}
+                          {t("projects:modal.unassigned")}
                         </SelectItem>
                         {customers.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
@@ -775,7 +715,7 @@ export function ProjectsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="prj-val" required>
-                    {isEn ? "Contract Value (IDR)" : "Nilai Kontrak (Rp Bulat)"}
+                    {t("projects:modal.field_contract_value")}
                   </FieldLabel>
                   <NumberInput
                     id="prj-val"
@@ -788,7 +728,7 @@ export function ProjectsPage() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="prj-terms" required>
-                    {isEn ? "Milestones Count" : "Jumlah Termin"}
+                    {t("projects:modal.field_milestones_count")}
                   </FieldLabel>
                   <NumberInput
                     id="prj-terms"
@@ -800,9 +740,7 @@ export function ProjectsPage() {
                     onValueChange={setTermCount}
                   />
                   <FieldDescription>
-                    {isEn
-                      ? `Automatic method: ${REVENUE_METHOD_LABELS[previewMethod]}`
-                      : `Metode otomatis: ${REVENUE_METHOD_LABELS[previewMethod]}`}
+                    {t("projects:modal.field_revenue_method")}: {getLocalizedRevenueMethod(previewMethod, language)}
                   </FieldDescription>
                 </Field>
               </div>
@@ -810,7 +748,7 @@ export function ProjectsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="prj-start">
-                    {isEn ? "Start Date" : "Tanggal Mulai"}
+                    {t("projects:modal.field_start_date")}
                   </FieldLabel>
                   <DatePicker
                     id="prj-start"
@@ -820,7 +758,7 @@ export function ProjectsPage() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="prj-end">
-                    {isEn ? "Target Completion" : "Target Selesai"}
+                    {t("projects:modal.field_end_date")}
                   </FieldLabel>
                   <DatePicker
                     id="prj-end"
@@ -832,7 +770,7 @@ export function ProjectsPage() {
 
               <Field>
                 <FieldLabel required>
-                  {isEn ? "Project Status" : "Status Proyek"}
+                  {t("projects:modal.field_status")}
                 </FieldLabel>
                 <Select
                   value={status}
@@ -843,11 +781,11 @@ export function ProjectsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="draft">{isEn ? "Draft" : "Draf"}</SelectItem>
-                      <SelectItem value="active">{isEn ? "Active" : "Aktif"}</SelectItem>
-                      <SelectItem value="on_hold">{isEn ? "On Hold" : "Ditunda"}</SelectItem>
-                      <SelectItem value="completed">{isEn ? "Completed" : "Selesai"}</SelectItem>
-                      <SelectItem value="cancelled">{isEn ? "Cancelled" : "Dibatalkan"}</SelectItem>
+                      <SelectItem value="draft">{t("projects:status.draft")}</SelectItem>
+                      <SelectItem value="active">{t("projects:status.active")}</SelectItem>
+                      <SelectItem value="on_hold">{t("projects:status.on_hold")}</SelectItem>
+                      <SelectItem value="completed">{t("projects:status.completed")}</SelectItem>
+                      <SelectItem value="cancelled">{t("projects:status.cancelled")}</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -856,21 +794,15 @@ export function ProjectsPage() {
               <FieldSet className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] p-4 space-y-3">
                 <div>
                   <FieldLegend className="text-xs font-semibold text-foreground">
-                    {isEn
-                      ? "Team Member Assignment (User Portal)"
-                      : "Penugasan Anggota Tim (Portal User)"}
+                    {t("projects:modal.team_assignment_title")}
                   </FieldLegend>
                   <FieldDescription className="text-[11px]">
-                    {isEn
-                      ? "Only enabled users below can view the project and its budget in the User Portal."
-                      : "Hanya User yang diaktifkan di bawah yang dapat melihat proyek dan anggarannya di Portal User."}
+                    {t("projects:modal.team_assignment_desc")}
                   </FieldDescription>
                 </div>
                 {teamUsers.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    {isEn
-                      ? "No users with User role yet."
-                      : "Belum ada pengguna dengan peran User."}
+                    {t("common:empty")}
                   </p>
                 ) : (
                   <div className="space-y-2.5">
@@ -893,12 +825,13 @@ export function ProjectsPage() {
 
               <Field>
                 <FieldLabel htmlFor="prj-desc">
-                  {isEn ? "Project Notes" : "Catatan Proyek"}
+                  {t("projects:modal.field_notes")}
                 </FieldLabel>
                 <Textarea
                   id="prj-desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("projects:modal.field_notes_ph")}
                 />
               </Field>
 
@@ -908,11 +841,11 @@ export function ProjectsPage() {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  {isEn ? "Cancel" : "Batal"}
+                  {t("projects:modal.btn_cancel")}
                 </Button>
                 <Button type="submit" disabled={saving}>
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Save Project" : "Simpan Proyek"}
+                  {t("projects:modal.btn_save")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -931,44 +864,40 @@ export function ProjectsPage() {
           <DialogHeader>
             <DialogTitle>
               {viewProject
-                ? isEn
-                  ? `Details of ${viewProject.code}`
-                  : `Rincian ${viewProject.code}`
-                : isEn
-                  ? "Project Details"
-                  : "Rincian Proyek"}
+                ? `${t("projects:modal.view_title_client")} — ${viewProject.code}`
+                : t("projects:modal.view_title_internal")}
             </DialogTitle>
           </DialogHeader>
           {viewProject ? (
             <div className="space-y-4">
               <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-muted/15">
                 {[
-                  { label: isEn ? "Project Code" : "Kode Proyek", value: viewProject.code },
-                  { label: isEn ? "Project Name" : "Nama Proyek", value: viewProject.name },
+                  { label: t("projects:col_code"), value: viewProject.code },
+                  { label: t("projects:col_name"), value: viewProject.name },
                   {
-                    label: isEn ? "Client" : "Klien",
+                    label: t("projects:modal.field_client"),
                     value:
                       customers.find((c) => c.id === viewProject.customer_id)?.name ??
-                      (isEn ? "Internal Project" : "Proyek Internal"),
+                      t("projects:modal.internal_project"),
                   },
                   {
-                    label: isEn ? "Period" : "Periode",
-                    value: `${formatDateID(viewProject.start_date)} - ${formatDateID(viewProject.target_end_date)}`,
+                    label: t("projects:col_period"),
+                    value: `${formatDateI18n(viewProject.start_date, language)} - ${formatDateI18n(viewProject.target_end_date, language)}`,
                   },
                   {
-                    label: isEn ? "Contract Value" : "Nilai Kontrak",
+                    label: t("projects:col_contract_val"),
                     value: formatRupiah(viewProject.contract_value),
                   },
                   {
-                    label: isEn ? "Milestones" : "Jumlah Termin",
-                    value: isEn ? `${viewProject.term_count} Milestones` : `${viewProject.term_count} Termin`,
+                    label: t("projects:col_milestones"),
+                    value: `${viewProject.term_count} ${t("projects:milestones_count")}`,
                   },
                   {
-                    label: isEn ? "Revenue Method" : "Metode Pengakuan",
-                    value: REVENUE_METHOD_LABELS[viewProject.revenue_method],
+                    label: t("projects:modal.field_revenue_method"),
+                    value: getLocalizedRevenueMethod(viewProject.revenue_method, language),
                   },
                   {
-                    label: isEn ? "Notes" : "Catatan",
+                    label: t("projects:modal.field_notes"),
                     value: viewProject.description ?? "-",
                   },
                 ].map((item, idx) => (
@@ -993,7 +922,7 @@ export function ProjectsPage() {
                   className="cursor-pointer"
                 >
                   <Link to={`/admin/proyek/${viewProject.id}`}>
-                    {isEn ? "Open Documents & Milestones" : "Buka Dokumen & Termin"}
+                    {t("projects:modal.btn_open_workspace")}
                   </Link>
                 </Button>
                 <Button
@@ -1001,7 +930,7 @@ export function ProjectsPage() {
                   onClick={() => setViewProject(null)}
                   className="cursor-pointer"
                 >
-                  {isEn ? "Close" : "Tutup"}
+                  {t("projects:modal.btn_close")}
                 </Button>
               </DialogFooter>
             </div>

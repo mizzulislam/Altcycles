@@ -262,6 +262,8 @@
     "status_filter": "Filter Status",
     "active": "Active:",
     "period_active": "Active",
-    "period_closed": "Closed"
+    "period_closed": "Closed",
+    "start": "Start",
+    "end": "End"
   }
 }

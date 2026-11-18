@@ -149,89 +149,23 @@
       "/admin/bagi-hasil",
       "/admin/master"
     ],
-    "totalIssues": 122,
+    "totalIssues": 2,
     "files": [
       {
         "file": "src/features/master-data/admin-dashboard.tsx",
-        "count": 8,
+        "count": 1,
         "items": [
           {
-            "line": 159,
+            "line": 157,
             "type": "ternary",
-            "text": "const monthsArr = language === \"en\" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;"
-          },
-          {
-            "line": 253,
-            "type": "raw_jsx_text",
-            "text": "Memuat dasbor keuangan &amp; akuntansi..."
-          },
-          {
-            "line": 1188,
-            "type": "ternary",
-            "text": "{ value: \"column\", label: t(\"dashboard:charts.types.column\"), title: language === \"en\" ? \"Contract vs Billed Comparison\" : \"Perbandingan Kontrak vs Tertagih\", icon: BarChart3Icon },"
-          },
-          {
-            "line": 1189,
-            "type": "ternary",
-            "text": "{ value: \"pie\", label: t(\"dashboard:charts.types.pie_receivables\"), title: language === \"en\" ? \"AR Aging Distribution Pie Chart\" : \"Pie Chart Sebaran Umur Piutang\", icon: PieChartIcon },"
-          },
-          {
-            "line": 1190,
-            "type": "ternary",
-            "text": "{ value: \"bubble\", label: t(\"dashboard:charts.types.bubble\"), title: language === \"en\" ? \"Contract vs Billed Bubble Chart\" : \"Bubble Chart Nilai Kontrak vs Tertagih\", icon: CircleDotIcon },"
-          },
-          {
-            "line": 1205,
-            "type": "ternary",
-            "text": "? (language === \"en\""
-          },
-          {
-            "line": 1225,
-            "type": "ternary",
-            "text": "unitLabel={language === \"en\" ? \"Journals\" : \"Jurnal\"}"
-          },
-          {
-            "line": 1328,
-            "type": "ternary",
-            "text": "{ value: \"histogram\", label: t(\"dashboard:charts.types.histogram\"), title: language === \"en\" ? \"Journal Amount Distribution Histogram\" : \"Histogram Distribusi Nominal Jurnal\", icon: BarChart2Icon },"
+            "text": "const locale = language === \"en\" ? \"en-US\" : \"id-ID\";"
           }
         ]
       },
       {
         "file": "src/features/payment-approvals/admin-approvals-page.tsx",
-        "count": 6,
-        "items": [
-          {
-            "line": 269,
-            "type": "ternary",
-            "text": "profileMap.get(r.requester_id) ?? (language === \"en\" ? \"User\" : \"Pengguna\"),"
-          },
-          {
-            "line": 301,
-            "type": "ternary",
-            "text": "profileMap.get(r.requester_id) ?? (language === \"en\" ? \"User\" : \"Pengguna\"),"
-          },
-          {
-            "line": 331,
-            "type": "ternary",
-            "text": "profileMap.get(r.requester_id) ?? (language === \"en\" ? \"User\" : \"Pengguna\"),"
-          },
-          {
-            "line": 353,
-            "type": "ternary",
-            "text": "requesterName: profileMap.get(req.requester_id) ?? (language === \"en\" ? \"Team Member\" : \"Anggota Tim\"),"
-          },
-          {
-            "line": 354,
-            "type": "ternary",
-            "text": "projectName: projectMap.get(req.project_id) ?? (language === \"en\" ? \"General Operations\" : \"Operasional Umum\"),"
-          },
-          {
-            "line": 362,
-            "type": "ternary",
-            "text": "approverName: req.approver_id ? profileMap.get(req.approver_id) ?? (language === \"en\" ? \"Financial Admin\" : \"Admin Keuangan\") : null,"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/purchase-orders/po-page.tsx",
@@ -247,132 +181,18 @@
       },
       {
         "file": "src/features/master-data/projects-page.tsx",
-        "count": 71,
-        "items": [
-          {
-            "line": 105,
-            "type": "ternary",
-            "text": "const isEn = language === \"en\";"
-          },
-          {
-            "line": 242,
-            "type": "ternary",
-            "text": "const isEn = getActiveLanguage() === \"en\";"
-          },
-          {
-            "line": 244,
-            "type": "ternary",
-            "text": "fileName: isEn ? \"Altvira_Projects_Master_Altcycles.xlsx\" : \"Daftar_Proyek_Altvira_Altcycles.xlsx\","
-          },
-          {
-            "line": 245,
-            "type": "ternary",
-            "text": "sheetName: isEn ? \"Projects List\" : \"Daftar Proyek\","
-          },
-          {
-            "line": 246,
-            "type": "ternary",
-            "text": "columns: isEn"
-          },
-          {
-            "line": 271,
-            "type": "ternary",
-            "text": "const statusLabel = isEn ? (t(`status.${p.status}`) || p.status) : (PROJECT_STATUS_META[p.status]?.label ?? p.status);"
-          },
-          {
-            "line": 280,
-            "type": "ternary",
-            "text": "isEn ? `${countMembers} Members` : `${countMembers} Anggota`,"
-          },
-          {
-            "line": 286,
-            "type": "ternary",
-            "text": "toast.success(isEn ? \"Projects list successfully exported to Excel (.xlsx).\" : \"Daftar proyek berhasil diekspor ke Excel (.xlsx).\");"
-          },
-          {
-            "line": 290,
-            "type": "ternary",
-            "text": "const isEn = getActiveLanguage() === \"en\";"
-          },
-          {
-            "line": 293,
-            "type": "ternary",
-            "text": "docTitle: isEn ? \"PROJECTS MASTER & TEAM ASSIGNMENTS\" : \"DAFTAR MASTER PROYEK & PENUGASAN TIM\","
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/client-projects/project-detail-page.tsx",
-        "count": 2,
-        "items": [
-          {
-            "line": 745,
-            "type": "raw_jsx_text",
-            "text": "Memuat ruang kerja proyek klien..."
-          },
-          {
-            "line": 753,
-            "type": "raw_prop",
-            "prop": "title",
-            "text": "Proyek tidak ditemukan"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/invoicing/invoicing-page.tsx",
-        "count": 31,
-        "items": [
-          {
-            "line": 543,
-            "type": "ternary",
-            "text": "const isEn = getActiveLanguage() === \"en\";"
-          },
-          {
-            "line": 545,
-            "type": "ternary",
-            "text": "fileName: isEn"
-          },
-          {
-            "line": 548,
-            "type": "ternary",
-            "text": "sheetName: isEn ? \"Sales Invoices\" : \"Invoice Penjualan\","
-          },
-          {
-            "line": 550,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Invoice No.\" : \"No. Invoice\", width: 22 },"
-          },
-          {
-            "line": 551,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Issue Date\" : \"Tanggal\", width: 14 },"
-          },
-          {
-            "line": 552,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Due Date\" : \"Jatuh Tempo\", width: 14 },"
-          },
-          {
-            "line": 553,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Project\" : \"Proyek\", width: 22 },"
-          },
-          {
-            "line": 554,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Customer\" : \"Pelanggan\", width: 26 },"
-          },
-          {
-            "line": 555,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Total Amount\" : \"Total Tagihan\", width: 18 },"
-          },
-          {
-            "line": 556,
-            "type": "ternary",
-            "text": "{ header: isEn ? \"Paid Amount\" : \"Terbayar\", width: 18 },"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/budgeting/budget-page.tsx",
@@ -381,24 +201,8 @@
       },
       {
         "file": "src/features/accounting/accounting-page.tsx",
-        "count": 3,
-        "items": [
-          {
-            "line": 146,
-            "type": "ternary",
-            "text": "const isEn = language === \"en\";"
-          },
-          {
-            "line": 372,
-            "type": "ternary",
-            "text": "{customStartDate ? formatDateI18n(customStartDate, language) : (isEn ? \"Start\" : \"Awal\")} &minus;{\" \"}"
-          },
-          {
-            "line": 373,
-            "type": "ternary",
-            "text": "{customEndDate ? formatDateI18n(customEndDate, language) : (isEn ? \"End\" : \"Akhir\")}"
-          }
-        ]
+        "count": 0,
+        "items": []
       },
       {
         "file": "src/features/profit-sharing/profit-sharing-page.tsx",

@@ -96,6 +96,13 @@
     "sample_count": "Jumlah Sampel",
     "average_amount": "Rata-Rata Nominal",
     "median_amount": "Median Nominal",
+    "chart_contract_vs_billed_title": "Perbandingan Kontrak vs Tertagih",
+    "chart_ar_aging_title": "Pie Chart Sebaran Umur Piutang",
+    "chart_bubble_contract_billed_title": "Bubble Chart Nilai Kontrak vs Tertagih",
+    "chart_histogram_desc": "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting.",
+    "chart_histogram_title": "Histogram Distribusi Nominal Jurnal",
+    "unit_journals": "Jurnal",
+    "loading": "Memuat dasbor keuangan & akuntansi...",
     "types": {
       "column": "Kolom",
       "bar": "Batang",

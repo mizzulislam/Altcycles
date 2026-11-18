@@ -135,5 +135,24 @@
     "unpaid": "Belum Lunas",
     "overdue": "Lewat Jatuh Tempo",
     "cancelled": "Dibatalkan"
+  },
+  "export": {
+    "excel_filename": "Daftar_Invoice_dan_Piutang_Altcycles.xlsx",
+    "excel_sheet": "Invoice Penjualan",
+    "toast_excel_success": "Daftar invoice & piutang berhasil diekspor ke Excel (.xlsx).",
+    "pdf_filename": "Daftar_Invoice_dan_Piutang_Altcycles.pdf",
+    "pdf_title": "DAFTAR INVOICE PENAGIHAN & PIUTANG",
+    "pdf_subtitle": "Total Nilai Invoice: {{invoiced}} | Sisa Piutang: {{outstanding}}",
+    "csv_filename": "Daftar_Invoice_dan_Piutang_Altcycles.csv",
+    "toast_csv_success": "Daftar invoice & piutang berhasil diekspor ke CSV (.csv).",
+    "col_invoice_no": "No. Invoice",
+    "col_issue_date": "Tanggal",
+    "col_due_date": "Jatuh Tempo",
+    "col_project": "Proyek",
+    "col_customer": "Pelanggan",
+    "col_total_amount": "Total Tagihan",
+    "col_paid_amount": "Terbayar",
+    "col_outstanding": "Sisa Piutang",
+    "col_payment_status": "Status Bayar"
   }
 }

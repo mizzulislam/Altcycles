@@ -143,7 +143,6 @@ function calculatePresetDates(preset: PeriodPreset): { startDate?: string; endDa
 
 export function AccountingPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab") as AccountingTabId | null;
 
@@ -369,8 +368,8 @@ export function AccountingPage() {
                     </label>
                     {(customStartDate || customEndDate) && (
                       <span className="text-xs font-semibold text-primary dark:text-cyan-400 bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                        {customStartDate ? formatDateI18n(customStartDate, language) : (isEn ? "Start" : "Awal")} &minus;{" "}
-                        {customEndDate ? formatDateI18n(customEndDate, language) : (isEn ? "End" : "Akhir")}
+                        {customStartDate ? formatDateI18n(customStartDate, language) : t("accounting:filter.start")} &minus;{" "}
+                        {customEndDate ? formatDateI18n(customEndDate, language) : t("accounting:filter.end")}
                       </span>
                     )}
                   </div>

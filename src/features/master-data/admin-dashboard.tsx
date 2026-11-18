@@ -59,8 +59,6 @@ import {
 } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
-  SHORT_MONTHS_EN,
-  SHORT_MONTHS_ID,
   formatCompactRupiah,
   formatDateI18n,
   formatRupiah,
@@ -156,7 +154,7 @@ function buildMonthlySeries(
     buckets.set(monthKey, current);
   }
 
-  const monthsArr = language === "en" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;
+  const locale = language === "en" ? "en-US" : "id-ID";
 
   return [...buckets.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
@@ -164,7 +162,10 @@ function buildMonthlySeries(
     .map(([monthKey, val]) => {
       const [yStr = "", mStr = ""] = monthKey.split("-");
       const mIdx = Number(mStr) - 1;
-      const monthName = monthsArr[mIdx] ?? mStr;
+      const dateObj = new Date(Number(yStr), mIdx, 1);
+      const monthName = !isNaN(dateObj.getTime())
+        ? new Intl.DateTimeFormat(locale, { month: "short" }).format(dateObj)
+        : mStr;
       return {
         monthKey,
         label: `${monthName} ${yStr.slice(2)}`,
@@ -250,7 +251,7 @@ export function AdminDashboardPage() {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner />
-        <span>Memuat dasbor keuangan &amp; akuntansi...</span>
+        <span>{t("dashboard:charts.loading")}</span>
       </div>
     );
   }
@@ -1185,9 +1186,9 @@ export function AdminDashboardPage() {
               onChange={setBillingChartType}
               options={[
                 { value: "bar", label: t("dashboard:charts.types.progress"), icon: BarChartHorizontalIcon },
-                { value: "column", label: t("dashboard:charts.types.column"), title: language === "en" ? "Contract vs Billed Comparison" : "Perbandingan Kontrak vs Tertagih", icon: BarChart3Icon },
-                { value: "pie", label: t("dashboard:charts.types.pie_receivables"), title: language === "en" ? "AR Aging Distribution Pie Chart" : "Pie Chart Sebaran Umur Piutang", icon: PieChartIcon },
-                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: language === "en" ? "Contract vs Billed Bubble Chart" : "Bubble Chart Nilai Kontrak vs Tertagih", icon: CircleDotIcon },
+                { value: "column", label: t("dashboard:charts.types.column"), title: t("dashboard:charts.chart_contract_vs_billed_title"), icon: BarChart3Icon },
+                { value: "pie", label: t("dashboard:charts.types.pie_receivables"), title: t("dashboard:charts.chart_ar_aging_title"), icon: PieChartIcon },
+                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: t("dashboard:charts.chart_bubble_contract_billed_title"), icon: CircleDotIcon },
               ]}
             />
           </ChartCardFooter>
@@ -1202,9 +1203,7 @@ export function AdminDashboardPage() {
               </CardTitle>
               <CardDescription>
                 {expenseChartType === "histogram"
-                  ? (language === "en"
-                      ? "Histogram distribution of all posted journal transaction amounts."
-                      : "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting.")
+                  ? t("dashboard:charts.chart_histogram_desc")
                   : t("dashboard:charts.top_expenses_subtitle")}
               </CardDescription>
             </div>
@@ -1222,7 +1221,7 @@ export function AdminDashboardPage() {
                 average={journalHistogram.average}
                 median={journalHistogram.median}
                 totalCount={journalHistogram.totalCount}
-                unitLabel={language === "en" ? "Journals" : "Jurnal"}
+                unitLabel={t("dashboard:charts.unit_journals")}
                 accentColor="#0B43C8"
                 emptyTitle={t("dashboard:charts.empty_trends_title")}
                 emptySubtitle={t("dashboard:charts.empty_trends_desc")}
@@ -1325,7 +1324,7 @@ export function AdminDashboardPage() {
               options={[
                 { value: "bar", label: t("dashboard:charts.types.bar_expenses"), icon: BarChartHorizontalIcon },
                 { value: "pie", label: t("dashboard:charts.types.pie_expenses"), icon: PieChartIcon },
-                { value: "histogram", label: t("dashboard:charts.types.histogram"), title: language === "en" ? "Journal Amount Distribution Histogram" : "Histogram Distribusi Nominal Jurnal", icon: BarChart2Icon },
+                { value: "histogram", label: t("dashboard:charts.types.histogram"), title: t("dashboard:charts.chart_histogram_title"), icon: BarChart2Icon },
               ]}
             />
           </ChartCardFooter>

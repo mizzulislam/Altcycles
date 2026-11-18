@@ -819,7 +819,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         allowDecimal={false}
                         min={0}
                         required
-                        placeholder="Harga Rp"
+                        placeholder={t("po:modal_create.col_unit_price")}
                         value={it.unitPrice}
                         onValueChange={(unitPrice) =>
                           setFormItems((prev) =>
