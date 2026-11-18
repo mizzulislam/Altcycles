@@ -88,6 +88,8 @@ describe("i18n navigation and layout checks", () => {
     const budgetingEn = (await import("@/locales/en/budgeting.json")).default;
     const profitSharingId = (await import("@/locales/id/profit_sharing.json")).default;
     const profitSharingEn = (await import("@/locales/en/profit_sharing.json")).default;
+    const dashboardId = (await import("@/locales/id/dashboard.json")).default;
+    const dashboardEn = (await import("@/locales/en/dashboard.json")).default;
 
     const accountingId = (await import("@/locales/id/accounting.json")).default;
     const accountingEn = (await import("@/locales/en/accounting.json")).default;
@@ -130,6 +132,27 @@ describe("i18n navigation and layout checks", () => {
     const profitEnKeys = getDeepKeys(profitSharingEn).sort();
     expect(profitIdKeys).toEqual(profitEnKeys);
     expect(profitIdKeys.length).toBeGreaterThan(50);
+
+    // Check dashboard.json deep keys
+    const dashIdKeys = getDeepKeys(dashboardId).sort();
+    const dashEnKeys = getDeepKeys(dashboardEn).sort();
+    expect(dashIdKeys).toEqual(dashEnKeys);
+    expect(dashIdKeys.length).toBeGreaterThan(40);
+
+    // Ensure no empty translation values in dashboard
+    for (const key of dashIdKeys) {
+      const parts = key.split(".");
+      let valId: any = dashboardId;
+      let valEn: any = dashboardEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
 
     // Ensure no empty translation values in budgeting and profit sharing
     for (const key of budgetIdKeys) {

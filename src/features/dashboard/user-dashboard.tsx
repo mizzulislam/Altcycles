@@ -49,9 +49,10 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
 import { listProjects } from "@/lib/data-service";
 import {
+  SHORT_MONTHS_EN,
   SHORT_MONTHS_ID,
   formatCompactRupiah,
-  formatDateID,
+  formatDateI18n,
   formatRupiah,
 } from "@/lib/formatters";
 import {
@@ -79,7 +80,7 @@ const PROJECT_STATUS_LABELS: Record<
 
 export function UserDashboardPage() {
   const { profile } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [pos, setPos] = React.useState<PurchaseOrderRow[]>([]);
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
@@ -169,7 +170,8 @@ export function UserDashboardPage() {
     .map(([monthKey, values]) => {
       const [yStr = "", mStr = ""] = monthKey.split("-");
       const mIdx = Number(mStr) - 1;
-      const monthName = SHORT_MONTHS_ID[mIdx] ?? mStr;
+      const monthsArr = language === "en" ? SHORT_MONTHS_EN : SHORT_MONTHS_ID;
+      const monthName = monthsArr[mIdx] ?? mStr;
       return {
         key: monthKey,
         label: `${monthName} ${yStr.slice(2)}`,
@@ -725,12 +727,12 @@ export function UserDashboardPage() {
                         {p.name}
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap tabular-nums">
-                        {formatDateID(p.start_date)} &ndash;{" "}
-                        {formatDateID(p.target_end_date)}
+                        {formatDateI18n(p.start_date, language)} &ndash;{" "}
+                        {formatDateI18n(p.target_end_date, language)}
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
-                          <StatusBadge tone={pMeta.tone} label={pMeta.label} />
+                          <StatusBadge tone={pMeta.tone} label={t(`projects:status.${p.status}`, pMeta.label)} />
                         </div>
                       </TableCell>
                     </TableRow>

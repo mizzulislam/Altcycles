@@ -22,9 +22,8 @@ export function ChartCardFooter({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { language } = useLanguage();
-  const isEn = language === "en";
-  const displayLabel = !label || label === "Jenis Grafik" ? (isEn ? "Chart Type" : "Jenis Grafik") : label;
+  const { t } = useLanguage();
+  const displayLabel = !label || label === "Jenis Grafik" ? t("dashboard:charts.types.chart_type", "Jenis Grafik") : label;
 
   return (
     <div
@@ -1076,8 +1075,7 @@ export function HistogramChart({
   emptyTitle?: string;
   emptySubtitle?: string;
 }) {
-  const { language } = useLanguage();
-  const isEn = language === "en";
+  const { t } = useLanguage();
   const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
 
   if (bins.length === 0 || totalCount === 0) {
@@ -1184,19 +1182,19 @@ export function HistogramChart({
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60 text-xs">
         <div>
-          <p className="text-[10px] text-muted-foreground">{isEn ? "Sample Count" : "Jumlah Sampel"}</p>
+          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.sample_count")}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {totalCount} {unitLabel}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-muted-foreground">{isEn ? "Average Amount" : "Rata-Rata Nominal"}</p>
+          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.average_amount")}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {formatRupiah(average)}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-muted-foreground">{isEn ? "Median Amount" : "Median Nominal"}</p>
+          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.median_amount")}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">
             {formatRupiah(median)}
           </p>

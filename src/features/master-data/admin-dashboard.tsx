@@ -23,7 +23,7 @@ import {
   WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLanguage, getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import {
   buildRupiahHistogramBins,
   ChartCardFooter,
@@ -62,9 +62,13 @@ import {
   SHORT_MONTHS_EN,
   SHORT_MONTHS_ID,
   formatCompactRupiah,
-  formatDateID,
+  formatDateI18n,
   formatRupiah,
 } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import {
   getProjectWorkspace,
   listJournalsWithLines,
@@ -173,7 +177,6 @@ function buildMonthlySeries(
 
 export function AdminDashboardPage() {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [loading, setLoading] = React.useState(true);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [periods, setPeriods] = React.useState<PeriodRow[]>([]);
@@ -286,7 +289,7 @@ export function AdminDashboardPage() {
 
   const agingBuckets = [
     {
-      label: isEn ? "Current / Not Due" : "Belum Jatuh Tempo",
+      label: t("dashboard:charts.aging_current"),
       bucketKey: "Belum Jatuh Tempo",
       color: "bg-emerald-500",
       dotColor: "bg-emerald-500",
@@ -295,7 +298,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: isEn ? "1–30 Days" : "1–30 Hari",
+      label: t("dashboard:charts.aging_1_30"),
       bucketKey: "1–30 Hari",
       color: "bg-sky-500",
       dotColor: "bg-sky-500",
@@ -304,7 +307,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: isEn ? "31–60 Days" : "31–60 Hari",
+      label: t("dashboard:charts.aging_31_60"),
       bucketKey: "31–60 Hari",
       color: "bg-amber-500",
       dotColor: "bg-amber-500",
@@ -313,7 +316,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: isEn ? "> 60 Days" : "> 60 Hari",
+      label: t("dashboard:charts.aging_over_60"),
       bucketKey: "> 60 Hari",
       color: "bg-rose-500",
       dotColor: "bg-rose-500",
@@ -379,7 +382,6 @@ export function AdminDashboardPage() {
     .slice(0, 4);
 
   async function handleBackupExport() {
-    const isEn = getActiveLanguage() === "en";
     const rows: Array<Array<string | number>> = [];
     for (const j of journals) {
       const jLines = lines.filter((l) => l.journal_id === j.id);
@@ -387,48 +389,36 @@ export function AdminDashboardPage() {
         const acc = accMap.get(l.account_id);
         rows.push([
           j.journal_number,
-          formatDateID(j.journal_date),
+          formatDateI18n(j.journal_date, language),
           j.journal_type,
           j.status,
-          acc ? `${acc.code} - ${acc.name}` : "-",
-          l.description ?? j.description,
+          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
+          getLocalizedTransactionDescription(l.description ?? j.description, language),
           l.debit,
           l.credit,
         ]);
       }
     }
     await downloadExcelSheet({
-      fileName: isEn ? "Altcycles_Journal_Books_Backup.xlsx" : "Cadangan_Buku_Jurnal_Altcycles.xlsx",
-      sheetName: isEn ? "Journals Backup" : "Backup Jurnal",
-      columns: isEn
-        ? [
-            { header: "Journal No.", width: 22 },
-            { header: "Date", width: 14 },
-            { header: "Type", width: 18 },
-            { header: "Status", width: 14 },
-            { header: "Account", width: 32 },
-            { header: "Description", width: 38 },
-            { header: "Debit", width: 18 },
-            { header: "Credit", width: 18 },
-          ]
-        : [
-            { header: "No. Jurnal", width: 22 },
-            { header: "Tanggal", width: 14 },
-            { header: "Tipe", width: 18 },
-            { header: "Status", width: 14 },
-            { header: "Akun", width: 32 },
-            { header: "Keterangan", width: 38 },
-            { header: "Debit", width: 18 },
-            { header: "Kredit", width: 18 },
-          ],
+      fileName: t("dashboard:export.excel_filename"),
+      sheetName: t("dashboard:export.excel_sheet"),
+      columns: [
+        { header: t("dashboard:export.col_journal_no"), width: 22 },
+        { header: t("dashboard:export.col_date"), width: 14 },
+        { header: t("dashboard:export.col_type"), width: 18 },
+        { header: t("dashboard:export.col_status"), width: 14 },
+        { header: t("dashboard:export.col_account"), width: 32 },
+        { header: t("dashboard:export.col_description"), width: 38 },
+        { header: t("dashboard:export.col_debit"), width: 18 },
+        { header: t("dashboard:export.col_credit"), width: 18 },
+      ],
       rows,
     });
     await recordExportLog("FULL_BACKUP_LEDGER", "EXCEL");
-    toast.success(isEn ? "Journal backup data successfully downloaded to Excel (.xlsx)." : "Cadangan data jurnal berhasil diunduh ke Excel (.xlsx).");
+    toast.success(t("dashboard:export.toast_excel_success"));
   }
 
   async function handleBackupExportPdf() {
-    const isEn = getActiveLanguage() === "en";
     const comp = await getCompanyProfile();
     const tableRows: string[][] = [];
     for (const j of journals) {
@@ -436,47 +426,37 @@ export function AdminDashboardPage() {
       for (const l of jLines) {
         const acc = accMap.get(l.account_id);
         tableRows.push([
-          formatDateID(j.journal_date),
+          formatDateI18n(j.journal_date, language),
           j.journal_number,
-          acc ? `${acc.code} - ${acc.name}` : "-",
-          l.description ?? j.description,
+          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
+          getLocalizedTransactionDescription(l.description ?? j.description, language),
           l.debit > 0 ? formatRupiah(l.debit) : "-",
           l.credit > 0 ? formatRupiah(l.credit) : "-",
         ]);
       }
     }
     const bytes = await generateDocumentPdf({
-      docTitle: isEn ? "ALTCYCLES ACCOUNTING GENERAL JOURNALS BACKUP" : "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES",
-      docSubtitle: isEn ? `Total Journal Entries: ${journals.length} transactions` : `Total Entri Jurnal: ${journals.length} transaksi`,
+      docTitle: t("dashboard:export.pdf_title"),
+      docSubtitle: t("dashboard:export.pdf_subtitle", { count: journals.length }),
       docNumber: `BKP/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: isEn
-        ? [
-            { header: "Date", widthRatio: 0.14 },
-            { header: "Journal No.", widthRatio: 0.18 },
-            { header: "Account", widthRatio: 0.28 },
-            { header: "Description", widthRatio: 0.20 },
-            { header: "Debit", widthRatio: 0.10, align: "right" },
-            { header: "Credit", widthRatio: 0.10, align: "right" },
-          ]
-        : [
-            { header: "Tanggal", widthRatio: 0.14 },
-            { header: "No. Jurnal", widthRatio: 0.18 },
-            { header: "Akun", widthRatio: 0.28 },
-            { header: "Keterangan", widthRatio: 0.20 },
-            { header: "Debit", widthRatio: 0.10, align: "right" },
-            { header: "Kredit", widthRatio: 0.10, align: "right" },
-          ],
+      tableColumns: [
+        { header: t("dashboard:export.col_date"), widthRatio: 0.14 },
+        { header: t("dashboard:export.col_journal_no"), widthRatio: 0.18 },
+        { header: t("dashboard:export.col_account"), widthRatio: 0.28 },
+        { header: t("dashboard:export.col_description"), widthRatio: 0.20 },
+        { header: t("dashboard:export.col_debit"), widthRatio: 0.10, align: "right" },
+        { header: t("dashboard:export.col_credit"), widthRatio: 0.10, align: "right" },
+      ],
       tableRows,
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(bytes, isEn ? "Altcycles_Journal_Books_Backup.pdf" : "Cadangan_Buku_Jurnal_Altcycles.pdf");
+    downloadPdfBytes(bytes, t("dashboard:export.excel_filename").replace(".xlsx", ".pdf"));
     await recordExportLog("FULL_BACKUP_LEDGER", "PDF");
   }
 
   async function handleBackupExportCsv() {
-    const isEn = getActiveLanguage() === "en";
     const rows: Array<Array<string | number>> = [];
     for (const j of journals) {
       const jLines = lines.filter((l) => l.journal_id === j.id);
@@ -484,43 +464,32 @@ export function AdminDashboardPage() {
         const acc = accMap.get(l.account_id);
         rows.push([
           j.journal_number,
-          j.journal_date,
+          formatDateI18n(j.journal_date, language),
           j.journal_type,
           j.status,
-          acc ? `${acc.code} - ${acc.name}` : "-",
-          l.description ?? j.description,
+          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
+          getLocalizedTransactionDescription(l.description ?? j.description, language),
           l.debit,
           l.credit,
         ]);
       }
     }
     downloadCsvFile(
-      isEn ? "Altcycles_Journal_Books_Backup.csv" : "Cadangan_Buku_Jurnal_Altcycles.csv",
-      isEn
-        ? [
-            "Journal No.",
-            "Date",
-            "Type",
-            "Status",
-            "Account",
-            "Description",
-            "Debit",
-            "Credit",
-          ]
-        : [
-            "No. Jurnal",
-            "Tanggal",
-            "Tipe",
-            "Status",
-            "Akun",
-            "Keterangan",
-            "Debit",
-            "Credit",
-          ],
+      t("dashboard:export.excel_filename").replace(".xlsx", ".csv"),
+      [
+        t("dashboard:export.col_journal_no"),
+        t("dashboard:export.col_date"),
+        t("dashboard:export.col_type"),
+        t("dashboard:export.col_status"),
+        t("dashboard:export.col_account"),
+        t("dashboard:export.col_description"),
+        t("dashboard:export.col_debit"),
+        t("dashboard:export.col_credit"),
+      ],
       rows,
     );
     await recordExportLog("FULL_BACKUP_LEDGER", "CSV");
-    toast.success(isEn ? "Journal backup data successfully downloaded to CSV (.csv)." : "Cadangan data jurnal berhasil diunduh ke CSV (.csv).");
+    toast.success(t("dashboard:export.toast_csv_success"));
   }
 
   const totalExpense =
@@ -529,19 +498,19 @@ export function AdminDashboardPage() {
     donutMode === "profit"
       ? [
           {
-            label: isEn ? "Revenue" : "Pendapatan",
+            label: t("dashboard:charts.revenue"),
             value: Math.max(0, incomeStatement.totalRevenue),
             color: "#10b981",
             dotClass: "bg-emerald-500",
           },
           {
-            label: isEn ? "Direct Expense" : "Beban Langsung",
+            label: t("dashboard:charts.direct_expense"),
             value: Math.max(0, incomeStatement.totalDirectExpense),
             color: "#f59e0b",
             dotClass: "bg-amber-500",
           },
           {
-            label: isEn ? "Shared Expense" : "Beban Bersama",
+            label: t("dashboard:charts.shared_expense"),
             value: Math.max(0, incomeStatement.totalSharedExpense),
             color: "#3b82f6",
             dotClass: "bg-blue-500",
@@ -549,19 +518,19 @@ export function AdminDashboardPage() {
         ]
       : [
           {
-            label: isEn ? "Operating Cash Inflow" : "Kas Masuk Operasi",
+            label: t("dashboard:charts.operating_inflow"),
             value: Math.max(0, cashPosition.operatingInflow),
             color: "#10b981",
             dotClass: "bg-emerald-500",
           },
           {
-            label: isEn ? "Operating Cash Outflow" : "Kas Keluar Operasi",
+            label: t("dashboard:charts.operating_outflow"),
             value: Math.max(0, cashPosition.operatingOutflow),
             color: "#f43f5e",
             dotClass: "bg-rose-500",
           },
           {
-            label: isEn ? "Investing & Financing" : "Investasi & Pendanaan",
+            label: t("dashboard:charts.investing_financing"),
             value: Math.abs(
               cashPosition.netInvesting + cashPosition.netFinancing,
             ),
@@ -584,7 +553,7 @@ export function AdminDashboardPage() {
       dotClass: "bg-amber-500",
     };
     return {
-      label: `${exp.code} — ${exp.name}`,
+      label: `${exp.code} — ${getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}`,
       value: exp.amount,
       color: palette.color,
       dotClass: palette.dotClass,
@@ -608,7 +577,7 @@ export function AdminDashboardPage() {
       tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
       badge:
         pendingApprovals + readyDisbursements > 0
-          ? `${pendingApprovals + readyDisbursements} ${isEn ? "Queue" : "Antrean"}`
+          ? `${pendingApprovals + readyDisbursements} ${t("dashboard:shortcuts.badge_queue")}`
           : null,
     },
     {
@@ -618,7 +587,7 @@ export function AdminDashboardPage() {
       icon: FolderKanbanIcon,
       tone: "text-primary dark:text-cyan-400 bg-primary/10 border-primary/20",
       badge:
-        pendingClientPos > 0 ? `${pendingClientPos} ${isEn ? "New PO" : "PO Baru"}` : null,
+        pendingClientPos > 0 ? `${pendingClientPos} ${t("dashboard:shortcuts.badge_new_po")}` : null,
     },
     {
       to: "/admin/penagihan",
@@ -626,7 +595,7 @@ export function AdminDashboardPage() {
       desc: t("dashboard.shortcuts.invoices_receivables_desc", "Tagihan & kuitansi"),
       icon: ReceiptTextIcon,
       tone: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20",
-      badge: unpaidInvoiceCount > 0 ? `${unpaidInvoiceCount} ${isEn ? "Unpaid" : "Belum Lunas"}` : null,
+      badge: unpaidInvoiceCount > 0 ? `${unpaidInvoiceCount} ${t("dashboard:shortcuts.badge_unpaid")}` : null,
     },
     {
       to: "/admin/akuntansi",
@@ -650,7 +619,7 @@ export function AdminDashboardPage() {
       desc: t("dashboard.shortcuts.vendor_po_desc", "Pengadaan internal"),
       icon: ShoppingCartIcon,
       tone: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
-      badge: activePoCount > 0 ? `${activePoCount} ${isEn ? "Active" : "Aktif"}` : null,
+      badge: activePoCount > 0 ? `${activePoCount} ${t("dashboard:shortcuts.badge_active")}` : null,
     },
     {
       to: "/admin/anggaran",
@@ -866,15 +835,15 @@ export function AdminDashboardPage() {
               <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-emerald-500" />
-                  {isEn ? "Revenue" : "Pendapatan"}
+                  {t("dashboard:charts.revenue")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-amber-500" />
-                  {isEn ? "Expense" : "Beban"}
+                  {t("dashboard:charts.expense")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-primary" />
-                  {isEn ? "Net Cash" : "Kas Bersih"}
+                  {t("dashboard:charts.net_cash")}
                 </span>
               </div>
             ) : null}
@@ -886,19 +855,19 @@ export function AdminDashboardPage() {
               series={[
                 {
                   key: "revenue",
-                  label: isEn ? "Revenue" : "Pendapatan",
+                  label: t("dashboard:charts.revenue"),
                   color: "#10b981",
                   textClass: "text-emerald-600 dark:text-emerald-400",
                 },
                 {
                   key: "expense",
-                  label: isEn ? "Expense" : "Beban",
+                  label: t("dashboard:charts.expense"),
                   color: "#f59e0b",
                   textClass: "text-amber-600 dark:text-amber-400",
                 },
                 {
                   key: "netCash",
-                  label: isEn ? "Net Cash" : "Kas Bersih",
+                  label: t("dashboard:charts.net_cash"),
                   color: "#0B43C8",
                   textClass: "text-primary dark:text-sky-400",
                 },
@@ -909,24 +878,20 @@ export function AdminDashboardPage() {
                 xKey: "revenue",
                 yKey: "expense",
                 sizeKey: "netCash",
-                xLabel: isEn ? "Revenue" : "Pendapatan",
-                yLabel: isEn ? "Expense" : "Beban",
-                sizeLabel: isEn ? "Net Cash Scale" : "Skala Kas Bersih",
+                xLabel: t("dashboard:charts.revenue"),
+                yLabel: t("dashboard:charts.expense"),
+                sizeLabel: t("dashboard:charts.net_cash_scale"),
                 showBreakEvenLine: true,
               }}
-              emptyTitle={isEn ? "No Posted Journal Data Yet" : "Belum Ada Data Jurnal Terposting"}
-              emptySubtitle={
-                isEn
-                  ? "Monthly trend charts will appear once revenue, expense, or cash transactions are recorded."
-                  : "Grafik tren bulanan otomatis muncul setelah transaksi pendapatan, beban, atau kas dicatat di buku jurnal."
-              }
+              emptyTitle={t("dashboard:charts.empty_trends_title")}
+              emptySubtitle={t("dashboard:charts.empty_trends_desc")}
             />
 
             {/* Footer Ringkasan Laba Rugi */}
             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
               <div>
                 <p className="text-[11px] text-muted-foreground">
-                  {isEn ? "Total Revenue" : "Total Pendapatan"}
+                  {t("dashboard:charts.total_revenue")}
                 </p>
                 <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
                   {formatRupiah(incomeStatement.totalRevenue)}
@@ -934,7 +899,7 @@ export function AdminDashboardPage() {
               </div>
               <div>
                 <p className="text-[11px] text-muted-foreground">
-                  {isEn ? "Total Expense" : "Total Beban"}
+                  {t("dashboard:charts.total_expense")}
                 </p>
                 <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
                   {formatRupiah(totalExpense)}
@@ -942,7 +907,7 @@ export function AdminDashboardPage() {
               </div>
               <div>
                 <p className="text-[11px] text-muted-foreground">
-                  {isEn ? "Net Profit / Loss" : "Laba / Rugi Bersih"}
+                  {t("dashboard:charts.net_profit_loss")}
                 </p>
                 <p
                   className={cn(
@@ -967,11 +932,11 @@ export function AdminDashboardPage() {
               value={trendChartType}
               onChange={setTrendChartType}
               options={[
-                { value: "column", label: "Column", title: isEn ? "Column Chart (Vertical Bars)" : "Column Chart (Batang Vertikal)", icon: BarChart3Icon },
-                { value: "bar", label: "Bar", title: isEn ? "Bar Chart (Horizontal Bars)" : "Bar Chart (Batang Horizontal)", icon: BarChartHorizontalIcon },
-                { value: "line", label: "Line", title: isEn ? "Line Chart (Trend Line)" : "Line Chart (Garis Tren)", icon: TrendingUpIcon },
-                { value: "area", label: "Area", title: isEn ? "Area Chart (Area Curve)" : "Area Chart (Kurva Area)", icon: ActivityIcon },
-                { value: "bubble", label: "Bubble", title: isEn ? "Bubble Chart (Revenue vs Expense)" : "Bubble Chart (Pendapatan vs Beban)", icon: CircleDotIcon },
+                { value: "column", label: t("dashboard:charts.types.column"), title: t("dashboard:charts.types.column_title"), icon: BarChart3Icon },
+                { value: "bar", label: t("dashboard:charts.types.bar"), title: t("dashboard:charts.types.bar_title"), icon: BarChartHorizontalIcon },
+                { value: "line", label: t("dashboard:charts.types.line"), title: t("dashboard:charts.types.line_title"), icon: TrendingUpIcon },
+                { value: "area", label: t("dashboard:charts.types.area"), title: t("dashboard:charts.types.area_title"), icon: ActivityIcon },
+                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: t("dashboard:charts.types.bubble_title"), icon: CircleDotIcon },
               ]}
             />
           </ChartCardFooter>
@@ -1002,7 +967,7 @@ export function AdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {isEn ? "Profit & Loss" : "Laba Rugi"}
+                {t("dashboard:charts.tab_profit_loss")}
               </button>
               <button
                 type="button"
@@ -1014,7 +979,7 @@ export function AdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {isEn ? "Cash Flows" : "Arus Kas"}
+                {t("dashboard:charts.tab_cash_flow")}
               </button>
             </div>
           </CardHeader>
@@ -1022,19 +987,15 @@ export function AdminDashboardPage() {
             <CompositionChart
               chartType={compositionChartType}
               slices={donutSegments}
-              centerLabel={donutMode === "profit" ? (isEn ? "Net Profit" : "Laba Bersih") : (isEn ? "Cash Balance" : "Saldo Kas")}
+              centerLabel={donutMode === "profit" ? t("dashboard:charts.center_net_profit") : t("dashboard:charts.center_cash_balance")}
               centerValue={formatCompactRupiah(
                 donutMode === "profit"
                   ? incomeStatement.netProfit
                   : cashPosition.endingCash,
               )}
               formatValue={formatRupiah}
-              emptyTitle={isEn ? "No Financial Composition Yet" : "Belum Ada Komposisi Keuangan"}
-              emptySubtitle={
-                isEn
-                  ? "Composition chart will automatically display once revenue or expense accounts are posted."
-                  : "Grafik proporsi otomatis terisi setelah transaksi pendapatan, beban, atau kas dibukukan."
-              }
+              emptyTitle={t("dashboard:charts.empty_composition_title")}
+              emptySubtitle={t("dashboard:charts.empty_composition_desc")}
             />
           </CardContent>
           <ChartCardFooter>
@@ -1042,9 +1003,9 @@ export function AdminDashboardPage() {
               value={compositionChartType}
               onChange={setCompositionChartType}
               options={[
-                { value: "donut", label: "Donut", icon: CircleDotIcon },
-                { value: "pie", label: "Pie", icon: PieChartIcon },
-                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
+                { value: "donut", label: t("dashboard:charts.types.donut"), icon: CircleDotIcon },
+                { value: "pie", label: t("dashboard:charts.types.pie"), icon: PieChartIcon },
+                { value: "bar", label: t("dashboard:charts.types.bar"), icon: BarChartHorizontalIcon },
               ]}
             />
           </ChartCardFooter>
@@ -1058,19 +1019,17 @@ export function AdminDashboardPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
               <CardTitle>
-                {isEn ? "Project Billing Realization & AR Aging" : "Realisasi Penagihan Proyek & Umur Piutang"}
+                {t("dashboard:charts.billing_title")}
               </CardTitle>
               <CardDescription>
-                {isEn
-                  ? "Comparison of contract values to issued invoices and aging distribution."
-                  : "Perbandingan nilai kontrak terhadap invoice terbit serta sebaran jatuh tempo."}
+                {t("dashboard:charts.billing_subtitle")}
               </CardDescription>
             </div>
             <Link
               to="/admin/penagihan"
               className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
             >
-              {isEn ? "Manage Invoices" : "Kelola Tagihan"}
+              {t("dashboard:charts.link_manage_invoices")}
             </Link>
           </CardHeader>
           <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
@@ -1079,12 +1038,8 @@ export function AdminDashboardPage() {
                 chartType="pie"
                 slices={agingPieSlices}
                 formatValue={formatRupiah}
-                emptyTitle={isEn ? "No Overdue Accounts Receivable" : "Tidak Ada Piutang Jatuh Tempo"}
-                emptySubtitle={
-                  isEn
-                    ? "All issued project invoices are paid or no active billings exist."
-                    : "Seluruh invoice proyek yang diterbitkan sudah lunas atau belum ada penagihan berjalan."
-                }
+                emptyTitle={t("dashboard:charts.empty_aging_title")}
+                emptySubtitle={t("dashboard:charts.empty_aging_desc")}
               />
             ) : billingChartType === "column" || billingChartType === "bubble" ? (
               <div className="space-y-4">
@@ -1102,19 +1057,19 @@ export function AdminDashboardPage() {
                   series={[
                     {
                       key: "contract",
-                      label: isEn ? "Contract" : "Kontrak",
+                      label: t("dashboard:charts.contract"),
                       color: "#64748b",
                       textClass: "text-muted-foreground",
                     },
                     {
                       key: "billed",
-                      label: isEn ? "Billed" : "Tertagih",
+                      label: t("dashboard:charts.billed"),
                       color: "#0B43C8",
                       textClass: "text-primary dark:text-sky-400",
                     },
                     {
                       key: "paid",
-                      label: isEn ? "Paid" : "Terbayar",
+                      label: t("dashboard:charts.paid"),
                       color: "#10b981",
                       textClass: "text-emerald-600 dark:text-emerald-400",
                     },
@@ -1125,38 +1080,34 @@ export function AdminDashboardPage() {
                     xKey: "contract",
                     yKey: "billed",
                     sizeKey: "paid",
-                    xLabel: isEn ? "Contract Value" : "Nilai Kontrak",
-                    yLabel: isEn ? "Issued Invoices" : "Invoice Terbit",
-                    sizeLabel: isEn ? "Paid Amount" : "Dana Terbayar",
+                    xLabel: t("dashboard:charts.contract"),
+                    yLabel: t("dashboard:charts.billed"),
+                    sizeLabel: t("dashboard:charts.paid"),
                     showBreakEvenLine: true,
                   }}
-                  emptyTitle={isEn ? "No Active Client Projects" : "Belum Ada Proyek Klien Aktif"}
-                  emptySubtitle={
-                    isEn
-                      ? "Add client projects to visualize contract values and billing progress."
-                      : "Tambahkan proyek klien untuk memvisualisasikan perbandingan nilai kontrak dan invoice."
-                  }
+                  emptyTitle={t("dashboard:charts.empty_projects_title")}
+                  emptySubtitle={t("dashboard:charts.empty_projects_desc")}
                 />
                 {billingChartType === "column" ? (
                   <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="size-2.5 rounded-xs bg-slate-500" />
-                      {isEn ? "Contract" : "Kontrak"}
+                      {t("dashboard:charts.contract")}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="size-2.5 rounded-xs bg-primary" />
-                      {isEn ? "Issued Invoices" : "Invoice Terbit"}
+                      {t("dashboard:charts.billed")}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="size-2.5 rounded-xs bg-emerald-500" />
-                      {isEn ? "Paid" : "Sudah Dibayar"}
+                      {t("dashboard:charts.paid")}
                     </span>
                   </div>
                 ) : null}
               </div>
             ) : projectBillingStats.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4 text-center">
-                {isEn ? "No active client projects to analyze." : "Belum ada proyek klien aktif untuk dianalisis."}
+                {t("dashboard:charts.empty_projects_billing")}
               </p>
             ) : (
               <div className="space-y-3.5">
@@ -1189,7 +1140,7 @@ export function AdminDashboardPage() {
             <div className="pt-4 border-t border-border/60 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground">
-                  {isEn ? "Accounts Receivable Aging Distribution" : "Sebaran Umur Piutang Usaha"}
+                  {t("dashboard:charts.aging_title")}
                 </span>
                 <span className="text-muted-foreground tabular-nums">
                   Total: {formatRupiah(outstandingReceivable)}
@@ -1233,10 +1184,10 @@ export function AdminDashboardPage() {
               value={billingChartType}
               onChange={setBillingChartType}
               options={[
-                { value: "bar", label: "Progress", icon: BarChartHorizontalIcon },
-                { value: "column", label: "Column", title: isEn ? "Contract vs Billed Comparison" : "Perbandingan Kontrak vs Tertagih", icon: BarChart3Icon },
-                { value: "pie", label: isEn ? "AR Pie" : "Pie Piutang", title: isEn ? "AR Aging Distribution Pie Chart" : "Pie Chart Sebaran Umur Piutang", icon: PieChartIcon },
-                { value: "bubble", label: "Bubble", title: isEn ? "Contract vs Billed Bubble Chart" : "Bubble Chart Nilai Kontrak vs Tertagih", icon: CircleDotIcon },
+                { value: "bar", label: t("dashboard:charts.types.progress"), icon: BarChartHorizontalIcon },
+                { value: "column", label: t("dashboard:charts.types.column"), title: language === "en" ? "Contract vs Billed Comparison" : "Perbandingan Kontrak vs Tertagih", icon: BarChart3Icon },
+                { value: "pie", label: t("dashboard:charts.types.pie_receivables"), title: language === "en" ? "AR Aging Distribution Pie Chart" : "Pie Chart Sebaran Umur Piutang", icon: PieChartIcon },
+                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: language === "en" ? "Contract vs Billed Bubble Chart" : "Bubble Chart Nilai Kontrak vs Tertagih", icon: CircleDotIcon },
               ]}
             />
           </ChartCardFooter>
@@ -1247,23 +1198,21 @@ export function AdminDashboardPage() {
           <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
             <div className="space-y-1 min-w-0">
               <CardTitle>
-                {isEn ? "Top Expense Categories & Transaction Distribution" : "Pos Beban Terbesar & Distribusi Transaksi"}
+                {t("dashboard:charts.top_expenses_title")}
               </CardTitle>
               <CardDescription>
                 {expenseChartType === "histogram"
-                  ? (isEn
+                  ? (language === "en"
                       ? "Histogram distribution of all posted journal transaction amounts."
                       : "Histogram sebaran nilai nominal seluruh transaksi jurnal terposting.")
-                  : (isEn
-                      ? "Distribution of expenses per account and recent transactions."
-                      : "Distribusi pengeluaran per akun dan catatan transaksi terkini.")}
+                  : t("dashboard:charts.top_expenses_subtitle")}
               </CardDescription>
             </div>
             <Link
               to="/admin/akuntansi"
               className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
             >
-              {isEn ? "Journal Book" : "Buku Jurnal"}
+              {t("dashboard:charts.link_general_journal")}
             </Link>
           </CardHeader>
           <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
@@ -1273,36 +1222,26 @@ export function AdminDashboardPage() {
                 average={journalHistogram.average}
                 median={journalHistogram.median}
                 totalCount={journalHistogram.totalCount}
-                unitLabel={isEn ? "Journals" : "Jurnal"}
+                unitLabel={language === "en" ? "Journals" : "Jurnal"}
                 accentColor="#0B43C8"
-                emptyTitle={isEn ? "No Posted Journal Samples Yet" : "Belum Ada Sampel Jurnal Terposting"}
-                emptySubtitle={
-                  isEn
-                    ? "Transaction amount distribution histogram will appear once journals are posted."
-                    : "Histogram sebaran nominal transaksi otomatis terbentuk setelah ada jurnal akuntansi berstatus posted."
-                }
+                emptyTitle={t("dashboard:charts.empty_trends_title")}
+                emptySubtitle={t("dashboard:charts.empty_trends_desc")}
               />
             ) : expenseChartType === "pie" ? (
               <CompositionChart
                 chartType="pie"
                 slices={expenseSlices}
                 formatValue={formatRupiah}
-                emptyTitle={isEn ? "No Posted Expenses Yet" : "Belum Ada Pengeluaran Beban Terposting"}
-                emptySubtitle={
-                  isEn
-                    ? "Pie Chart will appear once expenses are posted to the journal."
-                    : "Pie Chart pos beban tampil setelah ada pengeluaran beban tercatat di buku jurnal."
-                }
+                emptyTitle={t("dashboard:charts.empty_expenses_title")}
+                emptySubtitle={t("dashboard:charts.empty_expenses_pie_desc")}
               />
             ) : topExpenses.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 py-6 px-4 text-center">
                 <p className="text-xs font-medium text-foreground">
-                  {isEn ? "No Posted Expenses Yet" : "Belum Ada Pengeluaran Beban Terposting"}
+                  {t("dashboard:charts.empty_expenses_title")}
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {isEn
-                    ? "Top expense categories will appear after payment approvals or expense journals are recorded."
-                    : "Pos beban terbesar akan tampil otomatis setelah persetujuan pembayaran atau jurnal beban dicatat."}
+                  {t("dashboard:charts.empty_expenses_desc")}
                 </p>
               </div>
             ) : (
@@ -1319,7 +1258,7 @@ export function AdminDashboardPage() {
                           <span className="font-mono text-muted-foreground">
                             {exp.code}
                           </span>{" "}
-                          &mdash; {exp.name}
+                          &mdash; {getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}
                         </span>
                         <span className="font-semibold text-foreground tabular-nums shrink-0">
                           {formatRupiah(exp.amount)}
@@ -1340,15 +1279,15 @@ export function AdminDashboardPage() {
             <div className="pt-4 border-t border-border/60 space-y-2.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground">
-                  {isEn ? "Recent Journal Activity" : "Aktivitas Jurnal Terakhir"}
+                  {t("dashboard:charts.recent_journals_title")}
                 </span>
                 <span className="text-muted-foreground tabular-nums">
-                  {journals.length} {isEn ? "ledger entries" : "entri buku besar"}
+                  {journals.length} {t("dashboard:charts.ledger_entries_count")}
                 </span>
               </div>
               {recentJournals.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-2">
-                  {isEn ? "No journal entries recorded yet." : "Belum ada entri jurnal tercatat."}
+                  {t("dashboard:charts.no_journals")}
                 </p>
               ) : (
                 <div className="divide-y divide-border/50">
@@ -1363,10 +1302,10 @@ export function AdminDashboardPage() {
                       >
                         <div className="min-w-0">
                           <p className="font-medium text-foreground truncate">
-                            {j.description}
+                            {getLocalizedTransactionDescription(j.description, language)}
                           </p>
                           <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
-                            {j.journal_number} &bull; {formatDateID(j.journal_date)}
+                            {j.journal_number} &bull; {formatDateI18n(j.journal_date, language)}
                           </p>
                         </div>
                         <span className="font-semibold text-foreground tabular-nums shrink-0">
@@ -1384,9 +1323,9 @@ export function AdminDashboardPage() {
               value={expenseChartType}
               onChange={setExpenseChartType}
               options={[
-                { value: "bar", label: isEn ? "Expense Bars" : "Bar Beban", icon: BarChartHorizontalIcon },
-                { value: "pie", label: isEn ? "Expense Pie" : "Pie Beban", icon: PieChartIcon },
-                { value: "histogram", label: isEn ? "Histogram" : "Histogram", title: isEn ? "Journal Amount Distribution Histogram" : "Histogram Distribusi Nominal Jurnal", icon: BarChart2Icon },
+                { value: "bar", label: t("dashboard:charts.types.bar_expenses"), icon: BarChartHorizontalIcon },
+                { value: "pie", label: t("dashboard:charts.types.pie_expenses"), icon: PieChartIcon },
+                { value: "histogram", label: t("dashboard:charts.types.histogram"), title: language === "en" ? "Journal Amount Distribution Histogram" : "Histogram Distribusi Nominal Jurnal", icon: BarChart2Icon },
               ]}
             />
           </ChartCardFooter>
