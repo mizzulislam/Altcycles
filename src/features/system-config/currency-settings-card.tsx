@@ -29,7 +29,7 @@ import {
  * 2. Card Kurs Konversi Valas ke Rupiah (IDR)
  */
 export function CurrencySettingsCard() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const [functionalCurrency, setFunctionalCurrencyState] = React.useState<string>(
     () => getFunctionalCurrency(),

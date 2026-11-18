@@ -987,10 +987,6 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           </form>
         </DialogContent>
       </Dialog>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmActionDialog
         open={Boolean(cancelTarget)}

@@ -77,7 +77,7 @@ function previewSequenceFormat(seq: Pick<DocSequenceRow, "prefix_pattern" | "pad
 }
 
 export function AdminSettingsPage() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const [loading, setLoading] = React.useState(true);
   const [sequences, setSequences] = React.useState<DocSequenceRow[]>([]);

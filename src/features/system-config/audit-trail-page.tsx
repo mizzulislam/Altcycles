@@ -64,7 +64,7 @@ function buildPageNumbers(currentPage: number, totalPages: number): Array<number
 }
 
 export function AuditTrailPage() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const [logs, setLogs] = React.useState<AuditLogRow[]>([]);
   const [loading, setLoading] = React.useState(true);

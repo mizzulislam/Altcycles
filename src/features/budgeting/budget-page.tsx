@@ -658,25 +658,6 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
           </form>
         </DialogContent>
       </Dialog>
-              </div>
-
-              <DialogFooter className="pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditOpen(false)}
-                >
-                  {isEn ? "Cancel" : "Batal"}
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Save Budget" : "Simpan Anggaran"}
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

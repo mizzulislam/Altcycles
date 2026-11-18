@@ -53,7 +53,7 @@ import type {
 import { CurrencySettingsCard } from "./currency-settings-card";
 
 export function MasterReadonlyPage() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const [loading, setLoading] = React.useState(true);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);

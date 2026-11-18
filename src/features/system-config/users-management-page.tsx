@@ -80,7 +80,7 @@ function getRolesSummary(user: ProfileRow): string {
 
 export function UsersManagementPage() {
   const { profile: currentUser } = useAuth();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const [users, setUsers] = React.useState<ProfileRow[]>([]);
   const [loading, setLoading] = React.useState(true);

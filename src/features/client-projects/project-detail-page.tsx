@@ -122,7 +122,7 @@ import { SowSpkTab } from "./tabs/sow-spk-tab";
 import { AcceptanceDocsTab } from "./tabs/acceptance-docs-tab";
 
 export function ProjectDetailPage() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isEn = language === "en";
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -951,13 +951,6 @@ export function ProjectDetailPage() {
           {
             id: "bakp_uat_bast" as const,
             label: isEn ? "BAKP, UAT, & BAST" : "BAKP, UAT, & BAST",
-            badge: String(
-              bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
-            ),
-            icon: ClipboardCheckIcon,
-          },
-        ].map((tab) => {
-            label: "BAKP, UAT, & BAST",
             badge: String(
               bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
             ),
