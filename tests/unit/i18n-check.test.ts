@@ -78,6 +78,11 @@ describe("i18n navigation and layout checks", () => {
     expect(Object.keys(projectsId).sort()).toEqual(Object.keys(projectsEn).sort());
     expect(Object.keys(invoicingId).sort()).toEqual(Object.keys(invoicingEn).sort());
 
+    const poId = (await import("@/locales/id/po.json")).default;
+    const poEn = (await import("@/locales/en/po.json")).default;
+    const approvalsId = (await import("@/locales/id/approvals.json")).default;
+    const approvalsEn = (await import("@/locales/en/approvals.json")).default;
+
     const accountingId = (await import("@/locales/id/accounting.json")).default;
     const accountingEn = (await import("@/locales/en/accounting.json")).default;
 
@@ -95,6 +100,47 @@ describe("i18n navigation and layout checks", () => {
 
     expect(idKeys).toEqual(enKeys);
     expect(idKeys.length).toBeGreaterThan(50);
+
+    // Check po.json deep keys
+    const poIdKeys = getDeepKeys(poId).sort();
+    const poEnKeys = getDeepKeys(poEn).sort();
+    expect(poIdKeys).toEqual(poEnKeys);
+    expect(poIdKeys.length).toBeGreaterThan(20);
+
+    // Check approvals.json deep keys
+    const apprvIdKeys = getDeepKeys(approvalsId).sort();
+    const apprvEnKeys = getDeepKeys(approvalsEn).sort();
+    expect(apprvIdKeys).toEqual(apprvEnKeys);
+    expect(apprvIdKeys.length).toBeGreaterThan(40);
+
+    // Ensure no empty translation values in po and approvals
+    for (const key of poIdKeys) {
+      const parts = key.split(".");
+      let valId: any = poId;
+      let valEn: any = poEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
+
+    for (const key of apprvIdKeys) {
+      const parts = key.split(".");
+      let valId: any = approvalsId;
+      let valEn: any = approvalsEn;
+      for (const p of parts) {
+        valId = valId[p];
+        valEn = valEn[p];
+      }
+      expect(typeof valId).toBe("string");
+      expect(valId.trim().length).toBeGreaterThan(0);
+      expect(typeof valEn).toBe("string");
+      expect(valEn.trim().length).toBeGreaterThan(0);
+    }
 
     // Ensure no empty translation values
     for (const key of idKeys) {

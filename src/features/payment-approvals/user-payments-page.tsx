@@ -67,14 +67,14 @@ import {
 } from "@/lib/data-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { getActiveLanguage } from "@/lib/i18n";
+import { useLanguage } from "@/lib/i18n";
 import {
   buildPaymentApprovalPdfSpec,
   downloadPdfBytes,
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
 import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
-import { formatDateID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatRupiah } from "@/lib/formatters";
 import {
   createAndSubmitPaymentRequest,
   getAttachmentSignedUrl,
@@ -93,72 +93,61 @@ import type {
   PurchaseOrderRow,
 } from "@/types/database.types";
 
-const PA_STATUS_META: Record<
-  PaymentRequestStatus,
-  { label: string; tone: "secondary" | "info" | "success" | "destructive" | "warning" }
-> = {
-  draft: { label: "Draf", tone: "secondary" },
-  submitted: { label: "Diajukan (Menunggu Admin)", tone: "info" },
-  approved: { label: "Disetujui (Menunggu Transfer)", tone: "warning" },
-  rejected: { label: "Ditolak (Perlu Revisi)", tone: "destructive" },
-  paid: { label: "Dibayar Lunas", tone: "success" },
+function getPaUserStatusMeta(
+  status: PaymentRequestStatus,
+  t: (key: string) => string,
+): { label: string; tone: "secondary" | "info" | "success" | "destructive" | "warning" } {
+  switch (status) {
+    case "draft":
+      return { label: t("approvals:status.draft"), tone: "secondary" };
+    case "submitted":
+      return { label: t("approvals:status.submitted"), tone: "info" };
+    case "approved":
+      return { label: t("approvals:status.approved"), tone: "warning" };
+    case "rejected":
+      return { label: t("approvals:status.rejected"), tone: "destructive" };
+    case "paid":
+      return { label: t("approvals:status.paid"), tone: "success" };
+  }
+}
+
+const FRIENDLY_EXPENSE_KEYS: Record<string, { labelKey: string; hintKey: string }> = {
+  "5-1101": { labelKey: "cat_5_1101_label", hintKey: "cat_5_1101_hint" },
+  "5-1201": { labelKey: "cat_5_1201_label", hintKey: "cat_5_1201_hint" },
+  "5-1301": { labelKey: "cat_5_1301_label", hintKey: "cat_5_1301_hint" },
+  "5-1401": { labelKey: "cat_5_1401_label", hintKey: "cat_5_1401_hint" },
+  "6-1101": { labelKey: "cat_6_1101_label", hintKey: "cat_6_1101_hint" },
+  "6-1201": { labelKey: "cat_6_1201_label", hintKey: "cat_6_1201_hint" },
+  "6-1301": { labelKey: "cat_6_1301_label", hintKey: "cat_6_1301_hint" },
+  "6-1401": { labelKey: "cat_6_1401_label", hintKey: "cat_6_1401_hint" },
 };
 
-const FRIENDLY_EXPENSE_CATEGORY_MAP: Record<
-  string,
-  { label: string; hint: string }
-> = {
-  "5-1101": {
-    label: "Server, Cloud, & Domain",
-    hint: "Hosting, VPS, domain, SSL, & infrastruktur proyek",
-  },
-  "5-1201": {
-    label: "Jasa Tenaga Ahli / Freelancer",
-    hint: "Honorarium tenaga lepas, spesialis, atau subkontraktor",
-  },
-  "5-1301": {
-    label: "Lisensi, Plugin, & API Proyek",
-    hint: "Plugin berbayar, API, font, atau aset lisensi khusus",
-  },
-  "5-1401": {
-    label: "Bagi Hasil Proyek",
-    hint: "Pembagian hasil laba proyek internal",
-  },
-  "6-1101": {
-    label: "Langganan Tools & Aplikasi Tim",
-    hint: "Figma, GitHub, AI tools, & perangkat produktivitas tim",
-  },
-  "6-1201": {
-    label: "Internet, Listrik, & Utilitas",
-    hint: "Tagihan internet, listrik, & kebutuhan rutin ruang kerja",
-  },
-  "6-1301": {
-    label: "Administrasi & Kebutuhan Umum",
-    hint: "ATK, materai, pengiriman dokumen, & biaya operasional",
-  },
-  "6-1401": {
-    label: "Peralatan & Aset Kerja",
-    hint: "Pengadaan atau penyusutan perangkat kerja",
-  },
-};
-
-function getFriendlyExpenseCategory(acc: AccountRow): {
+function getFriendlyExpenseCategory(
+  acc: AccountRow,
+  t: (key: string) => string,
+): {
   label: string;
   hint: string;
 } {
-  const mapped = FRIENDLY_EXPENSE_CATEGORY_MAP[acc.code];
-  if (mapped) return mapped;
+  const mapped = FRIENDLY_EXPENSE_KEYS[acc.code];
+  if (mapped) {
+    return {
+      label: t(`approvals:categories.${mapped.labelKey}`),
+      hint: t(`approvals:categories.${mapped.hintKey}`),
+    };
+  }
   const cleanName = acc.name
     .replace(/^Beban\s+/i, "")
     .replace(/\s+Proyek$/i, "")
     .trim();
   return {
     label: cleanName || acc.name,
-    hint: acc.description ?? "Pengeluaran operasional",
+    hint: acc.description ?? t("approvals:categories.default_hint"),
   };
 }
 
 export function UserPaymentsPage() {
+  const { t, language } = useLanguage();
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
   const [attachments, setAttachments] = React.useState<AttachmentRow[]>([]);
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
@@ -350,10 +339,10 @@ export function UserPaymentsPage() {
       requestNumber: req.request_number,
       revisionNo: req.revision_no,
       requestDate: (req.submitted_at ?? req.created_at).slice(0, 10),
-      requesterName: "Pengaju",
+      requesterName: language === "en" ? "Requester" : "Pengaju",
       projectName: req.project_id
-        ? projectMap.get(req.project_id) ?? "Operasional Proyek"
-        : "Operasional Umum",
+        ? projectMap.get(req.project_id) ?? (language === "en" ? "Project Operations" : "Operasional Proyek")
+        : (language === "en" ? "General Operations" : "Operasional Umum"),
       expenseAccountName: req.expense_account_id
         ? accountMap.get(req.expense_account_id) ?? "-"
         : "-",
@@ -362,8 +351,8 @@ export function UserPaymentsPage() {
       purpose: req.purpose,
       amount: req.amount,
       status: req.status,
-      statusLabel: PA_STATUS_META[req.status].label,
-      approverName: req.approver_id ? "Admin Keuangan" : null,
+      statusLabel: getPaUserStatusMeta(req.status, t).label,
+      approverName: req.approver_id ? (language === "en" ? "Financial Admin" : "Admin Keuangan") : null,
       approvedAt: req.decided_at ?? null,
       paidDate: req.paid_date ?? null,
       rejectionReason: req.rejection_reason ?? null,
@@ -383,206 +372,123 @@ export function UserPaymentsPage() {
     const blob = await generateDocumentWord(spec);
     downloadWordBlob(blob, `PA_${req.request_number.replace(/\//g, "-")}.docx`);
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
-    toast.success(`Form PA ${req.request_number} (Word) berhasil diunduh.`);
+    toast.success(
+      language === "en"
+        ? `PA Form ${req.request_number} (Word) downloaded successfully.`
+        : `Form PA ${req.request_number} (Word) berhasil diunduh.`,
+    );
   }
 
   async function handleExportExcel() {
-    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error(
-        isEn
-          ? "No payment request data to export."
-          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
-      );
+      toast.error(t("approvals:user.empty_title"));
       return;
     }
     await downloadExcelSheet({
-      sheetName: isEn ? "My Payment Requests" : "Pengajuan Pembayaran",
-      fileName: isEn ? "My_Payment_Requests.xlsx" : "Pengajuan_Pembayaran_Saya.xlsx",
-      columns: isEn
-        ? [
-            { header: "PA Number", width: 22 },
-            { header: "Date", width: 14 },
-            { header: "Project", width: 28 },
-            { header: "Expense Account", width: 28 },
-            { header: "Payee", width: 24 },
-            { header: "Purpose", width: 34 },
-            { header: "Amount (IDR)", width: 18 },
-            { header: "Status", width: 24 },
-            { header: "Payment Date", width: 16 },
-          ]
-        : [
-            { header: "Nomor PA", width: 22 },
-            { header: "Tanggal", width: 14 },
-            { header: "Proyek", width: 28 },
-            { header: "Pos Beban", width: 28 },
-            { header: "Penerima", width: 24 },
-            { header: "Keperluan", width: 34 },
-            { header: "Nominal", width: 18 },
-            { header: "Status", width: 24 },
-            { header: "Tanggal Bayar", width: 16 },
-          ],
+      sheetName: t("approvals:export.user_excel_sheet"),
+      fileName: t("approvals:export.user_excel_filename"),
+      columns: [
+        { header: t("approvals:user.col_number"), width: 22 },
+        { header: t("approvals:modals.request_date"), width: 14 },
+        { header: t("approvals:user.col_project"), width: 28 },
+        { header: t("approvals:modals.approve_expense_account"), width: 28 },
+        { header: t("approvals:modals.recipient_name"), width: 24 },
+        { header: t("approvals:modals.purpose"), width: 34 },
+        { header: t("approvals:user.col_amount"), width: 18 },
+        { header: t("approvals:admin.col_status"), width: 24 },
+        { header: t("approvals:modals.disburse_date"), width: 16 },
+      ],
       rows: requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
-        r.project_id ? (projectMap.get(r.project_id) ?? "-") : (isEn ? "General Operations" : "Operasional Umum"),
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : t("approvals:modals.general_operations"),
         r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
+        getPaUserStatusMeta(r.status, t).label,
         r.paid_date ?? "-",
       ]),
     });
     await recordExportLog("PAYMENT_APPROVALS", "EXCEL");
-    toast.success(
-      isEn
-        ? "Payment requests list exported to Excel (.xlsx) successfully."
-        : "Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).",
-    );
+    toast.success(t("approvals:export.toast_excel_success"));
   }
 
   async function handleExportPdf() {
-    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error(
-        isEn
-          ? "No payment request data to export."
-          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
-      );
+      toast.error(t("approvals:user.empty_title"));
       return;
     }
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: isEn
-        ? "PAYMENT APPROVALS & CASH DISBURSEMENTS"
-        : "DAFTAR PENGAJUAN PEMBAYARAN OPERASIONAL",
-      docSubtitle: isEn
-        ? "Summary History of User Payment Approvals (PA)"
-        : "Rekapitulasi Histori Pengajuan Payment Approval (PA) Pengguna",
+      docTitle: t("approvals:export.user_pdf_title"),
+      docSubtitle: t("approvals:export.user_pdf_subtitle"),
       docNumber: `REKAP-PA-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       metaRows: [
         {
-          label: isEn ? "Total Requests" : "Total Pengajuan",
-          value: isEn ? `${requests.length} requests` : `${requests.length} pengajuan`,
+          label: t("approvals:user.unit_submissions"),
+          value: `${requests.length} ${t("approvals:user.unit_submissions")}`,
         },
         {
-          label: isEn ? "Total Amount Requested" : "Total Nilai Diajukan",
+          label: t("approvals:user.kpi_paid"),
           value: formatRupiah(requests.reduce((s, r) => s + r.amount, 0)),
         },
       ],
-      tableColumns: isEn
-        ? [
-            { header: "PA Number", widthRatio: 2 },
-            { header: "Date", widthRatio: 1.2 },
-            { header: "Payee / Vendor", widthRatio: 2.2 },
-            { header: "Purpose", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.8 },
-            { header: "Amount (IDR)", widthRatio: 1.8, align: "right" },
-          ]
-        : [
-            { header: "Nomor PA", widthRatio: 2 },
-            { header: "Tanggal", widthRatio: 1.2 },
-            { header: "Penerima / Vendor", widthRatio: 2.2 },
-            { header: "Keperluan", widthRatio: 3 },
-            { header: "Status", widthRatio: 1.8 },
-            { header: "Nominal", widthRatio: 1.8, align: "right" },
-          ],
+      tableColumns: [
+        { header: t("approvals:user.col_number"), widthRatio: 2 },
+        { header: t("approvals:modals.request_date"), widthRatio: 1.2 },
+        { header: t("approvals:modals.recipient_name"), widthRatio: 2.2 },
+        { header: t("approvals:modals.purpose"), widthRatio: 3 },
+        { header: t("approvals:admin.col_status"), widthRatio: 1.8 },
+        { header: t("approvals:user.col_amount"), widthRatio: 1.8, align: "right" },
+      ],
       tableRows: requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
         r.recipient_name,
         r.purpose,
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
+        getPaUserStatusMeta(r.status, t).label,
         formatRupiah(r.amount),
       ]),
     });
-    downloadPdfBytes(
-      bytes,
-      isEn ? "My_Payment_Requests.pdf" : "Pengajuan_Pembayaran_Saya.pdf",
-    );
+    downloadPdfBytes(bytes, t("approvals:export.user_pdf_filename"));
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
   }
 
   async function handleExportCsv() {
-    const isEn = getActiveLanguage() === "en";
     if (requests.length === 0) {
-      toast.error(
-        isEn
-          ? "No payment request data to export."
-          : "Tidak ada data pengajuan pembayaran untuk diekspor.",
-      );
+      toast.error(t("approvals:user.empty_title"));
       return;
     }
     downloadCsvFile(
-      isEn ? "My_Payment_Requests.csv" : "Pengajuan_Pembayaran_Saya.csv",
-      isEn
-        ? [
-            "PA Number",
-            "Date",
-            "Project",
-            "Expense Account",
-            "Payee",
-            "Purpose",
-            "Amount (IDR)",
-            "Status",
-            "Payment Date",
-          ]
-        : [
-            "Nomor PA",
-            "Tanggal",
-            "Proyek",
-            "Pos Beban",
-            "Penerima",
-            "Keperluan",
-            "Nominal",
-            "Status",
-            "Tanggal Bayar",
-          ],
+      t("approvals:export.user_csv_filename"),
+      [
+        t("approvals:user.col_number"),
+        t("approvals:modals.request_date"),
+        t("approvals:user.col_project"),
+        t("approvals:modals.approve_expense_account"),
+        t("approvals:modals.recipient_name"),
+        t("approvals:modals.purpose"),
+        t("approvals:user.col_amount"),
+        t("approvals:admin.col_status"),
+        t("approvals:modals.disburse_date"),
+      ],
       requests.map((r) => [
         r.request_number,
         (r.submitted_at ?? r.created_at).slice(0, 10),
-        r.project_id ? (projectMap.get(r.project_id) ?? "-") : (isEn ? "General Operations" : "Operasional Umum"),
+        r.project_id ? (projectMap.get(r.project_id) ?? "-") : t("approvals:modals.general_operations"),
         r.expense_account_id ? (accountMap.get(r.expense_account_id) ?? "-") : "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
+        getPaUserStatusMeta(r.status, t).label,
         r.paid_date ?? "-",
       ]),
     );
     await recordExportLog("PAYMENT_APPROVALS", "CSV");
-    toast.success(
-      isEn
-        ? "Payment requests list exported to CSV (.csv) successfully."
-        : "Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).",
-    );
+    toast.success(t("approvals:export.toast_csv_success"));
   }
 
   const pendingCount = requests.filter((r) => r.status === "submitted").length;
@@ -596,15 +502,15 @@ export function UserPaymentsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Pengajuan Pembayaran Saya
+            {t("approvals:user.page_title")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            Ajukan permohonan dana operasional dan pantau status verifikasi secara transparan.
+            {t("approvals:user.page_desc")}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <ExportDownloadMenu
-            label="Unduh / Ekspor"
+            label={t("common:action.export_download")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
@@ -616,7 +522,7 @@ export function UserPaymentsPage() {
             className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
           >
             <PlusIcon className="size-4" />
-            <span>Ajukan Pembayaran</span>
+            <span>{t("approvals:user.btn_create")}</span>
           </Button>
         </div>
       </div>
@@ -626,15 +532,15 @@ export function UserPaymentsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Menunggu Persetujuan
+              {t("approvals:user.kpi_pending")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pendingCount} Pengajuan
+              {pendingCount} {t("approvals:user.unit_submissions")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {pendingCount > 0
-                ? "Sedang ditinjau oleh Admin / Bendahara"
-                : "Tidak ada pengajuan menunggu tinjauan"}
+                ? t("approvals:user.kpi_pending_desc_active")
+                : t("approvals:user.kpi_pending_desc_empty")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -645,15 +551,15 @@ export function UserPaymentsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Disetujui &amp; Siap Dicairkan
+              {t("approvals:user.kpi_ready")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {approvedCount} Pengajuan
+              {approvedCount} {t("approvals:user.unit_submissions")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {approvedCount > 0
-                ? "Menunggu proses transfer kas/bank"
-                : "Belum ada pencairan yang tertunda"}
+                ? t("approvals:user.kpi_ready_desc_active")
+                : t("approvals:user.kpi_ready_desc_empty")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
@@ -664,13 +570,13 @@ export function UserPaymentsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              Total Sudah Dicairkan
+              {t("approvals:user.kpi_paid")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalPaidAmount)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Akumulasi pembayaran berstatus lunas
+              {t("approvals:user.kpi_paid_desc")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -681,28 +587,28 @@ export function UserPaymentsPage() {
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70">
-          <CardTitle>Riwayat &amp; Status Pengajuan</CardTitle>
+          <CardTitle>{t("approvals:user.card_title")}</CardTitle>
           <CardDescription>
-            Apabila pengajuan ditolak, alasan penolakan ditampilkan secara transparan dan dapat direvisi untuk diajukan kembali.
+            {t("approvals:user.card_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>Memuat daftar pengajuan...</span>
+              <span>{t("approvals:user.loading")}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">Nomor</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Keperluan &amp; Penerima</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Proyek</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">Nominal</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Lampiran</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">Status &amp; Catatan Admin</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">Aksi</TableHead>
+                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_number")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_purpose_recipient")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_project")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("approvals:user.col_amount")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_attachments")}</TableHead>
+                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_status_notes")}</TableHead>
+                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("approvals:user.col_actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -714,10 +620,10 @@ export function UserPaymentsPage() {
                           <ReceiptTextIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Belum Ada Pengajuan Pembayaran
+                          {t("approvals:user.empty_title")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          Klik tombol Ajukan Pembayaran di kanan atas untuk mengirim permohonan pembayaran tagihan proyek.
+                          {t("approvals:user.empty_desc")}
                         </p>
                       </div>
                     </TableCell>
@@ -725,7 +631,7 @@ export function UserPaymentsPage() {
                 ) : (
                   requests.map((req) => {
                   const prj = projects.find((p) => p.id === req.project_id);
-                  const meta = PA_STATUS_META[req.status];
+                  const meta = getPaUserStatusMeta(req.status, t);
                   const files = attachments.filter((a) => a.entity_id === req.id);
                   return (
                     <TableRow key={req.id}>
@@ -733,7 +639,7 @@ export function UserPaymentsPage() {
                         <div>{req.request_number}</div>
                         {req.revision_no > 0 ? (
                           <div className="text-[11px] font-sans font-normal text-muted-foreground mt-0.5">
-                            Revisi ke-{req.revision_no}
+                            {t("approvals:user.revision_label", { count: req.revision_no })}
                           </div>
                         ) : null}
                       </TableCell>
@@ -742,7 +648,7 @@ export function UserPaymentsPage() {
                           {req.purpose}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                          Penerima: {req.recipient_name}{" "}
+                          {t("approvals:user.recipient_label", { name: req.recipient_name })}{" "}
                           {req.recipient_bank_info
                             ? `(${req.recipient_bank_info})`
                             : ""}
@@ -803,12 +709,12 @@ export function UserPaymentsPage() {
                           <StatusBadge tone={meta.tone} label={meta.label} />
                           {req.status === "rejected" && req.rejection_reason ? (
                             <p className="text-xs text-destructive leading-snug">
-                              Alasan tolak: {req.rejection_reason}
+                              {t("approvals:user.rejected_reason_prefix", { reason: req.rejection_reason })}
                             </p>
                           ) : null}
                           {req.status === "paid" && req.paid_date ? (
                             <p className="text-xs text-muted-foreground leading-snug">
-                              Dibayar: {formatDateID(req.paid_date)}
+                              {t("approvals:user.paid_date_prefix", { date: formatDateI18n(req.paid_date, language) })}
                             </p>
                           ) : null}
                         </div>
@@ -816,7 +722,7 @@ export function UserPaymentsPage() {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
-                            title="Unduh Form Pengajuan (PDF / Word)"
+                            title={t("approvals:user.download_form_menu_title")}
                             onDownloadPdf={() => void handleDownloadPaPdf(req)}
                             onDownloadWord={() => void handleDownloadPaWord(req)}
                           />
@@ -825,7 +731,7 @@ export function UserPaymentsPage() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              title="Perbaiki & Ajukan Ulang"
+                              title={t("approvals:user.btn_revise_tooltip")}
                               onClick={() => {
                                 setReviseTarget(req);
                                 setRevPurpose(req.purpose);
@@ -835,7 +741,7 @@ export function UserPaymentsPage() {
                               className="size-8 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
                             >
                               <RotateCcwIcon className="size-4" />
-                              <span className="sr-only">Perbaiki &amp; Ajukan Ulang</span>
+                              <span className="sr-only">{t("approvals:user.btn_revise_tooltip")}</span>
                             </Button>
                           ) : null}
                         </div>
@@ -852,24 +758,24 @@ export function UserPaymentsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Ajukan Persetujuan Pembayaran</DialogTitle>
+            <DialogTitle>{t("approvals:modals.create_title")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="min-w-0">
             <FieldGroup className="gap-3.5">
               <Field>
-                <FieldLabel htmlFor="pa-purpose" required>Keperluan Pembayaran</FieldLabel>
+                <FieldLabel htmlFor="pa-purpose" required>{t("approvals:modals.field_purpose")}</FieldLabel>
                 <Input
                   id="pa-purpose"
                   required
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="Contoh: Pembayaran perpanjangan domain & SSL produksi"
+                  placeholder={t("approvals:modals.placeholder_purpose")}
                 />
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="pa-rec" required>Nama Penerima / Vendor</FieldLabel>
+                  <FieldLabel htmlFor="pa-rec" required>{t("approvals:modals.field_recipient_name")}</FieldLabel>
                   <Input
                     id="pa-rec"
                     required
@@ -878,29 +784,29 @@ export function UserPaymentsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="pa-bank" required>Info Bank &amp; No. Rekening</FieldLabel>
+                  <FieldLabel htmlFor="pa-bank" required>{t("approvals:modals.field_bank_info")}</FieldLabel>
                   <Input
                     id="pa-bank"
                     required
                     value={recipientBankInfo}
                     onChange={(e) => setRecipientBankInfo(e.target.value)}
-                    placeholder="BCA 4371122334 a.n. CV Domain"
+                    placeholder={t("approvals:modals.placeholder_bank")}
                   />
                 </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel required>Proyek Terkait</FieldLabel>
+                  <FieldLabel required>{t("approvals:modals.field_project")}</FieldLabel>
                   <Select value={projectId} onValueChange={setProjectId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih proyek" />
+                      <SelectValue placeholder={t("approvals:modals.select_project_placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {projects.length === 0 ? (
                           <SelectItem value="__empty" disabled>
-                            Belum ada proyek ditugaskan
+                            {t("approvals:modals.no_projects_assigned")}
                           </SelectItem>
                         ) : (
                           projects.map((p) => (
@@ -914,24 +820,24 @@ export function UserPaymentsPage() {
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel required>Kategori Pengeluaran</FieldLabel>
+                  <FieldLabel required>{t("approvals:modals.field_expense_category")}</FieldLabel>
                   <Select
                     value={expenseAccountId}
                     onValueChange={setExpenseAccountId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori pengeluaran" />
+                      <SelectValue placeholder={t("approvals:modals.placeholder_expense_category")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {expenseAccounts.length === 0 ? (
                           <SelectItem value="__empty" disabled>
-                            Belum ada kategori tersedia
+                            {t("approvals:modals.no_expense_categories")}
                           </SelectItem>
                         ) : (
                           expenseAccounts.map((a) => (
                             <SelectItem key={a.id} value={a.id}>
-                              {getFriendlyExpenseCategory(a).label}
+                              {getFriendlyExpenseCategory(a, t).label}
                             </SelectItem>
                           ))
                         )}
@@ -945,7 +851,9 @@ export function UserPaymentsPage() {
                     if (!selectedAcc) return null;
                     return (
                       <FieldDescription>
-                        Contoh: {getFriendlyExpenseCategory(selectedAcc).hint}
+                        {t("approvals:modals.example_prefix", {
+                          hint: getFriendlyExpenseCategory(selectedAcc, t).hint,
+                        })}
                       </FieldDescription>
                     );
                   })()}
@@ -954,7 +862,7 @@ export function UserPaymentsPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="pa-amt" required>Nominal (Rp Bulat)</FieldLabel>
+                  <FieldLabel htmlFor="pa-amt" required>{t("approvals:modals.field_amount")}</FieldLabel>
                   <NumberInput
                     id="pa-amt"
                     allowDecimal={false}
@@ -965,14 +873,14 @@ export function UserPaymentsPage() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel>Tautkan PO Pembelian (Opsional)</FieldLabel>
+                  <FieldLabel>{t("approvals:modals.field_link_po")}</FieldLabel>
                   <Select value={poId} onValueChange={setPoId}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">Tanpa Dokumen PO</SelectItem>
+                        <SelectItem value="none">{t("approvals:modals.po_none")}</SelectItem>
                         {myPos.map((po) => (
                           <SelectItem key={po.id} value={po.id}>
                             {po.po_number} ({formatRupiah(po.total_amount)})
@@ -986,11 +894,13 @@ export function UserPaymentsPage() {
 
               {exceedsBudget ? (
                 <Alert variant="destructive">
-                  <AlertTitle>Peringatan Anggaran Akun Terlampaui</AlertTitle>
+                  <AlertTitle>{t("approvals:modals.budget_warning_title")}</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
-                      Nominal pengajuan ({formatRupiah(amount)}) melampaui sisa
-                      anggaran akun ini ({formatRupiah(budgetRemaining ?? 0)}).
+                      {t("approvals:modals.budget_warning_desc", {
+                        amount: formatRupiah(amount),
+                        budget: formatRupiah(budgetRemaining ?? 0),
+                      })}
                     </span>
                     <div className="flex items-center gap-2.5 text-xs font-medium">
                       <Checkbox
@@ -1002,7 +912,7 @@ export function UserPaymentsPage() {
                         htmlFor="ack-payment-budget-warning"
                         className="cursor-pointer select-none leading-relaxed"
                       >
-                        Saya mengonfirmasi pengajuan melebihi sisa anggaran.
+                        {t("approvals:modals.budget_warning_ack")}
                       </label>
                     </div>
                   </AlertDescription>
@@ -1011,7 +921,7 @@ export function UserPaymentsPage() {
 
               <Field>
                 <div className="flex items-center justify-between mb-1.5">
-                  <FieldLabel required>Lampiran Bukti Tagihan / Nota</FieldLabel>
+                  <FieldLabel required>{t("approvals:modals.field_attachments")}</FieldLabel>
                   <div className="inline-flex rounded-xl p-0.5 bg-muted/60 border border-border/60 text-xs">
                     <button
                       type="button"
@@ -1022,7 +932,7 @@ export function UserPaymentsPage() {
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      Berkas Komputer
+                      {t("approvals:modals.proof_local")}
                     </button>
                     <button
                       type="button"
@@ -1034,7 +944,7 @@ export function UserPaymentsPage() {
                       }`}
                     >
                       <GoogleDriveIcon className="size-3.5" />
-                      <span>Google Drive</span>
+                      <span>{t("approvals:modals.proof_gdrive")}</span>
                     </button>
                   </div>
                 </div>
@@ -1049,7 +959,7 @@ export function UserPaymentsPage() {
                       onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                     />
                     <FieldDescription>
-                      Format berkas yang didukung: PDF, PNG, atau JPG (maks. 5 MB).
+                      {t("approvals:modals.proof_local_hint")}
                     </FieldDescription>
                   </>
                 ) : (
@@ -1068,7 +978,7 @@ export function UserPaymentsPage() {
                               rel="noreferrer"
                               className="text-[10px] text-primary hover:underline truncate block"
                             >
-                              Lihat di Google Drive ↗
+                              {t("approvals:modals.proof_gdrive_view")}
                             </a>
                           </div>
                         </div>
@@ -1079,7 +989,7 @@ export function UserPaymentsPage() {
                           onClick={() => setDrivePickerOpen(true)}
                           className="text-xs h-8 rounded-xl shrink-0"
                         >
-                          Ganti
+                          {t("approvals:modals.proof_gdrive_change")}
                         </Button>
                       </div>
                     ) : (
@@ -1090,11 +1000,11 @@ export function UserPaymentsPage() {
                         className="w-full h-11 rounded-xl border-dashed border-2 border-primary/40 dark:border-sky-500/40 flex items-center justify-center gap-2 text-xs font-semibold hover:bg-primary/5 dark:hover:bg-sky-950/20 cursor-pointer"
                       >
                         <GoogleDriveIcon className="size-4" />
-                        <span>Pilih / Tautkan Berkas dari Google Drive</span>
+                        <span>{t("approvals:modals.proof_gdrive_btn")}</span>
                       </Button>
                     )}
                     <FieldDescription>
-                      Mendukung link nota, invoice, atau kuitansi pembayaran yang tersimpan di Google Drive.
+                      {t("approvals:modals.proof_gdrive_hint")}
                     </FieldDescription>
                   </div>
                 )}
@@ -1106,11 +1016,11 @@ export function UserPaymentsPage() {
                   variant="outline"
                   onClick={() => setCreateOpen(false)}
                 >
-                  Batal
+                  {t("approvals:modals.btn_cancel")}
                 </Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting ? <Spinner data-icon="inline-start" /> : null}
-                  Kirim Pengajuan
+                  {t("approvals:modals.btn_submit")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -1127,19 +1037,19 @@ export function UserPaymentsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              Perbaiki &amp; Ajukan Ulang ({reviseTarget?.request_number})
+              {t("approvals:modals.revise_title", { number: reviseTarget?.request_number ?? "" })}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleResubmit}>
             <FieldGroup>
               {reviseTarget?.rejection_reason ? (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                  <span className="font-semibold block">Catatan Penolakan Admin:</span>
+                  <span className="font-semibold block">{t("approvals:modals.revise_admin_note")}</span>
                   {reviseTarget.rejection_reason}
                 </div>
               ) : null}
               <Field>
-                <FieldLabel htmlFor="rev-purpose" required>Keperluan</FieldLabel>
+                <FieldLabel htmlFor="rev-purpose" required>{t("approvals:modals.purpose")}</FieldLabel>
                 <Input
                   id="rev-purpose"
                   required
@@ -1148,7 +1058,7 @@ export function UserPaymentsPage() {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="rev-bank" required>Info Bank &amp; Rekening</FieldLabel>
+                <FieldLabel htmlFor="rev-bank" required>{t("approvals:modals.field_bank_info")}</FieldLabel>
                 <Input
                   id="rev-bank"
                   required
@@ -1157,7 +1067,7 @@ export function UserPaymentsPage() {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="rev-amt" required>Nominal (Rp)</FieldLabel>
+                <FieldLabel htmlFor="rev-amt" required>{t("approvals:modals.field_amount")}</FieldLabel>
                 <NumberInput
                   id="rev-amt"
                   allowDecimal={false}
@@ -1173,10 +1083,10 @@ export function UserPaymentsPage() {
                   variant="outline"
                   onClick={() => setReviseTarget(null)}
                 >
-                  Batal
+                  {t("approvals:modals.btn_cancel")}
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  Ajukan Ulang
+                  {t("approvals:modals.revise_btn")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

@@ -62,7 +62,7 @@ import { useLanguage } from "@/lib/i18n";
 import { getCompanyProfile, listAccounts, listProfiles, listProjects } from "@/lib/data-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateID, formatDateTimeID, formatRupiah } from "@/lib/formatters";
+import { formatDateI18n, formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
 import {
   decidePaymentRequest,
   getAttachmentSignedUrl,
@@ -85,36 +85,24 @@ import type {
   ProjectRow,
 } from "@/types/database.types";
 
-const PA_STATUS_META: Record<
-  PaymentRequestStatus,
-  { label: string; tone: SemanticTone }
-> = {
-  draft: { label: "Draf", tone: "secondary" },
-  submitted: { label: "Menunggu Persetujuan", tone: "info" },
-  approved: { label: "Disetujui (Siap Cair)", tone: "warning" },
-  rejected: { label: "Ditolak", tone: "destructive" },
-  paid: { label: "Dibayar Lunas", tone: "success" },
-};
-
-function getPaStatusMeta(status: PaymentRequestStatus, isEn: boolean): { label: string; tone: SemanticTone } {
+function getPaStatusMeta(status: PaymentRequestStatus, t: (k: string, fb?: string) => string): { label: string; tone: SemanticTone } {
   switch (status) {
     case "draft":
-      return { label: isEn ? "Draft" : "Draf", tone: "secondary" };
+      return { label: t("approvals:status.draft", "Draf"), tone: "secondary" };
     case "submitted":
-      return { label: isEn ? "Awaiting Approval" : "Menunggu Persetujuan", tone: "info" };
+      return { label: t("approvals:status.submitted", "Menunggu Persetujuan"), tone: "info" };
     case "approved":
-      return { label: isEn ? "Approved (Ready)" : "Disetujui (Siap Cair)", tone: "warning" };
+      return { label: t("approvals:status.approved", "Disetujui (Siap Cair)"), tone: "warning" };
     case "rejected":
-      return { label: isEn ? "Rejected" : "Ditolak", tone: "destructive" };
+      return { label: t("approvals:status.rejected", "Ditolak"), tone: "destructive" };
     case "paid":
-      return { label: isEn ? "Paid / Disbursed" : "Dibayar Lunas", tone: "success" };
+      return { label: t("approvals:status.paid", "Dibayar Lunas"), tone: "success" };
   }
 }
 
 export function AdminApprovalsPage() {
   const { profile } = useAuth();
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [requests, setRequests] = React.useState<PaymentRequestRow[]>([]);
   const [attachments, setAttachments] = React.useState<AttachmentRow[]>([]);
   const [profiles, setProfiles] = React.useState<ProfileRow[]>([]);
@@ -261,177 +249,97 @@ export function AdminApprovalsPage() {
 
   async function handleExportExcel() {
     await downloadExcelSheet({
-      fileName: isEn
-        ? "Payment_Approvals_Altcycles.xlsx"
-        : "Daftar_Payment_Approval_Altcycles.xlsx",
-      sheetName: isEn ? "Payment Approvals" : "Payment Approval",
-      columns: isEn
-        ? [
-            { header: "PA Number", width: 20 },
-            { header: "Revision", width: 10 },
-            { header: "Requester", width: 22 },
-            { header: "Project", width: 28 },
-            { header: "Expense Account", width: 28 },
-            { header: "Payee", width: 24 },
-            { header: "Purpose", width: 34 },
-            { header: "Amount (IDR)", width: 18 },
-            { header: "Status", width: 20 },
-            { header: "Payment Date", width: 16 },
-          ]
-        : [
-            { header: "Nomor PA", width: 20 },
-            { header: "Revisi", width: 10 },
-            { header: "Pengaju", width: 22 },
-            { header: "Proyek", width: 28 },
-            { header: "Akun Beban", width: 28 },
-            { header: "Penerima Dana", width: 24 },
-            { header: "Keperluan", width: 34 },
-            { header: "Nominal (Rp)", width: 18 },
-            { header: "Status", width: 20 },
-            { header: "Tanggal Bayar", width: 16 },
-          ],
+      fileName: t("approvals:export.admin_excel_filename"),
+      sheetName: t("approvals:export.admin_excel_sheet"),
+      columns: [
+        { header: t("approvals:admin.col_number_date"), width: 20 },
+        { header: "Revisi", width: 10 },
+        { header: t("approvals:modals.requester_name"), width: 22 },
+        { header: t("approvals:modals.project_name"), width: 28 },
+        { header: t("approvals:modals.approve_expense_account"), width: 28 },
+        { header: t("approvals:modals.recipient_name"), width: 24 },
+        { header: t("approvals:modals.purpose"), width: 34 },
+        { header: t("approvals:admin.col_amount"), width: 18 },
+        { header: t("approvals:admin.col_status"), width: 20 },
+        { header: t("approvals:modals.disburse_date"), width: 16 },
+      ],
       rows: filteredRequests.map((r) => [
         r.request_number,
         r.revision_no,
-        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
+        profileMap.get(r.requester_id) ?? (language === "en" ? "User" : "Pengguna"),
         projectMap.get(r.project_id) ?? "-",
         accountMap.get(r.expense_account_id) ?? "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
-        r.paid_date ? formatDateID(r.paid_date) : "-",
+        getPaStatusMeta(r.status, t).label,
+        r.paid_date ? formatDateI18n(r.paid_date, language) : "-",
       ]),
     });
     await recordExportLog("PAYMENT_APPROVALS", "EXCEL");
-    toast.success(
-      isEn
-        ? "Payment requests list exported to Excel (.xlsx) successfully."
-        : "Daftar pengajuan pembayaran berhasil diekspor ke Excel (.xlsx).",
-    );
+    toast.success(t("approvals:export.toast_excel_success"));
   }
 
   async function handleExportPdf() {
     const comp = await getCompanyProfile();
     const bytes = await generateDocumentPdf({
-      docTitle: isEn
-        ? "PAYMENT APPROVALS & CASH DISBURSEMENTS"
-        : "DAFTAR PERSETUJUAN PEMBAYARAN & PENCAIRAN DANA",
-      docSubtitle: isEn
-        ? `Total Requests Displayed: ${filteredRequests.length} documents`
-        : `Total Pengajuan Ditampilkan: ${filteredRequests.length} dokumen`,
+      docTitle: t("approvals:export.admin_pdf_title"),
+      docSubtitle: t("approvals:export.admin_pdf_subtitle"),
       docNumber: `PA-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
-      tableColumns: isEn
-        ? [
-            { header: "PA Number", widthRatio: 0.16 },
-            { header: "Requester", widthRatio: 0.15 },
-            { header: "Payee & Purpose", widthRatio: 0.35 },
-            { header: "Amount (IDR)", widthRatio: 0.14, align: "right" },
-            { header: "Status", widthRatio: 0.12 },
-            { header: "Payment Date", widthRatio: 0.08 },
-          ]
-        : [
-            { header: "Nomor PA", widthRatio: 0.16 },
-            { header: "Pengaju", widthRatio: 0.15 },
-            { header: "Penerima & Keperluan", widthRatio: 0.35 },
-            { header: "Nominal", widthRatio: 0.14, align: "right" },
-            { header: "Status", widthRatio: 0.12 },
-            { header: "Tgl Bayar", widthRatio: 0.08 },
-          ],
+      tableColumns: [
+        { header: t("approvals:admin.col_number_date"), widthRatio: 0.16 },
+        { header: t("approvals:modals.requester_name"), widthRatio: 0.15 },
+        { header: t("approvals:modals.purpose"), widthRatio: 0.35 },
+        { header: t("approvals:admin.col_amount"), widthRatio: 0.14, align: "right" },
+        { header: t("approvals:admin.col_status"), widthRatio: 0.12 },
+        { header: t("approvals:modals.disburse_date"), widthRatio: 0.08 },
+      ],
       tableRows: filteredRequests.map((r) => [
         r.request_number,
-        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
+        profileMap.get(r.requester_id) ?? (language === "en" ? "User" : "Pengguna"),
         `${r.recipient_name} - ${r.purpose}`,
         formatRupiah(r.amount),
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
-        r.paid_date ? formatDateID(r.paid_date) : "-",
+        getPaStatusMeta(r.status, t).label,
+        r.paid_date ? formatDateI18n(r.paid_date, language) : "-",
       ]),
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
-    downloadPdfBytes(
-      bytes,
-      isEn
-        ? "Payment_Approvals_Altcycles.pdf"
-        : "Daftar_Payment_Approval_Altcycles.pdf",
-    );
+    downloadPdfBytes(bytes, t("approvals:export.admin_pdf_filename"));
     await recordExportLog("PAYMENT_APPROVALS", "PDF");
   }
 
   async function handleExportCsv() {
     downloadCsvFile(
-      isEn
-        ? "Payment_Approvals_Altcycles.csv"
-        : "Daftar_Payment_Approval_Altcycles.csv",
-      isEn
-        ? [
-            "PA Number",
-            "Revision",
-            "Requester",
-            "Project",
-            "Expense Account",
-            "Payee",
-            "Purpose",
-            "Amount (IDR)",
-            "Status",
-            "Payment Date",
-          ]
-        : [
-            "Nomor PA",
-            "Revisi",
-            "Pengaju",
-            "Proyek",
-            "Akun Beban",
-            "Penerima Dana",
-            "Keperluan",
-            "Nominal (Rp)",
-            "Status",
-            "Tanggal Bayar",
-          ],
+      t("approvals:export.admin_csv_filename"),
+      [
+        t("approvals:admin.col_number_date"),
+        "Revisi",
+        t("approvals:modals.requester_name"),
+        t("approvals:modals.project_name"),
+        t("approvals:modals.approve_expense_account"),
+        t("approvals:modals.recipient_name"),
+        t("approvals:modals.purpose"),
+        t("approvals:admin.col_amount"),
+        t("approvals:admin.col_status"),
+        t("approvals:modals.disburse_date"),
+      ],
       filteredRequests.map((r) => [
         r.request_number,
         r.revision_no,
-        profileMap.get(r.requester_id) ?? (isEn ? "User" : "Pengguna"),
+        profileMap.get(r.requester_id) ?? (language === "en" ? "User" : "Pengguna"),
         projectMap.get(r.project_id) ?? "-",
         accountMap.get(r.expense_account_id) ?? "-",
         r.recipient_name,
         r.purpose,
         r.amount,
-        isEn
-          ? r.status === "paid"
-            ? "Paid"
-            : r.status === "approved"
-              ? "Approved"
-              : r.status === "rejected"
-                ? "Rejected"
-                : "Pending Approval"
-          : PA_STATUS_META[r.status].label,
+        getPaStatusMeta(r.status, t).label,
         r.paid_date ?? "-",
       ]),
     );
     await recordExportLog("PAYMENT_APPROVALS", "CSV");
-    toast.success(
-      isEn
-        ? "Payment requests list exported to CSV (.csv) successfully."
-        : "Daftar pengajuan pembayaran berhasil diekspor ke CSV (.csv).",
-    );
+    toast.success(t("approvals:export.toast_csv_success"));
   }
 
   async function makePaDocSpec(req: PaymentRequestRow) {
@@ -442,16 +350,16 @@ export function AdminApprovalsPage() {
       requestNumber: req.request_number,
       revisionNo: req.revision_no,
       requestDate: (req.submitted_at ?? req.created_at).slice(0, 10),
-      requesterName: profileMap.get(req.requester_id) ?? "Anggota Tim",
-      projectName: projectMap.get(req.project_id) ?? "Operasional Umum",
+      requesterName: profileMap.get(req.requester_id) ?? (language === "en" ? "Team Member" : "Anggota Tim"),
+      projectName: projectMap.get(req.project_id) ?? (language === "en" ? "General Operations" : "Operasional Umum"),
       expenseAccountName: accountMap.get(req.expense_account_id) ?? "-",
       recipientName: req.recipient_name,
       recipientBankInfo: req.recipient_bank_info ?? null,
       purpose: req.purpose,
       amount: req.amount,
       status: req.status,
-      statusLabel: PA_STATUS_META[req.status].label,
-      approverName: req.approver_id ? profileMap.get(req.approver_id) ?? "Admin Keuangan" : null,
+      statusLabel: getPaStatusMeta(req.status, t).label,
+      approverName: req.approver_id ? profileMap.get(req.approver_id) ?? (language === "en" ? "Financial Admin" : "Admin Keuangan") : null,
       approvedAt: req.decided_at ?? null,
       paidDate: req.paid_date ?? null,
       rejectionReason: req.rejection_reason ?? null,
@@ -487,15 +395,15 @@ export function AdminApprovalsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("approvals.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
+            {t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("approvals.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
+            {t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
           </p>
         </div>
         <div className="shrink-0">
           <ExportDownloadMenu
-            label={t("action.export_download", "Unduh / Ekspor")}
+            label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
@@ -508,15 +416,15 @@ export function AdminApprovalsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Awaiting Admin Approval" : "Menunggu Persetujuan Admin"}
+              {t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pendingCount} {isEn ? "Submissions" : "Pengajuan"}
+              {pendingCount} {t("approvals:admin.unit_submissions", "Pengajuan")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {pendingCount > 0
-                ? (isEn ? "Awaiting treasurer verification & authorization" : "Menunggu verifikasi & otorisasi bendahara")
-                : (isEn ? "No new pending submissions" : "Tidak ada antrean pengajuan baru")}
+                ? t("approvals:admin.kpi_pending_desc_active", "Menunggu verifikasi & otorisasi bendahara")
+                : t("approvals:admin.kpi_pending_desc_empty", "Tidak ada antrean pengajuan baru")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -527,15 +435,15 @@ export function AdminApprovalsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Approved & Ready to Disburse" : "Disetujui & Siap Dicairkan"}
+              {t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {approvedUnpaidCount} {isEn ? "Submissions" : "Pengajuan"}
+              {approvedUnpaidCount} {t("approvals:admin.unit_submissions", "Pengajuan")}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
               {approvedUnpaidCount > 0
-                ? (isEn ? "Awaiting cash/bank transfer disbursement" : "Menunggu realisasi transfer kas/bank")
-                : (isEn ? "All approved submissions disbursed" : "Seluruh pengajuan disetujui telah cair")}
+                ? t("approvals:admin.kpi_ready_desc_active", "Menunggu realisasi transfer kas/bank")
+                : t("approvals:admin.kpi_ready_desc_empty", "Seluruh pengajuan disetujui telah cair")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
@@ -546,13 +454,13 @@ export function AdminApprovalsPage() {
         <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              {isEn ? "Total Realized Payments" : "Total Pembayaran Terealisasi"}
+              {t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
               {formatRupiah(totalPaidAmount)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {isEn ? "Recorded automatically in cash general ledger" : "Tercatat otomatis di buku besar kas"}
+              {t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -564,25 +472,23 @@ export function AdminApprovalsPage() {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>{isEn ? "Team Payment Submissions List" : "Daftar Pengajuan Pembayaran Tim"}</CardTitle>
+            <CardTitle>{t("approvals:admin.card_title", "Daftar Pengajuan Pembayaran Tim")}</CardTitle>
             <CardDescription>
-              {isEn
-                ? "Review evidence attachments before approving or rejecting submissions."
-                : "Periksa lampiran bukti sebelum menyetujui atau menolak pengajuan."}
+              {t("approvals:admin.card_desc", "Periksa bukti lampiran pengeluaran sebelum menyetujui atau menolak permohonan dana.")}
             </CardDescription>
           </div>
           <div className="w-full sm:w-56 shrink-0">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={isEn ? "Filter status" : "Filter status"} />
+                <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="ALL">{isEn ? "All Statuses" : "Semua Status"}</SelectItem>
-                  <SelectItem value="submitted">{isEn ? "Awaiting Approval" : "Menunggu Persetujuan"}</SelectItem>
-                  <SelectItem value="approved">{isEn ? "Approved (Ready to Disburse)" : "Disetujui (Siap Cair)"}</SelectItem>
-                  <SelectItem value="paid">{isEn ? "Paid in Full" : "Dibayar Lunas"}</SelectItem>
-                  <SelectItem value="rejected">{isEn ? "Rejected" : "Ditolak"}</SelectItem>
+                  <SelectItem value="ALL">{t("approvals:admin.filter_all", "Semua Status")}</SelectItem>
+                  <SelectItem value="submitted">{t("approvals:admin.filter_submitted", "Menunggu Persetujuan")}</SelectItem>
+                  <SelectItem value="approved">{t("approvals:admin.filter_approved", "Disetujui (Siap Cair)")}</SelectItem>
+                  <SelectItem value="paid">{t("approvals:admin.filter_paid", "Dibayar Lunas")}</SelectItem>
+                  <SelectItem value="rejected">{t("approvals:admin.filter_rejected", "Ditolak")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -592,32 +498,32 @@ export function AdminApprovalsPage() {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>{isEn ? "Loading payment requests..." : "Memuat pengajuan pembayaran..."}</span>
+              <span>{t("common:action.loading", "Memuat data...")}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Number & Time" : "Nomor & Waktu"}
+                    {t("approvals:admin.col_number_date", "Nomor & Tanggal")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Requester & Project" : "Pengaju & Proyek"}
+                    {t("approvals:admin.col_requester_project", "Pemohon & Proyek")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Purpose & Recipient" : "Keperluan & Penerima"}
+                    {t("approvals:admin.col_purpose", "Keterangan Pengeluaran")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Proof Attachment" : "Lampiran Bukti"}
+                    {t("approvals:modals.attachments", "Bukti Lampiran")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">
-                    {isEn ? "Amount" : "Nominal"}
+                    {t("approvals:admin.col_amount", "Nominal Pengajuan (IDR)")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Status" : "Status"}
+                    {t("approvals:admin.col_status", "Status")}
                   </TableHead>
                   <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                    {isEn ? "Actions" : "Aksi"}
+                    {t("approvals:admin.col_actions", "Aksi")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -630,12 +536,10 @@ export function AdminApprovalsPage() {
                           <ReceiptTextIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "No Payment Submissions" : "Tidak Ada Pengajuan Pembayaran"}
+                          {t("approvals:admin.empty_title", "Tidak Ada Pengajuan Pembayaran")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          {isEn
-                            ? "No team payment submissions currently match the active filter criteria."
-                            : "Belum ada pengajuan pembayaran tim yang sesuai dengan filter status saat ini."}
+                          {t("approvals:admin.empty_desc", "Belum ada data pengajuan pembayaran dari tim pada kriteria filter ini.")}
                         </p>
                       </div>
                     </TableCell>
@@ -646,7 +550,7 @@ export function AdminApprovalsPage() {
                     (a) => a.entity_id === req.id,
                   );
                   const isSelfRequest = req.requester_id === profile?.id;
-                  const meta = getPaStatusMeta(req.status, isEn);
+                  const meta = getPaStatusMeta(req.status, t);
 
                   return (
                     <TableRow key={req.id}>
@@ -656,12 +560,12 @@ export function AdminApprovalsPage() {
                           {req.revision_no > 0 ? ` (Rev.${req.revision_no})` : ""}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                          {formatDateTimeID(req.submitted_at ?? req.created_at)}
+                          {formatDateTimeI18n(req.submitted_at ?? req.created_at, language)}
                         </div>
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5">
                         <div className="text-xs sm:text-sm leading-5 font-medium text-foreground">
-                          {profileMap.get(req.requester_id) ?? (isEn ? "Team Member" : "Anggota Tim")}
+                          {profileMap.get(req.requester_id) ?? t("common:role.team_member", "Anggota Tim")}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
                           {projectMap.get(req.project_id) ?? "-"}
@@ -675,14 +579,14 @@ export function AdminApprovalsPage() {
                           {req.purpose}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                          {isEn ? "Payee: " : "Penerima: "}{req.recipient_name}{" "}
+                          {t("approvals:admin.recipient_label", { name: req.recipient_name, defaultValue: `Penerima: ${req.recipient_name}` })}{" "}
                           {req.recipient_bank_info
                             ? `(${req.recipient_bank_info})`
                             : ""}
                         </div>
                         {req.rejection_reason ? (
                           <div className="mt-1 text-xs text-destructive leading-snug">
-                            {isEn ? "Rejection reason: " : "Alasan tolak: "}&ldquo;{req.rejection_reason}&rdquo;
+                            {t("approvals:modals.admin_notes", "Catatan Admin")}: &ldquo;{req.rejection_reason}&rdquo;
                           </div>
                         ) : null}
                       </TableCell>
@@ -753,7 +657,7 @@ export function AdminApprovalsPage() {
                           <StatusBadge tone={meta.tone} label={meta.label} />
                           {req.paid_date ? (
                             <span className="text-[11px] text-muted-foreground">
-                              {isEn ? "Paid: " : "Cair: "}{formatDateID(req.paid_date)}
+                              {formatDateI18n(req.paid_date, language)}
                             </span>
                           ) : null}
                         </div>
@@ -761,7 +665,7 @@ export function AdminApprovalsPage() {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
-                            title={isEn ? "Download PA Form (PDF / Word)" : "Unduh Form PA (PDF / Word)"}
+                            title={t("approvals:admin.btn_detail", "Unduh Form PA (PDF / Word)")}
                             onDownloadPdf={() => void handleDownloadPaPdf(req)}
                             onDownloadWord={() => void handleDownloadPaWord(req)}
                           />
@@ -770,7 +674,7 @@ export function AdminApprovalsPage() {
                               <div className="inline-flex items-center min-h-5 -my-px">
                                 <StatusBadge
                                   tone="warning"
-                                  label={isEn ? "Own Submission" : "Pengajuan Sendiri"}
+                                  label={t("common:role.own_submission", "Pengajuan Sendiri")}
                                 />
                               </div>
                             ) : (
@@ -779,7 +683,7 @@ export function AdminApprovalsPage() {
                                   type="button"
                                   size="icon"
                                   variant="ghost"
-                                  title={isEn ? "Approve Submission" : "Setujui Pengajuan"}
+                                  title={t("approvals:admin.btn_approve", "Setujui Pengajuan")}
                                   onClick={() => {
                                     setAccountingDate(
                                       (req.submitted_at ?? req.created_at).slice(
@@ -792,18 +696,18 @@ export function AdminApprovalsPage() {
                                   className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                                 >
                                   <CheckCircle2Icon className="size-4" />
-                                  <span className="sr-only">{isEn ? "Approve Submission" : "Setujui Pengajuan"}</span>
+                                  <span className="sr-only">{t("approvals:admin.action_approve_short", "Setujui")}</span>
                                 </Button>
                                 <Button
                                   type="button"
                                   size="icon"
                                   variant="ghost"
-                                  title={isEn ? "Reject Submission" : "Tolak Pengajuan"}
+                                  title={t("approvals:admin.btn_reject", "Tolak Pengajuan")}
                                   onClick={() => setRejectTarget(req)}
                                   className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                                 >
                                   <XCircleIcon className="size-4" />
-                                  <span className="sr-only">{isEn ? "Reject Submission" : "Tolak Pengajuan"}</span>
+                                  <span className="sr-only">{t("approvals:admin.action_reject_short", "Tolak")}</span>
                                 </Button>
                               </>
                             )
@@ -812,7 +716,7 @@ export function AdminApprovalsPage() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              title={isEn ? "Record Disbursement" : "Catat Pencairan Dana"}
+                              title={t("approvals:admin.btn_disburse", "Catat Pencairan Dana")}
                               onClick={() => {
                                 setPaidDate(
                                   (req.decided_at ?? req.created_at).slice(0, 10),
@@ -822,12 +726,12 @@ export function AdminApprovalsPage() {
                               className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
                             >
                               <BanknoteIcon className="size-4" />
-                              <span className="sr-only">{isEn ? "Record Disbursement" : "Catat Pencairan Dana"}</span>
+                              <span className="sr-only">{t("approvals:admin.action_disburse_short", "Cairkan")}</span>
                             </Button>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-xs leading-5 text-muted-foreground">
                               <LockIcon className="size-3.5" />
-                              <span>{isEn ? "Locked" : "Terkunci"}</span>
+                              <span>{t("common:action.locked", "Terkunci")}</span>
                             </span>
                           )}
                         </div>
@@ -852,15 +756,16 @@ export function AdminApprovalsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {isEn ? `Approve Submission ${approveTarget?.request_number}?` : `Setujui Pengajuan ${approveTarget?.request_number}?`}
+              {t("approvals:modals.approve_title", {
+                number: approveTarget?.request_number ?? "",
+                defaultValue: `Persetujuan & Pengakuan Beban Akrual ${approveTarget?.request_number}`,
+              })}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleConfirmApprove}>
             <FieldGroup>
               <div className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs text-muted-foreground leading-relaxed">
-                {isEn
-                  ? "Approval will immediately post an automatic accrual expense journal of "
-                  : "Persetujuan langsung menerbitkan jurnal akrual beban otomatis sebesar "}
+                {t("approvals:modals.approve_amount", "Nominal Pembayaran:")}{" "}
                 <span className="font-semibold text-foreground">
                   {formatRupiah(approveTarget?.amount ?? 0)}
                 </span>
@@ -869,17 +774,15 @@ export function AdminApprovalsPage() {
               {approveTarget?.budget_warning_acknowledged ? (
                 <Alert>
                   <ShieldAlertIcon className="size-4" />
-                  <AlertTitle>{isEn ? "Submission Exceeds Budget Threshold" : "Pengajuan Melebihi Ambang Anggaran"}</AlertTitle>
+                  <AlertTitle>{t("po:modal_create.budget_warning_title", "Peringatan Ambang Anggaran")}</AlertTitle>
                   <AlertDescription>
-                    {isEn
-                      ? "The requester confirmed the budget absorption warning when submitting this request."
-                      : "Pengaju telah mengonfirmasi peringatan serapan anggaran saat mengirim pengajuan ini."}
+                    {t("common:action.acknowledge_warning", "Pengaju telah mengonfirmasi peringatan serapan anggaran saat mengirim pengajuan ini.")}
                   </AlertDescription>
                 </Alert>
               ) : null}
               <Field>
                 <FieldLabel htmlFor="pa-acc-date" required>
-                  {isEn ? "Accrual Recognition Date" : "Tanggal Pengakuan Beban Akrual"}
+                  {t("approvals:modals.approve_accrual_date", "Tanggal Pengakuan Beban Akrual")}
                 </FieldLabel>
                 <DatePicker
                   id="pa-acc-date"
@@ -888,7 +791,7 @@ export function AdminApprovalsPage() {
                   onChange={setAccountingDate}
                 />
                 <FieldDescription>
-                  {isEn ? "Must fall within an open accounting period." : "Harus berada pada periode akuntansi yang berstatus Terbuka."}
+                  {t("approvals:modals.approve_period_hint", "Harus berada pada periode akuntansi yang berstatus Terbuka.")}
                 </FieldDescription>
               </Field>
               <DialogFooter>
@@ -897,11 +800,11 @@ export function AdminApprovalsPage() {
                   variant="outline"
                   onClick={() => setApproveTarget(null)}
                 >
-                  {isEn ? "Cancel" : "Batal"}
+                  {t("approvals:modals.btn_cancel", "Batal")}
                 </Button>
                 <Button type="submit" disabled={approving}>
                   {approving ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Approve & Post Accrual" : "Setujui & Posting Akrual"}
+                  {t("approvals:modals.btn_approve_confirm", "Setujui & Posting Akrual")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -915,21 +818,22 @@ export function AdminApprovalsPage() {
         onOpenChange={(open) => {
           if (!open) setRejectTarget(null);
         }}
-        title={isEn ? `Reject Submission ${rejectTarget?.request_number ?? ""}?` : `Tolak Pengajuan ${rejectTarget?.request_number ?? ""}?`}
-        description={
-          isEn
-            ? "The requester will receive a notification with your rejection reason to revise and resubmit."
-            : "Pengaju akan menerima notifikasi beserta alasan penolakan Anda agar dapat memperbaiki dan mengajukan ulang."
-        }
+        title={t("approvals:modals.reject_title", {
+          number: rejectTarget?.request_number ?? "",
+          defaultValue: `Tolak Pengajuan ${rejectTarget?.request_number ?? ""}?`,
+        })}
+        description={t(
+          "approvals:modals.reject_desc",
+          "Pengajuan ini akan dikembalikan ke pemohon dengan catatan penolakan resmi. Pemohon dapat memperbaiki dokumen dan mengajukan kembali.",
+        )}
         destructive
         requireReason
-        reasonLabel={isEn ? "Rejection Reason (Required)" : "Alasan Penolakan (Wajib Diisi)"}
-        reasonPlaceholder={
-          isEn
-            ? "e.g.: Amount on vendor invoice does not match PO specification..."
-            : "Contoh: Nominal pada faktur vendor belum sesuai dengan rincian PO..."
-        }
-        confirmLabel={isEn ? "Reject Submission" : "Tolak Pengajuan"}
+        reasonLabel={t("approvals:modals.reject_reason_label", "Alasan Penolakan (Wajib Diisi)")}
+        reasonPlaceholder={t(
+          "approvals:modals.reject_reason_placeholder",
+          "Tuliskan alasan penolakan atau kekurangan berkas bukti...",
+        )}
+        confirmLabel={t("approvals:modals.btn_reject_confirm", "Tolak Pengajuan")}
         onConfirm={async (reason) => {
           if (!rejectTarget || !reason) return;
           await decidePaymentRequest({
@@ -939,9 +843,10 @@ export function AdminApprovalsPage() {
             accountingDate: new Date().toLocaleDateString("en-CA"),
           });
           toast.success(
-            isEn
-              ? `Submission ${rejectTarget.request_number} has been rejected.`
-              : `Pengajuan ${rejectTarget.request_number} telah ditolak.`,
+            t("approvals:modals.toast_rejected", {
+              number: rejectTarget.request_number,
+              defaultValue: `Pengajuan ${rejectTarget.request_number} telah ditolak.`,
+            }),
           );
           await reload();
         }}
@@ -957,14 +862,17 @@ export function AdminApprovalsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {isEn ? `Record Payment Disbursement ${disburseTarget?.request_number}` : `Catat Realisasi Pembayaran ${disburseTarget?.request_number}`}
+              {t("approvals:modals.disburse_title", {
+                number: disburseTarget?.request_number ?? "",
+                defaultValue: `Catat Realisasi Pembayaran ${disburseTarget?.request_number}`,
+              })}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleDisburse}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="pa-paid-date" required>
-                  {isEn ? "Transfer / Payment Date" : "Tanggal Transfer / Pembayaran"}
+                  {t("approvals:modals.disburse_date", "Tanggal Transfer / Pembayaran")}
                 </FieldLabel>
                 <DatePicker
                   id="pa-paid-date"
@@ -974,19 +882,19 @@ export function AdminApprovalsPage() {
                 />
               </Field>
               <Field>
-                <FieldLabel required>{isEn ? "Source Company Cash / Bank Account" : "Akun Sumber Kas / Bank Perusahaan"}</FieldLabel>
+                <FieldLabel required>{t("approvals:modals.disburse_cash_account", "Akun Sumber Kas / Bank Perusahaan")}</FieldLabel>
                 <Select
                   value={sourceCashAccountId}
                   onValueChange={setSourceCashAccountId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={isEn ? "Select cash/bank account" : "Pilih rekening kas/bank"} />
+                    <SelectValue placeholder={t("approvals:modals.select_cash_placeholder", "Pilih rekening kas/bank")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {cashAccounts.length === 0 ? (
                         <SelectItem value="__empty" disabled>
-                          {isEn ? "No active cash/bank accounts" : "Belum ada akun kas/bank aktif"}
+                          {t("approvals:modals.no_cash_accounts", "Belum ada akun kas/bank aktif")}
                         </SelectItem>
                       ) : (
                         cashAccounts.map((acc) => (
@@ -1005,11 +913,11 @@ export function AdminApprovalsPage() {
                   variant="outline"
                   onClick={() => setDisburseTarget(null)}
                 >
-                  {isEn ? "Cancel" : "Batal"}
+                  {t("approvals:modals.btn_cancel", "Batal")}
                 </Button>
                 <Button type="submit" disabled={disbursing}>
                   {disbursing ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Save Disbursement & Post Journal" : "Simpan Pencairan & Posting Jurnal"}
+                  {t("approvals:modals.btn_disburse_confirm", "Simpan Pencairan & Posting Jurnal")}
                 </Button>
               </DialogFooter>
             </FieldGroup>

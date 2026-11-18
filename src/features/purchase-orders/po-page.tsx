@@ -64,6 +64,7 @@ import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
   formatDateID,
+  formatDateI18n,
   formatDocDateLong,
   formatDocRupiah,
   formatRupiah,
@@ -103,22 +104,21 @@ const PO_STATUS_META: Record<
   cancelled: { label: "Dibatalkan", tone: "destructive" },
 };
 
-function getPoStatusMeta(status: PoStatus, isEn: boolean): { label: string; tone: "secondary" | "info" | "success" | "destructive" } {
+function getPoStatusMeta(status: PoStatus, t: (k: string, fb?: string) => string): { label: string; tone: "secondary" | "info" | "success" | "destructive" } {
   switch (status) {
     case "draft":
-      return { label: isEn ? "Draft" : "Draf", tone: "secondary" };
+      return { label: t("po:status_draft", "Draf"), tone: "secondary" };
     case "issued":
-      return { label: isEn ? "Issued" : "Diterbitkan", tone: "info" };
+      return { label: t("po:status_issued", "Diterbitkan"), tone: "info" };
     case "completed":
-      return { label: isEn ? "Completed" : "Selesai", tone: "success" };
+      return { label: t("po:status_completed", "Selesai"), tone: "success" };
     case "cancelled":
-      return { label: isEn ? "Cancelled" : "Dibatalkan", tone: "destructive" };
+      return { label: t("po:status_cancelled", "Dibatalkan"), tone: "destructive" };
   }
 }
 
 export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const { t, language } = useLanguage();
-  const isEn = language === "en";
   const [orders, setOrders] = React.useState<PurchaseOrderRow[]>([]);
   const [items, setItems] = React.useState<PoItemRow[]>([]);
   const [vendors, setVendors] = React.useState<VendorRow[]>([]);
@@ -529,19 +529,19 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {mode === "admin"
-              ? t("procurement.title", "Seluruh Purchase Order Pembelian Vendor")
-              : t("procurement.my_title", "Purchase Order Pembelian Saya")}
+              ? t("po:title", "Seluruh Purchase Order Pembelian Vendor")
+              : t("po:my_title", "Purchase Order Pembelian Saya")}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {mode === "admin"
-              ? t("procurement.subtitle", "Kelola penerbitan, persetujuan status, dan dokumen purchase order vendor.")
-              : t("procurement.my_subtitle", "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.")}
+              ? t("po:subtitle", "Kelola penerbitan, persetujuan status, dan dokumen purchase order vendor.")
+              : t("po:my_subtitle", "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           {mode === "admin" ? (
             <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
+              label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
@@ -554,7 +554,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
             className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
           >
             <PlusIcon className="size-4" />
-            <span>{t("procurement.create_po", "Buat PO Vendor")}</span>
+            <span>{t("po:btn_create", "Buat PO Vendor")}</span>
           </Button>
         </div>
       </div>
@@ -562,11 +562,9 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
-            <CardTitle>{isEn ? "PO Documents List" : "Daftar Dokumen PO"}</CardTitle>
+            <CardTitle>{t("po:card_title", "Daftar Purchase Order Vendor")}</CardTitle>
             <CardDescription>
-              {isEn
-                ? "Filter by issuance status or procurement fulfillment."
-                : "Saring berdasarkan status penerbitan atau penyelesaian pengadaan."}
+              {t("po:card_desc", "Pantau riwayat penerbitan PO internal dan status konfirmasi rekanan.")}
             </CardDescription>
           </div>
           <div className="w-full sm:w-52 shrink-0">
@@ -576,11 +574,11 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="ALL">{isEn ? "All Statuses" : "Semua Status"}</SelectItem>
-                  <SelectItem value="draft">{isEn ? "Draft" : "Draf"}</SelectItem>
-                  <SelectItem value="issued">{isEn ? "Issued" : "Diterbitkan"}</SelectItem>
-                  <SelectItem value="completed">{isEn ? "Completed" : "Selesai"}</SelectItem>
-                  <SelectItem value="cancelled">{isEn ? "Cancelled" : "Dibatalkan"}</SelectItem>
+                  <SelectItem value="ALL">{t("po:status_all", "Semua Status")}</SelectItem>
+                  <SelectItem value="draft">{t("po:status_draft", "Draf")}</SelectItem>
+                  <SelectItem value="issued">{t("po:status_issued", "Diterbitkan")}</SelectItem>
+                  <SelectItem value="completed">{t("po:status_completed", "Selesai")}</SelectItem>
+                  <SelectItem value="cancelled">{t("po:status_cancelled", "Dibatalkan")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -590,32 +588,32 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <Spinner />
-              <span>{isEn ? "Loading purchase orders..." : "Memuat PO pembelian..."}</span>
+              <span>{t("common:action.loading", "Memuat data...")}</span>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "PO Number" : "Nomor PO"}
+                    {t("po:col_po_number", "Nomor PO")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Date" : "Tanggal"}
+                    {t("po:col_date", "Tanggal PO")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Vendor" : "Vendor"}
+                    {t("po:col_vendor", "Vendor / Rekanan")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Project" : "Proyek"}
+                    {t("po:col_project", "Proyek")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
-                    {isEn ? "Total Value" : "Total Nilai"}
+                    {t("po:col_total", "Total Nilai (IDR)")}
                   </TableHead>
                   <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {isEn ? "Status" : "Status"}
+                    {t("po:col_status", "Status")}
                   </TableHead>
                   <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                    {isEn ? "Actions" : "Aksi"}
+                    {t("po:col_actions", "Aksi")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -628,12 +626,10 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                           <FileTextIcon className="size-6" />
                         </div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          {isEn ? "No PO Documents Found" : "Belum Ada Dokumen PO"}
+                          {t("po:empty_title", "Belum ada dokumen Purchase Order yang dibuat.")}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                          {isEn
-                            ? "Click the Create Vendor PO button above to order project goods or services."
-                            : "Klik tombol Buat PO Vendor di kanan atas untuk membuat pesanan pembelian barang atau jasa proyek."}
+                          {t("po:empty_desc", "Klik tombol Buat PO Vendor di kanan atas untuk membuat purchase order baru.")}
                         </p>
                       </div>
                     </TableCell>
@@ -642,14 +638,14 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   filtered.map((po) => {
                   const vnd = vendors.find((v) => v.id === po.vendor_id);
                   const prj = projects.find((p) => p.id === po.project_id);
-                  const meta = getPoStatusMeta(po.status, isEn);
+                  const meta = getPoStatusMeta(po.status, t);
                   return (
                     <TableRow key={po.id}>
                       <TableCell className="align-top pl-6 pr-3 py-3.5 text-center font-mono text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
                         {po.po_number}
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
-                        {formatDateID(po.po_date)}
+                        {formatDateI18n(po.po_date, language)}
                       </TableCell>
                       <TableCell className="align-top px-3 py-3.5 font-medium text-xs sm:text-sm leading-5">
                         {vnd?.name ?? "-"}
@@ -668,7 +664,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
-                            title={isEn ? "Download PO (PDF / Word)" : "Unduh PO (PDF / Word)"}
+                            title={t("po:action_view_pdf", "Lihat / Unduh Dokumen PO")}
                             onDownloadPdf={() => void handleDownloadPdf(po)}
                             onDownloadWord={() => void handleDownloadWord(po)}
                           />
@@ -677,16 +673,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title={isEn ? "Issue PO" : "Terbitkan PO"}
+                              title={t("po:status_issued", "Terbitkan PO")}
                               onClick={async () => {
                                 await updatePurchaseOrderStatus(po.id, "issued");
-                                toast.success(isEn ? `PO ${po.po_number} issued.` : `PO ${po.po_number} diterbitkan.`);
+                                toast.success(t("po:toast_issued", { number: po.po_number, defaultValue: `PO ${po.po_number} diterbitkan.` }));
                                 await reload();
                               }}
                               className="size-8 rounded-lg text-primary hover:text-primary hover:bg-primary/10 cursor-pointer"
                             >
                               <SendIcon className="size-4" />
-                              <span className="sr-only">{isEn ? "Issue PO" : "Terbitkan PO"}</span>
+                              <span className="sr-only">{t("po:status_issued", "Terbitkan PO")}</span>
                             </Button>
                           ) : null}
                           {mode === "admin" && po.status === "issued" ? (
@@ -694,16 +690,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title={isEn ? "Mark PO as Completed" : "Tandai PO Selesai"}
+                              title={t("po:action_mark_completed", "Tandai Selesai")}
                               onClick={async () => {
                                 await updatePurchaseOrderStatus(po.id, "completed");
-                                toast.success(isEn ? `PO ${po.po_number} marked completed.` : `PO ${po.po_number} ditandai selesai.`);
+                                toast.success(t("po:toast_completed", { number: po.po_number, defaultValue: `PO ${po.po_number} ditandai selesai.` }));
                                 await reload();
                               }}
                               className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
                             >
                               <CheckCircle2Icon className="size-4" />
-                              <span className="sr-only">{isEn ? "Mark Completed" : "Tandai Selesai"}</span>
+                              <span className="sr-only">{t("po:action_mark_completed", "Tandai Selesai")}</span>
                             </Button>
                           ) : null}
                           {(po.status === "draft" || po.status === "issued") ? (
@@ -711,12 +707,12 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              title={isEn ? "Cancel PO" : "Batalkan PO"}
+                              title={t("po:action_cancel_po", "Batalkan PO")}
                               onClick={() => setCancelTarget(po)}
                               className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                             >
                               <BanIcon className="size-4" />
-                              <span className="sr-only">{isEn ? "Cancel PO" : "Batalkan PO"}</span>
+                              <span className="sr-only">{t("po:action_cancel_po", "Batalkan PO")}</span>
                             </Button>
                           ) : null}
                         </div>
@@ -733,13 +729,13 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{isEn ? "Create Vendor Purchase Order" : "Buat Purchase Order Pembelian Vendor"}</DialogTitle>
+            <DialogTitle>{t("po:modal_create.title", "Buat Purchase Order Pembelian Vendor")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreatePo} className="min-w-0">
             <FieldGroup className="gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="po-date" required>{isEn ? "PO Date" : "Tanggal PO"}</FieldLabel>
+                  <FieldLabel htmlFor="po-date" required>{t("po:modal_create.field_date", "Tanggal PO")}</FieldLabel>
                   <DatePicker
                     id="po-date"
                     required
@@ -748,16 +744,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel required>{isEn ? "Vendor / Supplier" : "Vendor / Pemasok"}</FieldLabel>
+                  <FieldLabel required>{t("po:modal_create.field_vendor", "Vendor / Pemasok")}</FieldLabel>
                   <Select value={vendorId} onValueChange={setVendorId}>
                     <SelectTrigger>
-                      <SelectValue placeholder={isEn ? "Select vendor" : "Pilih vendor"} />
+                      <SelectValue placeholder={t("po:modal_create.select_vendor_placeholder", "Pilih vendor")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {vendors.length === 0 ? (
                           <SelectItem value="__empty" disabled>
-                            {isEn ? "No active vendors" : "Belum ada vendor aktif"}
+                            {t("po:modal_create.no_vendors", "Belum ada vendor aktif")}
                           </SelectItem>
                         ) : (
                           vendors.map((v) => (
@@ -772,16 +768,16 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 </Field>
               </div>
               <Field>
-                <FieldLabel required>{isEn ? "Related Project" : "Proyek Terkait"}</FieldLabel>
+                <FieldLabel required>{t("po:modal_create.field_project", "Proyek Terkait")}</FieldLabel>
                 <Select value={projectId} onValueChange={setProjectId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={isEn ? "Select project" : "Pilih proyek"} />
+                    <SelectValue placeholder={t("po:modal_create.select_project_placeholder", "Pilih proyek")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       {projects.length === 0 ? (
                         <SelectItem value="__empty" disabled>
-                          {isEn ? "No projects available" : "Belum ada proyek tersedia"}
+                          {t("po:modal_create.no_projects", "Belum ada proyek tersedia")}
                         </SelectItem>
                       ) : (
                         projects.map((p) => (
@@ -798,7 +794,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               <div className="flex flex-col gap-2.5 rounded-xl border border-border/80 bg-muted/15 p-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground">
-                    {isEn ? "PO Items Details" : "Rincian Item PO"}
+                    {t("po:modal_create.items_section_title", "Rincian Item PO")}
                   </span>
                   <Button
                     type="button"
@@ -813,15 +809,15 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                     }
                   >
                     <PlusIcon className="size-3.5 mr-1" />
-                    {isEn ? "Add Row" : "Tambah Baris"}
+                    {t("po:modal_create.btn_add_row", "Tambah Baris")}
                   </Button>
                 </div>
                 <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-0.5 text-[11px] font-medium text-muted-foreground">
-                  <div className="sm:col-span-5">{isEn ? "Item / Service Description" : "Deskripsi Barang / Jasa"}</div>
-                  <div className="sm:col-span-2">{isEn ? "Qty" : "Qty"}</div>
-                  <div className="sm:col-span-2">{isEn ? "Unit" : "Satuan"}</div>
-                  <div className="sm:col-span-2">{isEn ? "Unit Price (Rp)" : "Harga Satuan (Rp)"}</div>
-                  <div className="sm:col-span-1 text-center">{isEn ? "Delete" : "Hapus"}</div>
+                  <div className="sm:col-span-5">{t("po:modal_create.col_item_desc", "Deskripsi Barang / Jasa")}</div>
+                  <div className="sm:col-span-2">{t("po:modal_create.col_qty", "Qty")}</div>
+                  <div className="sm:col-span-2">{t("po:modal_create.col_unit", "Satuan")}</div>
+                  <div className="sm:col-span-2">{t("po:modal_create.col_unit_price", "Harga Satuan (Rp)")}</div>
+                  <div className="sm:col-span-1 text-center">{t("po:modal_create.col_delete", "Hapus")}</div>
                 </div>
                 {formItems.map((it, idx) => (
                   <div
@@ -830,7 +826,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   >
                     <div className="sm:col-span-5">
                       <Input
-                        placeholder={isEn ? "Item/service description" : "Deskripsi barang/jasa"}
+                        placeholder={t("po:modal_create.placeholder_desc", "Deskripsi barang/jasa")}
                         required
                         value={it.description}
                         onChange={(e) =>
@@ -859,7 +855,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                     </div>
                     <div className="sm:col-span-2">
                       <Input
-                        placeholder={isEn ? "Unit" : "Satuan"}
+                        placeholder={t("po:modal_create.placeholder_unit", "Satuan")}
                         value={it.unit}
                         onChange={(e) =>
                           setFormItems((prev) =>
@@ -891,7 +887,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        title={isEn ? "Delete item row" : "Hapus baris item"}
+                        title={t("po:modal_create.tooltip_delete_row", "Hapus baris item")}
                         disabled={formItems.length === 1}
                         onClick={() =>
                           setFormItems((prev) => prev.filter((_, i) => i !== idx))
@@ -899,7 +895,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                       >
                         <Trash2Icon className="size-4" />
-                        <span className="sr-only">{isEn ? "Delete row" : "Hapus baris"}</span>
+                        <span className="sr-only">{t("po:modal_create.col_delete", "Hapus baris")}</span>
                       </Button>
                     </div>
                   </div>
@@ -911,12 +907,14 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
               {exceedsBudget ? (
                 <Alert variant="destructive">
-                  <AlertTitle>{isEn ? "Warning: Exceeds Project Budget Remaining" : "Peringatan Melampaui Sisa Anggaran Proyek"}</AlertTitle>
+                  <AlertTitle>{t("po:modal_create.budget_warning_title", "Peringatan Melampaui Sisa Anggaran Proyek")}</AlertTitle>
                   <AlertDescription className="flex flex-col gap-2">
                     <span>
-                      {isEn
-                        ? `PO Total (${formatRupiah(draftTotal)}) exceeds project remaining budget (${formatRupiah(budgetRemaining ?? 0)}).`
-                        : `Total PO (${formatRupiah(draftTotal)}) melebihi sisa anggaran proyek saat ini (${formatRupiah(budgetRemaining ?? 0)}).`}
+                      {t("po:modal_create.budget_warning_desc", {
+                        orderTotal: formatRupiah(draftTotal),
+                        budgetRemaining: formatRupiah(budgetRemaining ?? 0),
+                        defaultValue: `Total PO (${formatRupiah(draftTotal)}) melebihi sisa anggaran proyek saat ini (${formatRupiah(budgetRemaining ?? 0)}).`,
+                      })}
                     </span>
                     <div className="flex items-center gap-2.5 text-xs font-medium">
                       <Checkbox
@@ -928,9 +926,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                         htmlFor="ack-po-budget-warning"
                         className="cursor-pointer select-none leading-relaxed"
                       >
-                        {isEn
-                          ? "I understand this budget warning and choose to proceed."
-                          : "Saya memahami peringatan anggaran ini dan tetap melanjutkan."}
+                        {t("common:action.acknowledge_warning", "Saya memahami peringatan ini dan tetap melanjutkan.")}
                       </label>
                     </div>
                   </AlertDescription>
@@ -938,20 +934,20 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               ) : null}
 
               <Field>
-                <FieldLabel htmlFor="po-notes">{isEn ? "Additional Notes" : "Catatan Tambahan"}</FieldLabel>
+                <FieldLabel htmlFor="po-notes">{t("po:modal_create.field_notes", "Catatan Tambahan")}</FieldLabel>
                 <Textarea
                   id="po-notes"
                   rows={2}
                   className="min-h-[64px]"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={isEn ? "Delivery schedule or technical specifications..." : "Jadwal pengiriman atau spesifikasi teknis..."}
+                  placeholder={t("po:modal_create.placeholder_notes", "Jadwal pengiriman atau spesifikasi teknis...")}
                 />
               </Field>
 
               <Field orientation="horizontal">
                 <FieldLabel htmlFor="po-issue" className="font-normal">
-                  {isEn ? "Immediately issue PO upon saving (locks values)" : "Langsung terbitkan PO setelah disimpan (mengunci rincian nilai)"}
+                  {t("po:modal_create.switch_immediate_issue", "Langsung terbitkan PO setelah disimpan (mengunci rincian nilai)")}
                 </FieldLabel>
                 <Switch
                   id="po-issue"
@@ -962,7 +958,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
               <DocumentIssueChecklistCard
                 items={poChecklist.items}
-                title={isEn ? "Vendor PO Validation Checklist (Altvira Standard)" : "Checklist Validasi PO Vendor (Standar Altvira)"}
+                title={t("po:modal_create.checklist_title", "Checklist Validasi PO Vendor (Standar Altvira)")}
               />
 
               <DialogFooter>
@@ -971,7 +967,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  {isEn ? "Cancel" : "Batal"}
+                  {t("po:modal_create.btn_cancel", "Batal")}
                 </Button>
                 <Button
                   type="submit"
@@ -980,7 +976,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                   }
                 >
                   {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {isEn ? "Save PO" : "Simpan PO"}
+                  {saving ? t("po:modal_create.saving", "Menyimpan...") : t("po:modal_create.btn_save", "Simpan PO")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -993,20 +989,27 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         onOpenChange={(open) => {
           if (!open) setCancelTarget(null);
         }}
-        title={isEn ? `Cancel PO Document ${cancelTarget?.po_number ?? ""}?` : `Batalkan dokumen ${cancelTarget?.po_number ?? ""}?`}
-        description={
-          isEn
-            ? "Cancellation is permanent and recorded in document history."
-            : "Pembatalan bersifat permanen dan tercatat di riwayat status dokumen."
-        }
+        title={t("po:modal_cancel.title", {
+          number: cancelTarget?.po_number ?? "",
+          defaultValue: `Batalkan dokumen ${cancelTarget?.po_number ?? ""}?`,
+        })}
+        description={t(
+          "po:modal_cancel.desc",
+          "Pembatalan PO ini akan dicatat dalam riwayat audit trail sistem. Masukkan alasan pembatalan dokumen resmi ini.",
+        )}
         destructive
         requireReason
-        reasonLabel={isEn ? "PO Cancellation Reason" : "Alasan Pembatalan PO"}
-        confirmLabel={isEn ? "Yes, Cancel PO" : "Ya, Batalkan PO"}
+        reasonLabel={t("po:modal_cancel.reason_label", "Alasan Pembatalan PO")}
+        confirmLabel={t("po:modal_cancel.btn_confirm", "Ya, Batalkan PO")}
         onConfirm={async (reason) => {
           if (!cancelTarget) return;
           await updatePurchaseOrderStatus(cancelTarget.id, "cancelled", reason);
-          toast.success(isEn ? `PO ${cancelTarget.po_number} cancelled.` : `PO ${cancelTarget.po_number} dibatalkan.`);
+          toast.success(
+            t("po:toast_cancelled", {
+              number: cancelTarget.po_number,
+              defaultValue: `PO ${cancelTarget.po_number} dibatalkan.`,
+            }),
+          );
           await reload();
         }}
       />
