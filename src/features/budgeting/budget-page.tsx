@@ -6,6 +6,7 @@ import {
   PencilIcon,
   PiggyBankIcon,
   PlusIcon,
+  RotateCcwIcon,
   TrendingUpIcon,
   WalletIcon,
 } from "lucide-react";
@@ -75,6 +76,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   const [loading, setLoading] = React.useState(true);
 
   const [editOpen, setEditOpen] = React.useState(false);
+  const [isEditSource, setIsEditSource] = React.useState(false);
   const [thresholdPct, setThresholdPct] = React.useState(80);
   const [allocations, setAllocations] = React.useState<Record<string, number>>({});
   const [saving, setSaving] = React.useState(false);
@@ -130,7 +132,8 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
     void loadComparison();
   }, [loadComparison]);
 
-  function openBudgetEditor() {
+  function openBudgetEditor(isFromEdit = false) {
+    setIsEditSource(isFromEdit);
     const map: Record<string, number> = {};
     for (const r of rows) {
       map[r.account_id] = r.allocated_amount;
@@ -138,6 +141,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
     if (rows[0]) setThresholdPct(rows[0].alert_threshold_pct);
     setAllocations(map);
     setEditOpen(true);
+  }
+
+  function handleResetAllocations() {
+    const resetMap: Record<string, number> = {};
+    for (const acc of expenseAccounts) {
+      resetMap[acc.id] = 0;
+    }
+    setAllocations(resetMap);
+    toast.info(t("budgeting:modal_editor.toast_reset"));
   }
 
   async function handleSaveBudget(e: React.FormEvent) {
@@ -313,7 +325,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             />
             <Button
               type="button"
-              onClick={openBudgetEditor}
+              onClick={() => openBudgetEditor(false)}
               className="shrink-0 cursor-pointer shadow-2xs"
             >
               <PlusIcon className="size-4" />
@@ -478,7 +490,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={openBudgetEditor}
+                onClick={() => openBudgetEditor(true)}
                 className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 text-primary dark:text-sky-400 hover:text-primary dark:hover:text-sky-400"
               >
                 <PencilIcon className="size-3.5" />
@@ -587,7 +599,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
           </DialogHeader>
           <form onSubmit={handleSaveBudget} className="min-w-0">
             <FieldGroup className="gap-4">
-              <div className="grid gap-3.5 sm:grid-cols-2 sm:items-end">
+              <div className="grid gap-3.5 sm:grid-cols-2 items-start">
                 <Field>
                   <FieldLabel htmlFor="bdg-thr" required>
                     {t("budgeting:modal_editor.threshold_label")}
@@ -600,27 +612,35 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     required
                     value={thresholdPct}
                     onValueChange={setThresholdPct}
+                    className="h-9"
                   />
                   <FieldDescription>
                     {t("budgeting:modal_editor.threshold_desc")}
                   </FieldDescription>
                 </Field>
-                <div className="rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5">
-                  <p className="text-[11px] font-medium text-muted-foreground">
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs sm:text-sm font-medium text-foreground">
                     {t("budgeting:modal_editor.planned_total_label")}
-                  </p>
-                  <p className="text-base sm:text-lg font-bold tracking-tight text-foreground tabular-nums mt-0.5">
-                    {formatRupiah(draftAllocatedTotal)}
+                  </span>
+                  <div className="flex h-9 items-center justify-between rounded-xl border border-border/80 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 font-bold tracking-tight text-foreground tabular-nums text-sm sm:text-base shadow-2xs">
+                    <span className="text-xs font-semibold text-muted-foreground">IDR</span>
+                    <span>{formatRupiah(draftAllocatedTotal).replace(/^Rp\s?/, "")}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-normal">
+                    {t("budgeting:modal_editor.planned_total_desc")}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 rounded-xl border border-border/80 bg-muted/15 p-3.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-foreground pb-1 border-b border-border/60">
-                  <span>{t("budgeting:modal_editor.section_title")}</span>
-                  <span className="text-muted-foreground font-medium">{t("budgeting:modal_editor.section_ceiling_label")}</span>
+              <div className="flex flex-col gap-2 rounded-2xl border border-border/80 bg-muted/15 p-4 shadow-2xs">
+                <div className="grid grid-cols-12 items-center text-xs font-semibold text-foreground pb-2 border-b border-border/60">
+                  <span className="col-span-7">{t("budgeting:modal_editor.section_title")}</span>
+                  <span className="col-span-5 text-right text-muted-foreground font-medium pr-1">
+                    {t("budgeting:modal_editor.section_ceiling_label")}
+                  </span>
                 </div>
-                <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto pr-1 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex max-h-72 flex-col gap-2.5 overflow-y-auto pr-1 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {expenseAccounts.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">
                       {t("budgeting:modal_editor.no_expense_accounts")}
@@ -653,6 +673,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                                 [acc.id]: val,
                               }))
                             }
+                            className="h-9 tabular-nums text-right"
                           />
                         </div>
                       </div>
@@ -661,19 +682,56 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 </div>
               </div>
 
-              <DialogFooter className="pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditOpen(false)}
-                >
-                  {t("budgeting:modal_editor.btn_cancel")}
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {t("budgeting:modal_editor.btn_save")}
-                </Button>
-              </DialogFooter>
+              {isEditSource ? (
+                <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between w-full gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetAllocations}
+                    className="h-9 gap-1.5 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer text-xs sm:text-sm font-semibold"
+                  >
+                    <RotateCcwIcon className="size-3.5" />
+                    <span>{t("budgeting:modal_editor.btn_reset")}</span>
+                  </Button>
+                  <div className="flex items-center gap-2.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditOpen(false)}
+                      className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
+                    >
+                      {t("budgeting:modal_editor.btn_cancel")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={saving}
+                      className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
+                    >
+                      {saving ? <Spinner data-icon="inline-start" /> : null}
+                      <span>{t("budgeting:modal_editor.btn_save")}</span>
+                    </Button>
+                  </div>
+                </DialogFooter>
+              ) : (
+                <DialogFooter className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditOpen(false)}
+                    className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
+                  >
+                    {t("budgeting:modal_editor.btn_cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
+                  >
+                    {saving ? <Spinner data-icon="inline-start" /> : null}
+                    <span>{t("budgeting:modal_editor.btn_save")}</span>
+                  </Button>
+                </DialogFooter>
+              )}
             </FieldGroup>
           </form>
         </DialogContent>

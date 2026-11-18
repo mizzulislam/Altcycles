@@ -279,22 +279,26 @@ export function ProjectsPage() {
       docNumber: `PRJ-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
+      orientation: "landscape",
       tableColumns: [
-        { header: t("projects:col_code"), widthRatio: 0.16 },
-        { header: t("projects:col_name"), widthRatio: 0.30 },
-        { header: t("projects:col_period"), widthRatio: 0.20 },
-        { header: t("projects:col_contract_val"), widthRatio: 0.16, align: "right" },
-        { header: t("projects:col_milestones"), widthRatio: 0.08 },
-        { header: t("projects:col_status"), widthRatio: 0.10 },
+        { header: t("projects:col_code"), widthRatio: 0.12, align: "center" },
+        { header: t("projects:col_name"), widthRatio: 0.28 },
+        { header: t("projects:col_period"), widthRatio: 0.18, align: "center" },
+        { header: t("projects:col_contract_val"), widthRatio: 0.14, align: "right" },
+        { header: t("projects:col_milestones"), widthRatio: 0.08, align: "center" },
+        { header: t("projects:col_team"), widthRatio: 0.10, align: "center" },
+        { header: t("projects:col_status"), widthRatio: 0.10, align: "center" },
       ],
       tableRows: filteredProjects.map((p) => {
+        const countMembers = members.filter((m) => m.project_id === p.id).length;
         const statusLabel = t(`projects:status.${p.status}`, PROJECT_STATUS_META[p.status]?.label ?? p.status);
         return [
           p.code,
           p.name,
           `${formatDateI18n(p.start_date, language)} - ${formatDateI18n(p.target_end_date, language)}`,
           formatRupiah(p.contract_value),
-          `${p.term_count}`,
+          `${p.term_count} ${t("projects:milestones_count", "Termin")}`,
+          `${countMembers} ${t("projects:members_count", "Anggota")}`,
           statusLabel,
         ];
       }),

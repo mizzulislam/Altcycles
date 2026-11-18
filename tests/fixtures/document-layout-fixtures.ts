@@ -1876,13 +1876,15 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
     docNumber: "PRJ-RPT/20261116",
     docDate: "2026-11-16",
     company: FIXTURE_COMPANY,
+    orientation: "landscape",
     tableColumns: [
-      { header: "Kode", widthRatio: 0.16 },
-      { header: "Nama Proyek", widthRatio: 0.30 },
-      { header: "Periode", widthRatio: 0.20 },
-      { header: "Nilai Kontrak", widthRatio: 0.16, align: "right" },
+      { header: "Kode", widthRatio: 0.12, align: "center" },
+      { header: "Nama Proyek", widthRatio: 0.28 },
+      { header: "Periode", widthRatio: 0.18, align: "center" },
+      { header: "Nilai Kontrak", widthRatio: 0.14, align: "right" },
       { header: "Termin", widthRatio: 0.08, align: "center" },
-      { header: "Status", widthRatio: 0.10 },
+      { header: "Anggota Tim", widthRatio: 0.10, align: "center" },
+      { header: "Status", widthRatio: 0.10, align: "center" },
     ],
     tableRows: [
       [
@@ -1890,7 +1892,8 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
         "Website Enhancement & Optimization TIMTravel RMM",
         "01/11/2026 - 15/12/2026",
         "Rp2.000.600",
-        "3",
+        "3 Termin",
+        "0 Anggota",
         "Aktif",
       ],
       [
@@ -1898,7 +1901,8 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
         "ERP Keuangan Internal Altcycles Phase 2",
         "15/10/2026 - 31/01/2027",
         "Rp85.000.000",
-        "4",
+        "4 Termin",
+        "2 Anggota",
         "Aktif",
       ],
       [
@@ -1906,7 +1910,8 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
         "Aplikasi Point of Sale Cloud Multi-Cabang",
         "01/09/2026 - 30/11/2026",
         "Rp45.000.000",
-        "2",
+        "2 Termin",
+        "1 Anggota",
         "Selesai",
       ],
       [
@@ -1914,7 +1919,8 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
         "Infrastruktur Cloud CI/CD & Security Hardening",
         "01/11/2026 - 30/04/2027",
         "Rp120.000.000",
-        "6",
+        "6 Termin",
+        "3 Anggota",
         "Aktif",
       ],
       [
@@ -1922,7 +1928,8 @@ export function buildFixtureProjectsMasterNormal(): PdfDocumentSpec {
         "Mobile App E-Commerce iOS & Android",
         "10/11/2026 - 28/02/2027",
         "Rp60.000.000",
-        "3",
+        "3 Termin",
+        "0 Anggota",
         "Perencanaan",
       ],
     ],
@@ -1936,7 +1943,8 @@ export function buildFixtureProjectsMasterExtreme(): PdfDocumentSpec {
     `Proyek Transformasi Digital Enterprise Entitas ${i + 1}`,
     "01/11/2026 - 31/12/2027",
     formatDocRupiah((i + 1) * 15_000_000),
-    String((i % 4) + 1),
+    `${(i % 4) + 1} Termin`,
+    `${(i % 3)} Anggota`,
     i % 2 === 0 ? "Aktif" : "Selesai",
   ]);
   return {

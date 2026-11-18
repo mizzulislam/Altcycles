@@ -43,13 +43,16 @@
     "threshold_label": "Absorption Warning Threshold (%)",
     "threshold_desc": "System warns automatically when expense realization hits this threshold.",
     "planned_total_label": "Total Planned Budget Ceiling",
+    "planned_total_desc": "Accumulation of all expense account budget ceilings.",
     "section_title": "Allocation per Expense Account",
     "section_ceiling_label": "Ceiling (Rp)",
     "no_expense_accounts": "No active expense accounts in Chart of Accounts.",
     "btn_cancel": "Cancel",
+    "btn_reset": "Reset",
     "btn_save": "Save Budget Allocation",
     "saving": "Saving...",
-    "toast_saved": "Project budget saved successfully."
+    "toast_saved": "Project budget saved successfully.",
+    "toast_reset": "Allocation fields have been reset. Click Save Budget Allocation to empty table data."
   },
   "export": {
     "excel_filename": "Project_Budget_{{code}}.xlsx",

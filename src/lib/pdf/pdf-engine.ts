@@ -2796,7 +2796,8 @@ async function renderDocumentPdfInternal(
       },
       "F-notes-heading",
     );
-    y -= 12;
+    const notesHeadingAfterGap = isInvoiceDoc ? 12 : 16;
+    y -= notesHeadingAfterGap;
 
     for (const rawNote of rawNotes) {
       // Bersihkan marker bawaan bila string sudah diawali "• " atau "- "

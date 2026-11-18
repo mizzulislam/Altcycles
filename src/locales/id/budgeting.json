@@ -43,13 +43,16 @@
     "threshold_label": "Ambang Peringatan Serapan (%)",
     "threshold_desc": "Sistem memberi peringatan otomatis saat realisasi mencapai ambang ini.",
     "planned_total_label": "Total Pagu Anggaran Disusun",
+    "planned_total_desc": "Akumulasi seluruh pagu alokasi akun beban.",
     "section_title": "Alokasi per Akun Beban",
     "section_ceiling_label": "Pagu (Rp)",
     "no_expense_accounts": "Belum ada akun beban aktif pada Bagan Akun.",
     "btn_cancel": "Batal",
+    "btn_reset": "Reset",
     "btn_save": "Simpan Anggaran",
     "saving": "Menyimpan...",
-    "toast_saved": "Anggaran proyek berhasil disimpan."
+    "toast_saved": "Anggaran proyek berhasil disimpan.",
+    "toast_reset": "Field alokasi telah dikosongkan. Klik Simpan Anggaran untuk mengosongkan data tabel."
   },
   "export": {
     "excel_filename": "Anggaran_Proyek_{{code}}.xlsx",
