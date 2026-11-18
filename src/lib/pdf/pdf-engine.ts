@@ -145,15 +145,47 @@ export function wrapTextByWidth(
 }
 
 /**
+ * Mendeteksi apakah dokumen berasal dari modul Siklus Akuntansi atau Laporan Keuangan resmi.
+ * Dokumen di luar modul ini wajib menggunakan font normal (regular) pada baris tabel data.
+ */
+function isAccountingCycleOrFinancialReport(docTitle?: string): boolean {
+  if (!docTitle) return false;
+  const upper = docTitle.toUpperCase();
+  return (
+    upper.includes("JURNAL") ||
+    upper.includes("JOURNAL") ||
+    upper.includes("BUKU BESAR") ||
+    upper.includes("GENERAL LEDGER") ||
+    upper.includes("NERACA") ||
+    upper.includes("BALANCE SHEET") ||
+    upper.includes("TRIAL BALANCE") ||
+    upper.includes("LABA RUGI") ||
+    upper.includes("INCOME STATEMENT") ||
+    upper.includes("PROFIT & LOSS") ||
+    upper.includes("POSISI KEUANGAN") ||
+    upper.includes("FINANCIAL POSITION") ||
+    upper.includes("ARUS KAS") ||
+    upper.includes("CASH FLOW") ||
+    upper.includes("PERUBAHAN EKUITAS") ||
+    upper.includes("CHANGES IN EQUITY") ||
+    upper.includes("LAPORAN KEUANGAN") ||
+    upper.includes("FINANCIAL STATEMENT")
+  );
+}
+
+/**
  * Mendeteksi apakah suatu baris tabel merupakan baris klasifikasi/rekapitulasi UPPERCASE
  * sehingga seluruh sel di baris tersebut dicetak tebal (bold).
+ * Hanya dievaluasi untuk dokumen siklus akuntansi & laporan keuangan.
  */
 function isRowUppercase(row: string[]): boolean {
   for (const cell of row) {
     if (!cell) continue;
     const trimmed = cell.trim().replace(/^(\d+\.|\-|\*)\s*/, "").trim();
+    // Abaikan kode/nomor dokumen/referensi yang mengandung slash (misal JRN/..., PRJ/...) atau pola kode singkat
+    if (trimmed.includes("/") || /^[A-Z0-9_-]{2,15}$/.test(trimmed)) continue;
     const lettersOnly = trimmed.replace(/[^A-Za-z]/g, "");
-    if (lettersOnly.length >= 3 && lettersOnly === lettersOnly.toUpperCase()) {
+    if (lettersOnly.length >= 4 && lettersOnly === lettersOnly.toUpperCase()) {
       return true;
     }
   }
@@ -1747,8 +1779,9 @@ async function renderDocumentPdfInternal(
       } else {
         let lastRowBottomLineY = y;
         const isLedgerDoc = spec.docTitle?.toUpperCase().includes("BUKU BESAR") ?? false;
+        const isAccountingDoc = isAccountingCycleOrFinancialReport(spec.docTitle);
         for (const row of sec.tableRows) {
-          const isBoldRow = !isLedgerDoc && isRowUppercase(row);
+          const isBoldRow = isAccountingDoc && !isLedgerDoc && isRowUppercase(row);
           const rowFont = isBoldRow ? fontBold : fontRegular;
           const colWrappedLines: string[][] = row.map((cellText, colIdx) => {
             const w = colWidths[colIdx]! - 16;
@@ -2020,9 +2053,10 @@ async function renderDocumentPdfInternal(
       y = emptyBottomY - tableSpacing;
     } else {
       const isJournal = docUpper.includes("JURNAL");
+      const isAccountingDoc = isAccountingCycleOrFinancialReport(spec.docTitle);
       for (let rIdx = 0; rIdx < spec.tableRows.length; rIdx++) {
         const row = spec.tableRows[rIdx]!;
-        const isBoldRow = isRowUppercase(row);
+        const isBoldRow = isAccountingDoc && isRowUppercase(row);
         const rowFont = isBoldRow ? fontBold : fontRegular;
 
         const wrappedCells = cols.map((col, idx) => {

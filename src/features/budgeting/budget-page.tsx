@@ -1,7 +1,9 @@
 import * as React from "react";
 import {
   AlertTriangleIcon,
+  ArrowUpDownIcon,
   FolderKanbanIcon,
+  PencilIcon,
   PiggyBankIcon,
   PlusIcon,
   TrendingUpIcon,
@@ -76,6 +78,16 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   const [thresholdPct, setThresholdPct] = React.useState(80);
   const [allocations, setAllocations] = React.useState<Record<string, number>>({});
   const [saving, setSaving] = React.useState(false);
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
+
+  const sortedRows = React.useMemo(() => {
+    return [...rows].sort((a, b) => {
+      if (sortOrder === "asc") {
+        return a.account_code.localeCompare(b.account_code);
+      }
+      return b.account_code.localeCompare(a.account_code);
+    });
+  }, [rows, sortOrder]);
 
   React.useEffect(() => {
     async function init() {
@@ -436,13 +448,44 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70">
-          <CardTitle>
-            {t("budgeting:common.card_title")}
-          </CardTitle>
-          <CardDescription>
-            {t("budgeting:common.card_desc")}
-          </CardDescription>
+        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <CardTitle>
+              {t("budgeting:common.card_title")}
+            </CardTitle>
+            <CardDescription>
+              {t("budgeting:common.card_desc")}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+              className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
+            >
+              <ArrowUpDownIcon className="size-3.5" />
+              <span>
+                {t("common:action.order", "Urutan")}:{" "}
+                {sortOrder === "asc"
+                  ? t("common:action.oldest", "Terlama")
+                  : t("common:action.newest", "Terbaru")}
+              </span>
+            </Button>
+            {mode === "admin" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={openBudgetEditor}
+                className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 text-primary dark:text-sky-400 hover:text-primary dark:hover:text-sky-400"
+              >
+                <PencilIcon className="size-3.5" />
+                <span>{t("common:action.edit", "Edit")}</span>
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -494,7 +537,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rows.map((r) => (
+                  sortedRows.map((r) => (
                     <TableRow key={r.account_id}>
                       <TableCell className="align-top pl-6 pr-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
                         <span className="font-mono font-semibold text-muted-foreground">

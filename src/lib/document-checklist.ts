@@ -126,7 +126,12 @@ export function validatePurchaseOrderChecklist(params: {
   items: Array<{ description: string; quantity: number; unitPrice: number }>;
   exceedsBudget?: boolean;
   ackBudgetWarning?: boolean;
+  issueImmediately?: boolean;
 }): DocumentValidationResult {
+  const totalAmount = params.items.reduce(
+    (s, it) => s + (it.quantity > 0 && it.unitPrice > 0 ? it.quantity * it.unitPrice : 0),
+    0,
+  );
   const items: ChecklistItem[] = [
     {
       id: "vendor_identity",
@@ -151,10 +156,12 @@ export function validatePurchaseOrderChecklist(params: {
           (it) =>
             it.description.trim().length > 0 &&
             it.quantity > 0 &&
-            it.unitPrice >= 0,
-        ),
-      message:
-        "Minimal harus ada 1 item dengan deskripsi jelas, kuantitas ≥ 1, dan harga satuan.",
+            (params.issueImmediately ? it.unitPrice > 0 : it.unitPrice >= 0),
+        ) &&
+        (!params.issueImmediately || totalAmount > 0),
+      message: params.issueImmediately
+        ? "Purchase Order yang langsung diterbitkan wajib memiliki total nilai lebih dari Rp 0 (harga satuan > 0)."
+        : "Minimal harus ada 1 item dengan deskripsi jelas, kuantitas ≥ 1, dan harga satuan.",
       required: true,
     },
     {

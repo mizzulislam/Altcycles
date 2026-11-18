@@ -134,6 +134,12 @@ export async function createPurchaseOrder(input: {
   }));
   const subtotal = computedItems.reduce((s, i) => s + i.line_total, 0);
 
+  if (input.issueImmediately && subtotal <= 0) {
+    throw new Error(
+      "Purchase Order yang langsung diterbitkan wajib memiliki total nilai lebih dari Rp 0.",
+    );
+  }
+
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     const now = new Date().toISOString();

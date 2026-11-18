@@ -2053,13 +2053,14 @@ export function buildFixtureBackupJurnalNormal(): PdfDocumentSpec {
     docNumber: "BKP/20261116",
     docDate: "2026-11-16",
     company: FIXTURE_COMPANY,
+    orientation: "landscape",
     tableColumns: [
-      { header: "Tanggal", widthRatio: 0.14 },
-      { header: "No. Jurnal", widthRatio: 0.18 },
-      { header: "Akun", widthRatio: 0.28 },
-      { header: "Keterangan", widthRatio: 0.20 },
-      { header: "Debit", widthRatio: 0.10, align: "right" },
-      { header: "Kredit", widthRatio: 0.10, align: "right" },
+      { header: "Tanggal", widthRatio: 0.12, align: "center" },
+      { header: "No. Jurnal", widthRatio: 0.18, align: "left" },
+      { header: "Akun Keuangan", widthRatio: 0.26, align: "left" },
+      { header: "Keterangan", widthRatio: 0.24, align: "left" },
+      { header: "Debit (IDR)", widthRatio: 0.10, align: "right" },
+      { header: "Kredit (IDR)", widthRatio: 0.10, align: "right" },
     ],
     tableRows: [
       [

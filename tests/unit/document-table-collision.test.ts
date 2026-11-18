@@ -214,6 +214,7 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
   it("(h) Item 1: Memastikan dokumen dengan orientasi landscape memiliki dimensi 841.89 x 595.28 pt", async () => {
     const landscapeSlugs = [
       "13-daftar-payment-approval",
+      "14-backup-jurnal",
       "15-laporan-budgeting",
       "16-daftar-invoice",
     ];

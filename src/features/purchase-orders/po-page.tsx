@@ -207,11 +207,18 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       items: formItems,
       exceedsBudget,
       ackBudgetWarning,
+      issueImmediately: issueNow,
     });
-  }, [selectedVendor, poDate, formItems, exceedsBudget, ackBudgetWarning]);
+  }, [selectedVendor, poDate, formItems, exceedsBudget, ackBudgetWarning, issueNow]);
 
   async function handleCreatePo(e: React.FormEvent) {
     e.preventDefault();
+    if (issueNow && draftTotal <= 0) {
+      toast.error(
+        "Purchase Order yang langsung diterbitkan wajib memiliki total nilai lebih dari Rp 0 (harga satuan > 0).",
+      );
+      return;
+    }
     if (!poChecklist.isValid) {
       const firstInvalid = poChecklist.items.find((i) => !i.passed);
       toast.error(

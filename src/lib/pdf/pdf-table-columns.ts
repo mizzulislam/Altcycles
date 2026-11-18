@@ -336,21 +336,23 @@ export const PDF_TABLE_COLUMN_CONFIGS: Record<string, TableColumnsEntry> = {
     ],
   },
 
-  // 10. CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES
+  // 10. CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES (ORIENTASI LANDSCAPE)
   "CADANGAN BUKU JURNAL AKUNTANSI ALTCYCLES": {
     id: [
-      { header: "Tanggal", widthRatio: 0.14, align: "center" },
+      { header: "Tanggal", widthRatio: 0.12, align: "center" },
       { header: "No. Jurnal", widthRatio: 0.18, align: "left" },
       { header: "Akun Keuangan", widthRatio: 0.26, align: "left" },
       { header: "Keterangan", widthRatio: 0.24, align: "left" },
-      { header: "Debit (IDR)", widthRatio: 0.18, align: "right" },
+      { header: "Debit (IDR)", widthRatio: 0.10, align: "right" },
+      { header: "Kredit (IDR)", widthRatio: 0.10, align: "right" },
     ],
     en: [
-      { header: "Date", widthRatio: 0.14, align: "center" },
+      { header: "Date", widthRatio: 0.12, align: "center" },
       { header: "Journal No.", widthRatio: 0.18, align: "left" },
       { header: "Account Name", widthRatio: 0.26, align: "left" },
       { header: "Description", widthRatio: 0.24, align: "left" },
-      { header: "Debit (IDR)", widthRatio: 0.18, align: "right" },
+      { header: "Debit (IDR)", widthRatio: 0.10, align: "right" },
+      { header: "Credit (IDR)", widthRatio: 0.10, align: "right" },
     ],
   },
 };

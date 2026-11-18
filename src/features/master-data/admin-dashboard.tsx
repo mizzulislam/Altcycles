@@ -437,16 +437,17 @@ export function AdminDashboardPage() {
       }
     }
     const bytes = await generateDocumentPdf({
+      orientation: "landscape",
       docTitle: t("dashboard:export.pdf_title"),
       docSubtitle: t("dashboard:export.pdf_subtitle", { count: journals.length }),
       docNumber: `BKP/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
       tableColumns: [
-        { header: t("dashboard:export.col_date"), widthRatio: 0.14 },
-        { header: t("dashboard:export.col_journal_no"), widthRatio: 0.18 },
-        { header: t("dashboard:export.col_account"), widthRatio: 0.28 },
-        { header: t("dashboard:export.col_description"), widthRatio: 0.20 },
+        { header: t("dashboard:export.col_date"), widthRatio: 0.12, align: "center" },
+        { header: t("dashboard:export.col_journal_no"), widthRatio: 0.18, align: "left" },
+        { header: t("dashboard:export.col_account"), widthRatio: 0.26, align: "left" },
+        { header: t("dashboard:export.col_description"), widthRatio: 0.24, align: "left" },
         { header: t("dashboard:export.col_debit"), widthRatio: 0.10, align: "right" },
         { header: t("dashboard:export.col_credit"), widthRatio: 0.10, align: "right" },
       ],
