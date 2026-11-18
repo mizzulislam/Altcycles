@@ -702,24 +702,24 @@ export function JournalsPage({
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             {filterMode === "adjusting"
-              ? t("accounting.journal_history_adj", "Riwayat Jurnal Penyesuaian & Koreksi")
-              : t("accounting.journal_history", "Riwayat Jurnal Umum")}
+              ? t("accounting:journals.adj_title", "Riwayat Jurnal Penyesuaian & Koreksi")
+              : t("accounting:journals.general_title", "Riwayat Jurnal Umum")}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
             {filterMode === "adjusting"
               ? t(
-                  "accounting.journal_history_adj_desc",
+                  "accounting:journals.adj_subtitle",
                   "Kelola penyesuaian akrual, amortisasi, dan penerbitan jurnal koreksi transaksi dengan jejak audit.",
                 )
               : t(
-                  "accounting.journal_history_desc",
+                  "accounting:journals.general_subtitle",
                   "Daftar historis seluruh transaksi akuntansi keuangan secara kronologis.",
                 )}
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
           <ExportDownloadMenu
-            label={t("action.download", "Unduh / Ekspor")}
+            label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
@@ -732,8 +732,8 @@ export function JournalsPage({
             <PlusIcon className="size-4" />
             <span>
               {filterMode === "adjusting"
-                ? t("accounting.record_adjusting", "Catat Jurnal Penyesuaian")
-                : t("accounting.record_transaction", "Catat Transaksi")}
+                ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                : t("accounting:journals.btn_record", "Catat Transaksi")}
             </span>
           </Button>
         </div>
@@ -745,7 +745,7 @@ export function JournalsPage({
           <div className="flex items-center gap-2 mb-3">
             <SlidersHorizontalIcon className="size-4 text-primary dark:text-cyan-400" />
             <h3 className="font-bold text-sm text-foreground">
-              {t("accounting.accounting_assumptions", "Penerapan Asumsi Akuntansi Keuangan")}
+              {t("accounting:journals.assumptions_title", "Penerapan Asumsi Akuntansi Keuangan")}
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -753,12 +753,12 @@ export function JournalsPage({
               <div className="flex items-center gap-2">
                 <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
                 <h4 className="font-semibold text-xs text-foreground">
-                  {t("accounting.assumption_periodicity", "Periodisitas (Periodicity)")}
+                  {t("accounting:journals.assumption_periodicity", "Periodisitas (Periodicity)")}
                 </h4>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 {t(
-                  "accounting.assumption_periodicity_desc",
+                  "accounting:journals.assumption_periodicity_desc",
                   "Membagi aktivitas ekonomi entitas ke dalam periode waktu bulanan/tahunan untuk penyajian laporan yang tepat waktu dan relevan.",
                 )}
               </p>
@@ -767,12 +767,12 @@ export function JournalsPage({
               <div className="flex items-center gap-2">
                 <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
                 <h4 className="font-semibold text-xs text-foreground">
-                  {t("accounting.assumption_deferral", "Penangguhan (Deferral)")}
+                  {t("accounting:journals.assumption_deferral", "Penangguhan (Deferral)")}
                 </h4>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 {t(
-                  "accounting.assumption_deferral_desc",
+                  "accounting:journals.assumption_deferral_desc",
                   "Pendapatan diterima dimuka dicatat sebagai kewajiban dan direalisasikan bertahap menjadi pendapatan pada periode manfaat.",
                 )}
               </p>
@@ -781,12 +781,12 @@ export function JournalsPage({
               <div className="flex items-center gap-2">
                 <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
                 <h4 className="font-semibold text-xs text-foreground">
-                  {t("accounting.assumption_accrual", "Asas Akrual (Accrual Basis)")}
+                  {t("accounting:journals.assumption_accrual", "Asas Akrual (Accrual Basis)")}
                 </h4>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 {t(
-                  "accounting.assumption_accrual_desc",
+                  "accounting:journals.assumption_accrual_desc",
                   "Mencatat pengaruh transaksi pada periode terjadinya, bukan sekadar saat kas diterima atau dikeluarkan, guna mencerminkan posisi keuangan yang andal.",
                 )}
               </p>
@@ -795,12 +795,12 @@ export function JournalsPage({
               <div className="flex items-center gap-2">
                 <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
                 <h4 className="font-semibold text-xs text-foreground">
-                  {t("accounting.assumption_depreciation", "Depresiasi (Depreciation)")}
+                  {t("accounting:journals.assumption_depreciation", "Depresiasi (Depreciation)")}
                 </h4>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 {t(
-                  "accounting.assumption_depreciation_desc",
+                  "accounting:journals.assumption_depreciation_desc",
                   "Mengalokasikan harga perolehan aset tetap secara berkala ke Beban Penyusutan berpasangan dengan Akumulasi Penyusutan.",
                 )}
               </p>
@@ -813,8 +813,8 @@ export function JournalsPage({
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4.5 border-b border-border/60 gap-3">
           <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             {filterMode === "adjusting"
-              ? t("accounting.adj_journal_book", "Buku Jurnal Penyesuaian (AJP)")
-              : t("accounting.daily_journal_book", "Buku Jurnal Harian")}
+              ? t("accounting:journals.adj_book", "Buku Jurnal Penyesuaian (AJP)")
+              : t("accounting:journals.daily_book", "Buku Jurnal Harian")}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2.5">
             <Button
@@ -828,10 +828,10 @@ export function JournalsPage({
             >
               <ArrowUpDownIcon className="size-3.5" />
               <span>
-                {t("accounting.order_label", "Urutan:")}{" "}
+                {t("accounting:journals.order", "Urutan:")}{" "}
                 {sortOrder === "asc"
-                  ? t("accounting.order_oldest", "Terlama")
-                  : t("accounting.order_newest", "Terbaru")}
+                  ? t("accounting:journals.order_oldest", "Terlama")
+                  : t("accounting:journals.order_newest", "Terbaru")}
               </span>
             </Button>
 
@@ -844,7 +844,7 @@ export function JournalsPage({
                 className="gap-1.5 text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-xs"
               >
                 <PencilIcon className="size-3.5" />
-                <span>{t("action.edit", "Edit")}</span>
+                <span>{t("common:action.edit", "Edit")}</span>
               </Button>
             ) : (
               <div className="flex items-center gap-2">
@@ -858,7 +858,7 @@ export function JournalsPage({
                   }}
                   className="text-xs font-medium cursor-pointer"
                 >
-                  {t("action.cancel", "Batal")}
+                  {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button
                   type="button"
@@ -868,7 +868,7 @@ export function JournalsPage({
                   disabled={selectedJournalIds.length === 0}
                   className="text-xs font-medium cursor-pointer"
                 >
-                  {t("action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
+                  {t("common:action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
                 </Button>
               </div>
             )}
@@ -910,10 +910,10 @@ export function JournalsPage({
                     isEditMode ? "w-[120px]" : "w-[140px]",
                   )}
                 >
-                  {t("accounting.th_date", "Tanggal")}
+                  {t("accounting:journals.col_date", "Tanggal")}
                 </TableHead>
                 <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
-                  {t("accounting.th_description", "Deskripsi")}
+                  {t("accounting:journals.col_description", "Deskripsi")}
                 </TableHead>
                 <TableHead
                   className={cn(
@@ -921,7 +921,7 @@ export function JournalsPage({
                     isEditMode ? "w-[82px]" : "w-[110px]",
                   )}
                 >
-                  {t("accounting.th_ref", "Ref")}
+                  {t("accounting:journals.col_ref", "Ref")}
                 </TableHead>
                 <TableHead
                   className={cn(
@@ -929,7 +929,7 @@ export function JournalsPage({
                     isEditMode ? "w-[155px]" : "w-[195px]",
                   )}
                 >
-                  {t("accounting.th_debit", "Debit")}
+                  {t("accounting:journals.col_debit", "Debit")}
                 </TableHead>
                 <TableHead
                   className={cn(
@@ -937,11 +937,11 @@ export function JournalsPage({
                     isEditMode ? "w-[155px]" : "w-[195px]",
                   )}
                 >
-                  {t("accounting.th_credit", "Kredit")}
+                  {t("accounting:journals.col_credit", "Kredit")}
                 </TableHead>
                 {isEditMode && (
                   <TableHead className="w-[112px] text-center pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
-                    {t("accounting.th_actions", "Aksi")}
+                    {t("accounting:journals.col_actions", "Aksi")}
                   </TableHead>
                 )}
               </TableRow>
@@ -955,7 +955,7 @@ export function JournalsPage({
                     >
                       <div className="flex items-center justify-center gap-2">
                         <Spinner />
-                        <span>{t("accounting.loading_journals", "Memuat buku jurnal...")}</span>
+                        <span>{t("accounting:journals.loading_journals", "Memuat buku jurnal...")}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -968,17 +968,17 @@ export function JournalsPage({
                       <EmptyState
                         title={
                           filterMode === "adjusting"
-                            ? t("accounting.no_adj_journal", "Belum ada Ayat Jurnal Penyesuaian (AJP)")
-                            : t("accounting.no_general_journal", "Belum ada transaksi jurnal umum pada periode ini")
+                            ? t("accounting:journals.no_adj_journal", "Belum ada Ayat Jurnal Penyesuaian (AJP)")
+                            : t("accounting:journals.no_general_journal", "Belum ada transaksi jurnal umum pada periode ini")
                         }
                         description={
                           filterMode === "adjusting"
                             ? t(
-                                "accounting.no_adj_desc",
+                                "accounting:journals.no_adj_journal_desc",
                                 "Gunakan tombol 'Catat Jurnal Penyesuaian' untuk menambahkan penyesuaian beban akrual, amortisasi, atau pengakuan pendapatan sewa/jasa di muka.",
                               )
                             : t(
-                                "accounting.no_gen_desc",
+                                "accounting:journals.no_general_journal_desc",
                                 "Gunakan tombol 'Catat Transaksi' atau sesuaikan saringan periode dan proyek.",
                               )
                         }

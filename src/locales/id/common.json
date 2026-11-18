@@ -22,7 +22,17 @@
     "oldest": "Terlama",
     "newest": "Terbaru",
     "select_all": "Pilih Semua",
-    "loading": "Memuat..."
+    "loading": "Memuat...",
+    "confirm_continue": "Ya, Lanjutkan",
+    "reason": "Alasan",
+    "reason_placeholder": "Masukkan alasan...",
+    "delete_selected": "Hapus Pilihan",
+    "locked": "Terkunci",
+    "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan"
+  },
+  "loading": "Memuat data...",
+  "time": {
+    "days": "Hari"
   },
   "nav": {
     "home": "Beranda",
@@ -54,7 +64,9 @@
   "role": {
     "super_admin": "Super Admin",
     "admin": "Bendahara",
-    "user": "Anggota Tim"
+    "user": "Anggota Tim",
+    "team_member": "Anggota Tim",
+    "own_submission": "Pengajuan Sendiri"
   },
   "header": {
     "notifications": "Notifikasi sistem",

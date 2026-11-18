@@ -16,7 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatAccountRef, formatDateID } from "@/lib/formatters";
+import { formatAccountRef, formatDateI18n } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type {
@@ -41,7 +45,7 @@ export function JournalDetailDialog({
   accountMap,
   onEdit,
 }: JournalDetailDialogProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <Dialog
@@ -52,7 +56,7 @@ export function JournalDetailDialog({
     >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t("journal.detail_title", "Detail Transaksi Jurnal")}</DialogTitle>
+          <DialogTitle>{t("accounting:dialogs.detail_title", "Detail Transaksi Jurnal")}</DialogTitle>
         </DialogHeader>
 
         {detailJournal && (
@@ -60,7 +64,7 @@ export function JournalDetailDialog({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs">
               <div>
                 <span className="text-muted-foreground block text-[11px]">
-                  {t("journal.number", "Nomor Jurnal")}
+                  {t("accounting:dialogs.number", "Nomor Jurnal")}
                 </span>
                 <span className="font-semibold text-foreground">
                   {detailJournal.journal_number}
@@ -68,15 +72,15 @@ export function JournalDetailDialog({
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">
-                  {t("table.date", "Tanggal")}
+                  {t("accounting:journals.col_date", "Tanggal")}
                 </span>
                 <span className="font-semibold text-foreground">
-                  {formatDateID(detailJournal.journal_date)}
+                  {formatDateI18n(detailJournal.journal_date, language)}
                 </span>
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">
-                  {t("journal.type", "Jenis Jurnal")}
+                  {t("accounting:dialogs.type", "Jenis Jurnal")}
                 </span>
                 <span className="font-semibold text-foreground">
                   {JOURNAL_TYPE_LABELS[detailJournal.journal_type]?.label ??
@@ -85,7 +89,7 @@ export function JournalDetailDialog({
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">
-                  {t("table.status", "Status")}
+                  {t("common:table.status", "Status")}
                 </span>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                   {detailJournal.status.toUpperCase()}
@@ -95,32 +99,32 @@ export function JournalDetailDialog({
 
             <div>
               <span className="text-xs font-medium text-muted-foreground">
-                {t("journal.description", "Keterangan")}:
+                {t("accounting:dialogs.description", "Keterangan")}:
               </span>
               <p className="text-sm text-foreground mt-1 p-3 rounded-xl bg-muted/30 border border-border/50">
-                {detailJournal.description || "-"}
+                {detailJournal.description ? getLocalizedTransactionDescription(detailJournal.description, language) : "-"}
               </p>
             </div>
 
             <div className="space-y-1.5">
               <span className="text-xs font-semibold text-foreground">
-                {t("journal.accounts_list", "Daftar Akun & Mutasi:")}
+                {t("accounting:dialogs.accounts_list", "Daftar Akun & Mutasi:")}
               </span>
               <div className="rounded-xl border border-border/60 overflow-hidden">
                 <Table>
                   <TableHeader className="bg-muted/40">
                     <TableRow>
                       <TableHead className="text-xs sm:text-sm font-semibold text-center py-2.5">
-                        {t("accounting.th_account", "Akun")}
+                        {t("accounting:journals.col_account", "Akun")}
                       </TableHead>
                       <TableHead className="text-xs sm:text-sm font-semibold text-center w-20 py-2.5">
-                        {t("accounting.th_ref", "Ref")}
+                        {t("accounting:journals.col_ref", "Ref")}
                       </TableHead>
                       <TableHead className="text-xs sm:text-sm font-semibold text-center w-32 py-2.5 pr-4">
-                        {t("accounting.th_debit", "Debit")}
+                        {t("accounting:journals.col_debit", "Debit")}
                       </TableHead>
                       <TableHead className="text-xs sm:text-sm font-semibold text-center w-32 py-2.5 pr-4">
-                        {t("accounting.th_credit", "Kredit")}
+                        {t("accounting:journals.col_credit", "Kredit")}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -140,7 +144,7 @@ export function JournalDetailDialog({
                                 )}
                               >
                                 {acc
-                                  ? `${acc.code} - ${acc.name}`
+                                  ? `${acc.code} - ${getLocalizedAccountName(acc, language)}`
                                   : line.account_id}
                               </span>
                             </TableCell>
@@ -178,7 +182,7 @@ export function JournalDetailDialog({
             onClick={onClose}
             className="rounded-xl"
           >
-            {t("action.close", "Tutup")}
+            {t("common:action.close", "Tutup")}
           </Button>
           {detailJournal && (
             <Button

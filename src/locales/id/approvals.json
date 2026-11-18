@@ -127,6 +127,7 @@
     "reject_reason_label": "Alasan Penolakan (Wajib Diisi)",
     "reject_reason_placeholder": "Tuliskan alasan penolakan atau kekurangan berkas bukti...",
     "btn_reject_confirm": "Tolak Pengajuan",
+    "toast_rejected": "Pengajuan pembayaran berhasil ditolak.",
     "disburse_title": "Catat Realisasi Pembayaran {{number}}",
     "disburse_amount": "Nominal Pembayaran:",
     "disburse_date": "Tanggal Transfer / Pembayaran",

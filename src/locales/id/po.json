@@ -25,6 +25,8 @@
   "action_cancel_po": "Batalkan PO",
   "toast_completed": "PO {{number}} ditandai selesai.",
   "toast_cancelled": "PO {{number}} dibatalkan.",
+  "toast_issued": "Purchase Order berhasil diterbitkan.",
+  "toast_created": "PO {{number}} berhasil dibuat.",
   "modal_create": {
     "title": "Buat Purchase Order Pembelian Vendor",
     "field_date": "Tanggal PO",

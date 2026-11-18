@@ -55,7 +55,7 @@ export function PeriodListTable({
         {loading ? (
           <div className="flex items-center gap-2 py-8 px-6 text-sm text-muted-foreground">
             <Spinner />
-            <span>{t("common.loading", "Memuat daftar periode...")}</span>
+            <span>{t("common:loading", "Memuat daftar periode...")}</span>
           </div>
         ) : (
           <div className="overflow-x-auto">

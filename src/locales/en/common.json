@@ -22,7 +22,17 @@
     "oldest": "Oldest",
     "newest": "Newest",
     "select_all": "Select All",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "confirm_continue": "Yes, Continue",
+    "reason": "Reason",
+    "reason_placeholder": "Enter reason...",
+    "delete_selected": "Delete Selected",
+    "locked": "Locked",
+    "acknowledge_warning": "I Understand Risks & Proceed Anyway"
+  },
+  "loading": "Loading data...",
+  "time": {
+    "days": "Days"
   },
   "nav": {
     "home": "Home",
@@ -54,7 +64,9 @@
   "role": {
     "super_admin": "Super Admin",
     "admin": "Treasurer",
-    "user": "Team Member"
+    "user": "Team Member",
+    "team_member": "Team Member",
+    "own_submission": "Own Submission"
   },
   "header": {
     "notifications": "System Notifications",

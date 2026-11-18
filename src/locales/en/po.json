@@ -25,6 +25,8 @@
   "action_cancel_po": "Cancel PO",
   "toast_completed": "PO {{number}} marked completed.",
   "toast_cancelled": "PO {{number}} cancelled.",
+  "toast_issued": "Purchase Order successfully issued.",
+  "toast_created": "PO {{number}} successfully created.",
   "modal_create": {
     "title": "Create Vendor Purchase Order",
     "field_date": "PO Date",

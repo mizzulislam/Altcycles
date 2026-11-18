@@ -127,6 +127,7 @@
     "reject_reason_label": "Rejection Reason (Required)",
     "reject_reason_placeholder": "State the reason for rejection or missing documentation...",
     "btn_reject_confirm": "Reject Submission",
+    "toast_rejected": "Payment request successfully rejected.",
     "disburse_title": "Record Payment Disbursement {{number}}",
     "disburse_amount": "Payment Amount:",
     "disburse_date": "Transfer / Payment Date",

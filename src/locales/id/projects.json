@@ -19,7 +19,9 @@
   "empty_desc": "Daftar proyek masih kosong. Tambahkan proyek baru untuk memulai siklus pengadaan dan penagihan.",
   "header": {
     "title": "Dokumen & Milestone Proyek Klien",
-    "subtitle": "Kelola siklus pengikatan kontrak, dokumen formal proyek (SPK, BAKP, UAT, BAST), jadwal termin, dan pengakuan pendapatan progres."
+    "subtitle": "Kelola siklus pengikatan kontrak, dokumen formal proyek (SPK, BAKP, UAT, BAST), jadwal termin, dan pengakuan pendapatan progres.",
+    "switch_project": "Ganti Proyek",
+    "select_project": "Pilih Proyek"
   },
   "summary": {
     "code": "Kode Proyek",
@@ -30,7 +32,10 @@
     "progress": "Progres Penyelesaian",
     "docs_completeness": "Kelengkapan Dokumen & PO",
     "docs_verified": "{{count}} PO klien terverifikasi",
-    "structured_milestones": "{{count}} termin tersusun"
+    "structured_milestones": "{{count}} termin tersusun",
+    "eliminated_badge": "Eliminasi 100%",
+    "internal_project": "Proyek Internal",
+    "docs_unit": "Dokumen"
   },
   "tabs": {
     "milestones": "Termin & Progres",
@@ -44,6 +49,8 @@
     "btn_reset": "Atur Ulang Termin",
     "btn_setup": "Susun Termin 100%",
     "btn_reset_disabled_title": "Jadwal termin tidak dapat disusun ulang karena sebagian termin sudah dipakai di BAKP atau Invoice. Gunakan tombol Edit untuk mengubah rincian baris yang tersedia.",
+    "empty_title": "Belum ada termin penagihan",
+    "empty_desc": "Atur jadwal termin penagihan untuk proyek ini.",
     "col_no": "No.",
     "col_name": "Nama Termin",
     "col_ratio": "Porsi (%)",

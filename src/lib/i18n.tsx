@@ -1007,6 +1007,100 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
 
 const LanguageContext = React.createContext<LanguageContextValue | undefined>(undefined);
 
+export function resolveTranslation(
+  key: string,
+  language: Language,
+  optionsOrFallback?: string | TOptions,
+  fallback?: string,
+): string {
+  const opts =
+    typeof optionsOrFallback === "object" && optionsOrFallback !== null
+      ? optionsOrFallback
+      : {};
+  const explicitFallback =
+    typeof optionsOrFallback === "string" ? optionsOrFallback : fallback;
+  const callOpts: TOptions = { lng: language, ...opts };
+
+  // 1. Normalisasi namespace jika key diawali nama namespace + titik (mis. "accounting.title" -> "accounting:title")
+  let normalizedKey = key;
+  const knownNamespaces = [
+    "common",
+    "projects",
+    "invoicing",
+    "accounting",
+    "po",
+    "approvals",
+    "budgeting",
+    "profit_sharing",
+  ];
+  if (!normalizedKey.includes(":")) {
+    for (const ns of knownNamespaces) {
+      if (normalizedKey.startsWith(`${ns}.`)) {
+        normalizedKey = normalizedKey.replace(`${ns}.`, `${ns}:`);
+        break;
+      }
+    }
+  }
+
+  // 2. Cek apakah kunci ada di i18next pada bahasa aktif
+  if (i18n.exists(normalizedKey, callOpts)) {
+    return i18n.t(normalizedKey, callOpts);
+  }
+
+  // 3. Fallback jika bahasa aktif bukan id dan belum ada di en: ambil dari id (bahasa dasar)
+  if (language !== "id" && i18n.exists(normalizedKey, { ...callOpts, lng: "id" })) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[i18n] Key "${normalizedKey}" missing in "${language}", falling back to "id"`,
+      );
+    }
+    return i18n.t(normalizedKey, { ...callOpts, lng: "id" });
+  }
+
+  // 4. Cek apakah kunci tanpa namespace ada di default namespace (common)
+  if (i18n.exists(key, callOpts)) {
+    return i18n.t(key, callOpts);
+  }
+  if (language !== "id" && i18n.exists(key, { ...callOpts, lng: "id" })) {
+    return i18n.t(key, { ...callOpts, lng: "id" });
+  }
+
+  // 5. Cek kamus statis DICTIONARY (bahasa aktif lalu bahasa id)
+  const dict = DICTIONARY[language];
+  const dictId = DICTIONARY.id;
+  const valLang = dict?.[key];
+  if (typeof valLang === "string") {
+    return valLang;
+  }
+  const valId = dictId?.[key];
+  if (typeof valId === "string") {
+    return valId;
+  }
+
+  // Cek juga normalizedKey di DICTIONARY
+  const normValLang = dict?.[normalizedKey];
+  if (typeof normValLang === "string") {
+    return normValLang;
+  }
+  const normValId = dictId?.[normalizedKey];
+  if (typeof normValId === "string") {
+    return normValId;
+  }
+
+  // 6. Explicit fallback yang diberikan pemanggil (misal: t("key", "Teks Asli"))
+  if (explicitFallback !== undefined) {
+    return explicitFallback;
+  }
+
+  // 7. Jika benar-benar tidak ditemukan di mana pun:
+  if (import.meta.env.DEV) {
+    console.warn(
+      `[i18n] Missing translation key: "${key}" (normalized: "${normalizedKey}")`,
+    );
+  }
+  return key;
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = React.useState<Language>(() => {
     if (typeof window === "undefined") return "id";
@@ -1048,53 +1142,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const t = React.useCallback(
     (key: string, optionsOrFallback?: string | TOptions, fallback?: string): string => {
-      const opts = typeof optionsOrFallback === "object" && optionsOrFallback !== null ? optionsOrFallback : {};
-      const explicitFallback = typeof optionsOrFallback === "string" ? optionsOrFallback : fallback;
-      const callOpts: TOptions = { lng: language, ...opts };
-
-      // Normalisasi namespace: ubah "projects.milestones" -> "projects:milestones" jika diawali nama namespace
-      let normalizedKey = key;
-      const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals", "budgeting", "profit_sharing"];
-      if (!normalizedKey.includes(":")) {
-        for (const ns of knownNamespaces) {
-          if (normalizedKey.startsWith(`${ns}.`)) {
-            normalizedKey = normalizedKey.replace(`${ns}.`, `${ns}:`);
-            break;
-          }
-        }
-      }
-
-      // 1. Cek kunci i18next (dengan namespace yang dinormalisasi atau kunci asli)
-      if (i18n.exists(normalizedKey, callOpts)) {
-        return i18n.t(normalizedKey, callOpts);
-      }
-
-      if (normalizedKey.includes(":")) {
-        const translated = i18n.t(normalizedKey, callOpts);
-        if (translated && translated !== normalizedKey && translated !== key) {
-          return translated;
-        }
-      }
-
-      // 2. Cek kamus i18next pada default namespace
-      if (i18n.exists(key, callOpts)) {
-        return i18n.t(key, callOpts);
-      }
-
-      // 3. Cek kamus statis DICTIONARY
-      const dict = DICTIONARY[language];
-      const val = dict ? dict[key] : undefined;
-      if (typeof val === "string") {
-        return val;
-      }
-
-      // 4. Jika bahasa Inggris dan tidak ada fallback khusus bahasa, coba cari padanan di dictionary en
-      if (language === "en") {
-        const enVal = DICTIONARY.en[key];
-        if (typeof enVal === "string") return enVal;
-      }
-
-      return explicitFallback !== undefined ? explicitFallback : key;
+      return resolveTranslation(key, language, optionsOrFallback, fallback);
     },
     [language],
   );
@@ -1121,36 +1169,7 @@ export function useLanguage(): LanguageContextValue {
       setLanguage: () => {},
       toggleLanguage: () => {},
       t: (key: string, optionsOrFallback?: string | TOptions, fallback?: string) => {
-        const opts = typeof optionsOrFallback === "object" && optionsOrFallback !== null ? optionsOrFallback : {};
-        const explicitFallback = typeof optionsOrFallback === "string" ? optionsOrFallback : fallback;
-        const callOpts: TOptions = { lng: lang, ...opts };
-
-        let normalizedKey = key;
-        const knownNamespaces = ["common", "projects", "invoicing", "accounting", "po", "approvals", "budgeting", "profit_sharing"];
-        if (!normalizedKey.includes(":")) {
-          for (const ns of knownNamespaces) {
-            if (normalizedKey.startsWith(`${ns}.`)) {
-              normalizedKey = normalizedKey.replace(`${ns}.`, `${ns}:`);
-              break;
-            }
-          }
-        }
-
-        if (i18n.exists(normalizedKey, callOpts)) {
-          return i18n.t(normalizedKey, callOpts);
-        }
-        if (normalizedKey.includes(":")) {
-          const translated = i18n.t(normalizedKey, callOpts);
-          if (translated && translated !== normalizedKey && translated !== key) return translated;
-        }
-        if (i18n.exists(key, callOpts)) {
-          return i18n.t(key, callOpts);
-        }
-        const dict = DICTIONARY[lang];
-        if (dict && dict[key]) {
-          return dict[key];
-        }
-        return explicitFallback ?? key;
+        return resolveTranslation(key, lang, optionsOrFallback, fallback);
       },
     };
   }

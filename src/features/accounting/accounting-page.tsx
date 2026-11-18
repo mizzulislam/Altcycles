@@ -414,7 +414,7 @@ export function AccountingPage() {
                     </label>
                     <Select value={projectFilter} onValueChange={setProjectFilter}>
                       <SelectTrigger className="w-full h-10 rounded-xl text-xs sm:text-sm">
-                        <SelectValue placeholder={t("projects.filter_project", "Pilih proyek")} />
+                        <SelectValue placeholder={t("accounting:filter.select_project", "Pilih proyek...")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">

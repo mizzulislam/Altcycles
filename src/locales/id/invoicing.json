@@ -47,6 +47,7 @@
     "issued_date": "Terbit: {{date}}",
     "due_date": "Jatuh Tempo: {{date}}",
     "order_newest": "Urutan: Terbaru",
+    "selected_invoices": "Invoice Terpilih",
     "empty_invoices_title": "Belum Ada Invoice Diterbitkan",
     "empty_invoices_desc": "Terbitkan invoice penjualan proyek klien pertama dengan mengklik tombol + Terbitkan Invoice di atas."
   },
@@ -59,6 +60,8 @@
     "col_1_30": "1–30 Hari",
     "col_31_60": "31–60 Hari",
     "col_gt_60": "> 60 Hari",
+    "col_aging_bucket": "Rentang Umur",
+    "overdue": "Lewat Jatuh Tempo",
     "col_total": "Total Piutang",
     "empty_title": "Tidak Ada Piutang Belum Tertagih",
     "empty_desc": "Seluruh invoice proyek klien yang diterbitkan telah lunas tertagih."
@@ -66,6 +69,7 @@
   "receipts": {
     "card_title": "Daftar Kuitansi Resmi Penerimaan Dana",
     "card_desc": "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat dan diverifikasi di rekening bank.",
+    "selected_receipts": "Kuitansi Terpilih",
     "col_receipt_no": "Nomor Kuitansi",
     "col_payment_date": "Tanggal Terima",
     "col_invoice_ref": "Referensi Invoice",
@@ -97,7 +101,18 @@
     "field_notes": "Catatan Tagihan (Tampil di Dokumen)",
     "checklist_title": "Checklist Validasi Invoice Standar Altvira",
     "btn_submit": "Terbitkan & Posting Jurnal",
-    "btn_submitting": "Menerbitkan Invoice..."
+    "btn_submitting": "Menerbitkan Invoice...",
+    "no_projects": "Belum ada proyek yang dapat dipilih",
+    "no_verified_cpo": "Belum ada PO Pembeli (CPO) yang terverifikasi",
+    "verify_cpo_hint": "Verifikasi PO Klien terlebih dahulu di modul Proyek sebelum menerbitkan invoice.",
+    "no_specific_milestone": "Tidak terikat termin spesifik",
+    "no_bakp_approved": "Belum ada BAKP yang disetujui untuk termin ini",
+    "no_bast_signed": "Belum ada BAST yang ditandatangani untuk termin ini",
+    "post_to_ar": "Posting Piutang Usaha (AR)",
+    "paid_direct": "Dibayar Langsung (Kas/Bank)",
+    "recog_mode_desc": "Pilih metode pengakuan pendapatan dan jurnal transaksi.",
+    "notes_placeholder": "Catatan atau instruksi penagihan...",
+    "no_cash_accounts": "Tidak ada akun kas/bank yang tersedia"
   },
   "modal_payment": {
     "title": "Catat Bukti Penerimaan Pembayaran",
@@ -117,6 +132,7 @@
     "sent": "Terkirim",
     "partially_paid": "Sebagian Terbayar",
     "paid": "Lunas",
+    "unpaid": "Belum Lunas",
     "overdue": "Lewat Jatuh Tempo",
     "cancelled": "Dibatalkan"
   }

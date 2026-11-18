@@ -19,7 +19,9 @@
   "empty_desc": "Projects directory is currently empty. Add a new project to start procurement and invoicing cycles.",
   "header": {
     "title": "Client Project Documents & Milestones",
-    "subtitle": "Manage formal project contractual binding, compliance documents (SPK, BAKP, UAT, BAST), milestone schedules, and progress revenue recognition."
+    "subtitle": "Manage formal project contractual binding, compliance documents (SPK, BAKP, UAT, BAST), milestone schedules, and progress revenue recognition.",
+    "switch_project": "Switch Project",
+    "select_project": "Select Project"
   },
   "summary": {
     "code": "Project Code",
@@ -30,7 +32,10 @@
     "progress": "Completion Progress",
     "docs_completeness": "Documents & PO Completeness",
     "docs_verified": "{{count}} verified client POs",
-    "structured_milestones": "{{count}} structured milestones"
+    "structured_milestones": "{{count}} structured milestones",
+    "eliminated_badge": "100% Eliminated",
+    "internal_project": "Internal Project",
+    "docs_unit": "Documents"
   },
   "tabs": {
     "milestones": "Milestones & Progress",
@@ -44,6 +49,8 @@
     "btn_reset": "Reset Milestones",
     "btn_setup": "Set Up 100% Milestones",
     "btn_reset_disabled_title": "Milestone schedule cannot be re-structured because some milestones are already used in a BAKP or Invoice. Use the Edit button to modify available rows.",
+    "empty_title": "No milestone payments yet",
+    "empty_desc": "Set up milestone payment schedule for this project.",
     "col_no": "No.",
     "col_name": "Milestone Name",
     "col_ratio": "Portion (%)",

@@ -47,6 +47,7 @@
     "issued_date": "Issued: {{date}}",
     "due_date": "Due: {{date}}",
     "order_newest": "Order: Newest",
+    "selected_invoices": "Selected Invoices",
     "empty_invoices_title": "No Invoices Issued Yet",
     "empty_invoices_desc": "Issue your first client project sales invoice by clicking the + Issue Invoice button above."
   },
@@ -59,6 +60,8 @@
     "col_1_30": "1–30 Days",
     "col_31_60": "31–60 Days",
     "col_gt_60": "> 60 Days",
+    "col_aging_bucket": "Aging Bucket",
+    "overdue": "Overdue",
     "col_total": "Total Receivables",
     "empty_title": "No Outstanding Receivables",
     "empty_desc": "All issued client project invoices have been paid in full."
@@ -66,6 +69,7 @@
   "receipts": {
     "card_title": "Official Payment Receipts List",
     "card_desc": "Issued automatically whenever client invoice payments are recorded and verified in company accounts.",
+    "selected_receipts": "Selected Receipts",
     "col_receipt_no": "Receipt No.",
     "col_payment_date": "Receipt Date",
     "col_invoice_ref": "Invoice Reference",
@@ -97,7 +101,18 @@
     "field_notes": "Billing Notes (Shown on Document)",
     "checklist_title": "Altvira Standard Invoice Validation Checklist",
     "btn_submit": "Issue & Post Journal",
-    "btn_submitting": "Issuing Invoice..."
+    "btn_submitting": "Issuing Invoice...",
+    "no_projects": "No selectable projects available",
+    "no_verified_cpo": "No verified Client Purchase Order (CPO)",
+    "verify_cpo_hint": "Verify Client PO first in Projects module before issuing invoice.",
+    "no_specific_milestone": "Not tied to a specific milestone",
+    "no_bakp_approved": "No approved BAKP for this milestone",
+    "no_bast_signed": "No signed BAST for this milestone",
+    "post_to_ar": "Post to Accounts Receivable (AR)",
+    "paid_direct": "Paid Directly (Cash/Bank)",
+    "recog_mode_desc": "Select revenue recognition method and journal posting.",
+    "notes_placeholder": "Billing notes or instructions...",
+    "no_cash_accounts": "No cash/bank accounts available"
   },
   "modal_payment": {
     "title": "Record Payment Receipt",
@@ -117,6 +132,7 @@
     "sent": "Sent",
     "partially_paid": "Partially Paid",
     "paid": "Paid in Full",
+    "unpaid": "Unpaid",
     "overdue": "Overdue",
     "cancelled": "Cancelled"
   }
