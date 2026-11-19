@@ -138,6 +138,8 @@
       "bubble": "Gelembung",
       "donut": "Donut",
       "pie": "Pie",
+      "pie3d": "Pie 3D",
+      "pie3d_title": "Pie Chart 3D (Diagram Lingkaran 3D)",
       "progress": "Progress",
       "pie_receivables": "Pie Piutang",
       "bar_expenses": "Bar Beban",

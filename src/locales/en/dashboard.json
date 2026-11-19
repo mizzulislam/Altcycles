@@ -138,6 +138,8 @@
       "bubble": "Bubble",
       "donut": "Donut",
       "pie": "Pie",
+      "pie3d": "3D Pie",
+      "pie3d_title": "3D Pie Chart (Three-Dimensional Pie)",
       "progress": "Progress",
       "pie_receivables": "Receivables Pie",
       "bar_expenses": "Expense Bars",

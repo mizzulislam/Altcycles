@@ -6,8 +6,8 @@ import {
   BarChart3Icon,
   BarChartHorizontalIcon,
   CheckCircle2Icon,
-  CircleDotIcon,
   ClockIcon,
+  PieChartIcon,
   ReceiptTextIcon,
   ScaleIcon,
   TrendingDownIcon,
@@ -197,8 +197,8 @@ export function AdminDashboardPage() {
   // Kontrol Switcher Tampilan Grafik
   const [trendChartType, setTrendChartType] = React.useState<MultiSeriesChartKind>("column");
   const [donutMode, setDonutMode] = React.useState<"profit" | "cash">("profit");
-  const [compositionChartType, setCompositionChartType] = React.useState<CompositionChartKind>("donut");
-  const [txFreqMode, setTxFreqMode] = React.useState<"bar" | "histogram">("bar");
+  const [compositionChartType, setCompositionChartType] = React.useState<CompositionChartKind>("pie3d");
+  const [txFreqMode, setTxFreqMode] = React.useState<"area" | "histogram">("area");
 
   React.useEffect(() => {
     async function load() {
@@ -790,9 +790,9 @@ export function AdminDashboardPage() {
             )}
           />
 
-          {/* Footer Ringkasan Laba Rugi */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
-            <div>
+          {/* Footer Ringkasan Laba Rugi Edge-to-Edge */}
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60">
+            <div className="p-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.total_revenue", "Total Pendapatan")}
               </p>
@@ -800,7 +800,7 @@ export function AdminDashboardPage() {
                 {formatRupiah(incomeStatement.totalRevenue)}
               </p>
             </div>
-            <div>
+            <div className="p-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.total_expense", "Total Beban")}
               </p>
@@ -808,7 +808,7 @@ export function AdminDashboardPage() {
                 {formatRupiah(totalExpense)}
               </p>
             </div>
-            <div>
+            <div className="p-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.net_profit_loss", "Laba / Rugi Bersih")}
               </p>
@@ -873,13 +873,15 @@ export function AdminDashboardPage() {
                 onChange={setCompositionChartType}
                 options={[
                   {
-                    value: "donut",
-                    label: t("dashboard:charts.types.donut", "Donut"),
-                    icon: CircleDotIcon,
+                    value: "pie3d",
+                    label: t("dashboard:charts.types.pie3d", "Pie 3D"),
+                    title: t("dashboard:charts.types.pie3d_title", "3D Pie Chart"),
+                    icon: PieChartIcon,
                   },
                   {
                     value: "bar",
                     label: t("dashboard:charts.types.bar", "Batang"),
+                    title: t("dashboard:charts.types.bar_title", "Bar Chart"),
                     icon: BarChartHorizontalIcon,
                   },
                 ]}
@@ -965,10 +967,10 @@ export function AdminDashboardPage() {
                       </span>
                     </div>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <div className="h-2 flex-1 rounded-full bg-muted/60 overflow-hidden">
+                      <div className="h-2 flex-1 rounded-none bg-muted/60 overflow-hidden">
                         <div
                           style={{ width: `${widthPct}%` }}
-                          className="h-full rounded-full bg-amber-500/85 transition-all duration-300"
+                          className="h-full rounded-none bg-amber-500/85 transition-all duration-300"
                         />
                       </div>
                       <span className="text-[10px] font-medium text-muted-foreground tabular-nums shrink-0 w-9 text-right">
@@ -993,15 +995,15 @@ export function AdminDashboardPage() {
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setTxFreqMode("bar")}
+                onClick={() => setTxFreqMode("area")}
                 className={cn(
                   "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                  txFreqMode === "bar"
+                  txFreqMode === "area"
                     ? "bg-primary text-primary-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {t("dashboard:charts.types.column", "Bulanan")}
+                {t("dashboard:charts.types.area", "Area")}
               </button>
               <button
                 type="button"
@@ -1013,7 +1015,7 @@ export function AdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {t("dashboard:charts.types.histogram", "Distribusi")}
+                {t("dashboard:charts.types.histogram", "Histogram")}
               </button>
             </div>
           }
@@ -1030,9 +1032,9 @@ export function AdminDashboardPage() {
               emptySubtitle={t("dashboard:charts.empty_trends_desc", "Histogram sebaran nominal muncul otomatis setelah transaksi dicatat.")}
             />
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col h-full justify-between space-y-4">
               <MultiSeriesChart
-                chartType="column"
+                chartType="area"
                 data={txFreqChartData}
                 series={[
                   {
@@ -1047,8 +1049,8 @@ export function AdminDashboardPage() {
                 emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Transaksi")}
                 emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
               />
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/60">
-                <div>
+              <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 divide-x divide-border/60">
+                <div className="p-3.5">
                   <p className="text-[11px] text-muted-foreground">
                     {t("dashboard:charts.total_tx", "Total Transaksi")}
                   </p>
@@ -1056,7 +1058,7 @@ export function AdminDashboardPage() {
                     {totalTxCount} {t("dashboard:charts.tx_unit", "Jurnal")}
                   </p>
                 </div>
-                <div>
+                <div className="p-3.5">
                   <p className="text-[11px] text-muted-foreground">
                     {t("dashboard:charts.avg_monthly_tx", "Rata-Rata / Bulan")}
                   </p>
@@ -1105,10 +1107,10 @@ export function AdminDashboardPage() {
                       {formatCompactRupiah(pb.billed)} / {formatCompactRupiah(pb.contract)} ({pb.pct}%)
                     </span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+                  <div className="h-2 w-full rounded-none bg-muted/60 overflow-hidden">
                     <div
                       style={{ width: `${pb.pct}%` }}
-                      className="h-full rounded-full bg-primary transition-all duration-300"
+                      className="h-full rounded-none bg-primary transition-all duration-300"
                     />
                   </div>
                 </div>
@@ -1126,7 +1128,7 @@ export function AdminDashboardPage() {
                 Total: {formatRupiah(outstandingReceivable)}
               </span>
             </div>
-            <div className="flex h-2 w-full rounded-full bg-muted/50 overflow-hidden gap-0.5">
+            <div className="flex h-2 w-full rounded-none bg-muted/50 overflow-hidden gap-0.5">
               {outstandingReceivable > 0
                 ? agingBuckets.map((b) =>
                     b.amount > 0 ? (
@@ -1135,7 +1137,7 @@ export function AdminDashboardPage() {
                         style={{
                           width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
                         }}
-                        className={cn("h-full", b.color)}
+                        className={cn("h-full rounded-none", b.color)}
                         title={`${b.label}: ${formatRupiah(b.amount)}`}
                       />
                     ) : null,
@@ -1146,7 +1148,7 @@ export function AdminDashboardPage() {
               {agingBuckets.map((b) => (
                 <div key={b.label} className="text-[10px]">
                   <div className="flex items-center gap-1 text-muted-foreground truncate">
-                    <span className={cn("size-1.5 rounded-full shrink-0", b.dotColor)} />
+                    <span className={cn("size-1.5 rounded-none shrink-0", b.dotColor)} />
                     <span className="truncate">{b.label}</span>
                   </div>
                   <p className="font-semibold text-foreground tabular-nums mt-0.5">
