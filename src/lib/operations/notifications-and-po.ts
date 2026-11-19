@@ -367,6 +367,13 @@ export async function deletePurchaseOrders(poIds: string[]): Promise<void> {
     return;
   }
 
+  // Hapus item-item PO terlebih dahulu agar trigger draft-only pada po_items tidak gagal saat parent terhapus
+  const { error: itemsErr } = await supabase
+    .from("po_items")
+    .delete()
+    .in("po_id", poIds);
+  if (itemsErr) throw new Error(itemsErr.message);
+
   const { error } = await supabase
     .from("purchase_orders")
     .delete()

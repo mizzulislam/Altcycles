@@ -799,7 +799,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       </TableCell>
                       <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
-                          {po.status === "draft" ? (
+                          {isEditing && po.status === "draft" ? (
                             <Button
                               type="button"
                               variant="ghost"
