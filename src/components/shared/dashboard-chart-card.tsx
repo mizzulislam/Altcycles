@@ -49,7 +49,7 @@ export function ChartCard({
         )}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <CardTitle className="text-sm sm:text-base font-bold text-foreground truncate leading-none">
+          <CardTitle className="text-sm sm:text-base font-bold text-foreground truncate leading-normal py-0.5">
             {title}
           </CardTitle>
           {subtitle ? (

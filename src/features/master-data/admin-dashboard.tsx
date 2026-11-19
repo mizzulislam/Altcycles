@@ -7,7 +7,6 @@ import {
   BarChartHorizontalIcon,
   CheckCircle2Icon,
   ClockIcon,
-  PieChartIcon,
   ReceiptTextIcon,
   ScaleIcon,
   TrendingDownIcon,
@@ -24,7 +23,6 @@ import {
   CompositionChart,
   HistogramChart,
   MultiSeriesChart,
-  type CompositionChartKind,
   type MultiSeriesChartKind,
 } from "@/components/shared/dashboard-charts";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
@@ -197,7 +195,6 @@ export function AdminDashboardPage() {
   // Kontrol Switcher Tampilan Grafik
   const [trendChartType, setTrendChartType] = React.useState<MultiSeriesChartKind>("column");
   const [donutMode, setDonutMode] = React.useState<"profit" | "cash">("profit");
-  const [compositionChartType, setCompositionChartType] = React.useState<CompositionChartKind>("pie3d");
   const [txFreqMode, setTxFreqMode] = React.useState<"area" | "histogram">("area");
 
   React.useEffect(() => {
@@ -402,17 +399,9 @@ export function AdminDashboardPage() {
     .filter((amt) => amt > 0);
   const journalHistogram = buildRupiahHistogramBins(postedJournalAmounts);
 
-  // Top 5 Beban (B1)
+  // Total Realisasi Beban
   const totalExpense =
     incomeStatement.totalDirectExpense + incomeStatement.totalSharedExpense;
-  const topExpenses = [
-    ...incomeStatement.directExpenses,
-    ...incomeStatement.sharedExpenses,
-  ]
-    .filter((e) => e.amount > 0)
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 5);
-  const maxExpenseItem = Math.max(1, ...topExpenses.map((e) => e.amount));
 
   // 5 Transaksi Terakhir (B3)
   const recentJournals = filteredJournals
@@ -792,7 +781,7 @@ export function AdminDashboardPage() {
 
           {/* Footer Ringkasan Laba Rugi Edge-to-Edge */}
           <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60">
-            <div className="p-3.5">
+            <div className="pl-6 pr-4 py-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.total_revenue", "Total Pendapatan")}
               </p>
@@ -831,7 +820,7 @@ export function AdminDashboardPage() {
           </div>
         </ChartCard>
 
-        {/* Grafik 2: Komposisi Keuangan (Donut & Bar) */}
+        {/* Grafik 2: Komposisi Keuangan (Pie 3D & Batang Horizontal Terintegrasi) */}
         <ChartCard
           title={t("dashboard.charts.composition_title", "Komposisi Keuangan")}
           subtitle={t(
@@ -866,31 +855,9 @@ export function AdminDashboardPage() {
               </button>
             </div>
           }
-          footer={
-            <ChartCardFooter>
-              <ChartTypeSwitcher
-                value={compositionChartType}
-                onChange={setCompositionChartType}
-                options={[
-                  {
-                    value: "pie3d",
-                    label: t("dashboard:charts.types.pie3d", "Pie 3D"),
-                    title: t("dashboard:charts.types.pie3d_title", "3D Pie Chart"),
-                    icon: PieChartIcon,
-                  },
-                  {
-                    value: "bar",
-                    label: t("dashboard:charts.types.bar", "Batang"),
-                    title: t("dashboard:charts.types.bar_title", "Bar Chart"),
-                    icon: BarChartHorizontalIcon,
-                  },
-                ]}
-              />
-            </ChartCardFooter>
-          }
         >
           <CompositionChart
-            chartType={compositionChartType}
+            chartType="pie3d"
             slices={donutSegments}
             centerLabel={
               donutMode === "profit"
@@ -912,79 +879,9 @@ export function AdminDashboardPage() {
         </ChartCard>
       </div>
 
-      {/* A4: Baris 3, Tiga Kartu Sejajar: Top 5 Beban, Frekuensi Transaksi, Penagihan & Umur Piutang */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Kartu 1: Top 5 Beban (B1) */}
-        <ChartCard
-          title={t("dashboard:charts.top_5_expenses_title", "Top 5 Pos Beban")}
-          subtitle={t(
-            "dashboard:charts.top_5_expenses_subtitle",
-            "Akun beban dengan realisasi terbesar pada periode terpilih.",
-          )}
-          controls={
-            <Link
-              to="/admin/akuntansi?tab=jurnal"
-              className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
-            >
-              {t("dashboard:charts.link_general_journal", "Buku Jurnal")}
-            </Link>
-          }
-        >
-          {topExpenses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10">
-              <p className="text-xs font-semibold text-foreground">
-                {t("dashboard:charts.empty_expenses_title", "Belum Ada Pengeluaran Beban Terposting")}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1 max-w-xs leading-relaxed">
-                {t("dashboard:charts.empty_expenses_desc", "Pos beban terbesar akan tampil otomatis setelah transaksi jurnal beban dicatat.")}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {topExpenses.map((exp) => {
-                const widthPct = Math.max(
-                  8,
-                  Math.round((exp.amount / maxExpenseItem) * 100),
-                );
-                const sharePct =
-                  totalExpense > 0
-                    ? ((exp.amount / totalExpense) * 100).toFixed(1)
-                    : "0";
-                return (
-                  <Link
-                    key={exp.code}
-                    to="/admin/akuntansi?tab=jurnal"
-                    className="block group rounded-xl p-2 -mx-2 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                        <span className="font-mono text-muted-foreground">{exp.code}</span>
-                        {" \u2014 "}
-                        {getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}
-                      </span>
-                      <span className="font-semibold text-foreground tabular-nums shrink-0">
-                        {formatRupiah(exp.amount)}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <div className="h-2 flex-1 rounded-none bg-muted/60 overflow-hidden">
-                        <div
-                          style={{ width: `${widthPct}%` }}
-                          className="h-full rounded-none bg-amber-500/85 transition-all duration-300"
-                        />
-                      </div>
-                      <span className="text-[10px] font-medium text-muted-foreground tabular-nums shrink-0 w-9 text-right">
-                        {sharePct}%
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </ChartCard>
-
-        {/* Kartu 2: Frekuensi Transaksi (B2) */}
+      {/* A4: Baris 3, Dua Kartu Sejajar: Frekuensi Transaksi & Realisasi Penagihan */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Kartu 1: Frekuensi Transaksi (B2) */}
         <ChartCard
           title={t("dashboard:charts.tx_frequency_title", "Frekuensi Transaksi")}
           subtitle={t(
@@ -1050,7 +947,7 @@ export function AdminDashboardPage() {
                 emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
               />
               <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 divide-x divide-border/60">
-                <div className="p-3.5">
+                <div className="pl-6 pr-4 py-3.5">
                   <p className="text-[11px] text-muted-foreground">
                     {t("dashboard:charts.total_tx", "Total Transaksi")}
                   </p>
