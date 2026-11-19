@@ -270,8 +270,8 @@ export function CommandPaletteDialog({
           </DialogPrimitive.Title>
 
           {/* Baris Input Pencarian */}
-          <div className="flex items-center px-4.5 py-3.5 border-b border-border/70 bg-card">
-            <Search className="size-4 text-muted-foreground/80 shrink-0 ml-1" />
+          <div className="flex items-center px-6 sm:px-7 py-4 border-b border-border/70 bg-card">
+            <Search className="size-4.5 text-muted-foreground/80 shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -284,9 +284,9 @@ export function CommandPaletteDialog({
                 "common:search.modal_placeholder",
                 "Ketik perintah, nama halaman, atau kata kunci...",
               )}
-              className="w-full bg-transparent text-sm sm:text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none mx-3.5 py-0.5 leading-normal"
+              className="w-full bg-transparent text-sm sm:text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none mx-4 px-2 py-0.5 leading-normal"
             />
-            <div className="flex items-center gap-2 shrink-0 pr-1">
+            <div className="flex items-center gap-2 shrink-0">
               {searchQuery && (
                 <button
                   type="button"
@@ -483,7 +483,7 @@ export function CommandPaletteDialog({
           </div>
 
           {/* Footer Navigasi Hint */}
-          <div className="px-4.5 py-2.5 border-t border-border/60 bg-muted/20 flex items-center justify-between text-[11px] text-muted-foreground select-none">
+          <div className="px-6 sm:px-7 py-3 border-t border-border/60 bg-muted/20 flex items-center justify-between text-[11px] text-muted-foreground select-none">
             <span className="truncate">
               {t(
                 "common:search.navigation_hint",
