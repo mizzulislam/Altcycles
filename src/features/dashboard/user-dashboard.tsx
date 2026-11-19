@@ -5,27 +5,24 @@ import {
   ArrowRightIcon,
   BarChart2Icon,
   BarChart3Icon,
-  BarChartHorizontalIcon,
-  CircleDotIcon,
   CoinsIcon,
   FolderKanbanIcon,
   HandCoinsIcon,
-  PieChartIcon,
   PiggyBankIcon,
   PlusIcon,
   ReceiptTextIcon,
   ShoppingCartIcon,
-  TrendingUpIcon,
 } from "lucide-react";
 import {
   buildRupiahHistogramBins,
-  ChartCardFooter,
+  ChartLegendFooter,
   ChartTypeSwitcher,
   CompositionChart,
   HistogramChart,
   MultiSeriesChart,
-  type CompositionChartKind,
 } from "@/components/shared/dashboard-charts";
+import { ChartCard } from "@/components/shared/dashboard-chart-card";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -87,11 +84,21 @@ export function UserDashboardPage() {
   const [loading, setLoading] = React.useState(true);
 
   const [activityChartType, setActivityChartType] = React.useState<
-    "column" | "bar" | "line" | "area" | "histogram"
+    "column" | "area" | "histogram"
   >("column");
+  const [hiddenActivitySeries, setHiddenActivitySeries] = React.useState<Set<string>>(new Set());
+  const toggleActivitySeries = React.useCallback((key: string) => {
+    setHiddenActivitySeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (next.size < 2) next.add(key);
+      }
+      return next;
+    });
+  }, []);
   const [compDataset, setCompDataset] = React.useState<"claims" | "sharing">("claims");
-  const [compChartType, setCompChartType] =
-    React.useState<CompositionChartKind>("donut");
 
   React.useEffect(() => {
     async function load() {
@@ -321,83 +328,70 @@ export function UserDashboardPage() {
 
       {/* 4 Kartu KPI Utama */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("user_portal.kpi_projects", "Proyek Ditugaskan")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {projects.length} {t("user_portal.projects_count", "Proyek")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {projects.length > 0
-                ? t("user_portal.kpi_projects_sub", "Terdaftar sebagai pelaksana proyek")
-                : t("user_portal.kpi_projects_empty", "Belum ada penugasan aktif")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <FolderKanbanIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("user_portal.kpi_projects", "Proyek Ditugaskan")}
+          value={projects.length}
+          suffix={t("user_portal.projects_count", "Proyek")}
+          subtext={
+            projects.length > 0
+              ? t("user_portal.kpi_projects_sub", "Terdaftar sebagai pelaksana proyek")
+              : t("user_portal.kpi_projects_empty", "Belum ada penugasan aktif")
+          }
+          icon={FolderKanbanIcon}
+          to="/user/anggaran"
+          sparklineData={projects.length > 0 ? [0, projects.length] : [0, 0]}
+          changePercent={null}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("user_portal.kpi_po", "PO Pembelian Vendor")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pos.length} {t("user_portal.documents", "Dokumen")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {pos.length > 0
-                ? t("user_portal.kpi_po_sub", "Dokumen pengadaan barang/jasa")
-                : t("user_portal.kpi_po_empty", "Belum ada PO pembelian tercatat")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
-            <ShoppingCartIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("user_portal.kpi_po", "PO Pembelian Vendor")}
+          value={pos.length}
+          suffix={t("user_portal.documents", "Dokumen")}
+          subtext={
+            pos.length > 0
+              ? t("user_portal.kpi_po_sub", "Dokumen pengadaan barang/jasa")
+              : t("user_portal.kpi_po_empty", "Belum ada PO pembelian tercatat")
+          }
+          icon={ShoppingCartIcon}
+          iconTone="bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20"
+          to="/user/po"
+          sparklineData={pos.length > 1 ? pos.map((p) => p.total_amount) : [0, pos.length]}
+          changePercent={null}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("user_portal.kpi_claims", "Pengajuan Pembayaran")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {requests.length} {t("user_portal.submissions", "Pengajuan")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {pendingPa > 0
-                ? `${pendingPa} ${t("user_portal.pending_approval", "menunggu persetujuan Admin")}`
-                : approvedPa > 0
-                  ? `${approvedPa} ${t("user_portal.approved_waiting", "disetujui menunggu transfer")}`
-                  : t("user_portal.all_processed", "Semua pengajuan telah diproses")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ReceiptTextIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("user_portal.kpi_claims", "Pengajuan Pembayaran")}
+          value={requests.length}
+          suffix={t("user_portal.submissions", "Pengajuan")}
+          subtext={
+            pendingPa > 0
+              ? `${pendingPa} ${t("user_portal.pending_approval", "menunggu persetujuan Admin")}`
+              : approvedPa > 0
+                ? `${approvedPa} ${t("user_portal.approved_waiting", "disetujui menunggu transfer")}`
+                : t("user_portal.all_processed", "Semua pengajuan telah diproses")
+          }
+          icon={ReceiptTextIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          to="/user/pembayaran"
+          sparklineData={requests.length > 1 ? requests.map((r) => r.amount) : [0, requests.length]}
+          changePercent={null}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("user_portal.kpi_sharing", "Hak Bagi Hasil")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalMyShare)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {sharingLines.length > 0
-                ? `${t("user_portal.from", "Dari")} ${sharingLines.length} ${t("user_portal.projects_completed", "proyek diselesaikan")}`
-                : t("dashboard:user_dashboard.no_sharing_allocation", "Belum ada alokasi bagi hasil")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CoinsIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("user_portal.kpi_sharing", "Hak Bagi Hasil")}
+          value={totalMyShare}
+          formatter={formatRupiah}
+          subtext={
+            sharingLines.length > 0
+              ? `${t("user_portal.from", "Dari")} ${sharingLines.length} ${t("user_portal.projects_completed", "proyek diselesaikan")}`
+              : t("dashboard:user_dashboard.no_sharing_allocation", "Belum ada alokasi bagi hasil")
+          }
+          icon={CoinsIcon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          to="/user/pembayaran"
+          sparklineData={sharingLines.length > 1 ? sharingLines.map((l) => l.share_amount) : [0, totalMyShare]}
+          changePercent={null}
+        />
       </div>
 
       {/* Pintasan Cepat Anggota Tim */}
@@ -442,127 +436,141 @@ export function UserDashboardPage() {
       {/* Baris Grafik Visualisasi Anggota Tim */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Tren Bulanan & Histogram Pengajuan Pembayaran / PO */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard:user_dashboard.chart_activity_title", "Aktivitas PO & Pengajuan Pembayaran")}
-              </CardTitle>
-              <CardDescription>
-                {activityChartType === "histogram"
-                  ? t("dashboard:user_dashboard.chart_histogram_desc", "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda.")
-                  : t("dashboard:user_dashboard.chart_activity_desc", "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan.")}
-              </CardDescription>
-            </div>
-            {activityChartType !== "histogram" ? (
-              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-violet-500" />
-                  {t("dashboard:user_dashboard.legend_po", "PO Pembelian")}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-amber-500" />
-                  {t("dashboard:user_dashboard.legend_req", "Pengajuan Dana")}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-emerald-500" />
-                  {t("dashboard:user_dashboard.legend_paid", "Dana Dicairkan")}
-                </span>
-              </div>
-            ) : null}
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            {activityChartType === "histogram" ? (
-              <HistogramChart
-                bins={userTxHistogram.bins}
-                average={userTxHistogram.average}
-                median={userTxHistogram.median}
-                totalCount={userTxHistogram.totalCount}
-                unitLabel={t("dashboard:user_dashboard.unit_docs", "Dokumen")}
-                accentColor="#0B43C8"
-                emptyTitle={t("dashboard:user_dashboard.no_claims_tx", "Belum Ada Transaksi Pengajuan")}
-                emptySubtitle={t("dashboard:user_dashboard.no_claims_tx_desc", "Histogram distribusi nominal otomatis muncul setelah Anda membuat PO pembelian atau pengajuan pembayaran.")}
-              />
-            ) : (
-              <MultiSeriesChart
-                chartType={activityChartType}
-                data={userMonthlyData}
+        <ChartCard
+          className="lg:col-span-2"
+          title={t("dashboard:user_dashboard.chart_activity_title", "Aktivitas PO & Pengajuan Pembayaran")}
+          subtitle={
+            activityChartType === "histogram"
+              ? t("dashboard:user_dashboard.chart_histogram_desc", "Histogram sebaran nominal seluruh PO pembelian dan pengajuan klaim Anda.")
+              : t("dashboard:user_dashboard.chart_activity_desc", "Perbandingan bulanan nilai PO pembelian, klaim diajukan, dan dana dicairkan.")
+          }
+          controls={
+            <ChartTypeSwitcher
+              value={activityChartType}
+              onChange={(val) => setActivityChartType(val)}
+              options={[
+                {
+                  value: "column",
+                  label: t("dashboard:charts.types.column", "Kolom"),
+                  title: t("dashboard:charts.types.column_title", "Column Chart"),
+                  icon: BarChart3Icon,
+                },
+                {
+                  value: "area",
+                  label: t("dashboard:charts.types.area", "Area"),
+                  title: t("dashboard:charts.types.area_title", "Area Chart"),
+                  icon: ActivityIcon,
+                },
+                {
+                  value: "histogram",
+                  label: t("dashboard:charts.types.histogram", "Histogram"),
+                  title: t("dashboard:charts.types.histogram_title", "Histogram"),
+                  icon: BarChart2Icon,
+                },
+              ]}
+            />
+          }
+          footer={
+            activityChartType !== "histogram" ? (
+              <ChartLegendFooter
                 series={[
                   {
                     key: "poTotal",
                     label: t("dashboard:user_dashboard.legend_po", "PO Pembelian"),
                     color: "#8b5cf6",
-                    textClass: "text-violet-600 dark:text-violet-400",
                   },
                   {
                     key: "reqTotal",
                     label: t("dashboard:user_dashboard.legend_req", "Pengajuan Dana"),
                     color: "#f59e0b",
-                    textClass: "text-amber-600 dark:text-amber-400",
                   },
                   {
                     key: "paidTotal",
                     label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
                     color: "#10b981",
-                    textClass: "text-emerald-600 dark:text-emerald-400",
                   },
                 ]}
-                formatValue={formatRupiah}
-                formatShortValue={formatCompactRupiah}
-                emptyTitle={t("dashboard:user_dashboard.no_claims_history", "Belum Ada Riwayat Pengajuan")}
-                emptySubtitle={t("dashboard:user_dashboard.no_claims_history_desc", "Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat.")}
+                hiddenKeys={hiddenActivitySeries}
+                onToggleSeries={toggleActivitySeries}
               />
-            )}
-
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_po_val", "Total Nilai PO")}</p>
-                <p className="text-xs sm:text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums mt-0.5">
-                  {formatRupiah(totalPoNominal)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_req_val", "Total Diajukan")}</p>
-                <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
-                  {formatRupiah(totalReqNominal)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan")}</p>
-                <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                  {formatRupiah(totalPaidNominal)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={activityChartType}
-              onChange={setActivityChartType}
-              options={[
-                { value: "column", label: "Column", icon: BarChart3Icon },
-                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                { value: "line", label: "Line", icon: TrendingUpIcon },
-                { value: "area", label: "Area", icon: ActivityIcon },
-                { value: "histogram", label: "Histogram", icon: BarChart2Icon },
-              ]}
+            ) : null
+          }
+        >
+          {activityChartType === "histogram" ? (
+            <HistogramChart
+              bins={userTxHistogram.bins}
+              average={userTxHistogram.average}
+              median={userTxHistogram.median}
+              totalCount={userTxHistogram.totalCount}
+              unitLabel={t("dashboard:user_dashboard.unit_docs", "Dokumen")}
+              accentColor="#0B43C8"
+              emptyTitle={t("dashboard:user_dashboard.no_claims_tx", "Belum Ada Transaksi Pengajuan")}
+              emptySubtitle={t("dashboard:user_dashboard.no_claims_tx_desc", "Histogram distribusi nominal otomatis muncul setelah Anda membuat PO pembelian atau pengajuan pembayaran.")}
             />
-          </ChartCardFooter>
-        </Card>
+          ) : (
+            <MultiSeriesChart
+              chartType={activityChartType}
+              data={userMonthlyData}
+              series={[
+                {
+                  key: "poTotal",
+                  label: t("dashboard:user_dashboard.legend_po", "PO Pembelian"),
+                  color: "#8b5cf6",
+                  textClass: "text-violet-600 dark:text-violet-400",
+                },
+                {
+                  key: "reqTotal",
+                  label: t("dashboard:user_dashboard.legend_req", "Pengajuan Dana"),
+                  color: "#f59e0b",
+                  textClass: "text-amber-600 dark:text-amber-400",
+                },
+                {
+                  key: "paidTotal",
+                  label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
+                  color: "#10b981",
+                  textClass: "text-emerald-600 dark:text-emerald-400",
+                },
+              ]}
+              hiddenKeys={hiddenActivitySeries}
+              formatValue={formatRupiah}
+              formatShortValue={formatCompactRupiah}
+              emptyTitle={t("dashboard:user_dashboard.no_claims_history", "Belum Ada Riwayat Pengajuan")}
+              emptySubtitle={t("dashboard:user_dashboard.no_claims_history_desc", "Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat.")}
+            />
+          )}
+
+          {/* Strip Ringkasan Edge-to-Edge */}
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60">
+            <div className="pl-6 pr-4 py-3.5">
+              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_po_val", "Total Nilai PO")}</p>
+              <p className="text-xs sm:text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums mt-0.5">
+                {formatRupiah(totalPoNominal)}
+              </p>
+            </div>
+            <div className="p-3.5">
+              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_req_val", "Total Diajukan")}</p>
+              <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
+                {formatRupiah(totalReqNominal)}
+              </p>
+            </div>
+            <div className="pl-3.5 pr-6 py-3.5">
+              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan")}</p>
+              <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
+                {formatRupiah(totalPaidNominal)}
+              </p>
+            </div>
+          </div>
+        </ChartCard>
 
         {/* Grafik 2: Status Klaim Pembayaran & Porsi Bagi Hasil */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard:user_dashboard.chart_claims_sharing_title", "Status Klaim & Bagi Hasil")}
-              </CardTitle>
-              <CardDescription>
-                {compDataset === "claims"
-                  ? t("dashboard:user_dashboard.chart_claims_desc", "Proporsi nominal pengajuan pembayaran per status.")
-                  : t("dashboard:user_dashboard.chart_sharing_desc", "Alokasi nominal hak bagi hasil per proyek.")}
-              </CardDescription>
-            </div>
+        <ChartCard
+          title={t("dashboard:user_dashboard.chart_claims_sharing_title", "Status Klaim & Bagi Hasil")}
+          subtitle={
+            compDataset === "claims"
+              ? t("dashboard:user_dashboard.chart_claims_desc", "Proporsi nominal pengajuan pembayaran per status.")
+              : t("dashboard:user_dashboard.chart_sharing_desc", "Alokasi nominal hak bagi hasil per proyek.")
+          }
+          controls={
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
               <button
                 type="button"
@@ -589,44 +597,44 @@ export function UserDashboardPage() {
                 {t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil")}
               </button>
             </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            <CompositionChart
-              chartType={compChartType}
-              slices={compDataset === "claims" ? claimStatusSlices : sharingSlices}
-              centerLabel={
-                compDataset === "claims"
+          }
+          footer={
+            <div className="flex items-center justify-between px-6 py-3 border-t border-border/70 bg-muted/10 text-xs">
+              <span className="text-xs font-medium text-muted-foreground">
+                {compDataset === "claims"
                   ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
-                  : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")
-              }
-              centerValue={formatCompactRupiah(
-                compDataset === "claims" ? totalReqNominal : totalMyShare,
-              )}
-              formatValue={formatRupiah}
-              emptyTitle={
-                compDataset === "claims"
-                  ? t("dashboard:user_dashboard.no_claims_empty", "Belum Ada Pengajuan Pembayaran")
-                  : t("dashboard:user_dashboard.no_sharing_empty", "Belum Ada Alokasi Bagi Hasil")
-              }
-              emptySubtitle={
-                compDataset === "claims"
-                  ? t("dashboard:user_dashboard.no_claims_empty_desc", "Proporsi status pengajuan dana tampil setelah Anda mengajukan klaim pembayaran.")
-                  : t("dashboard:user_dashboard.no_sharing_empty_desc", "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi.")
-              }
-            />
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={compChartType}
-              onChange={setCompChartType}
-              options={[
-                { value: "donut", label: "Donut", icon: CircleDotIcon },
-                { value: "pie", label: "Pie", icon: PieChartIcon },
-                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
+                  : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")}
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-foreground tabular-nums">
+                {formatRupiah(compDataset === "claims" ? totalReqNominal : totalMyShare)}
+              </span>
+            </div>
+          }
+        >
+          <CompositionChart
+            chartType="donut"
+            slices={compDataset === "claims" ? claimStatusSlices : sharingSlices}
+            centerLabel={
+              compDataset === "claims"
+                ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
+                : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")
+            }
+            centerValue={formatCompactRupiah(
+              compDataset === "claims" ? totalReqNominal : totalMyShare,
+            )}
+            formatValue={formatRupiah}
+            emptyTitle={
+              compDataset === "claims"
+                ? t("dashboard:user_dashboard.no_claims_empty", "Belum Ada Pengajuan Pembayaran")
+                : t("dashboard:user_dashboard.no_sharing_empty", "Belum Ada Alokasi Bagi Hasil")
+            }
+            emptySubtitle={
+              compDataset === "claims"
+                ? t("dashboard:user_dashboard.no_claims_empty_desc", "Proporsi status pengajuan dana tampil setelah Anda mengajukan klaim pembayaran.")
+                : t("dashboard:user_dashboard.no_sharing_empty_desc", "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi.")
+            }
+          />
+        </ChartCard>
       </div>
 
       {/* Ringkasan Status Pengajuan (tampil ringkas jika sudah ada pengajuan) */}
