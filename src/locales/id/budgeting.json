@@ -2,7 +2,7 @@
   "admin": {
     "page_title": "Budgeting & Pengendalian Anggaran Proyek",
     "page_desc": "Kendalikan pagu anggaran belanja dan pantau realisasi pengeluaran proyek.",
-    "btn_set_budget": "+ Atur Alokasi Anggaran",
+    "btn_set_budget": "Atur Alokasi Anggaran",
     "empty_desc": "Klik tombol Atur Alokasi Anggaran di kanan atas untuk menetapkan pagu per akun beban."
   },
   "user": {

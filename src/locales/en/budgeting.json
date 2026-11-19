@@ -2,7 +2,7 @@
   "admin": {
     "page_title": "Project Budgeting & Spending Controls",
     "page_desc": "Control expense ceilings and monitor project actual expenditure.",
-    "btn_set_budget": "+ Set Budget Allocation",
+    "btn_set_budget": "Set Budget Allocation",
     "empty_desc": "Click the Set Budget Allocation button in the top right to define ceilings per expense account."
   },
   "user": {
