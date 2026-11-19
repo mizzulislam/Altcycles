@@ -7,15 +7,9 @@ import {
   BarChartHorizontalIcon,
   CheckCircle2Icon,
   CircleDotIcon,
-  ClipboardListIcon,
   ClockIcon,
-  CoinsIcon,
-  FolderKanbanIcon,
-  HandCoinsIcon,
-  PiggyBankIcon,
   ReceiptTextIcon,
   ScaleIcon,
-  ShoppingCartIcon,
   TrendingDownIcon,
   TrendingUpIcon,
   WalletIcon,
@@ -77,7 +71,6 @@ import {
   getProjectWorkspace,
   listJournalsWithLines,
   listPaymentRequests,
-  listPurchaseOrders,
   recordExportLog,
 } from "@/lib/operations-service";
 import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
@@ -90,7 +83,6 @@ import type {
   PaymentRequestRow,
   PeriodRow,
   ProjectRow,
-  PurchaseOrderRow,
   SalesInvoiceRow,
 } from "@/types/database.types";
 
@@ -197,7 +189,6 @@ export function AdminDashboardPage() {
   const [lines, setLines] = React.useState<JournalLineRow[]>([]);
   const [invoices, setInvoices] = React.useState<SalesInvoiceRow[]>([]);
   const [paymentRequests, setPaymentRequests] = React.useState<PaymentRequestRow[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrderRow[]>([]);
   const [pendingClientPos, setPendingClientPos] = React.useState(0);
 
   // Filter Periode Global Terpadu
@@ -213,7 +204,7 @@ export function AdminDashboardPage() {
     async function load() {
       setLoading(true);
       try {
-        const [accs, pers, prjs, csts, jRes, paRes, ws, poRes] = await Promise.all([
+        const [accs, pers, prjs, csts, jRes, paRes, ws] = await Promise.all([
           listAccounts(),
           listPeriods(),
           listProjects(),
@@ -221,7 +212,6 @@ export function AdminDashboardPage() {
           listJournalsWithLines(),
           listPaymentRequests(),
           getProjectWorkspace(),
-          listPurchaseOrders(),
         ]);
         setAccounts(accs);
         setPeriods(pers);
@@ -231,7 +221,6 @@ export function AdminDashboardPage() {
         setLines(jRes.lines);
         setPaymentRequests(paRes.requests);
         setInvoices(ws.invoices);
-        setPurchaseOrders(poRes.orders);
         setPendingClientPos(
           ws.clientPos.filter((c) => c.status === "pending_verification").length,
         );
@@ -319,9 +308,6 @@ export function AdminDashboardPage() {
   const outstandingReceivable = Math.max(0, totalInvoiced - totalCollected);
   const unpaidInvoiceCount = issuedInvoices.filter(
     (i) => i.total_amount - i.paid_amount > 0,
-  ).length;
-  const activePoCount = purchaseOrders.filter(
-    (p) => p.status === "issued" || p.status === "draft",
   ).length;
 
   // AR Aging
@@ -613,78 +599,6 @@ export function AdminDashboardPage() {
     toast.success(t("dashboard:export.toast_csv_success"));
   }
 
-  // 8 Pintasan Modul Keuangan (A6: Baris Chip Horizontal)
-  const quickShortcuts = [
-    {
-      to: "/admin/persetujuan",
-      label: t("dashboard.shortcuts.fund_approval", "Persetujuan Dana"),
-      icon: HandCoinsIcon,
-      tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
-      badge:
-        pendingApprovals + readyDisbursements > 0
-          ? `${pendingApprovals + readyDisbursements} ${t("dashboard:shortcuts.badge_queue", "Antrean")}`
-          : null,
-    },
-    {
-      to: "/admin/proyek",
-      label: t("dashboard.shortcuts.projects_milestones", "Proyek & Termin"),
-      icon: FolderKanbanIcon,
-      tone: "text-primary dark:text-cyan-400 bg-primary/10 border-primary/20",
-      badge:
-        pendingClientPos > 0
-          ? `${pendingClientPos} ${t("dashboard:shortcuts.badge_new_po", "PO Baru")}`
-          : null,
-    },
-    {
-      to: "/admin/penagihan",
-      label: t("dashboard.shortcuts.invoices_receivables", "Invoice & Piutang"),
-      icon: ReceiptTextIcon,
-      tone: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20",
-      badge:
-        unpaidInvoiceCount > 0
-          ? `${unpaidInvoiceCount} ${t("dashboard:shortcuts.badge_unpaid", "Belum Lunas")}`
-          : null,
-    },
-    {
-      to: "/admin/akuntansi",
-      label: t("dashboard.shortcuts.journals_gl", "Jurnal & Buku Besar"),
-      icon: ScaleIcon,
-      tone: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
-      badge: null,
-    },
-    {
-      to: "/admin/akuntansi/laporan",
-      label: t("dashboard.shortcuts.financial_reports", "Laporan Keuangan"),
-      icon: BarChart3Icon,
-      tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-      badge: null,
-    },
-    {
-      to: "/admin/po-internal",
-      label: t("dashboard.shortcuts.vendor_po", "PO Vendor"),
-      icon: ShoppingCartIcon,
-      tone: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
-      badge:
-        activePoCount > 0
-          ? `${activePoCount} ${t("dashboard:shortcuts.badge_active", "Aktif")}`
-          : null,
-    },
-    {
-      to: "/admin/anggaran",
-      label: t("dashboard.shortcuts.project_budget", "Budgeting Proyek"),
-      icon: PiggyBankIcon,
-      tone: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20",
-      badge: null,
-    },
-    {
-      to: "/admin/bagi-hasil",
-      label: t("dashboard.shortcuts.profit_sharing", "Bagi Hasil & Master"),
-      icon: CoinsIcon,
-      tone: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
-      badge: null,
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-6">
       {/* A1: Header Halaman + Filter Periode Global + Unduh/Ekspor */}
@@ -784,49 +698,9 @@ export function AdminDashboardPage() {
           icon={CheckCircle2Icon}
           iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
           to="/admin/proyek"
-          sparklineData={projects.map((p) => p.contract_value)}
+          sparklineData={projects.length > 1 ? projects.map((p) => p.contract_value) : [0, totalContract]}
           changePercent={null}
         />
-      </div>
-
-      {/* A6: Pintasan Modul (Baris Chip Horizontal Ringkas & Cepat) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
-          {t("dashboard.shortcuts.title", "Pintasan:")}
-        </span>
-        {quickShortcuts.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:border-primary/50 hover:bg-muted/40 transition-all shrink-0 cursor-pointer"
-            >
-              <div
-                className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-md border",
-                  item.tone,
-                )}
-              >
-                <Icon className="size-3" />
-              </div>
-              <span className="whitespace-nowrap">{item.label}</span>
-              {item.badge ? (
-                <span className="rounded-full bg-primary/12 text-primary dark:text-cyan-400 px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums">
-                  {item.badge}
-                </span>
-              ) : null}
-            </Link>
-          );
-        })}
-        <Link
-          to="/admin/master"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-border/80 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-primary hover:border-primary/50 transition-all shrink-0 ml-auto"
-        >
-          <ClipboardListIcon className="size-3.5" />
-          <span>{t("dashboard.shortcuts.master_link", "Master Data")}</span>
-          <ArrowRightIcon className="size-3" />
-        </Link>
       </div>
 
       {/* A3: Baris 2, Tren Bulanan (2/3) & Komposisi Keuangan (1/3) */}

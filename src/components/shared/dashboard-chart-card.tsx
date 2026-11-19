@@ -1,8 +1,9 @@
 import * as React from "react";
+import { InfoIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -43,18 +44,25 @@ export function ChartCard({
     >
       <CardHeader
         className={cn(
-          "px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+          "px-6 py-3.5 border-b border-border/70 flex flex-row items-center justify-between gap-3 min-h-[56px]",
           headerClassName,
         )}
       >
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-sm sm:text-base font-bold text-foreground">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <CardTitle className="text-sm sm:text-base font-bold text-foreground truncate">
             {title}
           </CardTitle>
           {subtitle ? (
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {subtitle}
-            </CardDescription>
+            <ActionTooltip content={subtitle} side="top" align="center">
+              <button
+                type="button"
+                className="inline-flex size-5 items-center justify-center rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors cursor-help shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                aria-label={typeof subtitle === "string" ? subtitle : "Informasi"}
+                title={typeof subtitle === "string" ? subtitle : undefined}
+              >
+                <InfoIcon className="size-3.5" />
+              </button>
+            </ActionTooltip>
           ) : null}
         </div>
         {controls ? <div className="shrink-0 flex items-center gap-2">{controls}</div> : null}

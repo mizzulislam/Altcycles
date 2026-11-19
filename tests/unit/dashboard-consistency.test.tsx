@@ -65,7 +65,7 @@ describe("Dashboard Consistency & Shared Components", () => {
     );
 
     expect(screen.getByText("Tren Pendapatan & Beban")).toBeInTheDocument();
-    expect(screen.getByText("Analisis bulanan jurnal terposting")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Analisis bulanan jurnal terposting" })).toBeInTheDocument();
     expect(screen.getByText("Kontrol")).toBeInTheDocument();
     expect(screen.getByTestId("chart-content")).toBeInTheDocument();
   });

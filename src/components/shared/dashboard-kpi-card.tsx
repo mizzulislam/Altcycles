@@ -126,7 +126,7 @@ export function KpiCard({
   const content = (
     <Card
       className={cn(
-        "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-3.5 transition-all duration-150",
+        "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-3.5 h-full transition-all duration-150",
         to && "group hover:border-primary/50 hover:bg-muted/15 cursor-pointer",
         className,
       )}
@@ -151,7 +151,7 @@ export function KpiCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50 min-h-[26px]">
         <div className="min-w-0 flex items-center gap-1.5 text-[11px] leading-tight">
           {hasChange ? (
             <span
@@ -185,14 +185,16 @@ export function KpiCard({
 
         {sparklineData && sparklineData.length >= 2 ? (
           <MiniSparkline data={sparklineData} color={sparklineColor} />
-        ) : null}
+        ) : (
+          <div className="w-[58px] h-[22px] shrink-0" aria-hidden="true" />
+        )}
       </div>
     </Card>
   );
 
   if (to) {
     return (
-      <Link to={to} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl">
+      <Link to={to} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl">
         {content}
       </Link>
     );
