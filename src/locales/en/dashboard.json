@@ -151,7 +151,8 @@
       "column_title": "Column Chart (Vertical Bars)",
       "bar_title": "Bar Chart (Horizontal Bars)",
       "line_title": "Line Chart (Trend Line)",
-      "area_title": "Area Chart (Area Curve)"
+      "area_title": "Area Chart (Area Curve)",
+      "histogram_title": "Histogram (Amount Distribution)"
     }
   },
   "export": {

@@ -151,7 +151,8 @@
       "column_title": "Column Chart (Batang Vertikal)",
       "bar_title": "Bar Chart (Batang Horizontal)",
       "line_title": "Line Chart (Garis Tren)",
-      "area_title": "Area Chart (Kurva Area)"
+      "area_title": "Area Chart (Kurva Area)",
+      "histogram_title": "Histogram (Sebaran Nominal)"
     }
   },
   "export": {

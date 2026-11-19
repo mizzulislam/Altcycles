@@ -5,21 +5,18 @@ import {
   ActivityIcon,
   ArrowRightIcon,
   BarChart3Icon,
-  BarChartHorizontalIcon,
   BookOpenIcon,
-  CircleDotIcon,
-  PieChartIcon,
   ShieldCheckIcon,
-  TrendingUpIcon,
   UsersIcon,
 } from "lucide-react";
 import {
-  ChartCardFooter,
+  ChartLegendFooter,
   ChartTypeSwitcher,
   CompositionChart,
   MultiSeriesChart,
-  type CompositionChartKind,
 } from "@/components/shared/dashboard-charts";
+import { ChartCard } from "@/components/shared/dashboard-chart-card";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,12 +61,21 @@ export function SuperAdminDashboardPage() {
   const [recentLogs, setRecentLogs] = React.useState<AuditLogRow[]>([]);
 
   const [auditViewMode, setAuditViewMode] = React.useState<"daily" | "entity">("daily");
-  const [auditChartType, setAuditChartType] = React.useState<
-    "column" | "bar" | "line" | "area"
-  >("column");
+  const [auditChartType, setAuditChartType] = React.useState<"column" | "area">("column");
+  const [hiddenAuditSeries, setHiddenAuditSeries] = React.useState<Set<string>>(new Set());
+  const toggleAuditSeries = React.useCallback((key: string) => {
+    setHiddenAuditSeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (next.size < 2) next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
   const [compDataset, setCompDataset] = React.useState<"roles" | "coa">("roles");
-  const [compChartType, setCompChartType] =
-    React.useState<CompositionChartKind>("donut");
 
   React.useEffect(() => {
     async function load() {
@@ -259,213 +265,206 @@ export function SuperAdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Kartu KPI Utama (Proper Case + Ikon Semantik) */}
+      {/* 4 Kartu KPI Utama Terstandar */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:super_admin.kpi_users", "Pengguna Internal")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {activeUsers}{" "}
-              <span className="text-sm font-medium text-muted-foreground">
-                / {profiles.length} {t("settings:users.status_active", "Aktif")}
-              </span>
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("settings:super_admin.kpi_users_sub", "Akses peran aktif dan terverifikasi")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <UsersIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:super_admin.kpi_users", "Pengguna Internal")}
+          value={activeUsers}
+          suffix={`/ ${profiles.length} ${t("settings:users.status_active", "Aktif")}`}
+          subtext={t("settings:super_admin.kpi_users_sub", "Akses peran aktif dan terverifikasi")}
+          icon={UsersIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+          to="/super-admin/pengguna"
+          sparklineData={[profiles.length - activeUsers, activeUsers]}
+          changePercent={null}
+        />
 
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:super_admin.kpi_tax", "Status Perpajakan")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1">
-              {company?.pkp_enabled ? t("settings:super_admin.pkp_active", "PKP Aktif") : t("settings:super_admin.non_pkp", "Non-PKP")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {company?.pkp_enabled
-                ? `${t("settings:super_admin.vat_rate", "Tarif PPN")} ${company.ppn_rate}% ${t("settings:super_admin.vat_applied", "berlaku pada invoice")}`
-                : t("settings:super_admin.vat_none", "Faktur diterbitkan tanpa PPN")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ShieldCheckIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:super_admin.kpi_tax", "Status Perpajakan")}
+          displayValue={company?.pkp_enabled ? t("settings:super_admin.pkp_active", "PKP Aktif") : t("settings:super_admin.non_pkp", "Non-PKP")}
+          subtext={
+            company?.pkp_enabled
+              ? `${t("settings:super_admin.vat_rate", "Tarif PPN")} ${company.ppn_rate}% ${t("settings:super_admin.vat_applied", "berlaku pada invoice")}`
+              : t("settings:super_admin.vat_none", "Faktur diterbitkan tanpa PPN")
+          }
+          icon={ShieldCheckIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          to="/super-admin/profil"
+          changePercent={null}
+        />
 
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:super_admin.kpi_coa", "Bagan Akun Keuangan")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {accounts.length} {t("settings:super_admin.accounts", "Akun")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("settings:super_admin.sak_standard", "Standar Akuntansi Keuangan")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <BookOpenIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:super_admin.kpi_coa", "Bagan Akun Keuangan")}
+          value={accounts.length}
+          suffix={t("settings:super_admin.accounts", "Akun")}
+          subtext={t("settings:super_admin.sak_standard", "Standar Akuntansi Keuangan")}
+          icon={BookOpenIcon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          to="/admin/akuntansi"
+          sparklineData={accounts.length > 1 ? [accounts.length * 0.9, accounts.length] : undefined}
+          changePercent={null}
+        />
 
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:super_admin.kpi_audit", "Jejak Audit Terbaru")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {allLogs.length} {t("settings:super_admin.logs", "Log")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("settings:super_admin.audit_saved", "Rekaman audit aktivitas tersimpan")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-            <ActivityIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:super_admin.kpi_audit", "Jejak Audit Terbaru")}
+          value={allLogs.length}
+          suffix={t("settings:super_admin.logs", "Log")}
+          subtext={t("settings:super_admin.audit_saved", "Rekaman audit aktivitas tersimpan")}
+          icon={ActivityIcon}
+          iconTone="bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20"
+          to="/super-admin/audit-trail"
+          sparklineData={
+            auditDailyData.length > 1
+              ? auditDailyData.map((d) => d.values.insert + d.values.update + d.values.delete)
+              : undefined
+          }
+          changePercent={null}
+        />
       </div>
 
       {/* Baris Grafik Visualisasi Sistem */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Aktivitas Audit Sistem (Harian vs Entitas) */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>{t("settings:super_admin.card_audit_title", "Aktivitas Audit & Perubahan Data")}</CardTitle>
-              <CardDescription>
-                {auditViewMode === "daily"
-                  ? t("settings:super_admin.card_audit_desc_daily", "Frekuensi operasi tambah, ubah, dan hapus data per hari.")
-                  : t("settings:super_admin.card_audit_desc_entity", "Distribusi operasi audit berdasarkan entitas sistem teraktif.")}
-              </CardDescription>
+        <ChartCard
+          className="lg:col-span-2"
+          title={t("settings:super_admin.card_audit_title", "Aktivitas Audit & Perubahan Data")}
+          subtitle={
+            auditViewMode === "daily"
+              ? t("settings:super_admin.card_audit_desc_daily", "Frekuensi operasi tambah, ubah, dan hapus data per hari.")
+              : t("settings:super_admin.card_audit_desc_entity", "Distribusi operasi audit berdasarkan entitas sistem teraktif.")
+          }
+          controls={
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setAuditViewMode("daily")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                    auditViewMode === "daily"
+                      ? "bg-primary text-primary-foreground shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t("settings:super_admin.audit_daily", "Harian")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuditViewMode("entity")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                    auditViewMode === "entity"
+                      ? "bg-primary text-primary-foreground shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t("settings:super_admin.audit_entity", "Entitas")}
+                </button>
+              </div>
+              <ChartTypeSwitcher
+                value={auditChartType}
+                onChange={(val) => setAuditChartType(val as "column" | "area")}
+                options={[
+                  {
+                    value: "column",
+                    label: t("dashboard:charts.types.column", "Kolom"),
+                    title: t("dashboard:charts.types.column_title", "Column Chart"),
+                    icon: BarChart3Icon,
+                  },
+                  {
+                    value: "area",
+                    label: t("dashboard:charts.types.area", "Area"),
+                    title: t("dashboard:charts.types.area_title", "Area Chart"),
+                    icon: ActivityIcon,
+                  },
+                ]}
+              />
             </div>
-            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setAuditViewMode("daily")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                  auditViewMode === "daily"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("settings:super_admin.audit_daily", "Harian")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuditViewMode("entity")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                  auditViewMode === "entity"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("settings:super_admin.audit_entity", "Entitas")}
-              </button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-emerald-500" />
-                {t("settings:super_admin.op_insert", "Tambah (Insert)")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-primary" />
-                {t("settings:super_admin.op_update", "Ubah (Update)")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-rose-500" />
-                {t("settings:super_admin.op_delete", "Hapus (Delete)")}
-              </span>
-            </div>
-
-            <MultiSeriesChart
-              chartType={auditChartType}
-              data={auditViewMode === "daily" ? auditDailyData : auditEntityData}
+          }
+          footer={
+            <ChartLegendFooter
               series={[
                 {
                   key: "insert",
-                  label: t("settings:super_admin.op_insert_label", "Operasi Tambah"),
+                  label: t("settings:super_admin.op_insert", "Tambah (Insert)"),
                   color: "#10b981",
-                  textClass: "text-emerald-600 dark:text-emerald-400",
                 },
                 {
                   key: "update",
-                  label: t("settings:super_admin.op_update_label", "Operasi Ubah"),
+                  label: t("settings:super_admin.op_update", "Ubah (Update)"),
                   color: "#0B43C8",
-                  textClass: "text-primary dark:text-sky-400",
                 },
                 {
                   key: "delete",
-                  label: t("settings:super_admin.op_delete_label", "Operasi Hapus"),
+                  label: t("settings:super_admin.op_delete", "Hapus (Delete)"),
                   color: "#f43f5e",
-                  textClass: "text-rose-600 dark:text-rose-400",
                 },
               ]}
-              formatValue={(v) => `${v} ${t("settings:super_admin.logs", "Log")}`}
-              formatShortValue={(v) => `${v}`}
-              emptyTitle={t("settings:super_admin.audit_chart_empty_title", "Belum Ada Aktivitas Audit")}
-              emptySubtitle={t("settings:super_admin.audit_chart_empty_sub", "Grafik tren audit otomatis muncul saat aktivitas pengguna dan perubahan data terekam.")}
+              hiddenKeys={hiddenAuditSeries}
+              onToggleSeries={toggleAuditSeries}
             />
+          }
+        >
+          <MultiSeriesChart
+            chartType={auditChartType}
+            data={auditViewMode === "daily" ? auditDailyData : auditEntityData}
+            series={[
+              {
+                key: "insert",
+                label: t("settings:super_admin.op_insert_label", "Operasi Tambah"),
+                color: "#10b981",
+                textClass: "text-emerald-600 dark:text-emerald-400",
+              },
+              {
+                key: "update",
+                label: t("settings:super_admin.op_update_label", "Operasi Ubah"),
+                color: "#0B43C8",
+                textClass: "text-primary dark:text-sky-400",
+              },
+              {
+                key: "delete",
+                label: t("settings:super_admin.op_delete_label", "Operasi Hapus"),
+                color: "#f43f5e",
+                textClass: "text-rose-600 dark:text-rose-400",
+              },
+            ].filter((s) => !hiddenAuditSeries.has(s.key))}
+            formatValue={(v) => `${v} ${t("settings:super_admin.logs", "Log")}`}
+            formatShortValue={(v) => `${v}`}
+            emptyTitle={t("settings:super_admin.audit_chart_empty_title", "Belum Ada Aktivitas Audit")}
+            emptySubtitle={t("settings:super_admin.audit_chart_empty_sub", "Grafik tren audit otomatis muncul saat aktivitas pengguna dan perubahan data terekam.")}
+          />
 
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_insert_label", "Operasi Tambah")}</p>
-                <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                  {totalInserts} {t("settings:super_admin.logs", "Log")}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_update_label", "Operasi Ubah")}</p>
-                <p className="text-xs sm:text-sm font-bold text-primary dark:text-sky-400 tabular-nums mt-0.5">
-                  {totalUpdates} {t("settings:super_admin.logs", "Log")}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_delete_label", "Operasi Hapus")}</p>
-                <p className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 tabular-nums mt-0.5">
-                  {totalDeletes} {t("settings:super_admin.logs", "Log")}
-                </p>
-              </div>
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/60 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs">
+            <div className="py-3 pl-6 pr-4">
+              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_insert_label", "Operasi Tambah")}</p>
+              <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
+                {totalInserts} {t("settings:super_admin.logs", "Log")}
+              </p>
             </div>
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={auditChartType}
-              onChange={setAuditChartType}
-              options={[
-                { value: "column", label: "Column", icon: BarChart3Icon },
-                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-                { value: "line", label: "Line", icon: TrendingUpIcon },
-                { value: "area", label: "Area", icon: ActivityIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
+            <div className="py-3 px-4">
+              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_update_label", "Operasi Ubah")}</p>
+              <p className="text-xs sm:text-sm font-bold text-primary dark:text-sky-400 tabular-nums mt-0.5">
+                {totalUpdates} {t("settings:super_admin.logs", "Log")}
+              </p>
+            </div>
+            <div className="py-3 pl-3.5 pr-6">
+              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_delete_label", "Operasi Hapus")}</p>
+              <p className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 tabular-nums mt-0.5">
+                {totalDeletes} {t("settings:super_admin.logs", "Log")}
+              </p>
+            </div>
+          </div>
+        </ChartCard>
 
         {/* Grafik 2: Komposisi Peran Pengguna & Bagan Akun */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>{t("settings:super_admin.card_master_title", "Komposisi Master Sistem")}</CardTitle>
-              <CardDescription>
-                {compDataset === "roles"
-                  ? t("settings:super_admin.card_master_desc_roles", "Sebaran hak akses peran pengguna internal.")
-                  : t("settings:super_admin.card_master_desc_coa", "Struktur klasifikasi bagan akun.")}
-              </CardDescription>
-            </div>
+        <ChartCard
+          title={t("settings:super_admin.card_master_title", "Komposisi Master Sistem")}
+          subtitle={
+            compDataset === "roles"
+              ? t("settings:super_admin.card_master_desc_roles", "Sebaran hak akses peran pengguna internal.")
+              : t("settings:super_admin.card_master_desc_coa", "Struktur klasifikasi bagan akun.")
+          }
+          controls={
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
               <button
                 type="button"
@@ -492,49 +491,51 @@ export function SuperAdminDashboardPage() {
                 {t("settings:super_admin.comp_coa", "Bagan Akun")}
               </button>
             </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            <CompositionChart
-              chartType={compChartType}
-              slices={
-                compDataset === "roles"
-                  ? roleCompositionSlices
-                  : coaCompositionSlices
-              }
-              centerLabel={
-                compDataset === "roles"
+          }
+          footer={
+            <div className="border-t border-border/70 bg-muted/10 px-6 py-3 flex items-center justify-between text-xs">
+              <span className="font-medium text-muted-foreground">
+                {compDataset === "roles"
                   ? t("settings:super_admin.center_active_users", "Pengguna Aktif")
-                  : t("settings:super_admin.center_total_accounts", "Total Akun")
-              }
-              centerValue={
-                compDataset === "roles"
-                  ? `${activeUsers} ${t("settings:super_admin.users_unit", "Orang")}`
-                  : `${accounts.length} ${t("settings:super_admin.accounts_unit", "Akun")}`
-              }
-              formatValue={(v) =>
-                compDataset === "roles"
-                  ? `${v} ${t("settings:super_admin.users_unit", "Orang")}`
-                  : `${v} COA`
-              }
-              emptyTitle={t("settings:super_admin.comp_empty_title", "Belum Ada Data Master")}
-              emptySubtitle={t("settings:super_admin.comp_empty_sub", "Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia.")}
-            />
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={compChartType}
-              onChange={setCompChartType}
-              options={[
-                { value: "donut", label: "Donut", icon: CircleDotIcon },
-                { value: "pie", label: "Pie", icon: PieChartIcon },
-                { value: "bar", label: "Bar", icon: BarChartHorizontalIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
+                  : t("settings:super_admin.center_total_accounts", "Total Akun")}
+              </span>
+              <span className="font-bold tabular-nums text-foreground">
+                {compDataset === "roles"
+                  ? `${activeUsers} / ${profiles.length} ${t("settings:super_admin.users_unit", "Orang")}`
+                  : `${accounts.length} ${t("settings:super_admin.accounts_unit", "Akun")}`}
+              </span>
+            </div>
+          }
+        >
+          <CompositionChart
+            chartType="donut"
+            slices={
+              compDataset === "roles"
+                ? roleCompositionSlices
+                : coaCompositionSlices
+            }
+            centerLabel={
+              compDataset === "roles"
+                ? t("settings:super_admin.center_active_users", "Pengguna Aktif")
+                : t("settings:super_admin.center_total_accounts", "Total Akun")
+            }
+            centerValue={
+              compDataset === "roles"
+                ? `${activeUsers} ${t("settings:super_admin.users_unit", "Orang")}`
+                : `${accounts.length} ${t("settings:super_admin.accounts_unit", "Akun")}`
+            }
+            formatValue={(v) =>
+              compDataset === "roles"
+                ? `${v} ${t("settings:super_admin.users_unit", "Orang")}`
+                : `${v} COA`
+            }
+            emptyTitle={t("settings:super_admin.comp_empty_title", "Belum Ada Data Master")}
+            emptySubtitle={t("settings:super_admin.comp_empty_sub", "Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia.")}
+          />
+        </ChartCard>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1 min-w-0">
             <CardTitle className="text-base sm:text-lg font-bold">
@@ -582,21 +583,30 @@ export function SuperAdminDashboardPage() {
               ) : (
                 recentLogs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="pl-6 pr-3 whitespace-nowrap tabular-nums text-muted-foreground">
+                    <TableCell className="pl-6 pr-3 whitespace-nowrap tabular-nums text-muted-foreground align-middle">
                       {formatDateTimeID(log.created_at)}
                     </TableCell>
-                    <TableCell className="px-3 text-center font-medium">
+                    <TableCell className="px-3 text-center font-medium align-middle">
                       {log.actor_role ?? "sistem"}
                     </TableCell>
-                    <TableCell className="px-3 text-center whitespace-nowrap">
+                    <TableCell className="px-3 text-center whitespace-nowrap align-middle">
                       <div className="inline-flex items-center min-h-5 -my-px">
-                        <StatusBadge tone="info" label={log.action} />
+                        <StatusBadge
+                          tone={
+                            log.action.toUpperCase() === "INSERT"
+                              ? "success"
+                              : log.action.toUpperCase() === "DELETE"
+                                ? "destructive"
+                                : "info"
+                          }
+                          label={log.action}
+                        />
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 font-mono font-medium">
+                    <TableCell className="px-3 font-mono font-medium text-xs align-middle">
                       {log.entity_name}
                     </TableCell>
-                    <TableCell className="pl-2 pr-6 font-mono text-muted-foreground truncate max-w-44">
+                    <TableCell className="pl-2 pr-6 font-mono text-xs text-muted-foreground truncate max-w-44 align-middle">
                       {log.entity_id}
                     </TableCell>
                   </TableRow>

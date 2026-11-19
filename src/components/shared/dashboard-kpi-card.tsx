@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 export interface DashboardKpiCardProps {
   label: string;
-  value: number;
+  value?: number;
+  displayValue?: React.ReactNode;
   formatter?: (val: number) => string;
   suffix?: string;
   subtext?: React.ReactNode;
@@ -84,6 +85,7 @@ function MiniSparkline({
 export function KpiCard({
   label,
   value,
+  displayValue,
   formatter,
   suffix,
   subtext,
@@ -137,7 +139,11 @@ export function KpiCard({
             {label}
           </p>
           <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate">
-            <AnimatedNumber value={value} formatter={formatter} suffix={suffix} />
+            {displayValue ? (
+              displayValue
+            ) : (
+              <AnimatedNumber value={value ?? 0} formatter={formatter} suffix={suffix} />
+            )}
           </p>
         </div>
         <div

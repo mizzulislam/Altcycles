@@ -247,4 +247,21 @@ describe("Dashboard Consistency & Shared Components", () => {
     const summaryStrip = container.querySelector(".min-h-\\[58px\\]");
     expect(summaryStrip).toBeInTheDocument();
   });
+
+  it("KpiCard mendukung displayValue untuk status non-numerik (seperti PKP Aktif / Non-PKP)", () => {
+    render(
+      <BrowserRouter>
+        <KpiCard
+          label="Status Perpajakan"
+          displayValue="PKP Aktif"
+          subtext="Tarif PPN 11% berlaku pada invoice"
+          icon={WalletIcon}
+        />
+      </BrowserRouter>,
+    );
+
+    expect(screen.getByText("Status Perpajakan")).toBeInTheDocument();
+    expect(screen.getByText("PKP Aktif")).toBeInTheDocument();
+    expect(screen.getByText("Tarif PPN 11% berlaku pada invoice")).toBeInTheDocument();
+  });
 });
