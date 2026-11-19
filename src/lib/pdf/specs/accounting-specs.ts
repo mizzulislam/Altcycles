@@ -49,13 +49,18 @@ export function buildJournalsPdfSpec(params: {
     params.refNumber ??
     `${isAdj ? (isEn ? "AJE" : "AJP") : (isEn ? "GJN" : "JRN")}/${docDate.replace(/-/g, "")}`;
 
-  const tableRows = params.rows.map((r) => [
-    r.date,
-    r.description,
-    r.ref ? formatAccountRef(r.ref) : "-",
-    r.debit > 0 ? formatDocRupiah(r.debit) : "-",
-    r.credit > 0 ? formatDocRupiah(r.credit) : "-",
-  ]);
+  const tableRows = params.rows.map((r) => {
+    const isMemo =
+      (!r.ref && r.debit === 0 && r.credit === 0) ||
+      r.description.trim().startsWith("(");
+    return [
+      r.date,
+      r.description,
+      isMemo ? "" : r.ref ? formatAccountRef(r.ref) : "-",
+      isMemo ? "" : r.debit > 0 ? formatDocRupiah(r.debit) : "-",
+      isMemo ? "" : r.credit > 0 ? formatDocRupiah(r.credit) : "-",
+    ];
+  });
 
   const totDeb = params.totalDebit ?? params.rows.reduce((s, r) => s + r.debit, 0);
   const totCred = params.totalCredit ?? params.rows.reduce((s, r) => s + r.credit, 0);

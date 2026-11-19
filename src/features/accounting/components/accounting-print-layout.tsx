@@ -318,6 +318,13 @@ export function AccountingPrintLayout({
             visibility: hidden !important;
           }
 
+          [data-accounting-print-area="${printAreaId}"] .print-memo {
+            color: #0b43c8 !important;
+            font-style: italic !important;
+            margin-top: 4px !important;
+            font-weight: 500 !important;
+          }
+
           [data-accounting-print-area="${printAreaId}"] tr {
             page-break-inside: avoid !important;
             break-inside: avoid !important;

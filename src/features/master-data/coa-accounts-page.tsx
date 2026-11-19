@@ -56,7 +56,6 @@ import {
   getLocalizedAccountDescription,
   getLocalizedAccountType,
   getLocalizedNormalBalance,
-  getLocalizedCashFlowCategory,
 } from "@/lib/glossary";
 import type {
   AccountRow,
@@ -395,21 +394,20 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32 pl-6">{t("accounting:coa.col_code", "Kode")}</TableHead>
-                <TableHead>{t("accounting:coa.col_name", "Nama Akun")}</TableHead>
-                <TableHead className="w-36">{t("accounting:coa.col_type", "Tipe Akun")}</TableHead>
-                <TableHead className="w-28 text-center">{t("accounting:coa.col_balance", "Saldo Normal")}</TableHead>
-                <TableHead className="w-28 text-center">{t("accounting:coa.col_cash_flow", "Kategori Arus Kas")}</TableHead>
-                <TableHead className="w-24 text-center">{t("accounting:coa.col_postable", "Postable")}</TableHead>
+                <TableHead className="w-32 pl-6 text-center">{t("accounting:coa.col_code", "Kode")}</TableHead>
+                <TableHead className="text-center">{t("accounting:coa.col_name", "Nama Akun")}</TableHead>
+                <TableHead className="w-32 text-center">{t("accounting:coa.col_type", "Tipe")}</TableHead>
+                <TableHead className="w-32 text-center">{t("accounting:coa.col_balance", "Saldo Normal")}</TableHead>
+                <TableHead className="w-48 text-center">{t("accounting:coa.col_system_tag", "Tag Sistem")}</TableHead>
                 <TableHead className="w-28 text-center">{t("accounting:coa.col_status", "Status")}</TableHead>
-                <TableHead className="w-24 text-center pr-6">{t("accounting:coa.col_actions", "Aksi")}</TableHead>
+                <TableHead className="w-28 text-center pr-6">{t("accounting:coa.col_actions", "Tindakan")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="py-12 text-center text-muted-foreground"
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -421,99 +419,102 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="py-12 text-center text-muted-foreground"
                   >
                     {t("accounting:coa.empty_accounts", "Tidak ada akun yang sesuai dengan filter.")}
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((acc) => (
-                  <TableRow key={acc.id}>
-                    <TableCell className="font-mono text-xs font-semibold pl-6 align-top">
-                      {acc.code}
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="font-medium text-foreground">
-                        {getLocalizedAccountName(acc, language)}
-                      </div>
-                      {acc.description && (
-                        <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                          {getLocalizedAccountDescription(acc.code, acc.description, language)}
+                filtered.map((acc) => {
+                  const isHeader = !acc.is_postable;
+                  return (
+                    <TableRow key={acc.id} className={isHeader ? "bg-muted/20" : ""}>
+                      <TableCell className="font-mono text-xs font-semibold pl-6 align-top">
+                        {acc.code}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className={cn("font-medium text-foreground", isHeader && "font-bold tracking-wide")}>
+                          {getLocalizedAccountName(acc, language)}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground align-top">
-                      {getLocalizedAccountType(acc.account_type, language)}
-                    </TableCell>
-                    <TableCell className="text-xs text-center font-medium align-top">
-                      {getLocalizedNormalBalance(acc.normal_balance, language)}
-                    </TableCell>
-                    <TableCell className="text-xs text-center font-medium align-top">
-                      {getLocalizedCashFlowCategory(acc.cash_flow_category, language)}
-                    </TableCell>
-                    <TableCell className="text-center align-top">
-                      {acc.is_postable ? (
-                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                          {t("accounting:coa.postable_yes", "Ya")}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {t("accounting:coa.postable_header", "Header")}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center align-top">
-                      <StatusBadge
-                        tone={acc.is_active ? "success" : "secondary"}
-                        label={acc.is_active ? t("accounting:coa.status_active", "Aktif") : t("accounting:coa.status_inactive", "Nonaktif")}
-                      />
-                    </TableCell>
-                    <TableCell className="text-center pr-6 align-top">
-                      <div className="flex items-center justify-center gap-1 -my-1.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(acc)}
-                          title="Ubah Akun"
-                          className="size-8 rounded-lg cursor-pointer"
-                        >
-                          <PencilIcon className="size-3.5" />
-                          <span className="sr-only">Ubah</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setToggleTarget(acc)}
-                          title={
-                            acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"
-                          }
-                          className={cn(
-                            "size-8 rounded-lg cursor-pointer",
-                            acc.is_active
-                              ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
-                              : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
-                          )}
-                        >
-                          <PowerIcon className="size-3.5" />
-                          <span className="sr-only">
-                            {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
+                        {acc.description && (
+                          <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                            {getLocalizedAccountDescription(acc.code, acc.description, language)}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-center align-top">
+                        {getLocalizedAccountType(acc.account_type, language)}
+                      </TableCell>
+                      <TableCell className="text-xs text-center font-medium capitalize align-top">
+                        {getLocalizedNormalBalance(acc.normal_balance, language)}
+                      </TableCell>
+                      <TableCell className="text-center align-top">
+                        {isHeader ? (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        ) : acc.system_tag && acc.system_tag !== "none" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                            <span className="size-1.5 rounded-full bg-sky-400" />
+                            {acc.system_tag}
                           </span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteTarget(acc)}
-                          title="Hapus Akun"
-                          className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                        >
-                          <Trash2Icon className="size-3.5" />
-                          <span className="sr-only">Hapus</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center align-top">
+                        <div className="-my-px inline-flex justify-center">
+                          <StatusBadge
+                            tone={acc.is_active ? "success" : "secondary"}
+                            label={acc.is_active ? t("accounting:coa.status_active", "Aktif") : t("accounting:coa.status_inactive", "Nonaktif")}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center pr-6 align-top">
+                        <div className="flex items-center justify-center gap-1 -my-1.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditDialog(acc)}
+                            title="Ubah Akun"
+                            className="size-8 rounded-lg cursor-pointer"
+                          >
+                            <PencilIcon className="size-3.5" />
+                            <span className="sr-only">Ubah</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setToggleTarget(acc)}
+                            title={
+                              acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"
+                            }
+                            className={cn(
+                              "size-8 rounded-lg cursor-pointer",
+                              acc.is_active
+                                ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
+                                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
+                            )}
+                          >
+                            <PowerIcon className="size-3.5" />
+                            <span className="sr-only">
+                              {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
+                            </span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteTarget(acc)}
+                            title="Hapus Akun"
+                            className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                          >
+                            <Trash2Icon className="size-3.5" />
+                            <span className="sr-only">Hapus</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -570,188 +571,180 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
 
       {/* Dialog Form Tambah / Ubah Akun */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? "Ubah Bagan Akun" : "Tambah Bagan Akun Baru"}
+              {editingId
+                ? t("accounting:coa.dialog_edit_title", "Ubah Akun Buku Besar")
+                : t("accounting:coa.dialog_add_title", "Tambah Akun Baru")}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel htmlFor="acc-code" required>
-                  Kode Akun
-                </FieldLabel>
-                <Input
-                  id="acc-code"
-                  required
-                  placeholder="Contoh: 1101 atau 5201"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-              </Field>
+          <form onSubmit={handleSave}>
+            <FieldGroup className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="acc-code" required>
+                    {t("accounting:coa.field_code", "Kode Akun")}
+                  </FieldLabel>
+                  <Input
+                    id="acc-code"
+                    required
+                    placeholder="Contoh: 5-1501"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="acc-type" required>
+                    {t("accounting:coa.field_type", "Tipe Akun")}
+                  </FieldLabel>
+                  <Select
+                    value={accountType}
+                    onValueChange={(val) =>
+                      handleAccountTypeChange(val as AccountType)
+                    }
+                  >
+                    <SelectTrigger id="acc-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
+                        <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
+                        <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
+                        <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
+                        <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
+                        <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
               <Field>
                 <FieldLabel htmlFor="acc-name" required>
-                  Nama Akun
+                  {t("accounting:coa.field_name", "Nama Akun")}
                 </FieldLabel>
                 <Input
                   id="acc-name"
                   required
-                  placeholder="Contoh: Kas Operasional"
+                  placeholder="Contoh: Beban Pengujian Keamanan Proyek"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </Field>
-            </FieldGroup>
 
-            <FieldGroup className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field>
-                <FieldLabel htmlFor="acc-type" required>
-                  Tipe Akun
-                </FieldLabel>
-                <Select
-                  value={accountType}
-                  onValueChange={(val) =>
-                    handleAccountTypeChange(val as AccountType)
-                  }
-                >
-                  <SelectTrigger id="acc-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="asset">Aset</SelectItem>
-                      <SelectItem value="contra_asset">Kontra-Aset</SelectItem>
-                      <SelectItem value="liability">Liabilitas</SelectItem>
-                      <SelectItem value="equity">Ekuitas</SelectItem>
-                      <SelectItem value="revenue">Pendapatan</SelectItem>
-                      <SelectItem value="expense">Beban</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="acc-balance" required>
-                  Saldo Normal
-                </FieldLabel>
-                <Select
-                  value={normalBalance}
-                  onValueChange={(val) =>
-                    setNormalBalance(val as NormalBalance)
-                  }
-                >
-                  <SelectTrigger id="acc-balance">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="debit">Debit</SelectItem>
-                      <SelectItem value="credit">Kredit</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="acc-cf" required>
-                  Arus Kas
-                </FieldLabel>
-                <Select
-                  value={cashFlowCategory}
-                  onValueChange={(val) =>
-                    setCashFlowCategory(val as CashFlowCategory)
-                  }
-                >
-                  <SelectTrigger id="acc-cf">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="operating">Operasional</SelectItem>
-                      <SelectItem value="investing">Investasi</SelectItem>
-                      <SelectItem value="financing">Pendanaan</SelectItem>
-                      <SelectItem value="none">Bukan Kas (None)</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </FieldGroup>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="acc-balance" required>
+                    {t("accounting:coa.field_normal_balance", "Saldo Normal")}
+                  </FieldLabel>
+                  <Select
+                    value={normalBalance}
+                    onValueChange={(val) =>
+                      setNormalBalance(val as NormalBalance)
+                    }
+                  >
+                    <SelectTrigger id="acc-balance">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="debit">{t("accounting:normal_balance.debit", "Debit")}</SelectItem>
+                        <SelectItem value="credit">{t("accounting:normal_balance.credit", "Kredit")}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
 
-            <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel htmlFor="acc-tag">Tag Sistem Khusus</FieldLabel>
-                <Select
-                  value={systemTag}
-                  onValueChange={(val) =>
-                    setSystemTag(val as AccountSystemTag)
-                  }
-                >
-                  <SelectTrigger id="acc-tag">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="none">Tidak Ada (Reguler)</SelectItem>
-                      <SelectItem value="cash">Kas &amp; Bank</SelectItem>
-                      <SelectItem value="ar">Piutang Usaha (AR)</SelectItem>
-                      <SelectItem value="ap">Utang Usaha (AP)</SelectItem>
-                      <SelectItem value="retained_earnings">
-                        Laba Ditahan
-                      </SelectItem>
-                      <SelectItem value="current_earnings">
-                        Laba Tahun Berjalan
-                      </SelectItem>
-                      <SelectItem value="tax_vat_in">PPN Masukan</SelectItem>
-                      <SelectItem value="tax_vat_out">PPN Keluaran</SelectItem>
-                      <SelectItem value="tax_wht23_payable">
-                        Utang PPh 23
-                      </SelectItem>
-                      <SelectItem value="tax_wht23_prepaid">
-                        Uang Muka PPh 23
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <div className="flex items-center gap-6 pt-6">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <Switch
-                    checked={isPostable}
-                    onCheckedChange={setIsPostable}
-                  />
-                  <span className="text-xs font-medium">Bisa Diposting</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <Switch checked={isActive} onCheckedChange={setIsActive} />
-                  <span className="text-xs font-medium">Status Aktif</span>
-                </label>
+                <Field>
+                  <FieldLabel htmlFor="acc-tag">
+                    {t("accounting:coa.field_system_tag", "Penanda Otomasi Sistem")}
+                  </FieldLabel>
+                  <Select
+                    value={systemTag}
+                    onValueChange={(val) =>
+                      setSystemTag(val as AccountSystemTag)
+                    }
+                  >
+                    <SelectTrigger id="acc-tag">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">Umum (Tanpa Tag)</SelectItem>
+                        <SelectItem value="cash_bank">Kas / Bank</SelectItem>
+                        <SelectItem value="accounts_receivable">
+                          Piutang Usaha
+                        </SelectItem>
+                        <SelectItem value="unbilled_receivable">
+                          Piutang Belum Ditagih
+                        </SelectItem>
+                        <SelectItem value="work_in_progress">
+                          Jasa dalam Proses (Progress Billing)
+                        </SelectItem>
+                        <SelectItem value="contract_billings">
+                          Penagihan atas Kontrak (Progress Billing)
+                        </SelectItem>
+                        <SelectItem value="accounts_payable">
+                          Utang Usaha
+                        </SelectItem>
+                        <SelectItem value="unearned_revenue">
+                          Pendapatan Diterima di Muka
+                        </SelectItem>
+                        <SelectItem value="service_revenue">
+                          Pendapatan Jasa Utama
+                        </SelectItem>
+                        <SelectItem value="retained_earnings">
+                          Laba Ditahan
+                        </SelectItem>
+                        <SelectItem value="shared_expense">
+                          Beban Operasional Bersama
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
               </div>
+
+              <Field orientation="horizontal">
+                <FieldLabel htmlFor="acc-postable">
+                  {t("accounting:coa.field_postable", "Dapat Diposting Langsung ke Jurnal")}
+                </FieldLabel>
+                <Switch
+                  id="acc-postable"
+                  checked={isPostable}
+                  onCheckedChange={setIsPostable}
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="acc-desc">
+                  {t("accounting:coa.field_description", "Keterangan")}
+                </FieldLabel>
+                <Textarea
+                  id="acc-desc"
+                  placeholder="Deskripsi singkat fungsi dan peruntukan akun ini..."
+                  rows={2}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Field>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditorOpen(false)}
+                  disabled={saving}
+                >
+                  {t("common:action.cancel", "Batal")}
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Menyimpan..." : t("accounting:coa.btn_save_account", "Simpan Akun")}
+                </Button>
+              </DialogFooter>
             </FieldGroup>
-
-            <Field>
-              <FieldLabel htmlFor="acc-desc">Keterangan / Fungsi Akun</FieldLabel>
-              <Textarea
-                id="acc-desc"
-                placeholder="Deskripsi singkat fungsi dan peruntukan akun ini..."
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Field>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditorOpen(false)}
-                disabled={saving}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? "Menyimpan..." : "Simpan Akun"}
-              </Button>
-            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

@@ -182,8 +182,8 @@ function isRowUppercase(row: string[]): boolean {
   for (const cell of row) {
     if (!cell) continue;
     const trimmed = cell.trim().replace(/^(\d+\.|\-|\*)\s*/, "").trim();
-    // Abaikan kode/nomor dokumen/referensi yang mengandung slash (misal JRN/..., PRJ/...) atau pola kode singkat
-    if (trimmed.includes("/") || /^[A-Z0-9_-]{2,15}$/.test(trimmed)) continue;
+    // Abaikan kode/nomor dokumen/referensi yang mengandung slash (misal JRN/..., PRJ/...) atau pola kode singkat yang memiliki angka (misal INV-01, PRJ-1)
+    if (trimmed.includes("/") || (/^[A-Z0-9_-]{2,15}$/.test(trimmed) && /\d/.test(trimmed))) continue;
     const lettersOnly = trimmed.replace(/[^A-Za-z]/g, "");
     if (lettersOnly.length >= 4 && lettersOnly === lettersOnly.toUpperCase()) {
       return true;
@@ -2100,6 +2100,10 @@ async function renderDocumentPdfInternal(
             const isSecondaryLine =
               lIdx > 0 &&
               (rawCell.includes("\n") || /bank|rekening|pic|kontak/i.test(col.header));
+            const isJournalMemo =
+              isJournal &&
+              rawCell.trim().startsWith("(") &&
+              (rawCell.trim().endsWith(")") || row[3] === "" || row[4] === "");
             drawTrackedText(
               cleanL,
               {
@@ -2107,7 +2111,7 @@ async function renderDocumentPdfInternal(
                 y: y - lIdx * cellLineH,
                 size: cellFontSize,
                 font: rowFont,
-                color: isSecondaryLine ? TEXT_MUTED : TEXT_DARK,
+                color: isJournalMemo ? BRAND_BLUE : (isSecondaryLine ? TEXT_MUTED : TEXT_DARK),
               },
               "D-table-cell",
             );

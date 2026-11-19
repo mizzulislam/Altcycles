@@ -1,5 +1,6 @@
-import { ScaleIcon } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -51,6 +52,7 @@ interface BalanceSheetCardProps {
   modalDisetorBalance: number;
   endingRetainedEarnings: number;
   totalEndingEquity: number;
+  onDownload?: () => void;
 }
 
 export function BalanceSheetCard({
@@ -58,6 +60,7 @@ export function BalanceSheetCard({
   modalDisetorBalance,
   endingRetainedEarnings,
   totalEndingEquity,
+  onDownload,
 }: BalanceSheetCardProps) {
   const { t, language } = useLanguage();
 
@@ -76,7 +79,17 @@ export function BalanceSheetCard({
               {language === "en" ? "Summary of Altcycles assets, liabilities, and equity" : "Ringkasan aset, kewajiban, dan ekuitas Altcycles"}
             </p>
           </div>
-          <ScaleIcon className="size-5 text-muted-foreground mt-1" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDownload}
+            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
+            title={t("common:action.download", "Unduh PDF")}
+          >
+            <DownloadIcon className="size-4" />
+            <span className="sr-only">{t("common:action.download", "Unduh PDF")}</span>
+          </Button>
         </div>
 
         <div className="space-y-4 text-xs">

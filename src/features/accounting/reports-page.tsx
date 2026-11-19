@@ -497,8 +497,13 @@ export function AccountingReportsPage({
 
           {/* Content Area */}
           {layoutMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-              <IncomeStatementCard incomeStatement={incomeStatement} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <IncomeStatementCard
+                incomeStatement={incomeStatement}
+                onDownload={() =>
+                  void exportReportToPdf({ ...exportData, activeTab: "laba_rugi" })
+                }
+              />
               <EquityStatementCard
                 beginningRetainedEarnings={beginningRetainedEarnings}
                 netProfit={netIncome}
@@ -506,14 +511,25 @@ export function AccountingReportsPage({
                 endingRetainedEarnings={endingRetainedEarnings}
                 modalDisetorBalance={modalDisetorBalance}
                 totalEndingEquity={totalEndingEquity}
+                onDownload={() =>
+                  void exportReportToPdf({ ...exportData, activeTab: "ekuitas" })
+                }
               />
               <BalanceSheetCard
                 balanceSheet={balanceSheet}
                 modalDisetorBalance={modalDisetorBalance}
                 endingRetainedEarnings={endingRetainedEarnings}
                 totalEndingEquity={totalEndingEquity}
+                onDownload={() =>
+                  void exportReportToPdf({ ...exportData, activeTab: "neraca" })
+                }
               />
-              <CashFlowCard cashFlow={cashFlow} />
+              <CashFlowCard
+                cashFlow={cashFlow}
+                onDownload={() =>
+                  void exportReportToPdf({ ...exportData, activeTab: "arus_kas" })
+                }
+              />
             </div>
           ) : (
             <div className="w-full">

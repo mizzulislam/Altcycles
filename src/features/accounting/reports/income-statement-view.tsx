@@ -1,3 +1,5 @@
+import { DownloadIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -32,24 +34,41 @@ export interface IncomeStatementData {
 
 interface IncomeStatementCardProps {
   incomeStatement: IncomeStatementData;
+  onDownload?: () => void;
 }
 
-export function IncomeStatementCard({ incomeStatement }: IncomeStatementCardProps) {
+export function IncomeStatementCard({
+  incomeStatement,
+  onDownload,
+}: IncomeStatementCardProps) {
   const { t, language } = useLanguage();
 
   return (
     <div className="rounded-2xl border border-border/80 bg-background p-5 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[560px] w-full">
       <div>
-        <div className="border-b border-border/60 pb-3 mb-4">
-          <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-            {language === "en" ? "Operating Statement" : "Laporan Operasional"}
-          </span>
-          <h2 className="text-lg font-bold text-foreground mt-0.5">
-            {t("accounting:reports.tab_income_statement", "Laba Rugi")}
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            {language === "en" ? "Measures Altcycles operational financial performance" : "Mengukur kinerja keuangan operasional Altcycles"}
-          </p>
+        <div className="border-b border-border/60 pb-3 mb-4 flex justify-between items-start">
+          <div>
+            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              {language === "en" ? "Operating Statement" : "Laporan Operasional"}
+            </span>
+            <h2 className="text-lg font-bold text-foreground mt-0.5">
+              {t("accounting:reports.tab_income_statement", "Laba Rugi")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === "en" ? "Measures Altcycles operational financial performance" : "Mengukur kinerja keuangan operasional Altcycles"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDownload}
+            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
+            title={t("common:action.download", "Unduh PDF")}
+          >
+            <DownloadIcon className="size-4" />
+            <span className="sr-only">{t("common:action.download", "Unduh PDF")}</span>
+          </Button>
         </div>
 
         <div className="space-y-4">

@@ -1,3 +1,5 @@
+import { DownloadIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -28,24 +30,38 @@ export interface CashFlowData {
 
 interface CashFlowCardProps {
   cashFlow: CashFlowData;
+  onDownload?: () => void;
 }
 
-export function CashFlowCard({ cashFlow }: CashFlowCardProps) {
+export function CashFlowCard({ cashFlow, onDownload }: CashFlowCardProps) {
   const { t, language } = useLanguage();
 
   return (
     <div className="rounded-2xl border border-border/80 bg-background p-5 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between min-h-[560px] w-full">
       <div>
-        <div className="border-b border-border/60 pb-3 mb-4">
-          <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-            {language === "en" ? "Cash Movement" : "Pergerakan Kas"}
-          </span>
-          <h2 className="text-lg font-bold text-foreground mt-0.5">
-            {t("accounting:reports.tab_cash_flow", "Laporan Arus Kas")}
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            {language === "en" ? "Summary of cash inflows and outflows by activity" : "Ringkasan arus kas masuk dan keluar berdasarkan aktivitas"}
-          </p>
+        <div className="border-b border-border/60 pb-3 mb-4 flex justify-between items-start">
+          <div>
+            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+              {language === "en" ? "Cash Movement" : "Pergerakan Kas"}
+            </span>
+            <h2 className="text-lg font-bold text-foreground mt-0.5">
+              {t("accounting:reports.tab_cash_flow", "Laporan Arus Kas")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === "en" ? "Summary of cash inflows and outflows by activity" : "Ringkasan arus kas masuk dan keluar berdasarkan aktivitas"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDownload}
+            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer shrink-0"
+            title={t("common:action.download", "Unduh PDF")}
+          >
+            <DownloadIcon className="size-4" />
+            <span className="sr-only">{t("common:action.download", "Unduh PDF")}</span>
+          </Button>
         </div>
 
         <div className="space-y-3 text-xs">
