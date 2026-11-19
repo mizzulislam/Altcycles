@@ -113,16 +113,15 @@ export interface BubbleAxisConfig {
   showBreakEvenLine?: boolean;
 }
 
-export type MultiSeriesChartKind = "column" | "bar" | "line" | "area" | "bubble";
+export type MultiSeriesChartKind = "column" | "bar" | "area" | "line" | "bubble";
 
-/** Grafik multi-seri serbaguna: Column, Horizontal Bar, Line, Area, dan Bubble Chart. */
+/** Grafik multi-seri serbaguna: Column, Horizontal Bar, dan Area Chart. */
 export function MultiSeriesChart({
-  chartType,
+  chartType: rawChartType,
   data,
   series,
   formatValue,
   formatShortValue,
-  bubbleConfig,
   emptyTitle = "Belum Ada Data Grafik",
   emptySubtitle = "Visualisasi akan muncul otomatis setelah transaksi tercatat.",
 }: {
@@ -135,6 +134,13 @@ export function MultiSeriesChart({
   emptyTitle?: string;
   emptySubtitle?: string;
 }) {
+  // Fallback anggun: Line dan Bubble otomatis dialihkan ke Column/Area tanpa error
+  const chartType: "column" | "bar" | "area" =
+    rawChartType === "bar"
+      ? "bar"
+      : rawChartType === "area"
+        ? "area"
+        : "column";
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const chartUid = React.useId().replace(/:/g, "");
   const shortFmt = formatShortValue ?? formatValue;
@@ -222,186 +228,9 @@ export function MultiSeriesChart({
     );
   }
 
-  // Mode Bubble Chart (Pemetaan 2 Sumbu + Ukuran Gelembung)
-  if (chartType === "bubble" && bubbleConfig) {
-    const svgW = 640;
-    const svgH = 232;
-    const padL = 72;
-    const padR = 26;
-    const padT = 22;
-    const padB = 34;
-    const plotW = svgW - padL - padR;
-    const plotH = svgH - padT - padB;
 
-    const maxX = Math.max(
-      1,
-      ...data.map((d) => Math.max(0, d.values[bubbleConfig.xKey] ?? 0)),
-    );
-    const maxY = Math.max(
-      1,
-      ...data.map((d) => Math.max(0, d.values[bubbleConfig.yKey] ?? 0)),
-    );
-    const axisMax = bubbleConfig.showBreakEvenLine ? Math.max(maxX, maxY) : 0;
-    const effMaxX = bubbleConfig.showBreakEvenLine ? axisMax : maxX;
-    const effMaxY = bubbleConfig.showBreakEvenLine ? axisMax : maxY;
-    const maxSize = Math.max(
-      1,
-      ...data.map((d) => Math.abs(d.values[bubbleConfig.sizeKey] ?? 0)),
-    );
-
-    const activeBubble = hoveredIndex !== null ? data[hoveredIndex] : null;
-
-    return (
-      <div className="relative space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-          <span>
-            Sumbu X: <strong className="text-foreground">{bubbleConfig.xLabel}</strong>{" "}
-            &bull; Sumbu Y:{" "}
-            <strong className="text-foreground">{bubbleConfig.yLabel}</strong> &bull; Ukuran:{" "}
-            <strong className="text-foreground">{bubbleConfig.sizeLabel}</strong>
-          </span>
-          {bubbleConfig.showBreakEvenLine ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-4 border-t border-dashed border-muted-foreground/70" />
-              Garis Impas (Pendapatan = Beban)
-            </span>
-          ) : null}
-        </div>
-
-        <div className="relative">
-          {activeBubble ? (
-            <div className="absolute top-1 right-2 z-20 w-52 rounded-xl border border-border/80 bg-popover p-2.5 text-[11px] shadow-xl pointer-events-none">
-              <p className="font-bold text-foreground mb-1">{activeBubble.label}</p>
-              <div className="flex justify-between gap-2 text-emerald-500">
-                <span>{bubbleConfig.xLabel}</span>
-                <span className="font-semibold tabular-nums">
-                  {shortFmt(activeBubble.values[bubbleConfig.xKey] ?? 0)}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2 text-amber-500">
-                <span>{bubbleConfig.yLabel}</span>
-                <span className="font-semibold tabular-nums">
-                  {shortFmt(activeBubble.values[bubbleConfig.yKey] ?? 0)}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2 text-primary dark:text-sky-400">
-                <span>{bubbleConfig.sizeLabel}</span>
-                <span className="font-semibold tabular-nums">
-                  {shortFmt(activeBubble.values[bubbleConfig.sizeKey] ?? 0)}
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          <svg
-            viewBox={`0 0 ${svgW} ${svgH}`}
-            className="w-full h-auto max-h-60 overflow-visible select-none"
-            role="img"
-            aria-label="Grafik gelembung keuangan"
-          >
-            {[0, 0.5, 1].map((ratio) => {
-              const y = padT + plotH * (1 - ratio);
-              const x = padL + plotW * ratio;
-              return (
-                <g key={ratio}>
-                  <line
-                    x1={padL}
-                    y1={y}
-                    x2={padL + plotW}
-                    y2={y}
-                    stroke="currentColor"
-                    strokeDasharray="4 4"
-                    className="text-border/70"
-                  />
-                  <text
-                    x={padL - 8}
-                    y={y + 3}
-                    textAnchor="end"
-                    className="fill-muted-foreground text-[10px] tabular-nums"
-                  >
-                    {shortFmt(Math.round(effMaxY * ratio))}
-                  </text>
-                  <line
-                    x1={x}
-                    y1={padT}
-                    x2={x}
-                    y2={padT + plotH}
-                    stroke="currentColor"
-                    strokeDasharray="4 4"
-                    className="text-border/40"
-                  />
-                  <text
-                    x={x}
-                    y={padT + plotH + 16}
-                    textAnchor="middle"
-                    className="fill-muted-foreground text-[10px] tabular-nums"
-                  >
-                    {shortFmt(Math.round(effMaxX * ratio))}
-                  </text>
-                </g>
-              );
-            })}
-
-            {bubbleConfig.showBreakEvenLine ? (
-              <line
-                x1={padL}
-                y1={padT + plotH}
-                x2={padL + plotW}
-                y2={padT}
-                stroke="currentColor"
-                strokeWidth="1.25"
-                strokeDasharray="5 4"
-                className="text-muted-foreground/60"
-              />
-            ) : null}
-
-            {data.map((pt, idx) => {
-              const xv = Math.max(0, pt.values[bubbleConfig.xKey] ?? 0);
-              const yv = Math.max(0, pt.values[bubbleConfig.yKey] ?? 0);
-              const sv = Math.abs(pt.values[bubbleConfig.sizeKey] ?? 0);
-              const cx = padL + (xv / effMaxX) * plotW;
-              const cy = padT + plotH - (yv / effMaxY) * plotH;
-              const r = 9 + Math.sqrt(sv / maxSize) * 16;
-              const isSurplus = xv >= yv;
-              const bubbleColor = isSurplus ? "#10b981" : "#f59e0b";
-              const active = hoveredIndex === idx;
-
-              return (
-                <g
-                  key={pt.key}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className="cursor-pointer"
-                >
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={active ? r + 3 : r}
-                    fill={bubbleColor}
-                    fillOpacity={active ? 0.38 : 0.22}
-                    stroke={bubbleColor}
-                    strokeWidth={active ? 2.5 : 1.75}
-                    className="transition-all duration-150"
-                  />
-                  <text
-                    x={cx}
-                    y={cy + 3.5}
-                    textAnchor="middle"
-                    className="fill-foreground text-[10px] font-bold pointer-events-none"
-                  >
-                    {pt.label}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      </div>
-    );
-  }
-
-  // Mode Line Chart & Area Chart
-  if (chartType === "line" || chartType === "area") {
+  // Mode Area Chart
+  if (chartType === "area") {
     const svgW = 640;
     const svgH = 216;
     const padL = 72;
@@ -1149,7 +978,7 @@ export function HistogramChart({
                     backgroundColor: bin.count > 0 ? accentColor : "var(--muted)",
                   }}
                   className={cn(
-                    "w-full rounded-t-sm transition-all duration-200",
+                    "w-full rounded-none transition-all duration-200",
                     bin.count > 0
                       ? active
                         ? "opacity-100"

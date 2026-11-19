@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   ActivityIcon,
   ArrowRightIcon,
-  BarChart2Icon,
   BarChart3Icon,
   BarChartHorizontalIcon,
   CheckCircle2Icon,
@@ -13,7 +12,6 @@ import {
   CoinsIcon,
   FolderKanbanIcon,
   HandCoinsIcon,
-  PieChartIcon,
   PiggyBankIcon,
   ReceiptTextIcon,
   ScaleIcon,
@@ -24,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 import {
   buildRupiahHistogramBins,
   ChartCardFooter,
@@ -34,16 +33,23 @@ import {
   type CompositionChartKind,
   type MultiSeriesChartKind,
 } from "@/components/shared/dashboard-charts";
-import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
-import { AnimatedNumber } from "@/components/shared/animated-number";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  PeriodFilter,
+  type DashboardPeriodPreset,
+} from "@/components/shared/dashboard-period-filter";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { Spinner } from "@/components/ui/empty";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   buildArAging,
   buildCashFlowStatement,
@@ -94,6 +100,7 @@ interface MonthlyFinancialPoint {
   revenue: number;
   expense: number;
   netCash: number;
+  txCount: number;
 }
 
 function buildMonthlySeries(
@@ -122,7 +129,7 @@ function buildMonthlySeries(
 
   const buckets = new Map<
     string,
-    { revenue: number; expense: number; netCash: number }
+    { revenue: number; expense: number; netCash: number; txCount: number }
   >();
 
   for (const j of journals) {
@@ -134,7 +141,9 @@ function buildMonthlySeries(
       revenue: 0,
       expense: 0,
       netCash: 0,
+      txCount: 0,
     };
+    current.txCount += 1;
 
     const jLines = linesByJournal.get(j.id) ?? [];
     for (const l of jLines) {
@@ -172,6 +181,7 @@ function buildMonthlySeries(
         revenue: Math.max(0, val.revenue),
         expense: Math.max(0, val.expense),
         netCash: val.netCash,
+        txCount: val.txCount,
       };
     });
 }
@@ -186,41 +196,33 @@ export function AdminDashboardPage() {
   const [journals, setJournals] = React.useState<JournalRow[]>([]);
   const [lines, setLines] = React.useState<JournalLineRow[]>([]);
   const [invoices, setInvoices] = React.useState<SalesInvoiceRow[]>([]);
-  const [paymentRequests, setPaymentRequests] = React.useState<
-    PaymentRequestRow[]
-  >([]);
-  const [purchaseOrders, setPurchaseOrders] = React.useState<
-    PurchaseOrderRow[]
-  >([]);
+  const [paymentRequests, setPaymentRequests] = React.useState<PaymentRequestRow[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = React.useState<PurchaseOrderRow[]>([]);
   const [pendingClientPos, setPendingClientPos] = React.useState(0);
 
-  const [trendChartType, setTrendChartType] =
-    React.useState<MultiSeriesChartKind>("column");
+  // Filter Periode Global Terpadu
+  const [periodFilter, setPeriodFilter] = React.useState<DashboardPeriodPreset>("all");
+
+  // Kontrol Switcher Tampilan Grafik
+  const [trendChartType, setTrendChartType] = React.useState<MultiSeriesChartKind>("column");
   const [donutMode, setDonutMode] = React.useState<"profit" | "cash">("profit");
-  const [compositionChartType, setCompositionChartType] =
-    React.useState<CompositionChartKind>("donut");
-  const [billingChartType, setBillingChartType] = React.useState<
-    "bar" | "column" | "pie" | "bubble"
-  >("bar");
-  const [expenseChartType, setExpenseChartType] = React.useState<
-    "bar" | "pie" | "histogram"
-  >("bar");
+  const [compositionChartType, setCompositionChartType] = React.useState<CompositionChartKind>("donut");
+  const [txFreqMode, setTxFreqMode] = React.useState<"bar" | "histogram">("bar");
 
   React.useEffect(() => {
     async function load() {
       setLoading(true);
       try {
-        const [accs, pers, prjs, csts, jRes, paRes, ws, poRes] =
-          await Promise.all([
-            listAccounts(),
-            listPeriods(),
-            listProjects(),
-            listCustomers(),
-            listJournalsWithLines(),
-            listPaymentRequests(),
-            getProjectWorkspace(),
-            listPurchaseOrders(),
-          ]);
+        const [accs, pers, prjs, csts, jRes, paRes, ws, poRes] = await Promise.all([
+          listAccounts(),
+          listPeriods(),
+          listProjects(),
+          listCustomers(),
+          listJournalsWithLines(),
+          listPaymentRequests(),
+          getProjectWorkspace(),
+          listPurchaseOrders(),
+        ]);
         setAccounts(accs);
         setPeriods(pers);
         setProjects(prjs.projects);
@@ -231,8 +233,7 @@ export function AdminDashboardPage() {
         setInvoices(ws.invoices);
         setPurchaseOrders(poRes.orders);
         setPendingClientPos(
-          ws.clientPos.filter((c) => c.status === "pending_verification")
-            .length,
+          ws.clientPos.filter((c) => c.status === "pending_verification").length,
         );
       } catch (err) {
         toast.error(
@@ -247,19 +248,64 @@ export function AdminDashboardPage() {
     void load();
   }, []);
 
+  // Filter Data berdasarkan PeriodFilter Global
+  const filteredJournals = React.useMemo(() => {
+    if (periodFilter === "all") return journals;
+    const now = new Date();
+    if (periodFilter === "this_month") {
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      return journals.filter((j) => j.journal_date.startsWith(curMonth));
+    }
+    if (periodFilter === "last_month") {
+      const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+      return journals.filter((j) => j.journal_date.startsWith(prevMonth));
+    }
+    if (periodFilter === "this_year") {
+      const curYear = String(now.getFullYear());
+      return journals.filter((j) => j.journal_date.startsWith(curYear));
+    }
+    const matchedPeriod = periods.find((p) => p.id === periodFilter);
+    if (matchedPeriod) {
+      return journals.filter(
+        (j) =>
+          j.period_id === matchedPeriod.id ||
+          (j.journal_date >= matchedPeriod.start_date &&
+            j.journal_date <= matchedPeriod.end_date),
+      );
+    }
+    return journals;
+  }, [journals, periodFilter, periods]);
+
+  const filteredJournalIds = React.useMemo(
+    () => new Set(filteredJournals.map((j) => j.id)),
+    [filteredJournals],
+  );
+  const filteredLines = React.useMemo(
+    () => lines.filter((l) => filteredJournalIds.has(l.journal_id)),
+    [lines, filteredJournalIds],
+  );
+
+  const accMap = React.useMemo(
+    () => new Map(accounts.map((a) => [a.id, a])),
+    [accounts],
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
         <Spinner />
-        <span>{t("dashboard:charts.loading")}</span>
+        <span>{t("dashboard:charts.loading", "Memuat dasbor keuangan & akuntansi...")}</span>
       </div>
     );
   }
 
-  const cashPosition = buildCashFlowStatement(accounts, journals, lines);
-  const incomeStatement = buildIncomeStatement(accounts, journals, lines);
+  // Perhitungan Data Keuangan Terfilter
+  const cashPosition = buildCashFlowStatement(accounts, filteredJournals, filteredLines);
+  const incomeStatement = buildIncomeStatement(accounts, filteredJournals, filteredLines);
   const openPeriods = periods.filter((p) => p.status === "open").length;
   const totalContract = projects.reduce((sum, p) => sum + p.contract_value, 0);
+
   const pendingApprovals = paymentRequests.filter(
     (r) => r.status === "submitted",
   ).length;
@@ -274,11 +320,11 @@ export function AdminDashboardPage() {
   const unpaidInvoiceCount = issuedInvoices.filter(
     (i) => i.total_amount - i.paid_amount > 0,
   ).length;
-
   const activePoCount = purchaseOrders.filter(
     (p) => p.status === "issued" || p.status === "draft",
   ).length;
 
+  // AR Aging
   const customerMap = new Map(customers.map((c) => [c.id, c.name]));
   const projectCodeMap = new Map(projects.map((p) => [p.id, p.code]));
   const arAging = buildArAging(
@@ -290,7 +336,7 @@ export function AdminDashboardPage() {
 
   const agingBuckets = [
     {
-      label: t("dashboard:charts.aging_current"),
+      label: t("dashboard:charts.aging_current", "Belum Jatuh Tempo"),
       bucketKey: "Belum Jatuh Tempo",
       color: "bg-emerald-500",
       dotColor: "bg-emerald-500",
@@ -299,7 +345,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: t("dashboard:charts.aging_1_30"),
+      label: t("dashboard:charts.aging_1_30", "1–30 Hari"),
       bucketKey: "1–30 Hari",
       color: "bg-sky-500",
       dotColor: "bg-sky-500",
@@ -308,7 +354,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: t("dashboard:charts.aging_31_60"),
+      label: t("dashboard:charts.aging_31_60", "31–60 Hari"),
       bucketKey: "31–60 Hari",
       color: "bg-amber-500",
       dotColor: "bg-amber-500",
@@ -317,7 +363,7 @@ export function AdminDashboardPage() {
         .reduce((s, a) => s + a.outstandingAmount, 0),
     },
     {
-      label: t("dashboard:charts.aging_over_60"),
+      label: t("dashboard:charts.aging_over_60", "> 60 Hari"),
       bucketKey: "> 60 Hari",
       color: "bg-rose-500",
       dotColor: "bg-rose-500",
@@ -327,6 +373,7 @@ export function AdminDashboardPage() {
     },
   ];
 
+  // Tren Bulanan MultiSeriesChart
   const monthlySeries = buildMonthlySeries(accounts, journals, lines, language);
   const monthlyChartData = monthlySeries.map((pt) => ({
     key: pt.monthKey,
@@ -338,7 +385,28 @@ export function AdminDashboardPage() {
     },
   }));
 
-  const postedJournalAmounts = journals
+  // Sparkline data array untuk kartu KPI
+  const cashSparkline = monthlySeries.map((m) => m.netCash);
+  const prevCash = monthlySeries.length >= 2 ? monthlySeries[monthlySeries.length - 2]?.netCash ?? 0 : null;
+  const cashChangePct =
+    prevCash !== null && prevCash !== 0
+      ? ((cashPosition.endingCash - prevCash) / Math.abs(prevCash)) * 100
+      : null;
+
+  // Frekuensi Transaksi Jurnal (B2)
+  const totalTxCount = filteredJournals.filter((j) => j.status === "posted").length;
+  const activeMonthsCount = Math.max(1, monthlySeries.length);
+  const avgTxPerMonth = Math.round((totalTxCount / activeMonthsCount) * 10) / 10;
+  const txFreqChartData = monthlySeries.map((pt) => ({
+    key: pt.monthKey,
+    label: pt.label,
+    values: {
+      count: pt.txCount,
+    },
+  }));
+
+  // Histogram Distribusi Nominal Transaksi
+  const postedJournalAmounts = filteredJournals
     .filter((j) => j.status === "posted" && j.journal_type !== "closing")
     .map((j) =>
       lines
@@ -348,6 +416,9 @@ export function AdminDashboardPage() {
     .filter((amt) => amt > 0);
   const journalHistogram = buildRupiahHistogramBins(postedJournalAmounts);
 
+  // Top 5 Beban (B1)
+  const totalExpense =
+    incomeStatement.totalDirectExpense + incomeStatement.totalSharedExpense;
   const topExpenses = [
     ...incomeStatement.directExpenses,
     ...incomeStatement.sharedExpenses,
@@ -355,12 +426,65 @@ export function AdminDashboardPage() {
     .filter((e) => e.amount > 0)
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
-  const maxExpenseItem = Math.max(1, ...(topExpenses.map((e) => e.amount)));
+  const maxExpenseItem = Math.max(1, ...topExpenses.map((e) => e.amount));
 
+  // 5 Transaksi Terakhir (B3)
+  const recentJournals = filteredJournals
+    .filter((j) => j.status === "posted")
+    .sort((a, b) => b.journal_date.localeCompare(a.journal_date))
+    .slice(0, 5);
+
+  // Komposisi Segments
+  const donutSegments =
+    donutMode === "profit"
+      ? [
+          {
+            label: t("dashboard:charts.revenue", "Pendapatan"),
+            value: Math.max(0, incomeStatement.totalRevenue),
+            color: "#10b981",
+            dotClass: "bg-emerald-500",
+          },
+          {
+            label: t("dashboard:charts.direct_expense", "Beban Langsung"),
+            value: Math.max(0, incomeStatement.totalDirectExpense),
+            color: "#f59e0b",
+            dotClass: "bg-amber-500",
+          },
+          {
+            label: t("dashboard:charts.shared_expense", "Beban Bersama"),
+            value: Math.max(0, incomeStatement.totalSharedExpense),
+            color: "#0B43C8",
+            dotClass: "bg-primary",
+          },
+        ]
+      : [
+          {
+            label: t("dashboard:charts.operating_inflow", "Kas Masuk Operasi"),
+            value: Math.max(0, cashPosition.operatingInflow),
+            color: "#10b981",
+            dotClass: "bg-emerald-500",
+          },
+          {
+            label: t("dashboard:charts.operating_outflow", "Kas Keluar Operasi"),
+            value: Math.max(0, cashPosition.operatingOutflow),
+            color: "#f43f5e",
+            dotClass: "bg-rose-500",
+          },
+          {
+            label: t("dashboard:charts.investing_financing", "Investasi & Pendanaan"),
+            value: Math.abs(cashPosition.netInvesting + cashPosition.netFinancing),
+            color: "#0B43C8",
+            dotClass: "bg-primary",
+          },
+        ];
+
+  // Proyek Progress Penagihan
   const projectBillingStats = projects.slice(0, 4).map((p) => {
-    const pInvoices = issuedInvoices.filter((i) => i.project_id === p.id);
-    const billed = pInvoices.reduce((s, i) => s + i.subtotal_amount, 0);
-    const paid = pInvoices.reduce((s, i) => s + i.paid_amount, 0);
+    const prjInvoices = invoices.filter(
+      (i) => i.project_id === p.id && i.doc_status === "issued",
+    );
+    const billed = prjInvoices.reduce((s, i) => s + i.total_amount, 0);
+    const paid = prjInvoices.reduce((s, i) => s + i.paid_amount, 0);
     const pct =
       p.contract_value > 0
         ? Math.min(100, Math.round((billed / p.contract_value) * 100))
@@ -376,12 +500,7 @@ export function AdminDashboardPage() {
     };
   });
 
-  const accMap = new Map(accounts.map((a) => [a.id, a]));
-  const recentJournals = [...journals]
-    .filter((j) => j.status === "posted")
-    .sort((a, b) => b.journal_date.localeCompare(a.journal_date))
-    .slice(0, 4);
-
+  // Ekspor Dokumen
   async function handleBackupExport() {
     const rows: Array<Array<string | number>> = [];
     for (const j of journals) {
@@ -494,115 +613,41 @@ export function AdminDashboardPage() {
     toast.success(t("dashboard:export.toast_csv_success"));
   }
 
-  const totalExpense =
-    incomeStatement.totalDirectExpense + incomeStatement.totalSharedExpense;
-  const donutSegments =
-    donutMode === "profit"
-      ? [
-          {
-            label: t("dashboard:charts.revenue"),
-            value: Math.max(0, incomeStatement.totalRevenue),
-            color: "#10b981",
-            dotClass: "bg-emerald-500",
-          },
-          {
-            label: t("dashboard:charts.direct_expense"),
-            value: Math.max(0, incomeStatement.totalDirectExpense),
-            color: "#f59e0b",
-            dotClass: "bg-amber-500",
-          },
-          {
-            label: t("dashboard:charts.shared_expense"),
-            value: Math.max(0, incomeStatement.totalSharedExpense),
-            color: "#3b82f6",
-            dotClass: "bg-blue-500",
-          },
-        ]
-      : [
-          {
-            label: t("dashboard:charts.operating_inflow"),
-            value: Math.max(0, cashPosition.operatingInflow),
-            color: "#10b981",
-            dotClass: "bg-emerald-500",
-          },
-          {
-            label: t("dashboard:charts.operating_outflow"),
-            value: Math.max(0, cashPosition.operatingOutflow),
-            color: "#f43f5e",
-            dotClass: "bg-rose-500",
-          },
-          {
-            label: t("dashboard:charts.investing_financing"),
-            value: Math.abs(
-              cashPosition.netInvesting + cashPosition.netFinancing,
-            ),
-            color: "#3b82f6",
-            dotClass: "bg-blue-500",
-          },
-        ];
-
-  const expensePalette = [
-    { color: "#f59e0b", dotClass: "bg-amber-500" },
-    { color: "#0B43C8", dotClass: "bg-primary" },
-    { color: "#10b981", dotClass: "bg-emerald-500" },
-    { color: "#0ea5e9", dotClass: "bg-sky-500" },
-    { color: "#8b5cf6", dotClass: "bg-violet-500" },
-  ];
-
-  const expenseSlices = topExpenses.map((exp, idx) => {
-    const palette = expensePalette[idx % expensePalette.length] ?? {
-      color: "#f59e0b",
-      dotClass: "bg-amber-500",
-    };
-    return {
-      label: `${exp.code} — ${getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}`,
-      value: exp.amount,
-      color: palette.color,
-      dotClass: palette.dotClass,
-    };
-  });
-
-  const agingColors = ["#10b981", "#0ea5e9", "#f59e0b", "#f43f5e"];
-  const agingPieSlices = agingBuckets.map((b, idx) => ({
-    label: b.label,
-    value: b.amount,
-    color: agingColors[idx % agingColors.length] ?? "#10b981",
-    dotClass: b.dotColor,
-  }));
-
+  // 8 Pintasan Modul Keuangan (A6: Baris Chip Horizontal)
   const quickShortcuts = [
     {
       to: "/admin/persetujuan",
       label: t("dashboard.shortcuts.fund_approval", "Persetujuan Dana"),
-      desc: t("dashboard.shortcuts.fund_approval_desc", "Verifikasi & cairkan"),
       icon: HandCoinsIcon,
       tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
       badge:
         pendingApprovals + readyDisbursements > 0
-          ? `${pendingApprovals + readyDisbursements} ${t("dashboard:shortcuts.badge_queue")}`
+          ? `${pendingApprovals + readyDisbursements} ${t("dashboard:shortcuts.badge_queue", "Antrean")}`
           : null,
     },
     {
       to: "/admin/proyek",
       label: t("dashboard.shortcuts.projects_milestones", "Proyek & Termin"),
-      desc: t("dashboard.shortcuts.projects_milestones_desc", "SPK, BAKP, & UAT"),
       icon: FolderKanbanIcon,
       tone: "text-primary dark:text-cyan-400 bg-primary/10 border-primary/20",
       badge:
-        pendingClientPos > 0 ? `${pendingClientPos} ${t("dashboard:shortcuts.badge_new_po")}` : null,
+        pendingClientPos > 0
+          ? `${pendingClientPos} ${t("dashboard:shortcuts.badge_new_po", "PO Baru")}`
+          : null,
     },
     {
       to: "/admin/penagihan",
       label: t("dashboard.shortcuts.invoices_receivables", "Invoice & Piutang"),
-      desc: t("dashboard.shortcuts.invoices_receivables_desc", "Tagihan & kuitansi"),
       icon: ReceiptTextIcon,
       tone: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20",
-      badge: unpaidInvoiceCount > 0 ? `${unpaidInvoiceCount} ${t("dashboard:shortcuts.badge_unpaid")}` : null,
+      badge:
+        unpaidInvoiceCount > 0
+          ? `${unpaidInvoiceCount} ${t("dashboard:shortcuts.badge_unpaid", "Belum Lunas")}`
+          : null,
     },
     {
       to: "/admin/akuntansi",
       label: t("dashboard.shortcuts.journals_gl", "Jurnal & Buku Besar"),
-      desc: t("dashboard.shortcuts.journals_gl_desc", "Catat transaksi keuangan"),
       icon: ScaleIcon,
       tone: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
       badge: null,
@@ -610,7 +655,6 @@ export function AdminDashboardPage() {
     {
       to: "/admin/akuntansi/laporan",
       label: t("dashboard.shortcuts.financial_reports", "Laporan Keuangan"),
-      desc: t("dashboard.shortcuts.financial_reports_desc", "Laba Rugi & Neraca"),
       icon: BarChart3Icon,
       tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
       badge: null,
@@ -618,15 +662,16 @@ export function AdminDashboardPage() {
     {
       to: "/admin/po-internal",
       label: t("dashboard.shortcuts.vendor_po", "PO Vendor"),
-      desc: t("dashboard.shortcuts.vendor_po_desc", "Pengadaan internal"),
       icon: ShoppingCartIcon,
       tone: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
-      badge: activePoCount > 0 ? `${activePoCount} ${t("dashboard:shortcuts.badge_active")}` : null,
+      badge:
+        activePoCount > 0
+          ? `${activePoCount} ${t("dashboard:shortcuts.badge_active", "Aktif")}`
+          : null,
     },
     {
       to: "/admin/anggaran",
       label: t("dashboard.shortcuts.project_budget", "Budgeting Proyek"),
-      desc: t("dashboard.shortcuts.project_budget_desc", "Pagu & realisasi"),
       icon: PiggyBankIcon,
       tone: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20",
       badge: null,
@@ -634,7 +679,6 @@ export function AdminDashboardPage() {
     {
       to: "/admin/bagi-hasil",
       label: t("dashboard.shortcuts.profit_sharing", "Bagi Hasil & Master"),
-      desc: t("dashboard.shortcuts.profit_sharing_desc", "Distribusi tim"),
       icon: CoinsIcon,
       tone: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
       badge: null,
@@ -643,7 +687,7 @@ export function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header Halaman */}
+      {/* A1: Header Halaman + Filter Periode Global + Unduh/Ekspor */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -656,7 +700,12 @@ export function AdminDashboardPage() {
             )}
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-2.5">
+          <PeriodFilter
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            periods={periods}
+          />
           <ExportDownloadMenu
             label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleBackupExport}
@@ -666,298 +715,256 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Kartu KPI Utama (Proper Case + Ikon Semantik) */}
+      {/* A2: Baris 1, Empat Kartu KPI Utama (KpiCard) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("dashboard.kpi.ending_cash", "Kas & Bank Terkini")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              <AnimatedNumber value={cashPosition.endingCash} formatter={formatRupiah} />
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {openPeriods > 0
-                ? `${openPeriods} ${t("dashboard.kpi.open_periods", "periode buku aktif terbuka")}`
-                : t("dashboard.kpi.all_periods_closed", "Seluruh periode buku ditutup")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
+        {/* KPI 1: Kas & Bank */}
+        <KpiCard
+          label={t("dashboard.kpi.ending_cash", "Kas & Bank Terkini")}
+          value={cashPosition.endingCash}
+          formatter={formatRupiah}
+          subtext={
+            openPeriods > 0
+              ? `${openPeriods} ${t("dashboard.kpi.open_periods", "periode buku aktif terbuka")}`
+              : t("dashboard.kpi.all_periods_closed", "Seluruh periode buku ditutup")
+          }
+          icon={WalletIcon}
+          iconTone="bg-primary/10 text-primary dark:text-cyan-400 border-primary/20"
+          to="/admin/akuntansi/laporan"
+          sparklineData={cashSparkline}
+          changePercent={cashChangePct}
+          changeLabel={t("dashboard:charts.vs_prev_period", "vs periode lalu")}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("dashboard.kpi.pending_approvals", "Antrean Pembayaran")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              <AnimatedNumber
-                value={pendingApprovals}
-                suffix={` ${t("dashboard.kpi.submissions", "Pengajuan")}`}
-              />
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {readyDisbursements > 0
-                ? `${readyDisbursements} ${t("dashboard.kpi.ready_disbursements", "siap dicairkan ke rekening")}`
-                : pendingApprovals > 0
-                  ? `${pendingApprovals} ${t("dashboard.kpi.awaiting_verification", "menunggu verifikasi Anda")}`
-                  : t("dashboard.kpi.all_processed", "Semua pengajuan telah diproses")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ClockIcon className="size-5" />
-          </div>
-        </Card>
+        {/* KPI 2: Antrean Pembayaran */}
+        <KpiCard
+          label={t("dashboard.kpi.pending_approvals", "Antrean Pembayaran")}
+          value={pendingApprovals + readyDisbursements}
+          suffix={` ${t("dashboard.kpi.submissions", "Pengajuan")}`}
+          subtext={
+            readyDisbursements > 0
+              ? `${readyDisbursements} ${t("dashboard.kpi.ready_disbursements", "siap dicairkan ke rekening")}`
+              : pendingApprovals > 0
+                ? `${pendingApprovals} ${t("dashboard.kpi.awaiting_verification", "menunggu verifikasi Anda")}`
+                : t("dashboard.kpi.all_processed", "Semua pengajuan telah diproses")
+          }
+          icon={ClockIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          to="/admin/persetujuan"
+          invertChangeTone
+          sparklineData={[readyDisbursements, pendingApprovals]}
+          changePercent={null}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              <AnimatedNumber value={outstandingReceivable} formatter={formatRupiah} />
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {unpaidInvoiceCount > 0
-                ? `${unpaidInvoiceCount} ${t("dashboard.kpi.invoices_awaiting_payment", "invoice menunggu pelunasan")}`
-                : pendingClientPos > 0
-                  ? `${pendingClientPos} ${t("dashboard.kpi.client_pos_need_verification", "PO klien perlu verifikasi")}`
-                  : t("dashboard.kpi.all_receivables_managed", "Seluruh tagihan klien terkelola")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-            <ReceiptTextIcon className="size-5" />
-          </div>
-        </Card>
+        {/* KPI 3: Piutang Belum Tertagih */}
+        <KpiCard
+          label={t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih")}
+          value={outstandingReceivable}
+          formatter={formatRupiah}
+          subtext={
+            unpaidInvoiceCount > 0
+              ? `${unpaidInvoiceCount} ${t("dashboard.kpi.invoices_awaiting_payment", "invoice menunggu pelunasan")}`
+              : pendingClientPos > 0
+                ? `${pendingClientPos} ${t("dashboard.kpi.client_pos_need_verification", "PO klien perlu verifikasi")}`
+                : t("dashboard.kpi.all_receivables_managed", "Seluruh tagihan klien terkelola")
+          }
+          icon={ReceiptTextIcon}
+          iconTone="bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20"
+          to="/admin/penagihan"
+          invertChangeTone
+          sparklineData={agingBuckets.map((b) => b.amount)}
+          changePercent={null}
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("dashboard.kpi.contract_commitments", "Komitmen Kontrak")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              <AnimatedNumber value={totalContract} formatter={formatRupiah} />
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("dashboard.kpi.accumulated_from", "Akumulasi dari")} {projects.length}{" "}
-              {t("dashboard.kpi.client_projects", "proyek klien")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2Icon className="size-5" />
-          </div>
-        </Card>
+        {/* KPI 4: Komitmen Kontrak */}
+        <KpiCard
+          label={t("dashboard.kpi.contract_commitments", "Komitmen Kontrak")}
+          value={totalContract}
+          formatter={formatRupiah}
+          subtext={`${t("dashboard.kpi.accumulated_from", "Akumulasi dari")} ${projects.length} ${t("dashboard.kpi.client_projects", "proyek klien")}`}
+          icon={CheckCircle2Icon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          to="/admin/proyek"
+          sparklineData={projects.map((p) => p.contract_value)}
+          changePercent={null}
+        />
       </div>
 
-      {/* Bilah Pintasan Cepat ke Halaman Penting */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
-              {t("dashboard.shortcuts.title", "Pintasan Cepat Modul Keuangan")}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                "dashboard.shortcuts.subtitle",
-                "Akses langsung ke menu operasional, penagihan, dan pelaporan utama.",
-              )}
-            </p>
-          </div>
-          <Link
-            to="/admin/master"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-cyan-400 hover:underline shrink-0"
-          >
-            <ClipboardListIcon className="size-3.5" />
-            <span>
-              {t("dashboard.shortcuts.master_link", "Master Vendor & Klien")}
-            </span>
-            <ArrowRightIcon className="size-3" />
-          </Link>
-        </div>
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-          {quickShortcuts.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="group relative flex items-center gap-3 rounded-2xl border border-border/80 bg-card px-4 py-3.5 shadow-2xs transition-all duration-150 hover:border-primary/50 hover:bg-muted/30"
+      {/* A6: Pintasan Modul (Baris Chip Horizontal Ringkas & Cepat) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
+          {t("dashboard.shortcuts.title", "Pintasan:")}
+        </span>
+        {quickShortcuts.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:border-primary/50 hover:bg-muted/40 transition-all shrink-0 cursor-pointer"
+            >
+              <div
+                className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-md border",
+                  item.tone,
+                )}
               >
-                <div
-                  className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-transform duration-150 group-hover:scale-105",
-                    item.tone,
-                  )}
-                >
-                  <Icon className="size-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                      {item.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <span className="text-[11px] text-muted-foreground truncate">
-                      {item.desc}
-                    </span>
-                    {item.badge ? (
-                      <span className="shrink-0 rounded-full bg-primary/12 text-primary dark:text-cyan-400 px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums">
-                        {item.badge}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <ArrowRightIcon className="size-3.5 shrink-0 text-muted-foreground/60 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-primary" />
-              </Link>
-            );
-          })}
-        </div>
+                <Icon className="size-3" />
+              </div>
+              <span className="whitespace-nowrap">{item.label}</span>
+              {item.badge ? (
+                <span className="rounded-full bg-primary/12 text-primary dark:text-cyan-400 px-1.5 py-0.5 text-[10px] font-bold leading-none tabular-nums">
+                  {item.badge}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
+        <Link
+          to="/admin/master"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-border/80 px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-primary hover:border-primary/50 transition-all shrink-0 ml-auto"
+        >
+          <ClipboardListIcon className="size-3.5" />
+          <span>{t("dashboard.shortcuts.master_link", "Master Data")}</span>
+          <ArrowRightIcon className="size-3" />
+        </Link>
       </div>
 
-      {/* Baris Grafik Analisis Utama: Tren Bulanan + Komposisi Laba Rugi / Arus Kas */}
+      {/* A3: Baris 2, Tren Bulanan (2/3) & Komposisi Keuangan (1/3) */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Grafik 1: Tren Pendapatan, Beban, & Arus Kas Bulanan */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden lg:col-span-2 flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard.charts.trends_title", "Tren Pendapatan, Beban, & Arus Kas")}
-              </CardTitle>
-              <CardDescription>
-                {t(
-                  "dashboard.charts.trends_subtitle",
-                  "Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.",
-                )}
-              </CardDescription>
+        <ChartCard
+          className="lg:col-span-2"
+          title={t("dashboard.charts.trends_title", "Tren Pendapatan, Beban, & Arus Kas")}
+          subtitle={t(
+            "dashboard.charts.trends_subtitle",
+            "Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.",
+          )}
+          controls={
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 rounded-xs bg-emerald-500" />
+                {t("dashboard:charts.revenue", "Pendapatan")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 rounded-xs bg-amber-500" />
+                {t("dashboard:charts.expense", "Beban")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 rounded-xs bg-primary" />
+                {t("dashboard:charts.net_cash", "Kas Bersih")}
+              </span>
             </div>
-            {trendChartType !== "bubble" ? (
-              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground shrink-0">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-emerald-500" />
-                  {t("dashboard:charts.revenue")}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-amber-500" />
-                  {t("dashboard:charts.expense")}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-2.5 rounded-xs bg-primary" />
-                  {t("dashboard:charts.net_cash")}
-                </span>
-              </div>
-            ) : null}
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            <MultiSeriesChart
-              chartType={trendChartType}
-              data={monthlyChartData}
-              series={[
-                {
-                  key: "revenue",
-                  label: t("dashboard:charts.revenue"),
-                  color: "#10b981",
-                  textClass: "text-emerald-600 dark:text-emerald-400",
-                },
-                {
-                  key: "expense",
-                  label: t("dashboard:charts.expense"),
-                  color: "#f59e0b",
-                  textClass: "text-amber-600 dark:text-amber-400",
-                },
-                {
-                  key: "netCash",
-                  label: t("dashboard:charts.net_cash"),
-                  color: "#0B43C8",
-                  textClass: "text-primary dark:text-sky-400",
-                },
-              ]}
-              formatValue={formatRupiah}
-              formatShortValue={formatCompactRupiah}
-              bubbleConfig={{
-                xKey: "revenue",
-                yKey: "expense",
-                sizeKey: "netCash",
-                xLabel: t("dashboard:charts.revenue"),
-                yLabel: t("dashboard:charts.expense"),
-                sizeLabel: t("dashboard:charts.net_cash_scale"),
-                showBreakEvenLine: true,
-              }}
-              emptyTitle={t("dashboard:charts.empty_trends_title")}
-              emptySubtitle={t("dashboard:charts.empty_trends_desc")}
-            />
+          }
+          footer={
+            <ChartCardFooter>
+              <ChartTypeSwitcher
+                value={trendChartType}
+                onChange={setTrendChartType}
+                options={[
+                  {
+                    value: "column",
+                    label: t("dashboard:charts.types.column", "Kolom"),
+                    title: t("dashboard:charts.types.column_title", "Column Chart"),
+                    icon: BarChart3Icon,
+                  },
+                  {
+                    value: "bar",
+                    label: t("dashboard:charts.types.bar", "Batang"),
+                    title: t("dashboard:charts.types.bar_title", "Bar Chart"),
+                    icon: BarChartHorizontalIcon,
+                  },
+                  {
+                    value: "area",
+                    label: t("dashboard:charts.types.area", "Area"),
+                    title: t("dashboard:charts.types.area_title", "Area Chart"),
+                    icon: ActivityIcon,
+                  },
+                ]}
+              />
+            </ChartCardFooter>
+          }
+        >
+          <MultiSeriesChart
+            chartType={trendChartType}
+            data={monthlyChartData}
+            series={[
+              {
+                key: "revenue",
+                label: t("dashboard:charts.revenue", "Pendapatan"),
+                color: "#10b981",
+                textClass: "text-emerald-600 dark:text-emerald-400",
+              },
+              {
+                key: "expense",
+                label: t("dashboard:charts.expense", "Beban"),
+                color: "#f59e0b",
+                textClass: "text-amber-600 dark:text-amber-400",
+              },
+              {
+                key: "netCash",
+                label: t("dashboard:charts.net_cash", "Kas Bersih"),
+                color: "#0B43C8",
+                textClass: "text-primary dark:text-sky-400",
+              },
+            ]}
+            formatValue={formatRupiah}
+            formatShortValue={formatCompactRupiah}
+            emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Data Jurnal Terposting")}
+            emptySubtitle={t(
+              "dashboard:charts.empty_trends_desc",
+              "Grafik tren bulanan otomatis muncul setelah transaksi pendapatan, beban, atau kas dicatat di buku jurnal.",
+            )}
+          />
 
-            {/* Footer Ringkasan Laba Rugi */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
-              <div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("dashboard:charts.total_revenue")}
-                </p>
-                <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                  {formatRupiah(incomeStatement.totalRevenue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("dashboard:charts.total_expense")}
-                </p>
-                <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
-                  {formatRupiah(totalExpense)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("dashboard:charts.net_profit_loss")}
-                </p>
-                <p
-                  className={cn(
-                    "text-xs sm:text-sm font-bold tabular-nums mt-0.5 inline-flex items-center gap-1",
-                    incomeStatement.netProfit >= 0
-                      ? "text-foreground"
-                      : "text-destructive",
-                  )}
-                >
-                  {incomeStatement.netProfit >= 0 ? (
-                    <TrendingUpIcon className="size-3.5 text-emerald-500" />
-                  ) : (
-                    <TrendingDownIcon className="size-3.5 text-rose-500" />
-                  )}
-                  {formatRupiah(incomeStatement.netProfit)}
-                </p>
-              </div>
+          {/* Footer Ringkasan Laba Rugi */}
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border/60">
+            <div>
+              <p className="text-[11px] text-muted-foreground">
+                {t("dashboard:charts.total_revenue", "Total Pendapatan")}
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
+                {formatRupiah(incomeStatement.totalRevenue)}
+              </p>
             </div>
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={trendChartType}
-              onChange={setTrendChartType}
-              options={[
-                { value: "column", label: t("dashboard:charts.types.column"), title: t("dashboard:charts.types.column_title"), icon: BarChart3Icon },
-                { value: "bar", label: t("dashboard:charts.types.bar"), title: t("dashboard:charts.types.bar_title"), icon: BarChartHorizontalIcon },
-                { value: "line", label: t("dashboard:charts.types.line"), title: t("dashboard:charts.types.line_title"), icon: TrendingUpIcon },
-                { value: "area", label: t("dashboard:charts.types.area"), title: t("dashboard:charts.types.area_title"), icon: ActivityIcon },
-                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: t("dashboard:charts.types.bubble_title"), icon: CircleDotIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
-
-        {/* Grafik 2: Komposisi Laba Rugi / Arus Kas (Donut, Pie, Bar) */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard.charts.composition_title", "Komposisi Keuangan")}
-              </CardTitle>
-              <CardDescription>
-                {t(
-                  "dashboard.charts.composition_subtitle",
-                  "Proporsi struktur keuangan dan likuiditas kas.",
+            <div>
+              <p className="text-[11px] text-muted-foreground">
+                {t("dashboard:charts.total_expense", "Total Beban")}
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
+                {formatRupiah(totalExpense)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground">
+                {t("dashboard:charts.net_profit_loss", "Laba / Rugi Bersih")}
+              </p>
+              <p
+                className={cn(
+                  "text-xs sm:text-sm font-bold tabular-nums mt-0.5 inline-flex items-center gap-1",
+                  incomeStatement.netProfit >= 0
+                    ? "text-foreground"
+                    : "text-destructive",
                 )}
-              </CardDescription>
+              >
+                {incomeStatement.netProfit >= 0 ? (
+                  <TrendingUpIcon className="size-3.5 text-emerald-500" />
+                ) : (
+                  <TrendingDownIcon className="size-3.5 text-rose-500" />
+                )}
+                {formatRupiah(incomeStatement.netProfit)}
+              </p>
             </div>
+          </div>
+        </ChartCard>
+
+        {/* Grafik 2: Komposisi Keuangan (Donut & Bar) */}
+        <ChartCard
+          title={t("dashboard.charts.composition_title", "Komposisi Keuangan")}
+          subtitle={t(
+            "dashboard.charts.composition_subtitle",
+            "Proporsi struktur keuangan dan likuiditas kas.",
+          )}
+          controls={
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
               <button
                 type="button"
@@ -969,7 +976,7 @@ export function AdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {t("dashboard:charts.tab_profit_loss")}
+                {t("dashboard:charts.tab_profit_loss", "Laba Rugi")}
               </button>
               <button
                 type="button"
@@ -981,356 +988,397 @@ export function AdminDashboardPage() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {t("dashboard:charts.tab_cash_flow")}
+                {t("dashboard:charts.tab_cash_flow", "Arus Kas")}
               </button>
             </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-between gap-5">
-            <CompositionChart
-              chartType={compositionChartType}
-              slices={donutSegments}
-              centerLabel={donutMode === "profit" ? t("dashboard:charts.center_net_profit") : t("dashboard:charts.center_cash_balance")}
-              centerValue={formatCompactRupiah(
-                donutMode === "profit"
-                  ? incomeStatement.netProfit
-                  : cashPosition.endingCash,
-              )}
-              formatValue={formatRupiah}
-              emptyTitle={t("dashboard:charts.empty_composition_title")}
-              emptySubtitle={t("dashboard:charts.empty_composition_desc")}
-            />
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={compositionChartType}
-              onChange={setCompositionChartType}
-              options={[
-                { value: "donut", label: t("dashboard:charts.types.donut"), icon: CircleDotIcon },
-                { value: "pie", label: t("dashboard:charts.types.pie"), icon: PieChartIcon },
-                { value: "bar", label: t("dashboard:charts.types.bar"), icon: BarChartHorizontalIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
+          }
+          footer={
+            <ChartCardFooter>
+              <ChartTypeSwitcher
+                value={compositionChartType}
+                onChange={setCompositionChartType}
+                options={[
+                  {
+                    value: "donut",
+                    label: t("dashboard:charts.types.donut", "Donut"),
+                    icon: CircleDotIcon,
+                  },
+                  {
+                    value: "bar",
+                    label: t("dashboard:charts.types.bar", "Batang"),
+                    icon: BarChartHorizontalIcon,
+                  },
+                ]}
+              />
+            </ChartCardFooter>
+          }
+        >
+          <CompositionChart
+            chartType={compositionChartType}
+            slices={donutSegments}
+            centerLabel={
+              donutMode === "profit"
+                ? t("dashboard:charts.center_net_profit", "Laba Bersih")
+                : t("dashboard:charts.center_cash_balance", "Saldo Kas")
+            }
+            centerValue={formatCompactRupiah(
+              donutMode === "profit"
+                ? incomeStatement.netProfit
+                : cashPosition.endingCash,
+            )}
+            formatValue={formatRupiah}
+            emptyTitle={t("dashboard:charts.empty_composition_title", "Belum Ada Komposisi Keuangan")}
+            emptySubtitle={t(
+              "dashboard:charts.empty_composition_desc",
+              "Grafik proporsi otomatis terisi setelah transaksi dibukukan.",
+            )}
+          />
+        </ChartCard>
       </div>
 
-      {/* Baris Grafik Analisis Kedua: Penagihan & Piutang + Pos Beban & Jurnal Terbaru */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Grafik 3: Progress Penagihan Proyek & Umur Piutang */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard:charts.billing_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("dashboard:charts.billing_subtitle")}
-              </CardDescription>
+      {/* A4: Baris 3, Tiga Kartu Sejajar: Top 5 Beban, Frekuensi Transaksi, Penagihan & Umur Piutang */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Kartu 1: Top 5 Beban (B1) */}
+        <ChartCard
+          title={t("dashboard:charts.top_5_expenses_title", "Top 5 Pos Beban")}
+          subtitle={t(
+            "dashboard:charts.top_5_expenses_subtitle",
+            "Akun beban dengan realisasi terbesar pada periode terpilih.",
+          )}
+          controls={
+            <Link
+              to="/admin/akuntansi?tab=jurnal"
+              className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
+            >
+              {t("dashboard:charts.link_general_journal", "Buku Jurnal")}
+            </Link>
+          }
+        >
+          {topExpenses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10">
+              <p className="text-xs font-semibold text-foreground">
+                {t("dashboard:charts.empty_expenses_title", "Belum Ada Pengeluaran Beban Terposting")}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1 max-w-xs leading-relaxed">
+                {t("dashboard:charts.empty_expenses_desc", "Pos beban terbesar akan tampil otomatis setelah transaksi jurnal beban dicatat.")}
+              </p>
             </div>
+          ) : (
+            <div className="space-y-3.5">
+              {topExpenses.map((exp) => {
+                const widthPct = Math.max(
+                  8,
+                  Math.round((exp.amount / maxExpenseItem) * 100),
+                );
+                const sharePct =
+                  totalExpense > 0
+                    ? ((exp.amount / totalExpense) * 100).toFixed(1)
+                    : "0";
+                return (
+                  <Link
+                    key={exp.code}
+                    to="/admin/akuntansi?tab=jurnal"
+                    className="block group rounded-xl p-2 -mx-2 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                        <span className="font-mono text-muted-foreground">{exp.code}</span>
+                        {" \u2014 "}
+                        {getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}
+                      </span>
+                      <span className="font-semibold text-foreground tabular-nums shrink-0">
+                        {formatRupiah(exp.amount)}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <div className="h-2 flex-1 rounded-full bg-muted/60 overflow-hidden">
+                        <div
+                          style={{ width: `${widthPct}%` }}
+                          className="h-full rounded-full bg-amber-500/85 transition-all duration-300"
+                        />
+                      </div>
+                      <span className="text-[10px] font-medium text-muted-foreground tabular-nums shrink-0 w-9 text-right">
+                        {sharePct}%
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </ChartCard>
+
+        {/* Kartu 2: Frekuensi Transaksi (B2) */}
+        <ChartCard
+          title={t("dashboard:charts.tx_frequency_title", "Frekuensi Transaksi")}
+          subtitle={t(
+            "dashboard:charts.tx_frequency_subtitle",
+            "Jumlah jurnal terposting per bulan kalender.",
+          )}
+          controls={
+            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setTxFreqMode("bar")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  txFreqMode === "bar"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t("dashboard:charts.types.column", "Bulanan")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTxFreqMode("histogram")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  txFreqMode === "histogram"
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t("dashboard:charts.types.histogram", "Distribusi")}
+              </button>
+            </div>
+          }
+        >
+          {txFreqMode === "histogram" ? (
+            <HistogramChart
+              bins={journalHistogram.bins}
+              average={journalHistogram.average}
+              median={journalHistogram.median}
+              totalCount={journalHistogram.totalCount}
+              unitLabel={t("dashboard:charts.unit_journals", "Jurnal")}
+              accentColor="#0B43C8"
+              emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Data Jurnal Terposting")}
+              emptySubtitle={t("dashboard:charts.empty_trends_desc", "Histogram sebaran nominal muncul otomatis setelah transaksi dicatat.")}
+            />
+          ) : (
+            <div className="space-y-4">
+              <MultiSeriesChart
+                chartType="column"
+                data={txFreqChartData}
+                series={[
+                  {
+                    key: "count",
+                    label: t("dashboard:charts.tx_unit", "Jurnal"),
+                    color: "#0B43C8",
+                    textClass: "text-primary dark:text-sky-400",
+                  },
+                ]}
+                formatValue={(v) => `${v} ${t("dashboard:charts.tx_unit", "Jurnal")}`}
+                formatShortValue={(v) => `${v}`}
+                emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Transaksi")}
+                emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
+              />
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/60">
+                <div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("dashboard:charts.total_tx", "Total Transaksi")}
+                  </p>
+                  <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums mt-0.5">
+                    {totalTxCount} {t("dashboard:charts.tx_unit", "Jurnal")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("dashboard:charts.avg_monthly_tx", "Rata-Rata / Bulan")}
+                  </p>
+                  <p className="text-xs sm:text-sm font-bold text-primary dark:text-cyan-400 tabular-nums mt-0.5">
+                    {avgTxPerMonth} {t("dashboard:charts.tx_unit", "Jurnal")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </ChartCard>
+
+        {/* Kartu 3: Penagihan & Umur Piutang */}
+        <ChartCard
+          title={t("dashboard:charts.billing_title", "Realisasi Penagihan & Piutang")}
+          subtitle={t(
+            "dashboard:charts.billing_subtitle",
+            "Perbandingan nilai kontrak terhadap invoice terbit serta sebaran jatuh tempo.",
+          )}
+          controls={
             <Link
               to="/admin/penagihan"
               className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
             >
-              {t("dashboard:charts.link_manage_invoices")}
+              {t("dashboard:charts.link_manage_invoices", "Kelola Tagihan")}
             </Link>
-          </CardHeader>
-          <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
-            {billingChartType === "pie" ? (
-              <CompositionChart
-                chartType="pie"
-                slices={agingPieSlices}
-                formatValue={formatRupiah}
-                emptyTitle={t("dashboard:charts.empty_aging_title")}
-                emptySubtitle={t("dashboard:charts.empty_aging_desc")}
-              />
-            ) : billingChartType === "column" || billingChartType === "bubble" ? (
-              <div className="space-y-4">
-                <MultiSeriesChart
-                  chartType={billingChartType}
-                  data={projectBillingStats.map((pb) => ({
-                    key: pb.id,
-                    label: pb.code,
-                    values: {
-                      contract: pb.contract,
-                      billed: pb.billed,
-                      paid: pb.paid,
-                    },
-                  }))}
-                  series={[
-                    {
-                      key: "contract",
-                      label: t("dashboard:charts.contract"),
-                      color: "#64748b",
-                      textClass: "text-muted-foreground",
-                    },
-                    {
-                      key: "billed",
-                      label: t("dashboard:charts.billed"),
-                      color: "#0B43C8",
-                      textClass: "text-primary dark:text-sky-400",
-                    },
-                    {
-                      key: "paid",
-                      label: t("dashboard:charts.paid"),
-                      color: "#10b981",
-                      textClass: "text-emerald-600 dark:text-emerald-400",
-                    },
-                  ]}
-                  formatValue={formatRupiah}
-                  formatShortValue={formatCompactRupiah}
-                  bubbleConfig={{
-                    xKey: "contract",
-                    yKey: "billed",
-                    sizeKey: "paid",
-                    xLabel: t("dashboard:charts.contract"),
-                    yLabel: t("dashboard:charts.billed"),
-                    sizeLabel: t("dashboard:charts.paid"),
-                    showBreakEvenLine: true,
-                  }}
-                  emptyTitle={t("dashboard:charts.empty_projects_title")}
-                  emptySubtitle={t("dashboard:charts.empty_projects_desc")}
-                />
-                {billingChartType === "column" ? (
-                  <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="size-2.5 rounded-xs bg-slate-500" />
-                      {t("dashboard:charts.contract")}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="size-2.5 rounded-xs bg-primary" />
-                      {t("dashboard:charts.billed")}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="size-2.5 rounded-xs bg-emerald-500" />
-                      {t("dashboard:charts.paid")}
+          }
+        >
+          {projectBillingStats.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-6 text-center">
+              {t("dashboard:charts.empty_projects_billing", "Belum ada proyek klien aktif untuk dianalisis.")}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {projectBillingStats.map((pb) => (
+                <div key={pb.id} className="space-y-1">
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <Link
+                      to={`/admin/proyek/${pb.id}`}
+                      className="font-semibold text-foreground hover:text-primary truncate"
+                      title={pb.name}
+                    >
+                      {pb.code} &mdash; {pb.name}
+                    </Link>
+                    <span className="text-muted-foreground shrink-0 tabular-nums text-[11px]">
+                      {formatCompactRupiah(pb.billed)} / {formatCompactRupiah(pb.contract)} ({pb.pct}%)
                     </span>
                   </div>
-                ) : null}
-              </div>
-            ) : projectBillingStats.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-4 text-center">
-                {t("dashboard:charts.empty_projects_billing")}
-              </p>
-            ) : (
-              <div className="space-y-3.5">
-                {projectBillingStats.map((pb) => (
-                  <div key={pb.id} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <Link
-                        to={`/admin/proyek/${pb.id}`}
-                        className="font-semibold text-foreground hover:text-primary truncate"
-                        title={pb.name}
-                      >
-                        {pb.code} &mdash; {pb.name}
-                      </Link>
-                      <span className="text-muted-foreground shrink-0 tabular-nums">
-                        {formatCompactRupiah(pb.billed)} /{" "}
-                        {formatCompactRupiah(pb.contract)} ({pb.pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2.5 w-full rounded-full bg-muted/60 overflow-hidden">
-                      <div
-                        style={{ width: `${pb.pct}%` }}
-                        className="h-full rounded-full bg-primary transition-all duration-300"
-                      />
-                    </div>
+                  <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+                    <div
+                      style={{ width: `${pb.pct}%` }}
+                      className="h-full rounded-full bg-primary transition-all duration-300"
+                    />
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
+          )}
 
-            <div className="pt-4 border-t border-border/60 space-y-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground">
-                  {t("dashboard:charts.aging_title")}
-                </span>
-                <span className="text-muted-foreground tabular-nums">
-                  Total: {formatRupiah(outstandingReceivable)}
-                </span>
-              </div>
-              <div className="flex h-2.5 w-full rounded-full bg-muted/50 overflow-hidden gap-0.5">
-                {outstandingReceivable > 0
-                  ? agingBuckets.map((b) =>
-                      b.amount > 0 ? (
-                        <div
-                          key={b.label}
-                          style={{
-                            width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
-                          }}
-                          className={cn("h-full", b.color)}
-                          title={`${b.label}: ${formatRupiah(b.amount)}`}
-                        />
-                      ) : null,
-                    )
-                  : null}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                {agingBuckets.map((b) => (
-                  <div key={b.label} className="text-[11px]">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <span
-                        className={cn("size-2 rounded-full shrink-0", b.dotColor)}
+          {/* Aging Distribution */}
+          <div className="pt-3 border-t border-border/60 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">
+                {t("dashboard:charts.aging_title", "Sebaran Umur Piutang")}
+              </span>
+              <span className="text-muted-foreground tabular-nums text-[11px]">
+                Total: {formatRupiah(outstandingReceivable)}
+              </span>
+            </div>
+            <div className="flex h-2 w-full rounded-full bg-muted/50 overflow-hidden gap-0.5">
+              {outstandingReceivable > 0
+                ? agingBuckets.map((b) =>
+                    b.amount > 0 ? (
+                      <div
+                        key={b.label}
+                        style={{
+                          width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
+                        }}
+                        className={cn("h-full", b.color)}
+                        title={`${b.label}: ${formatRupiah(b.amount)}`}
                       />
-                      <span className="truncate">{b.label}</span>
-                    </div>
-                    <p className="font-semibold text-foreground tabular-nums mt-0.5">
-                      {formatCompactRupiah(b.amount)}
+                    ) : null,
+                  )
+                : null}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+              {agingBuckets.map((b) => (
+                <div key={b.label} className="text-[10px]">
+                  <div className="flex items-center gap-1 text-muted-foreground truncate">
+                    <span className={cn("size-1.5 rounded-full shrink-0", b.dotColor)} />
+                    <span className="truncate">{b.label}</span>
+                  </div>
+                  <p className="font-semibold text-foreground tabular-nums mt-0.5">
+                    {formatCompactRupiah(b.amount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* A5: Baris 4, 5 Transaksi Terakhir (Lebar Penuh) */}
+      <ChartCard
+        title={t("dashboard:charts.recent_5_tx_title", "5 Transaksi Terakhir")}
+        subtitle={t(
+          "dashboard:charts.recent_5_tx_subtitle",
+          "Catatan transaksi jurnal terposting paling mutakhir.",
+        )}
+        controls={
+          <Button variant="outline" size="sm" asChild className="h-8 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer gap-1.5">
+            <Link to="/admin/akuntansi?tab=jurnal">
+              <span>{t("dashboard:charts.view_all_journals", "Lihat Semua Jurnal")}</span>
+              <ArrowRightIcon className="size-3.5" />
+            </Link>
+          </Button>
+        }
+        contentClassName="p-0"
+      >
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/20 hover:bg-muted/20">
+              <TableHead className="pl-6 pr-3 text-center font-semibold text-xs whitespace-nowrap">
+                {t("dashboard:charts.col_date", "Tanggal")}
+              </TableHead>
+              <TableHead className="px-3 text-center font-semibold text-xs whitespace-nowrap">
+                {t("dashboard:charts.col_journal_no", "No. Jurnal")}
+              </TableHead>
+              <TableHead className="px-3 text-center font-semibold text-xs min-w-[220px]">
+                {t("dashboard:charts.col_desc", "Keterangan")}
+              </TableHead>
+              <TableHead className="px-3 text-center font-semibold text-xs whitespace-nowrap">
+                {t("dashboard:charts.col_main_account", "Akun Utama")}
+              </TableHead>
+              <TableHead className="pl-3 pr-6 text-center font-semibold text-xs whitespace-nowrap">
+                {t("dashboard:charts.col_amount", "Nominal")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recentJournals.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={5} className="p-0">
+                  <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                    <ScaleIcon className="size-8 text-muted-foreground/60 mb-2" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t("dashboard:charts.empty_tx_title", "Belum Ada Transaksi")}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
+                      {t("dashboard:charts.empty_tx_desc", "Transaksi jurnal terposting akan otomatis muncul di sini.")}
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={billingChartType}
-              onChange={setBillingChartType}
-              options={[
-                { value: "bar", label: t("dashboard:charts.types.progress"), icon: BarChartHorizontalIcon },
-                { value: "column", label: t("dashboard:charts.types.column"), title: t("dashboard:charts.chart_contract_vs_billed_title"), icon: BarChart3Icon },
-                { value: "pie", label: t("dashboard:charts.types.pie_receivables"), title: t("dashboard:charts.chart_ar_aging_title"), icon: PieChartIcon },
-                { value: "bubble", label: t("dashboard:charts.types.bubble"), title: t("dashboard:charts.chart_bubble_contract_billed_title"), icon: CircleDotIcon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
-
-        {/* Grafik 4: Pos Beban Terbesar, Histogram Transaksi, & Aktivitas Jurnal Terbaru */}
-        <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-row items-center justify-between gap-2">
-            <div className="space-y-1 min-w-0">
-              <CardTitle>
-                {t("dashboard:charts.top_expenses_title")}
-              </CardTitle>
-              <CardDescription>
-                {expenseChartType === "histogram"
-                  ? t("dashboard:charts.chart_histogram_desc")
-                  : t("dashboard:charts.top_expenses_subtitle")}
-              </CardDescription>
-            </div>
-            <Link
-              to="/admin/akuntansi"
-              className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline shrink-0"
-            >
-              {t("dashboard:charts.link_general_journal")}
-            </Link>
-          </CardHeader>
-          <CardContent className="p-6 space-y-5 flex-1 flex flex-col justify-between">
-            {expenseChartType === "histogram" ? (
-              <HistogramChart
-                bins={journalHistogram.bins}
-                average={journalHistogram.average}
-                median={journalHistogram.median}
-                totalCount={journalHistogram.totalCount}
-                unitLabel={t("dashboard:charts.unit_journals")}
-                accentColor="#0B43C8"
-                emptyTitle={t("dashboard:charts.empty_trends_title")}
-                emptySubtitle={t("dashboard:charts.empty_trends_desc")}
-              />
-            ) : expenseChartType === "pie" ? (
-              <CompositionChart
-                chartType="pie"
-                slices={expenseSlices}
-                formatValue={formatRupiah}
-                emptyTitle={t("dashboard:charts.empty_expenses_title")}
-                emptySubtitle={t("dashboard:charts.empty_expenses_pie_desc")}
-              />
-            ) : topExpenses.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 py-6 px-4 text-center">
-                <p className="text-xs font-medium text-foreground">
-                  {t("dashboard:charts.empty_expenses_title")}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {t("dashboard:charts.empty_expenses_desc")}
-                </p>
-              </div>
+                </TableCell>
+              </TableRow>
             ) : (
-              <div className="space-y-3">
-                {topExpenses.map((exp) => {
-                  const widthPct = Math.max(
-                    6,
-                    Math.round((exp.amount / maxExpenseItem) * 100),
-                  );
-                  return (
-                    <div key={exp.code} className="space-y-1">
-                      <div className="flex items-center justify-between gap-3 text-xs">
-                        <span className="font-medium text-foreground truncate">
-                          <span className="font-mono text-muted-foreground">
-                            {exp.code}
-                          </span>{" "}
-                          &mdash; {getLocalizedAccountName({ code: exp.code, name: exp.name }, language)}
-                        </span>
-                        <span className="font-semibold text-foreground tabular-nums shrink-0">
-                          {formatRupiah(exp.amount)}
-                        </span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
-                        <div
-                          style={{ width: `${widthPct}%` }}
-                          className="h-full rounded-full bg-amber-500/85"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              recentJournals.map((j) => {
+                const jLines = lines.filter((l) => l.journal_id === j.id);
+                const firstLine = jLines[0];
+                const mainAcc = firstLine ? accMap.get(firstLine.account_id) : null;
+                const totalDebit = jLines.reduce((s, l) => s + l.debit, 0);
+                const desc = getLocalizedTransactionDescription(j.description, language);
 
-            <div className="pt-4 border-t border-border/60 space-y-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground">
-                  {t("dashboard:charts.recent_journals_title")}
-                </span>
-                <span className="text-muted-foreground tabular-nums">
-                  {journals.length} {t("dashboard:charts.ledger_entries_count")}
-                </span>
-              </div>
-              {recentJournals.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-2">
-                  {t("dashboard:charts.no_journals")}
-                </p>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {recentJournals.map((j) => {
-                    const totalDebit = lines
-                      .filter((l) => l.journal_id === j.id)
-                      .reduce((s, l) => s + l.debit, 0);
-                    return (
-                      <div
-                        key={j.id}
-                        className="py-2 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {getLocalizedTransactionDescription(j.description, language)}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
-                            {j.journal_number} &bull; {formatDateI18n(j.journal_date, language)}
-                          </p>
-                        </div>
-                        <span className="font-semibold text-foreground tabular-nums shrink-0">
-                          {formatRupiah(totalDebit)}
+                return (
+                  <TableRow key={j.id}>
+                    <TableCell className="pl-6 pr-3 text-center align-top whitespace-nowrap tabular-nums text-xs sm:text-sm leading-5">
+                      {formatDateI18n(j.journal_date, language)}
+                    </TableCell>
+                    <TableCell className="px-3 text-center align-top whitespace-nowrap font-mono text-xs sm:text-sm font-semibold leading-5 text-foreground">
+                      {j.journal_number}
+                    </TableCell>
+                    <TableCell className="px-3 text-left align-top text-xs sm:text-sm leading-5 text-foreground/90 max-w-sm">
+                      <p className="truncate" title={desc}>
+                        {desc}
+                      </p>
+                    </TableCell>
+                    <TableCell className="px-3 text-left align-top text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
+                      {mainAcc ? (
+                        <span>
+                          <span className="font-mono text-foreground/75 font-semibold">{mainAcc.code}</span>
+                          {" \u2014 "}
+                          {getLocalizedAccountName(mainAcc, language)}
                         </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <ChartCardFooter>
-            <ChartTypeSwitcher
-              value={expenseChartType}
-              onChange={setExpenseChartType}
-              options={[
-                { value: "bar", label: t("dashboard:charts.types.bar_expenses"), icon: BarChartHorizontalIcon },
-                { value: "pie", label: t("dashboard:charts.types.pie_expenses"), icon: PieChartIcon },
-                { value: "histogram", label: t("dashboard:charts.types.histogram"), title: t("dashboard:charts.chart_histogram_title"), icon: BarChart2Icon },
-              ]}
-            />
-          </ChartCardFooter>
-        </Card>
-      </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="pl-3 pr-6 text-right align-top whitespace-nowrap text-xs sm:text-sm leading-5">
+                      <MonetaryCell amount={totalDebit} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </ChartCard>
     </div>
   );
 }
