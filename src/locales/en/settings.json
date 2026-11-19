@@ -620,5 +620,30 @@
     "toast_pwd_updated": "Your account password was updated successfully!",
     "toast_pwd_update_fail": "Failed to update password.",
     "toast_notif_saved": "Notification preferences saved."
+  },
+  "profile_overview": {
+    "default_job_title": "Altvira Team Member",
+    "phone_not_set": "Phone number not set",
+    "joined_since": "Joined on {{date}}",
+    "about_me": "About Me",
+    "empty_bio": "No personal bio yet. You can add one via the Settings menu in the sidebar account card.",
+    "roles_title": "Authorized Roles ({{count}} Roles)",
+    "roles_desc": "Official access permissions granted by Super Admin. You can switch operational modes via the Active Mode menu in the top header.",
+    "role_labels": {
+      "super_admin": "Super Admin (System Administrator)",
+      "admin": "Admin (Treasurer / Accountant)",
+      "user": "User (Project Team)"
+    },
+    "active_mode_badge": "Active Mode",
+    "card_status_title": "Account Status",
+    "card_status_value": "Active & Verified",
+    "card_status_desc": "Verified RLS Authorization",
+    "card_active_mode_title": "Active Mode",
+    "card_active_mode_desc": "Can be switched in Header",
+    "card_total_roles_title": "Total Roles",
+    "card_total_roles_unit": "Authorized Roles",
+    "card_total_roles_desc": "Multi-role ready to use",
+    "card_last_session_title": "Last Session",
+    "card_last_session_desc": "Automatic Audit Logging"
   }
 }

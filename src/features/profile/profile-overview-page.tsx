@@ -9,10 +9,13 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/auth-context";
-import { formatDateTimeID, ROLE_LABELS } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
+import { formatDateTimeI18n, ROLE_LABELS } from "@/lib/formatters";
+import { getRoleShortName } from "@/components/layout/nav-structure";
 
 export function ProfileOverviewPage() {
   const { profile, activeRole, availableRoles } = useAuth();
+  const { t, language } = useLanguage();
 
   if (!profile) return null;
 
@@ -72,7 +75,7 @@ export function ProfileOverviewPage() {
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                 <span className="font-semibold text-foreground/80">@{username}</span>
                 <span>•</span>
-                <span>{profile.job_title || "Anggota Tim Altvira"}</span>
+                <span>{profile.job_title || t("settings:profile_overview.default_job_title", "Anggota Tim Altvira")}</span>
               </p>
             </div>
 
@@ -84,22 +87,30 @@ export function ProfileOverviewPage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <PhoneIcon className="size-3.5 text-primary" />
-                <span>{profile.phone_number || "Nomor belum diatur"}</span>
+                <span>{profile.phone_number || t("settings:profile_overview.phone_not_set", "Nomor belum diatur")}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CalendarIcon className="size-3.5 text-primary" />
-                <span>Bergabung sejak {formatDateTimeID(profile.created_at)}</span>
+                <span>
+                  {t("settings:profile_overview.joined_since", {
+                    date: formatDateTimeI18n(profile.created_at, language),
+                    defaultValue: `Bergabung sejak ${formatDateTimeI18n(profile.created_at, language)}`,
+                  })}
+                </span>
               </div>
             </div>
 
             {/* Tentang Saya / Bio */}
             <div className="pt-1.5">
               <h2 className="text-xs font-semibold text-muted-foreground mb-1">
-                Tentang Saya
+                {t("settings:profile_overview.about_me", "Tentang Saya")}
               </h2>
               <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
                 {profile.bio ||
-                  "Belum ada catatan ringkasan pribadi. Anda dapat menambahkannya melalui menu Pengaturan di kartu akun sidebar."}
+                  t(
+                    "settings:profile_overview.empty_bio",
+                    "Belum ada catatan ringkasan pribadi. Anda dapat menambahkannya melalui menu Pengaturan di kartu akun sidebar.",
+                  )}
               </p>
             </div>
           </div>
@@ -112,14 +123,25 @@ export function ProfileOverviewPage() {
       <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
         <h2 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
           <ShieldCheckIcon className="size-4 text-primary dark:text-sky-400" />
-          <span>Wewenang Peran yang Sah ({availableRoles.length} Peran)</span>
+          <span>
+            {t("settings:profile_overview.roles_title", {
+              count: availableRoles.length,
+              defaultValue: `Wewenang Peran yang Sah (${availableRoles.length} Peran)`,
+            })}
+          </span>
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.
+          {t(
+            "settings:profile_overview.roles_desc",
+            "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
+          )}
         </p>
         <div className="flex flex-wrap gap-2.5">
           {availableRoles.map((role) => {
             const isActive = role === currentRole;
+            const roleLabel =
+              t(`settings:profile_overview.role_labels.${role}`, ROLE_LABELS[role] || role);
+
             return (
               <div
                 key={role}
@@ -134,10 +156,10 @@ export function ProfileOverviewPage() {
                 ) : (
                   <span className="size-1.5 rounded-full bg-muted-foreground/60" />
                 )}
-                <span>{ROLE_LABELS[role] || role}</span>
+                <span>{roleLabel}</span>
                 {isActive && (
                   <span className="ml-1 text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/10 px-1.5 py-0.5 rounded-md">
-                    Mode Aktif
+                    {t("settings:profile_overview.active_mode_badge", "Mode Aktif")}
                   </span>
                 )}
               </div>
@@ -153,66 +175,66 @@ export function ProfileOverviewPage() {
         {/* Card 1: Status Akun */}
         <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
           <p className="text-xs font-medium text-muted-foreground">
-            Status Akun
+            {t("settings:profile_overview.card_status_title", "Status Akun")}
           </p>
           <div className="flex items-center gap-2 my-1">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <p className="text-base sm:text-lg font-bold text-foreground">
-              Aktif &amp; Sah
+              {t("settings:profile_overview.card_status_value", "Aktif & Sah")}
             </p>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Otorisasi RLS Terverifikasi
+            {t("settings:profile_overview.card_status_desc", "Otorisasi RLS Terverifikasi")}
           </p>
         </Card>
 
         {/* Card 2: Mode Aktif */}
         <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
           <p className="text-xs font-medium text-muted-foreground">
-            Mode Aktif
+            {t("settings:profile_overview.card_active_mode_title", "Mode Aktif")}
           </p>
           <div className="flex items-center gap-2 my-1">
             <UserCheckIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
             <p className="text-base sm:text-lg font-bold text-foreground capitalize truncate">
-              {currentRole.replace("_", " ")}
+              {getRoleShortName(currentRole, t)}
             </p>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Dapat dialihkan di Header
+            {t("settings:profile_overview.card_active_mode_desc", "Dapat dialihkan di Header")}
           </p>
         </Card>
 
         {/* Card 3: Total Peran */}
         <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
           <p className="text-xs font-medium text-muted-foreground">
-            Total Peran
+            {t("settings:profile_overview.card_total_roles_title", "Total Peran")}
           </p>
           <div className="flex items-baseline gap-1.5 my-1">
             <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">
               {availableRoles.length}
             </p>
             <span className="text-xs font-semibold text-muted-foreground">
-              Peran Wewenang
+              {t("settings:profile_overview.card_total_roles_unit", "Peran Wewenang")}
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Multi-role siap pakai
+            {t("settings:profile_overview.card_total_roles_desc", "Multi-role siap pakai")}
           </p>
         </Card>
 
         {/* Card 4: Sesi Terakhir */}
         <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
           <p className="text-xs font-medium text-muted-foreground">
-            Sesi Terakhir
+            {t("settings:profile_overview.card_last_session_title", "Sesi Terakhir")}
           </p>
           <div className="flex items-center gap-1.5 my-1">
             <ClockIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
             <p className="text-xs sm:text-sm font-bold text-foreground truncate tabular-nums">
-              {formatDateTimeID(profile.last_login_at || profile.updated_at)}
+              {formatDateTimeI18n(profile.last_login_at || profile.updated_at, language)}
             </p>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Pencatatan Audit Otomatis
+            {t("settings:profile_overview.card_last_session_desc", "Pencatatan Audit Otomatis")}
           </p>
         </Card>
       </div>

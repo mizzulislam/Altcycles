@@ -620,5 +620,30 @@
     "toast_pwd_updated": "Kata sandi akun Anda berhasil diperbarui!",
     "toast_pwd_update_fail": "Gagal memperbarui kata sandi.",
     "toast_notif_saved": "Preferensi notifikasi disimpan."
+  },
+  "profile_overview": {
+    "default_job_title": "Anggota Tim Altvira",
+    "phone_not_set": "Nomor belum diatur",
+    "joined_since": "Bergabung sejak {{date}}",
+    "about_me": "Tentang Saya",
+    "empty_bio": "Belum ada catatan ringkasan pribadi. Anda dapat menambahkannya melalui menu Pengaturan di kartu akun sidebar.",
+    "roles_title": "Wewenang Peran yang Sah ({{count}} Peran)",
+    "roles_desc": "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
+    "role_labels": {
+      "super_admin": "Super Admin (Pengelola Sistem)",
+      "admin": "Admin (Bendahara / Akuntan)",
+      "user": "User (Tim Proyek)"
+    },
+    "active_mode_badge": "Mode Aktif",
+    "card_status_title": "Status Akun",
+    "card_status_value": "Aktif & Sah",
+    "card_status_desc": "Otorisasi RLS Terverifikasi",
+    "card_active_mode_title": "Mode Aktif",
+    "card_active_mode_desc": "Dapat dialihkan di Header",
+    "card_total_roles_title": "Total Peran",
+    "card_total_roles_unit": "Peran Wewenang",
+    "card_total_roles_desc": "Multi-role siap pakai",
+    "card_last_session_title": "Sesi Terakhir",
+    "card_last_session_desc": "Pencatatan Audit Otomatis"
   }
 }
