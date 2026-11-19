@@ -138,6 +138,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedPoIds, setSelectedPoIds] = React.useState<string[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [singleDeleteTarget, setSingleDeleteTarget] = React.useState<PurchaseOrderRow | null>(null);
 
   const [poDate, setPoDate] = React.useState(() =>
     new Date().toLocaleDateString("en-CA"),
@@ -812,6 +813,19 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               <span className="sr-only">{t("po:action_edit_po", "Edit PO")}</span>
                             </Button>
                           ) : null}
+                          {isEditing && po.status === "draft" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              title={t("po:action_delete_po", "Hapus PO")}
+                              onClick={() => setSingleDeleteTarget(po)}
+                              className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                            >
+                              <Trash2Icon className="size-4" />
+                              <span className="sr-only">{t("po:action_delete_po", "Hapus PO")}</span>
+                            </Button>
+                          ) : null}
                           <DocumentDownloadMenu
                             title={t("po:action_view_pdf", "Lihat / Unduh Dokumen PO")}
                             onDownloadPdf={() => void handleDownloadPdf(po)}
@@ -851,7 +865,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                               <span className="sr-only">{t("po:action_mark_completed", "Tandai Selesai")}</span>
                             </Button>
                           ) : null}
-                          {(po.status === "draft" || po.status === "issued") ? (
+                          {po.status === "issued" ? (
                             <Button
                               type="button"
                               variant="ghost"
@@ -1163,6 +1177,39 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         destructive
         confirmLabel={t("common:action.delete", "Hapus")}
         onConfirm={handleDeleteSelectedPos}
+      />
+
+      <ConfirmActionDialog
+        open={Boolean(singleDeleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setSingleDeleteTarget(null);
+        }}
+        title={t("po:modal_delete_single.title", {
+          number: singleDeleteTarget?.po_number ?? "",
+          defaultValue: `Hapus Purchase Order ${singleDeleteTarget?.po_number ?? ""}?`,
+        })}
+        description={t(
+          "po:modal_delete_single.desc",
+          "Apakah Anda yakin ingin menghapus dokumen Purchase Order draf ini? Tindakan ini tidak dapat dibatalkan.",
+        )}
+        destructive
+        confirmLabel={t("common:action.delete", "Hapus")}
+        onConfirm={async () => {
+          if (!singleDeleteTarget) return;
+          try {
+            await deletePurchaseOrders([singleDeleteTarget.id]);
+            toast.success(
+              t("po:toast_deleted_single", {
+                number: singleDeleteTarget.po_number,
+                defaultValue: `PO draf ${singleDeleteTarget.po_number} berhasil dihapus.`,
+              }),
+            );
+            setSingleDeleteTarget(null);
+            await reload();
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Gagal menghapus PO.");
+          }
+        }}
       />
 
       <ConfirmActionDialog

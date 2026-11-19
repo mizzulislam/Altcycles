@@ -64,9 +64,15 @@
     "title": "Delete Draft Purchase Order?",
     "desc": "Are you sure you want to delete the selected draft Purchase Order documents? This action cannot be undone."
   },
+  "modal_delete_single": {
+    "title": "Delete Purchase Order {{number}}?",
+    "desc": "Are you sure you want to delete this draft Purchase Order document? This action cannot be undone."
+  },
   "action_edit_po": "Edit PO",
+  "action_delete_po": "Delete PO",
   "toast_updated": "PO {{number}} successfully updated.",
   "toast_deleted": "{{count}} draft POs successfully deleted.",
+  "toast_deleted_single": "Draft PO {{number}} was deleted successfully.",
   "modal_cancel": {
     "title": "Cancel document {{number}}?",
     "desc": "This PO cancellation will be recorded in the system audit trail. Enter the reason for cancelling this official document.",
