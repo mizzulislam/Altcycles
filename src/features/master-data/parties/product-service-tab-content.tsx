@@ -40,6 +40,7 @@ import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
 import { formatRupiah } from "@/lib/formatters";
+import { getLocalizedCatalogProduct } from "@/lib/glossary";
 import type { ServiceProductRow } from "@/types/database.types";
 
 export interface ProductServiceTabContentProps {
@@ -58,7 +59,7 @@ export function ProductServiceTabContent({
   onReload,
   onRequestDelete,
 }: ProductServiceTabContentProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [prdOpen, setPrdOpen] = React.useState(false);
   const [prdForm, setPrdForm] = React.useState({
     id: undefined as string | undefined,
@@ -80,7 +81,7 @@ export function ProductServiceTabContent({
       await onReload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menyimpan produk/layanan.",
+        err instanceof Error ? err.message : t("parties:products.toast_save_error", "Gagal menyimpan produk/layanan."),
       );
     }
   }
@@ -102,15 +103,18 @@ export function ProductServiceTabContent({
         { header: t("parties:products.col_desc", "Deskripsi"), width: 44 },
         { header: t("parties:products.col_status", "Status"), width: 14 },
       ],
-      rows: products.map((p) => [
-        p.code,
-        p.name,
-        p.category,
-        p.unit,
-        p.price,
-        p.description ?? "-",
-        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
-      ]),
+      rows: products.map((p) => {
+        const loc = getLocalizedCatalogProduct(p, language);
+        return [
+          p.code,
+          loc.name,
+          loc.category,
+          loc.unit,
+          p.price,
+          loc.description ?? "-",
+          p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
+        ];
+      }),
     });
     await recordExportLog("SYSTEM_CONFIG", "EXCEL");
     toast.success(t("parties:products.export_toast_excel", "Katalog produk/layanan berhasil diekspor ke Excel (.xlsx)."));
@@ -130,6 +134,7 @@ export function ProductServiceTabContent({
       docNumber: `KATALOG-SRV-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
+      language,
       metaRows: [
         {
           label: t("parties:products.export_pdf_total_label", "Total Layanan"),
@@ -147,15 +152,23 @@ export function ProductServiceTabContent({
         { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.12, align: "center" },
         { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.20, align: "right" },
       ],
-      tableRows: products.map((p) => [
-        p.code,
-        p.name,
-        p.category,
-        p.unit,
-        formatRupiah(p.price),
-      ]),
+      tableRows: products.map((p) => {
+        const loc = getLocalizedCatalogProduct(p, language);
+        return [
+          p.code,
+          loc.name,
+          loc.category,
+          loc.unit,
+          formatRupiah(p.price),
+        ];
+      }),
     });
-    downloadPdfBytes(bytes, "Master_Produk_Layanan_Altcycles.pdf");
+    downloadPdfBytes(
+      bytes,
+      language === "en"
+        ? "Master_Products_Services_Altcycles.pdf"
+        : "Master_Produk_Layanan_Altcycles.pdf",
+    );
     await recordExportLog("SYSTEM_CONFIG", "PDF");
   }
 
@@ -165,7 +178,9 @@ export function ProductServiceTabContent({
       return;
     }
     downloadCsvFile(
-      "Master_Produk_Layanan_Altcycles.csv",
+      language === "en"
+        ? "Master_Products_Services_Altcycles.csv"
+        : "Master_Produk_Layanan_Altcycles.csv",
       [
         t("parties:products.col_code", "Kode"),
         t("parties:products.col_name", "Nama Layanan / Produk"),
@@ -175,15 +190,18 @@ export function ProductServiceTabContent({
         t("parties:products.col_desc", "Deskripsi"),
         t("parties:products.col_status", "Status"),
       ],
-      products.map((p) => [
-        p.code,
-        p.name,
-        p.category,
-        p.unit,
-        String(p.price),
-        p.description ?? "-",
-        p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
-      ]),
+      products.map((p) => {
+        const loc = getLocalizedCatalogProduct(p, language);
+        return [
+          p.code,
+          loc.name,
+          loc.category,
+          loc.unit,
+          String(p.price),
+          loc.description ?? "-",
+          p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
+        ];
+      }),
     );
     await recordExportLog("SYSTEM_CONFIG", "CSV");
     toast.success(t("parties:products.export_toast_csv", "Katalog produk/layanan berhasil diekspor ke CSV (.csv)."));
@@ -261,87 +279,90 @@ export function ProductServiceTabContent({
                   </TableCell>
                 </TableRow>
               ) : (
-                products.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
-                      {p.code}
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">
-                      {p.name}
-                    </TableCell>
-                    <TableCell className="text-center text-xs">
-                      <span className="inline-flex items-center rounded-lg bg-muted/80 border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        {p.category}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-xs">
-                      <span className="line-clamp-2" title={p.description ?? "-"}>
-                        {p.description ?? "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center text-xs font-medium">
-                      {p.unit}
-                    </TableCell>
-                    <TableCell className="px-3">
-                      <MonetaryCell amount={p.price} currency="Rp" />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="-my-px inline-flex justify-center">
-                        <StatusBadge
-                          tone={p.is_active ? "success" : "secondary"}
-                          label={p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif")}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="pl-2 pr-6 text-center">
-                      <div className="flex items-center justify-center gap-1 -my-1.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setPrdForm({
-                              id: p.id,
-                              code: p.code,
-                              name: p.name,
-                              category: p.category,
-                              description: p.description ?? "",
-                              unit: p.unit,
-                              price: p.price,
-                              is_active: p.is_active,
-                            });
-                            setPrdOpen(true);
-                          }}
-                          className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
-                          title={t("common:action.edit", "Edit")}
-                          aria-label={t("common:action.edit", "Edit")}
-                        >
-                          <PencilIcon className="size-4" />
-                          <span className="sr-only">{t("common:action.edit", "Edit")}</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            onRequestDelete({
-                              type: "product",
-                              id: p.id,
-                              code: p.code,
-                              name: p.name,
-                            })
-                          }
-                          className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                          title={t("common:action.delete", "Hapus")}
-                          aria-label={t("common:action.delete", "Hapus")}
-                        >
-                          <Trash2Icon className="size-4" />
-                          <span className="sr-only">{t("common:action.delete", "Hapus")}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                products.map((p) => {
+                  const loc = getLocalizedCatalogProduct(p, language);
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
+                        {p.code}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">
+                        {loc.name}
+                      </TableCell>
+                      <TableCell className="text-center text-xs">
+                        <span className="inline-flex items-center rounded-lg bg-muted/80 border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {loc.category}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-xs">
+                        <span className="line-clamp-2" title={loc.description ?? "-"}>
+                          {loc.description ?? "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center text-xs font-medium">
+                        {loc.unit}
+                      </TableCell>
+                      <TableCell className="px-3">
+                        <MonetaryCell amount={p.price} currency="Rp" />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="-my-px inline-flex justify-center">
+                          <StatusBadge
+                            tone={p.is_active ? "success" : "secondary"}
+                            label={p.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif")}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pl-2 pr-6 text-center">
+                        <div className="flex items-center justify-center gap-1 -my-1.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setPrdForm({
+                                id: p.id,
+                                code: p.code,
+                                name: loc.name,
+                                category: loc.category,
+                                description: loc.description ?? "",
+                                unit: loc.unit,
+                                price: p.price,
+                                is_active: p.is_active,
+                              });
+                              setPrdOpen(true);
+                            }}
+                            className="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
+                            title={t("common:action.edit", "Edit")}
+                            aria-label={t("common:action.edit", "Edit")}
+                          >
+                            <PencilIcon className="size-4" />
+                            <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              onRequestDelete({
+                                type: "product",
+                                id: p.id,
+                                code: p.code,
+                                name: loc.name,
+                              })
+                            }
+                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                            title={t("common:action.delete", "Hapus")}
+                            aria-label={t("common:action.delete", "Hapus")}
+                          >
+                            <Trash2Icon className="size-4" />
+                            <span className="sr-only">{t("common:action.delete", "Hapus")}</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

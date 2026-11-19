@@ -39,6 +39,7 @@ import { AccountingPrintLayout } from "@/features/accounting/components/accounti
 import { formatAccountRef, formatDateID, roundRupiah } from "@/lib/formatters";
 import {
   getLocalizedAccountName,
+  getLocalizedPeriodName,
   getLocalizedTransactionDescription,
   formatJournalDateI18n,
 } from "@/lib/glossary";
@@ -226,7 +227,10 @@ export function JournalsPage({
   function openEditJournal(j: JournalRow) {
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif. Untuk mengedit atau menghapus transaksi jurnal, Super Admin perlu membuka kunci jurnal di menu Pengaturan & Kontrol Akuntansi.",
+        t(
+          "accounting:journals.toast_lock_edit",
+          "Kunci jurnal sedang aktif. Untuk mengedit atau menghapus transaksi jurnal, Super Admin perlu membuka kunci jurnal di menu Pengaturan & Kontrol Akuntansi.",
+        ),
       );
       return;
     }
@@ -324,7 +328,10 @@ export function JournalsPage({
     e.preventDefault();
     if (!isDraftBalanced) {
       toast.error(
-        "Jurnal belum seimbang: Total Debit wajib sama dengan Total Kredit dan bernilai di atas Rp0.",
+        t(
+          "accounting:journals.toast_unbalanced",
+          "Jurnal belum seimbang: Total Debit wajib sama dengan Total Kredit dan bernilai di atas Rp0.",
+        ),
       );
       return;
     }
@@ -360,7 +367,10 @@ export function JournalsPage({
           lines: linesPayload,
         });
         toast.success(
-          `Jurnal ${editingJournal.journal_number} berhasil diperbarui.`,
+          t("accounting:journals.toast_updated", {
+            number: editingJournal.journal_number,
+            defaultValue: `Jurnal ${editingJournal.journal_number} berhasil diperbarui.`,
+          }),
         );
       } else {
         await createManualOrAdjustmentJournal({
@@ -371,14 +381,21 @@ export function JournalsPage({
           autoReverseNextPeriod: canUseAutoReverse ? autoReverse : false,
           lines: linesPayload,
         });
-        toast.success("Jurnal berhasil diposting ke Buku Besar.");
+        toast.success(
+          t(
+            "accounting:journals.toast_posted",
+            "Jurnal berhasil diposting ke Buku Besar.",
+          ),
+        );
       }
       setCreateOpen(false);
       setEditingJournal(null);
       await reload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menyimpan jurnal.",
+        err instanceof Error
+          ? err.message
+          : t("accounting:journals.toast_save_error", "Gagal menyimpan jurnal."),
       );
     } finally {
       setPosting(false);
@@ -388,20 +405,30 @@ export function JournalsPage({
   async function handleDeleteSingle(journal: JournalRow) {
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        t(
+          "accounting:journals.toast_lock_delete",
+          "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        ),
       );
       return;
     }
     try {
       await deleteJournals([journal.id]);
-      toast.success(`Jurnal ${journal.journal_number} berhasil dihapus.`);
+      toast.success(
+        t("accounting:journals.toast_deleted", {
+          number: journal.journal_number,
+          defaultValue: `Jurnal ${journal.journal_number} berhasil dihapus.`,
+        }),
+      );
       setSelectedJournalIds((prev) => prev.filter((id) => id !== journal.id));
       setDeleteTargetJournal(null);
       setIsEditMode(false);
       await reload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menghapus jurnal.",
+        err instanceof Error
+          ? err.message
+          : t("accounting:journals.toast_delete_error", "Gagal menghapus jurnal."),
       );
     }
   }
@@ -410,14 +437,20 @@ export function JournalsPage({
     if (selectedJournalIds.length === 0) return;
     if (journalLockEnabled) {
       toast.error(
-        "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        t(
+          "accounting:journals.toast_lock_delete",
+          "Kunci jurnal sedang aktif. Jurnal tidak dapat dihapus saat kunci jurnal aktif. Hubungi Super Admin di Pengaturan & Kontrol Akuntansi untuk membuka mode testing.",
+        ),
       );
       return;
     }
     try {
       await deleteJournals(selectedJournalIds);
       toast.success(
-        `${selectedJournalIds.length} transaksi jurnal berhasil dihapus.`,
+        t("accounting:journals.toast_batch_deleted", {
+          count: selectedJournalIds.length,
+          defaultValue: `${selectedJournalIds.length} transaksi jurnal berhasil dihapus.`,
+        }),
       );
       setSelectedJournalIds([]);
       setIsBatchDeleteDialogOpen(false);
@@ -425,7 +458,12 @@ export function JournalsPage({
       await reload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menghapus jurnal pilihan.",
+        err instanceof Error
+          ? err.message
+          : t(
+              "accounting:journals.toast_batch_delete_error",
+              "Gagal menghapus jurnal pilihan.",
+            ),
       );
     }
   }
@@ -441,14 +479,22 @@ export function JournalsPage({
         reason: correctionReason,
       });
       toast.success(
-        `Jurnal koreksi resmi atas ${correctTarget.journal_number} berhasil diposting.`,
+        t("accounting:journals.toast_correction_posted", {
+          number: correctTarget.journal_number,
+          defaultValue: `Jurnal koreksi resmi atas ${correctTarget.journal_number} berhasil diposting.`,
+        }),
       );
       setCorrectTarget(null);
       setCorrectionReason("");
       await reload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menerbitkan jurnal koreksi.",
+        err instanceof Error
+          ? err.message
+          : t(
+              "accounting:journals.toast_correction_error",
+              "Gagal menerbitkan jurnal koreksi.",
+            ),
       );
     } finally {
       setCorrecting(false);
@@ -523,15 +569,18 @@ export function JournalsPage({
 
   const printPeriodLabel =
     externalStartDate && externalEndDate
-      ? `${formatDateID(externalStartDate)} s.d. ${formatDateID(externalEndDate)}`
+      ? getLocalizedPeriodName(
+          `${formatDateID(externalStartDate)} s.d. ${formatDateID(externalEndDate)}`,
+          language,
+        )
       : periodFilter === "ALL"
-        ? "Semua Periode"
-        : periodFilter;
+        ? t("accounting:journals.all_periods", "Semua Periode")
+        : getLocalizedPeriodName(periodFilter, language);
 
   const printDocTitle =
     filterMode === "adjusting"
-      ? "Jurnal Penyesuaian & Koreksi"
-      : "Jurnal Umum";
+      ? t("accounting:journals.print_adj_title", "Jurnal Penyesuaian & Koreksi")
+      : t("accounting:journals.print_gen_title", "Jurnal Umum");
 
   async function handleExportPdf() {
     await exportJournalsToPdf({
@@ -582,18 +631,18 @@ export function JournalsPage({
         </colgroup>
         <thead>
           <tr>
-            <th className="print-center">Tanggal</th>
-            <th className="print-center">Deskripsi</th>
-            <th className="print-center">Ref</th>
-            <th className="print-center">Debit</th>
-            <th className="print-center">Kredit</th>
+            <th className="print-center">{t("accounting:journals.col_date", "Tanggal")}</th>
+            <th className="print-center">{t("accounting:journals.col_description", "Deskripsi")}</th>
+            <th className="print-center">{t("accounting:journals.col_ref", "Ref")}</th>
+            <th className="print-center">{t("accounting:journals.col_debit", "Debit")}</th>
+            <th className="print-center">{t("accounting:journals.col_credit", "Kredit")}</th>
           </tr>
         </thead>
         <tbody>
           {sortedJournals.length === 0 ? (
             <tr>
               <td colSpan={5} className="print-center" style={{ padding: "28px", color: "#6b7280" }}>
-                Belum ada transaksi pada periode ini.
+                {t("accounting:journals.print_empty", "Belum ada transaksi pada periode ini.")}
               </td>
             </tr>
           ) : (
@@ -899,7 +948,10 @@ export function JournalsPage({
                             setSelectedJournalIds([]);
                           }
                         }}
-                        aria-label="Pilih semua transaksi"
+                        aria-label={t(
+                          "accounting:journals.select_all_aria",
+                          "Pilih semua transaksi",
+                        )}
                       />
                     </div>
                   </TableHead>
@@ -1019,7 +1071,13 @@ export function JournalsPage({
                                 }
                               }}
                               className="mt-0.5"
-                              aria-label={`Pilih transaksi ${j.journal_number}`}
+                              aria-label={t(
+                                "accounting:journals.select_row_aria",
+                                {
+                                  number: j.journal_number,
+                                  defaultValue: `Pilih transaksi ${j.journal_number}`,
+                                },
+                              )}
                             />
                           </TableCell>
                         )}
@@ -1152,8 +1210,8 @@ export function JournalsPage({
                                 type="button"
                                 onClick={() => setDetailJournal(j)}
                                 className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                                title="Lihat detail transaksi"
-                                aria-label="Lihat detail transaksi"
+                                title={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}
+                                aria-label={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}
                               >
                                 <EyeIcon className="size-4" />
                               </button>
@@ -1161,8 +1219,8 @@ export function JournalsPage({
                                 type="button"
                                 onClick={() => openEditJournal(j)}
                                 className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                                title="Edit transaksi"
-                                aria-label="Edit transaksi"
+                                title={t("accounting:journals.edit_tx_title", "Edit transaksi")}
+                                aria-label={t("accounting:journals.edit_tx_title", "Edit transaksi")}
                               >
                                 <PencilIcon className="size-4" />
                               </button>
@@ -1170,8 +1228,8 @@ export function JournalsPage({
                                 type="button"
                                 onClick={() => setDeleteTargetJournal(j)}
                                 className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                                title="Hapus transaksi"
-                                aria-label="Hapus transaksi"
+                                title={t("accounting:journals.delete_tx_title", "Hapus transaksi")}
+                                aria-label={t("accounting:journals.delete_tx_title", "Hapus transaksi")}
                               >
                                 <Trash2Icon className="size-4" />
                               </button>
@@ -1256,9 +1314,12 @@ export function JournalsPage({
         onOpenChange={(open) => {
           if (!open) setDeleteTargetJournal(null);
         }}
-        title="Hapus Transaksi Jurnal?"
-        description={`Apakah Anda yakin ingin menghapus jurnal ${deleteTargetJournal?.journal_number ?? ""}? Seluruh baris debit dan kredit terkait akan dihapus dari buku besar. Tindakan ini tidak dapat dibatalkan.`}
-        confirmLabel="Ya, Hapus Jurnal"
+        title={t("accounting:journals.delete_single_title", "Hapus Transaksi Jurnal?")}
+        description={t("accounting:journals.delete_single_desc", {
+          number: deleteTargetJournal?.journal_number ?? "",
+          defaultValue: `Apakah Anda yakin ingin menghapus jurnal ${deleteTargetJournal?.journal_number ?? ""}? Seluruh baris debit dan kredit terkait akan dihapus dari buku besar. Tindakan ini tidak dapat dibatalkan.`,
+        })}
+        confirmLabel={t("accounting:journals.delete_single_confirm", "Ya, Hapus Jurnal")}
         destructive
         onConfirm={() =>
           deleteTargetJournal ? handleDeleteSingle(deleteTargetJournal) : Promise.resolve()
@@ -1269,9 +1330,18 @@ export function JournalsPage({
       <ConfirmActionDialog
         open={isBatchDeleteDialogOpen}
         onOpenChange={setIsBatchDeleteDialogOpen}
-        title={`Hapus ${selectedJournalIds.length} Transaksi Terpilih?`}
-        description={`Apakah Anda yakin ingin menghapus secara massal ${selectedJournalIds.length} transaksi jurnal yang dipilih? Seluruh data mutasi dan baris buku besar terkait akan dihapus permanen.`}
-        confirmLabel={`Ya, Hapus (${selectedJournalIds.length}) Jurnal`}
+        title={t("accounting:journals.delete_batch_title", {
+          count: selectedJournalIds.length,
+          defaultValue: `Hapus ${selectedJournalIds.length} Transaksi Terpilih?`,
+        })}
+        description={t("accounting:journals.delete_batch_desc", {
+          count: selectedJournalIds.length,
+          defaultValue: `Apakah Anda yakin ingin menghapus secara massal ${selectedJournalIds.length} transaksi jurnal yang dipilih? Seluruh data mutasi dan baris buku besar terkait akan dihapus permanen.`,
+        })}
+        confirmLabel={t("accounting:journals.delete_batch_confirm", {
+          count: selectedJournalIds.length,
+          defaultValue: `Ya, Hapus (${selectedJournalIds.length}) Jurnal`,
+        })}
         destructive
         onConfirm={handleDeleteBatch}
       />

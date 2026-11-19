@@ -24,6 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  getLocalizedAccountName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type {
   AccountRow,
@@ -31,12 +36,17 @@ import type {
   JournalRow,
 } from "@/types/database.types";
 
-function formatJournalDate(val: string | null | undefined): string {
+function formatJournalDate(val: string | null | undefined, lang: "id" | "en" = "id"): string {
   if (!val) return "-";
-  const months = [
+  const monthsId = [
     "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
     "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
   ];
+  const monthsEn = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+  const months = lang === "en" ? monthsEn : monthsId;
   const parts = val.split("-");
   const y = parts[0];
   const mStr = parts[1];
@@ -82,13 +92,15 @@ export function PeriodClosingTable({
   onDeleteSingleClosing,
   onOpenBatchDelete,
 }: PeriodClosingTableProps) {
+  const { t, language: lang } = useLanguage();
+
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 px-6 py-4">
         <div className="space-y-1 min-w-0">
-          <CardTitle>Jurnal Penutup</CardTitle>
+          <CardTitle>{t("accounting:closing.table_card_title", "Jurnal Penutup")}</CardTitle>
           <CardDescription>
-            Historis entri jurnal penutup akun nominal yang tersimpan pada sistem pembukuan.
+            {t("accounting:closing.table_card_desc", "Historis entri jurnal penutup akun nominal yang tersimpan pada sistem pembukuan.")}
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -99,7 +111,7 @@ export function PeriodClosingTable({
             className="h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
           >
             <PlusIcon className="size-3.5" />
-            <span>Catat Jurnal Penutup Manual</span>
+            <span>{t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}</span>
           </Button>
 
           <Button
@@ -110,7 +122,12 @@ export function PeriodClosingTable({
             className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5"
           >
             <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
-            <span>Urutan: {sortOrder === "asc" ? "Terlama" : "Terbaru"}</span>
+            <span>
+              {t("accounting:journals.order", "Urutan:")}{" "}
+              {sortOrder === "asc"
+                ? t("accounting:journals.order_oldest", "Terlama")
+                : t("accounting:journals.order_newest", "Terbaru")}
+            </span>
           </Button>
 
           {!isEditMode ? (
@@ -122,7 +139,7 @@ export function PeriodClosingTable({
               className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10"
             >
               <PencilIcon className="size-3.5" />
-              <span>Edit</span>
+              <span>{t("common:action.edit", "Edit")}</span>
             </Button>
           ) : (
             <div className="flex items-center gap-2">
@@ -136,7 +153,7 @@ export function PeriodClosingTable({
                 }}
                 className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer"
               >
-                Batal
+                {t("common:action.cancel", "Batal")}
               </Button>
               <Button
                 type="button"
@@ -147,7 +164,9 @@ export function PeriodClosingTable({
                 className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer gap-1.5"
               >
                 <Trash2Icon className="size-3.5" />
-                <span>Hapus Pilihan ({selectedClosingIds.length})</span>
+                <span>
+                  {t("accounting:closing.btn_delete_selected", "Hapus Pilihan")} ({selectedClosingIds.length})
+                </span>
               </Button>
             </div>
           )}
@@ -176,7 +195,7 @@ export function PeriodClosingTable({
                           setSelectedClosingIds([]);
                         }
                       }}
-                      aria-label="Pilih semua jurnal penutup"
+                      aria-label={t("accounting:closing.select_all_aria", "Pilih semua jurnal penutup")}
                     />
                   </div>
                 </TableHead>
@@ -187,10 +206,10 @@ export function PeriodClosingTable({
                   isEditMode ? "w-[120px]" : "w-[140px]",
                 )}
               >
-                Tanggal
+                {t("accounting:journals.col_date", "Tanggal")}
               </TableHead>
               <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
-                Deskripsi
+                {t("accounting:journals.col_description", "Deskripsi")}
               </TableHead>
               <TableHead
                 className={cn(
@@ -198,7 +217,7 @@ export function PeriodClosingTable({
                   isEditMode ? "w-[82px]" : "w-[110px]",
                 )}
               >
-                Ref
+                {t("accounting:journals.col_ref", "Ref")}
               </TableHead>
               <TableHead
                 className={cn(
@@ -206,7 +225,7 @@ export function PeriodClosingTable({
                   isEditMode ? "w-[155px]" : "w-[195px]",
                 )}
               >
-                Debit
+                {t("accounting:journals.col_debit", "Debit")}
               </TableHead>
               <TableHead
                 className={cn(
@@ -214,11 +233,11 @@ export function PeriodClosingTable({
                   isEditMode ? "w-[155px]" : "w-[195px]",
                 )}
               >
-                Kredit
+                {t("accounting:journals.col_credit", "Kredit")}
               </TableHead>
               {isEditMode && (
                 <TableHead className="w-[112px] text-center pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
-                  Aksi
+                  {t("accounting:journals.col_actions", "Aksi")}
                 </TableHead>
               )}
             </TableRow>
@@ -232,7 +251,7 @@ export function PeriodClosingTable({
                 >
                   <div className="flex items-center justify-center gap-2">
                     <Spinner />
-                    <span>Memuat jurnal penutup...</span>
+                    <span>{t("accounting:closing.loading_closing_journals", "Memuat jurnal penutup...")}</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -243,8 +262,8 @@ export function PeriodClosingTable({
                   className="h-36 text-center text-muted-foreground"
                 >
                   <EmptyState
-                    title="Belum ada jurnal penutup aktual pada periode ini"
-                    description="Gunakan tombol 'Catat Jurnal Penutup Manual' atau jalankan tutup buku otomatis saat menutup periode bulanan."
+                    title={t("accounting:closing.empty_closing_title", "Belum ada jurnal penutup aktual pada periode ini")}
+                    description={t("accounting:closing.empty_closing_desc", "Gunakan tombol 'Catat Jurnal Penutup Manual' atau jalankan tutup buku otomatis saat menutup periode bulanan.")}
                   />
                 </TableCell>
               </TableRow>
@@ -278,7 +297,7 @@ export function PeriodClosingTable({
                             }
                           }}
                           className="mt-0.5"
-                          aria-label={`Pilih jurnal penutup ${j.journal_number}`}
+                          aria-label={`${t("common:action.select", "Pilih")} ${j.journal_number}`}
                         />
                       </TableCell>
                     )}
@@ -286,7 +305,7 @@ export function PeriodClosingTable({
                     {/* TANGGAL */}
                     <TableCell className="align-top py-4 pl-6 pr-3 text-left whitespace-nowrap">
                       <span className="font-medium text-xs sm:text-sm text-foreground">
-                        {formatJournalDate(j.journal_date)}
+                        {formatJournalDate(j.journal_date, lang)}
                       </span>
                     </TableCell>
 
@@ -300,7 +319,9 @@ export function PeriodClosingTable({
                               key={`d-${idx}`}
                               className="text-foreground font-medium min-h-5 flex items-center whitespace-normal break-words"
                             >
-                              {acc?.name ?? "Akun Debit"}
+                              {acc
+                                ? getLocalizedAccountName(acc, lang)
+                                : t("accounting:journals.debit_account", "Akun Debit")}
                             </div>
                           );
                         })}
@@ -311,13 +332,15 @@ export function PeriodClosingTable({
                               key={`c-${idx}`}
                               className="text-foreground font-medium min-h-5 flex items-center pl-6 whitespace-normal break-words"
                             >
-                              {acc?.name ?? "Akun Kredit"}
+                              {acc
+                                ? getLocalizedAccountName(acc, lang)
+                                : t("accounting:journals.credit_account", "Akun Kredit")}
                             </div>
                           );
                         })}
                       </div>
                       <div className="mt-2 max-w-[54ch] text-xs leading-relaxed text-blue-600 dark:text-cyan-400 italic font-medium whitespace-normal break-words">
-                        ({j.description})
+                        ({getLocalizedTransactionDescription(j.description, lang)})
                       </div>
                     </TableCell>
 
@@ -410,8 +433,8 @@ export function PeriodClosingTable({
                             type="button"
                             onClick={() => onViewDetailJournal(j)}
                             className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                            title="Lihat detail transaksi"
-                            aria-label="Lihat detail transaksi"
+                            title={t("accounting:closing.view_detail_title", "Lihat detail transaksi")}
+                            aria-label={t("accounting:closing.view_detail_title", "Lihat detail transaksi")}
                           >
                             <EyeIcon className="size-4" />
                           </button>
@@ -419,8 +442,8 @@ export function PeriodClosingTable({
                             type="button"
                             onClick={() => onEditClosingJournal(j)}
                             className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                            title="Edit transaksi"
-                            aria-label="Edit transaksi"
+                            title={t("accounting:closing.edit_tx_title", "Edit transaksi")}
+                            aria-label={t("accounting:closing.edit_tx_title", "Edit transaksi")}
                           >
                             <PencilIcon className="size-4" />
                           </button>
@@ -428,8 +451,8 @@ export function PeriodClosingTable({
                             type="button"
                             onClick={() => onDeleteSingleClosing(j)}
                             className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                            title="Hapus transaksi"
-                            aria-label="Hapus transaksi"
+                            title={t("accounting:closing.delete_tx_title", "Hapus transaksi")}
+                            aria-label={t("accounting:closing.delete_tx_title", "Hapus transaksi")}
                           >
                             <Trash2Icon className="size-4" />
                           </button>

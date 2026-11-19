@@ -113,6 +113,7 @@
     "modal_status_active": "Service Active Status",
     "modal_btn_save": "Save Product / Service",
     "toast_saved": "Product/service data successfully saved.",
+    "toast_save_error": "Failed to save product/service.",
     "toast_deleted": "Product/service \"{{name}}\" ({{code}}) successfully deleted.",
     "empty_title": "No Products or Services Yet",
     "empty_desc": "Catalog is empty. Add a new package or service offering for contract references.",
@@ -132,6 +133,8 @@
     "delete_title": "Delete {{type}} Data?",
     "delete_desc": "Are you sure you want to delete master record {{name}} ({{code}})? This action cannot be undone.",
     "delete_btn": "Yes, Delete Record",
-    "loading": "Loading vendor, client, and product master data..."
+    "loading": "Loading vendor, client, and product master data...",
+    "load_error": "Failed to load master data.",
+    "delete_error": "Failed to delete master record."
   }
 }

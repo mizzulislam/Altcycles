@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatRupiah } from "@/lib/formatters";
+import { getLocalizedAccountName } from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import {
   createManualOrAdjustmentJournal,
   updateJournal,
@@ -52,9 +54,10 @@ export function PeriodManualClosingDialog({
   defaultDate,
   onSuccess,
 }: PeriodManualClosingDialogProps) {
+  const { t, language: lang } = useLanguage();
   const [manualDate, setManualDate] = React.useState(defaultDate);
   const [manualDescription, setManualDescription] = React.useState(
-    "Jurnal Penutup Manual Akhir Periode",
+    t("accounting:closing.manual_desc_default", "Jurnal Penutup Manual Akhir Periode"),
   );
   const [debitLines, setDebitLines] = React.useState<
     Array<{ accountId: string; amount: number }>
@@ -69,7 +72,8 @@ export function PeriodManualClosingDialog({
       if (editingJournal) {
         setManualDate(editingJournal.journal_date);
         setManualDescription(
-          editingJournal.description || "Jurnal Penutup Manual Akhir Periode",
+          editingJournal.description ||
+            t("accounting:closing.manual_desc_default", "Jurnal Penutup Manual Akhir Periode"),
         );
         const jLines = (linesByJournal.get(editingJournal.id) ?? []).sort(
           (a, b) => a.line_no - b.line_no,
@@ -88,12 +92,14 @@ export function PeriodManualClosingDialog({
         );
       } else {
         setManualDate(defaultDate || new Date().toISOString().slice(0, 10));
-        setManualDescription("Jurnal Penutup Manual Akhir Periode");
+        setManualDescription(
+          t("accounting:closing.manual_desc_default", "Jurnal Penutup Manual Akhir Periode"),
+        );
         setDebitLines([{ accountId: "", amount: 0 }]);
         setCreditLines([{ accountId: "", amount: 0 }]);
       }
     }
-  }, [open, editingJournal, defaultDate, linesByJournal]);
+  }, [open, editingJournal, defaultDate, linesByJournal, t]);
 
   const totalDebit = debitLines.reduce(
     (s, l) => s + (Number(l.amount) || 0),
@@ -109,14 +115,16 @@ export function PeriodManualClosingDialog({
     e.preventDefault();
     if (!isBalanced) {
       toast.error(
-        "Total Debit dan Kredit jurnal penutup harus seimbang dan tidak boleh kosong.",
+        t("accounting:closing.toast_manual_unbalanced", "Total Debit dan Kredit jurnal penutup harus seimbang dan tidak boleh kosong."),
       );
       return;
     }
     const validDebits = debitLines.filter((l) => l.accountId && l.amount > 0);
     const validCredits = creditLines.filter((l) => l.accountId && l.amount > 0);
     if (validDebits.length === 0 || validCredits.length === 0) {
-      toast.error("Lengkapi akun debit dan kredit jurnal penutup.");
+      toast.error(
+        t("accounting:closing.toast_manual_min_lines", "Lengkapi akun debit dan kredit jurnal penutup."),
+      );
       return;
     }
 
@@ -148,7 +156,10 @@ export function PeriodManualClosingDialog({
           lines: linesInput,
         });
         toast.success(
-          `Jurnal penutup ${editingJournal.journal_number} berhasil diperbarui.`,
+          t("accounting:closing.toast_manual_updated", {
+            number: editingJournal.journal_number,
+            defaultValue: `Jurnal penutup ${editingJournal.journal_number} berhasil diperbarui.`,
+          }),
         );
       } else {
         await createManualOrAdjustmentJournal({
@@ -159,7 +170,9 @@ export function PeriodManualClosingDialog({
           autoReverseNextPeriod: false,
           lines: linesInput,
         });
-        toast.success("Jurnal penutup manual berhasil dibukukan.");
+        toast.success(
+          t("accounting:closing.toast_manual_success", "Jurnal penutup manual berhasil dibukukan."),
+        );
       }
 
       onOpenChange(false);
@@ -168,7 +181,7 @@ export function PeriodManualClosingDialog({
       toast.error(
         err instanceof Error
           ? err.message
-          : "Gagal memposting jurnal penutup manual.",
+          : t("accounting:closing.toast_manual_error", "Gagal memposting jurnal penutup manual."),
       );
     } finally {
       setPostingManual(false);
@@ -181,24 +194,31 @@ export function PeriodManualClosingDialog({
         <DialogHeader>
           <DialogTitle>
             {editingJournal
-              ? `Edit Jurnal Penutup (${editingJournal.journal_number})`
-              : "Catat Jurnal Penutup Manual"}
+              ? t("accounting:closing.manual_edit_title", {
+                  number: editingJournal.journal_number,
+                  defaultValue: `Edit Jurnal Penutup (${editingJournal.journal_number})`,
+                })
+              : t("accounting:closing.manual_create_title", "Catat Jurnal Penutup Manual")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handlePostManualClosing} className="space-y-5">
           <FieldGroup>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel required>Tanggal Jurnal</FieldLabel>
+                <FieldLabel required>
+                  {t("accounting:dialogs.date", "Tanggal Jurnal")}
+                </FieldLabel>
                 <DatePicker value={manualDate} onChange={setManualDate} />
               </Field>
               <Field>
-                <FieldLabel required>Deskripsi Transaksi Penutup</FieldLabel>
+                <FieldLabel required>
+                  {t("accounting:closing.manual_tx_desc_label", "Deskripsi Transaksi Penutup")}
+                </FieldLabel>
                 <Input
                   value={manualDescription}
                   onChange={(e) => setManualDescription(e.target.value)}
                   required
-                  placeholder="Penutupan akun nominal akhir periode..."
+                  placeholder={t("accounting:closing.manual_tx_desc_placeholder", "Penutupan akun nominal akhir periode...")}
                 />
               </Field>
             </div>
@@ -209,7 +229,7 @@ export function PeriodManualClosingDialog({
               <div className="rounded-2xl border border-border/80 bg-background/50 p-4 space-y-3">
                 <div className="flex items-center justify-between pb-1 border-b border-border/60">
                   <span className="text-xs font-bold text-foreground tracking-wide">
-                    Sisi Debit
+                    {t("accounting:dialogs.debit_side", "Sisi Debit")}
                   </span>
                   <Button
                     type="button"
@@ -220,7 +240,7 @@ export function PeriodManualClosingDialog({
                     }
                     className="h-7 text-xs font-semibold text-primary dark:text-cyan-400 gap-1"
                   >
-                    <PlusIcon className="size-3" /> Tambah Akun
+                    <PlusIcon className="size-3" /> {t("accounting:dialogs.add_account", "Tambah Akun")}
                   </Button>
                 </div>
                 {debitLines.map((line, idx) => (
@@ -237,7 +257,9 @@ export function PeriodManualClosingDialog({
                       }}
                     >
                       <SelectTrigger className="w-full text-xs">
-                        <SelectValue placeholder="Pilih Akun Debit..." />
+                        <SelectValue
+                          placeholder={t("accounting:closing.manual_select_debit", "Pilih Akun Debit...")}
+                        />
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {postableAccounts.map((a) => (
@@ -246,7 +268,7 @@ export function PeriodManualClosingDialog({
                             value={a.id}
                             className="text-xs"
                           >
-                            {a.code}: {a.name}
+                            {a.code}: {getLocalizedAccountName(a, lang)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -254,7 +276,7 @@ export function PeriodManualClosingDialog({
                     <NumberInput
                       allowDecimal={false}
                       min={0}
-                      placeholder="Nominal Debit (Rp)"
+                      placeholder={t("accounting:closing.manual_debit_amount_placeholder", "Nominal Debit (Rp)")}
                       value={line.amount || 0}
                       onValueChange={(val) => {
                         const updated = [...debitLines];
@@ -266,7 +288,7 @@ export function PeriodManualClosingDialog({
                   </div>
                 ))}
                 <div className="flex justify-between items-center pt-2 text-xs font-bold">
-                  <span>Total Debit:</span>
+                  <span>{t("accounting:dialogs.total_debit", "Total Debit")}:</span>
                   <span className="text-primary dark:text-cyan-400">
                     {formatRupiah(totalDebit)}
                   </span>
@@ -277,7 +299,7 @@ export function PeriodManualClosingDialog({
               <div className="rounded-2xl border border-border/80 bg-background/50 p-4 space-y-3">
                 <div className="flex items-center justify-between pb-1 border-b border-border/60">
                   <span className="text-xs font-bold text-foreground tracking-wide">
-                    Sisi Kredit
+                    {t("accounting:dialogs.credit_side", "Sisi Kredit")}
                   </span>
                   <Button
                     type="button"
@@ -288,7 +310,7 @@ export function PeriodManualClosingDialog({
                     }
                     className="h-7 text-xs font-semibold text-primary dark:text-cyan-400 gap-1"
                   >
-                    <PlusIcon className="size-3" /> Tambah Akun
+                    <PlusIcon className="size-3" /> {t("accounting:dialogs.add_account", "Tambah Akun")}
                   </Button>
                 </div>
                 {creditLines.map((line, idx) => (
@@ -305,7 +327,9 @@ export function PeriodManualClosingDialog({
                       }}
                     >
                       <SelectTrigger className="w-full text-xs">
-                        <SelectValue placeholder="Pilih Akun Kredit..." />
+                        <SelectValue
+                          placeholder={t("accounting:closing.manual_select_credit", "Pilih Akun Kredit...")}
+                        />
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {postableAccounts.map((a) => (
@@ -314,7 +338,7 @@ export function PeriodManualClosingDialog({
                             value={a.id}
                             className="text-xs"
                           >
-                            {a.code}: {a.name}
+                            {a.code}: {getLocalizedAccountName(a, lang)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -322,7 +346,7 @@ export function PeriodManualClosingDialog({
                     <NumberInput
                       allowDecimal={false}
                       min={0}
-                      placeholder="Nominal Kredit (Rp)"
+                      placeholder={t("accounting:closing.manual_credit_amount_placeholder", "Nominal Kredit (Rp)")}
                       value={line.amount || 0}
                       onValueChange={(val) => {
                         const updated = [...creditLines];
@@ -334,7 +358,7 @@ export function PeriodManualClosingDialog({
                   </div>
                 ))}
                 <div className="flex justify-between items-center pt-2 text-xs font-bold">
-                  <span>Total Kredit:</span>
+                  <span>{t("accounting:dialogs.total_credit", "Total Kredit")}:</span>
                   <span className="text-primary dark:text-cyan-400">
                     {formatRupiah(totalCredit)}
                   </span>
@@ -355,12 +379,12 @@ export function PeriodManualClosingDialog({
                 <ScaleIcon className="size-4" />
                 <span>
                   {isBalanced
-                    ? "Jurnal Seimbang (Balanced)"
-                    : "Jurnal Belum Seimbang (Selisih Debit - Kredit)"}
+                    ? t("accounting:closing.manual_balanced_status", "Jurnal Seimbang (Balanced)")
+                    : t("accounting:closing.manual_unbalanced_status", "Jurnal Belum Seimbang (Selisih Debit - Kredit)")}
                 </span>
               </div>
               <span>
-                Selisih: {formatRupiah(Math.abs(totalDebit - totalCredit))}
+                {t("accounting:closing.manual_diff_label", "Selisih:")} {formatRupiah(Math.abs(totalDebit - totalCredit))}
               </span>
             </div>
 
@@ -370,11 +394,11 @@ export function PeriodManualClosingDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Batal
+                {t("common:action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={!isBalanced || postingManual}>
                 {postingManual ? <Spinner data-icon="inline-start" /> : null}
-                Rekam Transaksi
+                {t("accounting:dialogs.btn_post", "Rekam Transaksi")}
               </Button>
             </DialogFooter>
           </FieldGroup>

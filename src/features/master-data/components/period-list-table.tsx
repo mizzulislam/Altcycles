@@ -114,10 +114,10 @@ export function PeriodListTable({
                             size="icon"
                             onClick={() => onClosePeriod(p)}
                             className="size-8 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/30 transition-all cursor-pointer shadow-2xs"
-                            title="Tutup Buku & Periode"
+                            title={t("accounting:closing.tooltip_close_period", "Tutup Buku & Periode")}
                           >
                             <LockIcon className="size-4" />
-                            <span className="sr-only">Tutup Buku &amp; Periode</span>
+                            <span className="sr-only">{t("accounting:closing.tooltip_close_period", "Tutup Buku & Periode")}</span>
                           </Button>
                         ) : (
                           <Button
@@ -126,10 +126,10 @@ export function PeriodListTable({
                             size="icon"
                             onClick={() => onReopenPeriod(p)}
                             className="size-8 rounded-lg text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all cursor-pointer shadow-2xs"
-                            title="Buka Kembali Periode"
+                            title={t("accounting:closing.tooltip_reopen_period", "Buka Kembali Periode")}
                           >
                             <LockOpenIcon className="size-4" />
-                            <span className="sr-only">Buka Kembali Periode</span>
+                            <span className="sr-only">{t("accounting:closing.tooltip_reopen_period", "Buka Kembali Periode")}</span>
                           </Button>
                         )}
                         <Button
@@ -138,10 +138,10 @@ export function PeriodListTable({
                           size="icon"
                           onClick={() => onDeletePeriod(p)}
                           className="size-8 rounded-lg text-rose-600 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/30 dark:text-rose-400 dark:hover:text-rose-300 transition-all cursor-pointer shadow-2xs"
-                          title="Hapus Periode"
+                          title={t("accounting:closing.tooltip_delete_period", "Hapus Periode")}
                         >
                           <Trash2Icon className="size-4" />
-                          <span className="sr-only">Hapus Periode</span>
+                          <span className="sr-only">{t("accounting:closing.tooltip_delete_period", "Hapus Periode")}</span>
                         </Button>
                       </div>
                     </TableCell>

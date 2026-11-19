@@ -13,6 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateID, formatRupiah } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import type {
   AccountRow,
   JournalLineRow,
@@ -32,6 +37,8 @@ export function PeriodClosingDetailDialog({
   accounts,
   linesByJournal,
 }: PeriodClosingDetailDialogProps) {
+  const { t, language: lang } = useLanguage();
+
   return (
     <Dialog
       open={Boolean(journal)}
@@ -41,27 +48,35 @@ export function PeriodClosingDetailDialog({
     >
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Detail Transaksi Jurnal Penutup</DialogTitle>
+          <DialogTitle>
+            {t("accounting:closing.detail_modal_title", "Detail Transaksi Jurnal Penutup")}
+          </DialogTitle>
         </DialogHeader>
         {journal && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl border border-border/80 bg-muted/20 text-xs">
               <div>
-                <span className="text-muted-foreground block">Nomor Jurnal</span>
+                <span className="text-muted-foreground block">
+                  {t("accounting:dialogs.number", "Nomor Jurnal")}
+                </span>
                 <span className="font-mono font-bold text-foreground">
                   {journal.journal_number}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground block">Tanggal Transaksi</span>
+                <span className="text-muted-foreground block">
+                  {t("accounting:closing.detail_tx_date", "Tanggal Transaksi")}
+                </span>
                 <span className="font-semibold text-foreground">
                   {formatDateID(journal.journal_date)}
                 </span>
               </div>
               <div className="col-span-2">
-                <span className="text-muted-foreground block">Deskripsi</span>
+                <span className="text-muted-foreground block">
+                  {t("accounting:closing.detail_description", "Deskripsi")}
+                </span>
                 <span className="font-medium text-foreground">
-                  {journal.description}
+                  {getLocalizedTransactionDescription(journal.description, lang)}
                 </span>
               </div>
             </div>
@@ -70,9 +85,15 @@ export function PeriodClosingDetailDialog({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center font-semibold text-xs">Akun</TableHead>
-                    <TableHead className="text-center font-semibold text-xs">Debit</TableHead>
-                    <TableHead className="text-center font-semibold text-xs">Kredit</TableHead>
+                    <TableHead className="text-center font-semibold text-xs">
+                      {t("accounting:journals.col_account", "Akun")}
+                    </TableHead>
+                    <TableHead className="text-center font-semibold text-xs">
+                      {t("accounting:journals.col_debit", "Debit")}
+                    </TableHead>
+                    <TableHead className="text-center font-semibold text-xs">
+                      {t("accounting:journals.col_credit", "Kredit")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -84,7 +105,7 @@ export function PeriodClosingDetailDialog({
                           <span className="font-mono font-semibold text-primary dark:text-cyan-400">
                             {acc?.code}
                           </span>{" "}
-                          &ndash; {acc?.name}
+                          &ndash; {acc ? getLocalizedAccountName(acc, lang) : ""}
                         </TableCell>
                         <TableCell className="text-xs text-right pr-6 font-medium">
                           {l.debit > 0 ? formatRupiah(l.debit) : "-"}

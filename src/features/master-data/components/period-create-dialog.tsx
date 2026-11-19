@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createPeriod } from "@/lib/data-service";
+import { FULL_MONTHS_EN, FULL_MONTHS_ID } from "@/lib/formatters";
+import { useLanguage } from "@/lib/i18n";
 
 export interface PeriodCreateDialogProps {
   open: boolean;
@@ -32,21 +34,32 @@ export function PeriodCreateDialog({
   onOpenChange,
   onSuccess,
 }: PeriodCreateDialogProps) {
+  const { t, language: lang } = useLanguage();
   const [year, setYear] = React.useState(2027);
   const [month, setMonth] = React.useState("2");
   const [creating, setCreating] = React.useState(false);
+
+  const months = lang === "en" ? FULL_MONTHS_EN : FULL_MONTHS_ID;
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setCreating(true);
     try {
       await createPeriod(year, Number(month));
-      toast.success("Periode akuntansi baru berhasil dibuka.");
+      const mName = months[Number(month) - 1] ?? month;
+      toast.success(
+        t("accounting:closing.toast_period_opened", {
+          name: `${mName} ${year}`,
+          defaultValue: `Periode ${mName} ${year} berhasil dibuka.`,
+        }),
+      );
       onOpenChange(false);
       await onSuccess();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal membuat periode.",
+        err instanceof Error
+          ? err.message
+          : t("accounting:closing.toast_period_open_error", "Gagal membuat periode."),
       );
     } finally {
       setCreating(false);
@@ -57,14 +70,16 @@ export function PeriodCreateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Buka Periode Akuntansi Baru</DialogTitle>
+          <DialogTitle>
+            {t("accounting:closing.create_period_title", "Buka Periode Akuntansi Baru")}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleCreate}>
           <FieldGroup>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="p-year" required>
-                  Tahun Buku
+                  {t("accounting:closing.create_period_year", "Tahun Buku")}
                 </FieldLabel>
                 <Input
                   id="p-year"
@@ -77,25 +92,24 @@ export function PeriodCreateDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel required>Bulan</FieldLabel>
+                <FieldLabel required>
+                  {t("accounting:closing.create_period_month", "Bulan")}
+                </FieldLabel>
                 <Select value={month} onValueChange={setMonth}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="1">01 — Januari</SelectItem>
-                      <SelectItem value="2">02 — Februari</SelectItem>
-                      <SelectItem value="3">03 — Maret</SelectItem>
-                      <SelectItem value="4">04 — April</SelectItem>
-                      <SelectItem value="5">05 — Mei</SelectItem>
-                      <SelectItem value="6">06 — Juni</SelectItem>
-                      <SelectItem value="7">07 — Juli</SelectItem>
-                      <SelectItem value="8">08 — Agustus</SelectItem>
-                      <SelectItem value="9">09 — September</SelectItem>
-                      <SelectItem value="10">10 — Oktober</SelectItem>
-                      <SelectItem value="11">11 — November</SelectItem>
-                      <SelectItem value="12">12 — Desember</SelectItem>
+                      {months.map((mLabel, idx) => {
+                        const mVal = String(idx + 1);
+                        const padM = mVal.padStart(2, "0");
+                        return (
+                          <SelectItem key={mVal} value={mVal}>
+                            {padM} — {mLabel}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -107,11 +121,11 @@ export function PeriodCreateDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Batal
+                {t("common:action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={creating}>
                 {creating ? <Spinner data-icon="inline-start" /> : null}
-                Buka Periode
+                {t("accounting:closing.create_period_submit", "Buka Periode")}
               </Button>
             </DialogFooter>
           </FieldGroup>

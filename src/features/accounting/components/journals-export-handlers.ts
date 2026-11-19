@@ -2,6 +2,12 @@ import { toast } from "sonner";
 import { getCompanyProfile } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
+import {
+  getLocalizedAccountName,
+  getLocalizedJournalType,
+  getLocalizedPeriodName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import { getActiveLanguage } from "@/lib/i18n";
 import {
   buildJournalsPdfSpec,
@@ -17,7 +23,6 @@ import type {
   JournalRow,
   ProjectRow,
 } from "@/types/database.types";
-import { JOURNAL_TYPE_LABELS } from "../journals-page";
 
 interface ExportJournalsPdfParams {
   company: CompanyProfileRow | null;
@@ -39,6 +44,8 @@ export async function exportJournalsToPdf({
   printPeriodLabel,
 }: ExportJournalsPdfParams): Promise<void> {
   try {
+    const lang = getActiveLanguage();
+    const isEn = lang === "en";
     const comp = company ?? (await getCompanyProfile());
     const isAdj = filterMode === "adjusting";
 
@@ -61,7 +68,11 @@ export async function exportJournalsToPdf({
         const acc = accountMap.get(l.account_id);
         rows.push({
           date: idx === 0 ? formatDateID(j.journal_date) : "",
-          description: acc ? acc.name : "Akun Debit",
+          description: acc
+            ? getLocalizedAccountName(acc, lang)
+            : isEn
+              ? "Debit Account"
+              : "Akun Debit",
           ref: acc?.code ?? "-",
           debit: l.debit,
           credit: 0,
@@ -72,14 +83,22 @@ export async function exportJournalsToPdf({
         const acc = accountMap.get(l.account_id);
         rows.push({
           date: "",
-          description: `   ${acc ? acc.name : "Akun Kredit"}`,
+          description: `   ${
+            acc
+              ? getLocalizedAccountName(acc, lang)
+              : isEn
+                ? "Credit Account"
+                : "Akun Kredit"
+          }`,
           ref: acc?.code ?? "-",
           debit: 0,
           credit: l.credit,
         });
       });
 
-      const memo = j.description || "";
+      const memo = j.description
+        ? getLocalizedTransactionDescription(j.description, lang)
+        : "";
       if (memo) {
         rows.push({
           date: "",
@@ -94,11 +113,11 @@ export async function exportJournalsToPdf({
     const spec = buildJournalsPdfSpec({
       company: comp,
       isAdjusting: isAdj,
-      periodLabel: printPeriodLabel,
+      periodLabel: getLocalizedPeriodName(printPeriodLabel, lang),
       rows,
+      lang,
     });
 
-    const isEn = getActiveLanguage() === "en";
     const bytes = await generateDocumentPdf(spec);
     downloadPdfBytes(
       bytes,
@@ -122,7 +141,11 @@ export async function exportJournalsToPdf({
     );
   } catch (err) {
     console.error("Gagal mengunduh PDF jurnal:", err);
-    toast.error("Gagal membuat berkas PDF jurnal akuntansi.");
+    toast.error(
+      getActiveLanguage() === "en"
+        ? "Failed to generate accounting journal PDF file."
+        : "Gagal membuat berkas PDF jurnal akuntansi.",
+    );
   }
 }
 
@@ -142,6 +165,8 @@ export async function exportJournalsToExcel({
   periodFilter,
 }: ExportJournalsExcelParams): Promise<void> {
   try {
+    const lang = getActiveLanguage();
+    const isEn = lang === "en";
     const exportRows: Array<Array<string | number>> = [];
     for (const j of filteredJournals) {
       const jLines = lines
@@ -153,17 +178,16 @@ export async function exportJournalsToExcel({
         exportRows.push([
           j.journal_number,
           formatDateID(j.journal_date),
-          JOURNAL_TYPE_LABELS[j.journal_type].label,
+          getLocalizedJournalType(j.journal_type, lang),
           prj ? prj.code : "-",
-          acc ? `${acc.code}: ${acc.name}` : "-",
-          l.description || j.description,
+          acc ? `${acc.code}: ${getLocalizedAccountName(acc, lang)}` : "-",
+          getLocalizedTransactionDescription(l.description || j.description, lang),
           l.debit,
           l.credit,
         ]);
       }
     }
 
-    const isEn = getActiveLanguage() === "en";
     await downloadExcelSheet({
       fileName: isEn ? "General_Journals_Altcycles.xlsx" : "Jurnal_Akuntansi_Altcycles.xlsx",
       sheetName: isEn ? "Accounting Journals" : "Jurnal Akuntansi",
@@ -187,7 +211,11 @@ export async function exportJournalsToExcel({
     );
   } catch (err) {
     console.error("Gagal mengekspor Excel jurnal:", err);
-    toast.error("Gagal mengekspor jurnal akuntansi ke Excel.");
+    toast.error(
+      getActiveLanguage() === "en"
+        ? "Failed to export accounting journals to Excel."
+        : "Gagal mengekspor jurnal akuntansi ke Excel.",
+    );
   }
 }
 
@@ -207,6 +235,8 @@ export async function exportJournalsToCsv({
   periodFilter,
 }: ExportJournalsCsvParams): Promise<void> {
   try {
+    const lang = getActiveLanguage();
+    const isEn = lang === "en";
     const exportRows: Array<Array<string | number>> = [];
     for (const j of sortedJournals) {
       const jLines = lines
@@ -219,7 +249,11 @@ export async function exportJournalsToCsv({
         const acc = accountMap.get(l.account_id);
         exportRows.push([
           idx === 0 ? formatDateID(j.journal_date) : "",
-          acc?.name ?? "Akun Debit",
+          acc
+            ? getLocalizedAccountName(acc, lang)
+            : isEn
+              ? "Debit Account"
+              : "Akun Debit",
           acc?.code ?? "-",
           l.debit,
           "",
@@ -230,7 +264,13 @@ export async function exportJournalsToCsv({
         const acc = accountMap.get(l.account_id);
         exportRows.push([
           "",
-          `    ${acc?.name ?? "Akun Kredit"}`,
+          `    ${
+            acc
+              ? getLocalizedAccountName(acc, lang)
+              : isEn
+                ? "Credit Account"
+                : "Akun Kredit"
+          }`,
           acc?.code ?? "-",
           "",
           Math.abs(l.credit),
@@ -240,14 +280,13 @@ export async function exportJournalsToCsv({
       if (j.description) {
         exportRows.push([
           "",
-          `(${j.description})`,
+          `(${getLocalizedTransactionDescription(j.description, lang)})`,
           "",
           "",
           "",
         ]);
       }
     }
-    const isEn = getActiveLanguage() === "en";
     downloadCsvFile(
       filterMode === "adjusting"
         ? isEn
@@ -262,9 +301,17 @@ export async function exportJournalsToCsv({
       exportRows,
     );
     await recordExportLog("JOURNALS", "CSV", periodFilter);
-    toast.success("Jurnal akuntansi berhasil diekspor ke format CSV (.csv).");
+    toast.success(
+      isEn
+        ? "Accounting journals exported to CSV (.csv) format successfully."
+        : "Jurnal akuntansi berhasil diekspor ke format CSV (.csv).",
+    );
   } catch (err) {
     console.error("Gagal mengekspor CSV jurnal:", err);
-    toast.error("Gagal mengekspor jurnal akuntansi ke CSV.");
+    toast.error(
+      getActiveLanguage() === "en"
+        ? "Failed to export accounting journals to CSV."
+        : "Gagal mengekspor jurnal akuntansi ke CSV.",
+    );
   }
 }

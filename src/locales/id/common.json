@@ -21,6 +21,7 @@
     "order": "Urutan",
     "oldest": "Terlama",
     "newest": "Terbaru",
+    "select": "Pilih",
     "select_all": "Pilih Semua",
     "loading": "Memuat...",
     "confirm_continue": "Ya, Lanjutkan",
@@ -35,6 +36,7 @@
     "tagline": "ERP Keuangan"
   },
   "loading": "Memuat data...",
+  "saving": "Menyimpan...",
   "empty": "Tidak ada data yang tersedia",
   "error": "Terjadi kesalahan",
   "auth": {

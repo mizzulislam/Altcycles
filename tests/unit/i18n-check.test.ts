@@ -505,4 +505,400 @@ describe("i18n navigation and layout checks", () => {
 
     expect(missingKeys).toEqual([]);
   });
+
+  it("verifies COA_NAME_MAP, COA_DESCRIPTION_MAP, SYSTEM_TAG_MAP, and catalog helpers completeness (Items 4 & 5)", async () => {
+    const {
+      COA_NAME_MAP,
+      COA_DESCRIPTION_MAP,
+      SYSTEM_TAG_MAP,
+      CATALOG_DEFAULT_ITEMS_MAP,
+      getLocalizedAccountName,
+      getLocalizedAccountDescription,
+      getLocalizedSystemTag,
+      getLocalizedServiceUnit,
+      getLocalizedCatalogProduct,
+      getLocalizedTransactionDescription,
+    } = await import("@/lib/glossary");
+    const { DEMO_ACCOUNTS } = await import("@/lib/demo-seed");
+    const { listServicesProducts } = await import(
+      "@/lib/services/products-services-service"
+    );
+    const defaultServicesProducts = await listServicesProducts();
+
+    // 1. Every COA_NAME_MAP key must have non-empty id & en and matching COA_DESCRIPTION_MAP
+    for (const [code, names] of Object.entries(COA_NAME_MAP)) {
+      expect(names.id.trim().length).toBeGreaterThan(0);
+      expect(names.en.trim().length).toBeGreaterThan(0);
+      expect(COA_DESCRIPTION_MAP[code]).toBeDefined();
+      expect(COA_DESCRIPTION_MAP[code]!.id.trim().length).toBeGreaterThan(0);
+      expect(COA_DESCRIPTION_MAP[code]!.en.trim().length).toBeGreaterThan(0);
+    }
+
+    // 2. Every DEMO_ACCOUNTS item must resolve to pure English name & description in 'en' mode
+    for (const acc of DEMO_ACCOUNTS) {
+      const nameEn = getLocalizedAccountName(acc, "en");
+      const descEn = getLocalizedAccountDescription(acc.code, acc.description, "en");
+      expect(nameEn.trim().length).toBeGreaterThan(0);
+      expect(descEn.trim().length).toBeGreaterThan(0);
+      expect(nameEn).not.toMatch(/\b(Kas|Piutang|Beban|Pendapatan|Utang|Laba|Modal|Ekuitas)\b/);
+      expect(descEn).not.toMatch(/\b(Akun|Digunakan|Mencatat|Pencatatan|Saldo|Dana)\b/);
+    }
+
+    // 3. Additional user-observed accounts (1-1402, 2-1403, 4-1102, 7-0000, 7-1101, 7-2101, 7-2201)
+    const extraAccounts = [
+      { code: "1-1402", name: "Beban Dibayar di Muka - Server", description: "Biaya sewa server tahunan" },
+      { code: "2-1403", name: "Pendapatan Diterima di Muka - Hosting", description: "Uang muka hosting klien" },
+      { code: "4-1102", name: "Pendapatan Jasa Pengembangan Website", description: "Pendapatan pengembangan website" },
+      { code: "7-0000", name: "PENDAPATAN & BEBAN LAIN-LAIN", description: "Header akun non-operasional" },
+      { code: "7-1101", name: "Pendapatan Bunga Bank", description: "Jasa giro dan bunga bank" },
+      { code: "7-2101", name: "Beban Pajak Final atas Bunga", description: "Pajak final PPh atas bunga bank" },
+      { code: "7-2201", name: "Beban Administrasi Bank", description: "Biaya admin bulanan rekening bank" },
+    ];
+    for (const acc of extraAccounts) {
+      const nameEn = getLocalizedAccountName(acc, "en");
+      const descEn = getLocalizedAccountDescription(acc.code, acc.description, "en");
+      expect(nameEn).not.toMatch(/\b(Beban|Pendapatan|Biaya|Pajak)\b/i);
+      expect(descEn).not.toMatch(/\b(Biaya|Uang|Pendapatan|Pajak)\b/i);
+    }
+
+    // 4. System tags: all 14 tags must translate cleanly without snake_case in both id and en
+    const allTags = Object.keys(SYSTEM_TAG_MAP);
+    expect(allTags.length).toBeGreaterThanOrEqual(14);
+    for (const tag of allTags) {
+      if (tag === "none") {
+        expect(getLocalizedSystemTag(tag, "id")).toBe("-");
+        expect(getLocalizedSystemTag(tag, "en")).toBe("-");
+        continue;
+      }
+      const labelId = getLocalizedSystemTag(tag, "id");
+      const labelEn = getLocalizedSystemTag(tag, "en");
+      expect(labelId).not.toContain("_");
+      expect(labelEn).not.toContain("_");
+      expect(labelId.length).toBeGreaterThan(2);
+      expect(labelEn.length).toBeGreaterThan(2);
+    }
+
+    // 5. Catalog products & service units (Item 5)
+    expect(getLocalizedServiceUnit("Proyek", "en")).toBe("Project");
+    expect(getLocalizedServiceUnit("Paket / Modul", "en")).toBe("Package / Module");
+    expect(getLocalizedServiceUnit("Paket", "en")).toBe("Package");
+    expect(getLocalizedServiceUnit("Bulan", "en")).toBe("Month");
+
+    for (const item of defaultServicesProducts) {
+      expect(CATALOG_DEFAULT_ITEMS_MAP[item.code]).toBeDefined();
+      const locEn = getLocalizedCatalogProduct(item, "en");
+      expect(locEn.name).not.toMatch(/\b(Pengembangan|Pemeliharaan|Pendampingan|Proyek)\b/i);
+      expect(locEn.unit).not.toMatch(/\b(Proyek|Paket|Bulan)\b/i);
+      expect(locEn.description).not.toMatch(/\b(Layanan|Pembuatan|Paket)\b/i);
+    }
+
+    // User-edited product name is preserved (not overwritten by default catalog map)
+    const customEdited = getLocalizedCatalogProduct(
+      {
+        code: "SRV-001",
+        name: "Custom AI Agent Integration by User",
+        category: "Software Development",
+        unit: "Proyek",
+        description: "Custom description typed by user",
+      },
+      "en",
+    );
+    expect(customEdited.name).toBe("Custom AI Agent Integration by User");
+    expect(customEdited.unit).toBe("Project");
+
+    // 6. Automated journal descriptions in English
+    expect(
+      getLocalizedTransactionDescription(
+        "Penerimaan termin 1 dari PT RMM berupa uang muka development dan pembayaran penuh hosting 1 tahun",
+        "en",
+      ),
+    ).toBe(
+      "Receipt of milestone 1 from PT RMM as advance payment for development and full 1-year hosting payment",
+    );
+    expect(
+      getLocalizedTransactionDescription(
+        "Pengakuan pendapatan hosting selama 42 hari (20 Sep s.d. 31 Okt 2026)",
+        "en",
+      ),
+    ).toBe("Hosting revenue recognition for 42 days (20 Sep to 31 Oct 2026)");
+    expect(
+      getLocalizedTransactionDescription(
+        "Pembebanan biaya server tahunan untuk 42 hari yang sudah terpakai (20 Sep s.d. 31 Okt 2026)",
+        "en",
+      ),
+    ).toBe("Annual server cost allocation for 42 used days (20 Sep to 31 Oct 2026)");
+  });
+
+  it("verifies PDF layout parity (id vs en) and zero Indonesian leakage in English accounting PDFs (Items 1 & 2)", async () => {
+    const {
+      buildJournalsPdfSpec,
+      buildGeneralLedgerPdfSpec,
+      buildTrialBalancePdfSpec,
+      buildIncomeStatementPdfSpec,
+      buildRetainedEarningsPdfSpec,
+      buildBalanceSheetPdfSpec,
+      buildCashFlowPdfSpec,
+      buildCompleteFinancialStatementsPdfSpec,
+    } = await import("@/lib/pdf/specs/accounting-specs");
+    const { inspectPdfDocumentLayout } = await import("@/lib/pdf/pdf-engine");
+    const { DEMO_COMPANY: INITIAL_COMPANY } = await import("@/lib/demo-seed");
+
+    const sampleJournalRows = [
+      {
+        date: "12 Nov 2026",
+        description: "Kas di Bank - Bank Jago",
+        ref: "1-1102",
+        debit: 2000000,
+        credit: 0,
+      },
+      {
+        date: "",
+        description: "    Pendapatan Diterima di Muka - Development",
+        ref: "2-1402",
+        debit: 0,
+        credit: 2000000,
+      },
+      {
+        date: "",
+        description:
+          "(Penerimaan termin 1 dari PT RMM berupa uang muka development dan pembayaran penuh hosting 1 tahun)",
+        ref: "",
+        debit: 0,
+        credit: 0,
+      },
+    ];
+
+    const ledgerAccounts = [
+      {
+        code: "1-1102",
+        name: "Kas di Bank - Bank Jago",
+        type: "Aset",
+        normalBalance: "Debit",
+        endingBalance: 2000000,
+        rows: [
+          {
+            date: "12 Nov 2026",
+            description:
+              "Penerimaan termin 1 dari PT RMM berupa uang muka development dan pembayaran penuh hosting 1 tahun",
+            ref: "JRN/ALT/2026/11/006",
+            debit: 2000000,
+            credit: 0,
+            runningBalance: 2000000,
+          },
+        ],
+      },
+      {
+        code: "1-1101",
+        name: "Kas Kecil",
+        type: "Aset",
+        normalBalance: "Debit",
+        endingBalance: 0,
+        rows: [],
+      },
+    ];
+
+    const tbRows = [
+      {
+        code: "1-1102",
+        name: "Kas di Bank - Bank Jago",
+        debit: 2000000,
+        credit: 0,
+      },
+      {
+        code: "4-1102",
+        name: "Pendapatan Jasa Pengembangan Website",
+        debit: 0,
+        credit: 2000000,
+      },
+    ];
+
+    const builders = [
+      {
+        name: "General Journal",
+        build: (lang: "id" | "en") =>
+          buildJournalsPdfSpec({
+            company: INITIAL_COMPANY,
+            isAdjusting: false,
+            periodLabel: "Semua Periode",
+            rows: sampleJournalRows,
+            totalDebit: 2000000,
+            totalCredit: 2000000,
+            lang,
+          }),
+      },
+      {
+        name: "Adjusting Journal",
+        build: (lang: "id" | "en") =>
+          buildJournalsPdfSpec({
+            company: INITIAL_COMPANY,
+            isAdjusting: true,
+            periodLabel: "Semua Periode",
+            rows: sampleJournalRows,
+            totalDebit: 2000000,
+            totalCredit: 2000000,
+            lang,
+          }),
+      },
+      {
+        name: "General Ledger",
+        build: (lang: "id" | "en") =>
+          buildGeneralLedgerPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            isAllAccounts: true,
+            accounts: ledgerAccounts,
+            lang,
+          }),
+      },
+      {
+        name: "Trial Balance",
+        build: (lang: "id" | "en") =>
+          buildTrialBalancePdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            rows: tbRows,
+            sumDebit: 2000000,
+            sumCredit: 2000000,
+            isBalanced: true,
+            lang,
+          }),
+      },
+      {
+        name: "Income Statement",
+        build: (lang: "id" | "en") =>
+          buildIncomeStatementPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            revenueRows: [
+              { label: "4-1102 — Pendapatan Jasa Pengembangan Website", amount: 2000000 },
+            ],
+            totalRevenue: 2000000,
+            cogsRows: [
+              { label: "5-1101 — Beban Cloud, Hosting, & Domain Proyek", amount: 500000 },
+            ],
+            grossProfit: 1500000,
+            opexRows: [
+              { label: "5-2101 — Beban Sewa & Utilitas Kantor Bersama", amount: 200000 },
+            ],
+            totalOpex: 200000,
+            netIncome: 1300000,
+            lang,
+          }),
+      },
+      {
+        name: "Retained Earnings",
+        build: (lang: "id" | "en") =>
+          buildRetainedEarningsPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            rows: [
+              { label: "Saldo Laba Ditahan Awal Periode", amount: 0 },
+              { label: "Ditambah: Laba (Rugi) Bersih Periode Berjalan", amount: 1300000 },
+              { label: "Dikurangi: Prive Pemilik / Dividen", amount: 0 },
+            ],
+            endingRetainedEarnings: 1300000,
+            lang,
+          }),
+      },
+      {
+        name: "Balance Sheet",
+        build: (lang: "id" | "en") =>
+          buildBalanceSheetPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Per 30 November 2026",
+            currentAssetRows: [
+              { label: "1-1102 — Kas di Bank - Bank Jago", amount: 11300000 },
+            ],
+            totalCurrentAssets: 11300000,
+            nonCurrentAssetRows: [],
+            totalNonCurrentAssets: 0,
+            totalAssets: 11300000,
+            currentLiabRows: [
+              { label: "2-1101 — Utang Usaha Vendor", amount: 0 },
+            ],
+            totalCurrentLiabilities: 0,
+            nonCurrentLiabRows: [],
+            totalNonCurrentLiabilities: 0,
+            totalLiabilities: 0,
+            equityRows: [
+              { label: "3-1101 — Modal Disetor Pemilik", amount: 10000000 },
+              { label: "Laba (Rugi) Bersih Periode Berjalan", amount: 1300000 },
+            ],
+            totalEquity: 11300000,
+            totalLiabilitiesAndEquity: 11300000,
+            isBalanced: true,
+            lang,
+          }),
+      },
+      {
+        name: "Cash Flow",
+        build: (lang: "id" | "en") =>
+          buildCashFlowPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            operatingRows: [
+              { label: "Penerimaan Kas dari Pelanggan (Operasional)", amount: 2000000 },
+              { label: "Pembayaran Kas Operasional & Vendor", amount: -500000 },
+            ],
+            netOperating: 1500000,
+            netCashChange: 1500000,
+            beginningCash: 0,
+            endingCash: 1500000,
+            lang,
+          }),
+      },
+      {
+        name: "Complete Financial Statements",
+        build: (lang: "id" | "en") =>
+          buildCompleteFinancialStatementsPdfSpec({
+            company: INITIAL_COMPANY,
+            periodLabel: "Semua Periode",
+            incomeStatementRows: [
+              ["PENDAPATAN USAHA", ""],
+              ["  4-1102 — Pendapatan Jasa Pengembangan Website", "Rp 2.000.000"],
+              ["TOTAL PENDAPATAN USAHA", "Rp 2.000.000"],
+            ],
+            retainedEarningsRows: [
+              ["Saldo Laba Ditahan Awal Periode", "Rp 0"],
+              ["TOTAL SALDO LABA DITAHAN AKHIR", "Rp 1.300.000"],
+            ],
+            balanceSheetRows: [
+              ["ASET LANCAR", ""],
+              ["  1-1102 — Kas di Bank - Bank Jago", "Rp 11.300.000"],
+              ["TOTAL ASET", "Rp 11.300.000"],
+            ],
+            cashFlowRows: [
+              ["AKTIVITAS OPERASI", ""],
+              ["  Penerimaan Kas dari Pelanggan (Operasional)", "Rp 2.000.000"],
+              ["SALDO KAS AKHIR PERIODE", "Rp 1.500.000"],
+            ],
+            lang,
+          }),
+      },
+    ];
+
+    const forbiddenIndonesianPattern =
+      /\b(Semua Periode|Kas Kecil|Kas di Bank|Piutang Usaha|Pendapatan Diterima di Muka|Beban Dibayar di Muka|Pendapatan Jasa Pengembangan|Penerimaan termin|Pengakuan pendapatan|Pembebanan biaya|Dana masuk|Saldo Akhir|Tidak ada transaksi pada akun ini)\b/i;
+
+    for (const item of builders) {
+      const specId = item.build("id");
+      const specEn = item.build("en");
+
+      // Structural parity between id and en specs
+      expect(specEn.tableRows?.length ?? 0).toBe(specId.tableRows?.length ?? 0);
+      expect(specEn.tableColumns?.length ?? 0).toBe(specId.tableColumns?.length ?? 0);
+      expect(specEn.sections?.length ?? 0).toBe(specId.sections?.length ?? 0);
+
+      const layoutId = await inspectPdfDocumentLayout(specId);
+      const layoutEn = await inspectPdfDocumentLayout(specEn);
+
+      expect(layoutId.collisions).toEqual([]);
+      expect(layoutEn.collisions).toEqual([]);
+      expect(layoutEn.pageCount).toBe(layoutId.pageCount);
+
+      // Ensure no Indonesian leakage in English PDF text boxes
+      const allEnText = layoutEn.textBoxes.map((b) => b.text).join(" | ");
+      expect(allEnText).not.toMatch(forbiddenIndonesianPattern);
+    }
+  });
 });

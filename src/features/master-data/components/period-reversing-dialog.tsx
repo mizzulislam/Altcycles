@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDateID } from "@/lib/formatters";
+import { getLocalizedPeriodName } from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import { runOptionalReversingEntries } from "@/lib/operations-service";
 import type { PeriodRow } from "@/types/database.types";
 
@@ -36,6 +38,7 @@ export function PeriodReversingDialog({
   periods,
   onSuccess,
 }: PeriodReversingDialogProps) {
+  const { t, language: lang } = useLanguage();
   const [sourcePeriodId, setSourcePeriodId] = React.useState("");
   const [reversingDate, setReversingDate] = React.useState("2027-01-01");
   const [runningReverse, setRunningReverse] = React.useState(false);
@@ -51,8 +54,11 @@ export function PeriodReversingDialog({
       );
       toast.success(
         count > 0
-          ? `${count} jurnal pembalik awal periode berhasil diterbitkan.`
-          : "Tidak ada jurnal penyesuaian yang ditandai pembalik pada periode asal (0 jurnal diterbitkan).",
+          ? t("accounting:closing.toast_rev_success", {
+              count,
+              defaultValue: `${count} jurnal pembalik awal periode berhasil diterbitkan.`,
+            })
+          : t("accounting:closing.toast_rev_none", "Tidak ada jurnal penyesuaian yang ditandai pembalik pada periode asal (0 jurnal diterbitkan)."),
       );
       onOpenChange(false);
       await onSuccess();
@@ -60,7 +66,7 @@ export function PeriodReversingDialog({
       toast.error(
         err instanceof Error
           ? err.message
-          : "Gagal menjalankan jurnal pembalik.",
+          : t("accounting:closing.toast_rev_error", "Gagal menjalankan jurnal pembalik."),
       );
     } finally {
       setRunningReverse(false);
@@ -71,24 +77,30 @@ export function PeriodReversingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Jalankan Jurnal Pembalik Awal Periode</DialogTitle>
+          <DialogTitle>
+            {t("accounting:closing.rev_modal_title", "Jalankan Jurnal Pembalik Awal Periode")}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleRunReverse}>
           <FieldGroup>
             <Field>
-              <FieldLabel required>Periode Asal AJP</FieldLabel>
+              <FieldLabel required>
+                {t("accounting:closing.rev_period_label", "Periode Asal AJP")}
+              </FieldLabel>
               <Select
                 value={sourcePeriodId}
                 onValueChange={setSourcePeriodId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih periode asal..." />
+                  <SelectValue
+                    placeholder={t("accounting:closing.rev_period_placeholder", "Pilih periode asal...")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     {periods.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({formatDateID(p.start_date)} – {formatDateID(p.end_date)})
+                        {getLocalizedPeriodName(p.name, lang)} ({formatDateID(p.start_date)} – {formatDateID(p.end_date)})
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -97,7 +109,7 @@ export function PeriodReversingDialog({
             </Field>
             <Field>
               <FieldLabel htmlFor="rev-date" required>
-                Tanggal Efektif Pembalik
+                {t("accounting:closing.rev_effective_date", "Tanggal Efektif Pembalik")}
               </FieldLabel>
               <DatePicker
                 id="rev-date"
@@ -112,11 +124,11 @@ export function PeriodReversingDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Batal
+                {t("common:action.cancel", "Batal")}
               </Button>
               <Button type="submit" disabled={runningReverse}>
                 {runningReverse ? <Spinner data-icon="inline-start" /> : null}
-                Jalankan Pembalik
+                {t("accounting:closing.rev_run_btn", "Jalankan Pembalik")}
               </Button>
             </DialogFooter>
           </FieldGroup>

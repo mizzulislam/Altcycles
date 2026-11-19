@@ -14,6 +14,8 @@ import {
   listAccounts,
   listPeriods,
 } from "@/lib/data-service";
+import { getLocalizedTransactionDescription } from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import {
   deleteJournals,
   listJournalsWithLines,
@@ -50,6 +52,7 @@ export function PeriodsPage({
   externalStartDate: extStart,
   externalEndDate: extEnd,
 }: PeriodsPageProps) {
+  const { t, language: lang } = useLanguage();
   const activePeriodFilter = extPeriod ?? periodFilter;
   const activeStartDate = extStart ?? startDate;
   const activeEndDate = extEnd ?? endDate;
@@ -88,12 +91,12 @@ export function PeriodsPage({
       setCompany(cData);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal memuat data periode.",
+        err instanceof Error ? err.message : t("accounting:closing.loading", "Gagal memuat data periode."),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     void reload();
@@ -146,7 +149,7 @@ export function PeriodsPage({
   function openEditClosingJournal(j: JournalRow) {
     if (company?.journal_lock_enabled) {
       toast.error(
-        "Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.",
+        t("accounting:closing.toast_lock_active", "Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin."),
       );
       return;
     }
@@ -157,35 +160,57 @@ export function PeriodsPage({
   async function handleDeleteClosingEntries() {
     if (selectedClosingIds.length === 0) return;
     if (company?.journal_lock_enabled) {
-      toast.error("Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.");
+      toast.error(
+        t("accounting:closing.toast_lock_active", "Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin."),
+      );
       return;
     }
     try {
       await deleteJournals(selectedClosingIds);
-      toast.success(`${selectedClosingIds.length} entri jurnal penutup berhasil dihapus.`);
+      toast.success(
+        t("accounting:closing.toast_batch_deleted", {
+          count: selectedClosingIds.length,
+          defaultValue: `${selectedClosingIds.length} entri jurnal penutup berhasil dihapus.`,
+        }),
+      );
       setSelectedClosingIds([]);
       setIsBatchDeleteClosingOpen(false);
       setIsEditMode(false);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus entri jurnal penutup.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("accounting:closing.toast_delete_error", "Gagal menghapus entri jurnal penutup."),
+      );
     }
   }
 
   async function handleDeleteSingleClosing(journal: JournalRow) {
     if (company?.journal_lock_enabled) {
-      toast.error("Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin.");
+      toast.error(
+        t("accounting:closing.toast_lock_active", "Kunci jurnal sedang aktif. Buka kunci terlebih dahulu di portal Super Admin."),
+      );
       return;
     }
     try {
       await deleteJournals([journal.id]);
-      toast.success(`Jurnal penutup ${journal.journal_number} berhasil dihapus.`);
+      toast.success(
+        t("accounting:closing.toast_single_deleted", {
+          number: journal.journal_number,
+          defaultValue: `Jurnal penutup ${journal.journal_number} berhasil dihapus.`,
+        }),
+      );
       setSelectedClosingIds((prev) => prev.filter((id) => id !== journal.id));
       setDeleteTargetClosing(null);
       setIsEditMode(false);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus jurnal penutup.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("accounting:closing.toast_delete_error", "Gagal menghapus jurnal penutup."),
+      );
     }
   }
 
@@ -196,10 +221,10 @@ export function PeriodsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1 min-w-0 max-w-2xl">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Tutup Buku &amp; Periode Akuntansi
+              {t("accounting:closing.page_title", "Tutup Buku & Periode Akuntansi")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.
+              {t("accounting:closing.page_subtitle", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -210,7 +235,7 @@ export function PeriodsPage({
               className="shrink-0 cursor-pointer shadow-xs gap-1.5"
             >
               <RotateCcwIcon className="size-4" />
-              <span>Jurnal Pembalik Opsional</span>
+              <span>{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
             </Button>
           </div>
         </div>
@@ -218,10 +243,10 @@ export function PeriodsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Tutup Buku (Closing the Books)
+              {t("accounting:closing.tab_heading", "Tutup Buku (Closing the Books)")}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              Daftar jurnal penutup aktual yang tersimpan di sistem serta kontrol periode pembukuan.
+              {t("accounting:closing.tab_subheading", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kontrol periode pembukuan.")}
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
@@ -233,7 +258,7 @@ export function PeriodsPage({
               className="h-9 px-3.5 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-1.5"
             >
               <RotateCcwIcon className="size-3.5" />
-              <span>Jurnal Pembalik Opsional</span>
+              <span>{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
             </Button>
           </div>
         </div>
@@ -248,15 +273,15 @@ export function PeriodsPage({
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-foreground">
-                Alur &amp; Langkah Jurnal Penutup (GAAP/IFRS)
+                {t("accounting:closing.flow_title", "Alur & Langkah Jurnal Penutup (GAAP/IFRS)")}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Panduan 4 tahap penutupan saldo akun nominal di akhir periode akuntansi.
+                {t("accounting:closing.flow_subtitle", "Panduan 4 tahap penutupan saldo akun nominal di akhir periode akuntansi.")}
               </p>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 self-start sm:self-center rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400 shrink-0">
-            4 Tahap Siklus Akhir
+            {t("accounting:closing.flow_badge", "4 Tahap Siklus Akhir")}
           </span>
         </div>
 
@@ -267,12 +292,11 @@ export function PeriodsPage({
                 01
               </span>
               <span className="text-xs font-bold text-foreground">
-                Tutup Pendapatan
+                {t("accounting:closing.step1_title", "Tutup Pendapatan")}
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Mendebit semua akun <span className="font-medium text-foreground">Pendapatan (Revenues)</span> dan mengkredit{" "}
-              <span className="font-medium text-foreground">Ikhtisar Laba Rugi (3500)</span> sebesar total pendapatan.
+              {t("accounting:closing.step1_desc", "Mendebit semua akun Pendapatan (Revenues) dan mengkredit Ikhtisar Laba Rugi (3500) sebesar total pendapatan.")}
             </p>
           </div>
 
@@ -282,12 +306,11 @@ export function PeriodsPage({
                 02
               </span>
               <span className="text-xs font-bold text-foreground">
-                Tutup Beban
+                {t("accounting:closing.step2_title", "Tutup Beban")}
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Mendebit <span className="font-medium text-foreground">Ikhtisar Laba Rugi (3500)</span> dan mengkredit semua akun{" "}
-              <span className="font-medium text-foreground">Beban (Expenses)</span> sebesar total beban masing-masing.
+              {t("accounting:closing.step2_desc", "Mendebit Ikhtisar Laba Rugi (3500) dan mengkredit semua akun Beban (Expenses) sebesar total beban masing-masing.")}
             </p>
           </div>
 
@@ -297,12 +320,11 @@ export function PeriodsPage({
                 03
               </span>
               <span className="text-xs font-bold text-foreground">
-                Ikhtisar ke Laba Ditahan
+                {t("accounting:closing.step3_title", "Ikhtisar ke Laba Ditahan")}
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Menutup saldo bersih Ikhtisar Laba Rugi ke <span className="font-medium text-foreground">Laba Ditahan (3201)</span>{" "}
-              (laba: debit Ikhtisar &amp; kredit Laba Ditahan; rugi: sebaliknya).
+              {t("accounting:closing.step3_desc", "Menutup saldo bersih Ikhtisar Laba Rugi ke Laba Ditahan (3201) (laba: debit Ikhtisar & kredit Laba Ditahan; rugi: sebaliknya).")}
             </p>
           </div>
 
@@ -312,12 +334,11 @@ export function PeriodsPage({
                 04
               </span>
               <span className="text-xs font-bold text-foreground">
-                Tutup Prive Pemilik
+                {t("accounting:closing.step4_title", "Tutup Prive Pemilik")}
               </span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Mendebit <span className="font-medium text-foreground">Laba Ditahan (3201)</span> dan mengkredit akun{" "}
-              <span className="font-medium text-foreground">Prive Pemilik (3301)</span> untuk menihilkan penarikan modal.
+              {t("accounting:closing.step4_desc", "Mendebit Laba Ditahan (3201) dan mengkredit akun Prive Pemilik (3301) untuk menihilkan penarikan modal.")}
             </p>
           </div>
         </div>
@@ -332,15 +353,15 @@ export function PeriodsPage({
             </div>
             <div>
               <h4 className="text-sm font-bold text-foreground">
-                Tutup Buku Otomatis Diaktifkan
+                {t("accounting:closing.auto_banner_on_title", "Tutup Buku Otomatis Diaktifkan")}
               </h4>
               <p className="text-xs mt-0.5 text-muted-foreground leading-relaxed">
-                Sistem dikonfigurasi untuk memposting jurnal penutup otomatis berbasis GAAP/IFRS secara terintegrasi saat periode ditutup. Anda tetap dapat mencatat penyesuaian penutup manual di bawah.
+                {t("accounting:closing.auto_banner_on_desc", "Sistem dikonfigurasi untuk memposting jurnal penutup otomatis berbasis GAAP/IFRS secara terintegrasi saat periode ditutup. Anda tetap dapat mencatat penyesuaian penutup manual di bawah.")}
               </p>
             </div>
           </div>
           <div className="shrink-0 self-start sm:self-center">
-            <StatusBadge tone="success" label="Mode Otomatis" />
+            <StatusBadge tone="success" label={t("accounting:closing.auto_banner_on_badge", "Mode Otomatis")} />
           </div>
         </div>
       ) : (
@@ -351,15 +372,15 @@ export function PeriodsPage({
             </div>
             <div>
               <h4 className="text-sm font-bold text-foreground">
-                Tutup Buku Otomatis Dinonaktifkan
+                {t("accounting:closing.auto_banner_off_title", "Tutup Buku Otomatis Dinonaktifkan")}
               </h4>
               <p className="text-xs mt-0.5 text-muted-foreground leading-relaxed">
-                Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin.
+                {t("accounting:closing.auto_banner_off_desc", "Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin.")}
               </p>
             </div>
           </div>
           <div className="shrink-0 self-start sm:self-center">
-            <StatusBadge tone="warning" label="Mode Manual" />
+            <StatusBadge tone="warning" label={t("accounting:closing.auto_banner_off_badge", "Mode Manual")} />
           </div>
         </div>
       )}
@@ -416,9 +437,15 @@ export function PeriodsPage({
         onOpenChange={(open) => {
           if (!open) setDeleteTargetClosing(null);
         }}
-        title={`Hapus Jurnal Penutup: ${deleteTargetClosing?.journal_number ?? ""}`}
-        description={`Apakah Anda yakin ingin menghapus jurnal penutup "${deleteTargetClosing?.description ?? ""}"?`}
-        confirmLabel="Ya, Hapus Jurnal"
+        title={t("accounting:closing.delete_single_title", {
+          number: deleteTargetClosing?.journal_number ?? "",
+          defaultValue: `Hapus Jurnal Penutup: ${deleteTargetClosing?.journal_number ?? ""}`,
+        })}
+        description={t("accounting:closing.delete_single_desc", {
+          desc: getLocalizedTransactionDescription(deleteTargetClosing?.description ?? "", lang),
+          defaultValue: `Apakah Anda yakin ingin menghapus jurnal penutup "${deleteTargetClosing?.description ?? ""}"?`,
+        })}
+        confirmLabel={t("accounting:closing.delete_single_confirm", "Ya, Hapus Jurnal")}
         destructive
         onConfirm={() =>
           deleteTargetClosing
@@ -431,9 +458,18 @@ export function PeriodsPage({
       <ConfirmActionDialog
         open={isBatchDeleteClosingOpen}
         onOpenChange={setIsBatchDeleteClosingOpen}
-        title={`Hapus ${selectedClosingIds.length} Jurnal Penutup Pilihan`}
-        description={`Apakah Anda yakin ingin menghapus ${selectedClosingIds.length} entri jurnal penutup yang dipilih secara permanen?`}
-        confirmLabel={`Ya, Hapus (${selectedClosingIds.length})`}
+        title={t("accounting:closing.delete_batch_title", {
+          count: selectedClosingIds.length,
+          defaultValue: `Hapus ${selectedClosingIds.length} Jurnal Penutup Pilihan`,
+        })}
+        description={t("accounting:closing.delete_batch_desc", {
+          count: selectedClosingIds.length,
+          defaultValue: `Apakah Anda yakin ingin menghapus ${selectedClosingIds.length} entri jurnal penutup yang dipilih secara permanen?`,
+        })}
+        confirmLabel={t("accounting:closing.delete_batch_confirm", {
+          count: selectedClosingIds.length,
+          defaultValue: `Ya, Hapus (${selectedClosingIds.length})`,
+        })}
         destructive
         onConfirm={handleDeleteClosingEntries}
       />

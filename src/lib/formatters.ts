@@ -194,40 +194,90 @@ export function formatDocNumber(
  * - "Dana masuk Invoice INV/ALT/2026/11/002" -> "Dana masuk"
  * - "Penerimaan termin 1 dari PT RMM berupa uang muka development 40%" -> "Penerimaan termin 1 PT RMM"
  */
-export function simplifyLedgerDescription(desc: string): string {
+export function simplifyLedgerDescription(
+  desc: string,
+  lang?: "id" | "en",
+): string {
   if (!desc) return "-";
+  const targetLang = lang ?? getActiveLanguage();
   let s = desc.trim();
 
-  // Pola: "Dana masuk Invoice ..." -> "Dana masuk"
-  if (/^Dana masuk\s+(?:Invoice|Tagihan|INV).*/i.test(s)) {
-    return "Dana masuk";
+  // Pola: "Dana masuk Invoice ..." / "Cash receipt for Invoice ..." -> "Dana masuk" / "Cash receipt"
+  if (/^(?:Dana masuk|Cash receipt(?:\s+for)?)\s+(?:Invoice|Tagihan|INV).*/i.test(s)) {
+    return targetLang === "en" ? "Cash receipt" : "Dana masuk";
   }
 
-  // Pola: "Penerimaan termin X dari PT Y berupa ..." -> "Penerimaan termin X PT Y"
+  // Pola: "Penerimaan termin X dari PT Y berupa ..." -> "Penerimaan termin X PT Y" / "Milestone X receipt PT Y"
   const mTermin = s.match(
-    /^Penerimaan termin\s+(\d+)\s+dari\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})(?:\s+berupa.*|\s+—.*|\..*)?$/i,
+    /^(?:Penerimaan termin|Receipt of milestone|Milestone)\s+(\d+)\s+(?:dari|from)\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})(?:\s+(?:berupa|as).*|\s+—.*|\..*)?$/i,
   );
   if (mTermin) {
-    return `Penerimaan termin ${mTermin[1]} ${mTermin[2]}`.trim();
+    return targetLang === "en"
+      ? `Milestone ${mTermin[1]} receipt ${mTermin[2]}`.trim()
+      : `Penerimaan termin ${mTermin[1]} ${mTermin[2]}`.trim();
   }
 
-  // Pola: "Penerimaan pembayaran Invoice ... dari PT Y" -> "Penerimaan pembayaran PT Y"
+  // Pola: "Penerimaan pembayaran Invoice ... dari PT Y" -> "Penerimaan pembayaran PT Y" / "Payment receipt PT Y"
   const mPenerimaan = s.match(
-    /^Penerimaan\s+(?:pembayaran\s+)?(?:Invoice\s+[^\s]+\s+)?dari\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})/i,
+    /^(?:Penerimaan(?:\s+pembayaran)?|Payment receipt(?:\s+for)?)\s+(?:Invoice\s+[^\s]+\s+)?(?:dari|from)\s+([^,.\s]+(?:\s+[^,.\s]+){0,3})/i,
   );
   if (mPenerimaan) {
-    return `Penerimaan ${mPenerimaan[1]}`.trim();
+    return targetLang === "en"
+      ? `Payment receipt ${mPenerimaan[1]}`.trim()
+      : `Penerimaan ${mPenerimaan[1]}`.trim();
+  }
+
+  // Pola: "Penerimaan pembayaran Invoice INV/..." (tanpa "dari PT Y")
+  if (/^(?:Penerimaan pembayaran|Payment receipt(?:\s+for)?)\s+Invoice\s+[^\s]+$/i.test(s)) {
+    return targetLang === "en" ? "Invoice payment receipt" : "Penerimaan pembayaran";
+  }
+
+  // Pola: "Penagihan Invoice INV/... — ..."
+  if (/^(?:Penagihan|Billing(?:\s+for)?)\s+Invoice\s+[^\s]+/i.test(s)) {
+    return targetLang === "en" ? "Invoice billing" : "Penagihan invoice";
+  }
+
+  // Pola: "Pengakuan pendapatan hosting selama X hari ..."
+  const mHosting = s.match(
+    /^(?:Pengakuan pendapatan hosting selama|Hosting revenue recognition for)\s+(\d+)\s+(?:hari|days)/i,
+  );
+  if (mHosting) {
+    return targetLang === "en"
+      ? `Hosting revenue recognition (${mHosting[1]} days)`
+      : `Pengakuan pendapatan hosting (${mHosting[1]} hari)`;
+  }
+
+  // Pola: "Pembebanan biaya server tahunan untuk X hari ..."
+  const mServer = s.match(
+    /^(?:Pembebanan biaya server tahunan untuk|Annual server cost allocation for)\s+(\d+)\s+(?:hari|used days|days)/i,
+  );
+  if (mServer) {
+    return targetLang === "en"
+      ? `Annual server cost allocation (${mServer[1]} days)`
+      : `Pembebanan biaya server (${mServer[1]} hari)`;
   }
 
   // Pola umum: potong klausa penjelasan panjang seperti "berupa uang muka...", "— Development cost...", ". Belum diakui..."
-  s = s.replace(/\s+berupa\s+uang\s+muka.*$/i, "");
-  s = s.replace(/\s+berupa\s+.*$/i, "");
+  s = s.replace(/\s+(?:berupa\s+uang\s+muka|as\s+\d+%?\s*development\s+down\s+payment).*$/i, "");
+  s = s.replace(/\s+(?:berupa|as)\s+.*$/i, "");
   s = s.replace(/\s*—\s*.*$/, "");
   s = s.replace(/\.\s+[A-Z].*$/, ""); // potong kalimat kedua
-  s = s.replace(/\s+Invoice\s+INV\/[^\s]+/gi, ""); // hapus nomor invoice panjang karena sudah ada di kolom Ref
+  s = s.replace(/\s+(?:for\s+)?Invoice\s+INV\/[^\s]+/gi, ""); // hapus nomor invoice panjang karena sudah ada di kolom Ref
 
   // Rapikan "termin X dari PT Y" -> "termin X PT Y"
-  s = s.replace(/termin\s+(\d+)\s+dari\s+/i, "termin $1 ");
+  s = s.replace(/termin\s+(\d+)\s+dari\s+/i, targetLang === "en" ? "milestone $1 " : "termin $1 ");
+
+  if (targetLang === "en") {
+    s = s
+      .replace(/^Dana masuk$/i, "Cash receipt")
+      .replace(/^Penerimaan pembayaran$/i, "Payment receipt")
+      .replace(/^Penagihan$/i, "Invoice billing")
+      .replace(/^Pencairan dana\b/i, "Fund disbursement")
+      .replace(/^Pembayaran PO\b/i, "PO payment")
+      .replace(/^Jurnal Penutup\b/i, "Closing Entry")
+      .replace(/^Jurnal Pembalik\b/i, "Reversing Entry")
+      .replace(/^Jurnal Koreksi\b/i, "Correction Entry");
+  }
 
   return s.trim() || desc.trim();
 }

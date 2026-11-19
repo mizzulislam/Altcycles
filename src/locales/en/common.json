@@ -22,6 +22,7 @@
     "order": "Order",
     "oldest": "Oldest",
     "newest": "Newest",
+    "select": "Select",
     "select_all": "Select All",
     "loading": "Loading...",
     "confirm_continue": "Yes, Continue",
@@ -36,6 +37,7 @@
     "tagline": "Financial ERP"
   },
   "loading": "Loading data...",
+  "saving": "Saving...",
   "empty": "No data available",
   "error": "An error occurred",
   "auth": {

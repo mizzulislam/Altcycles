@@ -113,6 +113,7 @@
     "modal_status_active": "Status Layanan Aktif",
     "modal_btn_save": "Simpan Layanan / Produk",
     "toast_saved": "Data produk/layanan berhasil disimpan.",
+    "toast_save_error": "Gagal menyimpan produk/layanan.",
     "toast_deleted": "Produk/layanan \"{{name}}\" ({{code}}) berhasil dihapus.",
     "empty_title": "Belum Ada Data Produk / Layanan",
     "empty_desc": "Katalog produk dan layanan Altvira masih kosong. Tambahkan paket atau penawaran baru untuk referensi transaksi & SPK proyek.",
@@ -132,6 +133,8 @@
     "delete_title": "Hapus Data {{type}}?",
     "delete_desc": "Apakah Anda yakin ingin menghapus data master {{name}} ({{code}})? Data yang dihapus tidak dapat dipulihkan.",
     "delete_btn": "Ya, Hapus Data",
-    "loading": "Memuat master vendor, pelanggan, & produk layanan..."
+    "loading": "Memuat master vendor, pelanggan, & produk layanan...",
+    "load_error": "Gagal memuat data master.",
+    "delete_error": "Gagal menghapus data."
   }
 }

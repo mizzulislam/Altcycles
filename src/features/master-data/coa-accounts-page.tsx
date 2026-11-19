@@ -56,6 +56,9 @@ import {
   getLocalizedAccountDescription,
   getLocalizedAccountType,
   getLocalizedNormalBalance,
+  getLocalizedPeriodName,
+  getLocalizedSystemTag,
+  SYSTEM_TAG_MAP,
 } from "@/lib/glossary";
 import type {
   AccountRow,
@@ -183,14 +186,20 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
       });
       toast.success(
         toggleTarget.is_active
-          ? `Akun ${toggleTarget.code} dinonaktifkan.`
-          : `Akun ${toggleTarget.code} diaktifkan kembali.`,
+          ? t("accounting:coa.toast_acc_deactivated", {
+              code: toggleTarget.code,
+              defaultValue: `Akun ${toggleTarget.code} dinonaktifkan.`,
+            })
+          : t("accounting:coa.toast_acc_activated", {
+              code: toggleTarget.code,
+              defaultValue: `Akun ${toggleTarget.code} diaktifkan kembali.`,
+            }),
       );
       setToggleTarget(null);
       await reload();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal mengubah status akun.",
+        err instanceof Error ? err.message : t("common:error", "Gagal mengubah status akun."),
       );
     }
   }
@@ -199,11 +208,16 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     if (!deleteTarget) return;
     try {
       await deleteAccount(deleteTarget.id);
-      toast.success(`Akun ${deleteTarget.code} berhasil dihapus.`);
+      toast.success(
+        t("accounting:coa.toast_acc_deleted", {
+          code: deleteTarget.code,
+          defaultValue: `Akun ${deleteTarget.code} berhasil dihapus.`,
+        }),
+      );
       setDeleteTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus akun.");
+      toast.error(err instanceof Error ? err.message : t("common:error", "Gagal menghapus akun."));
     }
   }
 
@@ -226,13 +240,19 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
       });
       toast.success(
         editingId
-          ? `Akun ${code} diperbarui.`
-          : `Akun ${code} berhasil ditambahkan.`,
+          ? t("accounting:coa.toast_acc_updated", {
+              code,
+              defaultValue: `Akun ${code} diperbarui.`,
+            })
+          : t("accounting:coa.toast_acc_added", {
+              code,
+              defaultValue: `Akun ${code} berhasil ditambahkan.`,
+            }),
       );
       setEditorOpen(false);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan akun.");
+      toast.error(err instanceof Error ? err.message : t("common:error", "Gagal menyimpan akun."));
     } finally {
       setSaving(false);
     }
@@ -243,23 +263,40 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     if (!closePeriodTarget) return;
     try {
       await runPeriodClosingBook(closePeriodTarget.id);
-      toast.success(`Periode ${closePeriodTarget.name} berhasil ditutup.`);
+      toast.success(
+        t("accounting:closing.toast_closed_success", {
+          name: getLocalizedPeriodName(closePeriodTarget.name, language),
+          defaultValue: `Periode ${closePeriodTarget.name} berhasil ditutup.`,
+        }),
+      );
       setClosePeriodTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menutup periode.");
+      toast.error(
+        err instanceof Error ? err.message : t("accounting:closing.toast_closed_error", "Gagal menutup periode."),
+      );
     }
   }
 
   async function handleReopenPeriod(reason?: string) {
     if (!reopenPeriodTarget) return;
     try {
-      await reopenPeriod(reopenPeriodTarget.id, reason || "Pembukaan kembali periode akuntansi.");
-      toast.success(`Periode ${reopenPeriodTarget.name} dibuka kembali.`);
+      await reopenPeriod(
+        reopenPeriodTarget.id,
+        reason || (language === "en" ? "Reopening of accounting period." : "Pembukaan kembali periode akuntansi."),
+      );
+      toast.success(
+        t("accounting:closing.toast_reopened_success", {
+          name: getLocalizedPeriodName(reopenPeriodTarget.name, language),
+          defaultValue: `Periode ${reopenPeriodTarget.name} dibuka kembali.`,
+        }),
+      );
       setReopenPeriodTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuka kembali periode.");
+      toast.error(
+        err instanceof Error ? err.message : t("accounting:closing.toast_reopened_error", "Gagal membuka kembali periode."),
+      );
     }
   }
 
@@ -267,18 +304,26 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     if (!deletePeriodTarget) return;
     try {
       await deletePeriod(deletePeriodTarget.id);
-      toast.success(`Periode ${deletePeriodTarget.name} berhasil dihapus.`);
+      toast.success(
+        t("accounting:coa.toast_period_deleted", {
+          name: getLocalizedPeriodName(deletePeriodTarget.name, language),
+          defaultValue: `Periode ${deletePeriodTarget.name} berhasil dihapus.`,
+        }),
+      );
       setDeletePeriodTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus periode.");
+      toast.error(err instanceof Error ? err.message : t("common:error", "Gagal menghapus periode."));
     }
   }
 
   const filtered = accounts.filter((a) => {
+    const q = search.toLowerCase();
+    const localizedName = getLocalizedAccountName(a, language).toLowerCase();
     const matchText =
-      a.code.toLowerCase().includes(search.toLowerCase()) ||
-      a.name.toLowerCase().includes(search.toLowerCase());
+      a.code.toLowerCase().includes(q) ||
+      a.name.toLowerCase().includes(q) ||
+      localizedName.includes(q);
     const matchType = typeFilter === "all" || a.account_type === typeFilter;
     return matchText && matchType;
   });
@@ -455,7 +500,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                         ) : acc.system_tag && acc.system_tag !== "none" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
                             <span className="size-1.5 rounded-full bg-sky-400" />
-                            {acc.system_tag}
+                            {getLocalizedSystemTag(acc.system_tag, language)}
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
@@ -475,18 +520,20 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                             variant="ghost"
                             size="icon"
                             onClick={() => openEditDialog(acc)}
-                            title="Ubah Akun"
+                            title={t("accounting:coa.tooltip_edit_account", "Ubah Akun")}
                             className="size-8 rounded-lg cursor-pointer"
                           >
                             <PencilIcon className="size-3.5" />
-                            <span className="sr-only">Ubah</span>
+                            <span className="sr-only">{t("accounting:coa.tooltip_edit_account", "Ubah Akun")}</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setToggleTarget(acc)}
                             title={
-                              acc.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"
+                              acc.is_active
+                                ? t("accounting:coa.tooltip_deactivate_account", "Nonaktifkan Akun")
+                                : t("accounting:coa.tooltip_activate_account", "Aktifkan Akun")
                             }
                             className={cn(
                               "size-8 rounded-lg cursor-pointer",
@@ -497,18 +544,20 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                           >
                             <PowerIcon className="size-3.5" />
                             <span className="sr-only">
-                              {acc.is_active ? "Nonaktifkan" : "Aktifkan"}
+                              {acc.is_active
+                                ? t("accounting:coa.tooltip_deactivate_account", "Nonaktifkan Akun")
+                                : t("accounting:coa.tooltip_activate_account", "Aktifkan Akun")}
                             </span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteTarget(acc)}
-                            title="Hapus Akun"
+                            title={t("accounting:coa.tooltip_delete_account", "Hapus Akun")}
                             className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                           >
                             <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">Hapus</span>
+                            <span className="sr-only">{t("accounting:coa.tooltip_delete_account", "Hapus Akun")}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -534,9 +583,15 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onOpenChange={(open) => {
           if (!open) setClosePeriodTarget(null);
         }}
-        title={`Tutup Periode ${closePeriodTarget?.name ?? ""}?`}
-        description={`Anda akan menutup periode buku ${closePeriodTarget?.name ?? ""}. Seluruh transaksi jurnal pada periode ini akan dikunci dan jurnal penutup dapat diposting otomatis atau manual.`}
-        confirmLabel="Ya, Tutup Periode"
+        title={t("accounting:coa.close_period_title", {
+          name: getLocalizedPeriodName(closePeriodTarget?.name, language),
+          defaultValue: `Tutup Periode ${closePeriodTarget?.name ?? ""}?`,
+        })}
+        description={t("accounting:coa.close_period_desc", {
+          name: getLocalizedPeriodName(closePeriodTarget?.name, language),
+          defaultValue: `Anda akan menutup periode buku ${closePeriodTarget?.name ?? ""}. Seluruh transaksi jurnal pada periode ini akan dikunci dan jurnal penutup dapat diposting otomatis atau manual.`,
+        })}
+        confirmLabel={t("accounting:coa.close_period_confirm", "Ya, Tutup Periode")}
         destructive
         onConfirm={handleClosePeriod}
       />
@@ -547,12 +602,15 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onOpenChange={(open) => {
           if (!open) setReopenPeriodTarget(null);
         }}
-        title={`Buka Kembali Periode ${reopenPeriodTarget?.name ?? ""}?`}
-        description={`Membuka kembali periode yang sudah ditutup memerlukan alasan audit trail resmi. Pastikan Anda telah mengonfirmasi dengan Super Admin/Auditor.`}
-        confirmLabel="Ya, Buka Kembali"
+        title={t("accounting:coa.reopen_period_title", {
+          name: getLocalizedPeriodName(reopenPeriodTarget?.name, language),
+          defaultValue: `Buka Kembali Periode ${reopenPeriodTarget?.name ?? ""}?`,
+        })}
+        description={t("accounting:coa.reopen_period_desc", "Membuka kembali periode yang sudah ditutup memerlukan alasan audit trail resmi. Pastikan Anda telah mengonfirmasi dengan Super Admin/Auditor.")}
+        confirmLabel={t("accounting:coa.reopen_period_confirm", "Ya, Buka Kembali")}
         requireReason
-        reasonLabel="Alasan Pembukaan Kembali (Audit Trail)"
-        reasonPlaceholder="Tuliskan alasan pembukaan kembali periode secara jelas (minimal 5 karakter)..."
+        reasonLabel={t("accounting:coa.reopen_period_reason_label", "Alasan Pembukaan Kembali (Audit Trail)")}
+        reasonPlaceholder={t("accounting:coa.reopen_period_reason_placeholder", "Tuliskan alasan pembukaan kembali periode secara jelas (minimal 5 karakter)...")}
         onConfirm={handleReopenPeriod}
       />
 
@@ -562,9 +620,15 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onOpenChange={(open) => {
           if (!open) setDeletePeriodTarget(null);
         }}
-        title={`Hapus Periode ${deletePeriodTarget?.name ?? ""}?`}
-        description={`Periode ${deletePeriodTarget?.name ?? ""} yang belum memiliki transaksi dapat dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`}
-        confirmLabel="Hapus Periode"
+        title={t("accounting:coa.delete_period_title", {
+          name: getLocalizedPeriodName(deletePeriodTarget?.name, language),
+          defaultValue: `Hapus Periode ${deletePeriodTarget?.name ?? ""}?`,
+        })}
+        description={t("accounting:coa.delete_period_desc", {
+          name: getLocalizedPeriodName(deletePeriodTarget?.name, language),
+          defaultValue: `Periode ${deletePeriodTarget?.name ?? ""} yang belum memiliki transaksi dapat dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`,
+        })}
+        confirmLabel={t("accounting:coa.delete_period_confirm", "Hapus Periode")}
         destructive
         onConfirm={handleDeletePeriod}
       />
@@ -589,7 +653,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                   <Input
                     id="acc-code"
                     required
-                    placeholder="Contoh: 5-1501"
+                    placeholder={t("accounting:coa.code_placeholder", "Contoh: 5-1501")}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                   />
@@ -628,7 +692,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                 <Input
                   id="acc-name"
                   required
-                  placeholder="Contoh: Beban Pengujian Keamanan Proyek"
+                  placeholder={t("accounting:coa.name_placeholder", "Contoh: Beban Pengujian Keamanan Proyek")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -672,35 +736,11 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="none">Umum (Tanpa Tag)</SelectItem>
-                        <SelectItem value="cash_bank">Kas / Bank</SelectItem>
-                        <SelectItem value="accounts_receivable">
-                          Piutang Usaha
-                        </SelectItem>
-                        <SelectItem value="unbilled_receivable">
-                          Piutang Belum Ditagih
-                        </SelectItem>
-                        <SelectItem value="work_in_progress">
-                          Jasa dalam Proses (Progress Billing)
-                        </SelectItem>
-                        <SelectItem value="contract_billings">
-                          Penagihan atas Kontrak (Progress Billing)
-                        </SelectItem>
-                        <SelectItem value="accounts_payable">
-                          Utang Usaha
-                        </SelectItem>
-                        <SelectItem value="unearned_revenue">
-                          Pendapatan Diterima di Muka
-                        </SelectItem>
-                        <SelectItem value="service_revenue">
-                          Pendapatan Jasa Utama
-                        </SelectItem>
-                        <SelectItem value="retained_earnings">
-                          Laba Ditahan
-                        </SelectItem>
-                        <SelectItem value="shared_expense">
-                          Beban Operasional Bersama
-                        </SelectItem>
+                        {(Object.keys(SYSTEM_TAG_MAP) as AccountSystemTag[]).map((tagKey) => (
+                          <SelectItem key={tagKey} value={tagKey}>
+                            {SYSTEM_TAG_MAP[tagKey]?.[language] ?? tagKey}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -724,7 +764,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                 </FieldLabel>
                 <Textarea
                   id="acc-desc"
-                  placeholder="Deskripsi singkat fungsi dan peruntukan akun ini..."
+                  placeholder={t("accounting:coa.desc_placeholder", "Deskripsi singkat fungsi dan peruntukan akun ini...")}
                   rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -741,7 +781,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
                   {t("common:action.cancel", "Batal")}
                 </Button>
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Menyimpan..." : t("accounting:coa.btn_save_account", "Simpan Akun")}
+                  {saving ? t("common:saving", "Menyimpan...") : t("accounting:coa.btn_save_account", "Simpan Akun")}
                 </Button>
               </DialogFooter>
             </FieldGroup>
@@ -757,16 +797,30 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         }}
         title={
           toggleTarget?.is_active
-            ? `Nonaktifkan Akun ${toggleTarget?.code ?? ""}?`
-            : `Aktifkan Akun ${toggleTarget?.code ?? ""}?`
+            ? t("accounting:coa.deactivate_acc_title", {
+                code: toggleTarget?.code ?? "",
+                defaultValue: `Nonaktifkan Akun ${toggleTarget?.code ?? ""}?`,
+              })
+            : t("accounting:coa.activate_acc_title", {
+                code: toggleTarget?.code ?? "",
+                defaultValue: `Aktifkan Akun ${toggleTarget?.code ?? ""}?`,
+              })
         }
         description={
           toggleTarget?.is_active
-            ? `Akun ${toggleTarget?.name} tidak akan muncul lagi di daftar pilihan akun saat penjurnalan baru.`
-            : `Akun ${toggleTarget?.name} akan diaktifkan kembali dan dapat dipilih saat penjurnalan.`
+            ? t("accounting:coa.deactivate_acc_desc", {
+                name: toggleTarget ? getLocalizedAccountName(toggleTarget, language) : "",
+                defaultValue: `Akun ${toggleTarget?.name} tidak akan muncul lagi di daftar pilihan akun saat penjurnalan baru.`,
+              })
+            : t("accounting:coa.activate_acc_desc", {
+                name: toggleTarget ? getLocalizedAccountName(toggleTarget, language) : "",
+                defaultValue: `Akun ${toggleTarget?.name} akan diaktifkan kembali dan dapat dipilih saat penjurnalan.`,
+              })
         }
         confirmLabel={
-          toggleTarget?.is_active ? "Ya, Nonaktifkan" : "Ya, Aktifkan"
+          toggleTarget?.is_active
+            ? t("accounting:coa.deactivate_acc_confirm", "Ya, Nonaktifkan")
+            : t("accounting:coa.activate_acc_confirm", "Ya, Aktifkan")
         }
         onConfirm={handleToggleActive}
       />
@@ -777,9 +831,15 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
-        title={`Hapus Akun ${deleteTarget?.code ?? ""}?`}
-        description={`Akun ${deleteTarget?.name} akan dihapus secara permanen dari sistem. Tindakan ini hanya berhasil jika akun belum memiliki riwayat transaksi jurnal.`}
-        confirmLabel="Ya, Hapus Akun"
+        title={t("accounting:coa.delete_acc_title", {
+          code: deleteTarget?.code ?? "",
+          defaultValue: `Hapus Akun ${deleteTarget?.code ?? ""}?`,
+        })}
+        description={t("accounting:coa.delete_acc_desc", {
+          name: deleteTarget ? getLocalizedAccountName(deleteTarget, language) : "",
+          defaultValue: `Akun ${deleteTarget?.name} akan dihapus secara permanen dari sistem. Tindakan ini hanya berhasil jika akun belum memiliki riwayat transaksi jurnal.`,
+        })}
+        confirmLabel={t("accounting:coa.delete_acc_confirm", "Ya, Hapus Akun")}
         destructive
         onConfirm={handleDeleteAccount}
       />

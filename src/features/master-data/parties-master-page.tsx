@@ -51,13 +51,17 @@ export function PartiesMasterPage() {
       setCustomers(c);
       setProducts(p);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memuat data master.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("parties:common.load_error", "Gagal memuat data master."),
+      );
     } finally {
       if (showSpinner) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     void reload(true);
@@ -68,18 +72,40 @@ export function PartiesMasterPage() {
     try {
       if (deleteTarget.type === "vendor") {
         await deleteVendor(deleteTarget.id);
-        toast.success(`Vendor "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`);
+        toast.success(
+          t("parties:vendors.toast_deleted", {
+            name: deleteTarget.name,
+            code: deleteTarget.code,
+            defaultValue: `Vendor "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`,
+          }),
+        );
       } else if (deleteTarget.type === "customer") {
         await deleteCustomer(deleteTarget.id);
-        toast.success(`Pelanggan "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`);
+        toast.success(
+          t("parties:customers.toast_deleted", {
+            name: deleteTarget.name,
+            code: deleteTarget.code,
+            defaultValue: `Pelanggan "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`,
+          }),
+        );
       } else if (deleteTarget.type === "product") {
         await deleteServiceProduct(deleteTarget.id);
-        toast.success(`Produk/layanan "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`);
+        toast.success(
+          t("parties:products.toast_deleted", {
+            name: deleteTarget.name,
+            code: deleteTarget.code,
+            defaultValue: `Produk/layanan "${deleteTarget.name}" (${deleteTarget.code}) berhasil dihapus.`,
+          }),
+        );
       }
       setDeleteTarget(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus data.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("parties:common.delete_error", "Gagal menghapus data."),
+      );
     }
   }
 

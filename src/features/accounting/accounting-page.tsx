@@ -33,7 +33,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { listPeriods, listProjects } from "@/lib/data-service";
 import { formatDateID, formatDateI18n } from "@/lib/formatters";
-import { getLocalizedPeriodName } from "@/lib/glossary";
+import { getLocalizedJournalType, getLocalizedPeriodName } from "@/lib/glossary";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { PeriodRow, ProjectRow } from "@/types/database.types";
@@ -441,9 +441,9 @@ export function AccountingPage() {
                           <SelectItem value="ALL">
                             {t("accounting:filter.all_journal_types", "Semua Jenis Jurnal")}
                           </SelectItem>
-                          {Object.entries(JOURNAL_TYPE_LABELS).map(([k, v]) => (
+                          {Object.keys(JOURNAL_TYPE_LABELS).map((k) => (
                             <SelectItem key={k} value={k}>
-                              {v.label}
+                              {getLocalizedJournalType(k, language)}
                             </SelectItem>
                           ))}
                         </SelectContent>

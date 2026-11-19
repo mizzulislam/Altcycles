@@ -1,10 +1,16 @@
 import * as React from "react";
 import { AccountingPrintLayout } from "@/features/accounting/components/accounting-print-layout";
 import {
-  ACCOUNT_TYPE_LABELS,
   formatDateID,
   formatRupiah,
 } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedAccountType,
+  getLocalizedNormalBalance,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
+import { useLanguage } from "@/lib/i18n";
 import type {
   AccountRow,
   CompanyProfileRow,
@@ -89,44 +95,61 @@ export function ReportsPrintContent({
   balanceSheet,
   cashFlow,
 }: ReportsPrintContentProps) {
+  const { language: lang } = useLanguage();
+  const isEn = lang === "en";
   const printAreaId = "accounting-reports-print";
   const printPeriodLabel =
     activeTab === "neraca" && mode !== "ledger" && mode !== "trial_balance"
-      ? `Per ${formatDateID(endDate)}`
-      : `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
+      ? isEn
+        ? `As of ${formatDateID(endDate)}`
+        : `Per ${formatDateID(endDate)}`
+      : isEn
+        ? `${formatDateID(startDate)} to ${formatDateID(endDate)}`
+        : `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
 
-  let printDocTitle = "LAPORAN KEUANGAN";
+  let printDocTitle = isEn ? "FINANCIAL REPORTS" : "LAPORAN KEUANGAN";
   let printDocSubtitle: string | undefined = undefined;
 
   if (mode === "ledger" || activeTab === "buku_besar") {
-    printDocTitle = "BUKU BESAR (GENERAL LEDGER)";
+    printDocTitle = isEn ? "GENERAL LEDGER" : "BUKU BESAR (GENERAL LEDGER)";
     printDocSubtitle = isAllAccounts
-      ? "Semua Akun Buku Besar"
-      : `${selectedAccount?.code ?? ""} - ${selectedAccount?.name ?? ""}`;
+      ? isEn
+        ? "All General Ledger Accounts"
+        : "Semua Akun Buku Besar"
+      : `${selectedAccount?.code ?? ""} - ${selectedAccount ? getLocalizedAccountName(selectedAccount, lang) : ""}`;
   } else if (mode === "trial_balance" || activeTab === "neraca_saldo") {
-    printDocTitle = "NERACA SALDO (TRIAL BALANCE)";
+    printDocTitle = isEn ? "TRIAL BALANCE" : "NERACA SALDO (TRIAL BALANCE)";
     printDocSubtitle =
       balanceType === "unadjusted"
-        ? "Sebelum Penyesuaian"
-        : "Setelah Penyesuaian";
+        ? isEn
+          ? "Unadjusted Trial Balance"
+          : "Sebelum Penyesuaian"
+        : isEn
+          ? "Adjusted Trial Balance"
+          : "Setelah Penyesuaian";
   } else if (mode === "statements") {
     if (layoutMode === "grid") {
-      printDocTitle = "LAPORAN KEUANGAN LENGKAP";
-      printDocSubtitle =
-        "Laporan Laba Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas";
+      printDocTitle = isEn ? "COMPLETE FINANCIAL STATEMENTS" : "LAPORAN KEUANGAN LENGKAP";
+      printDocSubtitle = isEn
+        ? "Income Statement, Statement of Changes in Equity, Balance Sheet, and Cash Flow Statement"
+        : "Laporan Laba Rugi, Perubahan Ekuitas, Neraca, dan Arus Kas";
     } else {
       if (activeTab === "laba_rugi") {
-        printDocTitle = "LAPORAN LABA RUGI BASIS AKRUAL";
-        printDocSubtitle = "Pendapatan Usaha dan Beban";
+        printDocTitle = isEn ? "STATEMENT OF PROFIT OR LOSS" : "LAPORAN LABA RUGI BASIS AKRUAL";
+        printDocSubtitle = isEn ? "Operating Revenue and Expenses" : "Pendapatan Usaha dan Beban";
       } else if (activeTab === "ekuitas") {
-        printDocTitle = "LAPORAN PERUBAHAN EKUITAS";
-        printDocSubtitle = "Modal Disetor dan Saldo Laba Ditahan";
+        printDocTitle = isEn ? "STATEMENT OF CHANGES IN EQUITY" : "LAPORAN PERUBAHAN EKUITAS";
+        printDocSubtitle = isEn ? "Paid-in Capital and Retained Earnings" : "Modal Disetor dan Saldo Laba Ditahan";
       } else if (activeTab === "neraca") {
-        printDocTitle = "LAPORAN POSISI KEUANGAN (NERACA)";
-        printDocSubtitle = `Posisi Aset, Liabilitas, dan Ekuitas per ${formatDateID(endDate)}`;
+        printDocTitle = isEn ? "STATEMENT OF FINANCIAL POSITION" : "LAPORAN POSISI KEUANGAN (NERACA)";
+        printDocSubtitle = isEn
+          ? `Position of Assets, Liabilities, and Equity as of ${formatDateID(endDate)}`
+          : `Posisi Aset, Liabilitas, dan Ekuitas per ${formatDateID(endDate)}`;
       } else if (activeTab === "arus_kas") {
-        printDocTitle = "LAPORAN ARUS KAS METODE LANGSUNG";
-        printDocSubtitle = "Aktivitas Operasi, Investasi, dan Pendanaan";
+        printDocTitle = isEn ? "STATEMENT OF CASH FLOWS" : "LAPORAN ARUS KAS METODE LANGSUNG";
+        printDocSubtitle = isEn
+          ? "Operating, Investing, and Financing Activities"
+          : "Aktivitas Operasi, Investasi, dan Pendanaan";
       }
     }
   }
@@ -161,7 +184,7 @@ export function ReportsPrintContent({
           textTransform: "uppercase",
         }}
       >
-        Laporan Laba Rugi Basis Akrual
+        {isEn ? "Statement of Profit or Loss (Accrual Basis)" : "Laporan Laba Rugi Basis Akrual"}
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
@@ -170,68 +193,84 @@ export function ReportsPrintContent({
         </colgroup>
         <thead>
           <tr>
-            <th style={{ textAlign: "left", paddingLeft: "8px" }}>Komponen / Keterangan</th>
-            <th style={{ textAlign: "right", paddingRight: "8px" }}>Nominal</th>
+            <th style={{ textAlign: "left", paddingLeft: "8px" }}>
+              {isEn ? "Component / Description" : "Komponen / Keterangan"}
+            </th>
+            <th style={{ textAlign: "right", paddingRight: "8px" }}>
+              {isEn ? "Amount" : "Nominal"}
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>PENDAPATAN USAHA</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "OPERATING REVENUE" : "PENDAPATAN USAHA"}
+            </td>
           </tr>
           {incomeStatement.revenues.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Belum ada pendapatan diakui pada rentang tanggal ini.
+                {isEn
+                  ? "No revenue recognized in this date range."
+                  : "Belum ada pendapatan diakui pada rentang tanggal ini."}
               </td>
             </tr>
           ) : (
             incomeStatement.revenues.map((r) => (
               <tr key={r.code}>
-                <td style={{ paddingLeft: "16px" }}>{r.name}</td>
+                <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(r, lang)}</td>
                 <td>{renderPrintAmount(r.amount)}</td>
               </tr>
             ))
           )}
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Total Pendapatan Usaha</td>
+            <td>{isEn ? "Total Operating Revenue" : "Total Pendapatan Usaha"}</td>
             <td>{renderPrintAmount(incomeStatement.totalRevenue)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>BEBAN LANGSUNG PROYEK</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "DIRECT PROJECT COSTS" : "BEBAN LANGSUNG PROYEK"}
+            </td>
           </tr>
           {incomeStatement.directExpenses.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Belum ada beban langsung proyek pada periode ini.
+                {isEn
+                  ? "No direct project costs in this period."
+                  : "Belum ada beban langsung proyek pada periode ini."}
               </td>
             </tr>
           ) : (
             incomeStatement.directExpenses.map((e) => (
               <tr key={e.code}>
-                <td style={{ paddingLeft: "16px" }}>{e.name}</td>
+                <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(e, lang)}</td>
                 <td>{renderPrintAmount(e.amount, true)}</td>
               </tr>
             ))
           )}
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Laba Kotor Proyek</td>
+            <td>{isEn ? "Project Gross Profit" : "Laba Kotor Proyek"}</td>
             <td>{renderPrintAmount(incomeStatement.grossProfit)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>BEBAN OPERASIONAL BERSAMA</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "SHARED OPERATING EXPENSES" : "BEBAN OPERASIONAL BERSAMA"}
+            </td>
           </tr>
           {incomeStatement.sharedExpenses.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Belum ada beban operasional bersama pada periode ini.
+                {isEn
+                  ? "No shared operating expenses in this period."
+                  : "Belum ada beban operasional bersama pada periode ini."}
               </td>
             </tr>
           ) : (
             incomeStatement.sharedExpenses.map((s) => (
               <tr key={s.code}>
-                <td style={{ paddingLeft: "16px" }}>{s.name}</td>
+                <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(s, lang)}</td>
                 <td>{renderPrintAmount(s.amount, true)}</td>
               </tr>
             ))
@@ -244,7 +283,9 @@ export function ReportsPrintContent({
               borderBottom: "3px double #0f172a",
             }}
           >
-            <td style={{ color: "#0f172a" }}>LABA (RUGI) BERSIH PERIODE BERJALAN</td>
+            <td style={{ color: "#0f172a" }}>
+              {isEn ? "NET INCOME (LOSS) FOR THE PERIOD" : "LABA (RUGI) BERSIH PERIODE BERJALAN"}
+            </td>
             <td>{renderPrintAmount(incomeStatement.netProfit)}</td>
           </tr>
         </tbody>
@@ -263,7 +304,7 @@ export function ReportsPrintContent({
           textTransform: "uppercase",
         }}
       >
-        Laporan Perubahan Ekuitas
+        {isEn ? "Statement of Changes in Equity" : "Laporan Perubahan Ekuitas"}
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
@@ -272,29 +313,41 @@ export function ReportsPrintContent({
         </colgroup>
         <thead>
           <tr>
-            <th style={{ textAlign: "left", paddingLeft: "8px" }}>Komponen Ekuitas</th>
-            <th style={{ textAlign: "right", paddingRight: "8px" }}>Nominal</th>
+            <th style={{ textAlign: "left", paddingLeft: "8px" }}>
+              {isEn ? "Equity Component" : "Komponen Ekuitas"}
+            </th>
+            <th style={{ textAlign: "right", paddingRight: "8px" }}>
+              {isEn ? "Amount" : "Nominal"}
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Saldo Awal Laba Ditahan (Retained Earnings Awal)</td>
+            <td>
+              {isEn
+                ? "Beginning Retained Earnings"
+                : "Saldo Awal Laba Ditahan (Retained Earnings Awal)"}
+            </td>
             <td>{renderPrintAmount(beginningRetainedEarnings)}</td>
           </tr>
           <tr>
-            <td style={{ paddingLeft: "16px" }}>Laba (Rugi) Bersih Periode Berjalan</td>
+            <td style={{ paddingLeft: "16px" }}>
+              {isEn ? "Net Income (Loss) for the Period" : "Laba (Rugi) Bersih Periode Berjalan"}
+            </td>
             <td>{renderPrintAmount(netIncome)}</td>
           </tr>
           <tr>
-            <td style={{ paddingLeft: "16px" }}>Distribusi Deviden / Prive Pemilik</td>
+            <td style={{ paddingLeft: "16px" }}>
+              {isEn ? "Dividend Distribution / Owner's Drawings" : "Distribusi Deviden / Prive Pemilik"}
+            </td>
             <td>{renderPrintAmount(dividends, true)}</td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Saldo Akhir Laba Ditahan</td>
+            <td>{isEn ? "Ending Retained Earnings" : "Saldo Akhir Laba Ditahan"}</td>
             <td>{renderPrintAmount(endingRetainedEarnings)}</td>
           </tr>
           <tr>
-            <td>Modal Disetor / Ekuitas Pemilik</td>
+            <td>{isEn ? "Paid-in Capital / Owner's Equity" : "Modal Disetor / Ekuitas Pemilik"}</td>
             <td>{renderPrintAmount(modalDisetorBalance)}</td>
           </tr>
           <tr
@@ -305,7 +358,9 @@ export function ReportsPrintContent({
               borderBottom: "3px double #0f172a",
             }}
           >
-            <td style={{ color: "#0f172a" }}>TOTAL EKUITAS AKHIR PERIODE</td>
+            <td style={{ color: "#0f172a" }}>
+              {isEn ? "TOTAL ENDING EQUITY FOR PERIOD" : "TOTAL EKUITAS AKHIR PERIODE"}
+            </td>
             <td>{renderPrintAmount(totalEndingEquity)}</td>
           </tr>
         </tbody>
@@ -324,7 +379,7 @@ export function ReportsPrintContent({
           textTransform: "uppercase",
         }}
       >
-        Laporan Posisi Keuangan (Neraca)
+        {isEn ? "Statement of Financial Position (Balance Sheet)" : "Laporan Posisi Keuangan (Neraca)"}
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
@@ -333,42 +388,48 @@ export function ReportsPrintContent({
         </colgroup>
         <thead>
           <tr>
-            <th style={{ textAlign: "left", paddingLeft: "8px" }}>Komponen Posisi Keuangan</th>
-            <th style={{ textAlign: "right", paddingRight: "8px" }}>Nominal</th>
+            <th style={{ textAlign: "left", paddingLeft: "8px" }}>
+              {isEn ? "Financial Position Component" : "Komponen Posisi Keuangan"}
+            </th>
+            <th style={{ textAlign: "right", paddingRight: "8px" }}>
+              {isEn ? "Amount" : "Nominal"}
+            </th>
           </tr>
         </thead>
         <tbody>
           {/* ASET */}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 800 }}>
             <td colSpan={2} style={{ color: "#0f172a", textTransform: "uppercase" }}>
-              ASET (HARTA)
+              {isEn ? "ASSETS" : "ASET (HARTA)"}
             </td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
             <td colSpan={2} style={{ paddingLeft: "12px", color: "#334155" }}>
-              ASET LANCAR
+              {isEn ? "CURRENT ASSETS" : "ASET LANCAR"}
             </td>
           </tr>
           {currentAssets.length === 0 && balanceSheet.contractAssets.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Belum ada aset lancar
+                {isEn ? "No current assets" : "Belum ada aset lancar"}
               </td>
             </tr>
           ) : (
             <>
               {currentAssets.map((a) => (
                 <tr key={a.code}>
-                  <td style={{ paddingLeft: "16px" }}>{a.name}</td>
+                  <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(a, lang)}</td>
                   <td>{renderPrintAmount(a.amount)}</td>
                 </tr>
               ))}
               {balanceSheet.contractAssets.map((ca) => (
                 <tr key={ca.projectId}>
                   <td style={{ paddingLeft: "16px" }}>
-                    <div>Aset Kontrak: {ca.projectName}</div>
+                    <div>
+                      {isEn ? "Contract Asset" : "Aset Kontrak"}: {ca.projectName}
+                    </div>
                     <div style={{ fontSize: "8.5px", color: "#64748b" }}>
-                      WIP {formatRupiah(ca.wipBalance)} &minus; Penagihan {formatRupiah(ca.billingsBalance)}
+                      WIP {formatRupiah(ca.wipBalance)} &minus; {isEn ? "Billings" : "Penagihan"} {formatRupiah(ca.billingsBalance)}
                     </div>
                   </td>
                   <td>{renderPrintAmount(ca.netContractPosition)}</td>
@@ -377,70 +438,76 @@ export function ReportsPrintContent({
             </>
           )}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td style={{ paddingLeft: "12px" }}>Total Aset Lancar</td>
+            <td style={{ paddingLeft: "12px" }}>
+              {isEn ? "Total Current Assets" : "Total Aset Lancar"}
+            </td>
             <td>{renderPrintAmount(totalCurrentAssets)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
             <td colSpan={2} style={{ paddingLeft: "12px", color: "#334155" }}>
-              ASET TETAP
+              {isEn ? "NON-CURRENT / FIXED ASSETS" : "ASET TETAP"}
             </td>
           </tr>
           {fixedAssets.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Tidak ada aset tetap
+                {isEn ? "No fixed assets" : "Tidak ada aset tetap"}
               </td>
             </tr>
           ) : (
             fixedAssets.map((a) => (
               <tr key={a.code}>
-                <td style={{ paddingLeft: "16px" }}>{a.name}</td>
+                <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(a, lang)}</td>
                 <td>{renderPrintAmount(a.amount)}</td>
               </tr>
             ))
           )}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td style={{ paddingLeft: "12px" }}>Total Aset Tetap (Net)</td>
+            <td style={{ paddingLeft: "12px" }}>
+              {isEn ? "Total Fixed Assets (Net)" : "Total Aset Tetap (Net)"}
+            </td>
             <td>{renderPrintAmount(totalFixedAssets)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#e2e8f0", fontWeight: 800, borderTop: "2px solid #94a3b8" }}>
-            <td style={{ color: "#0f172a" }}>TOTAL ASET</td>
+            <td style={{ color: "#0f172a" }}>{isEn ? "TOTAL ASSETS" : "TOTAL ASET"}</td>
             <td>{renderPrintAmount(balanceSheet.totalAssets)}</td>
           </tr>
 
           {/* LIABILITAS */}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 800 }}>
             <td colSpan={2} style={{ color: "#0f172a", textTransform: "uppercase" }}>
-              LIABILITAS (KEWAJIBAN)
+              {isEn ? "LIABILITIES" : "LIABILITAS (KEWAJIBAN)"}
             </td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
             <td colSpan={2} style={{ paddingLeft: "12px", color: "#334155" }}>
-              LIABILITAS JANGKA PENDEK
+              {isEn ? "CURRENT LIABILITIES" : "LIABILITAS JANGKA PENDEK"}
             </td>
           </tr>
           {currentLiabilities.length === 0 && balanceSheet.contractLiabilities.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Belum ada liabilitas jangka pendek
+                {isEn ? "No current liabilities" : "Belum ada liabilitas jangka pendek"}
               </td>
             </tr>
           ) : (
             <>
               {currentLiabilities.map((l) => (
                 <tr key={l.code}>
-                  <td style={{ paddingLeft: "16px" }}>{l.name}</td>
+                  <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(l, lang)}</td>
                   <td>{renderPrintAmount(l.amount)}</td>
                 </tr>
               ))}
               {balanceSheet.contractLiabilities.map((cl) => (
                 <tr key={cl.projectId}>
                   <td style={{ paddingLeft: "16px" }}>
-                    <div>Liabilitas Kontrak: {cl.projectName}</div>
+                    <div>
+                      {isEn ? "Contract Liability" : "Liabilitas Kontrak"}: {cl.projectName}
+                    </div>
                     <div style={{ fontSize: "8.5px", color: "#64748b" }}>
-                      Penagihan {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
+                      {isEn ? "Billings" : "Penagihan"} {formatRupiah(cl.billingsBalance)} &minus; WIP {formatRupiah(cl.wipBalance)}
                     </div>
                   </td>
                   <td>{renderPrintAmount(Math.abs(cl.netContractPosition))}</td>
@@ -449,61 +516,71 @@ export function ReportsPrintContent({
             </>
           )}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td style={{ paddingLeft: "12px" }}>Total Liabilitas Jangka Pendek</td>
+            <td style={{ paddingLeft: "12px" }}>
+              {isEn ? "Total Current Liabilities" : "Total Liabilitas Jangka Pendek"}
+            </td>
             <td>{renderPrintAmount(totalCurrentLiabilities)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
             <td colSpan={2} style={{ paddingLeft: "12px", color: "#334155" }}>
-              LIABILITAS JANGKA PANJANG
+              {isEn ? "LONG-TERM LIABILITIES" : "LIABILITAS JANGKA PANJANG"}
             </td>
           </tr>
           {longTermLiabilities.length === 0 ? (
             <tr>
               <td colSpan={2} style={{ fontStyle: "italic", color: "#64748b", paddingLeft: "16px" }}>
-                Tidak ada liabilitas jangka panjang
+                {isEn ? "No long-term liabilities" : "Tidak ada liabilitas jangka panjang"}
               </td>
             </tr>
           ) : (
             longTermLiabilities.map((l) => (
               <tr key={l.code}>
-                <td style={{ paddingLeft: "16px" }}>{l.name}</td>
+                <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(l, lang)}</td>
                 <td>{renderPrintAmount(l.amount)}</td>
               </tr>
             ))
           )}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td style={{ paddingLeft: "12px" }}>Total Liabilitas Jangka Panjang</td>
+            <td style={{ paddingLeft: "12px" }}>
+              {isEn ? "Total Long-Term Liabilities" : "Total Liabilitas Jangka Panjang"}
+            </td>
             <td>{renderPrintAmount(totalLongTermLiabilities)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 800 }}>
-            <td style={{ color: "#0f172a" }}>TOTAL LIABILITAS</td>
+            <td style={{ color: "#0f172a" }}>
+              {isEn ? "TOTAL LIABILITIES" : "TOTAL LIABILITAS"}
+            </td>
             <td>{renderPrintAmount(totalLiabilities)}</td>
           </tr>
 
           {/* EKUITAS */}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 800 }}>
             <td colSpan={2} style={{ color: "#0f172a", textTransform: "uppercase" }}>
-              EKUITAS (MODAL)
+              {isEn ? "EQUITY" : "EKUITAS (MODAL)"}
             </td>
           </tr>
           {balanceSheet.equities.map((eq) => (
             <tr key={eq.code}>
-              <td style={{ paddingLeft: "16px" }}>{eq.name}</td>
+              <td style={{ paddingLeft: "16px" }}>{getLocalizedAccountName(eq, lang)}</td>
               <td>{renderPrintAmount(eq.amount)}</td>
             </tr>
           ))}
           {balanceSheet.currentUnclosedEarnings !== 0 ? (
             <tr>
               <td style={{ paddingLeft: "16px", fontStyle: "italic", color: "#475569" }}>
-                Laba (Rugi) Periode Berjalan (Belum Ditutup)
+                {isEn
+                  ? "Current Period Net Income / Loss (Unclosed)"
+                  : "Laba (Rugi) Periode Berjalan (Belum Ditutup)"}
               </td>
               <td>{renderPrintAmount(balanceSheet.currentUnclosedEarnings)}</td>
             </tr>
           ) : null}
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td style={{ paddingLeft: "12px" }}>TOTAL EKUITAS</td>
+            <td style={{ paddingLeft: "12px" }}>
+              {isEn ? "TOTAL EQUITY" : "TOTAL EKUITAS"}
+            </td>
             <td>{renderPrintAmount(totalEquity)}</td>
           </tr>
 
@@ -515,7 +592,9 @@ export function ReportsPrintContent({
               borderBottom: "3px double #0f172a",
             }}
           >
-            <td style={{ color: "#0f172a" }}>TOTAL LIABILITAS DAN EKUITAS</td>
+            <td style={{ color: "#0f172a" }}>
+              {isEn ? "TOTAL LIABILITIES AND EQUITY" : "TOTAL LIABILITAS DAN EKUITAS"}
+            </td>
             <td>{renderPrintAmount(balanceSheet.totalLiabilitiesAndEquity)}</td>
           </tr>
         </tbody>
@@ -534,7 +613,7 @@ export function ReportsPrintContent({
           textTransform: "uppercase",
         }}
       >
-        Laporan Arus Kas Metode Langsung
+        {isEn ? "Statement of Cash Flows (Direct Method)" : "Laporan Arus Kas Metode Langsung"}
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
         <colgroup>
@@ -543,50 +622,78 @@ export function ReportsPrintContent({
         </colgroup>
         <thead>
           <tr>
-            <th style={{ textAlign: "left", paddingLeft: "8px" }}>Aktivitas Arus Kas</th>
-            <th style={{ textAlign: "right", paddingRight: "8px" }}>Nominal</th>
+            <th style={{ textAlign: "left", paddingLeft: "8px" }}>
+              {isEn ? "Cash Flow Activity" : "Aktivitas Arus Kas"}
+            </th>
+            <th style={{ textAlign: "right", paddingRight: "8px" }}>
+              {isEn ? "Amount" : "Nominal"}
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Saldo Kas Awal Periode</td>
+            <td>{isEn ? "Beginning Cash Balance" : "Saldo Kas Awal Periode"}</td>
             <td>{renderPrintAmount(cashFlow.beginningCash)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>ARUS KAS DARI AKTIVITAS OPERASI</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "CASH FLOWS FROM OPERATING ACTIVITIES" : "ARUS KAS DARI AKTIVITAS OPERASI"}
+            </td>
           </tr>
           <tr>
-            <td style={{ paddingLeft: "16px" }}>Penerimaan Kas Operasional (Inflow)</td>
+            <td style={{ paddingLeft: "16px" }}>
+              {isEn ? "Operating Cash Receipts (Inflow)" : "Penerimaan Kas Operasional (Inflow)"}
+            </td>
             <td>{renderPrintAmount(cashFlow.operatingInflow)}</td>
           </tr>
           <tr>
-            <td style={{ paddingLeft: "16px" }}>Pengeluaran Kas Operasional (Outflow)</td>
+            <td style={{ paddingLeft: "16px" }}>
+              {isEn ? "Operating Cash Payments (Outflow)" : "Pengeluaran Kas Operasional (Outflow)"}
+            </td>
             <td>{renderPrintAmount(cashFlow.operatingOutflow, true)}</td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Arus Kas Bersih dari Aktivitas Operasi</td>
+            <td>
+              {isEn
+                ? "Net Cash Flows from Operating Activities"
+                : "Arus Kas Bersih dari Aktivitas Operasi"}
+            </td>
             <td>{renderPrintAmount(cashFlow.netOperating)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>ARUS KAS DARI AKTIVITAS INVESTASI</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "CASH FLOWS FROM INVESTING ACTIVITIES" : "ARUS KAS DARI AKTIVITAS INVESTASI"}
+            </td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Arus Kas Bersih dari Aktivitas Investasi</td>
+            <td>
+              {isEn
+                ? "Net Cash Flows from Investing Activities"
+                : "Arus Kas Bersih dari Aktivitas Investasi"}
+            </td>
             <td>{renderPrintAmount(cashFlow.netInvesting)}</td>
           </tr>
 
           <tr style={{ backgroundColor: "#f8fafc", fontWeight: 700 }}>
-            <td colSpan={2} style={{ color: "#0f172a" }}>ARUS KAS DARI AKTIVITAS PENDANAAN</td>
+            <td colSpan={2} style={{ color: "#0f172a" }}>
+              {isEn ? "CASH FLOWS FROM FINANCING ACTIVITIES" : "ARUS KAS DARI AKTIVITAS PENDANAAN"}
+            </td>
           </tr>
           <tr style={{ backgroundColor: "#f1f5f9", fontWeight: 700 }}>
-            <td>Arus Kas Bersih dari Aktivitas Pendanaan</td>
+            <td>
+              {isEn
+                ? "Net Cash Flows from Financing Activities"
+                : "Arus Kas Bersih dari Aktivitas Pendanaan"}
+            </td>
             <td>{renderPrintAmount(cashFlow.netFinancing)}</td>
           </tr>
 
           <tr>
-            <td style={{ fontWeight: 600 }}>Kenaikan (Penurunan) Bersih Kas</td>
+            <td style={{ fontWeight: 600 }}>
+              {isEn ? "Net Increase (Decrease) in Cash" : "Kenaikan (Penurunan) Bersih Kas"}
+            </td>
             <td>{renderPrintAmount(cashFlow.netChangeInCash)}</td>
           </tr>
 
@@ -598,7 +705,9 @@ export function ReportsPrintContent({
               borderBottom: "3px double #0f172a",
             }}
           >
-            <td style={{ color: "#0f172a" }}>SALDO KAS AKHIR PERIODE</td>
+            <td style={{ color: "#0f172a" }}>
+              {isEn ? "ENDING CASH BALANCE" : "SALDO KAS AKHIR PERIODE"}
+            </td>
             <td>{renderPrintAmount(cashFlow.endingCash)}</td>
           </tr>
         </tbody>
@@ -621,8 +730,12 @@ export function ReportsPrintContent({
         }}
       >
         {isBalanced
-          ? "✓ Buku Besar Seimbang (Balanced) - Total Debit sama dengan Total Kredit"
-          : "⚠ Peringatan: Terdapat selisih antara Saldo Debit dan Kredit!"}
+          ? isEn
+            ? "✓ General Ledger Balanced - Total Debit equals Total Credit"
+            : "✓ Buku Besar Seimbang (Balanced) - Total Debit sama dengan Total Kredit"
+          : isEn
+            ? "⚠ Warning: Discrepancy detected between Debit and Credit Balances!"
+            : "⚠ Peringatan: Terdapat selisih antara Saldo Debit dan Kredit!"}
       </div>
 
       <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
@@ -634,24 +747,26 @@ export function ReportsPrintContent({
         </colgroup>
         <thead>
           <tr>
-            <th>No. Akun</th>
-            <th>Nama Akun</th>
+            <th>{isEn ? "Account No." : "No. Akun"}</th>
+            <th>{isEn ? "Account Name" : "Nama Akun"}</th>
             <th>Debit</th>
-            <th>Kredit</th>
+            <th>{isEn ? "Credit" : "Kredit"}</th>
           </tr>
         </thead>
         <tbody>
           {trialBalance.rows.length === 0 ? (
             <tr>
               <td colSpan={4} style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>
-                Belum ada data neraca saldo pada periode ini.
+                {isEn
+                  ? "No trial balance data in this period."
+                  : "Belum ada data neraca saldo pada periode ini."}
               </td>
             </tr>
           ) : (
             trialBalance.rows.map((r) => (
               <tr key={r.code}>
                 <td style={{ textAlign: "center", fontWeight: 600 }}>{r.code}</td>
-                <td>{r.name}</td>
+                <td>{getLocalizedAccountName(r, lang)}</td>
                 <td>{renderPrintAmount(r.endingDebit)}</td>
                 <td>{renderPrintAmount(r.endingCredit)}</td>
               </tr>
@@ -668,7 +783,7 @@ export function ReportsPrintContent({
             }}
           >
             <td colSpan={2} style={{ textAlign: "right", paddingRight: "10px", color: "#0f172a" }}>
-              TOTAL KESELURUHAN
+              {isEn ? "GRAND TOTAL" : "TOTAL KESELURUHAN"}
             </td>
             <td>{renderPrintAmount(trialBalance.sumEndingDebit)}</td>
             <td>{renderPrintAmount(trialBalance.sumEndingCredit)}</td>
@@ -683,7 +798,9 @@ export function ReportsPrintContent({
       if (allLedgers.length === 0) {
         return (
           <div style={{ textAlign: "center", color: "#64748b", padding: "30px" }}>
-            Belum ada transaksi pada akun buku besar di periode ini.
+            {isEn
+              ? "No transactions for any general ledger accounts in this period."
+              : "Belum ada transaksi pada akun buku besar di periode ini."}
           </div>
         );
       }
@@ -706,14 +823,16 @@ export function ReportsPrintContent({
               >
                 <div>
                   <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a" }}>
-                    {item.account.code} - {item.account.name}
+                    {item.account.code} - {getLocalizedAccountName(item.account, lang)}
                   </div>
                   <div style={{ fontSize: "8.5px", color: "#64748b", marginTop: "2px" }}>
-                    Tipe: {ACCOUNT_TYPE_LABELS[item.account.account_type] ?? item.account.account_type} | Saldo Normal: {item.account.normal_balance === "debit" ? "Debit" : "Kredit"}
+                    {isEn ? "Type" : "Tipe"}: {getLocalizedAccountType(item.account.account_type, lang)} | {isEn ? "Normal Balance" : "Saldo Normal"}: {getLocalizedNormalBalance(item.account.normal_balance, lang)}
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: 600 }}>Saldo Akhir</span>
+                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: 600 }}>
+                    {isEn ? "Ending Balance" : "Saldo Akhir"}
+                  </span>
                   <div style={{ fontSize: "12px", fontWeight: 800, color: "#0B43C8" }}>
                     {formatRupiah(item.endingBalance)}
                   </div>
@@ -730,11 +849,11 @@ export function ReportsPrintContent({
                 </colgroup>
                 <thead>
                   <tr>
-                    <th>Tanggal</th>
-                    <th>Keterangan</th>
+                    <th>{isEn ? "Date" : "Tanggal"}</th>
+                    <th>{isEn ? "Description" : "Keterangan"}</th>
                     <th>Debit</th>
-                    <th>Kredit</th>
-                    <th>Saldo Berjalan</th>
+                    <th>{isEn ? "Credit" : "Kredit"}</th>
+                    <th>{isEn ? "Running Balance" : "Saldo Berjalan"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -742,7 +861,9 @@ export function ReportsPrintContent({
                     <tr key={rIdx}>
                       <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>{formatDateID(r.journalDate)}</td>
                       <td>
-                        <div style={{ fontWeight: 600, color: "#0f172a" }}>{r.description}</div>
+                        <div style={{ fontWeight: 600, color: "#0f172a" }}>
+                          {getLocalizedTransactionDescription(r.description, lang)}
+                        </div>
                         {(r as any).journalNumber && (
                           <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as any).journalNumber}</div>
                         )}
@@ -779,14 +900,16 @@ export function ReportsPrintContent({
         >
           <div>
             <div style={{ fontSize: "12px", fontWeight: 800, color: "#0f172a" }}>
-              {targetAccount?.code} - {targetAccount?.name}
+              {targetAccount?.code} - {targetAccount ? getLocalizedAccountName(targetAccount, lang) : ""}
             </div>
             <div style={{ fontSize: "8.5px", color: "#64748b", marginTop: "2px" }}>
-              Tipe: {targetAccount ? (ACCOUNT_TYPE_LABELS[targetAccount.account_type] ?? targetAccount.account_type) : "-"} | Saldo Normal: {targetAccount?.normal_balance === "debit" ? "Debit" : "Kredit"}
+              {isEn ? "Type" : "Tipe"}: {targetAccount ? getLocalizedAccountType(targetAccount.account_type, lang) : "-"} | {isEn ? "Normal Balance" : "Saldo Normal"}: {targetAccount ? getLocalizedNormalBalance(targetAccount.normal_balance, lang) : "-"}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <span style={{ fontSize: "8px", color: "#64748b", fontWeight: 600 }}>Saldo Akhir</span>
+            <span style={{ fontSize: "8px", color: "#64748b", fontWeight: 600 }}>
+              {isEn ? "Ending Balance" : "Saldo Akhir"}
+            </span>
             <div style={{ fontSize: "12px", fontWeight: 800, color: "#0B43C8" }}>
               {formatRupiah(selectedLedgerEndingBalance)}
             </div>
@@ -803,18 +926,20 @@ export function ReportsPrintContent({
           </colgroup>
           <thead>
             <tr>
-              <th>Tanggal</th>
-              <th>Keterangan</th>
+              <th>{isEn ? "Date" : "Tanggal"}</th>
+              <th>{isEn ? "Description" : "Keterangan"}</th>
               <th>Debit</th>
-              <th>Kredit</th>
-              <th>Saldo Berjalan</th>
+              <th>{isEn ? "Credit" : "Kredit"}</th>
+              <th>{isEn ? "Running Balance" : "Saldo Berjalan"}</th>
             </tr>
           </thead>
           <tbody>
             {targetRows.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ textAlign: "center", color: "#64748b", padding: "24px" }}>
-                  Belum ada mutasi untuk akun ini pada periode terpilih.
+                  {isEn
+                    ? "No transactions for this account in the selected period."
+                    : "Belum ada mutasi untuk akun ini pada periode terpilih."}
                 </td>
               </tr>
             ) : (
@@ -822,7 +947,9 @@ export function ReportsPrintContent({
                 <tr key={rIdx}>
                   <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>{formatDateID(r.journalDate)}</td>
                   <td>
-                    <div style={{ fontWeight: 600, color: "#0f172a" }}>{r.description}</div>
+                    <div style={{ fontWeight: 600, color: "#0f172a" }}>
+                      {getLocalizedTransactionDescription(r.description, lang)}
+                    </div>
                     {(r as any).journalNumber && (
                       <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as any).journalNumber}</div>
                     )}

@@ -19,6 +19,7 @@ import {
 import { formatAccountRef, formatDateI18n } from "@/lib/formatters";
 import {
   getLocalizedAccountName,
+  getLocalizedJournalType,
   getLocalizedTransactionDescription,
 } from "@/lib/glossary";
 import { useLanguage } from "@/lib/i18n";
@@ -28,7 +29,6 @@ import type {
   JournalLineRow,
   JournalRow,
 } from "@/types/database.types";
-import { JOURNAL_TYPE_LABELS } from "../journals-page";
 
 interface JournalDetailDialogProps {
   detailJournal: JournalRow | null;
@@ -83,8 +83,7 @@ export function JournalDetailDialog({
                   {t("accounting:dialogs.type", "Jenis Jurnal")}
                 </span>
                 <span className="font-semibold text-foreground">
-                  {JOURNAL_TYPE_LABELS[detailJournal.journal_type]?.label ??
-                    detailJournal.journal_type}
+                  {getLocalizedJournalType(detailJournal.journal_type, language)}
                 </span>
               </div>
               <div>

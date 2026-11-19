@@ -5,6 +5,13 @@ import {
   formatDocRupiah,
   simplifyLedgerDescription,
 } from "@/lib/formatters";
+import {
+  getLocalizedAccountName,
+  getLocalizedAccountType,
+  getLocalizedNormalBalance,
+  getLocalizedPeriodName,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import { getActiveLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
 import type {
@@ -12,6 +19,61 @@ import type {
   PdfDocumentSpec,
   PdfTableColumn,
 } from "../pdf-types";
+
+function localizeReportRowLabel(rawLabel: string, lang: "id" | "en"): string {
+  if (!rawLabel) return "";
+  const leadingSpaces = rawLabel.match(/^\s*/)?.[0] ?? "";
+  const trimmed = rawLabel.trim();
+
+  // Jika berformat "1-1101 - Nama Akun"
+  const codeMatch = trimmed.match(/^(\d[\d.-]{3,8})\s+-\s+(.+)$/);
+  if (codeMatch) {
+    const code = codeMatch[1]!;
+    const name = codeMatch[2]!;
+    return `${leadingSpaces}${code} - ${getLocalizedAccountName({ code, name }, lang)}`;
+  }
+
+  // Jika berformat "Aset Kontrak (Jasa dalam Proses Bersih): ..."
+  if (lang === "en") {
+    let res = trimmed
+      .replace(
+        /^Aset Kontrak \(Jasa dalam Proses Bersih\):\s*/i,
+        "Contract Asset (Net Work in Progress): ",
+      )
+      .replace(
+        /^Liabilitas Kontrak \(Penagihan Melebihi Progres\):\s*/i,
+        "Contract Liability (Billings in Excess of Progress): ",
+      )
+      .replace(
+        /^Laba \(Rugi\) Periode Berjalan \(Belum Ditutup\)$/i,
+        "Current Period Net Income / Loss (Unclosed)",
+      )
+      .replace(
+        /^Saldo Awal Laba Ditahan$/i,
+        "Beginning Retained Earnings",
+      )
+      .replace(
+        /^Laba \(Rugi\) Bersih Periode Berjalan$/i,
+        "Net Income (Loss) for the Current Period",
+      )
+      .replace(
+        /^Distribusi Deviden \/ Prive Pemilik$/i,
+        "Dividend Distribution / Owner's Drawings",
+      )
+      .replace(
+        /^Penerimaan Kas dari Pelanggan \(Operasional\)$/i,
+        "Cash Receipts from Customers (Operating)",
+      )
+      .replace(
+        /^Pembayaran Kas Operasional & Vendor$/i,
+        "Operating & Vendor Cash Payments",
+      );
+    res = getLocalizedAccountName({ name: res }, lang);
+    return `${leadingSpaces}${res}`;
+  }
+
+  return `${leadingSpaces}${getLocalizedAccountName({ name: trimmed }, lang)}`;
+}
 
 /**
  * Builder Spesifikasi PDF: Jurnal Umum & Jurnal Penyesuaian
@@ -53,9 +115,33 @@ export function buildJournalsPdfSpec(params: {
     const isMemo =
       (!r.ref && r.debit === 0 && r.credit === 0) ||
       r.description.trim().startsWith("(");
+    let localizedDesc = r.description;
+    if (isMemo) {
+      const trimmed = r.description.trim();
+      if (trimmed.startsWith("(") && trimmed.endsWith(")")) {
+        const inner = trimmed.slice(1, -1);
+        localizedDesc = `(${getLocalizedTransactionDescription(inner, lang)})`;
+      } else {
+        localizedDesc = getLocalizedTransactionDescription(r.description, lang);
+      }
+    } else {
+      const leadingIndent = r.description.match(/^\s*/)?.[0] ?? "";
+      const rawAccName = r.description.trim();
+      const mappedAccName =
+        rawAccName === "Akun Debit"
+          ? isEn
+            ? "Debit Account"
+            : "Akun Debit"
+          : rawAccName === "Akun Kredit"
+            ? isEn
+              ? "Credit Account"
+              : "Akun Kredit"
+            : getLocalizedAccountName({ code: r.ref, name: rawAccName }, lang);
+      localizedDesc = `${leadingIndent}${mappedAccName}`;
+    }
     return [
       r.date,
-      r.description,
+      localizedDesc,
       isMemo ? "" : r.ref ? formatAccountRef(r.ref) : "-",
       isMemo ? "" : r.debit > 0 ? formatDocRupiah(r.debit) : "-",
       isMemo ? "" : r.credit > 0 ? formatDocRupiah(r.credit) : "-",
@@ -79,6 +165,7 @@ export function buildJournalsPdfSpec(params: {
     docTitle,
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Entity & Cycle" : "Entitas & Siklus",
     recipientLines: [
@@ -96,7 +183,10 @@ export function buildJournalsPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       {
         label: isEn ? "Verification Status" : "Status Verifikasi",
         value: isEn ? "Fully Posted" : "Terposting Lengkap",
@@ -147,10 +237,34 @@ export function buildGeneralLedgerPdfSpec(params: {
   const docNumber =
     params.refNumber ?? `GL/${docDate.replace(/-/g, "")}`;
 
+  const reverseTypeMap: Record<string, string> = {
+    aset: "asset",
+    "kontra-aset": "contra_asset",
+    liabilitas: "liability",
+    ekuitas: "equity",
+    pendapatan: "revenue",
+    beban: "expense",
+  };
+
   const sections: PdfDocumentSection[] = params.accounts.map((acc) => {
+    const localizedAccName = getLocalizedAccountName(
+      { code: acc.code, name: acc.name },
+      lang,
+    );
+    const normTypeKey = reverseTypeMap[acc.type.toLowerCase().trim()] ?? acc.type;
+    const localizedType = getLocalizedAccountType(normTypeKey, lang);
+    const normBalKey =
+      acc.normalBalance.toLowerCase().trim() === "kredit"
+        ? "credit"
+        : acc.normalBalance;
+    const localizedNormalBalance = getLocalizedNormalBalance(normBalKey, lang);
+
     const tableRows = acc.rows.map((r) => [
       r.date,
-      simplifyLedgerDescription(r.description),
+      simplifyLedgerDescription(
+        getLocalizedTransactionDescription(r.description, lang),
+        lang,
+      ),
       r.ref ? formatAccountRef(r.ref) : "-",
       r.debit > 0 ? formatDocNumber(r.debit) : "-",
       r.credit > 0 ? formatDocNumber(r.credit) : "-",
@@ -158,10 +272,10 @@ export function buildGeneralLedgerPdfSpec(params: {
     ]);
 
     return {
-      title: `${formatAccountRef(acc.code)} - ${acc.name}`,
+      title: `${formatAccountRef(acc.code)} - ${localizedAccName}`,
       subtitle: isEn
-        ? `Type: ${acc.type} | Normal Balance: ${acc.normalBalance}`
-        : `Tipe: ${acc.type} | Saldo Normal: ${acc.normalBalance}`,
+        ? `Type: ${localizedType} | Normal Balance: ${localizedNormalBalance}`
+        : `Tipe: ${localizedType} | Saldo Normal: ${localizedNormalBalance}`,
       badge: formatDocRupiah(acc.endingBalance),
       tableColumns: [
         { header: isEn ? "Date" : "Tanggal", widthRatio: 0.15 },
@@ -175,10 +289,15 @@ export function buildGeneralLedgerPdfSpec(params: {
     };
   });
 
+  const localizedHeaderAccountName = params.accountName
+    ? localizeReportRowLabel(params.accountName, lang)
+    : undefined;
+
   return {
     docTitle: isEn ? "GENERAL LEDGER" : "BUKU BESAR (GENERAL LEDGER)",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Entity General Ledger" : "Buku Besar Entitas",
     recipientLines: [
@@ -188,15 +307,18 @@ export function buildGeneralLedgerPdfSpec(params: {
           ? "Scope: All General Ledger Accounts"
           : "Cakupan: Seluruh Akun Buku Besar"
         : isEn
-          ? `Account: ${params.accountName || "Selected Account"}`
-          : `Akun: ${params.accountName || "Akun Terpilih"}`,
+          ? `Account: ${localizedHeaderAccountName || "Selected Account"}`
+          : `Akun: ${localizedHeaderAccountName || "Akun Terpilih"}`,
     ],
     metaRows: [
       {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       {
         label: isEn ? "Reconciliation Status" : "Status Rekonsiliasi",
         value: isEn ? "Fully Reconciled" : "Selesai Direkonsiliasi",
@@ -237,7 +359,7 @@ export function buildTrialBalancePdfSpec(params: {
 
   const tableRows = params.rows.map((r) => [
     r.code,
-    r.name,
+    getLocalizedAccountName({ code: r.code, name: r.name }, lang),
     r.debit > 0 ? formatDocRupiah(r.debit) : "-",
     r.credit > 0 ? formatDocRupiah(r.credit) : "-",
   ]);
@@ -258,6 +380,7 @@ export function buildTrialBalancePdfSpec(params: {
     docTitle: isEn ? "TRIAL BALANCE" : "NERACA SALDO (TRIAL BALANCE)",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Reporting Basis" : "Dasar Pelaporan",
     recipientLines: [
@@ -275,7 +398,10 @@ export function buildTrialBalancePdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       {
         label: isEn ? "Balance Status" : "Status Keseimbangan",
         value: isBalanced
@@ -296,8 +422,8 @@ export function buildTrialBalancePdfSpec(params: {
         }
       : undefined,
     tableColumns: [
-      { header: isEn ? "Account No." : "No. Akun", widthRatio: 0.11 },
-      { header: isEn ? "Account Name" : "Nama Akun", widthRatio: 0.43 },
+      { header: isEn ? "Account No." : "No. Akun", widthRatio: 0.14 },
+      { header: isEn ? "Account Name" : "Nama Akun", widthRatio: 0.40 },
       { header: "Debit", widthRatio: 0.23, align: "right" },
       { header: isEn ? "Credit" : "Kredit", widthRatio: 0.23, align: "right" },
     ],
@@ -334,7 +460,7 @@ export function buildIncomeStatementPdfSpec(params: {
   // PENDAPATAN USAHA
   tableRows.push([isEn ? "OPERATING REVENUE" : "PENDAPATAN USAHA", ""]);
   for (const r of params.revenueRows) {
-    tableRows.push([`  ${r.label}`, formatDocRupiah(r.amount)]);
+    tableRows.push([`  ${localizeReportRowLabel(r.label, lang)}`, formatDocRupiah(r.amount)]);
   }
   tableRows.push([
     isEn ? "TOTAL OPERATING REVENUE" : "TOTAL PENDAPATAN USAHA",
@@ -345,7 +471,7 @@ export function buildIncomeStatementPdfSpec(params: {
   tableRows.push([isEn ? "DIRECT PROJECT COSTS" : "BEBAN LANGSUNG PROYEK", ""]);
   if (params.cogsRows && params.cogsRows.length > 0) {
     for (const c of params.cogsRows) {
-      tableRows.push([`  ${c.label}`, formatDocRupiah(c.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(c.label, lang)}`, formatDocRupiah(c.amount)]);
     }
   } else {
     tableRows.push([
@@ -368,7 +494,7 @@ export function buildIncomeStatementPdfSpec(params: {
   ]);
   if (params.opexRows && params.opexRows.length > 0) {
     for (const o of params.opexRows) {
-      tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(o.label, lang)}`, formatDocRupiah(o.amount)]);
     }
     if (params.totalOpex !== undefined) {
       tableRows.push([
@@ -397,6 +523,7 @@ export function buildIncomeStatementPdfSpec(params: {
     docTitle: isEn ? "STATEMENT OF PROFIT OR LOSS" : "LAPORAN LABA RUGI BASIS AKRUAL",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
@@ -410,7 +537,10 @@ export function buildIncomeStatementPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
@@ -448,7 +578,7 @@ export function buildRetainedEarningsPdfSpec(params: {
     params.refNumber ?? `EQ/${docDate.replace(/-/g, "")}`;
 
   const tableRows = params.rows.map((r) => [
-    r.label.toUpperCase(),
+    localizeReportRowLabel(r.label, lang).toUpperCase(),
     formatDocRupiah(r.amount),
   ]);
   tableRows.push([
@@ -460,6 +590,7 @@ export function buildRetainedEarningsPdfSpec(params: {
     docTitle: isEn ? "STATEMENT OF CHANGES IN EQUITY" : "LAPORAN PERUBAHAN EKUITAS",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
@@ -473,7 +604,10 @@ export function buildRetainedEarningsPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
@@ -530,7 +664,7 @@ export function buildBalanceSheetPdfSpec(params: {
   // 1. ASET
   tableRows.push([isEn ? "CURRENT ASSETS" : "ASET LANCAR", ""]);
   for (const a of params.currentAssetRows) {
-    tableRows.push([`  ${a.label}`, formatDocRupiah(a.amount)]);
+    tableRows.push([`  ${localizeReportRowLabel(a.label, lang)}`, formatDocRupiah(a.amount)]);
   }
   tableRows.push([
     isEn ? "TOTAL CURRENT ASSETS" : "TOTAL ASET LANCAR",
@@ -540,7 +674,7 @@ export function buildBalanceSheetPdfSpec(params: {
   if (params.nonCurrentAssetRows.length > 0) {
     tableRows.push([isEn ? "NON-CURRENT ASSETS" : "ASET TIDAK LANCAR", ""]);
     for (const na of params.nonCurrentAssetRows) {
-      tableRows.push([`  ${na.label}`, formatDocRupiah(na.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(na.label, lang)}`, formatDocRupiah(na.amount)]);
     }
     tableRows.push([
       isEn ? "TOTAL NON-CURRENT ASSETS" : "TOTAL ASET TIDAK LANCAR",
@@ -558,7 +692,7 @@ export function buildBalanceSheetPdfSpec(params: {
     "",
   ]);
   for (const l of params.currentLiabRows) {
-    tableRows.push([`  ${l.label}`, formatDocRupiah(l.amount)]);
+    tableRows.push([`  ${localizeReportRowLabel(l.label, lang)}`, formatDocRupiah(l.amount)]);
   }
   tableRows.push([
     isEn ? "TOTAL CURRENT LIABILITIES" : "TOTAL LIABILITAS JANGKA PENDEK",
@@ -571,7 +705,7 @@ export function buildBalanceSheetPdfSpec(params: {
       "",
     ]);
     for (const nl of params.nonCurrentLiabRows) {
-      tableRows.push([`  ${nl.label}`, formatDocRupiah(nl.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(nl.label, lang)}`, formatDocRupiah(nl.amount)]);
     }
     tableRows.push([
       isEn ? "TOTAL NON-CURRENT LIABILITIES" : "TOTAL LIABILITAS JANGKA PANJANG",
@@ -586,7 +720,7 @@ export function buildBalanceSheetPdfSpec(params: {
   // 3. EKUITAS
   tableRows.push([isEn ? "EQUITY" : "EKUITAS", ""]);
   for (const eq of params.equityRows) {
-    tableRows.push([`  ${eq.label}`, formatDocRupiah(eq.amount)]);
+    tableRows.push([`  ${localizeReportRowLabel(eq.label, lang)}`, formatDocRupiah(eq.amount)]);
   }
   tableRows.push([
     isEn ? "TOTAL EQUITY" : "TOTAL EKUITAS",
@@ -602,6 +736,7 @@ export function buildBalanceSheetPdfSpec(params: {
     docTitle: isEn ? "STATEMENT OF FINANCIAL POSITION" : "LAPORAN POSISI KEUANGAN (NERACA)",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Financial Position Basis" : "Dasar Posisi Keuangan",
     recipientLines: [
@@ -615,7 +750,10 @@ export function buildBalanceSheetPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "As of" : "Posisi Per", value: params.periodLabel },
+      {
+        label: isEn ? "As of" : "Posisi Per",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       {
         label: isEn ? "Balance Status" : "Status Keseimbangan",
         value: isBalanced
@@ -687,7 +825,7 @@ export function buildCashFlowPdfSpec(params: {
 
   tableRows.push([isEn ? "OPERATING ACTIVITIES" : "AKTIVITAS OPERASI", ""]);
   for (const o of params.operatingRows) {
-    tableRows.push([`  ${o.label}`, formatDocRupiah(o.amount)]);
+    tableRows.push([`  ${localizeReportRowLabel(o.label, lang)}`, formatDocRupiah(o.amount)]);
   }
   tableRows.push([
     isEn
@@ -699,7 +837,7 @@ export function buildCashFlowPdfSpec(params: {
   tableRows.push([isEn ? "INVESTING ACTIVITIES" : "AKTIVITAS INVESTASI", ""]);
   if (params.investingRows && params.investingRows.length > 0) {
     for (const inv of params.investingRows) {
-      tableRows.push([`  ${inv.label}`, formatDocRupiah(inv.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(inv.label, lang)}`, formatDocRupiah(inv.amount)]);
     }
   } else {
     tableRows.push([
@@ -719,7 +857,7 @@ export function buildCashFlowPdfSpec(params: {
   tableRows.push([isEn ? "FINANCING ACTIVITIES" : "AKTIVITAS PENDANAAN", ""]);
   if (params.financingRows && params.financingRows.length > 0) {
     for (const fin of params.financingRows) {
-      tableRows.push([`  ${fin.label}`, formatDocRupiah(fin.amount)]);
+      tableRows.push([`  ${localizeReportRowLabel(fin.label, lang)}`, formatDocRupiah(fin.amount)]);
     }
   } else {
     tableRows.push([
@@ -751,6 +889,7 @@ export function buildCashFlowPdfSpec(params: {
     docTitle: isEn ? "STATEMENT OF CASH FLOWS" : "LAPORAN ARUS KAS METODE LANGSUNG",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
@@ -764,7 +903,10 @@ export function buildCashFlowPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       { label: isEn ? "Currency" : "Mata Uang", value: "Rupiah (IDR)" },
     ],
     tableColumns: [
@@ -815,6 +957,9 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
     },
   ];
 
+  const localizeMatrix = (rows: string[][]): string[][] =>
+    rows.map((r) => [localizeReportRowLabel(r[0] ?? "", lang), r[1] ?? ""]);
+
   const sections: PdfDocumentSection[] = [
     {
       title: isEn
@@ -824,7 +969,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
         ? "Operating Revenue, Direct Costs & Operating Expenses"
         : "Pendapatan Usaha, Beban Langsung & Beban Operasional",
       tableColumns: stdCols,
-      tableRows: params.incomeStatementRows,
+      tableRows: localizeMatrix(params.incomeStatementRows),
     },
     {
       title: isEn
@@ -834,7 +979,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
         ? "Paid-in Capital and Retained Earnings Movements"
         : "Modal Disetor dan Mutasi Saldo Laba Ditahan",
       tableColumns: stdCols,
-      tableRows: params.retainedEarningsRows,
+      tableRows: localizeMatrix(params.retainedEarningsRows),
       pageBreakBefore: true,
     },
     {
@@ -845,7 +990,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
         ? "Assets, Liabilities, and Equity Position at Period End"
         : "Posisi Aset, Liabilitas, dan Ekuitas Per Akhir Periode",
       tableColumns: stdCols,
-      tableRows: params.balanceSheetRows,
+      tableRows: localizeMatrix(params.balanceSheetRows),
       pageBreakBefore: true,
     },
     {
@@ -856,7 +1001,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
         ? "Operating, Investing, and Financing Cash Activities"
         : "Aktivitas Operasi, Investasi, dan Pendanaan Kas",
       tableColumns: stdCols,
-      tableRows: params.cashFlowRows,
+      tableRows: localizeMatrix(params.cashFlowRows),
       pageBreakBefore: true,
     },
   ];
@@ -865,6 +1010,7 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
     docTitle: isEn ? "COMPLETE FINANCIAL STATEMENTS" : "LAPORAN KEUANGAN LENGKAP",
     docNumber,
     docDate,
+    language: lang,
     company: params.company,
     recipientTitle: isEn ? "Basis of Preparation" : "Dasar Penyusunan",
     recipientLines: [
@@ -878,7 +1024,10 @@ export function buildCompleteFinancialStatementsPdfSpec(params: {
         label: isEn ? "Issue Date" : "Tanggal Terbit",
         value: formatDocDateLong(docDate, lang),
       },
-      { label: isEn ? "Period" : "Periode", value: params.periodLabel },
+      {
+        label: isEn ? "Period" : "Periode",
+        value: getLocalizedPeriodName(params.periodLabel, lang),
+      },
       {
         label: isEn ? "Reporting Standard" : "Standar Pelaporan",
         value: isEn

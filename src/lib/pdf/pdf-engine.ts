@@ -589,7 +589,10 @@ async function renderDocumentPdfInternal(
   headerAlignment: PdfHeaderAlignmentMetrics;
 }> {
   const spec = normalizeSpecCurrencyDecimals(rawSpec);
-  const isEnPdf = (spec as any).lang === "en" || getActiveLanguage() === "en";
+  const isEnPdf =
+    spec.language === "en" ||
+    (spec as any).lang === "en" ||
+    (!spec.language && getActiveLanguage() === "en");
   const pdfDoc = await PDFDocument.create();
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -1662,10 +1665,11 @@ async function renderDocumentPdfInternal(
         if (sec.badge) {
           const badgeText = sanitizePdfText(sec.badge);
           const badgeW = fontBold.widthOfTextAtSize(badgeText, 10.5);
+          const badgeLabel = isEnPdf ? "Ending Balance" : "Saldo Akhir";
           drawTrackedText(
-            "Saldo Akhir",
+            badgeLabel,
             {
-              x: pageWidth - marginX - 10 - fontRegular.widthOfTextAtSize("Saldo Akhir", 7.5),
+              x: pageWidth - marginX - 10 - fontRegular.widthOfTextAtSize(badgeLabel, 7.5),
               y: cardTopY - 14,
               size: 7.5,
               font: fontRegular,
@@ -1756,7 +1760,9 @@ async function renderDocumentPdfInternal(
         const emptyH = 24;
         const emptyTopY = y + cellPadY + 9;
         const emptyBottomY = emptyTopY - emptyH;
-        const emptyText = "Tidak ada transaksi pada akun ini dalam periode yang dipilih";
+        const emptyText = isEnPdf
+          ? "No transactions for this account in the selected period"
+          : "Tidak ada transaksi pada akun ini dalam periode yang dipilih";
         const emptyTextW = fontRegular.widthOfTextAtSize(emptyText, cellFontSize);
         drawTrackedText(
           emptyText,
@@ -1778,7 +1784,7 @@ async function renderDocumentPdfInternal(
         y = emptyBottomY - tableSpacing;
       } else {
         let lastRowBottomLineY = y;
-        const isLedgerDoc = spec.docTitle?.toUpperCase().includes("BUKU BESAR") ?? false;
+        const isLedgerDoc = /BUKU BESAR|GENERAL LEDGER/i.test(spec.docTitle ?? "");
         const isAccountingDoc = isAccountingCycleOrFinancialReport(spec.docTitle);
         for (const row of sec.tableRows) {
           const isBoldRow = isAccountingDoc && !isLedgerDoc && isRowUppercase(row);
@@ -2052,7 +2058,11 @@ async function renderDocumentPdfInternal(
       lastRowBottomLineY = emptyBottomY;
       y = emptyBottomY - tableSpacing;
     } else {
-      const isJournal = docUpper.includes("JURNAL");
+      const isJournal =
+        docUpper.includes("JURNAL") ||
+        docUpper.includes("GENERAL JOURNAL") ||
+        docUpper.includes("ADJUSTING") ||
+        docUpper.includes("CLOSING");
       const isAccountingDoc = isAccountingCycleOrFinancialReport(spec.docTitle);
       for (let rIdx = 0; rIdx < spec.tableRows.length; rIdx++) {
         const row = spec.tableRows[rIdx]!;
@@ -2099,7 +2109,7 @@ async function renderDocumentPdfInternal(
             }
             const isSecondaryLine =
               lIdx > 0 &&
-              (rawCell.includes("\n") || /bank|rekening|pic|kontak/i.test(col.header));
+              (rawCell.includes("\n") || /bank|rekening|account|pic|kontak|contact/i.test(col.header));
             const isJournalMemo =
               isJournal &&
               rawCell.trim().startsWith("(") &&

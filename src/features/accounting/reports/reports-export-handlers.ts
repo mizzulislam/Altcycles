@@ -2,6 +2,12 @@ import { toast } from "sonner";
 import { getCompanyProfile } from "@/lib/data-service";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { downloadCsvFile } from "@/lib/csv-exporter";
+import {
+  getLocalizedAccountName,
+  getLocalizedAccountType,
+  getLocalizedNormalBalance,
+  getLocalizedTransactionDescription,
+} from "@/lib/glossary";
 import { getActiveLanguage } from "@/lib/i18n";
 import {
   buildBalanceSheetPdfSpec,
@@ -15,7 +21,6 @@ import {
   generateDocumentPdf,
 } from "@/lib/pdf-generator";
 import {
-  ACCOUNT_TYPE_LABELS,
   formatDateID,
   formatRupiah,
 } from "@/lib/formatters";
@@ -127,7 +132,8 @@ export interface ReportExportData {
 }
 
 export async function exportReportToPdf(data: ReportExportData): Promise<void> {
-  const isEn = getActiveLanguage() === "en";
+  const lang = getActiveLanguage();
+  const isEn = lang === "en";
   const {
     company,
     activeTab,
@@ -160,25 +166,31 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
     const comp = company ?? (await getCompanyProfile());
     const periodLabel =
       activeTab === "neraca" && mode !== "ledger" && mode !== "trial_balance"
-        ? `Per ${formatDateID(endDate)}`
-        : `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
+        ? isEn
+          ? `As of ${formatDateID(endDate)}`
+          : `Per ${formatDateID(endDate)}`
+        : isEn
+          ? `${formatDateID(startDate)} to ${formatDateID(endDate)}`
+          : `${formatDateID(startDate)} s.d. ${formatDateID(endDate)}`;
 
     let spec;
-    let fileName = "Laporan_Keuangan_Altcycles.pdf";
-    let successMsg = "Laporan keuangan berhasil diunduh dalam format PDF (.pdf).";
+    let fileName = isEn ? "Financial_Report_Altcycles.pdf" : "Laporan_Keuangan_Altcycles.pdf";
+    let successMsg = isEn
+      ? "Financial report successfully downloaded in PDF (.pdf) format."
+      : "Laporan keuangan berhasil diunduh dalam format PDF (.pdf).";
 
     if (mode === "ledger" || activeTab === "buku_besar") {
       const isAll = isAllAccounts;
       const targetAccounts = isAll
         ? allLedgers.map((l) => ({
             code: l.account.code,
-            name: l.account.name,
-            type: ACCOUNT_TYPE_LABELS[l.account.account_type] ?? l.account.account_type,
-            normalBalance: l.account.normal_balance === "debit" ? "Debit" : "Kredit",
+            name: getLocalizedAccountName(l.account, lang),
+            type: getLocalizedAccountType(l.account.account_type, lang),
+            normalBalance: getLocalizedNormalBalance(l.account.normal_balance, lang),
             endingBalance: l.endingBalance,
             rows: l.rows.map((r) => ({
               date: formatDateID(r.journalDate),
-              description: r.description,
+              description: getLocalizedTransactionDescription(r.description, lang),
               ref: (r as any).referenceNumber || r.journalNumber || "-",
               debit: r.debit,
               credit: r.credit,
@@ -189,16 +201,16 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
           ? [
               {
                 code: selectedAccount.code,
-                name: selectedAccount.name,
-                type:
-                  ACCOUNT_TYPE_LABELS[selectedAccount.account_type] ??
-                  selectedAccount.account_type,
-                normalBalance:
-                  selectedAccount.normal_balance === "debit" ? "Debit" : "Kredit",
+                name: getLocalizedAccountName(selectedAccount, lang),
+                type: getLocalizedAccountType(selectedAccount.account_type, lang),
+                normalBalance: getLocalizedNormalBalance(
+                  selectedAccount.normal_balance,
+                  lang,
+                ),
                 endingBalance: selectedLedgerEndingBalance,
                 rows: ledgerRows.map((r) => ({
                   date: formatDateID(r.journalDate),
-                  description: r.description,
+                  description: getLocalizedTransactionDescription(r.description, lang),
                   ref: (r as any).referenceNumber || r.journalNumber || "-",
                   debit: r.debit,
                   credit: r.credit,
@@ -212,10 +224,11 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         company: comp,
         periodLabel,
         accountName: selectedAccount
-          ? `${selectedAccount.code} - ${selectedAccount.name}`
+          ? `${selectedAccount.code} - ${getLocalizedAccountName(selectedAccount, lang)}`
           : undefined,
         isAllAccounts: isAll,
         accounts: targetAccounts,
+        lang,
       });
       fileName = isEn ? "General_Ledger_Altcycles.pdf" : "Buku_Besar_Altcycles.pdf";
       successMsg = isEn
@@ -229,12 +242,13 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         isBalanced: trialBalance.sumEndingDebit === trialBalance.sumEndingCredit,
         rows: trialBalance.rows.map((r) => ({
           code: r.code,
-          name: r.name,
+          name: getLocalizedAccountName(r, lang),
           debit: r.endingDebit,
           credit: r.endingCredit,
         })),
         sumDebit: trialBalance.sumEndingDebit,
         sumCredit: trialBalance.sumEndingCredit,
+        lang,
       });
       fileName = isEn ? "Trial_Balance_Altcycles.pdf" : "Neraca_Saldo_Altcycles.pdf";
       successMsg = isEn
@@ -242,11 +256,20 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         : "Neraca Saldo berhasil diunduh dalam format PDF (.pdf).";
     } else if (mode === "statements" && layoutMode === "grid") {
       const isRows = [
-        ...incomeStatement.revenues.map((r) => [r.name, formatRupiah(r.amount)]),
+        ...incomeStatement.revenues.map((r) => [
+          getLocalizedAccountName(r, lang),
+          formatRupiah(r.amount),
+        ]),
         [isEn ? "Total Operating Revenue" : "Total Pendapatan Usaha", formatRupiah(incomeStatement.totalRevenue)],
-        ...incomeStatement.directExpenses.map((c) => [c.name, formatRupiah(c.amount)]),
+        ...incomeStatement.directExpenses.map((c) => [
+          getLocalizedAccountName(c, lang),
+          formatRupiah(c.amount),
+        ]),
         [isEn ? "Gross Profit" : "Laba Kotor Proyek", formatRupiah(incomeStatement.grossProfit)],
-        ...incomeStatement.sharedExpenses.map((o) => [o.name, formatRupiah(o.amount)]),
+        ...incomeStatement.sharedExpenses.map((o) => [
+          getLocalizedAccountName(o, lang),
+          formatRupiah(o.amount),
+        ]),
         [isEn ? "Net Income (Loss)" : "Laba (Rugi) Bersih", formatRupiah(incomeStatement.netProfit)],
       ];
       const eqRows = [
@@ -256,11 +279,20 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         [isEn ? "Ending Retained Earnings" : "Saldo Laba Ditahan Akhir", formatRupiah(endingRetainedEarnings)],
       ];
       const bsRows = [
-        ...balanceSheet.assets.map((a) => [a.name, formatRupiah(a.amount)]),
+        ...balanceSheet.assets.map((a) => [
+          getLocalizedAccountName(a, lang),
+          formatRupiah(a.amount),
+        ]),
         [isEn ? "Total Assets" : "Total Aset", formatRupiah(balanceSheet.totalAssets)],
-        ...balanceSheet.liabilities.map((l) => [l.name, formatRupiah(l.amount)]),
+        ...balanceSheet.liabilities.map((l) => [
+          getLocalizedAccountName(l, lang),
+          formatRupiah(l.amount),
+        ]),
         [isEn ? "Total Liabilities" : "Total Liabilitas", formatRupiah(totalLiabilities)],
-        ...balanceSheet.equities.map((e) => [e.name, formatRupiah(e.amount)]),
+        ...balanceSheet.equities.map((e) => [
+          getLocalizedAccountName(e, lang),
+          formatRupiah(e.amount),
+        ]),
         [isEn ? "Total Liabilities & Equity" : "Total Liabilitas & Ekuitas", formatRupiah(balanceSheet.totalLiabilitiesAndEquity)],
       ];
       const cfRows = [
@@ -277,6 +309,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         retainedEarningsRows: eqRows,
         balanceSheetRows: bsRows,
         cashFlowRows: cfRows,
+        lang,
       });
       fileName = isEn ? "Complete_Financial_Statements_Altcycles.pdf" : "Laporan_Keuangan_Lengkap_Altcycles.pdf";
       successMsg = isEn
@@ -287,21 +320,22 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         company: comp,
         periodLabel,
         revenueRows: incomeStatement.revenues.map((r) => ({
-          label: `${r.code} - ${r.name}`,
+          label: `${r.code} - ${getLocalizedAccountName(r, lang)}`,
           amount: r.amount,
         })),
         totalRevenue: incomeStatement.totalRevenue,
         cogsRows: incomeStatement.directExpenses.map((c) => ({
-          label: `${c.code} - ${c.name}`,
+          label: `${c.code} - ${getLocalizedAccountName(c, lang)}`,
           amount: c.amount,
         })),
         grossProfit: incomeStatement.grossProfit,
         opexRows: incomeStatement.sharedExpenses.map((o) => ({
-          label: `${o.code} - ${o.name}`,
+          label: `${o.code} - ${getLocalizedAccountName(o, lang)}`,
           amount: o.amount,
         })),
         totalOpex: incomeStatement.totalSharedExpense,
         netIncome: incomeStatement.netProfit,
+        lang,
       });
       fileName = isEn ? "Income_Statement_Altcycles.pdf" : "Laba_Rugi_Altcycles.pdf";
       successMsg = isEn
@@ -326,6 +360,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
           },
         ],
         endingRetainedEarnings,
+        lang,
       });
       fileName = isEn ? "Statement_of_Changes_in_Equity_Altcycles.pdf" : "Perubahan_Ekuitas_Altcycles.pdf";
       successMsg = isEn
@@ -345,7 +380,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         periodLabel,
         isBalanced: balanceSheet.isBalanced,
         currentAssetRows: currentAssets.map((a) => ({
-          label: `${a.code} - ${a.name}`,
+          label: `${a.code} - ${getLocalizedAccountName(a, lang)}`,
           amount: a.amount,
         })),
         totalCurrentAssets: totalCurrentAssets,
@@ -356,7 +391,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         totalNonCurrentAssets: sumContractAssets,
         totalAssets: balanceSheet.totalAssets,
         currentLiabRows: currentLiabilities.map((l) => ({
-          label: `${l.code} - ${l.name}`,
+          label: `${l.code} - ${getLocalizedAccountName(l, lang)}`,
           amount: l.amount,
         })),
         totalCurrentLiabilities: totalCurrentLiabilities,
@@ -368,7 +403,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         totalLiabilities: totalLiabilities,
         equityRows: [
           ...balanceSheet.equities.map((e) => ({
-            label: `${e.code} - ${e.name}`,
+            label: `${e.code} - ${getLocalizedAccountName(e, lang)}`,
             amount: e.amount,
           })),
           {
@@ -378,6 +413,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         ],
         totalEquity: totalEquity,
         totalLiabilitiesAndEquity: balanceSheet.totalLiabilitiesAndEquity,
+        lang,
       });
       fileName = isEn ? "Statement_of_Financial_Position_Altcycles.pdf" : "Posisi_Keuangan_Neraca_Altcycles.pdf";
       successMsg = isEn
@@ -405,6 +441,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
         netCashChange: cashFlow.netChangeInCash,
         beginningCash: cashFlow.beginningCash,
         endingCash: cashFlow.endingCash,
+        lang,
       });
       fileName = isEn ? "Statement_of_Cash_Flows_Altcycles.pdf" : "Arus_Kas_Altcycles.pdf";
       successMsg = isEn
@@ -426,12 +463,17 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
     void recordExportLog(logScope, "PDF", periodLabel);
   } catch (err) {
     console.error("Gagal mengunduh PDF laporan akuntansi:", err);
-    toast.error("Gagal membuat berkas PDF laporan keuangan.");
+    toast.error(
+      isEn
+        ? "Failed to generate financial report PDF file."
+        : "Gagal membuat berkas PDF laporan keuangan.",
+    );
   }
 }
 
 export async function exportReportToExcel(data: ReportExportData): Promise<void> {
-  const isEn = getActiveLanguage() === "en";
+  const lang = getActiveLanguage();
+  const isEn = lang === "en";
   const {
     activeTab,
     startDate,
@@ -470,7 +512,12 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
               { header: "Nominal (Rp)", width: 20 },
             ],
         rows: [
-          ...balanceSheet.assets.map((a) => [isEn ? "Assets" : "Aset", a.code, a.name, a.amount]),
+          ...balanceSheet.assets.map((a) => [
+            isEn ? "Assets" : "Aset",
+            a.code,
+            getLocalizedAccountName(a, lang),
+            a.amount,
+          ]),
           ...balanceSheet.contractAssets.map((ca) => [
             isEn ? "Contract Assets" : "Aset Kontrak",
             ca.projectCode,
@@ -481,7 +528,7 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
           ...balanceSheet.liabilities.map((l) => [
             isEn ? "Liabilities" : "Liabilitas",
             l.code,
-            l.name,
+            getLocalizedAccountName(l, lang),
             l.amount,
           ]),
           ...balanceSheet.contractLiabilities.map((cl) => [
@@ -490,7 +537,12 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
             cl.projectName,
             Math.abs(cl.netContractPosition),
           ]),
-          ...balanceSheet.equities.map((e) => [isEn ? "Equity" : "Ekuitas", e.code, e.name, e.amount]),
+          ...balanceSheet.equities.map((e) => [
+            isEn ? "Equity" : "Ekuitas",
+            e.code,
+            getLocalizedAccountName(e, lang),
+            e.amount,
+          ]),
           [
             isEn ? "Equity" : "Ekuitas",
             "-",
@@ -539,21 +591,21 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
           ...incomeStatement.revenues.map((r) => [
             isEn ? "Revenue" : "Pendapatan",
             r.code,
-            r.name,
+            getLocalizedAccountName(r, lang),
             r.amount,
           ]),
           [isEn ? "Subtotal Operating Revenue" : "Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
           ...incomeStatement.directExpenses.map((e) => [
             isEn ? "Direct Costs" : "Beban Langsung",
             e.code,
-            e.name,
+            getLocalizedAccountName(e, lang),
             e.amount,
           ]),
           [isEn ? "Gross Profit" : "Laba Kotor", "", "", incomeStatement.grossProfit],
           ...incomeStatement.sharedExpenses.map((s) => [
             isEn ? "Operating Expenses" : "Beban Bersama",
             s.code,
-            s.name,
+            getLocalizedAccountName(s, lang),
             s.amount,
           ]),
           [isEn ? "NET INCOME (LOSS)" : "LABA BERSIH", "", "", incomeStatement.netProfit],
@@ -626,8 +678,8 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
             ],
         rows: trialBalance.rows.map((r) => [
           r.code,
-          r.name,
-          (ACCOUNT_TYPE_LABELS as Record<string, string>)[r.accountType] || r.accountType,
+          getLocalizedAccountName(r, lang),
+          getLocalizedAccountType(r.accountType, lang),
           r.totalDebit,
           r.totalCredit,
           r.endingDebit,
@@ -684,9 +736,9 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
           l.rows.map((r) => [
             formatDateID(r.journalDate),
             r.journalNumber,
-            `${l.account.code} - ${l.account.name}`,
+            `${l.account.code} - ${getLocalizedAccountName(l.account, lang)}`,
             r.projectCode ?? "-",
-            r.description,
+            getLocalizedTransactionDescription(r.description, lang),
             r.debit,
             r.credit,
             r.runningBalance,
@@ -695,9 +747,11 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
       : ledgerRows.map((r) => [
           formatDateID(r.journalDate),
           r.journalNumber,
-          selectedAccount ? `${selectedAccount.code} - ${selectedAccount.name}` : "-",
+          selectedAccount
+            ? `${selectedAccount.code} - ${getLocalizedAccountName(selectedAccount, lang)}`
+            : "-",
           r.projectCode ?? "-",
-          r.description,
+          getLocalizedTransactionDescription(r.description, lang),
           r.debit,
           r.credit,
           r.runningBalance,
@@ -748,7 +802,8 @@ export async function exportReportToExcel(data: ReportExportData): Promise<void>
 }
 
 export async function exportReportToCsv(data: ReportExportData): Promise<void> {
-  const isEn = getActiveLanguage() === "en";
+  const lang = getActiveLanguage();
+  const isEn = lang === "en";
   const {
     activeTab,
     startDate,
@@ -759,8 +814,13 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
     ledgerRows,
     trialBalance,
     incomeStatement,
+    beginningRetainedEarnings,
+    endingRetainedEarnings,
+    dividends,
     balanceSheet,
     cashFlow,
+    modalDisetorBalance,
+    totalEndingEquity,
   } = data;
 
   try {
@@ -771,7 +831,12 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
           ? ["Category", "Code / Project", "Account / Project Name", "Amount"]
           : ["Kelompok", "Kode / Proyek", "Nama Akun / Proyek", "Nominal"],
         [
-          ...balanceSheet.assets.map((a) => [isEn ? "Assets" : "Aset", a.code, a.name, a.amount]),
+          ...balanceSheet.assets.map((a) => [
+            isEn ? "Assets" : "Aset",
+            a.code,
+            getLocalizedAccountName(a, lang),
+            a.amount,
+          ]),
           ...balanceSheet.contractAssets.map((ca) => [
             isEn ? "Contract Assets" : "Aset Kontrak",
             ca.projectCode,
@@ -782,7 +847,7 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
           ...balanceSheet.liabilities.map((l) => [
             isEn ? "Liabilities" : "Liabilitas",
             l.code,
-            l.name,
+            getLocalizedAccountName(l, lang),
             l.amount,
           ]),
           ...balanceSheet.contractLiabilities.map((cl) => [
@@ -791,7 +856,12 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
             cl.projectName,
             Math.abs(cl.netContractPosition),
           ]),
-          ...balanceSheet.equities.map((e) => [isEn ? "Equity" : "Ekuitas", e.code, e.name, e.amount]),
+          ...balanceSheet.equities.map((e) => [
+            isEn ? "Equity" : "Ekuitas",
+            e.code,
+            getLocalizedAccountName(e, lang),
+            e.amount,
+          ]),
           [
             isEn ? "Equity" : "Ekuitas",
             "-",
@@ -829,21 +899,21 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
           ...incomeStatement.revenues.map((r) => [
             isEn ? "Revenue" : "Pendapatan",
             r.code,
-            r.name,
+            getLocalizedAccountName(r, lang),
             r.amount,
           ]),
           [isEn ? "Subtotal Operating Revenue" : "Subtotal Pendapatan", "", "", incomeStatement.totalRevenue],
           ...incomeStatement.directExpenses.map((e) => [
             isEn ? "Direct Costs" : "Beban Langsung",
             e.code,
-            e.name,
+            getLocalizedAccountName(e, lang),
             e.amount,
           ]),
           [isEn ? "Gross Profit" : "Laba Kotor", "", "", incomeStatement.grossProfit],
           ...incomeStatement.sharedExpenses.map((s) => [
             isEn ? "Operating Expenses" : "Beban Bersama",
             s.code,
-            s.name,
+            getLocalizedAccountName(s, lang),
             s.amount,
           ]),
           [isEn ? "NET INCOME (LOSS)" : "LABA BERSIH", "", "", incomeStatement.netProfit],
@@ -854,6 +924,32 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
         isEn
           ? "Income statement exported to CSV successfully."
           : "Laporan Laba Rugi berhasil diekspor ke CSV.",
+      );
+      return;
+    }
+
+    if (activeTab === "ekuitas") {
+      downloadCsvFile(
+        isEn
+          ? `Equity_Changes_${startDate}_${endDate}.csv`
+          : `Perubahan_Ekuitas_${startDate}_${endDate}.csv`,
+        isEn
+          ? ["Equity Component", "Amount"]
+          : ["Komponen Ekuitas", "Nominal"],
+        [
+          [isEn ? "Beginning Retained Earnings" : "Saldo Laba Ditahan Awal Periode", beginningRetainedEarnings],
+          [isEn ? "Add: Net Income for the Period" : "Ditambah: Laba Bersih Periode Berjalan", incomeStatement.netProfit],
+          [isEn ? "Less: Owner Withdrawals / Dividends" : "Dikurangi: Prive Pemilik (Dividen)", -dividends],
+          [isEn ? "Ending Retained Earnings" : "Saldo Laba Ditahan Akhir Periode", endingRetainedEarnings],
+          [isEn ? "Owner Paid-in Capital" : "Modal Disetor Pemilik", modalDisetorBalance],
+          [isEn ? "TOTAL ENDING EQUITY" : "TOTAL EKUITAS AKHIR PERIODE", totalEndingEquity],
+        ],
+      );
+      await recordExportLog("EQUITY_STATEMENT", "CSV", `${startDate}..${endDate}`);
+      toast.success(
+        isEn
+          ? "Statement of changes in equity exported to CSV successfully."
+          : "Laporan Perubahan Ekuitas berhasil diekspor ke CSV.",
       );
       return;
     }
@@ -882,8 +978,8 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
             ],
         trialBalance.rows.map((r) => [
           r.code,
-          r.name,
-          (ACCOUNT_TYPE_LABELS as Record<string, string>)[r.accountType] || r.accountType,
+          getLocalizedAccountName(r, lang),
+          getLocalizedAccountType(r.accountType, lang),
           r.totalDebit,
           r.totalCredit,
           r.endingDebit,
@@ -932,9 +1028,9 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
           l.rows.map((r) => [
             formatDateID(r.journalDate),
             r.journalNumber,
-            `${l.account.code} - ${l.account.name}`,
+            `${l.account.code} - ${getLocalizedAccountName(l.account, lang)}`,
             r.projectCode ?? "-",
-            r.description,
+            getLocalizedTransactionDescription(r.description, lang),
             r.debit,
             r.credit,
             r.runningBalance,
@@ -943,9 +1039,11 @@ export async function exportReportToCsv(data: ReportExportData): Promise<void> {
       : ledgerRows.map((r) => [
           formatDateID(r.journalDate),
           r.journalNumber,
-          selectedAccount ? `${selectedAccount.code} - ${selectedAccount.name}` : "-",
+          selectedAccount
+            ? `${selectedAccount.code} - ${getLocalizedAccountName(selectedAccount, lang)}`
+            : "-",
           r.projectCode ?? "-",
-          r.description,
+          getLocalizedTransactionDescription(r.description, lang),
           r.debit,
           r.credit,
           r.runningBalance,
