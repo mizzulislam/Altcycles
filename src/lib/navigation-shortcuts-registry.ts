@@ -920,7 +920,7 @@ export function getShortcutOverrides(): ShortcutOverridesMap {
  */
 export function saveShortcutOverride(id: string, newKeys: string[]): boolean {
   const target = NAVIGATION_SHORTCUTS_REGISTRY.find((it) => it.id === id);
-  if (!target || target.isLocked) {
+  if (!target) {
     return false;
   }
 
@@ -1014,7 +1014,7 @@ export function getEffectiveShortcuts(role: UserRole): NavigationShortcutItem[] 
 
   return baseItems.map((item) => {
     const override = overrides[item.id];
-    if (override && Array.isArray(override) && !item.isLocked) {
+    if (override && Array.isArray(override)) {
       return {
         ...item,
         defaultKeys: override,

@@ -235,6 +235,17 @@
     "toast_reset_all": "Semua pintasan berhasil dikembalikan ke bawaan pabrik",
     "cannot_edit_locked": "Pintasan sistem ini terkunci dan tidak dapat diubah demi stabilitas navigasi.",
     "rule_disallowed_single": "Kombinasi tombol tidak valid. Gunakan kombinasi dengan Ctrl/Alt/Shift atau urutan huruf (misal: G lalu [huruf]).",
-    "rule_browser_hijack": "Kombinasi tombol ini dilindungi oleh peramban/sistem operasi dan tidak dapat digunakan."
+    "rule_browser_hijack": "Kombinasi tombol ini dilindungi oleh peramban/sistem operasi dan tidak dapat digunakan.",
+    "btn_filter": "Filter",
+    "btn_sort": "Urutkan",
+    "filter_title": "Filter Pintasan",
+    "reset_filter": "Reset",
+    "filter_group_label": "Grup Aksi",
+    "filter_role_label": "Peran Akses",
+    "filter_status_label": "Status Pintasan",
+    "sort_name_asc": "Nama Aksi (A - Z)",
+    "sort_name_desc": "Nama Aksi (Z - A)",
+    "sort_group": "Grup & Modul",
+    "sort_status": "Status Pintasan"
   }
 }

@@ -105,12 +105,13 @@ describe("ShortcutsManagementPage (Langkah 3: Pengaturan Super Admin)", () => {
     render(<ShortcutsManagementPage />);
 
     const editButtons = screen.getAllByRole("button", { name: "Edit" });
-    const firstEnabledEdit = editButtons.find((btn) => !btn.hasAttribute("disabled"));
-    expect(firstEnabledEdit).toBeDefined();
+    // Pilih tombol edit untuk pintasan selain command palette agar menekan '/' memicu konflik tombol
+    const targetEdit = editButtons[2] || editButtons[0];
+    expect(targetEdit).toBeDefined();
 
-    if (firstEnabledEdit) {
+    if (targetEdit) {
       act(() => {
-        fireEvent.click(firstEnabledEdit);
+        fireEvent.click(targetEdit);
       });
 
       const recorderArea = screen.getByRole("button", { name: "Area Perekaman Tombol" });
@@ -133,11 +134,12 @@ describe("ShortcutsManagementPage (Langkah 3: Pengaturan Super Admin)", () => {
     render(<ShortcutsManagementPage />);
 
     const editButtons = screen.getAllByRole("button", { name: "Edit" });
-    const firstEnabledEdit = editButtons.find((btn) => !btn.hasAttribute("disabled"));
+    const targetEdit = editButtons[2] || editButtons[0];
+    expect(targetEdit).toBeDefined();
 
-    if (firstEnabledEdit) {
+    if (targetEdit) {
       act(() => {
-        fireEvent.click(firstEnabledEdit);
+        fireEvent.click(targetEdit);
       });
 
       // Rekam kombinasi tombol unik dan valid: Mod + Shift + K

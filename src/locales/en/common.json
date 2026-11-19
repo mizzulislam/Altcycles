@@ -236,6 +236,17 @@
     "toast_reset_all": "All shortcuts successfully restored to factory defaults",
     "cannot_edit_locked": "This system shortcut is permanently locked for navigation stability.",
     "rule_disallowed_single": "Invalid shortcut key. Use a combination with Ctrl/Alt/Shift or a sequence (e.g. G then [key]).",
-    "rule_browser_hijack": "This key combination is reserved by the browser/operating system and cannot be used."
+    "rule_browser_hijack": "This key combination is reserved by the browser/operating system and cannot be used.",
+    "btn_filter": "Filter",
+    "btn_sort": "Sort",
+    "filter_title": "Filter Shortcuts",
+    "reset_filter": "Reset",
+    "filter_group_label": "Action Group",
+    "filter_role_label": "Role Access",
+    "filter_status_label": "Shortcut Status",
+    "sort_name_asc": "Action Name (A - Z)",
+    "sort_name_desc": "Action Name (Z - A)",
+    "sort_group": "Group & Module",
+    "sort_status": "Shortcut Status"
   }
 }
