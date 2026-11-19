@@ -64,7 +64,11 @@ export function ChartCard({
             </ActionTooltip>
           ) : null}
         </div>
-        {controls ? <div className="shrink-0 flex items-center gap-2">{controls}</div> : null}
+        {controls ? (
+          <div className="shrink-0 flex items-center gap-2 ml-auto justify-end">
+            {controls}
+          </div>
+        ) : null}
       </CardHeader>
 
       <CardContent

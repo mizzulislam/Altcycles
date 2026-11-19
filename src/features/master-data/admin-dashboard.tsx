@@ -810,7 +810,7 @@ export function AdminDashboardPage() {
                 {formatRupiah(totalExpense)}
               </p>
             </div>
-            <div className="p-3.5">
+            <div className="pl-3.5 pr-6 py-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.net_profit_loss", "Laba / Rugi Bersih")}
               </p>
@@ -866,6 +866,30 @@ export function AdminDashboardPage() {
               >
                 {t("dashboard:charts.tab_cash_flow", "Arus Kas")}
               </button>
+            </div>
+          }
+          footer={
+            <div className="flex items-center justify-between px-6 py-3 border-t border-border/70 bg-muted/10 text-xs">
+              <span className="text-xs font-medium text-muted-foreground">
+                {donutMode === "profit"
+                  ? t("dashboard:charts.center_net_profit", "Laba Bersih")
+                  : t("dashboard:charts.center_cash_balance", "Saldo Kas")}
+              </span>
+              <span
+                className={cn(
+                  "text-xs sm:text-sm font-bold tabular-nums inline-flex items-center gap-1.5",
+                  (donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash) >= 0
+                    ? "text-foreground"
+                    : "text-destructive",
+                )}
+              >
+                {(donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash) >= 0 ? (
+                  <TrendingUpIcon className="size-3.5 text-emerald-500" />
+                ) : (
+                  <TrendingDownIcon className="size-3.5 text-rose-500" />
+                )}
+                {formatRupiah(donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash)}
+              </span>
             </div>
           }
         >

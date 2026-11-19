@@ -560,7 +560,7 @@ export function MultiSeriesChart({
                     y={by}
                     width={colBarWidth}
                     height={actualH}
-                    fill={val < 0 ? "#f43f5e" : s.color}
+                    fill={s.color}
                     rx="0"
                     ry="0"
                     className={cn(
@@ -618,10 +618,10 @@ function ThreeDPieChart({
   setHoveredIdx: (idx: number | null) => void;
 }) {
   const cx = 130;
-  const cy = 48;
-  const rx = 90;
-  const ry = 42;
-  const depth = 12;
+  const cy = 40;
+  const rx = 85;
+  const ry = 38;
+  const depth = 11;
   const chartUid = React.useId().replace(/:/g, "");
 
   const baseStartDeg = -90;
@@ -671,10 +671,10 @@ function ThreeDPieChart({
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-full py-0.5">
+    <div className="relative flex flex-col items-center justify-center w-full pt-1 pb-6">
       <svg
-        viewBox="0 0 260 110"
-        className="w-full max-w-[215px] sm:max-w-[230px] h-auto select-none overflow-visible"
+        viewBox="0 0 260 92"
+        className="w-full max-w-[210px] sm:max-w-[225px] h-auto select-none overflow-visible"
         role="img"
         aria-label="3D Solid Pie Chart Komposisi Keuangan"
       >
@@ -836,9 +836,9 @@ function ThreeDPieChart({
         })}
       </svg>
 
-      {/* Floating Badge Interaktif saat Irisan Disorot */}
+      {/* Floating Badge Interaktif saat Irisan Disorot dengan Jarak Lega dari Pie */}
       {hoveredIdx !== null && slices[hoveredIdx] ? (
-        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 z-20 rounded-lg border border-border/80 bg-popover px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-md whitespace-nowrap tabular-nums pointer-events-none">
+        <div className="absolute top-[86px] left-1/2 -translate-x-1/2 z-20 rounded-lg border border-border/80 bg-popover px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-md whitespace-nowrap tabular-nums pointer-events-none">
           {slices[hoveredIdx].label}: {formatValue(slices[hoveredIdx].value)} (
           {total > 0 ? Math.round((Math.max(0, slices[hoveredIdx].value) / total) * 100) : 0}%)
         </div>
@@ -941,16 +941,8 @@ export function CompositionChart({
   const donutCircumference = 2 * Math.PI * donutRadius;
 
   return (
-    <div className="flex flex-col justify-between gap-3.5 flex-1">
-      {/* 1. Ringkasan Metrik Terpusat Tepat di Atas Pie Chart */}
-      <div className="flex flex-col items-center justify-center text-center py-0.5">
-        <span className="text-[11px] font-medium text-muted-foreground">{centerLabel}</span>
-        <span className="text-base sm:text-lg font-bold text-foreground tabular-nums tracking-tight mt-0.5">
-          {centerValue}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-center pb-2">
+    <div className="flex flex-col justify-between gap-3 flex-1">
+      <div className="flex items-center justify-center pt-1">
         {chartType === "donut" ? (
           <div className="relative size-36 flex items-center justify-center">
             <svg
