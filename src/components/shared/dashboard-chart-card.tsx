@@ -49,17 +49,17 @@ export function ChartCard({
         )}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <CardTitle className="text-sm sm:text-base font-bold text-foreground truncate leading-normal py-0.5">
+          <CardTitle className="text-sm sm:text-base font-bold text-foreground truncate leading-6 m-0 p-0 flex items-center">
             {title}
           </CardTitle>
           {subtitle ? (
             <ActionTooltip content={subtitle} side="top" align="center">
               <button
                 type="button"
-                className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors cursor-help shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="inline-flex h-6 w-5 items-center justify-center p-0 m-0 rounded-sm text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors cursor-help shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 aria-label={typeof subtitle === "string" ? subtitle : "Informasi"}
               >
-                <InfoIcon className="size-3.5" />
+                <InfoIcon className="size-3.5 block shrink-0" />
               </button>
             </ActionTooltip>
           ) : null}

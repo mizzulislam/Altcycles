@@ -53,6 +53,7 @@
     "badge_active": "Active"
   },
   "charts": {
+    "legend": "Legend",
     "trends_title": "Revenue, Expense, & Cash Flow Trends",
     "trends_subtitle": "Monthly financial movements based on posted journals.",
     "revenue": "Revenue",

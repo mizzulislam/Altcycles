@@ -4,7 +4,6 @@ import {
   ActivityIcon,
   ArrowRightIcon,
   BarChart3Icon,
-  BarChartHorizontalIcon,
   CheckCircle2Icon,
   ClockIcon,
   ReceiptTextIcon,
@@ -15,10 +14,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
 import {
   buildRupiahHistogramBins,
-  ChartCardFooter,
+  ChartLegendFooter,
   ChartTypeSwitcher,
   CompositionChart,
   HistogramChart,
@@ -194,6 +192,21 @@ export function AdminDashboardPage() {
 
   // Kontrol Switcher Tampilan Grafik
   const [trendChartType, setTrendChartType] = React.useState<MultiSeriesChartKind>("column");
+  const [hiddenTrendSeries, setHiddenTrendSeries] = React.useState<Set<string>>(new Set());
+  const toggleTrendSeries = React.useCallback((key: string) => {
+    setHiddenTrendSeries((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        // Jangan sembunyikan semua seri (harus ada minimal 1 yang aktif)
+        if (next.size < 2) {
+          next.add(key);
+        }
+      }
+      return next;
+    });
+  }, []);
   const [donutMode, setDonutMode] = React.useState<"profit" | "cash">("profit");
   const [txFreqMode, setTxFreqMode] = React.useState<"area" | "histogram">("area");
 
@@ -703,52 +716,51 @@ export function AdminDashboardPage() {
             "Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.",
           )}
           controls={
-            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-emerald-500" />
-                {t("dashboard:charts.revenue", "Pendapatan")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-amber-500" />
-                {t("dashboard:charts.expense", "Beban")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2.5 rounded-xs bg-primary" />
-                {t("dashboard:charts.net_cash", "Kas Bersih")}
-              </span>
-            </div>
+            <ChartTypeSwitcher
+              value={(trendChartType as string) === "bar" ? "column" : trendChartType}
+              onChange={(val) => setTrendChartType((val as string) === "bar" ? "column" : val)}
+              options={[
+                {
+                  value: "column",
+                  label: t("dashboard:charts.types.column", "Kolom"),
+                  title: t("dashboard:charts.types.column_title", "Column Chart"),
+                  icon: BarChart3Icon,
+                },
+                {
+                  value: "area",
+                  label: t("dashboard:charts.types.area", "Area"),
+                  title: t("dashboard:charts.types.area_title", "Area Chart"),
+                  icon: ActivityIcon,
+                },
+              ]}
+            />
           }
           footer={
-            <ChartCardFooter>
-              <ChartTypeSwitcher
-                value={trendChartType}
-                onChange={setTrendChartType}
-                options={[
-                  {
-                    value: "column",
-                    label: t("dashboard:charts.types.column", "Kolom"),
-                    title: t("dashboard:charts.types.column_title", "Column Chart"),
-                    icon: BarChart3Icon,
-                  },
-                  {
-                    value: "bar",
-                    label: t("dashboard:charts.types.bar", "Batang"),
-                    title: t("dashboard:charts.types.bar_title", "Bar Chart"),
-                    icon: BarChartHorizontalIcon,
-                  },
-                  {
-                    value: "area",
-                    label: t("dashboard:charts.types.area", "Area"),
-                    title: t("dashboard:charts.types.area_title", "Area Chart"),
-                    icon: ActivityIcon,
-                  },
-                ]}
-              />
-            </ChartCardFooter>
+            <ChartLegendFooter
+              series={[
+                {
+                  key: "revenue",
+                  label: t("dashboard:charts.revenue", "Pendapatan"),
+                  color: "#10b981",
+                },
+                {
+                  key: "expense",
+                  label: t("dashboard:charts.expense", "Beban"),
+                  color: "#f59e0b",
+                },
+                {
+                  key: "netCash",
+                  label: t("dashboard:charts.net_cash", "Kas Bersih"),
+                  color: "#0B43C8",
+                },
+              ]}
+              hiddenKeys={hiddenTrendSeries}
+              onToggleSeries={toggleTrendSeries}
+            />
           }
         >
           <MultiSeriesChart
-            chartType={trendChartType}
+            chartType={(trendChartType as string) === "bar" ? "column" : trendChartType}
             data={monthlyChartData}
             series={[
               {
@@ -770,6 +782,7 @@ export function AdminDashboardPage() {
                 textClass: "text-primary dark:text-sky-400",
               },
             ]}
+            hiddenKeys={hiddenTrendSeries}
             formatValue={formatRupiah}
             formatShortValue={formatCompactRupiah}
             emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Data Jurnal Terposting")}
@@ -946,17 +959,17 @@ export function AdminDashboardPage() {
                 emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Transaksi")}
                 emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
               />
-              <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 divide-x divide-border/60">
-                <div className="pl-6 pr-4 py-3.5">
-                  <p className="text-[11px] text-muted-foreground">
+              <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 divide-x divide-border/60 min-h-[58px] items-center">
+                <div className="pl-6 pr-4 py-3">
+                  <p className="text-[10px] text-muted-foreground">
                     {t("dashboard:charts.total_tx", "Total Transaksi")}
                   </p>
                   <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums mt-0.5">
                     {totalTxCount} {t("dashboard:charts.tx_unit", "Jurnal")}
                   </p>
                 </div>
-                <div className="p-3.5">
-                  <p className="text-[11px] text-muted-foreground">
+                <div className="p-3">
+                  <p className="text-[10px] text-muted-foreground">
                     {t("dashboard:charts.avg_monthly_tx", "Rata-Rata / Bulan")}
                   </p>
                   <p className="text-xs sm:text-sm font-bold text-primary dark:text-cyan-400 tabular-nums mt-0.5">
@@ -1015,7 +1028,7 @@ export function AdminDashboardPage() {
             </div>
           )}
 
-          {/* Aging Distribution */}
+          {/* Progress Bar Umur Piutang */}
           <div className="pt-3 border-t border-border/60 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-foreground">
@@ -1041,19 +1054,29 @@ export function AdminDashboardPage() {
                   )
                 : null}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
-              {agingBuckets.map((b) => (
-                <div key={b.label} className="text-[10px]">
-                  <div className="flex items-center gap-1 text-muted-foreground truncate">
-                    <span className={cn("size-1.5 rounded-none shrink-0", b.dotColor)} />
-                    <span className="truncate">{b.label}</span>
-                  </div>
-                  <p className="font-semibold text-foreground tabular-nums mt-0.5">
-                    {formatCompactRupiah(b.amount)}
-                  </p>
+          </div>
+
+          {/* Strip Ringkasan Edge-to-Edge 4 Kolom di Bawah Kartu */}
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 divide-x divide-border/60 text-xs">
+            {agingBuckets.map((b, idx) => (
+              <div
+                key={b.label}
+                className={cn(
+                  "py-3",
+                  idx === 0 && "pl-6 pr-3",
+                  idx > 0 && idx < 3 && "p-3",
+                  idx === 3 && "pl-3 pr-6",
+                )}
+              >
+                <div className="flex items-center gap-1.5 text-muted-foreground whitespace-normal leading-tight">
+                  <span className={cn("size-2 rounded-none shrink-0", b.dotColor)} />
+                  <span className="text-[10px]">{b.label}</span>
                 </div>
-              ))}
-            </div>
+                <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums mt-1">
+                  {formatCompactRupiah(b.amount)}
+                </p>
+              </div>
+            ))}
           </div>
         </ChartCard>
       </div>
@@ -1065,13 +1088,16 @@ export function AdminDashboardPage() {
           "dashboard:charts.recent_5_tx_subtitle",
           "Catatan transaksi jurnal terposting paling mutakhir.",
         )}
-        controls={
-          <Button variant="outline" size="sm" asChild className="h-8 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer gap-1.5">
-            <Link to="/admin/akuntansi?tab=jurnal">
+        footer={
+          <div className="flex items-center justify-end px-6 py-3 border-t border-border/70 bg-muted/10">
+            <Link
+              to="/admin/akuntansi?tab=jurnal"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
+            >
               <span>{t("dashboard:charts.view_all_journals", "Lihat Semua Jurnal")}</span>
               <ArrowRightIcon className="size-3.5" />
             </Link>
-          </Button>
+          </div>
         }
         contentClassName="p-0"
       >

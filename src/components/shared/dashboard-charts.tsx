@@ -41,6 +41,61 @@ export function ChartCardFooter({
   );
 }
 
+/** Komponen bersama footer kartu yang menampilkan keterangan warna seri interaktif (Item 2) */
+export function ChartLegendFooter({
+  series,
+  hiddenKeys,
+  onToggleSeries,
+  className,
+}: {
+  series: ChartSeriesDef[];
+  hiddenKeys?: Set<string>;
+  onToggleSeries?: (key: string) => void;
+  className?: string;
+}) {
+  const { t } = useLanguage();
+  return (
+    <div
+      className={cn(
+        "px-6 py-3 border-t border-border/70 bg-muted/10 flex flex-wrap items-center justify-between gap-3 text-xs",
+        className,
+      )}
+    >
+      <span className="text-[11px] font-medium text-muted-foreground">
+        {t("dashboard:charts.legend", "Keterangan")}
+      </span>
+      <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium">
+        {series.map((s) => {
+          const isHidden = hiddenKeys?.has(s.key) ?? false;
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => onToggleSeries?.(s.key)}
+              className={cn(
+                "inline-flex items-center gap-1.5 transition-opacity cursor-pointer rounded-sm hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                isHidden ? "opacity-35" : "opacity-90",
+              )}
+              title={isHidden ? `Tampilkan ${s.label}` : `Sembunyikan ${s.label}`}
+            >
+              <span
+                style={{ backgroundColor: s.color }}
+                className={cn(
+                  "size-2.5 rounded-xs shrink-0 transition-transform",
+                  isHidden && "scale-75",
+                )}
+              />
+              <span className={cn(isHidden && "line-through text-muted-foreground")}>
+                {s.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /** Pemilih jenis grafik ringkas bergaya pill terstandar Altcycles. */
 export function ChartTypeSwitcher<T extends string>({
   value,
@@ -115,13 +170,14 @@ export interface BubbleAxisConfig {
 
 export type MultiSeriesChartKind = "column" | "bar" | "area" | "line" | "bubble";
 
-/** Grafik multi-seri serbaguna: Column, Horizontal Bar, dan Area Chart. */
+/** Grafik multi-seri serbaguna: Column dan Area Chart (Item 4: Batang dialihkan ke Kolom). */
 export function MultiSeriesChart({
   chartType: rawChartType,
   data,
   series,
   formatValue,
   formatShortValue,
+  hiddenKeys,
   emptyTitle = "Belum Ada Data Grafik",
   emptySubtitle = "Visualisasi akan muncul otomatis setelah transaksi tercatat.",
 }: {
@@ -131,19 +187,21 @@ export function MultiSeriesChart({
   formatValue: (v: number) => string;
   formatShortValue?: (v: number) => string;
   bubbleConfig?: BubbleAxisConfig;
+  hiddenKeys?: Set<string>;
   emptyTitle?: string;
   emptySubtitle?: string;
 }) {
-  // Fallback anggun: Line dan Bubble otomatis dialihkan ke Column/Area tanpa error
-  const chartType: "column" | "bar" | "area" =
-    rawChartType === "bar"
-      ? "bar"
-      : rawChartType === "area"
-        ? "area"
-        : "column";
+  // Fallback anggun: Batang, Line, dan Bubble otomatis dialihkan ke Column/Area tanpa error (Item 4)
+  const chartType: "column" | "area" =
+    rawChartType === "area" ? "area" : "column";
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const chartUid = React.useId().replace(/:/g, "");
   const shortFmt = formatShortValue ?? formatValue;
+
+  const activeSeries = React.useMemo(() => {
+    if (!hiddenKeys || hiddenKeys.size === 0) return series;
+    return series.filter((s) => !hiddenKeys.has(s.key));
+  }, [series, hiddenKeys]);
 
   if (data.length === 0) {
     return (
@@ -159,94 +217,28 @@ export function MultiSeriesChart({
 
   const maxAbsValue = Math.max(
     1,
-    ...data.flatMap((d) => series.map((s) => Math.abs(d.values[s.key] ?? 0))),
+    ...data.flatMap((d) => activeSeries.map((s) => Math.abs(d.values[s.key] ?? 0))),
   );
 
-  // Mode Horizontal Bar Chart (hanya 3 periode terakhir agar proporsional dan tidak meninggalkan whitespace)
-  if (chartType === "bar") {
-    const barData = data.slice(-3);
-    return (
-      <div className="space-y-3">
-        {barData.map((pt, idx) => {
-          const isHovered = hoveredIndex === idx;
-          return (
-            <div
-              key={pt.key}
-              onMouseEnter={() => setHoveredIndex(idx)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              className={cn(
-                "rounded-xl border px-3.5 py-2.5 transition-colors",
-                isHovered
-                  ? "border-primary/40 bg-muted/30"
-                  : "border-border/50 bg-muted/10",
-              )}
-            >
-              <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/60">
-                <span className="text-xs font-semibold text-foreground">
-                  {pt.label}
-                </span>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums">
-                  {series.map((s) => {
-                    const val = pt.values[s.key] ?? 0;
-                    return (
-                      <span
-                        key={s.key}
-                        className={cn("font-semibold", s.textClass ?? "text-foreground")}
-                      >
-                        {s.label}: {shortFmt(val)}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="space-y-2">
-                {series.map((s) => {
-                  const val = pt.values[s.key] ?? 0;
-                  const pct =
-                    val === 0 ? 0 : Math.max(3, Math.round((Math.abs(val) / maxAbsValue) * 100));
-                  return (
-                    <div key={s.key} className="flex items-center gap-2.5">
-                      <span className="w-20 shrink-0 text-[10px] font-medium text-muted-foreground truncate">
-                        {s.label}
-                      </span>
-                      {/* Sumbu Vertikal Pemisah Label dengan Batang */}
-                      <div className="border-l-2 border-border/80 pl-2.5 flex-1 flex items-center">
-                        <div className="h-2.5 w-full rounded-none bg-muted/60 overflow-hidden">
-                          <div
-                            style={{
-                              width: `${pct}%`,
-                              backgroundColor: val < 0 ? "#f43f5e" : s.color,
-                            }}
-                            className="h-full rounded-none transition-all duration-300"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
+  // Ukuran kanvas SVG & konfigurasi tema grafik terstandar
+  const svgW = 640;
+  const svgH = 216;
+  const padT = 18;
+  const padB = 30;
+  const tickRatios = [1, 0.5, 0];
+  const tickStrings = tickRatios.map((r) => shortFmt(Math.round(maxAbsValue * r)));
+  const maxLabelChars = Math.max(3, ...tickStrings.map((s) => s.length));
+  // Lebar label Y dihitung presisi, padR = 0 untuk edge-to-edge rata kanan sempurna (Item 3 & 6)
+  const padL = Math.max(50, Math.ceil(maxLabelChars * 6.5 + 8));
+  const padR = 0;
+  const plotW = svgW - padL - padR;
+  const plotH = svgH - padT - padB;
+  const count = data.length;
 
   // Mode Area Chart
   if (chartType === "area") {
-    const svgW = 640;
-    const svgH = 216;
-    const padL = 72;
-    const padR = 24;
-    const padT = 18;
-    const padB = 30;
-    const plotW = svgW - padL - padR;
-    const plotH = svgH - padT - padB;
-    const count = data.length;
-
     const getX = (idx: number) =>
-      count === 1 ? padL + plotW / 2 : padL + (idx / (count - 1)) * plotW;
+      count <= 1 ? padL + plotW / 2 : padL + (idx / (count - 1)) * plotW;
     const getY = (val: number) => {
       const clamped = Math.max(0, val);
       return padT + plotH - (clamped / maxAbsValue) * plotH;
@@ -259,7 +251,7 @@ export function MultiSeriesChart({
         {hoveredDatum ? (
           <div className="absolute top-1 right-2 z-20 w-48 rounded-xl border border-border/80 bg-popover p-2.5 text-[11px] shadow-xl pointer-events-none">
             <p className="font-bold text-foreground mb-1">{hoveredDatum.label}</p>
-            {series.map((s) => (
+            {activeSeries.map((s) => (
               <div
                 key={s.key}
                 className={cn(
@@ -280,10 +272,10 @@ export function MultiSeriesChart({
           viewBox={`0 0 ${svgW} ${svgH}`}
           className="w-full h-auto max-h-56 overflow-visible select-none"
           role="img"
-          aria-label={chartType === "area" ? "Grafik area tren" : "Grafik garis tren"}
+          aria-label="Grafik area tren"
         >
           <defs>
-            {series.map((s) => (
+            {activeSeries.map((s) => (
               <linearGradient
                 key={s.key}
                 id={`${chartUid}-grad-${s.key}`}
@@ -298,24 +290,25 @@ export function MultiSeriesChart({
             ))}
           </defs>
 
-          {[1, 0.5, 0].map((ratio) => {
+          {/* Garis Grid Horizontal dan Label Sumbu Y (Tepi kiri persis x=0) */}
+          {tickRatios.map((ratio) => {
             const y = padT + plotH * (1 - ratio);
             return (
               <g key={ratio}>
                 <line
                   x1={padL}
                   y1={y}
-                  x2={padL + plotW}
+                  x2={svgW}
                   y2={y}
                   stroke="currentColor"
                   strokeDasharray="4 4"
                   className="text-border/70"
                 />
                 <text
-                  x={padL - 8}
+                  x={0}
                   y={y + 3.5}
-                  textAnchor="end"
-                  className="fill-muted-foreground text-[10px] tabular-nums"
+                  textAnchor="start"
+                  className="fill-muted-foreground text-[10px] tabular-nums font-medium"
                 >
                   {shortFmt(Math.round(maxAbsValue * ratio))}
                 </text>
@@ -333,11 +326,12 @@ export function MultiSeriesChart({
             strokeWidth="1.5"
             className="text-border/80"
           />
-          {/* Sumbu X (Horizontal) Memisahkan Grafik dengan Label Bawah */}
+
+          {/* Sumbu X (Horizontal) Memisahkan Grafik dengan Label Bawah, ujung kanan x=svgW */}
           <line
             x1={padL}
             y1={padT + plotH}
-            x2={padL + plotW}
+            x2={svgW}
             y2={padT + plotH}
             stroke="currentColor"
             strokeWidth="1.5"
@@ -356,7 +350,7 @@ export function MultiSeriesChart({
             />
           ) : null}
 
-          {series.map((s) => {
+          {activeSeries.map((s) => {
             const pts = data.map((d, idx) => ({
               x: getX(idx),
               y: getY(d.values[s.key] ?? 0),
@@ -374,7 +368,7 @@ export function MultiSeriesChart({
 
             return (
               <g key={s.key}>
-                {chartType === "area" && areaPath ? (
+                {areaPath ? (
                   <path d={areaPath} fill={`url(#${chartUid}-grad-${s.key})`} />
                 ) : null}
                 {pts.length > 1 ? (
@@ -441,22 +435,12 @@ export function MultiSeriesChart({
     );
   }
 
-  // Default Mode: Column Chart (Grouped Vertical Bars dengan Sumbu X & Y Tegas persis seperti Area Mode)
-  const colSvgW = 640;
-  const colSvgH = 216;
-  const colPadL = 72;
-  const colPadR = 24;
-  const colPadT = 18;
-  const colPadB = 30;
-  const colPlotW = colSvgW - colPadL - colPadR;
-  const colPlotH = colSvgH - colPadT - colPadB;
-  const colCount = data.length;
-
-  const colSlotW = colCount > 0 ? colPlotW / colCount : colPlotW;
-  const colSeriesCount = series.length;
-  const colBarWidth = Math.min(18, Math.max(7, Math.floor((colSlotW * 0.58) / colSeriesCount)));
+  // Default Mode: Column Chart (Grouped Vertical Bars dengan Sumbu X & Y Tegas Edge-to-Edge)
+  const colSlotW = count > 0 ? plotW / count : plotW;
+  const colSeriesCount = activeSeries.length;
+  const colBarWidth = Math.min(18, Math.max(7, Math.floor((colSlotW * 0.58) / (colSeriesCount || 1))));
   const colBarGap = 2;
-  const colTotalGroupWidth = colSeriesCount * colBarWidth + (colSeriesCount - 1) * colBarGap;
+  const colTotalGroupWidth = colSeriesCount * colBarWidth + Math.max(0, colSeriesCount - 1) * colBarGap;
 
   const colHoveredDatum = hoveredIndex !== null ? data[hoveredIndex] : null;
 
@@ -465,7 +449,7 @@ export function MultiSeriesChart({
       {colHoveredDatum ? (
         <div className="absolute top-1 right-2 z-20 w-48 rounded-xl border border-border/80 bg-popover p-2.5 text-[11px] shadow-xl pointer-events-none">
           <p className="font-bold text-foreground mb-1">{colHoveredDatum.label}</p>
-          {series.map((s) => (
+          {activeSeries.map((s) => (
             <div
               key={s.key}
               className={cn(
@@ -483,30 +467,30 @@ export function MultiSeriesChart({
       ) : null}
 
       <svg
-        viewBox={`0 0 ${colSvgW} ${colSvgH}`}
+        viewBox={`0 0 ${svgW} ${svgH}`}
         className="w-full h-auto max-h-56 overflow-visible select-none"
         role="img"
         aria-label="Grafik kolom tren"
       >
-        {/* Garis Grid Horizontal dan Skala Nilai Y */}
-        {[1, 0.5, 0].map((ratio) => {
-          const y = colPadT + colPlotH * (1 - ratio);
+        {/* Garis Grid Horizontal dan Skala Nilai Y (Tepi kiri persis x=0) */}
+        {tickRatios.map((ratio) => {
+          const y = padT + plotH * (1 - ratio);
           return (
             <g key={ratio}>
               <line
-                x1={colPadL}
+                x1={padL}
                 y1={y}
-                x2={colPadL + colPlotW}
+                x2={svgW}
                 y2={y}
                 stroke="currentColor"
                 strokeDasharray="4 4"
                 className="text-border/70"
               />
               <text
-                x={colPadL - 8}
+                x={0}
                 y={y + 3.5}
-                textAnchor="end"
-                className="fill-muted-foreground text-[10px] tabular-nums"
+                textAnchor="start"
+                className="fill-muted-foreground text-[10px] tabular-nums font-medium"
               >
                 {shortFmt(Math.round(maxAbsValue * ratio))}
               </text>
@@ -516,21 +500,21 @@ export function MultiSeriesChart({
 
         {/* Sumbu Y (Vertikal) Memisahkan Angka Nilai dengan Area Grafik */}
         <line
-          x1={colPadL}
-          y1={colPadT}
-          x2={colPadL}
-          y2={colPadT + colPlotH}
+          x1={padL}
+          y1={padT}
+          x2={padL}
+          y2={padT + plotH}
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-border/80"
         />
 
-        {/* Sumbu X (Horizontal) Memisahkan Grafik dengan Label Bawah */}
+        {/* Sumbu X (Horizontal) Memisahkan Grafik dengan Label Bawah, ujung kanan x=svgW */}
         <line
-          x1={colPadL}
-          y1={colPadT + colPlotH}
-          x2={colPadL + colPlotW}
-          y2={colPadT + colPlotH}
+          x1={padL}
+          y1={padT + plotH}
+          x2={svgW}
+          y2={padT + plotH}
           stroke="currentColor"
           strokeWidth="1.5"
           className="text-border/80"
@@ -538,7 +522,7 @@ export function MultiSeriesChart({
 
         {/* Kolom Grafik Persegi Kaku untuk Setiap Periode */}
         {data.map((pt, idx) => {
-          const centerX = colPadL + (idx + 0.5) * colSlotW;
+          const centerX = padL + (idx + 0.5) * colSlotW;
           const groupStartX = centerX - colTotalGroupWidth / 2;
           const isHovered = hoveredIndex === idx;
 
@@ -552,22 +536,22 @@ export function MultiSeriesChart({
               {/* Hit area transparan */}
               <rect
                 x={centerX - colSlotW / 2}
-                y={colPadT}
+                y={padT}
                 width={colSlotW}
-                height={colPlotH + colPadB}
+                height={plotH + padB}
                 fill="transparent"
               />
 
-              {/* Batang Kolom untuk Setiap Series */}
-              {series.map((s, sIdx) => {
+              {/* Batang Kolom untuk Setiap Series Aktif */}
+              {activeSeries.map((s, sIdx) => {
                 const val = pt.values[s.key] ?? 0;
                 const barH =
                   maxAbsValue > 0
-                    ? Math.round((Math.abs(val) / maxAbsValue) * colPlotH)
+                    ? Math.round((Math.abs(val) / maxAbsValue) * plotH)
                     : 0;
                 const bx = groupStartX + sIdx * (colBarWidth + colBarGap);
                 const actualH = val !== 0 ? Math.max(3, barH) : 0;
-                const by = colPadT + colPlotH - actualH;
+                const by = padT + plotH - actualH;
 
                 return (
                   <rect
@@ -590,7 +574,7 @@ export function MultiSeriesChart({
               {/* Label Bulan/Periode di Bawah Sumbu X */}
               <text
                 x={centerX}
-                y={colPadT + colPlotH + 18}
+                y={padT + plotH + 18}
                 textAnchor="middle"
                 className={cn(
                   "text-[11px] font-medium transition-colors select-none",
@@ -619,31 +603,26 @@ export interface CompositionSlice {
 
 export type CompositionChartKind = "pie3d" | "donut" | "pie" | "bar";
 
-/** Komponen 3D Pie / Donut Chart isometrik dengan dinding kedalaman dan platform nilai di pusat donat */
+/** Komponen 3D Pie Chart isometrik solid bebas lubang dengan gradasi halus, bayangan lembut, dan tanpa border gelap (Item 5) */
 function ThreeDPieChart({
   slices,
   total,
   formatValue,
   hoveredIdx,
   setHoveredIdx,
-  centerLabel = "Total",
-  centerValue = "0",
 }: {
   slices: CompositionSlice[];
   total: number;
   formatValue: (v: number) => string;
   hoveredIdx: number | null;
   setHoveredIdx: (idx: number | null) => void;
-  centerLabel?: string;
-  centerValue?: string;
 }) {
-  const cx = 135;
-  const cy = 64;
-  const rx = 95;
-  const ry = 46;
-  const irx = 44;
-  const iry = 21;
-  const depth = 14;
+  const cx = 145;
+  const cy = 66;
+  const rx = 114;
+  const ry = 54;
+  const depth = 16;
+  const chartUid = React.useId().replace(/:/g, "");
 
   const baseStartDeg = -90;
   let cursor = baseStartDeg;
@@ -694,19 +673,42 @@ function ThreeDPieChart({
   return (
     <div className="relative flex flex-col items-center justify-center w-full py-1">
       <svg
-        viewBox="0 0 270 148"
-        className="w-full max-w-[270px] h-auto select-none overflow-visible"
+        viewBox="0 0 290 152"
+        className="w-full max-w-[290px] h-auto select-none overflow-visible"
         role="img"
-        aria-label="3D Donut Chart Komposisi Keuangan"
+        aria-label="3D Solid Pie Chart Komposisi Keuangan"
       >
-        {/* Dinding Lubang Silinder Belakang (Hole Inner Back Rim) */}
-        <path
-          d={`M ${getPt(irx, iry, 180).x.toFixed(1)} ${getPt(irx, iry, 180).y.toFixed(1)} A ${irx} ${iry} 0 0 1 ${getPt(irx, iry, 360).x.toFixed(1)} ${getPt(irx, iry, 360).y.toFixed(1)} L ${getPt(irx, iry, 360).x.toFixed(1)} ${(getPt(irx, iry, 360).y + depth).toFixed(1)} A ${irx} ${iry} 0 0 0 ${getPt(irx, iry, 180).x.toFixed(1)} ${(getPt(irx, iry, 180).y + depth).toFixed(1)} Z`}
-          fill="rgba(0,0,0,0.18)"
+        <defs>
+          <filter id={`pie-shadow-${chartUid}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+          </filter>
+          {sectors.map((s) => (
+            <linearGradient
+              key={`grad-${s.idx}`}
+              id={`pie-slice-grad-${chartUid}-${s.idx}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={s.seg.color} stopOpacity="1" />
+              <stop offset="100%" stopColor={s.seg.color} stopOpacity="0.86" />
+            </linearGradient>
+          ))}
+        </defs>
+
+        {/* Bayangan Lembut di Bawah 3D Pie */}
+        <ellipse
+          cx={cx}
+          cy={cy + depth + 4}
+          rx={rx - 4}
+          ry={ry - 4}
+          fill="rgba(0,0,0,0.22)"
+          filter={`url(#pie-shadow-${chartUid})`}
           className="pointer-events-none"
         />
 
-        {/* 1. DINDING DEPAN LUAR BERPERSPEKTIF 3D (Extruded Curved Front Wall) */}
+        {/* 1. DINDING DEPAN LENGKUNG KEDALAMAN 3D (Tanpa Stroke Gelap) */}
         {sectors.map((s) => {
           const frontPts = getFrontOuterPoints(s.start, s.end);
           if (frontPts.length < 2) return null;
@@ -714,6 +716,10 @@ function ThreeDPieChart({
           const lastPt = frontPts[frontPts.length - 1];
           if (!firstPt || !lastPt) return null;
           const active = hoveredIdx === s.idx;
+          const midRad = (s.mid * Math.PI) / 180;
+          const explodeX = active ? Math.cos(midRad) * 5 : 0;
+          const explodeY = active ? Math.sin(midRad) * 3 : 0;
+
           const wallPath = [
             `M ${firstPt.x.toFixed(1)} ${firstPt.y.toFixed(1)}`,
             ...frontPts.slice(1).map((p) => `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`),
@@ -728,109 +734,94 @@ function ThreeDPieChart({
               d={wallPath}
               fill={s.seg.color}
               style={{ filter: "brightness(0.72)" }}
-              opacity={active ? 1 : 0.92}
-              stroke="rgba(0,0,0,0.15)"
-              strokeWidth="0.5"
-              className="cursor-pointer transition-all duration-150"
+              opacity={hoveredIdx === null || active ? 0.95 : 0.65}
+              transform={active ? `translate(${explodeX.toFixed(1)}, ${explodeY.toFixed(1)})` : undefined}
+              className="cursor-pointer transition-all duration-200 ease-out"
               onMouseEnter={() => setHoveredIdx(s.idx)}
               onMouseLeave={() => setHoveredIdx(null)}
             />
           );
         })}
 
-        {/* 2. DINDING POTONGAN RADIAL 3D (Radial Cut Faces) */}
+        {/* 2. DINDING POTONGAN RADIAL 3D (Solid Radial Cut Faces - Tanpa Stroke Gelap) */}
         {sectors.map((s) => {
           const active = hoveredIdx === s.idx;
-          const startPtOut = getPt(rx, ry, s.start);
-          const startPtIn = getPt(irx, iry, s.start);
-          const endPtOut = getPt(rx, ry, s.end);
-          const endPtIn = getPt(irx, iry, s.end);
+          const midRad = (s.mid * Math.PI) / 180;
+          const explodeX = active ? Math.cos(midRad) * 5 : 0;
+          const explodeY = active ? Math.sin(midRad) * 3 : 0;
 
+          const pStart = getPt(rx, ry, s.start);
+          const pEnd = getPt(rx, ry, s.end);
           const radStart = (s.start * Math.PI) / 180;
           const radEnd = (s.end * Math.PI) / 180;
           const startFacesFront = Math.cos(radStart) < 0;
           const endFacesFront = Math.cos(radEnd) > 0;
 
           return (
-            <g key={`cuts-${s.seg.label}`}>
+            <g
+              key={`cuts-${s.seg.label}`}
+              transform={active ? `translate(${explodeX.toFixed(1)}, ${explodeY.toFixed(1)})` : undefined}
+              className="cursor-pointer transition-all duration-200 ease-out"
+            >
               {startFacesFront ? (
                 <polygon
-                  points={`${startPtIn.x.toFixed(1)},${startPtIn.y.toFixed(1)} ${startPtOut.x.toFixed(1)},${startPtOut.y.toFixed(1)} ${startPtOut.x.toFixed(1)},${(startPtOut.y + depth).toFixed(1)} ${startPtIn.x.toFixed(1)},${(startPtIn.y + depth).toFixed(1)}`}
+                  points={`${cx},${cy} ${pStart.x.toFixed(1)},${pStart.y.toFixed(1)} ${pStart.x.toFixed(1)},${(pStart.y + depth).toFixed(1)} ${cx},${cy + depth}`}
                   fill={s.seg.color}
                   style={{ filter: "brightness(0.78)" }}
-                  opacity={active ? 1 : 0.9}
-                  stroke="rgba(0,0,0,0.15)"
-                  strokeWidth="0.5"
+                  opacity={hoveredIdx === null || active ? 0.95 : 0.65}
                   onMouseEnter={() => setHoveredIdx(s.idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
-                  className="cursor-pointer"
                 />
               ) : null}
               {endFacesFront ? (
                 <polygon
-                  points={`${endPtIn.x.toFixed(1)},${endPtIn.y.toFixed(1)} ${endPtOut.x.toFixed(1)},${endPtOut.y.toFixed(1)} ${endPtOut.x.toFixed(1)},${(endPtOut.y + depth).toFixed(1)} ${endPtIn.x.toFixed(1)},${(endPtIn.y + depth).toFixed(1)}`}
+                  points={`${cx},${cy} ${pEnd.x.toFixed(1)},${pEnd.y.toFixed(1)} ${pEnd.x.toFixed(1)},${(pEnd.y + depth).toFixed(1)} ${cx},${cy + depth}`}
                   fill={s.seg.color}
                   style={{ filter: "brightness(0.82)" }}
-                  opacity={active ? 1 : 0.9}
-                  stroke="rgba(0,0,0,0.15)"
-                  strokeWidth="0.5"
+                  opacity={hoveredIdx === null || active ? 0.95 : 0.65}
                   onMouseEnter={() => setHoveredIdx(s.idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
-                  className="cursor-pointer"
                 />
               ) : null}
             </g>
           );
         })}
 
-        {/* 3. MUKA ATAS ELIPS IRISAN 3D (Top Faces) */}
+        {/* 3. MUKA ATAS SOLID PIE DENGAN GRADASI HALUS & PEMISAH TOKEN */}
         {sectors.map((s) => {
           const active = hoveredIdx === s.idx;
-          const pToStart = getPt(rx, ry, s.start);
-          const pToEnd = getPt(rx, ry, s.end);
-          const pTiStart = getPt(irx, iry, s.start);
-          const pTiEnd = getPt(irx, iry, s.end);
+          const pStart = getPt(rx, ry, s.start);
+          const pEnd = getPt(rx, ry, s.end);
           const largeArc = s.sweep > 180 ? 1 : 0;
-
           const isFull = s.sweep >= 359.5;
-          let topD = "";
-          if (isFull) {
-            const p1 = getPt(rx, ry, 0);
-            const p2 = getPt(rx, ry, 180);
-            const pi1 = getPt(irx, iry, 0);
-            const pi2 = getPt(irx, iry, 180);
-            topD = `M ${p1.x} ${p1.y} A ${rx} ${ry} 0 0 1 ${p2.x} ${p2.y} A ${rx} ${ry} 0 0 1 ${p1.x} ${p1.y} M ${pi1.x} ${pi1.y} A ${irx} ${iry} 0 0 0 ${pi2.x} ${pi2.y} A ${irx} ${iry} 0 0 0 ${pi1.x} ${pi1.y} Z`;
-          } else {
-            topD = `M ${pToStart.x.toFixed(1)} ${pToStart.y.toFixed(1)} A ${rx} ${ry} 0 ${largeArc} 1 ${pToEnd.x.toFixed(1)} ${pToEnd.y.toFixed(1)} L ${pTiEnd.x.toFixed(1)} ${pTiEnd.y.toFixed(1)} A ${irx} ${iry} 0 ${largeArc} 0 ${pTiStart.x.toFixed(1)} ${pTiStart.y.toFixed(1)} Z`;
-          }
 
-          // Efek mekar irisan (exploded slice) saat disorot kursor
+          const topD = isFull
+            ? `M ${cx} ${cy - ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy + ry} A ${rx} ${ry} 0 1 1 ${cx} ${cy - ry} Z`
+            : `M ${cx} ${cy} L ${pStart.x.toFixed(1)} ${pStart.y.toFixed(1)} A ${rx} ${ry} 0 ${largeArc} 1 ${pEnd.x.toFixed(1)} ${pEnd.y.toFixed(1)} Z`;
+
           const midRad = (s.mid * Math.PI) / 180;
-          const explodeX = active ? Math.cos(midRad) * 4 : 0;
-          const explodeY = active ? Math.sin(midRad) * 2.5 : 0;
+          const explodeX = active ? Math.cos(midRad) * 5 : 0;
+          const explodeY = active ? Math.sin(midRad) * 3 : 0;
 
-          // Koordinat teks label nominal di atas irisan
-          const labelRadX = (rx + irx) / 2;
-          const labelRadY = (ry + iry) / 2;
-          const pLabel = getPt(labelRadX, labelRadY, s.mid);
+          const pLabel = getPt(rx * 0.65, ry * 0.65, s.mid);
 
           return (
             <g
               key={`top-${s.seg.label}`}
-              transform={`translate(${explodeX.toFixed(1)}, ${explodeY.toFixed(1)})`}
-              className="cursor-pointer transition-transform duration-200"
+              transform={active ? `translate(${explodeX.toFixed(1)}, ${explodeY.toFixed(1)})` : undefined}
+              className="cursor-pointer transition-all duration-200 ease-out"
               onMouseEnter={() => setHoveredIdx(s.idx)}
               onMouseLeave={() => setHoveredIdx(null)}
             >
               <path
                 d={topD}
-                fill={s.seg.color}
+                fill={`url(#pie-slice-grad-${chartUid}-${s.idx})`}
                 stroke="var(--card)"
-                strokeWidth="1.5"
-                opacity={hoveredIdx === null || active ? 1 : 0.85}
+                strokeWidth="1.2"
+                opacity={hoveredIdx === null || active ? 1 : 0.65}
               />
-              {/* Teks nominal langsung pada irisan jika porsi >= 14% */}
-              {s.pct >= 14 ? (
+              {/* Teks nominal langsung pada irisan jika porsi >= 15% */}
+              {s.pct >= 15 ? (
                 <text
                   x={pLabel.x}
                   y={pLabel.y + 3.5}
@@ -843,37 +834,11 @@ function ThreeDPieChart({
             </g>
           );
         })}
-
-        {/* 4. PLATFORM METRIK DI PUSAT LUBANG DONAT */}
-        <ellipse
-          cx={cx}
-          cy={cy + depth / 2}
-          rx={irx - 4}
-          ry={iry - 2}
-          className="fill-card/95 stroke-border/70"
-          strokeWidth="1"
-        />
-        <text
-          x={cx}
-          y={cy + depth / 2 - 2}
-          textAnchor="middle"
-          className="fill-muted-foreground text-[9px] font-medium select-none pointer-events-none"
-        >
-          {centerLabel}
-        </text>
-        <text
-          x={cx}
-          y={cy + depth / 2 + 9}
-          textAnchor="middle"
-          className="fill-foreground text-[10px] font-bold tabular-nums select-none pointer-events-none"
-        >
-          {centerValue}
-        </text>
       </svg>
 
       {/* Floating Badge Interaktif saat Irisan Disorot */}
       {hoveredIdx !== null && slices[hoveredIdx] ? (
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 rounded-lg border border-border/80 bg-popover px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-md whitespace-nowrap tabular-nums">
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20 rounded-lg border border-border/80 bg-popover px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-md whitespace-nowrap tabular-nums pointer-events-none">
           {slices[hoveredIdx].label}: {formatValue(slices[hoveredIdx].value)} (
           {total > 0 ? Math.round((Math.max(0, slices[hoveredIdx].value) / total) * 100) : 0}%)
         </div>
@@ -883,7 +848,7 @@ function ThreeDPieChart({
 }
 
 
-/** Grafik proporsi komposisi data: 3D Pie Chart, Donut Chart, maupun Horizontal Bar Chart. */
+/** Grafik proporsi komposisi data: 3D Solid Pie Chart, Donut Chart, maupun Horizontal Bar Chart. */
 export function CompositionChart({
   chartType,
   slices,
@@ -976,7 +941,13 @@ export function CompositionChart({
   const donutCircumference = 2 * Math.PI * donutRadius;
 
   return (
-    <div className="flex flex-col justify-between gap-5 flex-1">
+    <div className="flex flex-col justify-between gap-4 flex-1">
+      {/* 1. Ringkasan Metrik Bersih di Luar Pie (Item 5: Bebas dari Lubang/Teks Timpaan) */}
+      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-border/70 bg-muted/20">
+        <span className="text-xs font-semibold text-muted-foreground">{centerLabel}</span>
+        <span className="text-sm sm:text-base font-bold text-foreground tabular-nums">{centerValue}</span>
+      </div>
+
       <div className="flex items-center justify-center">
         {chartType === "donut" ? (
           <div className="relative size-36 flex items-center justify-center">
@@ -1039,15 +1010,13 @@ export function CompositionChart({
             </div>
           </div>
         ) : (
-          /* Mode Utama: 3D Pie Chart Sesuai Referensi Gambar */
+          /* Mode Utama: 3D Solid Pie Chart Modern Sesuai Permintaan Item 5 */
           <ThreeDPieChart
             slices={slices}
             total={total}
             formatValue={formatValue}
             hoveredIdx={hoveredIdx}
             setHoveredIdx={setHoveredIdx}
-            centerLabel={centerLabel}
-            centerValue={centerValue}
           />
         )}
       </div>
@@ -1226,17 +1195,19 @@ export function HistogramChart({
   }
 
   const maxCount = Math.max(1, ...bins.map((b) => b.count));
-  const svgW = 480;
-  const svgH = 180;
-  const padL = 40;
-  const padR = 16;
-  const padT = 16;
-  const padB = 28;
+  const svgW = 640;
+  const svgH = 216;
+  const padT = 24;
+  const padB = 30;
+  // Dynamic padL to place Y labels starting at x=0
+  const maxLabelWidth = String(maxCount).length * 8;
+  const padL = Math.max(36, maxLabelWidth + 12);
+  const padR = 0;
   const plotW = svgW - padL - padR;
   const plotH = svgH - padT - padB;
   const binCount = bins.length;
   const slotW = binCount > 0 ? plotW / binCount : plotW;
-  const barW = Math.max(16, slotW - 8);
+  const barW = Math.max(20, slotW - 12);
 
   const hoveredBin = hoveredIdx !== null ? bins[hoveredIdx] : null;
 
@@ -1264,11 +1235,11 @@ export function HistogramChart({
       <div className="relative">
         <svg
           viewBox={`0 0 ${svgW} ${svgH}`}
-          className="w-full h-auto max-h-48 overflow-visible select-none"
+          className="w-full h-auto max-h-56 overflow-visible select-none"
           role="img"
           aria-label="Grafik histogram distribusi transaksi"
         >
-          {/* Garis Grid Horizontal dan Skala Nilai Y */}
+          {/* Garis Grid Horizontal dan Skala Nilai Y (x1=padL sampai x2=svgW) */}
           {[maxCount, Math.ceil(maxCount / 2), 0].map((tick, idx) => {
             const ratio = maxCount > 0 ? tick / maxCount : 0;
             const y = padT + plotH * (1 - ratio);
@@ -1277,16 +1248,17 @@ export function HistogramChart({
                 <line
                   x1={padL}
                   y1={y}
-                  x2={padL + plotW}
+                  x2={svgW}
                   y2={y}
                   stroke="currentColor"
                   strokeDasharray="4 4"
                   className="text-border/70"
                 />
+                {/* Tepi kiri label teks Y di x=0 dengan textAnchor="start" sejajar tepi card content */}
                 <text
-                  x={padL - 8}
+                  x={0}
                   y={y + 3.5}
-                  textAnchor="end"
+                  textAnchor="start"
                   className="fill-muted-foreground text-[10px] tabular-nums"
                 >
                   {tick}
@@ -1306,11 +1278,11 @@ export function HistogramChart({
             className="text-border/80"
           />
 
-          {/* Sumbu X (Horizontal) Memisahkan Batang dengan Label Bawah */}
+          {/* Sumbu X (Horizontal) Memisahkan Batang dengan Label Bawah (x1=padL sampai x2=svgW) */}
           <line
             x1={padL}
             y1={padT + plotH}
-            x2={padL + plotW}
+            x2={svgW}
             y2={padT + plotH}
             stroke="currentColor"
             strokeWidth="1.5"
@@ -1396,8 +1368,8 @@ export function HistogramChart({
         </svg>
       </div>
 
-      {/* Ringkasan Statistik Edge-to-Edge dengan padding kiri pl-6 sejajar header card */}
-      <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs">
+      {/* Ringkasan Statistik Edge-to-Edge dengan tinggi min-h-[58px] identik mode area (CLS = 0) */}
+      <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs min-h-[58px] items-center">
         <div className="pl-6 pr-3 py-3 text-center sm:text-left">
           <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.sample_count")}</p>
           <p className="font-bold text-foreground tabular-nums mt-0.5">

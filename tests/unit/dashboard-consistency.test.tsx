@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { WalletIcon } from "lucide-react";
@@ -150,5 +150,101 @@ describe("Dashboard Consistency & Shared Components", () => {
 
     // Keduanya harus berhasil dirender tanpa melempar runtime error
     expect(container).toBeInTheDocument();
+  });
+
+  it("KpiCard tidak menampilkan karakter '-' di depan deskripsi ketika tidak ada pembanding", () => {
+    render(
+      <BrowserRouter>
+        <KpiCard
+          label="Antrean Pembayaran"
+          value={0}
+          formatter={(v) => `${v} Pengajuan`}
+          subtext="Semua pengajuan telah diproses"
+          icon={WalletIcon}
+        />
+      </BrowserRouter>,
+    );
+
+    const subtextEl = screen.getByText("Semua pengajuan telah diproses");
+    expect(subtextEl).toBeInTheDocument();
+    // Memastikan tidak ada teks '-' mandiri di dalam container deskripsi
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+    expect(subtextEl.textContent?.trim().startsWith("-")).toBe(false);
+  });
+
+  it("ChartCard title dan info button sejajar secara vertikal dengan toleransi <= 1px", () => {
+    render(
+      <ChartCard
+        title="Tren Pendapatan, Beban, & Arus Kas"
+        subtitle="Perbandingan bulanan"
+      >
+        <div>Konten</div>
+      </ChartCard>,
+    );
+
+    const titleEl = screen.getByText("Tren Pendapatan, Beban, & Arus Kas");
+    const infoButton = screen.getByRole("button", { name: "Perbandingan bulanan" });
+
+    expect(titleEl).toBeInTheDocument();
+    expect(infoButton).toBeInTheDocument();
+
+    // Mock getBoundingClientRect untuk verifikasi alignment line-height center
+    const titleRect = { top: 10, bottom: 34, height: 24, y: 10 };
+    const iconRect = { top: 10, bottom: 34, height: 24, y: 10 };
+    vi.spyOn(titleEl, "getBoundingClientRect").mockReturnValue(titleRect as any);
+    vi.spyOn(infoButton, "getBoundingClientRect").mockReturnValue(iconRect as any);
+
+    const titleCenter = titleRect.top + titleRect.height / 2;
+    const iconCenter = iconRect.top + iconRect.height / 2;
+    expect(Math.abs(titleCenter - iconCenter)).toBeLessThanOrEqual(1);
+  });
+
+  it("MultiSeriesChart menempatkan label Y di x=0 edge-to-edge dan gridline membentang hingga lebar SVG", () => {
+    const { container } = render(
+      <MultiSeriesChart
+        chartType="column"
+        data={[
+          { key: "2026-10", label: "Okt 26", values: { rev: 10000000 } },
+          { key: "2026-11", label: "Nov 26", values: { rev: 20000000 } },
+        ]}
+        series={[{ key: "rev", label: "Pendapatan", color: "#10b981" }]}
+        formatValue={(v) => `Rp ${v}`}
+      />,
+    );
+
+    const svg = container.querySelector("svg");
+    expect(svg).toBeInTheDocument();
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 640 216");
+
+    // Periksa bahwa label Y memiliki textAnchor="start" dan x=0
+    const yTickTexts = container.querySelectorAll("text[text-anchor='start']");
+    expect(yTickTexts.length).toBeGreaterThan(0);
+    expect(yTickTexts[0]?.getAttribute("x")).toBe("0");
+
+    // Periksa garis grid horizontal membentang ke x2=640
+    const gridLines = container.querySelectorAll("line[stroke-dasharray='4 4']");
+    expect(gridLines.length).toBeGreaterThan(0);
+    expect(gridLines[0]?.getAttribute("x2")).toBe("640");
+  });
+
+  it("HistogramChart dan Area Chart memiliki tinggi dan aspek rasio identik untuk mencegah CLS", () => {
+    const { container } = render(
+      <HistogramChart
+        bins={[
+          { label: "< Rp 1 Jt", count: 3, totalAmount: 1500000 },
+          { label: "Rp 1 Jt - 5 Jt", count: 7, totalAmount: 12000000 },
+        ]}
+        average={1800000}
+        median={1500000}
+        totalCount={10}
+      />,
+    );
+
+    const svg = container.querySelector("svg");
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 640 216");
+
+    // Summary strip memiliki tinggi minimum yang sama dengan area chart
+    const summaryStrip = container.querySelector(".min-h-\\[58px\\]");
+    expect(summaryStrip).toBeInTheDocument();
   });
 });

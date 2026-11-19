@@ -53,6 +53,7 @@
     "badge_active": "Aktif"
   },
   "charts": {
+    "legend": "Keterangan",
     "trends_title": "Tren Pendapatan, Beban, & Arus Kas",
     "trends_subtitle": "Perbandingan pergerakan keuangan bulanan berdasarkan jurnal terposting.",
     "revenue": "Pendapatan",

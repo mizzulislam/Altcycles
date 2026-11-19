@@ -152,3 +152,7 @@ Berikut adalah daftar keputusan desain yang membutuhkan persetujuan/konfirmasi p
    - *Pertanyaan:* Apakah Anda menyetujui pemadatan 8 kartu besar modul keuangan menjadi **Baris Chip Horizontal (Horizontal Quick-Chips Bar)** dengan ikon mini, label, dan badge ringkas yang dapat diklik langsung?
 4. **Navigasi Klik Baris Top 5 Beban:**
    - *Pertanyaan:* Saat pengguna mengklik salah satu baris akun pada kartu "Top 5 Beban", apakah baris tersebut cukup menampilkan tooltip rincian, atau langsung diarahkan menuju halaman **Buku Besar Akuntansi** (`/admin/akuntansi?tab=buku_besar&accountId=[id]`)? (Catatan: rute tab akuntansi saat ini adalah `/admin/akuntansi?tab=jurnal` dan `/admin/akuntansi?tab=laporan`).
+5. **Penempatan Tombol Aksi Header Kartu (Buku Jurnal & Kelola Tagihan):**
+   - *Status:* **Perlu Keputusanku: YA**
+   - *Deskripsi:* Sesuai arahan Item 9, tombol "Lihat Semua Jurnal" pada kartu "5 Transaksi Terakhir" telah dipindahkan ke footer kartu sebagai tautan teks dengan ikon panah (`ArrowRightIcon`) di atas pembatas garis tipis (`border-t border-border/70 bg-muted/10 px-6 py-3`).
+   - *Pertanyaan:* Kartu "Realisasi Penagihan & Umur Piutang" saat ini masih memiliki tombol/tautan header "Kelola Tagihan". Apakah tombol ini juga ingin dipindahkan ke footer kartu agar seluruh header kartu grafik di dashboard Finance 100% konsisten hanya menampilkan judul dan ikon info? (Rekomendasi sistem: Ya, pindahkan ke footer untuk konsistensi penuh).

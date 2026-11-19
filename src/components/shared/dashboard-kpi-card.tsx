@@ -167,11 +167,7 @@ export function KpiCard({
               )}
               {isPositive ? `+${changePercent.toFixed(1)}%` : `${changePercent.toFixed(1)}%`}
             </span>
-          ) : (
-            <span className="text-muted-foreground font-semibold tabular-nums shrink-0">
-              -
-            </span>
-          )}
+          ) : null}
           {changeLabel ? (
             <span className="text-muted-foreground truncate" title={changeLabel}>
               {changeLabel}
