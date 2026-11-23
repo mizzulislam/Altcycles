@@ -22,10 +22,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Field,
   FieldDescription,
@@ -319,14 +317,10 @@ export function ProfileSettingsPage() {
         {/* TAB 1: PROFIL PENGGUNA */}
         {activeTab === "profil" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("settings:profile.card_profile_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings:profile.card_profile_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:profile.card_profile_title")}
+              description={t("settings:profile.card_profile_desc")}
+            />
             <CardContent className="pt-5 space-y-6">
               <form onSubmit={handleSaveProfile} className="space-y-5">
                 {/* Baris 1: Grid 2-Kolom (Kolom Kiri: Box Upload Foto Diri Mirip Gambar Contoh | Kolom Kanan: Tentang Saya Sejajar Presisi) */}
@@ -531,14 +525,10 @@ export function ProfileSettingsPage() {
         {/* TAB 2: DATA PRIBADI */}
         {activeTab === "personal" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("settings:profile.card_personal_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings:profile.card_personal_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:profile.card_personal_title")}
+              description={t("settings:profile.card_personal_desc")}
+            />
             <CardContent className="pt-5 space-y-6">
               <form onSubmit={handleSaveProfile} className="space-y-5">
                 {/* Grid 2-Kolom: Nomor Telepon & Jabatan Divisi */}
@@ -630,14 +620,10 @@ export function ProfileSettingsPage() {
         {/* TAB 3: AKUN & KATA SANDI (Fitur Ganti Sandi dari Sidebar Dipindahkan ke Sini) */}
         {activeTab === "account" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("settings:profile.card_account_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings:profile.card_account_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:profile.card_account_title")}
+              description={t("settings:profile.card_account_desc")}
+            />
             <CardContent className="pt-5 space-y-6">
               <form onSubmit={handleUpdatePassword} className="space-y-5">
                 {/* Grid 2-Kolom: Kata Sandi Baru & Konfirmasi Kata Sandi */}
@@ -713,14 +699,10 @@ export function ProfileSettingsPage() {
         {/* TAB 4: PREFERENSI NOTIFIKASI */}
         {activeTab === "notifications" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("settings:profile.card_notif_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings:profile.card_notif_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:profile.card_notif_title")}
+              description={t("settings:profile.card_notif_desc")}
+            />
             <CardContent className="pt-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 border border-border/70">
