@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
+import fs from "node:fs";
+import path from "node:path";
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { GameDialogProvider } from "@/components/shared/game-dialog";
@@ -251,5 +253,64 @@ describe("GameDialog & CardHeaderWithInfo Components", () => {
       vi.advanceTimersByTime(200);
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("C.1: Dialog merender kursor berkedip (|) khas warna biru Altvira saat efek typewriter aktif", () => {
+    render(
+      <GameDialogProvider>
+        <TestPilotCard />
+      </GameDialogProvider>,
+    );
+
+    const infoButton = screen.getByRole("button", { name: /Informasi/i });
+    act(() => {
+      fireEvent.click(infoButton);
+    });
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+
+    // Caret berkedip | ada di DOM
+    const caret = dialog.querySelector(".animate-pulse");
+    expect(caret).toBeInTheDocument();
+    expect(caret).toHaveTextContent("|");
+    expect(caret).toHaveClass("text-primary");
+  });
+
+  it("C.2: Pemindaian menyeluruh berkas di src/features/ memastikan tidak ada CardDescription liar di luar pengecualian resmi", () => {
+    const featuresDir = path.resolve(process.cwd(), "src/features");
+    const allowedExceptions = [
+      // Portal publik pembeli (unauthenticated) yang disetujui dikecualikan
+      path.normalize("buyer-portal/buyer-portal-page.tsx"),
+      // Label metadata kode template di dalam admin (bukan subjudul kartu)
+      path.normalize("system-config/system-config-page.tsx"),
+    ];
+
+    function scanFiles(dir: string): string[] {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      const violations: string[] = [];
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          violations.push(...scanFiles(fullPath));
+        } else if (entry.isFile() && entry.name.endsWith(".tsx")) {
+          const content = fs.readFileSync(fullPath, "utf-8");
+          if (content.includes("<CardDescription>")) {
+            const rel = path.relative(featuresDir, fullPath);
+            const isAllowed = allowedExceptions.some((exc) => rel.includes(exc));
+            if (!isAllowed) {
+              violations.push(rel);
+            }
+          }
+        }
+      }
+      return violations;
+    }
+
+    const unmigratedFiles = scanFiles(featuresDir);
+    expect(
+      unmigratedFiles,
+      `Ditemukan kartu dengan <CardDescription> yang belum dimigrasikan ke GameDialog: ${unmigratedFiles.join(", ")}`,
+    ).toEqual([]);
   });
 });
