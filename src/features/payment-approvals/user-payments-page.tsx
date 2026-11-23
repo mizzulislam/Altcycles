@@ -23,10 +23,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +56,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import {
@@ -599,33 +598,30 @@ export function UserPaymentsPage() {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70">
-          <CardTitle>{t("approvals:user.card_title")}</CardTitle>
-          <CardDescription>
-            {t("approvals:user.card_desc")}
-          </CardDescription>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("approvals:user.card_title")}
+          description={t("approvals:user.card_desc")}
+        />
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>{t("approvals:user.loading")}</span>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_number")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_purpose_recipient")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_project")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("approvals:user.col_amount")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_attachments")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_status_notes")}</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("approvals:user.col_actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.length === 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_number")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_purpose_recipient")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_project")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("approvals:user.col_amount")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_attachments")}</TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_status_notes")}</TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("approvals:user.col_actions")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableLoadingRow
+                  colSpan={7}
+                  message={t("approvals:user.loading")}
+                />
+              ) : requests.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -761,10 +757,10 @@ export function UserPaymentsPage() {
                       </TableCell>
                     </TableRow>
                   );
-                }))}
-              </TableBody>
-            </Table>
-          )}
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

@@ -29,10 +29,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
 import {
   Table,
@@ -707,14 +705,10 @@ export function UserDashboardPage() {
 
       {/* Daftar Proyek Aktif Saya */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70">
-          <CardTitle>
-            {t("dashboard:user_dashboard.my_active_projects", "Proyek Aktif Saya")}
-          </CardTitle>
-          <CardDescription>
-            {t("dashboard:user_dashboard.my_active_projects_desc", "Daftar proyek di mana Anda terdaftar aktif sebagai pelaksana tugas.")}
-          </CardDescription>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("dashboard:user_dashboard.my_active_projects", "Proyek Aktif Saya")}
+          description={t("dashboard:user_dashboard.my_active_projects_desc", "Daftar proyek di mana Anda terdaftar aktif sebagai pelaksana tugas.")}
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -785,14 +779,10 @@ export function UserDashboardPage() {
       {/* Rincian Hak Bagi Hasil Saya */}
       {sharingLines.length > 0 ? (
         <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-          <CardHeader className="px-6 py-4 border-b border-border/70">
-            <CardTitle>
-              {t("dashboard:user_dashboard.my_sharing_detail", "Rincian Hak Bagi Hasil Saya")}
-            </CardTitle>
-            <CardDescription>
-              {t("dashboard:user_dashboard.my_sharing_detail_desc", "Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.")}
-            </CardDescription>
-          </CardHeader>
+          <CardHeaderWithInfo
+            title={t("dashboard:user_dashboard.my_sharing_detail", "Rincian Hak Bagi Hasil Saya")}
+            description={t("dashboard:user_dashboard.my_sharing_detail_desc", "Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.")}
+          />
           <CardContent className="p-0">
             <Table>
               <TableHeader>
