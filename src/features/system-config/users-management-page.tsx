@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronDownIcon,
   PlusIcon,
@@ -16,10 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +47,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/features/auth/auth-context";
@@ -68,14 +68,215 @@ const ALL_ROLES: { id: UserRole; label: string; descKey: string; fallbackDesc: s
   { id: "user", label: "User", descKey: "settings:users.role_desc_user", fallbackDesc: "Tim Proyek / Operasional" },
 ];
 
-function getRolesSummary(user: ProfileRow, t: (key: string, def?: string) => string): string {
-  const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+function getRolesSummary(
+  targetOrRoles: ProfileRow | UserRole[],
+  t: (key: string, def?: string) => string,
+): string {
+  const roles = Array.isArray(targetOrRoles)
+    ? targetOrRoles
+    : targetOrRoles.roles && targetOrRoles.roles.length > 0
+    ? targetOrRoles.roles
+    : [targetOrRoles.role];
   const shortLabels: Record<UserRole, string> = {
     super_admin: "Super Admin",
     admin: t("settings:super_admin.role_treasurer", "Bendahara"),
     user: "User",
   };
   return roles.map((r) => shortLabels[r] || r).join(", ");
+}
+
+interface UserRolesDropdownCellProps {
+  user: ProfileRow;
+  isSelf: boolean;
+  onToggleRole: (target: ProfileRow, toggledRole: UserRole) => Promise<void>;
+}
+
+function UserRolesDropdownCell({
+  user,
+  isSelf,
+  onToggleRole,
+}: UserRolesDropdownCellProps) {
+  const { t } = useLanguage();
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  // Optimistic local state for immediate interactive feedback
+  const [localRoles, setLocalRoles] = React.useState<UserRole[]>(() =>
+    user.roles && user.roles.length > 0 ? user.roles : [user.role],
+  );
+
+  React.useEffect(() => {
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    setLocalRoles(roles);
+  }, [user.roles, user.role]);
+
+  const menuWidth = 260;
+  const estimatedHeight = 180;
+
+  const updatePosition = React.useCallback(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward =
+      spaceBelow < estimatedHeight + 12 && rect.top > estimatedHeight + 12;
+
+    const top = openUpward ? rect.top - estimatedHeight - 6 : rect.bottom + 6;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - menuWidth - 12));
+    const width = Math.max(menuWidth, rect.width);
+    setCoords({ top, left, width });
+  }, [estimatedHeight, menuWidth]);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (
+        !buttonRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+    function handleReposition() {
+      updatePosition();
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [isOpen, updatePosition]);
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        disabled={isSelf}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={cn(
+          "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-left -my-0.5",
+          isSelf
+            ? "bg-muted/40 border-border/60 text-muted-foreground cursor-not-allowed"
+            : "bg-card border-border hover:bg-muted/50 text-foreground",
+        )}
+      >
+        <span className="truncate">{getRolesSummary(localRoles, t)}</span>
+        <ChevronDownIcon
+          className={cn(
+            "size-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
+            isOpen && "rotate-180",
+          )}
+        />
+      </button>
+
+      {isOpen &&
+        !isSelf &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              width: `${coords.width}px`,
+              zIndex: 99999,
+            }}
+            className="bg-card border border-border rounded-xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-150 select-none"
+          >
+            <div className="px-2.5 py-1.5 border-b border-border/60 mb-1">
+              <p className="text-[11px] font-semibold text-muted-foreground">
+                {t("settings:users.manage_role_rights", "Atur Hak Peran Pengguna")}
+              </p>
+            </div>
+            <div className="space-y-1">
+              {ALL_ROLES.map((r) => {
+                const isChecked = localRoles.includes(r.id);
+                const isPrimary = localRoles[0] === r.id;
+                const isOnlyRole = localRoles.length === 1 && isChecked;
+
+                return (
+                  <label
+                    key={r.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (isOnlyRole) {
+                        toast.error(
+                          t(
+                            "settings:users.toast_min_one_role",
+                            "Minimal satu peran harus tetap tercentang.",
+                          ),
+                        );
+                        return;
+                      }
+                      const next = isChecked
+                        ? localRoles.filter((id) => id !== r.id)
+                        : [...localRoles, r.id];
+                      setLocalRoles(next);
+                      void onToggleRole(user, r.id);
+                    }}
+                    className={cn(
+                      "flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors",
+                      isChecked
+                        ? "bg-primary/10 text-primary dark:text-sky-400 font-medium"
+                        : "hover:bg-muted/60 text-foreground",
+                      isOnlyRole && "cursor-not-allowed opacity-80",
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Checkbox
+                        checked={isChecked}
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        className="pointer-events-none"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold leading-tight">
+                          {r.label}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">
+                          {t(r.descKey, r.fallbackDesc)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Penanda Peran Utama */}
+                    {isPrimary && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
+                        {t("settings:users.role_primary_badge", "Utama")}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
 }
 
 export function UsersManagementPage() {
@@ -85,9 +286,6 @@ export function UsersManagementPage() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
-
-  // State Dropdown Multi-Role per Baris
-  const [openDropdownId, setOpenDropdownId] = React.useState<string | null>(null);
 
   // Modal Tambah Pengguna
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -119,18 +317,6 @@ export function UsersManagementPage() {
   React.useEffect(() => {
     void reload();
   }, [reload]);
-
-  // Tutup dropdown multi-role jika klik di luar
-  React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-role-dropdown]")) {
-        setOpenDropdownId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
@@ -178,11 +364,25 @@ export function UsersManagementPage() {
       nextRoles = [...currentRoles, toggledRole];
     }
 
+    // Optimistic table update
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === target.id
+          ? {
+              ...u,
+              roles: nextRoles,
+              role: nextRoles.includes(u.role) ? u.role : nextRoles[0]!,
+            }
+          : u,
+      ),
+    );
+
     try {
       await updateInternalUserRoles(target.id, nextRoles);
       toast.success(t("settings:users.toast_role_updated", { name: target.full_name, roles: nextRoles.join(", ") }));
       await reload();
     } catch (err) {
+      await reload();
       toast.error(err instanceof Error ? err.message : t("settings:users.toast_role_failed", "Gagal mengubah peran pengguna."));
     }
   }
@@ -231,37 +431,33 @@ export function UsersManagementPage() {
       </div>
 
       <Card className="overflow-visible">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("settings:users.card_title", "Daftar Pengguna Internal")}
-            </CardTitle>
-            <CardDescription>
-              {t("settings:users.card_desc", "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
-            <Input
-              placeholder={t("settings:users.search_input_placeholder", "Cari nama atau email...")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
-            />
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={t("settings:users.filter_role_placeholder", "Filter peran")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">{t("settings:users.filter_role_all", "Semua Peran")}</SelectItem>
-                  <SelectItem value="user">{t("settings:users.filter_role_user", "User (Tim Proyek)")}</SelectItem>
-                  <SelectItem value="admin">{t("settings:users.filter_role_admin", "Admin (Bendahara)")}</SelectItem>
-                  <SelectItem value="super_admin">{t("settings:users.filter_role_super_admin", "Super Admin")}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("settings:users.card_title", "Daftar Pengguna Internal")}
+          description={t("settings:users.card_desc", "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.")}
+          action={
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+              <Input
+                placeholder={t("settings:users.search_input_placeholder", "Cari nama atau email...")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
+              />
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder={t("settings:users.filter_role_placeholder", "Filter peran")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">{t("settings:users.filter_role_all", "Semua Peran")}</SelectItem>
+                    <SelectItem value="user">{t("settings:users.filter_role_user", "User (Tim Proyek)")}</SelectItem>
+                    <SelectItem value="admin">{t("settings:users.filter_role_admin", "Admin (Bendahara)")}</SelectItem>
+                    <SelectItem value="super_admin">{t("settings:users.filter_role_super_admin", "Super Admin")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -291,7 +487,12 @@ export function UsersManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={6}
+                    message={t("settings:users.loading", "Memuat pengguna...")}
+                  />
+                ) : filtered.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={6} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -310,8 +511,6 @@ export function UsersManagementPage() {
                 ) : (
                   filtered.map((u) => {
                   const isSelf = u.id === currentUser?.id;
-                  const currentRoles = u.roles && u.roles.length > 0 ? u.roles : [u.role];
-                  const isDropdownOpen = openDropdownId === u.id;
 
                   return (
                     <TableRow key={u.id}>
@@ -327,92 +526,13 @@ export function UsersManagementPage() {
                       </TableCell>
                       <TableCell className="px-3 text-muted-foreground">{u.email}</TableCell>
 
-                      {/* KOLOM PERAN DENGAN DROPDOWN BERCENTANG */}
-                      <TableCell className="relative px-3" data-role-dropdown>
-                        <button
-                          type="button"
-                          disabled={isSelf}
-                          onClick={() =>
-                            setOpenDropdownId((prev) => (prev === u.id ? null : u.id))
-                          }
-                          className={cn(
-                            "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-left -my-0.5",
-                            isSelf
-                              ? "bg-muted/40 border-border/60 text-muted-foreground cursor-not-allowed"
-                              : "bg-card border-border hover:bg-muted/50 text-foreground",
-                          )}
-                        >
-                          <span className="truncate">{getRolesSummary(u, t)}</span>
-                          <ChevronDownIcon
-                            className={cn(
-                              "size-3.5 text-muted-foreground shrink-0 transition-transform duration-150",
-                              isDropdownOpen && "rotate-180",
-                            )}
-                          />
-                        </button>
-
-                        {/* Menu Dropdown Checkbox */}
-                        {isDropdownOpen && !isSelf && (
-                          <div className="absolute left-0 top-full mt-1.5 z-50 w-64 bg-card border border-border rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-150">
-                            <div className="px-2.5 py-1.5 border-b border-border/60 mb-1">
-                              <p className="text-[11px] font-semibold text-muted-foreground">
-                                {t("settings:users.manage_role_rights", "Atur Hak Peran Pengguna")}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              {ALL_ROLES.map((r) => {
-                                const isChecked = currentRoles.includes(r.id);
-                                const isPrimary = currentRoles[0] === r.id;
-                                const isOnlyRole = currentRoles.length === 1 && isChecked;
-
-                                return (
-                                  <label
-                                    key={r.id}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      if (isOnlyRole) {
-                                        toast.error("Minimal satu peran harus tetap tercentang.");
-                                        return;
-                                      }
-                                      void handleToggleRole(u, r.id);
-                                    }}
-                                    className={cn(
-                                      "flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors",
-                                      isChecked
-                                        ? "bg-primary/10 text-primary dark:text-sky-400 font-medium"
-                                        : "hover:bg-muted/60 text-foreground",
-                                      isOnlyRole && "cursor-not-allowed opacity-80",
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <Checkbox
-                                        checked={isChecked}
-                                        tabIndex={-1}
-                                        aria-hidden="true"
-                                        className="pointer-events-none"
-                                      />
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-semibold leading-tight">
-                                          {r.label}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground leading-tight">
-                                          {t(r.descKey, r.fallbackDesc)}
-                                        </p>
-                                      </div>
-                                    </div>
-
-                                    {/* Penanda Peran Utama */}
-                                    {isPrimary && (
-                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
-                                        {t("settings:users.role_primary_badge", "Utama")}
-                                      </span>
-                                    )}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
+                      {/* KOLOM PERAN DENGAN DROPDOWN BERCENTANG (PORTAL ANTI-CLIPPING) */}
+                      <TableCell className="px-3" data-role-dropdown>
+                        <UserRolesDropdownCell
+                          user={u}
+                          isSelf={isSelf}
+                          onToggleRole={handleToggleRole}
+                        />
                       </TableCell>
 
                       <TableCell className="px-3 text-center whitespace-nowrap">

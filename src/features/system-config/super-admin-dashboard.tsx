@@ -22,10 +22,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
 import {
   Table,
@@ -536,22 +534,18 @@ export function SuperAdminDashboardPage() {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("settings:super_admin.card_recent_audit", "Jejak Audit Terbaru")}
-            </CardTitle>
-            <CardDescription>
-              {t("settings:super_admin.card_recent_audit_desc", "Setiap perubahan konfigurasi, master data, dan status periode tercatat otomatis.")}
-            </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" asChild className="shrink-0">
-            <Link to="/super-admin/audit-trail">
-              {t("settings:super_admin.btn_all_audits", "Semua Audit")}
-              <ArrowRightIcon className="size-3.5" />
-            </Link>
-          </Button>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("settings:super_admin.card_recent_audit", "Jejak Audit Terbaru")}
+          description={t("settings:super_admin.card_recent_audit_desc", "Setiap perubahan konfigurasi, master data, dan status periode tercatat otomatis.")}
+          action={
+            <Button variant="outline" size="sm" asChild className="shrink-0">
+              <Link to="/super-admin/audit-trail">
+                {t("settings:super_admin.btn_all_audits", "Semua Audit")}
+                <ArrowRightIcon className="size-3.5" />
+              </Link>
+            </Button>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

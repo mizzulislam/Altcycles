@@ -21,10 +21,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
 import {
   Field,
@@ -296,14 +294,10 @@ export function CompanyProfilePage() {
         {/* TAB 1: IDENTITAS & LOGO PERUSAHAAN */}
         {activeTab === "identitas" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("settings:company.identity_kop_title", "Identitas & Kop Dokumen Resmi")}
-              </CardTitle>
-              <CardDescription>
-                {t("settings:company.identity_kop_desc", "Logo, nama usaha, dan alamat kantor ini otomatis tampil pada header SPK, SoW, Quotation, BAKP, UAT, BAST, Invoice, dan Kuitansi.")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.identity_kop_title", "Identitas & Kop Dokumen Resmi")}
+              description={t("settings:company.identity_kop_desc", "Logo, nama usaha, dan alamat kantor ini otomatis tampil pada header SPK, SoW, Quotation, BAKP, UAT, BAST, Invoice, dan Kuitansi.")}
+            />
             <CardContent className="pt-5">
               <form onSubmit={handleSaveCompany} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -485,24 +479,20 @@ export function CompanyProfilePage() {
         {/* TAB 2: REKENING & TANDA TANGAN */}
         {activeTab === "keuangan" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle className="text-base sm:text-lg font-bold">
-                  {t("settings:company.accounts_signatures_title", "Rekening Transfer & Aset Tanda Tangan Resmi")}
-                </CardTitle>
-                <CardDescription>
-                  {t("settings:company.accounts_signatures_desc", "Rekening bank penerima pembayaran Invoice/SPK, identitas NPWP/NIK resmi, serta gambar tanda tangan & paraf digital Altvira.")}
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                onClick={handleAddBankSlot}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-              >
-                <PlusIcon className="size-4" />
-                <span>{t("settings:company.add_bank_btn", "Tambah Rekening")}</span>
-              </Button>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.accounts_signatures_title", "Rekening Transfer & Aset Tanda Tangan Resmi")}
+              description={t("settings:company.accounts_signatures_desc", "Rekening bank penerima pembayaran Invoice/SPK, identitas NPWP/NIK resmi, serta gambar tanda tangan & paraf digital Altvira.")}
+              action={
+                <Button
+                  type="button"
+                  onClick={handleAddBankSlot}
+                  className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+                >
+                  <PlusIcon className="size-4" />
+                  <span>{t("settings:company.add_bank_btn", "Tambah Rekening")}</span>
+                </Button>
+              }
+            />
             <CardContent className="pt-5">
               <form onSubmit={handleSaveCompany} className="space-y-5">
                 <div className="space-y-4">
@@ -725,27 +715,23 @@ export function CompanyProfilePage() {
         {/* TAB 3: SOSIAL MEDIA FOOTER DOKUMEN */}
         {activeTab === "sosmed" && (
           <Card>
-            <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle className="text-base sm:text-lg font-bold">
-                  {t("settings:company.social_accounts_title", {
-                    count: socials.length,
-                    defaultValue: `Akun Sosial Media Footer Dokumen (${socials.length})`,
-                  })}
-                </CardTitle>
-                <CardDescription>
-                  {t("settings:company.social_accounts_desc", "Ikon platform beserta username di bawah ini otomatis disematkan pada footer setiap dokumen PDF & Word yang diterbitkan sistem.")}
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                onClick={handleAddSocialSlot}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("settings:company.add_social_btn", "Tambah Sosial Media")}
-              </Button>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.social_accounts_title", {
+                count: socials.length,
+                defaultValue: `Akun Sosial Media Footer Dokumen (${socials.length})`,
+              })}
+              description={t("settings:company.social_accounts_desc", "Ikon platform beserta username di bawah ini otomatis disematkan pada footer setiap dokumen PDF & Word yang diterbitkan sistem.")}
+              action={
+                <Button
+                  type="button"
+                  onClick={handleAddSocialSlot}
+                  className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  {t("settings:company.add_social_btn", "Tambah Sosial Media")}
+                </Button>
+              }
+            />
             <CardContent className="pt-5">
               <form onSubmit={handleSaveCompany} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -922,29 +908,25 @@ export function CompanyProfilePage() {
         {/* TAB 4: PERPAJAKAN (PKP) */}
         {activeTab === "pajak" && (
           <Card className="overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <CardTitle className="text-base sm:text-lg font-bold">
-                  {t("settings:company.tax_pkp_title", "Status Pengusaha Kena Pajak (PKP) & Tarif PPN")}
-                </CardTitle>
-                <CardDescription>
-                  {t("settings:company.tax_pkp_desc", "Konfigurasi pengenaan Pajak Pertambahan Nilai (PPN) pada dokumen penagihan resmi perusahaan.")}
-                </CardDescription>
-              </div>
-              <div className="shrink-0">
-                <StatusBadge
-                  tone={company.pkp_enabled ? "warning" : "info"}
-                  label={
-                    company.pkp_enabled
-                      ? t("settings:company.badge_pkp_active", {
-                          rate: company.ppn_rate,
-                          defaultValue: `PKP Aktif (${company.ppn_rate}% PPN)`,
-                        })
-                      : t("settings:company.badge_non_pkp", "Belum PKP (Non-PKP)")
-                  }
-                />
-              </div>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.tax_pkp_title", "Status Pengusaha Kena Pajak (PKP) & Tarif PPN")}
+              description={t("settings:company.tax_pkp_desc", "Konfigurasi pengenaan Pajak Pertambahan Nilai (PPN) pada dokumen penagihan resmi perusahaan.")}
+              action={
+                <div className="shrink-0">
+                  <StatusBadge
+                    tone={company.pkp_enabled ? "warning" : "info"}
+                    label={
+                      company.pkp_enabled
+                        ? t("settings:company.badge_pkp_active", {
+                            rate: company.ppn_rate,
+                            defaultValue: `PKP Aktif (${company.ppn_rate}% PPN)`,
+                          })
+                        : t("settings:company.badge_non_pkp", "Belum PKP (Non-PKP)")
+                    }
+                  />
+                </div>
+              }
+            />
 
             <CardContent className="p-6">
               <form onSubmit={handleSaveCompany} className="space-y-6">

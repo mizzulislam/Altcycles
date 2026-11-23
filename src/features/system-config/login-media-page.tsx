@@ -25,10 +25,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -460,47 +458,45 @@ export function LoginMediaPage() {
 
       {/* Pratinjau Langsung Panel Kiri Halaman Login */}
       <Card className="overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("settings:login_media.preview_panel_title")}</CardTitle>
-            <CardDescription>
-              {t("settings:login_media.preview_panel_desc")}
-            </CardDescription>
-          </div>
-          {activeItems.length > 1 ? (
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-8 rounded-lg"
-                onClick={() =>
-                  setPreviewIdx(
-                    (prev) => (prev - 1 + activeItems.length) % activeItems.length,
-                  )
-                }
-                aria-label={t("settings:login_media.prev_slide")}
-              >
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-              <span className="text-xs font-semibold tabular-nums px-1.5 text-muted-foreground">
-                {previewIdx + 1} / {activeItems.length}
-              </span>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-8 rounded-lg"
-                onClick={() =>
-                  setPreviewIdx((prev) => (prev + 1) % activeItems.length)
-                }
-                aria-label={t("settings:login_media.next_slide")}
-              >
-                <ChevronRightIcon className="size-4" />
-              </Button>
-            </div>
-          ) : null}
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("settings:login_media.preview_panel_title")}
+          description={t("settings:login_media.preview_panel_desc")}
+          action={
+            activeItems.length > 1 ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="size-8 rounded-lg"
+                  onClick={() =>
+                    setPreviewIdx(
+                      (prev) => (prev - 1 + activeItems.length) % activeItems.length,
+                    )
+                  }
+                  aria-label={t("settings:login_media.prev_slide")}
+                >
+                  <ChevronLeftIcon className="size-4" />
+                </Button>
+                <span className="text-xs font-semibold tabular-nums px-1.5 text-muted-foreground">
+                  {previewIdx + 1} / {activeItems.length}
+                </span>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="size-8 rounded-lg"
+                  onClick={() =>
+                    setPreviewIdx((prev) => (prev + 1) % activeItems.length)
+                  }
+                  aria-label={t("settings:login_media.next_slide")}
+                >
+                  <ChevronRightIcon className="size-4" />
+                </Button>
+              </div>
+            ) : null
+          }
+        />
         <CardContent className="p-6">
           <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden bg-[#090E19] border border-border/80 flex items-center justify-center">
             {previewSlide ? (
@@ -564,16 +560,11 @@ export function LoginMediaPage() {
 
       {/* Tabel Daftar Media (Edge-to-Edge Card Konsisten Portal Super Admin) */}
       <Card>
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("settings:login_media.table_title")}
-            </CardTitle>
-            <CardDescription>
-              {t("settings:login_media.table_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <CardHeaderWithInfo
+          title={t("settings:login_media.table_title")}
+          description={t("settings:login_media.table_desc")}
+          action={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <div className="relative w-full sm:w-56">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -730,7 +721,8 @@ export function LoginMediaPage() {
               </span>
             </Button>
           </div>
-        </CardHeader>
+        }
+      />
         <CardContent className="p-0 rounded-b-2xl overflow-hidden">
           <Table>
             <TableHeader>

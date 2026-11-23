@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SaveIcon } from "lucide-react";
+import { FlaskConicalIcon, RotateCcwIcon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
 import {
   Field,
@@ -43,10 +44,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  bulkUpdateDocSequencesResetPeriod,
   getCompanyProfile,
   listDocSequences,
   listDocTemplates,
+  purgeTestData,
   setJournalLockStatus,
   updateCompanyProfile,
   updateDocSequence,
@@ -71,26 +72,8 @@ export function SystemConfigPage() {
   const [pendingPkpState, setPendingPkpState] = React.useState<boolean | null>(
     null,
   );
-  const [confirmMasterPolicy, setConfirmMasterPolicy] = React.useState<{
-    open: boolean;
-    period: "monthly" | "yearly";
-    applyStandard2027Prefix: boolean;
-  }>({
-    open: false,
-    period: "monthly",
-    applyStandard2027Prefix: false,
-  });
-  const [savingMasterPolicy, setSavingMasterPolicy] = React.useState(false);
-
-  const allYearly =
-    sequences.length > 0 && sequences.every((s) => s.reset_period === "yearly");
-  const allMonthly =
-    sequences.length > 0 && sequences.every((s) => s.reset_period === "monthly");
-  const currentGlobalResetPeriod: "monthly" | "yearly" | "custom" = allYearly
-    ? "yearly"
-    : allMonthly
-      ? "monthly"
-      : "custom";
+  const [confirmPurgeOpen, setConfirmPurgeOpen] = React.useState(false);
+  const [purging, setPurging] = React.useState(false);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -161,27 +144,21 @@ export function SystemConfigPage() {
     }
   }
 
-  async function handleApplyMasterPolicy() {
-    setSavingMasterPolicy(true);
+  async function handlePurgeTestData() {
+    setPurging(true);
     try {
-      await bulkUpdateDocSequencesResetPeriod(confirmMasterPolicy.period, {
-        applyStandard2027Prefix: confirmMasterPolicy.applyStandard2027Prefix,
-      });
-      toast.success(
-        confirmMasterPolicy.period === "yearly"
-          ? "Kebijakan penomoran berhasil dialihkan ke Mode Tahunan (Standar 2027)."
-          : "Kebijakan penomoran berhasil disetel ke Mode Bulanan (Aktif 2026).",
-      );
-      setConfirmMasterPolicy((prev) => ({ ...prev, open: false }));
+      const res = await purgeTestData();
+      toast.success(res.message || "Data pengujian berhasil dibersihkan.");
+      setConfirmPurgeOpen(false);
       await reload();
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Gagal memperbarui kebijakan penomoran.",
+          : "Gagal membersihkan data testing.",
       );
     } finally {
-      setSavingMasterPolicy(false);
+      setPurging(false);
     }
   }
 
@@ -242,12 +219,10 @@ export function SystemConfigPage() {
         {/* TAB 1: IDENTITAS & REKENING */}
         <TabsContent value="identitas">
           <Card>
-            <CardHeader>
-              <CardTitle>{t("settings:company.identity_card_title")}</CardTitle>
-              <CardDescription>
-                {t("settings:company.identity_card_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.identity_card_title")}
+              description={t("settings:company.identity_card_desc")}
+            />
             <CardContent>
               <form onSubmit={handleSaveCompany}>
                 <FieldGroup>
@@ -426,12 +401,10 @@ export function SystemConfigPage() {
         {/* TAB 2: PENGATURAN PAJAK */}
         <TabsContent value="pajak">
           <Card>
-            <CardHeader>
-              <CardTitle>{t("settings:company.tax_card_title")}</CardTitle>
-              <CardDescription>
-                {t("settings:company.tax_card_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:company.tax_card_title")}
+              description={t("settings:company.tax_card_desc")}
+            />
             <CardContent className="flex flex-col gap-5">
               <Alert variant={company.pkp_enabled ? "warning" : "info"}>
                 <AlertTitle>
@@ -489,201 +462,104 @@ export function SystemConfigPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 3: KEBIJAKAN AKUNTANSI & KUNCI JURNAL */}
+        {/* TAB 3: MODE TESTING & KONTROL AKUNTANSI */}
         <TabsContent value="akuntansi">
           <Card>
-            <CardHeader>
-              <CardTitle>{t("settings:master_readonly.journal_lock_title")}</CardTitle>
-              <CardDescription>
-                {t("settings:master_readonly.controls_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={
+                <span className="inline-flex items-center gap-2">
+                  <FlaskConicalIcon className="size-5 text-amber-500 shrink-0" />
+                  <span>Mode Testing / Sandbox Sistem</span>
+                </span>
+              }
+              description="Bungkus kontrol pengujian integritas akuntansi dan pencatatan dokumen. Saat mode testing aktif, transaksi jurnal dapat diedit/dihapus untuk pengujian dan nomor urut dokumen dapat dibersihkan."
+            />
             <CardContent className="flex flex-col gap-5">
-              <Alert variant={company.journal_lock_enabled !== false ? "info" : "warning"}>
+              <Alert variant={company.journal_lock_enabled === false ? "warning" : "info"}>
                 <AlertTitle>
-                  {company.journal_lock_enabled !== false
-                    ? t("settings:master_readonly.journal_lock_desc_active")
-                    : t("settings:master_readonly.journal_lock_desc_inactive")}
+                  {company.journal_lock_enabled === false
+                    ? "Mode Testing Sedang Aktif"
+                    : "Mode Normal (Produksi) Aktif"}
                 </AlertTitle>
                 <AlertDescription>
-                  {company.journal_lock_enabled !== false
-                    ? t("settings:master_readonly.journal_lock_desc_active")
-                    : t("settings:master_readonly.journal_lock_desc_inactive")}
+                  {company.journal_lock_enabled === false
+                    ? "Sistem berada dalam mode sandbox/testing. Transaksi jurnal tidak dikunci secara permanen sehingga dapat diedit atau dihapus. Anda dapat membersihkan data transaksi testing dan mereset penomoran dokumen di bawah."
+                    : "Sistem berada dalam mode operasional resmi. Seluruh jurnal transaksi terkunci otomatis (Strict Immutability) untuk menjamin kepatuhan audit PSAK/IFRS Altvira."}
                 </AlertDescription>
               </Alert>
 
               <FieldSet>
-                <FieldLegend>{t("settings:master_readonly.journal_lock_title")}</FieldLegend>
+                <FieldLegend>Status Mode Testing Sistem</FieldLegend>
                 <Field orientation="horizontal">
                   <div className="flex flex-col gap-0.5">
-                    <FieldLabel htmlFor="sw-journal-lock">
-                      {t("settings:master_readonly.journal_lock_title")}
+                    <FieldLabel htmlFor="sw-testing-mode">
+                      Aktifkan Sandbox / Mode Testing
                     </FieldLabel>
                     <FieldDescription>
-                      {t("settings:master_readonly.journal_lock_desc_active")}
+                      Buka kunci transaksi jurnal sementara untuk keperluan simulasi pembukuan dan pengujian fungsional sistem.
                     </FieldDescription>
                   </div>
                   <Switch
-                    id="sw-journal-lock"
-                    checked={company.journal_lock_enabled !== false}
-                    onCheckedChange={async (checked) => {
+                    id="sw-testing-mode"
+                    checked={company.journal_lock_enabled === false}
+                    onCheckedChange={async (enableTesting) => {
                       try {
-                        await setJournalLockStatus(checked);
+                        const nextLock = !enableTesting;
+                        await setJournalLockStatus(nextLock);
                         setCompany((prev) =>
-                          prev ? { ...prev, journal_lock_enabled: checked } : prev,
+                          prev ? { ...prev, journal_lock_enabled: nextLock } : prev,
                         );
-                        if (checked) {
-                          toast.success(t("settings:master_readonly.journal_lock_toast_enabled"));
+                        if (enableTesting) {
+                          toast.warning("Mode Testing diaktifkan. Kunci jurnal dibuka untuk pengujian.");
                         } else {
-                          toast.warning(t("settings:master_readonly.journal_lock_toast_disabled"));
+                          toast.success("Mode Normal (Produksi) aktif. Seluruh jurnal terkunci otomatis.");
                         }
                       } catch (err) {
                         toast.error(
                           err instanceof Error
                             ? err.message
-                            : "Gagal memperbarui pengaturan kunci jurnal.",
+                            : "Gagal memperbarui status mode testing.",
                         );
                       }
                     }}
                   />
                 </Field>
+
+                {company.journal_lock_enabled === false && (
+                  <div className="mt-4 p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-destructive">
+                        Bersihkan Data Pengujian & Reset Counter Dokumen
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Hapus seluruh counter urutan dokumen testing dan kembalikan urutan penomoran ke awal tanpa mempengaruhi format pola penomoran dokumen.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={purging}
+                      onClick={() => setConfirmPurgeOpen(true)}
+                      className="rounded-xl h-8 px-3 text-xs gap-1.5 shrink-0"
+                    >
+                      <RotateCcwIcon className="size-3.5" />
+                      Bersihkan Data Testing
+                    </Button>
+                  </div>
+                )}
               </FieldSet>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* TAB 3: PENOMORAN DOKUMEN */}
+        {/* TAB 4: PENOMORAN DOKUMEN */}
         <TabsContent value="penomoran" className="flex flex-col gap-6">
-          {/* Master Switch Kebijakan Periode Reset Penomoran (Konflik 2 & Standar 2027) */}
           <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-base sm:text-lg font-bold">
-                    {t("settings:admin_settings.policy_card_title")}
-                  </CardTitle>
-                  <StatusBadge
-                    tone={
-                      currentGlobalResetPeriod === "yearly"
-                        ? "info"
-                        : currentGlobalResetPeriod === "monthly"
-                          ? "success"
-                          : "warning"
-                    }
-                    label={
-                      currentGlobalResetPeriod === "yearly"
-                        ? t("settings:admin_settings.policy_status_yearly")
-                        : currentGlobalResetPeriod === "monthly"
-                          ? t("settings:admin_settings.policy_status_monthly")
-                          : t("settings:admin_settings.policy_status_custom")
-                    }
-                  />
-                </div>
-                <CardDescription>
-                  {t("settings:admin_settings.policy_card_desc")}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {/* Opsi 1: Bulanan (2026) */}
-                <div
-                  className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
-                    currentGlobalResetPeriod === "monthly"
-                      ? "border-primary/50 bg-primary/5"
-                      : "border-border/70 bg-muted/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-foreground">
-                        {t("settings:admin_settings.mode_monthly")}
-                      </span>
-                      {currentGlobalResetPeriod === "monthly" && (
-                        <StatusBadge
-                          tone="success"
-                          label={t("settings:admin_settings.active_badge")}
-                        />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t("settings:admin_settings.mode_monthly_desc")}
-                    </p>
-                    <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                      {t("settings:admin_settings.sample_monthly")}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant={currentGlobalResetPeriod === "monthly" ? "secondary" : "outline"}
-                    disabled={currentGlobalResetPeriod === "monthly" || savingMasterPolicy}
-                    onClick={() =>
-                      setConfirmMasterPolicy({
-                        open: true,
-                        period: "monthly",
-                        applyStandard2027Prefix: false,
-                      })
-                    }
-                    className="w-full rounded-xl text-xs h-9 cursor-pointer"
-                  >
-                    {t("settings:admin_settings.btn_apply_monthly")}
-                  </Button>
-                </div>
-
-                {/* Opsi 2: Tahunan (2027) */}
-                <div
-                  className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
-                    currentGlobalResetPeriod === "yearly"
-                      ? "border-primary/50 bg-primary/5"
-                      : "border-border/70 bg-muted/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-foreground">
-                        {t("settings:admin_settings.mode_yearly")}
-                      </span>
-                      {currentGlobalResetPeriod === "yearly" && (
-                        <StatusBadge
-                          tone="info"
-                          label={t("settings:admin_settings.active_badge")}
-                        />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t("settings:admin_settings.mode_yearly_desc")}
-                    </p>
-                    <div className="rounded-lg bg-background/80 border border-border/50 px-3 py-1.5 font-mono text-xs text-foreground font-medium">
-                      {t("settings:admin_settings.sample_yearly")}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant={currentGlobalResetPeriod === "yearly" ? "secondary" : "default"}
-                    disabled={currentGlobalResetPeriod === "yearly" || savingMasterPolicy}
-                    onClick={() =>
-                      setConfirmMasterPolicy({
-                        open: true,
-                        period: "yearly",
-                        applyStandard2027Prefix: true,
-                      })
-                    }
-                    className="w-full rounded-xl text-xs h-9 cursor-pointer"
-                  >
-                    {t("settings:admin_settings.btn_apply_yearly")}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle>{t("settings:admin_settings.sequences_card_title")}</CardTitle>
-              <CardDescription>
-                {t("settings:admin_settings.sequences_card_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:admin_settings.sequences_card_title")}
+              description={t("settings:admin_settings.sequences_card_desc")}
+            />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -864,28 +740,13 @@ export function SystemConfigPage() {
       />
 
       <ConfirmActionDialog
-        open={confirmMasterPolicy.open}
-        onOpenChange={(open) =>
-          setConfirmMasterPolicy((prev) => ({ ...prev, open }))
-        }
-        title={
-          confirmMasterPolicy.period === "yearly"
-            ? t("settings:admin_settings.confirm_policy_yearly_title")
-            : t("settings:admin_settings.confirm_policy_monthly_title")
-        }
-        description={
-          confirmMasterPolicy.period === "yearly"
-            ? t("settings:admin_settings.confirm_policy_yearly_desc")
-            : t("settings:admin_settings.confirm_policy_monthly_desc")
-        }
-        confirmLabel={
-          savingMasterPolicy
-            ? t("settings:admin_settings.confirm_policy_applying")
-            : confirmMasterPolicy.period === "yearly"
-              ? t("settings:admin_settings.btn_apply_yearly")
-              : t("settings:admin_settings.btn_apply_monthly")
-        }
-        onConfirm={handleApplyMasterPolicy}
+        open={confirmPurgeOpen}
+        onOpenChange={setConfirmPurgeOpen}
+        title="Bersihkan Data Pengujian & Reset Penomoran?"
+        description="Aksi ini akan menghapus seluruh data nomor urut dokumen hasil testing sebelumnya dan mengembalikan urutan penomoran ke awal. Format penomoran dokumen tetap dipertahankan. Gunakan aksi ini hanya saat mode sandbox/testing aktif."
+        confirmLabel={purging ? "Membersihkan..." : "Ya, Bersihkan Data"}
+        destructive
+        onConfirm={handlePurgeTestData}
       />
     </div>
   );

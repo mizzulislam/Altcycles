@@ -3,23 +3,25 @@ import {
   BookCheckIcon,
   BookOpenIcon,
   Building2Icon,
+  FlaskConicalIcon,
   FolderKanbanIcon,
   PercentIcon,
-  ShieldCheckIcon,
+  RotateCcwIcon,
   UsersIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
 import {
   Table,
@@ -36,6 +38,7 @@ import {
   listCustomers,
   listProjects,
   listVendors,
+  purgeTestData,
   setAutoClosingStatus,
   setJournalLockStatus,
   setPph23EstimateStatus,
@@ -65,6 +68,23 @@ export function MasterReadonlyPage() {
   const [togglingAutoClosing, setTogglingAutoClosing] = React.useState(false);
   const [pph23Enabled, setPph23Enabled] = React.useState(false);
   const [togglingPph23, setTogglingPph23] = React.useState(false);
+  const [confirmPurgeOpen, setConfirmPurgeOpen] = React.useState(false);
+  const [purging, setPurging] = React.useState(false);
+
+  const isTestingMode = !journalLockEnabled;
+
+  async function handlePurgeData() {
+    setPurging(true);
+    try {
+      const res = await purgeTestData();
+      toast.success(res.message);
+      setConfirmPurgeOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membersihkan data testing.");
+    } finally {
+      setPurging(false);
+    }
+  }
 
   React.useEffect(() => {
     async function load() {
@@ -121,150 +141,184 @@ export function MasterReadonlyPage() {
 
       {/* Grid 3 Kolom Kontrol Akuntansi Sejajar */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-stretch">
-        {/* Card 1: Kontrol Kunci Jurnal (Journal Lock Control) */}
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
-            <div className="space-y-1.5 min-w-0 flex-1 self-start">
-              <div className="flex items-center gap-2">
-                <ShieldCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
-                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
-                  {t("settings:master_readonly.journal_lock_title", "Kunci Jurnal & Pembukuan")}
+        {/* Card 1: Mode Testing / Sandbox Sistem */}
+        <Card className={cn(
+          "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4 transition-all",
+          isTestingMode ? "border-amber-500/50 bg-amber-500/5" : ""
+        )}>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                  isTestingMode
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                    : "bg-primary/10 text-primary dark:text-sky-400 border-primary/25"
+                )}>
+                  <FlaskConicalIcon className="size-4.5" />
+                </div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
+                  Mode Testing & Sandbox
                 </h2>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {journalLockEnabled
-                  ? t("settings:master_readonly.journal_lock_desc_active", "Seluruh transaksi jurnal terkunci otomatis untuk menjaga integritas jejak audit. Transaksi di portal Bendahara tidak dapat diedit atau dihapus.")
-                  : t("settings:master_readonly.journal_lock_desc_inactive", "Kunci jurnal dinonaktifkan sementara. Admin dan Bendahara diizinkan mengedit serta menghapus transaksi jurnal untuk pengujian sistem.")}
-              </p>
-            </div>
-            <label
-              htmlFor="journal-lock-switch"
-              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
-            >
-              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {journalLockEnabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
-              </span>
-              <Switch
-                id="journal-lock-switch"
-                checked={journalLockEnabled}
-                disabled={togglingLock}
-                aria-label={t("settings:master_readonly.journal_lock_title", "Toggle Kunci Jurnal")}
-                onCheckedChange={async (nextVal) => {
-                  setTogglingLock(true);
-                  try {
-                    await setJournalLockStatus(nextVal);
-                    setJournalLockEnabled(nextVal);
-                    if (nextVal) {
-                      toast.success(t("settings:master_readonly.journal_lock_toast_enabled", "Kunci jurnal diaktifkan (Mode Produksi)."));
-                    } else {
-                      toast.warning(t("settings:master_readonly.journal_lock_toast_disabled", "Kunci jurnal dinonaktifkan (Mode Testing Aktif: Transaksi jurnal dapat diedit & dihapus)."));
+              <label
+                htmlFor="testing-mode-switch"
+                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
+              >
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {isTestingMode ? "Aktif" : "Nonaktif"}
+                </span>
+                <Switch
+                  id="testing-mode-switch"
+                  checked={isTestingMode}
+                  disabled={togglingLock}
+                  aria-label="Toggle Mode Testing & Sandbox"
+                  onCheckedChange={async (enableTesting) => {
+                    setTogglingLock(true);
+                    try {
+                      const nextLockVal = !enableTesting;
+                      await setJournalLockStatus(nextLockVal);
+                      setJournalLockEnabled(nextLockVal);
+                      if (enableTesting) {
+                        toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
+                      } else {
+                        toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
+                      }
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
+                    } finally {
+                      setTogglingLock(false);
                     }
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status kunci jurnal."));
-                  } finally {
-                    setTogglingLock(false);
-                  }
-                }}
-              />
-            </label>
+                  }}
+                />
+              </label>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {isTestingMode
+                ? "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi."
+                : "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira."}
+            </p>
           </div>
+
+          {isTestingMode && (
+            <div className="pt-3 border-t border-border/60 flex items-center justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={purging}
+                onClick={() => setConfirmPurgeOpen(true)}
+                className="h-8 rounded-xl px-2.5 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
+              >
+                <RotateCcwIcon className="size-3" />
+                Bersihkan Data Testing
+              </Button>
+            </div>
+          )}
         </Card>
 
         {/* Card 2: Kontrol Tutup Buku Otomatis (Auto Closing Books Control) */}
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
-            <div className="space-y-1.5 min-w-0 flex-1 self-start">
-              <div className="flex items-center gap-2">
-                <BookCheckIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
-                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/25">
+                  <BookCheckIcon className="size-4.5" />
+                </div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
                   {t("settings:master_readonly.auto_close_title", "Tutup Buku Otomatis")}
                 </h2>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {autoClosingEnabled
-                  ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis menghitung dan memposting jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Laba Ditahan saat tutup buku periode.")
-                  : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis dinonaktifkan. Bendahara dan Admin dapat mencatat jurnal penutup secara manual atau menutup periode tanpa auto-posting.")}
-              </p>
-            </div>
-            <label
-              htmlFor="auto-closing-switch"
-              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
-            >
-              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {autoClosingEnabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
-              </span>
-              <Switch
-                id="auto-closing-switch"
-                checked={autoClosingEnabled}
-                disabled={togglingAutoClosing}
-                aria-label={t("settings:master_readonly.auto_close_title", "Toggle Tutup Buku Otomatis")}
-                onCheckedChange={async (nextVal) => {
-                  setTogglingAutoClosing(true);
-                  try {
-                    await setAutoClosingStatus(nextVal);
-                    setAutoClosingEnabled(nextVal);
-                    if (nextVal) {
-                      toast.success(t("settings:master_readonly.auto_close_toast_enabled", "Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode."));
-                    } else {
-                      toast.info(t("settings:master_readonly.auto_close_toast_disabled", "Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara."));
+              <label
+                htmlFor="auto-closing-switch"
+                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
+              >
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {autoClosingEnabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
+                </span>
+                <Switch
+                  id="auto-closing-switch"
+                  checked={autoClosingEnabled}
+                  disabled={togglingAutoClosing}
+                  aria-label={t("settings:master_readonly.auto_close_title", "Toggle Tutup Buku Otomatis")}
+                  onCheckedChange={async (nextVal) => {
+                    setTogglingAutoClosing(true);
+                    try {
+                      await setAutoClosingStatus(nextVal);
+                      setAutoClosingEnabled(nextVal);
+                      if (nextVal) {
+                        toast.success(t("settings:master_readonly.auto_close_toast_enabled", "Tutup buku otomatis diaktifkan. Jurnal penutup GAAP/IFRS akan diposting otomatis saat tutup periode."));
+                      } else {
+                        toast.info(t("settings:master_readonly.auto_close_toast_disabled", "Tutup buku otomatis dinonaktifkan. Penutupan buku dapat dilakukan manual oleh Bendahara."));
+                      }
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status tutup buku otomatis."));
+                    } finally {
+                      setTogglingAutoClosing(false);
                     }
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status tutup buku otomatis."));
-                  } finally {
-                    setTogglingAutoClosing(false);
-                  }
-                }}
-              />
-            </label>
+                  }}
+                />
+              </label>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {autoClosingEnabled
+                ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis membuat dan memposting ayat jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Saldo Laba Ditahan saat tutup buku periode.")
+                : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis nonaktif. Penutupan buku dan jurnal penutup dilakukan manual oleh Bendahara.")}
+            </p>
           </div>
         </Card>
 
         {/* Card 3: Kontrol Estimasi PPh 23 (2%) pada Invoice Klien */}
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs h-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-full">
-            <div className="space-y-1.5 min-w-0 flex-1 self-start">
-              <div className="flex items-center gap-2">
-                <PercentIcon className="size-5 text-primary dark:text-sky-400 shrink-0" />
-                <h2 className="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/25">
+                  <PercentIcon className="size-4.5" />
+                </div>
+                <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
                   {t("settings:master_readonly.pph23_title", "Estimasi PPh 23 (2%)")}
                 </h2>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {pph23Enabled
-                  ? t("settings:master_readonly.pph23_desc_active", "Informasi pemotongan PPh Pasal 23 (2% dari DPP) dan estimasi kas bersih ditampilkan otomatis pada dokumen cetak PDF/Word Invoice klien.")
-                  : t("settings:master_readonly.pph23_desc_inactive", "Estimasi potongan PPh Pasal 23 (2%) disembunyikan dari dokumen cetak Invoice klien sehingga hanya menampilkan nilai tagihan standar.")}
-              </p>
-            </div>
-            <label
-              htmlFor="pph23-estimate-switch"
-              className="flex items-center gap-2.5 shrink-0 cursor-pointer select-none sm:self-center"
-            >
-              <span className="text-xs font-medium text-muted-foreground w-14 text-right">
-                {pph23Enabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
-              </span>
-              <Switch
-                id="pph23-estimate-switch"
-                checked={pph23Enabled}
-                disabled={togglingPph23}
-                aria-label={t("settings:master_readonly.pph23_title", "Toggle Estimasi PPh 23 (2%)")}
-                onCheckedChange={async (nextVal) => {
-                  setTogglingPph23(true);
-                  try {
-                    await setPph23EstimateStatus(nextVal);
-                    setPph23Enabled(nextVal);
-                    if (nextVal) {
-                      toast.success(t("settings:master_readonly.pph23_toast_enabled", "Estimasi PPh 23 (2%) diaktifkan pada dokumen cetak Invoice klien."));
-                    } else {
-                      toast.info(t("settings:master_readonly.pph23_toast_disabled", "Estimasi PPh 23 (2%) dinonaktifkan pada dokumen cetak Invoice klien."));
+              <label
+                htmlFor="pph23-estimate-switch"
+                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
+              >
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {pph23Enabled ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
+                </span>
+                <Switch
+                  id="pph23-estimate-switch"
+                  checked={pph23Enabled}
+                  disabled={togglingPph23}
+                  aria-label={t("settings:master_readonly.pph23_title", "Toggle Estimasi PPh 23 (2%)")}
+                  onCheckedChange={async (nextVal) => {
+                    setTogglingPph23(true);
+                    try {
+                      await setPph23EstimateStatus(nextVal);
+                      setPph23Enabled(nextVal);
+                      if (nextVal) {
+                        toast.success(t("settings:master_readonly.pph23_toast_enabled", "Estimasi PPh 23 (2%) diaktifkan pada dokumen cetak Invoice klien."));
+                      } else {
+                        toast.info(t("settings:master_readonly.pph23_toast_disabled", "Estimasi PPh 23 (2%) dinonaktifkan pada dokumen cetak Invoice klien."));
+                      }
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status estimasi PPh 23."));
+                    } finally {
+                      setTogglingPph23(false);
                     }
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah status estimasi PPh 23."));
-                  } finally {
-                    setTogglingPph23(false);
-                  }
-                }}
-              />
-            </label>
+                  }}
+                />
+              </label>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {pph23Enabled
+                ? t("settings:master_readonly.pph23_desc_active", "Menampilkan estimasi potongan PPh 23 sebesar 2% pada cetak invoice klien.")
+                : t("settings:master_readonly.pph23_desc_inactive", "Faktur klien dicetak standar tanpa estimasi potongan PPh 23.")}
+            </p>
           </div>
         </Card>
       </div>
@@ -306,12 +360,10 @@ export function MasterReadonlyPage() {
 
         <TabsContent value="coa">
           <Card className="overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.coa_card_title", "Bagan Akun (Chart of Accounts)")}</CardTitle>
-              <CardDescription>
-                {t("settings:master_readonly.coa_card_desc", "Tampilan pemantauan hanya-baca untuk Super Admin.")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:master_readonly.coa_card_title", "Bagan Akun (Chart of Accounts)")}
+              description={t("settings:master_readonly.coa_card_desc", "Tampilan pemantauan hanya-baca untuk Super Admin.")}
+            />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -360,10 +412,10 @@ export function MasterReadonlyPage() {
 
         <TabsContent value="proyek">
           <Card className="overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.projects_card_title", "Daftar Proyek")}</CardTitle>
-              <CardDescription>{t("settings:master_readonly.projects_card_desc", "Tampilan pemantauan hanya-baca proyek klien dan internal.")}</CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:master_readonly.projects_card_title", "Daftar Proyek")}
+              description={t("settings:master_readonly.projects_card_desc", "Tampilan pemantauan hanya-baca proyek klien dan internal.")}
+            />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -407,10 +459,10 @@ export function MasterReadonlyPage() {
 
         <TabsContent value="vendor">
           <Card className="overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.vendors_card_title", "Daftar Vendor")}</CardTitle>
-              <CardDescription>{t("settings:master_readonly.vendors_card_desc", "Direktori vendor pemasok hanya-baca untuk pengawasan sistem.")}</CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:master_readonly.vendors_card_title", "Daftar Vendor")}
+              description={t("settings:master_readonly.vendors_card_desc", "Direktori vendor pemasok hanya-baca untuk pengawasan sistem.")}
+            />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -456,10 +508,10 @@ export function MasterReadonlyPage() {
 
         <TabsContent value="pelanggan">
           <Card className="overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">{t("settings:master_readonly.customers_card_title", "Daftar Pelanggan")}</CardTitle>
-              <CardDescription>{t("settings:master_readonly.customers_card_desc", "Basis data pelanggan dan klien perusahaan hanya-baca.")}</CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("settings:master_readonly.customers_card_title", "Daftar Pelanggan")}
+              description={t("settings:master_readonly.customers_card_desc", "Basis data pelanggan dan klien perusahaan hanya-baca.")}
+            />
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -494,6 +546,15 @@ export function MasterReadonlyPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ConfirmActionDialog
+        open={confirmPurgeOpen}
+        onOpenChange={setConfirmPurgeOpen}
+        title="Bersihkan Data Testing & Nomor Urut Dokumen?"
+        description="Aksi ini akan me-reset seluruh pencacah urutan nomor dokumen (kolom 'Urutan Terakhir' kembali ke 'Belum dipakai') dan membersihkan data hasil pengujian. Transaksi resmi Altvira tetap terjaga."
+        confirmLabel={purging ? "Membersihkan..." : "Bersihkan Sekarang"}
+        onConfirm={handlePurgeData}
+      />
     </div>
   );
 }

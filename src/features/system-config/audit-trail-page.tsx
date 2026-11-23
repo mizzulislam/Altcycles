@@ -14,10 +14,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +38,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { listAuditLogs } from "@/lib/data-service";
@@ -136,53 +135,49 @@ export function AuditTrailPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("settings:audit.card_title", "Riwayat Aktivitas & Perubahan Data")}
-            </CardTitle>
-            <CardDescription>
-              {t("settings:audit.card_desc", "Rekaman historis seluruh aktivitas dan perubahan data sistem secara kronologis.")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center shrink-0">
-            <Input
-              placeholder={t("settings:audit.search_placeholder", "Cari entitas, ID transaksi, atau pelaku...")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
-            />
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={t("settings:audit.filter_action", "Semua Tindakan")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">{t("settings:audit.filter_action", "Semua Tindakan")}</SelectItem>
-                  <SelectItem value="INSERT">INSERT</SelectItem>
-                  <SelectItem value="UPDATE">UPDATE</SelectItem>
-                  <SelectItem value="DELETE">DELETE</SelectItem>
-                  <SelectItem value="CLOSE_PERIOD">CLOSE_PERIOD</SelectItem>
-                  <SelectItem value="REOPEN_PERIOD">REOPEN_PERIOD</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
-            >
-              <ArrowUpDownIcon className="size-3.5" />
-              <span>
-                {t("common:action.order", "Urutan:")} {sortOrder === "asc" ? t("common:action.oldest", "Terlama") : t("common:action.newest", "Terbaru")}
-              </span>
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("settings:audit.card_title", "Riwayat Aktivitas & Perubahan Data")}
+          description={t("settings:audit.card_desc", "Rekaman historis seluruh aktivitas dan perubahan data sistem secara kronologis.")}
+          action={
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center shrink-0">
+              <Input
+                placeholder={t("settings:audit.search_placeholder", "Cari entitas, ID transaksi, atau pelaku...")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
+              />
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder={t("settings:audit.filter_action", "Semua Tindakan")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">{t("settings:audit.filter_action", "Semua Tindakan")}</SelectItem>
+                    <SelectItem value="INSERT">INSERT</SelectItem>
+                    <SelectItem value="UPDATE">UPDATE</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                    <SelectItem value="CLOSE_PERIOD">CLOSE_PERIOD</SelectItem>
+                    <SelectItem value="REOPEN_PERIOD">REOPEN_PERIOD</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                }
+                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+              >
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>
+                  {t("common:action.order", "Urutan:")} {sortOrder === "asc" ? t("common:action.oldest", "Terlama") : t("common:action.newest", "Terbaru")}
+                </span>
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -203,7 +198,12 @@ export function AuditTrailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedRows.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={7}
+                    message={t("settings:audit.loading", "Memuat log audit trail...")}
+                  />
+                ) : paginatedRows.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">

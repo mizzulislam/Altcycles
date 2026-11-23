@@ -22,10 +22,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -94,6 +92,8 @@ function getRoleBadgeClass(role: UserRole) {
   }
 }
 
+type ShortcutSortOption = "default" | "name_asc" | "name_desc" | "group" | "status";
+
 export function ShortcutsManagementPage() {
   const { t, language } = useLanguage();
   const [isMac, setIsMac] = React.useState(false);
@@ -102,7 +102,7 @@ export function ShortcutsManagementPage() {
   const [groupFilter, setGroupFilter] = React.useState<string>("all");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
-  const [sortBy, setSortBy] = React.useState<"default" | "name_asc" | "name_desc" | "group" | "status">("default");
+  const [sortBy, setSortBy] = React.useState<ShortcutSortOption>("default");
 
   // Filter Dropdown Portal State
   const [filterMenuOpen, setFilterMenuOpen] = React.useState(false);
@@ -551,20 +551,14 @@ export function ShortcutsManagementPage() {
       {/* 3. Kartu Edge-to-Edge Tabel Pintasan */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
         {/* Header & Filter Toolbar */}
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("shortcuts.card_title", "Daftar Pemetaan Pintasan")}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                "shortcuts.card_desc",
-                "Kelola kombinasi tombol cepat untuk membuka menu dan menjalankan fungsi operasional.",
-              )}
-            </CardDescription>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <CardHeaderWithInfo
+          title={t("shortcuts.card_title", "Daftar Pemetaan Pintasan")}
+          description={t(
+            "shortcuts.card_desc",
+            "Kelola kombinasi tombol cepat untuk membuka menu dan menjalankan fungsi operasional.",
+          )}
+          action={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* Search Input */}
             <div className="relative w-full sm:w-60">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -619,7 +613,8 @@ export function ShortcutsManagementPage() {
               <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", sortMenuOpen && "rotate-180")} />
             </Button>
           </div>
-        </CardHeader>
+        }
+      />
 
         {/* Data Table */}
         <CardContent className="p-0">
@@ -912,18 +907,18 @@ export function ShortcutsManagementPage() {
               }}
               className="z-[99999] rounded-2xl border border-border/80 bg-card p-1.5 shadow-xl flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100"
             >
-              {[
+              {([
                 { value: "default", label: "Urutan Bawaan" },
                 { value: "name_asc", label: t("shortcuts.sort_name_asc", "Nama Aksi (A - Z)") },
                 { value: "name_desc", label: t("shortcuts.sort_name_desc", "Nama Aksi (Z - A)") },
                 { value: "group", label: t("shortcuts.sort_group", "Grup & Modul") },
                 { value: "status", label: t("shortcuts.sort_status", "Status Pintasan") },
-              ].map((opt) => (
+              ] as Array<{ value: ShortcutSortOption; label: string }>).map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => {
-                    setSortBy(opt.value as any);
+                    setSortBy(opt.value);
                     setSortMenuOpen(false);
                   }}
                   className={cn(

@@ -74,6 +74,7 @@ export function CardHeaderTitleWithInfo({
 
 export interface CardHeaderWithInfoProps extends CardHeaderTitleWithInfoProps {
   controls?: React.ReactNode;
+  action?: React.ReactNode;
   children?: React.ReactNode;
   headerClassName?: string;
 }
@@ -82,12 +83,15 @@ export function CardHeaderWithInfo({
   title,
   description,
   controls,
+  action,
   children,
   className,
   titleClassName,
   infoAriaLabel,
   headerClassName,
 }: CardHeaderWithInfoProps) {
+  const rightSlot = action ?? controls;
+
   return (
     <CardHeader
       className={cn(
@@ -101,9 +105,9 @@ export function CardHeaderWithInfo({
         titleClassName={titleClassName}
         infoAriaLabel={infoAriaLabel}
       />
-      {controls ? (
+      {rightSlot ? (
         <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
-          {controls}
+          {rightSlot}
         </div>
       ) : null}
       {children}
