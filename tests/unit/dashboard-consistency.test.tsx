@@ -65,7 +65,7 @@ describe("Dashboard Consistency & Shared Components", () => {
     );
 
     expect(screen.getByText("Tren Pendapatan & Beban")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Analisis bulanan jurnal terposting" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Informasi/i })).toBeInTheDocument();
     expect(screen.getByText("Kontrol")).toBeInTheDocument();
     expect(screen.getByTestId("chart-content")).toBeInTheDocument();
   });
@@ -183,7 +183,7 @@ describe("Dashboard Consistency & Shared Components", () => {
     );
 
     const titleEl = screen.getByText("Tren Pendapatan, Beban, & Arus Kas");
-    const infoButton = screen.getByRole("button", { name: "Perbandingan bulanan" });
+    const infoButton = screen.getByRole("button", { name: /Informasi/i });
 
     expect(titleEl).toBeInTheDocument();
     expect(infoButton).toBeInTheDocument();
@@ -191,8 +191,8 @@ describe("Dashboard Consistency & Shared Components", () => {
     // Mock getBoundingClientRect untuk verifikasi alignment line-height center
     const titleRect = { top: 10, bottom: 34, height: 24, y: 10 };
     const iconRect = { top: 10, bottom: 34, height: 24, y: 10 };
-    vi.spyOn(titleEl, "getBoundingClientRect").mockReturnValue(titleRect as any);
-    vi.spyOn(infoButton, "getBoundingClientRect").mockReturnValue(iconRect as any);
+    vi.spyOn(titleEl, "getBoundingClientRect").mockReturnValue(titleRect as DOMRect);
+    vi.spyOn(infoButton, "getBoundingClientRect").mockReturnValue(iconRect as DOMRect);
 
     const titleCenter = titleRect.top + titleRect.height / 2;
     const iconCenter = iconRect.top + iconRect.height / 2;

@@ -22,13 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { validatePurchaseOrderChecklist } from "@/lib/document-checklist";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +50,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
@@ -629,117 +625,114 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("po:card_title", "Daftar Purchase Order Vendor")}</CardTitle>
-            <CardDescription>
-              {t("po:card_desc", "Pantau riwayat penerbitan PO internal dan status konfirmasi rekanan.")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <div className="w-full sm:w-44 shrink-0">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="ALL">{t("po:status_all", "Semua Status")}</SelectItem>
-                    <SelectItem value="draft">{t("po:status_draft", "Draf")}</SelectItem>
-                    <SelectItem value="issued">{t("po:status_issued", "Diterbitkan")}</SelectItem>
-                    <SelectItem value="completed">{t("po:status_completed", "Selesai")}</SelectItem>
-                    <SelectItem value="cancelled">{t("po:status_cancelled", "Dibatalkan")}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+        <CardHeaderWithInfo
+          title={t("po:card_title", "Daftar Purchase Order Vendor")}
+          description={t("po:card_desc", "Pantau riwayat penerbitan PO internal dan status konfirmasi rekanan.")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <div className="w-full sm:w-44 shrink-0">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="ALL">{t("po:status_all", "Semua Status")}</SelectItem>
+                      <SelectItem value="draft">{t("po:status_draft", "Draf")}</SelectItem>
+                      <SelectItem value="issued">{t("po:status_issued", "Diterbitkan")}</SelectItem>
+                      <SelectItem value="completed">{t("po:status_completed", "Selesai")}</SelectItem>
+                      <SelectItem value="cancelled">{t("po:status_cancelled", "Dibatalkan")}</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
+              >
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>
+                  {t("common:action.order", "Urutan")}:{" "}
+                  {sortOrder === "asc"
+                    ? t("common:action.oldest", "Terlama")
+                    : t("common:action.newest", "Terbaru")}
+                </span>
+              </Button>
+              <SectionEditControls
+                hasItems={sortedOrders.length > 0}
+                isEditing={isEditing}
+                selectedCount={selectedPoIds.length}
+                onStartEdit={() => setIsEditing(true)}
+                onCancelEdit={() => {
+                  setIsEditing(false);
+                  setSelectedPoIds([]);
+                }}
+                onDeleteSelected={() => setDeleteConfirmOpen(true)}
+              />
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-              className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
-            >
-              <ArrowUpDownIcon className="size-3.5" />
-              <span>
-                {t("common:action.order", "Urutan")}:{" "}
-                {sortOrder === "asc"
-                  ? t("common:action.oldest", "Terlama")
-                  : t("common:action.newest", "Terbaru")}
-              </span>
-            </Button>
-            <SectionEditControls
-              hasItems={sortedOrders.length > 0}
-              isEditing={isEditing}
-              selectedCount={selectedPoIds.length}
-              onStartEdit={() => setIsEditing(true)}
-              onCancelEdit={() => {
-                setIsEditing(false);
-                setSelectedPoIds([]);
-              }}
-              onDeleteSelected={() => setDeleteConfirmOpen(true)}
-            />
-          </div>
-        </CardHeader>
+          }
+        />
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>{t("common:action.loading", "Memuat data...")}</span>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  {isEditing && (
-                    <TableHead className="w-12 text-center align-middle px-3">
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={
-                            draftOrders.length > 0 &&
-                            selectedPoIds.length === draftOrders.length
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                {isEditing && (
+                  <TableHead className="w-12 text-center align-middle px-3">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={
+                          draftOrders.length > 0 &&
+                          selectedPoIds.length === draftOrders.length
+                        }
+                        indeterminate={
+                          selectedPoIds.length > 0 &&
+                          selectedPoIds.length < draftOrders.length
+                        }
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedPoIds(draftOrders.map((p) => p.id));
+                          } else {
+                            setSelectedPoIds([]);
                           }
-                          indeterminate={
-                            selectedPoIds.length > 0 &&
-                            selectedPoIds.length < draftOrders.length
-                          }
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPoIds(draftOrders.map((p) => p.id));
-                            } else {
-                              setSelectedPoIds([]);
-                            }
-                          }}
-                          aria-label="Pilih semua PO Draf"
-                        />
-                      </div>
-                    </TableHead>
-                  )}
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {t("po:col_po_number", "Nomor PO")}
+                        }}
+                        aria-label="Pilih semua PO Draf"
+                      />
+                    </div>
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("po:col_date", "Tanggal PO")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("po:col_vendor", "Vendor / Rekanan")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("po:col_project", "Proyek")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
-                    {t("po:col_total", "Total Nilai (IDR)")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("po:col_status", "Status")}
-                  </TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                    {t("po:col_actions", "Aksi")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedOrders.length === 0 ? (
+                )}
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                  {t("po:col_po_number", "Nomor PO")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("po:col_date", "Tanggal PO")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("po:col_vendor", "Vendor / Rekanan")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("po:col_project", "Proyek")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                  {t("po:col_total", "Total Nilai (IDR)")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("po:col_status", "Status")}
+                </TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                  {t("po:col_actions", "Aksi")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableLoadingRow
+                  colSpan={isEditing ? 8 : 7}
+                  message={t("common:action.loading", "Memuat data...")}
+                />
+              ) : sortedOrders.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={isEditing ? 8 : 7} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -882,10 +875,10 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                       </TableCell>
                     </TableRow>
                   );
-                }))}
-              </TableBody>
-            </Table>
-          )}
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

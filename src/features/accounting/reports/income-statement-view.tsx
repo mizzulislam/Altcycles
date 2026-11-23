@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Table,
   TableBody,
@@ -159,30 +157,23 @@ export function IncomeStatementView({
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-lg font-bold text-foreground">
-            {language === "en" ? "Accrual-Basis Income Statement" : "Laporan Laba Rugi Basis Akrual"}
-          </CardTitle>
-          <CardDescription>
-            {language === "en"
-              ? "Structured presentation of direct project expenses and shared operating expenses for period "
-              : "Penyajian terstruktur beban langsung proyek dan beban operasional bersama periode "}
-            <span className="font-semibold text-foreground">
-              {formatDateI18n(startDate, language)} &minus; {formatDateI18n(endDate, language)}
+      <CardHeaderWithInfo
+        title={language === "en" ? "Accrual-Basis Income Statement" : "Laporan Laba Rugi Basis Akrual"}
+        description={
+          language === "en"
+            ? `Structured presentation of direct project expenses and shared operating expenses for period ${formatDateI18n(startDate, language)} - ${formatDateI18n(endDate, language)}.`
+            : `Penyajian terstruktur beban langsung proyek dan beban operasional bersama periode ${formatDateI18n(startDate, language)} - ${formatDateI18n(endDate, language)}.`
+        }
+        headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
+        controls={
+          projectFilter !== "ALL" ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400">
+              {language === "en" ? "Project: " : "Proyek: "}
+              {projects.find((p) => p.id === projectFilter)?.name ?? projectFilter}
             </span>
-            .
-          </CardDescription>
-          {projectFilter !== "ALL" && (
-            <div className="mt-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400">
-                {language === "en" ? "Project: " : "Proyek: "}
-                {projects.find((p) => p.id === projectFilter)?.name ?? projectFilter}
-              </span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
+          ) : null
+        }
+      />
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>

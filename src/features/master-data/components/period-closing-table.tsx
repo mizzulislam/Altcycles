@@ -10,10 +10,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState, Spinner } from "@/components/ui/empty";
 import {
@@ -96,82 +94,81 @@ export function PeriodClosingTable({
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 px-6 py-4">
-        <div className="space-y-1 min-w-0">
-          <CardTitle>{t("accounting:closing.table_card_title", "Jurnal Penutup")}</CardTitle>
-          <CardDescription>
-            {t("accounting:closing.table_card_desc", "Historis entri jurnal penutup akun nominal yang tersimpan pada sistem pembukuan.")}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            type="button"
-            size="sm"
-            onClick={onOpenManualClosing}
-            className="h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
-          >
-            <PlusIcon className="size-3.5" />
-            <span>{t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}</span>
-          </Button>
+      <CardHeaderWithInfo
+        title={t("accounting:closing.table_card_title", "Jurnal Penutup")}
+        description={t("accounting:closing.table_card_desc", "Historis entri jurnal penutup akun nominal yang tersimpan pada sistem pembukuan.")}
+        headerClassName="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 px-6 py-4"
+        controls={
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              type="button"
+              size="sm"
+              onClick={onOpenManualClosing}
+              className="h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
+            >
+              <PlusIcon className="size-3.5" />
+              <span>{t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}</span>
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onToggleSortOrder}
-            className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5"
-          >
-            <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
-            <span>
-              {t("accounting:journals.order", "Urutan:")}{" "}
-              {sortOrder === "asc"
-                ? t("accounting:journals.order_oldest", "Terlama")
-                : t("accounting:journals.order_newest", "Terbaru")}
-            </span>
-          </Button>
-
-          {!isEditMode ? (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setIsEditMode(true)}
-              className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10"
+              onClick={onToggleSortOrder}
+              className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5"
             >
-              <PencilIcon className="size-3.5" />
-              <span>{t("common:action.edit", "Edit")}</span>
+              <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
+              <span>
+                {t("accounting:journals.order", "Urutan:")}{" "}
+                {sortOrder === "asc"
+                  ? t("accounting:journals.order_oldest", "Terlama")
+                  : t("accounting:journals.order_newest", "Terbaru")}
+              </span>
             </Button>
-          ) : (
-            <div className="flex items-center gap-2">
+
+            {!isEditMode ? (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setIsEditMode(false);
-                  setSelectedClosingIds([]);
-                }}
-                className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                onClick={() => setIsEditMode(true)}
+                className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10"
               >
-                {t("common:action.cancel", "Batal")}
+                <PencilIcon className="size-3.5" />
+                <span>{t("common:action.edit", "Edit")}</span>
               </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={selectedClosingIds.length === 0}
-                onClick={onOpenBatchDelete}
-                className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer gap-1.5"
-              >
-                <Trash2Icon className="size-3.5" />
-                <span>
-                  {t("accounting:closing.btn_delete_selected", "Hapus Pilihan")} ({selectedClosingIds.length})
-                </span>
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardHeader>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setSelectedClosingIds([]);
+                  }}
+                  className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  {t("common:action.cancel", "Batal")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={selectedClosingIds.length === 0}
+                  onClick={onOpenBatchDelete}
+                  className="h-9 px-3 rounded-xl text-xs font-semibold cursor-pointer gap-1.5"
+                >
+                  <Trash2Icon className="size-3.5" />
+                  <span>
+                    {t("accounting:closing.btn_delete_selected", "Hapus Pilihan")} ({selectedClosingIds.length})
+                  </span>
+                </Button>
+              </div>
+            )}
+          </div>
+        }
+      />
       <CardContent className="p-0">
         <Table className="w-full min-w-[680px] table-fixed">
           <TableHeader className="bg-muted/30">

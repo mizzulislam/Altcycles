@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -200,45 +198,43 @@ export function VendorTabContent({
   return (
     <>
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties:vendors.title", "Daftar Vendor Pemasok")}</CardTitle>
-            <CardDescription>
-              {t("parties:vendors.desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportVendorsExcel}
-              onExportPdf={handleExportVendorsPdf}
-              onExportCsv={handleExportVendorsCsv}
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 cursor-pointer"
-              onClick={() => {
-                setVndForm({
-                  id: undefined,
-                  code: `VND-00${vendors.length + 1}`,
-                  name: "",
-                  contact_name: "",
-                  email: "",
-                  phone: "",
-                  bank_name: "",
-                  bank_account_number: "",
-                  address: "",
-                  is_active: true,
-                });
-                setVndOpen(true);
-              }}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("parties:vendors.add_btn", "Tambah Vendor")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("parties:vendors.title", "Daftar Vendor Pemasok")}
+          description={t("parties:vendors.desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
+          controls={
+            <div className="flex items-center gap-2 shrink-0">
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportVendorsExcel}
+                onExportPdf={handleExportVendorsPdf}
+                onExportCsv={handleExportVendorsCsv}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 cursor-pointer"
+                onClick={() => {
+                  setVndForm({
+                    id: undefined,
+                    code: `VND-00${vendors.length + 1}`,
+                    name: "",
+                    contact_name: "",
+                    email: "",
+                    phone: "",
+                    bank_name: "",
+                    bank_account_number: "",
+                    address: "",
+                    is_active: true,
+                  });
+                  setVndOpen(true);
+                }}
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("parties:vendors.add_btn", "Tambah Vendor")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

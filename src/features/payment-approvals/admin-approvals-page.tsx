@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { GoogleDriveIcon } from "@/components/shared/google-drive-picker-dialog";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
@@ -23,9 +24,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -55,6 +53,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/features/auth/auth-context";
@@ -471,65 +470,62 @@ export function AdminApprovalsPage() {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("approvals:admin.card_title", "Daftar Pengajuan Pembayaran Tim")}</CardTitle>
-            <CardDescription>
-              {t("approvals:admin.card_desc", "Periksa bukti lampiran pengeluaran sebelum menyetujui atau menolak permohonan dana.")}
-            </CardDescription>
-          </div>
-          <div className="w-full sm:w-56 shrink-0">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="ALL">{t("approvals:admin.filter_all", "Semua Status")}</SelectItem>
-                  <SelectItem value="submitted">{t("approvals:admin.filter_submitted", "Menunggu Persetujuan")}</SelectItem>
-                  <SelectItem value="approved">{t("approvals:admin.filter_approved", "Disetujui (Siap Cair)")}</SelectItem>
-                  <SelectItem value="paid">{t("approvals:admin.filter_paid", "Dibayar Lunas")}</SelectItem>
-                  <SelectItem value="rejected">{t("approvals:admin.filter_rejected", "Ditolak")}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>{t("common:action.loading", "Memuat data...")}</span>
+        <CardHeaderWithInfo
+          title={t("approvals:admin.card_title", "Daftar Pengajuan Pembayaran Tim")}
+          description={t("approvals:admin.card_desc", "Periksa bukti lampiran pengeluaran sebelum menyetujui atau menolak permohonan dana.")}
+          controls={
+            <div className="w-full sm:w-56 shrink-0">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t("approvals:admin.filter_all", "Semua Status")}</SelectItem>
+                    <SelectItem value="submitted">{t("approvals:admin.filter_submitted", "Menunggu Persetujuan")}</SelectItem>
+                    <SelectItem value="approved">{t("approvals:admin.filter_approved", "Disetujui (Siap Cair)")}</SelectItem>
+                    <SelectItem value="paid">{t("approvals:admin.filter_paid", "Dibayar Lunas")}</SelectItem>
+                    <SelectItem value="rejected">{t("approvals:admin.filter_rejected", "Ditolak")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
-                    {t("approvals:admin.col_number_date", "Nomor & Tanggal")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("approvals:admin.col_requester_project", "Pemohon & Proyek")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("approvals:admin.col_purpose", "Keterangan Pengeluaran")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("approvals:modals.attachments", "Bukti Lampiran")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">
-                    {t("approvals:admin.col_amount", "Nominal Pengajuan (IDR)")}
-                  </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
-                    {t("approvals:admin.col_status", "Status")}
-                  </TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
-                    {t("approvals:admin.col_actions", "Aksi")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRequests.length === 0 ? (
+          }
+        />
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
+                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                  {t("approvals:admin.col_number_date", "Nomor & Tanggal")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("approvals:admin.col_requester_project", "Pemohon & Proyek")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("approvals:admin.col_purpose", "Keterangan Pengeluaran")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("approvals:modals.attachments", "Bukti Lampiran")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">
+                  {t("approvals:admin.col_amount", "Nominal Pengajuan (IDR)")}
+                </TableHead>
+                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  {t("approvals:admin.col_status", "Status")}
+                </TableHead>
+                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                  {t("approvals:admin.col_actions", "Aksi")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableLoadingRow
+                  colSpan={7}
+                  message={t("common:action.loading", "Memuat data...")}
+                />
+              ) : filteredRequests.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -740,10 +736,9 @@ export function AdminApprovalsPage() {
                     </TableRow>
                   );
                 })
-                )}
-              </TableBody>
-            </Table>
-          )}
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

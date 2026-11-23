@@ -8,17 +8,15 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/empty";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { formatDateI18n, formatDateTimeI18n } from "@/lib/formatters";
@@ -45,42 +43,52 @@ export function PeriodListTable({
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="px-6 py-4 border-b border-border/70">
-        <CardTitle>{t("accounting:coa.card_periods_title", "Daftar Periode Bulanan")}</CardTitle>
-        <CardDescription>
-          {t("accounting:coa.card_periods_desc", "Status terbuka mengizinkan pencatatan dan posting jurnal transaksi pada bulan bersangkutan.")}
-        </CardDescription>
-      </CardHeader>
+      <CardHeaderWithInfo
+        title={t("accounting:coa.card_periods_title", "Daftar Periode Bulanan")}
+        description={t("accounting:coa.card_periods_desc", "Status terbuka mengizinkan pencatatan dan posting jurnal transaksi pada bulan bersangkutan.")}
+      />
       <CardContent className="p-0">
-        {loading ? (
-          <div className="flex items-center gap-2 py-8 px-6 text-sm text-muted-foreground">
-            <Spinner />
-            <span>{t("common:loading", "Memuat daftar periode...")}</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">
-                    {t("accounting:coa.col_period", "Periode")}
-                  </TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">
-                    {t("accounting:coa.col_date_range", "Rentang Tanggal")}
-                  </TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">
-                    {t("accounting:coa.col_status", "Status")}
-                  </TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">
-                    {t("accounting:coa.col_history", "Riwayat Tutup / Buka Kembali")}
-                  </TableHead>
-                  <TableHead className="text-center font-semibold text-xs sm:text-sm">
-                    {t("accounting:coa.col_actions", "Aksi")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {periods.map((p) => (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                {t("accounting:coa.col_period", "Periode")}
+              </TableHead>
+              <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                {t("accounting:coa.col_date_range", "Rentang Tanggal")}
+              </TableHead>
+              <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                {t("accounting:coa.col_status", "Status")}
+              </TableHead>
+              <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                {t("accounting:coa.col_history", "Riwayat Tutup / Buka Kembali")}
+              </TableHead>
+              <TableHead className="text-center font-semibold text-xs sm:text-sm">
+                {t("accounting:coa.col_actions", "Aksi")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableLoadingRow
+                colSpan={5}
+                message={t("accounting:closing.loading", "Memuat daftar periode akuntansi...")}
+              />
+            ) : periods.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={5} className="p-0">
+                  <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                    <p className="text-sm font-semibold text-foreground">
+                      {t("accounting:closing.empty_title", "Belum Ada Periode Pembukuan")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                      {t("accounting:closing.empty_desc", "Buka periode bulanan baru untuk memulai pencatatan jurnal dan proses tutup buku.")}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              periods.map((p) => (
                   <TableRow key={p.id} className="hover:bg-muted/30">
                     <TableCell className="font-semibold text-xs sm:text-sm text-foreground text-center">
                       {getLocalizedPeriodName(p.name, language)}
@@ -146,12 +154,11 @@ export function PeriodListTable({
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
     </Card>
   );
 }

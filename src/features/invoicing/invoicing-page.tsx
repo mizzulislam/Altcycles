@@ -21,16 +21,15 @@ import { Spinner } from "@/components/ui/empty";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import {
@@ -46,8 +45,6 @@ import {
   listProjects,
 } from "@/lib/data-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
-import { downloadCsvFile } from "@/lib/csv-exporter";
-import { downloadExcelSheet } from "@/lib/excel-exporter";
 import { formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -67,6 +64,11 @@ import {
 } from "@/lib/pdf-generator";
 import { validateInvoiceChecklist } from "@/lib/document-checklist";
 import { downloadWordBlob, generateDocumentWord } from "@/lib/word-generator";
+import {
+  exportInvoicesToCsv,
+  exportInvoicesToExcel,
+  exportInvoicesToPdf,
+} from "./components/invoice-export-handlers";
 import type {
   AccountRow,
   CompanyProfileRow,
@@ -539,103 +541,43 @@ export function InvoicingPage() {
   }
 
   async function handleExportInvoicesExcel() {
-    if (!bundle) return;
-    await downloadExcelSheet({
-      fileName: t("invoicing:export.excel_filename"),
-      sheetName: t("invoicing:export.excel_sheet"),
-      columns: [
-        { header: t("invoicing:export.col_invoice_no"), width: 22 },
-        { header: t("invoicing:export.col_issue_date"), width: 14 },
-        { header: t("invoicing:export.col_due_date"), width: 14 },
-        { header: t("invoicing:export.col_project"), width: 22 },
-        { header: t("invoicing:export.col_customer"), width: 26 },
-        { header: t("invoicing:export.col_total_amount"), width: 18 },
-        { header: t("invoicing:export.col_paid_amount"), width: 18 },
-        { header: t("invoicing:export.col_outstanding"), width: 18 },
-        { header: t("invoicing:export.col_payment_status"), width: 16 },
-      ],
-      rows: bundle.invoices.map((inv) => [
-        inv.invoice_number,
-        formatDateI18n(inv.invoice_date, language),
-        formatDateI18n(inv.due_date, language),
-        projectMap.get(inv.project_id)?.code ?? "-",
-        customerMap.get(inv.customer_id)?.name ?? t("common:role.user"),
-        inv.total_amount,
-        inv.paid_amount,
-        inv.total_amount - inv.paid_amount,
-        t(`invoicing:status.${inv.payment_status === "partial" ? "partially_paid" : inv.payment_status}`, inv.payment_status),
-      ]),
+    await exportInvoicesToExcel({
+      bundle,
+      company,
+      projectMap,
+      customerMap,
+      totalInvoiced,
+      totalOutstanding,
+      language,
+      t,
     });
-    await recordExportLog("SALES_INVOICES", "EXCEL");
-    toast.success(t("invoicing:export.toast_excel_success"));
   }
 
   async function handleExportInvoicesPdf() {
-    if (!bundle) return;
     const comp = company ?? (await getCompanyProfile());
-    const bytes = await generateDocumentPdf({
-      docTitle: t("invoicing:export.pdf_title"),
-      docSubtitle: t("invoicing:export.pdf_subtitle", {
-        invoiced: formatRupiah(totalInvoiced),
-        outstanding: formatRupiah(totalOutstanding),
-      }),
-      docNumber: `INV-RPT/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
-      docDate: new Date().toISOString().slice(0, 10),
+    await exportInvoicesToPdf({
+      bundle,
       company: comp,
-      orientation: "landscape",
-      tableColumns: [
-        { header: t("invoicing:export.col_invoice_no"), widthRatio: 0.15 },
-        { header: t("invoicing:export.col_issue_date"), widthRatio: 0.12 },
-        { header: t("invoicing:export.col_due_date"), widthRatio: 0.12 },
-        { header: t("invoicing:table.col_project_client"), widthRatio: 0.24 },
-        { header: t("invoicing:table.col_total_billing"), widthRatio: 0.14, align: "right" },
-        { header: t("invoicing:export.col_outstanding"), widthRatio: 0.13, align: "right" },
-        { header: t("invoicing:table.col_status"), widthRatio: 0.10 },
-      ],
-      tableRows: bundle.invoices.map((inv) => [
-        inv.invoice_number,
-        formatDateI18n(inv.invoice_date, language),
-        formatDateI18n(inv.due_date, language),
-        `${projectMap.get(inv.project_id)?.code ?? "-"} - ${customerMap.get(inv.customer_id)?.name ?? t("common:role.user")}`,
-        formatRupiah(inv.total_amount),
-        formatRupiah(inv.total_amount - inv.paid_amount),
-        t(`invoicing:status.${inv.payment_status === "partial" ? "partially_paid" : inv.payment_status}`, inv.payment_status),
-      ]),
-      rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
+      projectMap,
+      customerMap,
+      totalInvoiced,
+      totalOutstanding,
+      language,
+      t,
     });
-    downloadPdfBytes(bytes, t("invoicing:export.pdf_filename"));
-    await recordExportLog("SALES_INVOICES", "PDF");
   }
 
   async function handleExportInvoicesCsv() {
-    if (!bundle) return;
-    downloadCsvFile(
-      t("invoicing:export.csv_filename"),
-      [
-        t("invoicing:export.col_invoice_no"),
-        t("invoicing:export.col_issue_date"),
-        t("invoicing:export.col_due_date"),
-        t("invoicing:export.col_project"),
-        t("invoicing:export.col_customer"),
-        t("invoicing:export.col_total_amount"),
-        t("invoicing:export.col_paid_amount"),
-        t("invoicing:export.col_outstanding"),
-        t("invoicing:export.col_payment_status"),
-      ],
-      bundle.invoices.map((inv) => [
-        inv.invoice_number,
-        inv.invoice_date,
-        inv.due_date,
-        projectMap.get(inv.project_id)?.code ?? "-",
-        customerMap.get(inv.customer_id)?.name ?? t("common:role.user"),
-        inv.total_amount,
-        inv.paid_amount,
-        inv.total_amount - inv.paid_amount,
-        t(`invoicing:status.${inv.payment_status === "partial" ? "partially_paid" : inv.payment_status}`, inv.payment_status),
-      ]),
-    );
-    await recordExportLog("SALES_INVOICES", "CSV");
-    toast.success(t("invoicing:export.toast_csv_success"));
+    await exportInvoicesToCsv({
+      bundle,
+      company,
+      projectMap,
+      customerMap,
+      totalInvoiced,
+      totalOutstanding,
+      language,
+      t,
+    });
   }
 
   const totalInvoiced = (bundle?.invoices ?? []).reduce(
@@ -747,52 +689,49 @@ export function InvoicingPage() {
 
       {activeTab === "invoices" && (
         <Card className="overflow-hidden">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("invoicing:table.invoice_list_title", "Daftar Invoice Klien")}
-              </CardTitle>
-              <CardDescription>
-                {t("invoicing:table.invoice_list_desc", "Klik ikon catat bayar pada baris invoice ketika dana klien masuk ke rekening bank perusahaan untuk menerbitkan kuitansi otomatis.")}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setInvoiceSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                }
-                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
-              >
-                <ArrowUpDownIcon className="size-3.5" />
-                <span>
-                  {t("common:action.order", "Urutan")}:{" "}
-                  {invoiceSortOrder === "asc"
-                    ? t("common:action.oldest", "Terlama")
-                    : t("common:action.newest", "Terbaru")}
-                </span>
-              </Button>
-              <SectionEditControls
-                hasItems={sortedInvoices.length > 0}
-                isEditing={isEditingInvoices}
-                selectedCount={selectedInvoiceIds.length}
-                onStartEdit={() => setIsEditingInvoices(true)}
-                onCancelEdit={() => {
-                  setIsEditingInvoices(false);
-                  setSelectedInvoiceIds([]);
-                }}
-                onDeleteSelected={() =>
-                  setDeleteConfirm({
-                    section: "invoices",
-                    ids: selectedInvoiceIds,
-                    label: t("invoicing:table.selected_invoices", "invoice terpilih"),
-                  })
-                }
-              />
-            </div>
-          </CardHeader>
+          <CardHeaderWithInfo
+            title={t("invoicing:table.invoice_list_title", "Daftar Invoice Klien")}
+            description={t("invoicing:table.invoice_list_desc", "Klik ikon catat bayar pada baris invoice ketika dana klien masuk ke rekening bank perusahaan untuk menerbitkan kuitansi otomatis.")}
+            headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            controls={
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setInvoiceSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                  }
+                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+                >
+                  <ArrowUpDownIcon className="size-3.5" />
+                  <span>
+                    {t("common:action.order", "Urutan")}:{" "}
+                    {invoiceSortOrder === "asc"
+                      ? t("common:action.oldest", "Terlama")
+                      : t("common:action.newest", "Terbaru")}
+                  </span>
+                </Button>
+                <SectionEditControls
+                  hasItems={sortedInvoices.length > 0}
+                  isEditing={isEditingInvoices}
+                  selectedCount={selectedInvoiceIds.length}
+                  onStartEdit={() => setIsEditingInvoices(true)}
+                  onCancelEdit={() => {
+                    setIsEditingInvoices(false);
+                    setSelectedInvoiceIds([]);
+                  }}
+                  onDeleteSelected={() =>
+                    setDeleteConfirm({
+                      section: "invoices",
+                      ids: selectedInvoiceIds,
+                      label: t("invoicing:table.selected_invoices", "invoice terpilih"),
+                    })
+                  }
+                />
+              </div>
+            }
+          />
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -851,7 +790,12 @@ export function InvoicingPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedInvoices.length === 0 ? (
+                  {loading ? (
+                    <TableLoadingRow
+                      colSpan={7 + (isEditingInvoices ? 1 : 0)}
+                      message={t("invoicing:loading_invoices", "Memuat daftar invoice...")}
+                    />
+                  ) : sortedInvoices.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
                       <TableCell colSpan={7 + (isEditingInvoices ? 1 : 0)} className="p-0">
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -1010,28 +954,25 @@ export function InvoicingPage() {
 
       {activeTab === "aging" && (
         <Card className="overflow-visible">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("invoicing:aging.card_title", "Tabel Distribusi Umur Piutang Usaha (AR Aging Schedule)")}
-              </CardTitle>
-              <CardDescription>
-                {t("invoicing:aging.card_desc", "Klasifikasi piutang klien berdasarkan keterlambatan jatuh tempo untuk mitigasi arus kas dan penagihan berkala.")}
-              </CardDescription>
-            </div>
-            <div className="w-full sm:w-60 shrink-0 space-y-1">
-              <div className="h-6 flex items-center">
-                <span className="text-xs font-semibold text-foreground">
-                  {t("invoicing:action.filter_aging", "Tanggal Acuan Perhitungan")}
-                </span>
+          <CardHeaderWithInfo
+            title={t("invoicing:aging.card_title", "Tabel Distribusi Umur Piutang Usaha (AR Aging Schedule)")}
+            description={t("invoicing:aging.card_desc", "Klasifikasi piutang klien berdasarkan keterlambatan jatuh tempo untuk mitigasi arus kas dan penagihan berkala.")}
+            headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+            controls={
+              <div className="w-full sm:w-60 shrink-0 space-y-1">
+                <div className="h-6 flex items-center">
+                  <span className="text-xs font-semibold text-foreground">
+                    {t("invoicing:action.filter_aging", "Tanggal Acuan Perhitungan")}
+                  </span>
+                </div>
+                <DatePicker
+                  value={agingRefDate}
+                  onChange={setAgingRefDate}
+                  className="w-full [&_[data-slot=input]]:h-8 [&_[data-inner-input=true]]:text-xs"
+                />
               </div>
-              <DatePicker
-                value={agingRefDate}
-                onChange={setAgingRefDate}
-                className="w-full [&_[data-slot=input]]:h-8 [&_[data-inner-input=true]]:text-xs"
-              />
-            </div>
-          </CardHeader>
+            }
+          />
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -1057,7 +998,12 @@ export function InvoicingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {arAgingRows.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={6}
+                    message={t("invoicing:loading_aging", "Memuat analisis umur piutang...")}
+                  />
+                ) : arAgingRows.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={6} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -1126,52 +1072,49 @@ export function InvoicingPage() {
 
       {activeTab === "receipts" && (
         <Card className="overflow-hidden">
-          <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1 min-w-0">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("invoicing:receipts.card_title", "Daftar Kuitansi Resmi Penerimaan Dana")}
-              </CardTitle>
-              <CardDescription>
-                {t("invoicing:receipts.card_desc", "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat dan diverifikasi di rekening bank.")}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setReceiptSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-                }
-                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
-              >
-                <ArrowUpDownIcon className="size-3.5" />
-                <span>
-                  {t("common:action.order", "Urutan")}:{" "}
-                  {receiptSortOrder === "asc"
-                    ? t("common:action.oldest", "Terlama")
-                    : t("common:action.newest", "Terbaru")}
-                </span>
-              </Button>
-              <SectionEditControls
-                hasItems={sortedReceipts.length > 0}
-                isEditing={isEditingReceipts}
-                selectedCount={selectedReceiptIds.length}
-                onStartEdit={() => setIsEditingReceipts(true)}
-                onCancelEdit={() => {
-                  setIsEditingReceipts(false);
-                  setSelectedReceiptIds([]);
-                }}
-                onDeleteSelected={() =>
-                  setDeleteConfirm({
-                    section: "receipts",
-                    ids: selectedReceiptIds,
-                    label: t("invoicing:receipts.selected_receipts", "kuitansi terpilih"),
-                  })
-                }
-              />
-            </div>
-          </CardHeader>
+          <CardHeaderWithInfo
+            title={t("invoicing:receipts.card_title", "Daftar Kuitansi Resmi Penerimaan Dana")}
+            description={t("invoicing:receipts.card_desc", "Diterbitkan otomatis setiap kali pembayaran invoice klien dicatat dan diverifikasi di rekening bank.")}
+            headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            controls={
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setReceiptSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                  }
+                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+                >
+                  <ArrowUpDownIcon className="size-3.5" />
+                  <span>
+                    {t("common:action.order", "Urutan")}:{" "}
+                    {receiptSortOrder === "asc"
+                      ? t("common:action.oldest", "Terlama")
+                      : t("common:action.newest", "Terbaru")}
+                  </span>
+                </Button>
+                <SectionEditControls
+                  hasItems={sortedReceipts.length > 0}
+                  isEditing={isEditingReceipts}
+                  selectedCount={selectedReceiptIds.length}
+                  onStartEdit={() => setIsEditingReceipts(true)}
+                  onCancelEdit={() => {
+                    setIsEditingReceipts(false);
+                    setSelectedReceiptIds([]);
+                  }}
+                  onDeleteSelected={() =>
+                    setDeleteConfirm({
+                      section: "receipts",
+                      ids: selectedReceiptIds,
+                      label: t("invoicing:receipts.selected_receipts", "kuitansi terpilih"),
+                    })
+                  }
+                />
+              </div>
+            }
+          />
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -1218,7 +1161,12 @@ export function InvoicingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedReceipts.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={5 + (isEditingReceipts ? 1 : 0)}
+                    message={t("invoicing:loading_receipts", "Memuat daftar kuitansi...")}
+                  />
+                ) : sortedReceipts.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={5 + (isEditingReceipts ? 1 : 0)} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">

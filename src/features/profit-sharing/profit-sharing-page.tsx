@@ -17,10 +17,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +51,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { getCompanyProfile, listProfiles, listProjects } from "@/lib/data-service";
@@ -497,14 +497,10 @@ export function ProfitSharingPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-2 items-stretch">
           <Card className="overflow-hidden flex flex-col">
-            <CardHeader className="px-6 py-4 border-b border-border/70">
-              <CardTitle className="text-base sm:text-lg font-bold">
-                {t("profit_sharing:scheme_card_title")}
-              </CardTitle>
-              <CardDescription>
-                {t("profit_sharing:scheme_card_desc")}
-              </CardDescription>
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("profit_sharing:scheme_card_title")}
+              description={t("profit_sharing:scheme_card_desc")}
+            />
             <CardContent className="p-0 flex-1 flex flex-col">
               <Table>
                 <TableHeader>
@@ -514,7 +510,12 @@ export function ProfitSharingPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {schemes.length === 0 ? (
+                  {loading ? (
+                    <TableLoadingRow
+                      colSpan={2}
+                      message={t("profit_sharing:loading", "Memuat skema bagi hasil...")}
+                    />
+                  ) : schemes.length === 0 ? (
                     <TableRow className="hover:bg-transparent">
                       <TableCell colSpan={2} className="p-0">
                         <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -548,28 +549,27 @@ export function ProfitSharingPage() {
           </Card>
 
           <Card className="overflow-hidden flex flex-col">
-            <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1 min-w-0">
-                <CardTitle className="text-base sm:text-lg font-bold">
-                  {t("profit_sharing:result_card_title")}
-                </CardTitle>
-                <CardDescription>
-                  {result?.finalized_at
-                    ? t("profit_sharing:finalized_at_label", { date: formatDateTimeI18n(result.finalized_at, language) })
-                    : t("profit_sharing:draft_simulation_desc")}
-                </CardDescription>
-              </div>
-              {result ? (
-                <div className="shrink-0 self-start sm:self-center">
-                  <StatusBadge
-                    tone={isFinalized ? "success" : "warning"}
-                    label={
-                      isFinalized ? t("profit_sharing:badge_finalized") : t("profit_sharing:badge_draft")
-                    }
-                  />
-                </div>
-              ) : null}
-            </CardHeader>
+            <CardHeaderWithInfo
+              title={t("profit_sharing:result_card_title")}
+              description={
+                result?.finalized_at
+                  ? t("profit_sharing:finalized_at_label", { date: formatDateTimeI18n(result.finalized_at, language) })
+                  : t("profit_sharing:draft_simulation_desc")
+              }
+              headerClassName="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              controls={
+                result ? (
+                  <div className="shrink-0 self-start sm:self-center">
+                    <StatusBadge
+                      tone={isFinalized ? "success" : "warning"}
+                      label={
+                        isFinalized ? t("profit_sharing:badge_finalized") : t("profit_sharing:badge_draft")
+                      }
+                    />
+                  </div>
+                ) : null
+              }
+            />
             <CardContent className="p-0 flex-1 flex flex-col">
               {!result ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center bg-muted/10">

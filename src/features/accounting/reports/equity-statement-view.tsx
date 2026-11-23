@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Table,
   TableBody,
@@ -150,23 +148,14 @@ export function EquityStatementView({
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-lg font-bold text-foreground">
-            {t("accounting:reports.equity_report_as_of", {
-              date: formatDateI18n(endDate, language),
-              defaultValue: `Laporan Perubahan Ekuitas per ${formatDateI18n(endDate, language)}`,
-            })}
-          </CardTitle>
-          <CardDescription>
-            {t("accounting:reports.equity_report_desc", "Menyajikan mutasi laba ditahan dan saldo modal disetor selama periode")}{" "}
-            <span className="font-semibold text-foreground">
-              {formatDateI18n(startDate, language)} &minus; {formatDateI18n(endDate, language)}
-            </span>
-            .
-          </CardDescription>
-        </div>
-      </CardHeader>
+      <CardHeaderWithInfo
+        title={t("accounting:reports.equity_report_as_of", {
+          date: formatDateI18n(endDate, language),
+          defaultValue: `Laporan Perubahan Ekuitas per ${formatDateI18n(endDate, language)}`,
+        })}
+        description={`${t("accounting:reports.equity_report_desc", "Menyajikan mutasi laba ditahan dan saldo modal disetor selama periode")} ${formatDateI18n(startDate, language)} - ${formatDateI18n(endDate, language)}.`}
+        headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
+      />
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>

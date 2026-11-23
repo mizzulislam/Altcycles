@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -202,48 +200,46 @@ export function CustomerTabContent({
   return (
     <>
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties:customers.title", "Daftar Pelanggan / Klien Resmi")}</CardTitle>
-            <CardDescription>
-              {t("parties:customers.desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportCustomersExcel}
-              onExportPdf={handleExportCustomersPdf}
-              onExportCsv={handleExportCustomersCsv}
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 cursor-pointer"
-              onClick={() => {
-                setCstForm({
-                  id: undefined,
-                  code: `CST-00${customers.length + 1}`,
-                  name: "",
-                  company_name: "",
-                  contact_person: "",
-                  contact_title: "",
-                  email: "",
-                  phone: "",
-                  address: "",
-                  logo_storage_path: null,
-                  signature_storage_path: null,
-                  paraf_storage_path: null,
-                  is_active: true,
-                });
-                setCstOpen(true);
-              }}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("parties:customers.add_btn", "Tambah Pelanggan")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("parties:customers.title", "Daftar Pelanggan / Klien Resmi")}
+          description={t("parties:customers.desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
+          controls={
+            <div className="flex items-center gap-2 shrink-0">
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportCustomersExcel}
+                onExportPdf={handleExportCustomersPdf}
+                onExportCsv={handleExportCustomersCsv}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 cursor-pointer"
+                onClick={() => {
+                  setCstForm({
+                    id: undefined,
+                    code: `CST-00${customers.length + 1}`,
+                    name: "",
+                    company_name: "",
+                    contact_person: "",
+                    contact_title: "",
+                    email: "",
+                    phone: "",
+                    address: "",
+                    logo_storage_path: null,
+                    signature_storage_path: null,
+                    paraf_storage_path: null,
+                    is_active: true,
+                  });
+                  setCstOpen(true);
+                }}
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("parties:customers.add_btn", "Tambah Pelanggan")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

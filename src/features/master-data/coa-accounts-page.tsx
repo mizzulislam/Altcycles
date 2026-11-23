@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -403,38 +401,37 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
 
       {/* 2. Card Daftar Bagan Akun (Chart of Accounts) */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("accounting:coa.card_coa_title", "Daftar Bagan Akun")}</CardTitle>
-            <CardDescription>
-              {t("accounting:coa.card_coa_desc", "Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <Input
-              placeholder={t("accounting:coa.search_placeholder", "Cari kode atau nama akun...")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-56 sm:w-64 h-9 rounded-xl bg-background"
-            />
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
-                <SelectValue placeholder={t("accounting:coa.all_types", "Semua Tipe Akun")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">{t("accounting:coa.all_types", "Semua Tipe Akun")}</SelectItem>
-                  <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
-                  <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
-                  <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
-                  <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
-                  <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
-                  <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("accounting:coa.card_coa_title", "Daftar Bagan Akun")}
+          description={t("accounting:coa.card_coa_desc", "Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.")}
+          headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <Input
+                placeholder={t("accounting:coa.search_placeholder", "Cari kode atau nama akun...")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-56 sm:w-64 h-9 rounded-xl bg-background"
+              />
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
+                  <SelectValue placeholder={t("accounting:coa.all_types", "Semua Tipe Akun")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">{t("accounting:coa.all_types", "Semua Tipe Akun")}</SelectItem>
+                    <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
+                    <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
+                    <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
+                    <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
+                    <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
+                    <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

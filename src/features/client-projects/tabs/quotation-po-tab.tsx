@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { EmptyState } from "@/components/ui/empty";
@@ -105,38 +103,36 @@ export function QuotationPoTab({
     <div className="flex flex-col gap-5">
       {/* Kartu 1: Quotation */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">{t("projects:quotations.card_title")}</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:quotations.card_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.quotations.length > 0}
-              isEditing={isSectionEditing("quotations")}
-              selectedCount={getSelectedIds("quotations").length}
-              onStartEdit={() => setSectionEditing("quotations", true)}
-              onCancelEdit={() => setSectionEditing("quotations", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "quotations",
-                  ids: getSelectedIds("quotations"),
-                  label: t("projects:quotations.select_all"),
-                })
-              }
-            />
-            <Button
-              type="button"
-              onClick={onOpenCreateQuotation}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("projects:quotations.btn_create")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("projects:quotations.card_title")}
+          description={t("projects:quotations.card_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.quotations.length > 0}
+                isEditing={isSectionEditing("quotations")}
+                selectedCount={getSelectedIds("quotations").length}
+                onStartEdit={() => setSectionEditing("quotations", true)}
+                onCancelEdit={() => setSectionEditing("quotations", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "quotations",
+                    ids: getSelectedIds("quotations"),
+                    label: t("projects:quotations.select_all"),
+                  })
+                }
+              />
+              <Button
+                type="button"
+                onClick={onOpenCreateQuotation}
+                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("projects:quotations.btn_create")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -268,32 +264,28 @@ export function QuotationPoTab({
 
       {/* Kartu 2: PO Klien */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects:client_po.card_title")}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:client_po.card_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.clientPos.length > 0}
-              isEditing={isSectionEditing("clientPos")}
-              selectedCount={getSelectedIds("clientPos").length}
-              onStartEdit={() => setSectionEditing("clientPos", true)}
-              onCancelEdit={() => setSectionEditing("clientPos", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "clientPos",
-                  ids: getSelectedIds("clientPos"),
-                  label: t("projects:client_po.select_all"),
-                })
-              }
-            />
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("projects:client_po.card_title")}
+          description={t("projects:client_po.card_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.clientPos.length > 0}
+                isEditing={isSectionEditing("clientPos")}
+                selectedCount={getSelectedIds("clientPos").length}
+                onStartEdit={() => setSectionEditing("clientPos", true)}
+                onCancelEdit={() => setSectionEditing("clientPos", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "clientPos",
+                    ids: getSelectedIds("clientPos"),
+                    label: t("projects:client_po.select_all"),
+                  })
+                }
+              />
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

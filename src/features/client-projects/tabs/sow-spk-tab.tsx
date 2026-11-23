@@ -4,10 +4,8 @@ import { useLanguage } from "@/lib/i18n";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { EmptyState } from "@/components/ui/empty";
@@ -85,40 +83,36 @@ export function SowSpkTab({
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1 min-w-0">
-          <CardTitle>
-            {t("projects:sow_spk.card_title")}
-          </CardTitle>
-          <CardDescription>
-            {t("projects:sow_spk.card_desc")}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <SectionEditControls
-            hasItems={bundle.documents.length > 0}
-            isEditing={isSectionEditing("documents")}
-            selectedCount={getSelectedIds("documents").length}
-            onStartEdit={() => setSectionEditing("documents", true)}
-            onCancelEdit={() => setSectionEditing("documents", false)}
-            onDeleteSelected={() =>
-              setDeleteConfirm({
-                section: "documents",
-                ids: getSelectedIds("documents"),
-                label: t("projects:sow_spk.select_all"),
-              })
-            }
-          />
-          <Button
-            type="button"
-            onClick={onOpenCreateDoc}
-            className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-          >
-            <PlusIcon data-icon="inline-start" />
-            {t("projects:sow_spk.btn_create")}
-          </Button>
-        </div>
-      </CardHeader>
+      <CardHeaderWithInfo
+        title={t("projects:sow_spk.card_title")}
+        description={t("projects:sow_spk.card_desc")}
+        controls={
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <SectionEditControls
+              hasItems={bundle.documents.length > 0}
+              isEditing={isSectionEditing("documents")}
+              selectedCount={getSelectedIds("documents").length}
+              onStartEdit={() => setSectionEditing("documents", true)}
+              onCancelEdit={() => setSectionEditing("documents", false)}
+              onDeleteSelected={() =>
+                setDeleteConfirm({
+                  section: "documents",
+                  ids: getSelectedIds("documents"),
+                  label: t("projects:sow_spk.select_all"),
+                })
+              }
+            />
+            <Button
+              type="button"
+              onClick={onOpenCreateDoc}
+              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <PlusIcon data-icon="inline-start" />
+              {t("projects:sow_spk.btn_create")}
+            </Button>
+          </div>
+        }
+      />
       <CardContent className="p-0">
         <Table>
           <TableHeader>

@@ -22,10 +22,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +57,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
@@ -375,90 +374,81 @@ export function ProjectsPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects.card_title", "Daftar Proyek Altvira")}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                "projects.card_desc",
-                "Induk referensi PO pembelian, anggaran, termin penagihan, dan bagi hasil.",
-              )}
-            </CardDescription>
-          </div>
-          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 shrink-0">
-            <Input
-              placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-44 h-9 rounded-xl text-xs sm:text-sm">
-                <SelectValue placeholder={t("status.all", "Semua Status")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">{t("status.all", "Semua Status")}</SelectItem>
-                  <SelectItem value="active">{t("status.active", "Aktif")}</SelectItem>
-                  <SelectItem value="draft">{t("status.draft", "Draf")}</SelectItem>
-                  <SelectItem value="on_hold">{t("status.on_hold", "Ditunda")}</SelectItem>
-                  <SelectItem value="completed">{t("status.completed", "Selesai")}</SelectItem>
-                  <SelectItem value="cancelled">{t("status.cancelled", "Dibatalkan")}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+        <CardHeaderWithInfo
+          title={t("projects.card_title", "Daftar Proyek Altvira")}
+          description={t(
+            "projects.card_desc",
+            "Induk referensi PO pembelian, anggaran, termin penagihan, dan bagi hasil.",
+          )}
+          headerClassName="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+          controls={
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 shrink-0">
+              <Input
+                placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
+              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-44 h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder={t("status.all", "Semua Status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">{t("status.all", "Semua Status")}</SelectItem>
+                    <SelectItem value="active">{t("status.active", "Aktif")}</SelectItem>
+                    <SelectItem value="draft">{t("status.draft", "Draf")}</SelectItem>
+                    <SelectItem value="on_hold">{t("status.on_hold", "Ditunda")}</SelectItem>
+                    <SelectItem value="completed">{t("status.completed", "Selesai")}</SelectItem>
+                    <SelectItem value="cancelled">{t("status.cancelled", "Dibatalkan")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
 
-            {filteredProjects.length === 0 && !isEditMode ? null : !isEditMode ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
-              >
-                <PencilIcon className="size-3.5" />
-                <span>{t("action.edit", "Edit")}</span>
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
+              {filteredProjects.length === 0 && !isEditMode ? null : !isEditMode ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setIsEditMode(false);
-                    setSelectedProjectIds([]);
-                  }}
-                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                  onClick={() => setIsEditMode(true)}
+                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
                 >
-                  {t("action.cancel", "Batal")}
+                  <PencilIcon className="size-3.5" />
+                  <span>{t("action.edit", "Edit")}</span>
                 </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setDeleteTargetIds(selectedProjectIds)}
-                  disabled={selectedProjectIds.length === 0}
-                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
-                >
-                  {t("action.delete_selected", "Hapus Pilihan")} ({selectedProjectIds.length})
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>{t("projects:loading_projects")}</span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setSelectedProjectIds([]);
+                    }}
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                  >
+                    {t("action.cancel", "Batal")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteTargetIds(selectedProjectIds)}
+                    disabled={selectedProjectIds.length === 0}
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                  >
+                    {t("action.delete_selected", "Hapus Pilihan")} ({selectedProjectIds.length})
+                  </Button>
+                </div>
+              )}
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/20 hover:bg-muted/20">
+          }
+        />
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/20 hover:bg-muted/20">
                   {isEditMode && (
                     <TableHead className="w-12 text-center align-middle px-3">
                       <div className="flex items-center justify-center">
@@ -494,7 +484,12 @@ export function ProjectsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProjects.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={isEditMode ? 9 : 8}
+                    message={t("projects:loading_projects")}
+                  />
+                ) : filteredProjects.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={isEditMode ? 9 : 8} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
@@ -634,10 +629,10 @@ export function ProjectsPage() {
                       </TableCell>
                     </TableRow>
                   );
-                }))}
-              </TableBody>
-            </Table>
-          )}
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

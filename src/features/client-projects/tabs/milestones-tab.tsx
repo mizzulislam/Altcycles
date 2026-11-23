@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -82,73 +80,69 @@ export function MilestonesTab({
     <div className="flex flex-col gap-5">
       {/* Card 1A: Jadwal Termin Penagihan */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects:milestones.card_title")}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:milestones.card_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {bundle.milestones.length > 0 && (
-              <ExportDownloadMenu
-                label={t("common:action.export_download")}
-                onExportExcel={onExportMilestonesExcel}
-                onExportPdf={onExportMilestonesPdf}
-                onExportCsv={onExportMilestonesCsv}
+        <CardHeaderWithInfo
+          title={t("projects:milestones.card_title")}
+          description={t("projects:milestones.card_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {bundle.milestones.length > 0 && (
+                <ExportDownloadMenu
+                  label={t("common:action.export_download")}
+                  onExportExcel={onExportMilestonesExcel}
+                  onExportPdf={onExportMilestonesPdf}
+                  onExportCsv={onExportMilestonesCsv}
+                />
+              )}
+              <SectionEditControls
+                hasItems={bundle.milestones.length > 0}
+                isEditing={isSectionEditing("milestones")}
+                selectedCount={getSelectedIds("milestones").length}
+                onStartEdit={() => setSectionEditing("milestones", true)}
+                onCancelEdit={() => setSectionEditing("milestones", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "milestones",
+                    ids: getSelectedIds("milestones"),
+                    label: t("projects:milestones.delete_confirm_label"),
+                  })
+                }
               />
-            )}
-            <SectionEditControls
-              hasItems={bundle.milestones.length > 0}
-              isEditing={isSectionEditing("milestones")}
-              selectedCount={getSelectedIds("milestones").length}
-              onStartEdit={() => setSectionEditing("milestones", true)}
-              onCancelEdit={() => setSectionEditing("milestones", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "milestones",
-                  ids: getSelectedIds("milestones"),
-                  label: t("projects:milestones.delete_confirm_label"),
-                })
-              }
-            />
-            {(() => {
-              const hasLockedMilestone = bundle.milestones.some(
-                (m) =>
-                  bundle.bakpList.some((b) => b.milestone_id === m.id) ||
-                  bundle.invoices.some((inv) => inv.milestone_id === m.id),
-              );
-              const isResetDisabled =
-                hasLockedMilestone && bundle.milestones.length > 0;
-              return (
-                <Button
-                  type="button"
-                  disabled={isResetDisabled}
-                  title={
-                    isResetDisabled
-                      ? t("projects:milestones.btn_reset_disabled_title")
-                      : bundle.milestones.length > 0
-                        ? t("projects:milestones.btn_reset")
-                        : t("projects:milestones.btn_setup")
-                  }
-                  onClick={openMilestonesEditor}
-                  className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-                >
-                  {bundle.milestones.length > 0 ? (
-                    <RotateCcwIcon data-icon="inline-start" />
-                  ) : (
-                    <PlusIcon data-icon="inline-start" />
-                  )}
-                  {bundle.milestones.length > 0
-                    ? t("projects:milestones.btn_reset")
-                    : t("projects:milestones.btn_setup")}
-                </Button>
-              );
-            })()}
-          </div>
-        </CardHeader>
+              {(() => {
+                const hasLockedMilestone = bundle.milestones.some(
+                  (m) =>
+                    bundle.bakpList.some((b) => b.milestone_id === m.id) ||
+                    bundle.invoices.some((inv) => inv.milestone_id === m.id),
+                );
+                const isResetDisabled =
+                  hasLockedMilestone && bundle.milestones.length > 0;
+                return (
+                  <Button
+                    type="button"
+                    disabled={isResetDisabled}
+                    title={
+                      isResetDisabled
+                        ? t("projects:milestones.btn_reset_disabled_title")
+                        : bundle.milestones.length > 0
+                          ? t("projects:milestones.btn_reset")
+                          : t("projects:milestones.btn_setup")
+                    }
+                    onClick={openMilestonesEditor}
+                    className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+                  >
+                    {bundle.milestones.length > 0 ? (
+                      <RotateCcwIcon data-icon="inline-start" />
+                    ) : (
+                      <PlusIcon data-icon="inline-start" />
+                    )}
+                    {bundle.milestones.length > 0
+                      ? t("projects:milestones.btn_reset")
+                      : t("projects:milestones.btn_setup")}
+                  </Button>
+                );
+              })()}
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -300,40 +294,36 @@ export function MilestonesTab({
 
       {/* Card 1B: Pengakuan Pendapatan & Persentase Penyelesaian */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects:milestones.progress_card_title")}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:milestones.progress_card_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.progressEntries.length > 0}
-              isEditing={isSectionEditing("progress")}
-              selectedCount={getSelectedIds("progress").length}
-              onStartEdit={() => setSectionEditing("progress", true)}
-              onCancelEdit={() => setSectionEditing("progress", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "progress",
-                  ids: getSelectedIds("progress"),
-                  label: "catatan progres terpilih",
-                })
-              }
-            />
-            <Button
-              type="button"
-              onClick={openRecordProgressDialog}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("projects:milestones.btn_record_progress")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("projects:milestones.progress_card_title")}
+          description={t("projects:milestones.progress_card_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.progressEntries.length > 0}
+                isEditing={isSectionEditing("progress")}
+                selectedCount={getSelectedIds("progress").length}
+                onStartEdit={() => setSectionEditing("progress", true)}
+                onCancelEdit={() => setSectionEditing("progress", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "progress",
+                    ids: getSelectedIds("progress"),
+                    label: "catatan progres terpilih",
+                  })
+                }
+              />
+              <Button
+                type="button"
+                onClick={openRecordProgressDialog}
+                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("projects:milestones.btn_record_progress")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

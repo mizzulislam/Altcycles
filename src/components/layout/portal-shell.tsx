@@ -6,6 +6,7 @@ import {
   BellIcon,
   CheckIcon,
   ChevronDownIcon,
+  FlaskConicalIcon,
   MenuIcon,
   SearchIcon,
   XIcon,
@@ -15,6 +16,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
+import { GameDialogProvider } from "@/components/shared/game-dialog";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
 import { initSupabaseRealtimeSync } from "@/lib/realtime-cache";
@@ -23,6 +25,7 @@ import {
   listMyNotifications,
   markAllNotificationsRead,
 } from "@/lib/operations-service";
+import { getCompanyProfile } from "@/lib/data-service";
 import { cn } from "@/lib/utils";
 import type { NotificationRow, UserRole } from "@/types/database.types";
 import {
@@ -80,6 +83,21 @@ export function PortalShell() {
 
   // State Panel Pintasan Keyboard (Drawer Samping Kanan)
   const [isShortcutsPanelOpen, setIsShortcutsPanelOpen] = React.useState(false);
+
+  // Status Testing Mode / Kunci Jurnal
+  const [isTestingMode, setIsTestingMode] = React.useState(false);
+
+  React.useEffect(() => {
+    let mounted = true;
+    void getCompanyProfile().then((cp) => {
+      if (mounted && cp) {
+        setIsTestingMode(cp.journal_lock_enabled === false);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [location.pathname]);
 
   // Hook Pintasan Keyboard Global (Pemicu '/', '?', urutan "G lalu X", dan kombinasi modifier)
   useGlobalShortcuts({
@@ -219,15 +237,9 @@ export function PortalShell() {
     }
   }, [location.pathname, profile, activeRole]);
 
-  if (!profile) {
-    return null;
-  }
-
-  const navStructure = getNavStructureForRole(currentRole, t);
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
-
-  // Otomatis catat riwayat kunjungan saat rute berubah
+  // Otomatis catat riwayat kunjungan saat rute berubah (panggil sebelum early-return agar mematuhi React Rules of Hooks)
   React.useEffect(() => {
+    if (!profile) return;
     const fullPath = location.pathname + location.search;
     const match = NAVIGATION_SHORTCUTS_REGISTRY.find(
       (item) => item.route === fullPath || item.route === location.pathname,
@@ -235,7 +247,14 @@ export function PortalShell() {
     if (match) {
       recordPageVisit(match.id, currentRole);
     }
-  }, [location.pathname, location.search, currentRole]);
+  }, [location.pathname, location.search, profile, currentRole]);
+
+  if (!profile) {
+    return null;
+  }
+
+  const navStructure = getNavStructureForRole(currentRole, t);
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   async function handleLogout() {
     setIsUserMenuOpen(false);
@@ -272,7 +291,8 @@ export function PortalShell() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
+    <GameDialogProvider>
+      <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
       {/* Fullscreen Overlay Loader saat Ganti Peran */}
       <div
         className={cn(
@@ -398,6 +418,16 @@ export function PortalShell() {
 
           {/* Sisi Kanan Header: Pencarian Halaman + Mode Aktif + Notifikasi + Tema */}
           <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
+            {/* Indikator Mode Testing / Sandbox Sistem */}
+            {isTestingMode && (
+              <ActionTooltip content="Mode Testing aktif: Transaksi jurnal dapat diedit/dihapus untuk pengujian" side="bottom">
+                <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-semibold select-none shadow-2xs">
+                  <FlaskConicalIcon className="size-3.5 animate-pulse text-amber-500" />
+                  <span>Mode Testing</span>
+                </div>
+              </ActionTooltip>
+            )}
+
             {/* Tombol Pemicu Command Palette (Field Search Header) */}
             <div className="flex items-center">
               <ActionTooltip content={t("common:search.placeholder", "Cari halaman...")} side="bottom">
@@ -553,5 +583,6 @@ export function PortalShell() {
         currentRole={currentRole}
       />
     </div>
+    </GameDialogProvider>
   );
 }

@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -210,43 +208,41 @@ export function ProductServiceTabContent({
   return (
     <>
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>{t("parties:products.title", "Katalog Produk & Layanan Altvira")}</CardTitle>
-            <CardDescription>
-              {t("parties:products.desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportProductsExcel}
-              onExportPdf={handleExportProductsPdf}
-              onExportCsv={handleExportProductsCsv}
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="shrink-0 cursor-pointer"
-              onClick={() => {
-                setPrdForm({
-                  id: undefined,
-                  code: `SRV-00${products.length + 1}`,
-                  name: "",
-                  category: "Software Development",
-                  description: "",
-                  unit: "Proyek",
-                  price: 0,
-                  is_active: true,
-                });
-                setPrdOpen(true);
-              }}
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("parties:products.add_btn", "Tambah Layanan / Produk")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("parties:products.title", "Katalog Produk & Layanan Altvira")}
+          description={t("parties:products.desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
+          controls={
+            <div className="flex items-center gap-2 shrink-0">
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportProductsExcel}
+                onExportPdf={handleExportProductsPdf}
+                onExportCsv={handleExportProductsCsv}
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 cursor-pointer"
+                onClick={() => {
+                  setPrdForm({
+                    id: undefined,
+                    code: `SRV-00${products.length + 1}`,
+                    name: "",
+                    category: "Software Development",
+                    description: "",
+                    unit: "Proyek",
+                    price: 0,
+                    is_active: true,
+                  });
+                  setPrdOpen(true);
+                }}
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("parties:products.add_btn", "Tambah Layanan / Produk")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>

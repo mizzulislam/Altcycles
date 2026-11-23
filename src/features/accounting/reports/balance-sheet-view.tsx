@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Table,
   TableBody,
@@ -232,29 +230,27 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
 
   return (
     <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70">
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-lg font-bold text-foreground">
-            {language === "en" ? "Statement of Financial Position (Balance Sheet) as of " : "Laporan Posisi Keuangan (Neraca) per "}
-            {formatDateI18n(endDate, language)}
-          </CardTitle>
-          <CardDescription>
-            {language === "en"
-              ? "Presents accrual-basis Assets, Liabilities, Equity, and project Contract Assets/Liabilities."
-              : "Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual."}
-          </CardDescription>
-        </div>
-        <div className="flex items-center gap-3">
-          <StatusBadge
-            tone={balanceSheet.isBalanced ? "success" : "destructive"}
-            label={
-              balanceSheet.isBalanced
-                ? (language === "en" ? "Balance Sheet Balanced" : "Neraca Seimbang")
-                : (language === "en" ? "Balance Sheet Difference" : "Selisih Neraca")
-            }
-          />
-        </div>
-      </CardHeader>
+      <CardHeaderWithInfo
+        title={`${language === "en" ? "Statement of Financial Position (Balance Sheet) as of " : "Laporan Posisi Keuangan (Neraca) per "}${formatDateI18n(endDate, language)}`}
+        description={
+          language === "en"
+            ? "Presents accrual-basis Assets, Liabilities, Equity, and project Contract Assets/Liabilities."
+            : "Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual."
+        }
+        headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
+        controls={
+          <div className="flex items-center gap-3">
+            <StatusBadge
+              tone={balanceSheet.isBalanced ? "success" : "destructive"}
+              label={
+                balanceSheet.isBalanced
+                  ? (language === "en" ? "Balance Sheet Balanced" : "Neraca Seimbang")
+                  : (language === "en" ? "Balance Sheet Difference" : "Selisih Neraca")
+              }
+            />
+          </div>
+        }
+      />
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>

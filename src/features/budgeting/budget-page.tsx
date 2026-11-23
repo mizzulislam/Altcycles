@@ -19,10 +19,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +45,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { downloadCsvFile } from "@/lib/csv-exporter";
@@ -460,45 +459,41 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="space-y-1 min-w-0">
-            <CardTitle>
-              {t("budgeting:common.card_title")}
-            </CardTitle>
-            <CardDescription>
-              {t("budgeting:common.card_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-              className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
-            >
-              <ArrowUpDownIcon className="size-3.5" />
-              <span>
-                {t("common:action.order", "Urutan")}:{" "}
-                {sortOrder === "asc"
-                  ? t("common:action.oldest", "Terlama")
-                  : t("common:action.newest", "Terbaru")}
-              </span>
-            </Button>
-            {mode === "admin" && (
+        <CardHeaderWithInfo
+          title={t("budgeting:common.card_title")}
+          description={t("budgeting:common.card_desc")}
+          controls={
+            <div className="flex items-center gap-2.5 shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => openBudgetEditor(true)}
-                className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 text-primary dark:text-sky-400 hover:text-primary dark:hover:text-sky-400"
+                onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+                className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
               >
-                <PencilIcon className="size-3.5" />
-                <span>{t("common:action.edit", "Edit")}</span>
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>
+                  {t("common:action.order", "Urutan")}:{" "}
+                  {sortOrder === "asc"
+                    ? t("common:action.oldest", "Terlama")
+                    : t("common:action.newest", "Terbaru")}
+                </span>
               </Button>
-            )}
-          </div>
-        </CardHeader>
+              {mode === "admin" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openBudgetEditor(true)}
+                  className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 text-primary dark:text-sky-400 hover:text-primary dark:hover:text-sky-400"
+                >
+                  <PencilIcon className="size-3.5" />
+                  <span>{t("common:action.edit", "Edit")}</span>
+                </Button>
+              )}
+            </div>
+          }
+        />
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -530,7 +525,12 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.length === 0 ? (
+                {loading ? (
+                  <TableLoadingRow
+                    colSpan={6}
+                    message={t("budgeting:common.loading", "Memuat data anggaran...")}
+                  />
+                ) : rows.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={6} className="p-0">
                       <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">

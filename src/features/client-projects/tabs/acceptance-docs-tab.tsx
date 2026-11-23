@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { EmptyState } from "@/components/ui/empty";
@@ -98,46 +96,42 @@ export function AcceptanceDocsTab({
     <div className="flex flex-col gap-5">
       {/* Card 4A: BAKP */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects:acceptance.bakp_title")}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:acceptance.bakp_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.bakpList.length > 0}
-              isEditing={isSectionEditing("bakp")}
-              selectedCount={getSelectedIds("bakp").length}
-              onStartEdit={() => setSectionEditing("bakp", true)}
-              onCancelEdit={() => setSectionEditing("bakp", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "bakp",
-                  ids: getSelectedIds("bakp"),
-                  label: t("projects:acceptance.select_all_bakp"),
-                })
-              }
-            />
-            <Button
-              type="button"
-              disabled={bundle.milestones.length === 0}
-              title={
-                bundle.milestones.length === 0
-                  ? t("projects:acceptance.btn_bakp_disabled_title")
-                  : t("projects:acceptance.btn_create_bakp")
-              }
-              onClick={openBakpDialog}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("projects:acceptance.btn_create_bakp")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("projects:acceptance.bakp_title")}
+          description={t("projects:acceptance.bakp_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.bakpList.length > 0}
+                isEditing={isSectionEditing("bakp")}
+                selectedCount={getSelectedIds("bakp").length}
+                onStartEdit={() => setSectionEditing("bakp", true)}
+                onCancelEdit={() => setSectionEditing("bakp", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "bakp",
+                    ids: getSelectedIds("bakp"),
+                    label: t("projects:acceptance.select_all_bakp"),
+                  })
+                }
+              />
+              <Button
+                type="button"
+                disabled={bundle.milestones.length === 0}
+                title={
+                  bundle.milestones.length === 0
+                    ? t("projects:acceptance.btn_bakp_disabled_title")
+                    : t("projects:acceptance.btn_create_bakp")
+                }
+                onClick={openBakpDialog}
+                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("projects:acceptance.btn_create_bakp")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -285,40 +279,36 @@ export function AcceptanceDocsTab({
 
       {/* Card 4B: UAT */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {t("projects:acceptance.uat_title")}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {t("projects:acceptance.uat_desc")}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.uatList.length > 0}
-              isEditing={isSectionEditing("uat")}
-              selectedCount={getSelectedIds("uat").length}
-              onStartEdit={() => setSectionEditing("uat", true)}
-              onCancelEdit={() => setSectionEditing("uat", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "uat",
-                  ids: getSelectedIds("uat"),
-                  label: t("projects:acceptance.select_all_uat"),
-                })
-              }
-            />
-            <Button
-              type="button"
-              onClick={openUatDialog}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("projects:acceptance.btn_record_uat")}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={t("projects:acceptance.uat_title")}
+          description={t("projects:acceptance.uat_desc")}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.uatList.length > 0}
+                isEditing={isSectionEditing("uat")}
+                selectedCount={getSelectedIds("uat").length}
+                onStartEdit={() => setSectionEditing("uat", true)}
+                onCancelEdit={() => setSectionEditing("uat", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "uat",
+                    ids: getSelectedIds("uat"),
+                    label: t("projects:acceptance.select_all_uat"),
+                  })
+                }
+              />
+              <Button
+                type="button"
+                onClick={openUatDialog}
+                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                <PlusIcon data-icon="inline-start" />
+                {t("projects:acceptance.btn_record_uat")}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -449,56 +439,52 @@ export function AcceptanceDocsTab({
 
       {/* Card 4C: BAST */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base sm:text-lg font-bold">
-              {language === "en" ? "Official Handover Certificate / BAST (Attachment A.8)" : "Berita Acara Serah Terima / BAST (Lampiran A.8)"}
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-              {language === "en" ? "Mandatory requirement for issuing Final Settlement Invoice." : "Syarat wajib penerbitan Invoice Pelunasan Akhir."}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <SectionEditControls
-              hasItems={bundle.bastList.length > 0}
-              isEditing={isSectionEditing("bast")}
-              selectedCount={getSelectedIds("bast").length}
-              onStartEdit={() => setSectionEditing("bast", true)}
-              onCancelEdit={() => setSectionEditing("bast", false)}
-              onDeleteSelected={() =>
-                setDeleteConfirm({
-                  section: "bast",
-                  ids: getSelectedIds("bast"),
-                  label: language === "en" ? "selected BAST documents" : "dokumen BAST terpilih",
-                })
-              }
-            />
-            <Button
-              type="button"
-              disabled={
-                !bundle.uatList.some(
-                  (u) =>
-                    u.conclusion === "accepted" ||
-                    u.conclusion === "accepted_with_notes",
-                )
-              }
-              title={
-                !bundle.uatList.some(
-                  (u) =>
-                    u.conclusion === "accepted" ||
-                    u.conclusion === "accepted_with_notes",
-                )
-                  ? (language === "en" ? "Ensure UAT is Accepted to issue BAST (FR-PK8)" : "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)")
-                  : (language === "en" ? "Issue BAST (Attachment A.8)" : "Terbitkan BAST (Lampiran A.8)")
-              }
-              onClick={openBastDialog}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {language === "en" ? "Issue BAST" : "Terbitkan BAST"}
-            </Button>
-          </div>
-        </CardHeader>
+        <CardHeaderWithInfo
+          title={language === "en" ? "Official Handover Certificate / BAST (Attachment A.8)" : "Berita Acara Serah Terima / BAST (Lampiran A.8)"}
+          description={language === "en" ? "Mandatory requirement for issuing Final Settlement Invoice." : "Syarat wajib penerbitan Invoice Pelunasan Akhir."}
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <SectionEditControls
+                hasItems={bundle.bastList.length > 0}
+                isEditing={isSectionEditing("bast")}
+                selectedCount={getSelectedIds("bast").length}
+                onStartEdit={() => setSectionEditing("bast", true)}
+                onCancelEdit={() => setSectionEditing("bast", false)}
+                onDeleteSelected={() =>
+                  setDeleteConfirm({
+                    section: "bast",
+                    ids: getSelectedIds("bast"),
+                    label: language === "en" ? "selected BAST documents" : "dokumen BAST terpilih",
+                  })
+                }
+              />
+              <Button
+                type="button"
+                disabled={
+                  !bundle.uatList.some(
+                    (u) =>
+                      u.conclusion === "accepted" ||
+                      u.conclusion === "accepted_with_notes",
+                  )
+                }
+                title={
+                  !bundle.uatList.some(
+                    (u) =>
+                      u.conclusion === "accepted" ||
+                      u.conclusion === "accepted_with_notes",
+                  )
+                    ? (language === "en" ? "Ensure UAT is Accepted to issue BAST (FR-PK8)" : "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)")
+                    : (language === "en" ? "Issue BAST (Attachment A.8)" : "Terbitkan BAST (Lampiran A.8)")
+                }
+                onClick={openBastDialog}
+                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+              >
+                <PlusIcon data-icon="inline-start" />
+                {language === "en" ? "Issue BAST" : "Terbitkan BAST"}
+              </Button>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
