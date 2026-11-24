@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { RoleGuard } from "@/app/role-guard";
 import { PortalShell } from "@/components/layout/portal-shell";
-import { PageLoader } from "@/components/ui/loader";
+import { FullScreenLoader } from "@/components/ui/loader";
 import { AuthProvider, portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { LanguageProvider } from "@/lib/i18n";
@@ -124,7 +124,7 @@ const UserPaymentsPage = lazyPage(
 );
 
 function RouteFallback() {
-  return <PageLoader />;
+  return <FullScreenLoader />;
 }
 
 function AuthenticatedIndexRedirect() {

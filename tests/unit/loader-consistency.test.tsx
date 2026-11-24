@@ -2,7 +2,6 @@
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, fireEvent } from "@testing-library/react";
-import * as React from "react";
 import {
   PageLoader,
   FullScreenLoader,
@@ -24,9 +23,8 @@ describe("Sistem Loader Terstandar (Reusable Loader System)", () => {
   });
 
   it("PageLoader: merender container terpusat, atribut aksesibilitas, dan teks loading", async () => {
-    let rendered: any;
     await act(async () => {
-      rendered = render(
+      render(
         <I18nextProvider i18n={i18n}>
           <PageLoader message="Memuat pengujian..." delayMs={0} />
         </I18nextProvider>

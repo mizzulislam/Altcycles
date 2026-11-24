@@ -31,14 +31,6 @@ export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "a
     return <Navigate to={portalHomeForRole(activeRole || profile.role)} replace />;
   }
 
-  if (allowedRole !== "any" && profile.role !== allowedRole) {
-    return (
-      <PageLoader
-        message={t("common:status.aligning_role", "Menyelaraskan peran aktif...")}
-      />
-    );
-  }
-
   return <Outlet />;
 }
 

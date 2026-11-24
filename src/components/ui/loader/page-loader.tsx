@@ -10,6 +10,8 @@ export interface PageLoaderProps {
   minHeight?: string;
   showTimeoutAction?: boolean;
   timeoutSeconds?: number;
+  timeoutMs?: number;
+  delayMs?: number;
   onRetry?: () => void;
 }
 
@@ -27,18 +29,21 @@ export function PageLoader({
   minHeight = "min-h-[55vh]",
   showTimeoutAction = true,
   timeoutSeconds = 15,
+  timeoutMs,
+  delayMs: _delayMs,
   onRetry,
 }: PageLoaderProps) {
   const { t } = useLanguage();
   const [isTimedOut, setIsTimedOut] = React.useState(false);
+  const effectiveTimeoutSeconds = timeoutMs ? timeoutMs / 1000 : timeoutSeconds;
 
   React.useEffect(() => {
-    if (!showTimeoutAction || timeoutSeconds <= 0) return;
+    if (!showTimeoutAction || effectiveTimeoutSeconds <= 0) return;
     const timer = setTimeout(() => {
       setIsTimedOut(true);
-    }, timeoutSeconds * 1000);
+    }, effectiveTimeoutSeconds * 1000);
     return () => clearTimeout(timer);
-  }, [showTimeoutAction, timeoutSeconds]);
+  }, [showTimeoutAction, effectiveTimeoutSeconds]);
 
   const handleReload = () => {
     if (onRetry) {

@@ -16,7 +16,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
-import { FullScreenLoader } from "@/components/ui/loader";
+import { FullScreenLoader, PageLoader } from "@/components/ui/loader";
 import { GameDialogProvider } from "@/components/shared/game-dialog";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -554,7 +554,9 @@ export function PortalShell() {
         <main className="flex-1 min-w-0 bg-background px-4 sm:px-6 lg:px-8 pt-4 pb-8 overflow-x-clip">
           <div className="w-full max-w-[1400px] min-w-0 flex flex-col gap-5">
             <SidebarStateContext.Provider value={isCollapsed}>
-              <Outlet />
+              <React.Suspense fallback={<PageLoader />}>
+                <Outlet />
+              </React.Suspense>
             </SidebarStateContext.Provider>
           </div>
         </main>
