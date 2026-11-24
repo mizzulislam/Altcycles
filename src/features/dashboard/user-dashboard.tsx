@@ -25,14 +25,13 @@ import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -126,7 +125,7 @@ export function UserDashboardPage() {
       <PageLoader
         message={t(
           "dashboard:user_dashboard.loading",
-          "Memuat ringkasan portal anggota tim..."
+          "Memuat ringkasan portal anggota tim...",
         )}
       />
     );

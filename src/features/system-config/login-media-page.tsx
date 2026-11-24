@@ -28,7 +28,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { PageLoader } from "@/components/ui/loader";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Field,
   FieldGroup,
@@ -343,9 +343,7 @@ export function LoginMediaPage() {
   }, [categoryTickerItems.length]);
 
   if (loading) {
-    return (
-      <PageLoader message={t("settings:login_media.loading_gallery")} />
-    );
+    return <PageLoader message={t("settings:login_media.loading_gallery")} />;
   }
 
   const normalizedQuery = searchQuery.trim().toLowerCase();

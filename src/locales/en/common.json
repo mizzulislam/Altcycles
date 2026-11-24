@@ -42,10 +42,6 @@
   "saving": "Saving...",
   "empty": "No data available",
   "error": "An error occurred",
-  "table": {
-    "loading": "Loading data...",
-    "empty": "No data found"
-  },
   "auth": {
     "brand_subtitle": "FINANCIAL ERP",
     "reset_title": "Password Recovery",
@@ -166,12 +162,11 @@
     "sent": "Sent",
     "signed": "Signed",
     "loading_page": "Loading page data...",
+    "slow_connection": "This is taking longer than expected.",
+    "retry": "Retry Loading",
     "checking_session": "Verifying user session...",
-    "switching_role": "Switching active mode...",
     "aligning_role": "Aligning active role...",
-    "slow_connection_title": "Loading Taking Longer",
-    "slow_connection": "Loading is taking longer than usual. Please check your internet connection.",
-    "retry": "Try Reload"
+    "switching_mode": "Switching Operation Mode..."
   },
   "search": {
     "placeholder": "Search pages...",

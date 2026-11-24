@@ -20,7 +20,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { SectionLoader } from "@/components/ui/loader";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/empty";
+import { SectionLoader } from "@/components/ui/loader";
 import {
   Field,
   FieldDescription,
@@ -491,7 +491,7 @@ export function ProfitSharingPage() {
       </Card>
 
       {loading ? (
-        <SectionLoader message={t("profit_sharing:loading")} minHeight={320} />
+        <SectionLoader message={t("profit_sharing:loading")} />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2 items-stretch">
           <Card className="overflow-hidden flex flex-col">

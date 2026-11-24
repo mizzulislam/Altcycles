@@ -5,9 +5,9 @@ import {
   DownloadIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
+  Loader2Icon,
   TableIcon,
 } from "lucide-react";
-import { ButtonLoader } from "@/components/ui/loader";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -144,7 +144,7 @@ export function ExportDownloadMenu({
       >
         <span className="flex items-center gap-2">
           {isLoading ? (
-            <ButtonLoader className="text-primary" />
+            <Loader2Icon className="size-4 animate-spin text-primary" />
           ) : (
             <DownloadIcon className="size-4 text-primary" />
           )}
@@ -181,7 +181,7 @@ export function ExportDownloadMenu({
               >
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   {loadingType === "excel" ? (
-                    <ButtonLoader />
+                    <Loader2Icon className="size-4 animate-spin" />
                   ) : (
                     <FileSpreadsheetIcon className="size-4" />
                   )}
@@ -209,7 +209,7 @@ export function ExportDownloadMenu({
               >
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
                   {loadingType === "pdf" ? (
-                    <ButtonLoader />
+                    <Loader2Icon className="size-4 animate-spin" />
                   ) : (
                     <FileTextIcon className="size-4" />
                   )}
@@ -239,7 +239,7 @@ export function ExportDownloadMenu({
               >
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                   {loadingType === "csv" ? (
-                    <ButtonLoader />
+                    <Loader2Icon className="size-4 animate-spin" />
                   ) : (
                     <TableIcon className="size-4" />
                   )}

@@ -13,7 +13,7 @@ import {
   ProjectDetailHeader,
   type ProjectDetailTabId,
 } from "@/features/client-projects/components/project-detail-header";
-import { EmptyState, Spinner } from "@/components/ui/empty";
+import { EmptyState } from "@/components/ui/empty";
 import { PageLoader } from "@/components/ui/loader";
 import { roundRupiah } from "@/lib/formatters";
 import {

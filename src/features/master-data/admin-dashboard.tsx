@@ -25,14 +25,13 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
-import { PageLoader } from "@/components/ui/loader";
 import {
   PeriodFilter,
   type DashboardPeriodPreset,
 } from "@/components/shared/dashboard-period-filter";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -296,7 +295,7 @@ export function AdminDashboardPage() {
       <PageLoader
         message={t(
           "dashboard:charts.loading",
-          "Memuat dasbor keuangan & akuntansi..."
+          "Memuat dasbor keuangan & akuntansi...",
         )}
       />
     );

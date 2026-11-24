@@ -35,7 +35,6 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
@@ -448,10 +447,17 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableLoadingRow
-                  colSpan={7}
-                  message={t("accounting:coa.loading_accounts", "Memuat bagan akun...")}
-                />
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner />
+                      <span>{t("accounting:coa.loading_accounts", "Memuat bagan akun...")}</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell

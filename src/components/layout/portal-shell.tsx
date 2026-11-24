@@ -307,7 +307,9 @@ export function PortalShell() {
       <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
       {/* Fullscreen Overlay Loader saat Ganti Peran */}
       {isSwitchingRole && (
-        <FullScreenLoader message={t("header.switching_mode", "Mengganti Mode Operasi...")} />
+        <FullScreenLoader
+          message={t("header.switching_mode", "Mengganti Mode Operasi...")}
+        />
       )}
 
       {/* Header Mobile */}

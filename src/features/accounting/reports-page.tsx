@@ -5,7 +5,6 @@ import {
   BookOpenIcon,
   LayoutGridIcon,
 } from "lucide-react";
-import { Spinner } from "@/components/ui/empty";
 import { PageLoader } from "@/components/ui/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -374,7 +373,7 @@ export function AccountingReportsPage({
       <PageLoader
         message={t(
           "accounting:reports.loading",
-          "Menyusun laporan keuangan berbasis akrual..."
+          "Menyusun laporan keuangan berbasis akrual...",
         )}
       />
     );

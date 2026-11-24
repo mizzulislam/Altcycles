@@ -19,7 +19,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo, CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
-import { Spinner } from "@/components/ui/empty";
 import { PageLoader } from "@/components/ui/loader";
 import {
   Table,
@@ -120,7 +119,7 @@ export function MasterReadonlyPage() {
       <PageLoader
         message={t(
           "settings:master_readonly.loading",
-          "Memuat konfigurasi akuntansi & master data..."
+          "Memuat konfigurasi akuntansi & master data...",
         )}
       />
     );

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/empty";
 
@@ -94,12 +93,9 @@ export interface TableLoadingRowProps {
 
 export function TableLoadingRow({
   colSpan,
-  message,
+  message = "Memuat data...",
   className,
 }: TableLoadingRowProps) {
-  const { t } = useTranslation("common");
-  const displayMessage = message || t("table.loading", "Memuat data...");
-
   return (
     <TableRow className="hover:bg-transparent">
       <TableCell
@@ -110,10 +106,10 @@ export function TableLoadingRow({
           role="status"
           aria-live="polite"
           aria-busy="true"
-          className="flex items-center justify-center gap-2"
+          className="flex items-center justify-center gap-2.5 text-xs sm:text-sm text-muted-foreground"
         >
-          <Spinner />
-          <span>{displayMessage}</span>
+          <Spinner className="size-4 text-primary dark:text-sky-400" />
+          <span>{message}</span>
         </div>
       </TableCell>
     </TableRow>

@@ -1,13 +1,26 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { FullScreenLoader } from "@/components/ui/loader";
+import { FullScreenLoader, PageLoader } from "@/components/ui/loader";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
+import { useLanguage } from "@/lib/i18n";
 import type { UserRole } from "@/types/database.types";
 
 export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "any" }) {
   const { profile, activeRole, availableRoles, loading } = useAuth();
+  const { t } = useLanguage();
 
   if (loading) {
-    return <FullScreenLoader messageKey="status.checking_session" />;
+    if (allowedRole === "any") {
+      return (
+        <FullScreenLoader
+          message={t("common:status.checking_session", "Memeriksa sesi pengguna...")}
+        />
+      );
+    }
+    return (
+      <PageLoader
+        message={t("common:status.checking_session", "Memeriksa sesi pengguna...")}
+      />
+    );
   }
 
   if (!profile || !profile.is_active) {
@@ -19,7 +32,11 @@ export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "a
   }
 
   if (allowedRole !== "any" && profile.role !== allowedRole) {
-    return <FullScreenLoader messageKey="status.aligning_role" />;
+    return (
+      <PageLoader
+        message={t("common:status.aligning_role", "Menyelaraskan peran aktif...")}
+      />
+    );
   }
 
   return <Outlet />;

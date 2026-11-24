@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Spinner } from "@/components/ui/empty";
+import { Loader2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface SectionLoaderProps {
@@ -8,25 +7,40 @@ export interface SectionLoaderProps {
   minHeight?: string | number;
 }
 
+/**
+ * Komponen SectionLoader Terstandar
+ * Digunakan pada kartu tunggal, modal dialog, atau section berbatas
+ */
 export function SectionLoader({
   message,
   className,
-  minHeight = "min-h-[200px]",
+  minHeight = "min-h-[220px]",
 }: SectionLoaderProps) {
+  const isNumberHeight = typeof minHeight === "number";
+  const isCssUnitHeight = typeof minHeight === "string" && (minHeight.includes("px") || minHeight.includes("rem") || minHeight.includes("vh") || minHeight.includes("%"));
+  const styleMinHeight = isNumberHeight ? `${minHeight}px` : isCssUnitHeight ? minHeight : undefined;
+
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      style={typeof minHeight === "number" ? { minHeight: `${minHeight}px` } : undefined}
+      style={styleMinHeight ? { minHeight: styleMinHeight } : undefined}
       className={cn(
-        "flex w-full items-center justify-center gap-2 p-6 text-xs sm:text-sm text-muted-foreground select-none",
-        typeof minHeight === "string" ? minHeight : "",
-        className
+        "flex flex-col items-center justify-center p-4 text-center select-none w-full",
+        !styleMinHeight && typeof minHeight === "string" ? minHeight : "",
+        className,
       )}
     >
-      <Spinner className="size-4 text-primary dark:text-sky-400" />
-      {message ? <span>{message}</span> : null}
+      <Loader2Icon
+        className="size-5 text-primary dark:text-sky-400 animate-spin motion-reduce:animate-none shrink-0 mb-2"
+        aria-hidden="true"
+      />
+      {message && (
+        <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

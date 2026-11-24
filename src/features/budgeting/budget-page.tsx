@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/empty";
+import { SectionLoader } from "@/components/ui/loader";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { NumberInput } from "@/components/ui/number-input";
 import {
@@ -495,7 +496,10 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
           }
         />
         <CardContent className="p-0">
-          <Table>
+          {loading ? (
+            <SectionLoader message={t("budgeting:common.loading")} />
+          ) : (
+            <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
@@ -582,6 +586,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 )}
               </TableBody>
             </Table>
+          )}
         </CardContent>
       </Card>
 

@@ -1,65 +1,50 @@
 import * as React from "react";
-import { useTranslation } from "react-i18next";
-import { Spinner } from "@/components/ui/empty";
+import { Loader2Icon, RotateCcwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 export interface PageLoaderProps {
   message?: string;
-  messageKey?: string;
   className?: string;
   minHeight?: string;
-  delayMs?: number;
-  timeoutMs?: number;
+  showTimeoutAction?: boolean;
+  timeoutSeconds?: number;
   onRetry?: () => void;
 }
 
+/**
+ * Komponen PageLoader Terstandar
+ * 
+ * - Terpusat secara horizontal dan vertikal di dalam area konten
+ * - Tidak berkedip (zero-overhead, CSS transform murni)
+ * - Mendukung timeout opsional (default 15s) untuk memunculkan tombol reload darurat jika jaringan lambat
+ * - Menghormati preferensi prefers-reduced-motion
+ */
 export function PageLoader({
   message,
-  messageKey = "status.loading_page",
   className,
   minHeight = "min-h-[55vh]",
-  delayMs = 150,
-  timeoutMs = 15000,
+  showTimeoutAction = true,
+  timeoutSeconds = 15,
   onRetry,
 }: PageLoaderProps) {
-  const { t } = useTranslation("common");
-  const [visible, setVisible] = React.useState(delayMs <= 0);
-  const [timedOut, setTimedOut] = React.useState(false);
+  const { t } = useLanguage();
+  const [isTimedOut, setIsTimedOut] = React.useState(false);
 
   React.useEffect(() => {
-    let delayTimer: ReturnType<typeof setTimeout> | undefined;
-    if (delayMs > 0) {
-      delayTimer = setTimeout(() => {
-        setVisible(true);
-      }, delayMs);
-    }
-    return () => {
-      if (delayTimer) clearTimeout(delayTimer);
-    };
-  }, [delayMs]);
+    if (!showTimeoutAction || timeoutSeconds <= 0) return;
+    const timer = setTimeout(() => {
+      setIsTimedOut(true);
+    }, timeoutSeconds * 1000);
+    return () => clearTimeout(timer);
+  }, [showTimeoutAction, timeoutSeconds]);
 
-  React.useEffect(() => {
-    if (timeoutMs <= 0) return;
-    const timeoutTimer = setTimeout(() => {
-      setTimedOut(true);
-    }, timeoutMs);
-    return () => {
-      clearTimeout(timeoutTimer);
-    };
-  }, [timeoutMs]);
-
-  if (!visible) return null;
-
-  const displayMessage =
-    message ||
-    (messageKey ? t(messageKey, "Memuat data halaman...") : t("status.loading_page", "Memuat data halaman..."));
-
-  const handleRetry = () => {
+  const handleReload = () => {
     if (onRetry) {
+      setIsTimedOut(false);
       onRetry();
-    } else if (typeof window !== "undefined") {
+    } else {
       window.location.reload();
     }
   };
@@ -70,45 +55,38 @@ export function PageLoader({
       aria-live="polite"
       aria-busy="true"
       className={cn(
-        "flex w-full flex-col items-center justify-center p-6 text-center select-none",
+        "flex flex-col items-center justify-center p-6 text-center select-none w-full",
         minHeight,
-        className
+        className,
       )}
     >
-      {!timedOut ? (
-        <div className="flex flex-col items-center justify-center gap-3">
-          <Spinner className="size-6 text-primary dark:text-sky-400" />
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground animate-pulse">
-            {displayMessage}
-          </p>
-        </div>
-      ) : (
-        <div className="flex max-w-sm flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 bg-card p-6 shadow-2xs">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20">
-            <AlertCircle className="size-5" />
+      <div className="flex flex-col items-center justify-center gap-3 max-w-sm">
+        <Loader2Icon
+          className="size-7 text-primary dark:text-sky-400 animate-spin motion-reduce:animate-none shrink-0"
+          aria-hidden="true"
+        />
+        <p className="text-xs sm:text-sm font-medium text-muted-foreground leading-relaxed">
+          {message || t("common:status.loading_page", "Memuat data halaman...")}
+        </p>
+
+        {isTimedOut && (
+          <div className="flex flex-col items-center gap-2 mt-2 animate-in fade-in duration-300">
+            <span className="text-[11px] text-amber-500/90 font-medium">
+              {t("common:status.slow_connection", "Proses memakan waktu lebih lama dari biasanya.")}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleReload}
+              className="h-8 rounded-xl px-3 text-xs gap-1.5 cursor-pointer border-border/80"
+            >
+              <RotateCcwIcon className="size-3.5" />
+              <span>{t("common:status.retry", "Coba Muat Ulang")}</span>
+            </Button>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              {t("status.slow_connection_title", "Pemuatan Lebih Lambat")}
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {t(
-                "status.slow_connection",
-                "Proses memuat membutuhkan waktu lebih lama dari biasanya. Periksa koneksi internet Anda."
-              )}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            className="mt-1 rounded-xl text-xs font-semibold gap-1.5"
-          >
-            <RefreshCw className="size-3.5" />
-            <span>{t("status.retry", "Coba Muat Ulang")}</span>
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -124,7 +124,7 @@ const UserPaymentsPage = lazyPage(
 );
 
 function RouteFallback() {
-  return <PageLoader messageKey="status.loading_page" />;
+  return <PageLoader />;
 }
 
 function AuthenticatedIndexRedirect() {
