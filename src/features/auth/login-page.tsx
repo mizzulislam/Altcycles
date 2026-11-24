@@ -270,14 +270,13 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   }, []);
 
   React.useEffect(() => {
-    // Jika tidak sedang dalam transisi visual OAuth, arahkan langsung
+    // Jika tidak sedang dalam transisi visual OAuth, arahkan langsung secara silent
     const isOauthPending =
       oauthChecking ||
       (typeof window !== "undefined" &&
         window.sessionStorage.getItem("altcycles_oauth_in_progress") === "1");
 
     if (profile && !isOauthPending) {
-      toast.success(`Berhasil masuk! Selamat datang, ${profile.full_name}`);
       navigate(portalHomeForRole(profile.role), { replace: true });
     }
   }, [profile, navigate, oauthChecking]);
@@ -310,7 +309,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     setSubmitting(true);
     try {
       const loggedIn = await signIn(username, password);
-      toast.success(`Selamat datang, ${loggedIn.full_name}`);
+      toast.success(`Berhasil masuk! Selamat datang, ${loggedIn.full_name}`, {
+        id: "auth-login-success",
+      });
       navigate(portalHomeForRole(loggedIn.role), { replace: true });
     } catch (err) {
       setError(
@@ -395,6 +396,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
           if (targetProfile) {
             toast.success(
               `Berhasil masuk! Selamat datang, ${targetProfile.full_name}`,
+              { id: "auth-login-success" },
             );
             navigate(portalHomeForRole(targetProfile.role), { replace: true });
           } else {

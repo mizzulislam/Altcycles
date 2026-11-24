@@ -793,7 +793,7 @@ export function AdminDashboardPage() {
           />
 
           {/* Footer Ringkasan Laba Rugi Edge-to-Edge */}
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60">
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 min-h-[64px]">
             <div className="pl-6 pr-4 py-3.5">
               <p className="text-[11px] text-muted-foreground">
                 {t("dashboard:charts.total_revenue", "Total Pendapatan")}
@@ -913,6 +913,21 @@ export function AdminDashboardPage() {
               "Grafik proporsi otomatis terisi setelah transaksi dibukukan.",
             )}
           />
+
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 px-6 py-3.5 flex items-center justify-between text-xs min-h-[64px]">
+            <span className="font-medium text-muted-foreground">
+              {donutMode === "profit"
+                ? t("dashboard:charts.center_net_profit", "Laba Bersih")
+                : t("dashboard:charts.center_cash_balance", "Saldo Kas")}
+            </span>
+            <span className="font-bold tabular-nums text-foreground text-xs sm:text-sm">
+              {formatRupiah(
+                donutMode === "profit"
+                  ? incomeStatement.netProfit
+                  : cashPosition.endingCash,
+              )}
+            </span>
+          </div>
         </ChartCard>
       </div>
 

@@ -329,7 +329,7 @@ export function UserDashboardPage() {
         <KpiCard
           label={t("user_portal.kpi_projects", "Proyek Ditugaskan")}
           value={projects.length}
-          suffix={t("user_portal.projects_count", "Proyek")}
+          suffix={` ${t("user_portal.projects_count", "Proyek")}`}
           subtext={
             projects.length > 0
               ? t("user_portal.kpi_projects_sub", "Terdaftar sebagai pelaksana proyek")
@@ -344,7 +344,7 @@ export function UserDashboardPage() {
         <KpiCard
           label={t("user_portal.kpi_po", "PO Pembelian Vendor")}
           value={pos.length}
-          suffix={t("user_portal.documents", "Dokumen")}
+          suffix={` ${t("user_portal.documents", "Dokumen")}`}
           subtext={
             pos.length > 0
               ? t("user_portal.kpi_po_sub", "Dokumen pengadaan barang/jasa")
@@ -360,7 +360,7 @@ export function UserDashboardPage() {
         <KpiCard
           label={t("user_portal.kpi_claims", "Pengajuan Pembayaran")}
           value={requests.length}
-          suffix={t("user_portal.submissions", "Pengajuan")}
+          suffix={` ${t("user_portal.submissions", "Pengajuan")}`}
           subtext={
             pendingPa > 0
               ? `${pendingPa} ${t("user_portal.pending_approval", "menunggu persetujuan Admin")}`
@@ -538,7 +538,7 @@ export function UserDashboardPage() {
           )}
 
           {/* Strip Ringkasan Edge-to-Edge */}
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60">
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 min-h-[64px]">
             <div className="pl-6 pr-4 py-3.5">
               <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_po_val", "Total Nilai PO")}</p>
               <p className="text-xs sm:text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums mt-0.5">
@@ -632,6 +632,19 @@ export function UserDashboardPage() {
                 : t("dashboard:user_dashboard.no_sharing_empty_desc", "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi.")
             }
           />
+
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 px-6 py-3.5 flex items-center justify-between text-xs min-h-[64px]">
+            <span className="font-medium text-muted-foreground">
+              {compDataset === "claims"
+                ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
+                : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")}
+            </span>
+            <span className="font-bold tabular-nums text-foreground text-xs sm:text-sm">
+              {formatRupiah(
+                compDataset === "claims" ? totalReqNominal : totalMyShare,
+              )}
+            </span>
+          </div>
         </ChartCard>
       </div>
 

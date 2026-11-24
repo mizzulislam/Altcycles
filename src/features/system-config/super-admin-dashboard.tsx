@@ -10,7 +10,6 @@ import {
   UsersIcon,
 } from "lucide-react";
 import {
-  ChartLegendFooter,
   ChartTypeSwitcher,
   CompositionChart,
   MultiSeriesChart,
@@ -293,7 +292,7 @@ export function SuperAdminDashboardPage() {
         <KpiCard
           label={t("settings:super_admin.kpi_coa", "Bagan Akun Keuangan")}
           value={accounts.length}
-          suffix={t("settings:super_admin.accounts", "Akun")}
+          suffix={` ${t("settings:super_admin.accounts", "Akun")}`}
           subtext={t("settings:super_admin.sak_standard", "Standar Akuntansi Keuangan")}
           icon={BookOpenIcon}
           iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
@@ -305,7 +304,7 @@ export function SuperAdminDashboardPage() {
         <KpiCard
           label={t("settings:super_admin.kpi_audit", "Jejak Audit Terbaru")}
           value={allLogs.length}
-          suffix={t("settings:super_admin.logs", "Log")}
+          suffix={` ${t("settings:super_admin.logs", "Log")}`}
           subtext={t("settings:super_admin.audit_saved", "Rekaman audit aktivitas tersimpan")}
           icon={ActivityIcon}
           iconTone="bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20"
@@ -378,29 +377,6 @@ export function SuperAdminDashboardPage() {
               />
             </div>
           }
-          footer={
-            <ChartLegendFooter
-              series={[
-                {
-                  key: "insert",
-                  label: t("settings:super_admin.op_insert", "Tambah (Insert)"),
-                  color: "#10b981",
-                },
-                {
-                  key: "update",
-                  label: t("settings:super_admin.op_update", "Ubah (Update)"),
-                  color: "#0B43C8",
-                },
-                {
-                  key: "delete",
-                  label: t("settings:super_admin.op_delete", "Hapus (Delete)"),
-                  color: "#f43f5e",
-                },
-              ]}
-              hiddenKeys={hiddenAuditSeries}
-              onToggleSeries={toggleAuditSeries}
-            />
-          }
         >
           <MultiSeriesChart
             chartType={auditChartType}
@@ -431,25 +407,55 @@ export function SuperAdminDashboardPage() {
             emptySubtitle={t("settings:super_admin.audit_chart_empty_sub", "Grafik tren audit otomatis muncul saat aktivitas pengguna dan perubahan data terekam.")}
           />
 
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/60 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs">
-            <div className="py-3 pl-6 pr-4">
-              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_insert_label", "Operasi Tambah")}</p>
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs min-h-[64px]">
+            <button
+              type="button"
+              onClick={() => toggleAuditSeries("insert")}
+              className={cn(
+                "py-3.5 pl-6 pr-4 text-left transition-opacity cursor-pointer focus-visible:outline-none",
+                hiddenAuditSeries.has("insert") && "opacity-40 line-through",
+              )}
+            >
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                <span>{t("settings:super_admin.op_insert_label", "Operasi Tambah")}</span>
+              </div>
               <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
                 {totalInserts} {t("settings:super_admin.logs", "Log")}
               </p>
-            </div>
-            <div className="py-3 px-4">
-              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_update_label", "Operasi Ubah")}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleAuditSeries("update")}
+              className={cn(
+                "py-3.5 px-4 text-left transition-opacity cursor-pointer focus-visible:outline-none",
+                hiddenAuditSeries.has("update") && "opacity-40 line-through",
+              )}
+            >
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="size-2 rounded-full bg-[#0B43C8] shrink-0" />
+                <span>{t("settings:super_admin.op_update_label", "Operasi Ubah")}</span>
+              </div>
               <p className="text-xs sm:text-sm font-bold text-primary dark:text-sky-400 tabular-nums mt-0.5">
                 {totalUpdates} {t("settings:super_admin.logs", "Log")}
               </p>
-            </div>
-            <div className="py-3 pl-3.5 pr-6">
-              <p className="text-[11px] text-muted-foreground">{t("settings:super_admin.op_delete_label", "Operasi Hapus")}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleAuditSeries("delete")}
+              className={cn(
+                "py-3.5 pl-3.5 pr-6 text-left transition-opacity cursor-pointer focus-visible:outline-none",
+                hiddenAuditSeries.has("delete") && "opacity-40 line-through",
+              )}
+            >
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="size-2 rounded-full bg-rose-500 shrink-0" />
+                <span>{t("settings:super_admin.op_delete_label", "Operasi Hapus")}</span>
+              </div>
               <p className="text-xs sm:text-sm font-bold text-rose-600 dark:text-rose-400 tabular-nums mt-0.5">
                 {totalDeletes} {t("settings:super_admin.logs", "Log")}
               </p>
-            </div>
+            </button>
           </div>
         </ChartCard>
 
@@ -489,20 +495,6 @@ export function SuperAdminDashboardPage() {
               </button>
             </div>
           }
-          footer={
-            <div className="border-t border-border/70 bg-muted/10 px-6 py-3 flex items-center justify-between text-xs">
-              <span className="font-medium text-muted-foreground">
-                {compDataset === "roles"
-                  ? t("settings:super_admin.center_active_users", "Pengguna Aktif")
-                  : t("settings:super_admin.center_total_accounts", "Total Akun")}
-              </span>
-              <span className="font-bold tabular-nums text-foreground">
-                {compDataset === "roles"
-                  ? `${activeUsers} / ${profiles.length} ${t("settings:super_admin.users_unit", "Orang")}`
-                  : `${accounts.length} ${t("settings:super_admin.accounts_unit", "Akun")}`}
-              </span>
-            </div>
-          }
         >
           <CompositionChart
             chartType="donut"
@@ -529,6 +521,19 @@ export function SuperAdminDashboardPage() {
             emptyTitle={t("settings:super_admin.comp_empty_title", "Belum Ada Data Master")}
             emptySubtitle={t("settings:super_admin.comp_empty_sub", "Proporsi akan muncul otomatis saat pengguna atau bagan akun tersedia.")}
           />
+
+          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 px-6 py-3.5 flex items-center justify-between text-xs min-h-[64px]">
+            <span className="font-medium text-muted-foreground">
+              {compDataset === "roles"
+                ? t("settings:super_admin.center_active_users", "Pengguna Aktif")
+                : t("settings:super_admin.center_total_accounts", "Total Akun")}
+            </span>
+            <span className="font-bold tabular-nums text-foreground text-xs sm:text-sm">
+              {compDataset === "roles"
+                ? `${activeUsers} / ${profiles.length} ${t("settings:super_admin.users_unit", "Orang")}`
+                : `${accounts.length} ${t("settings:super_admin.accounts_unit", "Akun")}`}
+            </span>
+          </div>
         </ChartCard>
       </div>
 

@@ -81,11 +81,16 @@ export function AnimatedNumber({
     ? formatter(displayValue)
     : displayValue.toLocaleString("id-ID");
 
+  const renderedSuffix =
+    suffix && /^[\p{L}\p{N}]/u.test(suffix.trim()) && !suffix.startsWith(" ")
+      ? ` ${suffix}`
+      : suffix;
+
   return (
     <span className={className}>
       {prefix}
       {formatted}
-      {suffix}
+      {renderedSuffix}
     </span>
   );
 }
