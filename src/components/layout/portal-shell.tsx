@@ -89,13 +89,18 @@ export function PortalShell() {
 
   React.useEffect(() => {
     let mounted = true;
-    void getCompanyProfile().then((cp) => {
-      if (mounted && cp) {
-        setIsTestingMode(cp.journal_lock_enabled === false);
-      }
-    });
+    const updateTestingMode = () => {
+      void getCompanyProfile().then((cp) => {
+        if (mounted && cp) {
+          setIsTestingMode(cp.journal_lock_enabled === false);
+        }
+      });
+    };
+    updateTestingMode();
+    window.addEventListener("altcycles:journal-lock-changed", updateTestingMode);
     return () => {
       mounted = false;
+      window.removeEventListener("altcycles:journal-lock-changed", updateTestingMode);
     };
   }, [location.pathname]);
 
@@ -421,9 +426,11 @@ export function PortalShell() {
             {/* Indikator Mode Testing / Sandbox Sistem */}
             {isTestingMode && (
               <ActionTooltip content="Mode Testing aktif: Transaksi jurnal dapat diedit/dihapus untuk pengujian" side="bottom">
-                <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-semibold select-none shadow-2xs">
-                  <FlaskConicalIcon className="size-3.5 animate-pulse text-amber-500" />
-                  <span>Mode Testing</span>
+                <div
+                  className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-2xs select-none"
+                  aria-label="Mode Testing aktif"
+                >
+                  <FlaskConicalIcon className="size-4 animate-pulse text-amber-500" />
                 </div>
               </ActionTooltip>
             )}

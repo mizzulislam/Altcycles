@@ -151,56 +151,56 @@ export function MasterReadonlyPage() {
                   ? t("settings:master_readonly.testing_mode_desc_active", "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi.")
                   : t("settings:master_readonly.testing_mode_desc_inactive", "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira.")
               }
-              titleClassName="text-xs sm:text-sm font-bold"
+              titleClassName="text-xs sm:text-sm font-bold whitespace-normal leading-snug"
             />
-            <label
-              htmlFor="testing-mode-switch"
-              className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
-            >
-              <span className="text-xs font-semibold text-muted-foreground">
-                {isTestingMode ? "Aktif" : "Nonaktif"}
-              </span>
-              <Switch
-                id="testing-mode-switch"
-                checked={isTestingMode}
-                disabled={togglingLock}
-                aria-label="Toggle Mode Testing & Sandbox"
-                onCheckedChange={async (enableTesting) => {
-                  setTogglingLock(true);
-                  try {
-                    const nextLockVal = !enableTesting;
-                    await setJournalLockStatus(nextLockVal);
-                    setJournalLockEnabled(nextLockVal);
-                    if (enableTesting) {
-                      toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
-                    } else {
-                      toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
-                    }
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
-                  } finally {
-                    setTogglingLock(false);
-                  }
-                }}
-              />
-            </label>
-          </div>
-
-          {isTestingMode && (
-            <div className="pt-3 mt-3 border-t border-border/60 flex items-center justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={purging}
-                onClick={() => setConfirmPurgeOpen(true)}
-                className="h-8 rounded-xl px-2.5 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
+            <div className="flex items-center gap-2.5 shrink-0">
+              {isTestingMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={purging}
+                  onClick={() => setConfirmPurgeOpen(true)}
+                  className="h-8 rounded-xl px-2.5 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
+                >
+                  <RotateCcwIcon className="size-3" />
+                  <span>Bersihkan Data Testing</span>
+                </Button>
+              )}
+              <label
+                htmlFor="testing-mode-switch"
+                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
               >
-                <RotateCcwIcon className="size-3" />
-                Bersihkan Data Testing
-              </Button>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {isTestingMode ? "Aktif" : "Nonaktif"}
+                </span>
+                <Switch
+                  id="testing-mode-switch"
+                  checked={isTestingMode}
+                  disabled={togglingLock}
+                  aria-label="Toggle Mode Testing & Sandbox"
+                  onCheckedChange={async (enableTesting) => {
+                    setTogglingLock(true);
+                    try {
+                      const nextLockVal = !enableTesting;
+                      await setJournalLockStatus(nextLockVal);
+                      setJournalLockEnabled(nextLockVal);
+                      window.dispatchEvent(new CustomEvent("altcycles:journal-lock-changed"));
+                      if (enableTesting) {
+                        toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
+                      } else {
+                        toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
+                      }
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
+                    } finally {
+                      setTogglingLock(false);
+                    }
+                  }}
+                />
+              </label>
             </div>
-          )}
+          </div>
         </Card>
 
         {/* Card 2: Kontrol Tutup Buku Otomatis (Auto Closing Books Control) */}
