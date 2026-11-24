@@ -425,10 +425,10 @@ export function PortalShell() {
           <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
             {/* Indikator Mode Testing / Sandbox Sistem */}
             {isTestingMode && (
-              <ActionTooltip content="Mode Testing aktif: Transaksi jurnal dapat diedit/dihapus untuk pengujian" side="bottom">
+              <ActionTooltip content={t("header.testing_mode_tooltip", "Dalam Mode Testing")} side="bottom">
                 <div
                   className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-2xs select-none"
-                  aria-label="Mode Testing aktif"
+                  aria-label={t("header.testing_mode_tooltip", "Dalam Mode Testing")}
                 >
                   <FlaskConicalIcon className="size-4 animate-pulse text-amber-500" />
                 </div>

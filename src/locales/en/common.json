@@ -109,7 +109,8 @@
     "active_mode": "Active Mode",
     "role_switch": "Switch active system role",
     "switching_mode": "Switching Operating Mode...",
-    "open_nav": "Open navigation menu"
+    "open_nav": "Open navigation menu",
+    "testing_mode_tooltip": "In Testing Mode"
   },
   "sidebar": {
     "open": "Open sidebar",

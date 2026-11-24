@@ -108,7 +108,8 @@
     "active_mode": "Mode Aktif",
     "role_switch": "Ganti peran aktif sistem",
     "switching_mode": "Mengganti Mode Operasi...",
-    "open_nav": "Buka menu navigasi"
+    "open_nav": "Buka menu navigasi",
+    "testing_mode_tooltip": "Dalam Mode Testing"
   },
   "sidebar": {
     "open": "Buka sidebar",

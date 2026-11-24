@@ -161,10 +161,10 @@ export function MasterReadonlyPage() {
                   size="sm"
                   disabled={purging}
                   onClick={() => setConfirmPurgeOpen(true)}
-                  className="h-8 rounded-xl px-2.5 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
+                  className="h-7 rounded-lg px-2 text-[11px] gap-1 border-destructive/35 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
                 >
                   <RotateCcwIcon className="size-3" />
-                  <span>Bersihkan Data Testing</span>
+                  <span>{t("settings:master_readonly.testing_mode_purge_btn", "Bersihkan Data Testing")}</span>
                 </Button>
               )}
               <label
@@ -172,7 +172,7 @@ export function MasterReadonlyPage() {
                 className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
               >
                 <span className="text-xs font-semibold text-muted-foreground">
-                  {isTestingMode ? "Aktif" : "Nonaktif"}
+                  {isTestingMode ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
                 </span>
                 <Switch
                   id="testing-mode-switch"
