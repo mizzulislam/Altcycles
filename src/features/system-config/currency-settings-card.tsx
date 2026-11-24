@@ -45,24 +45,29 @@ export function FunctionalCurrencyCard({ className }: { className?: string }) {
 
   return (
     <Card className={cn("rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-center min-h-[76px]", className)}>
-      <div className="flex items-center justify-between gap-2.5 min-w-0">
+      <div className="flex items-center justify-between gap-3 min-w-0">
         <CardHeaderTitleWithInfo
           title={t("settings:currency.functional_title", "Mata Uang Fungsional Sistem")}
           description={t("settings:currency.functional_desc", "Transaksi dalam mata uang asing otomatis ditranslasikan ke mata uang fungsional ini.")}
-          titleClassName="text-xs sm:text-sm font-bold"
+          titleClassName="text-xs sm:text-sm font-bold whitespace-normal leading-snug"
         />
 
-        <div className="w-40 sm:w-[185px] shrink-0">
+        <div className="w-56 sm:w-[275px] shrink-0">
           <Select
             value={functionalCurrency}
             onValueChange={handleSelectFunctionalCurrency}
           >
             <SelectTrigger className="w-full h-9 rounded-xl bg-background border-border/80 shadow-2xs font-semibold text-xs">
-              <span className="truncate font-mono">
-                {selectedCurrInfo ? `${selectedCurrInfo.code} (${selectedCurrInfo.symbol})` : functionalCurrency}
+              <span className="truncate">
+                <span className="font-bold font-mono">{selectedCurrInfo?.code ?? functionalCurrency}</span>
+                {selectedCurrInfo ? (
+                  <span className="text-muted-foreground ml-1.5">
+                    - {selectedCurrInfo.name} ({selectedCurrInfo.symbol})
+                  </span>
+                ) : null}
               </span>
             </SelectTrigger>
-            <SelectContent className="w-[max(var(--radix-select-trigger-width),280px)] min-w-[280px]">
+            <SelectContent className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
               <SelectGroup>
                 {TOP_10_CURRENCIES.map((c) => (
                   <SelectItem key={c.code} value={c.code} className="cursor-pointer whitespace-nowrap">
