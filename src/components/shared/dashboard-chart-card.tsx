@@ -13,6 +13,7 @@ export interface DashboardChartCardProps {
   subtitle?: React.ReactNode;
   controls?: React.ReactNode;
   children: React.ReactNode;
+  summary?: React.ReactNode;
   footer?: React.ReactNode;
   loading?: boolean;
   loadingText?: string;
@@ -26,6 +27,7 @@ export function ChartCard({
   subtitle,
   controls,
   children,
+  summary,
   footer,
   loading = false,
   loadingText = "Memuat grafik...",
@@ -36,13 +38,13 @@ export function ChartCard({
   return (
     <Card
       className={cn(
-        "rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col",
+        "rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col h-full",
         className,
       )}
     >
       <CardHeader
         className={cn(
-          "px-5 sm:px-6 py-3.5 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 min-h-[56px]",
+          "px-5 sm:px-6 py-3.5 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 min-h-[56px] shrink-0",
           headerClassName,
         )}
       >
@@ -70,7 +72,16 @@ export function ChartCard({
             <span>{loadingText}</span>
           </div>
         ) : (
-          children
+          <>
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              {children}
+            </div>
+            {summary ? (
+              <div className="shrink-0 -mx-6 -mb-6 mt-auto">
+                {summary}
+              </div>
+            ) : null}
+          </>
         )}
       </CardContent>
 

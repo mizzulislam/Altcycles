@@ -16,7 +16,9 @@ import {
 import {
   buildRupiahHistogramBins,
   ChartLegendFooter,
+  ChartSummaryRow,
   ChartTypeSwitcher,
+  ChartValueFooter,
   CompositionChart,
   HistogramChart,
   MultiSeriesChart,
@@ -470,30 +472,49 @@ export function UserDashboardPage() {
               ]}
             />
           }
+          summary={
+            <ChartSummaryRow
+              items={[
+                {
+                  label: t("dashboard:user_dashboard.total_po_val", "Total Nilai PO"),
+                  value: formatRupiah(totalPoNominal),
+                  valueClass: "text-violet-600 dark:text-violet-400",
+                },
+                {
+                  label: t("dashboard:user_dashboard.total_req_val", "Total Diajukan"),
+                  value: formatRupiah(totalReqNominal),
+                  valueClass: "text-amber-600 dark:text-amber-400",
+                },
+                {
+                  label: t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan"),
+                  value: formatRupiah(totalPaidNominal),
+                  valueClass: "text-emerald-600 dark:text-emerald-400",
+                },
+              ]}
+            />
+          }
           footer={
-            activityChartType !== "histogram" ? (
-              <ChartLegendFooter
-                series={[
-                  {
-                    key: "poTotal",
-                    label: t("dashboard:user_dashboard.legend_po", "PO Pembelian"),
-                    color: "#8b5cf6",
-                  },
-                  {
-                    key: "reqTotal",
-                    label: t("dashboard:user_dashboard.legend_req", "Pengajuan Dana"),
-                    color: "#f59e0b",
-                  },
-                  {
-                    key: "paidTotal",
-                    label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
-                    color: "#10b981",
-                  },
-                ]}
-                hiddenKeys={hiddenActivitySeries}
-                onToggleSeries={toggleActivitySeries}
-              />
-            ) : null
+            <ChartLegendFooter
+              series={[
+                {
+                  key: "poTotal",
+                  label: t("dashboard:user_dashboard.legend_po", "PO Pembelian"),
+                  color: "#8b5cf6",
+                },
+                {
+                  key: "reqTotal",
+                  label: t("dashboard:user_dashboard.legend_req", "Pengajuan Dana"),
+                  color: "#f59e0b",
+                },
+                {
+                  key: "paidTotal",
+                  label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
+                  color: "#10b981",
+                },
+              ]}
+              hiddenKeys={hiddenActivitySeries}
+              onToggleSeries={toggleActivitySeries}
+            />
           }
         >
           {activityChartType === "histogram" ? (
@@ -538,28 +559,6 @@ export function UserDashboardPage() {
               emptySubtitle={t("dashboard:user_dashboard.no_claims_history_desc", "Grafik bulanan otomatis tampil setelah PO pembelian atau pengajuan pembayaran tercatat.")}
             />
           )}
-
-          {/* Strip Ringkasan Edge-to-Edge */}
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 min-h-[64px]">
-            <div className="pl-6 pr-4 py-3.5">
-              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_po_val", "Total Nilai PO")}</p>
-              <p className="text-xs sm:text-sm font-bold text-violet-600 dark:text-violet-400 tabular-nums mt-0.5">
-                {formatRupiah(totalPoNominal)}
-              </p>
-            </div>
-            <div className="p-3.5">
-              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_req_val", "Total Diajukan")}</p>
-              <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
-                {formatRupiah(totalReqNominal)}
-              </p>
-            </div>
-            <div className="pl-3.5 pr-6 py-3.5">
-              <p className="text-[11px] text-muted-foreground">{t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan")}</p>
-              <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                {formatRupiah(totalPaidNominal)}
-              </p>
-            </div>
-          </div>
         </ChartCard>
 
         {/* Grafik 2: Status Klaim Pembayaran & Porsi Bagi Hasil */}
@@ -599,16 +598,16 @@ export function UserDashboardPage() {
             </div>
           }
           footer={
-            <div className="flex items-center justify-between px-6 py-3 border-t border-border/70 bg-muted/10 text-xs">
-              <span className="text-xs font-medium text-muted-foreground">
-                {compDataset === "claims"
+            <ChartValueFooter
+              label={
+                compDataset === "claims"
                   ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
-                  : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")}
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-foreground tabular-nums">
-                {formatRupiah(compDataset === "claims" ? totalReqNominal : totalMyShare)}
-              </span>
-            </div>
+                  : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")
+              }
+              value={formatRupiah(
+                compDataset === "claims" ? totalReqNominal : totalMyShare,
+              )}
+            />
           }
         >
           <CompositionChart
@@ -634,19 +633,6 @@ export function UserDashboardPage() {
                 : t("dashboard:user_dashboard.no_sharing_empty_desc", "Grafik porsi bagi hasil muncul setelah proyek selesai difinalisasi.")
             }
           />
-
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 px-6 py-3.5 flex items-center justify-between text-xs min-h-[64px]">
-            <span className="font-medium text-muted-foreground">
-              {compDataset === "claims"
-                ? t("dashboard:user_dashboard.total_claims", "Total Klaim")
-                : t("dashboard:user_dashboard.total_sharing", "Total Bagi Hasil")}
-            </span>
-            <span className="font-bold tabular-nums text-foreground text-xs sm:text-sm">
-              {formatRupiah(
-                compDataset === "claims" ? totalReqNominal : totalMyShare,
-              )}
-            </span>
-          </div>
         </ChartCard>
       </div>
 

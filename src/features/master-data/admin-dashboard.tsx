@@ -17,7 +17,9 @@ import { useLanguage } from "@/lib/i18n";
 import {
   buildRupiahHistogramBins,
   ChartLegendFooter,
+  ChartSummaryRow,
   ChartTypeSwitcher,
+  ChartValueFooter,
   CompositionChart,
   HistogramChart,
   MultiSeriesChart,
@@ -737,6 +739,39 @@ export function AdminDashboardPage() {
               ]}
             />
           }
+          summary={
+            <ChartSummaryRow
+              items={[
+                {
+                  label: t("dashboard:charts.total_revenue", "Total Pendapatan"),
+                  value: formatRupiah(incomeStatement.totalRevenue),
+                  valueClass: "text-emerald-600 dark:text-emerald-400",
+                },
+                {
+                  label: t("dashboard:charts.total_expense", "Total Beban"),
+                  value: formatRupiah(totalExpense),
+                  valueClass: "text-amber-600 dark:text-amber-400",
+                },
+                {
+                  label: t("dashboard:charts.net_profit_loss", "Laba / Rugi Bersih"),
+                  value: (
+                    <span className="inline-flex items-center gap-1">
+                      {incomeStatement.netProfit >= 0 ? (
+                        <TrendingUpIcon className="size-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <TrendingDownIcon className="size-3.5 text-rose-500 shrink-0" />
+                      )}
+                      {formatRupiah(incomeStatement.netProfit)}
+                    </span>
+                  ),
+                  valueClass:
+                    incomeStatement.netProfit >= 0
+                      ? "text-foreground"
+                      : "text-destructive",
+                },
+              ]}
+            />
+          }
           footer={
             <ChartLegendFooter
               series={[
@@ -793,46 +828,6 @@ export function AdminDashboardPage() {
               "Grafik tren bulanan otomatis muncul setelah transaksi pendapatan, beban, atau kas dicatat di buku jurnal.",
             )}
           />
-
-          {/* Footer Ringkasan Laba Rugi Edge-to-Edge */}
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 min-h-[64px]">
-            <div className="pl-6 pr-4 py-3.5">
-              <p className="text-[11px] text-muted-foreground">
-                {t("dashboard:charts.total_revenue", "Total Pendapatan")}
-              </p>
-              <p className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
-                {formatRupiah(incomeStatement.totalRevenue)}
-              </p>
-            </div>
-            <div className="p-3.5">
-              <p className="text-[11px] text-muted-foreground">
-                {t("dashboard:charts.total_expense", "Total Beban")}
-              </p>
-              <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums mt-0.5">
-                {formatRupiah(totalExpense)}
-              </p>
-            </div>
-            <div className="pl-3.5 pr-6 py-3.5">
-              <p className="text-[11px] text-muted-foreground">
-                {t("dashboard:charts.net_profit_loss", "Laba / Rugi Bersih")}
-              </p>
-              <p
-                className={cn(
-                  "text-xs sm:text-sm font-bold tabular-nums mt-0.5 inline-flex items-center gap-1",
-                  incomeStatement.netProfit >= 0
-                    ? "text-foreground"
-                    : "text-destructive",
-                )}
-              >
-                {incomeStatement.netProfit >= 0 ? (
-                  <TrendingUpIcon className="size-3.5 text-emerald-500" />
-                ) : (
-                  <TrendingDownIcon className="size-3.5 text-rose-500" />
-                )}
-                {formatRupiah(incomeStatement.netProfit)}
-              </p>
-            </div>
-          </div>
         </ChartCard>
 
         {/* Grafik 2: Komposisi Keuangan (Pie 3D & Batang Horizontal Terintegrasi) */}
@@ -871,28 +866,23 @@ export function AdminDashboardPage() {
             </div>
           }
           footer={
-            <div className="flex items-center justify-between px-6 py-3 border-t border-border/70 bg-muted/10 text-xs">
-              <span className="text-xs font-medium text-muted-foreground">
-                {donutMode === "profit"
+            <ChartValueFooter
+              label={
+                donutMode === "profit"
                   ? t("dashboard:charts.center_net_profit", "Laba Bersih")
-                  : t("dashboard:charts.center_cash_balance", "Saldo Kas")}
-              </span>
-              <span
-                className={cn(
-                  "text-xs sm:text-sm font-bold tabular-nums inline-flex items-center gap-1.5",
-                  (donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash) >= 0
-                    ? "text-foreground"
-                    : "text-destructive",
-                )}
-              >
-                {(donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash) >= 0 ? (
-                  <TrendingUpIcon className="size-3.5 text-emerald-500" />
-                ) : (
-                  <TrendingDownIcon className="size-3.5 text-rose-500" />
-                )}
-                {formatRupiah(donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash)}
-              </span>
-            </div>
+                  : t("dashboard:charts.center_cash_balance", "Saldo Kas")
+              }
+              value={formatRupiah(
+                donutMode === "profit"
+                  ? incomeStatement.netProfit
+                  : cashPosition.endingCash,
+              )}
+              trend={
+                (donutMode === "profit" ? incomeStatement.netProfit : cashPosition.endingCash) >= 0
+                  ? "up"
+                  : "down"
+              }
+            />
           }
         >
           <CompositionChart
@@ -915,21 +905,6 @@ export function AdminDashboardPage() {
               "Grafik proporsi otomatis terisi setelah transaksi dibukukan.",
             )}
           />
-
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 px-6 py-3.5 flex items-center justify-between text-xs min-h-[64px]">
-            <span className="font-medium text-muted-foreground">
-              {donutMode === "profit"
-                ? t("dashboard:charts.center_net_profit", "Laba Bersih")
-                : t("dashboard:charts.center_cash_balance", "Saldo Kas")}
-            </span>
-            <span className="font-bold tabular-nums text-foreground text-xs sm:text-sm">
-              {formatRupiah(
-                donutMode === "profit"
-                  ? incomeStatement.netProfit
-                  : cashPosition.endingCash,
-              )}
-            </span>
-          </div>
         </ChartCard>
       </div>
 

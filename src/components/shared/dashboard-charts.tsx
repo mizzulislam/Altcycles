@@ -1,4 +1,5 @@
 import * as React from "react";
+import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -60,14 +61,14 @@ export function ChartLegendFooter({
   return (
     <div
       className={cn(
-        "px-6 py-3 border-t border-border/70 bg-muted/10 flex flex-wrap items-center justify-between gap-3 text-xs",
+        "px-6 py-2.5 sm:py-3 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[48px]",
         className,
       )}
     >
-      <span className="text-[11px] font-medium text-muted-foreground">
+      <span className="text-[11px] font-medium text-muted-foreground shrink-0">
         {t("dashboard:charts.legend", "Keterangan")}
       </span>
-      <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium">
+      <div className="flex flex-wrap items-center justify-end gap-3 text-[11px] font-medium">
         {series.map((s) => {
           const isHidden = hiddenKeys?.has(s.key) ?? false;
           return (
@@ -99,6 +100,112 @@ export function ChartLegendFooter({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Komponen bersama footer kartu yang menampilkan nilai total / indikator tunggal selaras dengan ChartLegendFooter */
+export function ChartValueFooter({
+  label,
+  value,
+  trend,
+  className,
+}: {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  trend?: "up" | "down" | "neutral" | null;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "px-6 py-2.5 sm:py-3 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[48px]",
+        className,
+      )}
+    >
+      <span className="text-xs font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-xs sm:text-sm font-bold tabular-nums text-foreground inline-flex items-center gap-1.5">
+        {trend === "up" && <TrendingUpIcon className="size-3.5 text-emerald-500 shrink-0" />}
+        {trend === "down" && <TrendingDownIcon className="size-3.5 text-rose-500 shrink-0" />}
+        {value}
+      </span>
+    </div>
+  );
+}
+
+export interface ChartSummaryItem {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  valueClass?: string;
+  onClick?: () => void;
+  active?: boolean;
+}
+
+/**
+ * Baris ringkasan metrik grafik tanpa garis batas atas dan tanpa pembatas vertikal (divide-x).
+ * Berada langsung di atas garis footer sebagai bagian dari visualisasi data grafik.
+ */
+export function ChartSummaryRow({
+  items,
+  className,
+}: {
+  items: ChartSummaryItem[];
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid bg-muted/10 min-h-[58px] sm:min-h-[64px]",
+        items.length === 2 && "grid-cols-2",
+        items.length === 3 && "grid-cols-3",
+        items.length === 4 && "grid-cols-4",
+        className,
+      )}
+    >
+      {items.map((item, idx) => {
+        const content = (
+          <div
+            className={cn(
+              "py-3.5",
+              idx === 0 && "pl-6 pr-4",
+              idx > 0 && idx < items.length - 1 && "px-4",
+              idx === items.length - 1 && "pl-3.5 pr-6",
+            )}
+          >
+            <div className="text-[11px] text-muted-foreground leading-tight">
+              {item.label}
+            </div>
+            <p
+              className={cn(
+                "text-xs sm:text-sm font-bold tabular-nums mt-0.5",
+                item.valueClass ?? "text-foreground",
+              )}
+            >
+              {item.value}
+            </p>
+          </div>
+        );
+
+        if (item.onClick) {
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={item.onClick}
+              className={cn(
+                "text-left transition-opacity cursor-pointer focus-visible:outline-none",
+                item.active === false && "opacity-40 line-through",
+              )}
+            >
+              {content}
+            </button>
+          );
+        }
+
+        return <div key={idx}>{content}</div>;
+      })}
     </div>
   );
 }
