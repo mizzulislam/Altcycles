@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Field,
   FieldDescription,
@@ -214,12 +215,7 @@ export function AdminSettingsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("settings:admin_settings.loading")}</span>
-      </div>
-    );
+    return <PageLoader message={t("settings:admin_settings.loading")} />;
   }
 
   return (

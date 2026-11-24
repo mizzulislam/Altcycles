@@ -14,6 +14,7 @@ import {
   type ProjectDetailTabId,
 } from "@/features/client-projects/components/project-detail-header";
 import { EmptyState, Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import { roundRupiah } from "@/lib/formatters";
 import {
   getCompanyProfile,
@@ -720,12 +721,7 @@ export function ProjectDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("projects:loading_workspace")}</span>
-      </div>
-    );
+    return <PageLoader message={t("projects:loading_workspace")} />;
   }
 
   if (!project || !bundle) {

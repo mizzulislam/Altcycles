@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { ChevronDownIcon, DownloadIcon, FileTextIcon, Loader2Icon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon, FileTextIcon } from "lucide-react";
+import { ButtonLoader } from "@/components/ui/loader";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -129,7 +130,7 @@ export function DocumentDownloadMenu({
         >
           <span className="flex items-center gap-2">
             {loadingFmt ? (
-              <Loader2Icon className="size-4 animate-spin text-primary" />
+              <ButtonLoader className="text-primary" />
             ) : (
               <DownloadIcon className="size-4 text-primary" />
             )}
@@ -157,7 +158,7 @@ export function DocumentDownloadMenu({
           aria-expanded={open}
         >
           {loadingFmt ? (
-            <Loader2Icon className="size-4 animate-spin text-primary" />
+            <ButtonLoader className="text-primary" />
           ) : (
             <DownloadIcon className="size-4" />
           )}
@@ -187,7 +188,7 @@ export function DocumentDownloadMenu({
             >
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
                 {loadingFmt === "pdf" ? (
-                  <Loader2Icon className="size-4 animate-spin" />
+                  <ButtonLoader />
                 ) : (
                   <FileTextIcon className="size-4" />
                 )}
@@ -211,7 +212,7 @@ export function DocumentDownloadMenu({
             >
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                 {loadingFmt === "word" ? (
-                  <Loader2Icon className="size-4 animate-spin" />
+                  <ButtonLoader />
                 ) : (
                   <FileTextIcon className="size-4" />
                 )}

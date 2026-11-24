@@ -25,6 +25,7 @@ import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -122,10 +123,12 @@ export function UserDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("dashboard:user_dashboard.loading", "Memuat ringkasan portal anggota tim...")}</span>
-      </div>
+      <PageLoader
+        message={t(
+          "dashboard:user_dashboard.loading",
+          "Memuat ringkasan portal anggota tim..."
+        )}
+      />
     );
   }
 

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { CardHeaderWithInfo, CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -116,10 +117,12 @@ export function MasterReadonlyPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("settings:master_readonly.loading", "Memuat konfigurasi akuntansi & master data...")}</span>
-      </div>
+      <PageLoader
+        message={t(
+          "settings:master_readonly.loading",
+          "Memuat konfigurasi akuntansi & master data..."
+        )}
+      />
     );
   }
 

@@ -733,13 +733,7 @@ export function InvoicingPage() {
             }
           />
           <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-                <Spinner />
-                <span>{t("common:action.loading", "Memuat...")}</span>
-              </div>
-            ) : (
-              <Table>
+            <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
                     {isEditingInvoices && (
@@ -947,7 +941,6 @@ export function InvoicingPage() {
                     }))}
                 </TableBody>
               </Table>
-            )}
           </CardContent>
         </Card>
       )}

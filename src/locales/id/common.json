@@ -41,6 +41,10 @@
   "saving": "Menyimpan...",
   "empty": "Tidak ada data yang tersedia",
   "error": "Terjadi kesalahan",
+  "table": {
+    "loading": "Memuat data...",
+    "empty": "Tidak ada data yang ditemukan"
+  },
   "auth": {
     "brand_subtitle": "FINANCIAL ERP",
     "reset_title": "Pemulihan Kata Sandi",
@@ -159,7 +163,14 @@
     "closed": "Ditutup",
     "verified": "Terverifikasi",
     "sent": "Terkirim",
-    "signed": "Ditandatangani"
+    "signed": "Ditandatangani",
+    "loading_page": "Memuat data halaman...",
+    "checking_session": "Memeriksa sesi pengguna...",
+    "switching_role": "Mengganti mode operasi...",
+    "aligning_role": "Menyelaraskan peran aktif...",
+    "slow_connection_title": "Pemuatan Lebih Lambat",
+    "slow_connection": "Proses memuat membutuhkan waktu lebih lama dari biasanya. Periksa koneksi internet Anda.",
+    "retry": "Coba Muat Ulang"
   },
   "search": {
     "placeholder": "Cari halaman...",

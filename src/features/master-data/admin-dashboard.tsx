@@ -25,6 +25,7 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
+import { PageLoader } from "@/components/ui/loader";
 import {
   PeriodFilter,
   type DashboardPeriodPreset,
@@ -292,10 +293,12 @@ export function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("dashboard:charts.loading", "Memuat dasbor keuangan & akuntansi...")}</span>
-      </div>
+      <PageLoader
+        message={t(
+          "dashboard:charts.loading",
+          "Memuat dasbor keuangan & akuntansi..."
+        )}
+      />
     );
   }
 

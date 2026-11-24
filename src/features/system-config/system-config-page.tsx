@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Field,
   FieldDescription,
@@ -188,12 +189,7 @@ export function SystemConfigPage() {
   }
 
   if (loading || !company) {
-    return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("settings:company.loading")}</span>
-      </div>
-    );
+    return <PageLoader message={t("settings:company.loading")} />;
   }
 
   return (

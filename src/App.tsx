@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { RoleGuard } from "@/app/role-guard";
 import { PortalShell } from "@/components/layout/portal-shell";
-import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import { AuthProvider, portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { LanguageProvider } from "@/lib/i18n";
@@ -124,12 +124,7 @@ const UserPaymentsPage = lazyPage(
 );
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-[45vh] items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Spinner />
-      <span>Memuat halaman...</span>
-    </div>
-  );
+  return <PageLoader messageKey="status.loading_page" />;
 }
 
 function AuthenticatedIndexRedirect() {

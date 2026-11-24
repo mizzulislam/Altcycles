@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
+import { FullScreenLoader } from "@/components/ui/loader";
 import { GameDialogProvider } from "@/components/shared/game-dialog";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -305,17 +306,9 @@ export function PortalShell() {
     <GameDialogProvider>
       <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased">
       {/* Fullscreen Overlay Loader saat Ganti Peran */}
-      <div
-        className={cn(
-          "fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-300",
-          isSwitchingRole ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-        )}
-      >
-        <div className="size-12 rounded-full border-4 border-muted border-t-primary animate-spin mb-4" />
-        <p className="text-foreground font-semibold text-sm tracking-tight animate-pulse">
-          {t("header.switching_mode", "Mengganti Mode Operasi...")}
-        </p>
-      </div>
+      {isSwitchingRole && (
+        <FullScreenLoader message={t("header.switching_mode", "Mengganti Mode Operasi...")} />
+      )}
 
       {/* Header Mobile */}
       <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden sticky top-0 z-40">

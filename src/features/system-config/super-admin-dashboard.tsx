@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Table,
   TableBody,
@@ -101,10 +102,12 @@ export function SuperAdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("settings:super_admin.loading", "Menghitung metrik sistem...")}</span>
-      </div>
+      <PageLoader
+        message={t(
+          "settings:super_admin.loading",
+          "Menghitung metrik sistem..."
+        )}
+      />
     );
   }
 

@@ -179,13 +179,7 @@ export function AuditTrailPage() {
           }
         />
         <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-              <Spinner />
-              <span>{t("settings:audit.loading", "Memuat riwayat audit trail...")}</span>
-            </div>
-          ) : (
-            <Table>
+          <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
                   <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_id", "ID")}</TableHead>
@@ -268,7 +262,6 @@ export function AuditTrailPage() {
                 )}
               </TableBody>
             </Table>
-          )}
           {!loading ? (
             <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs sm:text-sm text-muted-foreground tabular-nums">

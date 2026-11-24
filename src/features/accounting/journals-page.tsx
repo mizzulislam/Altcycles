@@ -25,6 +25,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
 import {
@@ -881,17 +882,10 @@ export function JournalsPage({
             </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={isEditMode ? 7 : 5}
-                      className="h-32 text-center text-muted-foreground"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Spinner />
-                        <span>{t("accounting:journals.loading_journals", "Memuat buku jurnal...")}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <TableLoadingRow
+                    colSpan={isEditMode ? 7 : 5}
+                    message={t("accounting:journals.loading_journals", "Memuat buku jurnal...")}
+                  />
                 ) : sortedJournals.length === 0 ? (
                   <TableRow>
                     <TableCell

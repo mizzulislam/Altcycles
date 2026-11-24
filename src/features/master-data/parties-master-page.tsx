@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   deleteCustomer,
@@ -110,12 +111,7 @@ export function PartiesMasterPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("parties:common.loading")}</span>
-      </div>
-    );
+    return <PageLoader message={t("parties:common.loading")} />;
   }
 
   return (

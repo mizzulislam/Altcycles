@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { Spinner } from "@/components/ui/empty";
+import { FullScreenLoader } from "@/components/ui/loader";
 import { portalHomeForRole, useAuth } from "@/features/auth/auth-context";
 import type { UserRole } from "@/types/database.types";
 
@@ -7,12 +7,7 @@ export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "a
   const { profile, activeRole, availableRoles, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Spinner />
-        <span>Memeriksa sesi pengguna...</span>
-      </div>
-    );
+    return <FullScreenLoader messageKey="status.checking_session" />;
   }
 
   if (!profile || !profile.is_active) {
@@ -24,12 +19,7 @@ export function RoleGuard({ allowedRole = "any" }: { allowedRole?: UserRole | "a
   }
 
   if (allowedRole !== "any" && profile.role !== allowedRole) {
-    return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Spinner />
-        <span>Menyelaraskan peran aktif...</span>
-      </div>
-    );
+    return <FullScreenLoader messageKey="status.aligning_role" />;
   }
 
   return <Outlet />;

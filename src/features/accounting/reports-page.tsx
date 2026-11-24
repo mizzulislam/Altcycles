@@ -6,6 +6,7 @@ import {
   LayoutGridIcon,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/empty";
+import { PageLoader } from "@/components/ui/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   buildBalanceSheet,
@@ -370,10 +371,12 @@ export function AccountingReportsPage({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Spinner />
-        <span>{t("accounting:reports.loading", "Menyusun laporan keuangan berbasis akrual...")}</span>
-      </div>
+      <PageLoader
+        message={t(
+          "accounting:reports.loading",
+          "Menyusun laporan keuangan berbasis akrual..."
+        )}
+      />
     );
   }
 

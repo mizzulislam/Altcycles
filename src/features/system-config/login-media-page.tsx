@@ -28,6 +28,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
+import { PageLoader } from "@/components/ui/loader";
 import {
   Dialog,
   DialogContent,
@@ -343,10 +344,7 @@ export function LoginMediaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
-        <Spinner className="size-6 text-primary dark:text-sky-400" />
-        <span>{t("settings:login_media.loading_gallery")}</span>
-      </div>
+      <PageLoader message={t("settings:login_media.loading_gallery")} />
     );
   }
 
