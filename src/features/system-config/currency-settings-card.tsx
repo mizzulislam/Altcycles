@@ -13,7 +13,6 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   TOP_10_CURRENCIES,
@@ -50,10 +49,10 @@ export function FunctionalCurrencyCard({ className }: { className?: string }) {
         <CardHeaderTitleWithInfo
           title={t("settings:currency.functional_title", "Mata Uang Fungsional Sistem")}
           description={t("settings:currency.functional_desc", "Transaksi dalam mata uang asing otomatis ditranslasikan ke mata uang fungsional ini.")}
-          titleClassName="text-sm sm:text-base font-bold"
+          titleClassName="text-xs sm:text-sm font-bold whitespace-nowrap shrink-0"
         />
 
-        <div className="w-32 sm:w-36 shrink-0">
+        <div className="w-40 sm:w-44 shrink-0">
           <Select
             value={functionalCurrency}
             onValueChange={handleSelectFunctionalCurrency}
@@ -122,7 +121,7 @@ export function ExchangeRatesCard({ className }: { className?: string }) {
               "settings:currency.rates_desc",
               "Tentukan nilai kurs konversi mata uang asing terhadap Rupiah (IDR) untuk estimasi nilai kontrak, penerbitan invoice valas, dan pembukuan pengadaan luar negeri.",
             )}
-            titleClassName="text-sm sm:text-base font-bold"
+            titleClassName="text-base sm:text-lg font-bold"
           />
 
           <Button

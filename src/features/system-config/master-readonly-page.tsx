@@ -151,7 +151,7 @@ export function MasterReadonlyPage() {
                   ? t("settings:master_readonly.testing_mode_desc_active", "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi.")
                   : t("settings:master_readonly.testing_mode_desc_inactive", "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira.")
               }
-              titleClassName="text-sm sm:text-base font-bold"
+              titleClassName="text-xs sm:text-sm font-bold"
             />
             <label
               htmlFor="testing-mode-switch"
@@ -213,7 +213,7 @@ export function MasterReadonlyPage() {
                   ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis membuat dan memposting ayat jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Saldo Laba Ditahan saat tutup buku periode.")
                   : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis nonaktif. Penutupan buku dan jurnal penutup dilakukan manual oleh Bendahara.")
               }
-              titleClassName="text-sm sm:text-base font-bold"
+              titleClassName="text-xs sm:text-sm font-bold"
             />
             <label
               htmlFor="auto-closing-switch"
@@ -258,7 +258,7 @@ export function MasterReadonlyPage() {
                   ? t("settings:master_readonly.pph23_desc_active", "Menampilkan estimasi potongan PPh 23 sebesar 2% pada cetak invoice klien.")
                   : t("settings:master_readonly.pph23_desc_inactive", "Faktur klien dicetak standar tanpa estimasi potongan PPh 23.")
               }
-              titleClassName="text-sm sm:text-base font-bold"
+              titleClassName="text-xs sm:text-sm font-bold"
             />
             <label
               htmlFor="pph23-estimate-switch"
