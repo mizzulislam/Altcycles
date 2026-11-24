@@ -17,6 +17,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -364,6 +365,42 @@ export function LoginMediaPage() {
   const medsosCount = items.filter((i) => i.category === "medsos").length;
   const previewSlide = activeItems[previewIdx] ?? null;
 
+  // Daftar kategori untuk Cycling Ticker KPI Komposisi Kategori
+  const categoryTickerItems = React.useMemo(() => [
+    {
+      count: bannerCount,
+      label: t("settings:login_media.category_banner_label", "Banner"),
+      dotTone: "bg-sky-400",
+    },
+    {
+      count: flyerCount,
+      label: t("settings:login_media.category_flyer_label", "Flyer"),
+      dotTone: "bg-amber-400",
+    },
+    {
+      count: medsosCount,
+      label: t("settings:login_media.category_medsos_label", "Medsos"),
+      dotTone: "bg-emerald-400",
+    },
+  ], [bannerCount, flyerCount, medsosCount, t]);
+
+  const [activeTickerIdx, setActiveTickerIdx] = React.useState(0);
+  const [tickerAnimating, setTickerAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTickerAnimating(true);
+      setTimeout(() => {
+        setActiveTickerIdx((prev) => (prev + 1) % categoryTickerItems.length);
+        setTickerAnimating(false);
+      }, 300);
+    }, 3200);
+
+    return () => clearInterval(timer);
+  }, [categoryTickerItems.length]);
+
+  const currentTicker = categoryTickerItems[activeTickerIdx] ?? categoryTickerItems[0]!;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
@@ -439,15 +476,30 @@ export function LoginMediaPage() {
             <p className="text-xs font-medium text-muted-foreground">
               {t("settings:login_media.kpi_composition")}
             </p>
-            <p className="text-base sm:text-lg font-bold tracking-tight text-foreground mt-1 tabular-nums">
+            <div className="h-8 flex items-center mt-1 overflow-hidden">
+              <div
+                className={cn(
+                  "flex items-center gap-2 transition-all duration-300 ease-out",
+                  tickerAnimating
+                    ? "-translate-y-4 opacity-0"
+                    : "translate-y-0 opacity-100",
+                )}
+              >
+                <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                  {currentTicker.count} {currentTicker.label}
+                </span>
+                <span
+                  className={cn("size-2 rounded-full shrink-0 animate-pulse", currentTicker.dotTone)}
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1 truncate">
               {t("settings:login_media.kpi_comp_count", {
                 banner: bannerCount,
                 flyer: flyerCount,
                 medsos: medsosCount,
               })}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("settings:login_media.kpi_composition_desc")}
             </p>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
