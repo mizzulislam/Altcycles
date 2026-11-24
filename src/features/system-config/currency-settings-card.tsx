@@ -1,9 +1,9 @@
 import * as React from "react";
 import { CoinsIcon, GlobeIcon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
 import { NumberInput } from "@/components/ui/number-input";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -25,8 +25,8 @@ import {
 /**
  * Komponen Pengaturan Mata Uang Fungsional & Kurs Valuta Asing
  * Menampilkan:
- * 1. Card Mata Uang Fungsional (10 valuta terpopuler dunia)
- * 2. Card Kurs Konversi Valas ke Rupiah (IDR)
+ * 1. Card Mata Uang Fungsional Sistem (Baris horizontal ringkas dan proporsional)
+ * 2. Card Kurs Konversi Valas ke Rupiah (IDR) (Grid 9 valuta acuan)
  */
 export function CurrencySettingsCard() {
   const { t } = useLanguage();
@@ -64,52 +64,37 @@ export function CurrencySettingsCard() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
-      {/* Card 1: Pengaturan Mata Uang Fungsional */}
-      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs lg:col-span-4 flex flex-col justify-between gap-4">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
+    <div className="flex flex-col gap-4">
+      {/* Card 1: Pengaturan Mata Uang Fungsional Sistem (Layout Horizontal Proporsional) */}
+      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/25">
               <GlobeIcon className="size-4.5" />
             </div>
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
-                {t("settings:currency.functional_title", "Mata Uang Fungsional")}
-              </h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {t("settings:currency.functional_desc", "Standar pelaporan akuntansi entitas")}
-              </p>
-            </div>
+            <CardHeaderTitleWithInfo
+              title={t("settings:currency.functional_title", "Mata Uang Fungsional Sistem")}
+              description={t("settings:currency.functional_desc", "Transaksi dalam mata uang asing otomatis ditranslasikan ke mata uang fungsional ini.")}
+              titleClassName="text-sm sm:text-base font-bold"
+            />
           </div>
 
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t(
-              "settings:currency.functional_desc",
-              "Mata uang utama dari lingkungan ekonomi utama tempat Altvira beroperasi (sesuai ketentuan PSAK 10 / IAS 21). Transaksi dalam mata uang asing akan ditranslasikan ke mata uang fungsional ini.",
-            )}
-          </p>
-
-          <div className="space-y-2 pt-1">
-            <label className="text-xs font-semibold text-foreground">
-              {t("settings:currency.functional_title", "Pilih Mata Uang Utama:")}
-            </label>
+          <div className="w-full sm:w-64 shrink-0">
             <Select
               value={functionalCurrency}
               onValueChange={handleSelectFunctionalCurrency}
             >
-              <SelectTrigger className="w-full h-9 rounded-xl bg-background">
+              <SelectTrigger className="w-full h-9 rounded-xl bg-background border-border/80 shadow-2xs font-semibold text-xs">
                 <SelectValue placeholder={functionalCurrency} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   {TOP_10_CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs">{c.code}</span>
-                        <span className="text-xs text-muted-foreground">
-                          - {c.name} ({c.symbol})
-                        </span>
-                      </div>
+                    <SelectItem key={c.code} value={c.code} className="cursor-pointer">
+                      <span className="font-bold text-xs font-mono">{c.code}</span>
+                      <span className="text-xs text-muted-foreground ml-1.5">
+                        - {c.name} ({c.symbol})
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -117,29 +102,24 @@ export function CurrencySettingsCard() {
             </Select>
           </div>
         </div>
-
-        <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">{t("table.status", "Status Aktif:")}</span>
-          <StatusBadge tone="success" label={`${functionalCurrency} (Fungsional)`} />
-        </div>
       </Card>
 
       {/* Card 2: Kurs Mata Uang Asing & Konversi Rupiah */}
-      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs lg:col-span-8 flex flex-col justify-between gap-4">
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+      <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                 <CoinsIcon className="size-4.5" />
               </div>
-              <div className="min-w-0">
-                <h2 className="text-sm sm:text-base font-bold text-foreground leading-tight truncate">
-                  {t("settings:currency.rates_title", "Kurs Valuta Asing ke Rupiah (IDR)")}
-                </h2>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {t("settings:currency.rates_desc", "10 mata uang terpopuler dalam transaksi ekonomi global")}
-                </p>
-              </div>
+              <CardHeaderTitleWithInfo
+                title={t("settings:currency.rates_title", "Kurs Konversi Valuta Asing (Valas) ke Rupiah")}
+                description={t(
+                  "settings:currency.rates_desc",
+                  "Tentukan nilai kurs konversi mata uang asing terhadap Rupiah (IDR) untuk estimasi nilai kontrak, penerbitan invoice valas, dan pembukuan pengadaan luar negeri.",
+                )}
+                titleClassName="text-sm sm:text-base font-bold"
+              />
             </div>
 
             <Button
@@ -150,48 +130,41 @@ export function CurrencySettingsCard() {
               className="h-8.5 rounded-xl px-3.5 text-xs font-semibold cursor-pointer shadow-xs gap-1.5 shrink-0 self-start sm:self-center"
             >
               <SaveIcon className="size-3.5" />
-              <span>{t("settings:currency.btn_save_rates", "Simpan Kurs Valas")}</span>
+              <span>{t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}</span>
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t(
-              "settings:currency.rates_desc",
-              "Tentukan nilai kurs konversi mata uang asing terhadap Rupiah (IDR) untuk perhitungan estimasi kontrak, penagihan invoice, atau pengadaan luar negeri.",
-            )}
-          </p>
-
           {/* Grid 9 Valuta Asing Terpopuler Dunia */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {TOP_10_CURRENCIES.filter((c) => c.code !== "IDR").map((c) => {
               const currentVal = exchangeRates[c.code] ?? c.defaultRateToIdr;
               return (
                 <div
                   key={c.code}
-                  className="p-3 rounded-xl border border-border/70 bg-muted/20 flex flex-col gap-1.5"
+                  className="p-3 rounded-xl border border-border/70 bg-card hover:bg-muted/30 transition-colors flex flex-col gap-2 shadow-2xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="font-bold text-xs text-foreground font-mono">
                         {c.code}
                       </span>
-                      <span className="text-[11px] text-muted-foreground truncate">
+                      <span className="text-[11px] font-semibold text-primary/80 dark:text-sky-400">
                         ({c.symbol})
                       </span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground/80 truncate">
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px] text-right">
                       {c.country}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-muted-foreground shrink-0">
+                  <div className="relative w-full">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-muted-foreground pointer-events-none select-none">
                       Rp
                     </span>
                     <NumberInput
                       value={currentVal}
                       onValueChange={(val: number) => handleRateChange(c.code, val)}
-                      className="h-8 text-xs font-semibold tabular-nums bg-background"
+                      className="h-8.5 rounded-lg pl-8 pr-2.5 text-xs font-semibold tabular-nums text-right bg-background border-border/80 focus-visible:ring-1 focus-visible:ring-primary"
                     />
                   </div>
                 </div>

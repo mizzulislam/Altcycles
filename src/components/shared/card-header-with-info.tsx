@@ -51,8 +51,8 @@ export function CardHeaderTitleWithInfo({
     <div className={cn("flex items-center gap-2 min-w-0 flex-1", className)}>
       <CardTitle
         className={cn(
-          "text-base sm:text-lg font-bold tracking-tight text-foreground truncate min-w-0 py-0 m-0 leading-tight sm:leading-snug",
-          titleClassName,
+          "font-bold tracking-tight text-foreground truncate min-w-0 py-0 m-0 leading-tight sm:leading-snug",
+          titleClassName || "text-base sm:text-lg",
         )}
       >
         {title}
