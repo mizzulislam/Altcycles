@@ -303,6 +303,44 @@ export function LoginMediaPage() {
     setCurrentPage(1);
   }, [searchQuery, categoryFilter, statusFilter, sortOrder, pageSize]);
 
+  // Daftar kategori untuk Cycling Ticker KPI Komposisi Kategori
+  const bannerCount = items.filter((i) => i.category === "banner").length;
+  const flyerCount = items.filter((i) => i.category === "flyer").length;
+  const medsosCount = items.filter((i) => i.category === "medsos").length;
+
+  const categoryTickerItems = React.useMemo(() => [
+    {
+      count: bannerCount,
+      label: t("settings:login_media.category_banner_label", "Banner"),
+      dotTone: "bg-sky-400",
+    },
+    {
+      count: flyerCount,
+      label: t("settings:login_media.category_flyer_label", "Flyer"),
+      dotTone: "bg-amber-400",
+    },
+    {
+      count: medsosCount,
+      label: t("settings:login_media.category_medsos_label", "Medsos"),
+      dotTone: "bg-emerald-400",
+    },
+  ], [bannerCount, flyerCount, medsosCount, t]);
+
+  const [activeTickerIdx, setActiveTickerIdx] = React.useState(0);
+  const [tickerAnimating, setTickerAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTickerAnimating(true);
+      setTimeout(() => {
+        setActiveTickerIdx((prev) => (prev + 1) % categoryTickerItems.length);
+        setTickerAnimating(false);
+      }, 300);
+    }, 3200);
+
+    return () => clearInterval(timer);
+  }, [categoryTickerItems.length]);
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
@@ -360,45 +398,7 @@ export function LoginMediaPage() {
     if (safePage < totalPages - 2) pageNumbers.push("ellipsis");
     pageNumbers.push(totalPages);
   }
-  const bannerCount = items.filter((i) => i.category === "banner").length;
-  const flyerCount = items.filter((i) => i.category === "flyer").length;
-  const medsosCount = items.filter((i) => i.category === "medsos").length;
   const previewSlide = activeItems[previewIdx] ?? null;
-
-  // Daftar kategori untuk Cycling Ticker KPI Komposisi Kategori
-  const categoryTickerItems = React.useMemo(() => [
-    {
-      count: bannerCount,
-      label: t("settings:login_media.category_banner_label", "Banner"),
-      dotTone: "bg-sky-400",
-    },
-    {
-      count: flyerCount,
-      label: t("settings:login_media.category_flyer_label", "Flyer"),
-      dotTone: "bg-amber-400",
-    },
-    {
-      count: medsosCount,
-      label: t("settings:login_media.category_medsos_label", "Medsos"),
-      dotTone: "bg-emerald-400",
-    },
-  ], [bannerCount, flyerCount, medsosCount, t]);
-
-  const [activeTickerIdx, setActiveTickerIdx] = React.useState(0);
-  const [tickerAnimating, setTickerAnimating] = React.useState(false);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setTickerAnimating(true);
-      setTimeout(() => {
-        setActiveTickerIdx((prev) => (prev + 1) % categoryTickerItems.length);
-        setTickerAnimating(false);
-      }, 300);
-    }, 3200);
-
-    return () => clearInterval(timer);
-  }, [categoryTickerItems.length]);
-
   const currentTicker = categoryTickerItems[activeTickerIdx] ?? categoryTickerItems[0]!;
 
   return (
