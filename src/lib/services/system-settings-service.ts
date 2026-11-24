@@ -182,6 +182,131 @@ export async function setJournalLockStatus(enabled: boolean): Promise<boolean> {
   return enabled;
 }
 
+/**
+ * Membersihkan seluruh data pengujian dan mereset pencacah nomor urut dokumen (1-Click Purge).
+ * Sesuai keputusan resmi pemilik pada KONF-001 & KONF-003.
+ */
+export async function purgeTestData(): Promise<{ success: boolean; message: string }> {
+  demoStore.counters = [];
+
+  if (isDemoMode || !supabase) {
+    invalidateAndNotifyDataChange("company_profile");
+    return {
+      success: true,
+      message: "Nomor urut dokumen pengujian berhasil di-reset ke status awal (Belum dipakai).",
+    };
+  }
+
+  try {
+    const { data: rpcData, error: rpcErr } = await (supabase.rpc as unknown as (
+      fn: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{ data: { success: boolean; message: string } | null; error: { message: string } | null }>)(
+      "reset_doc_sequence_counters",
+      { p_doc_type: null },
+    );
+    if (rpcErr || !rpcData?.success) {
+      const { error: cntErr } = await supabase
+        .from("doc_sequence_counters")
+        .delete()
+        .gte("last_number", 0);
+      if (cntErr) {
+        console.warn("Peringatan saat reset doc_sequence_counters:", cntErr.message);
+      }
+    }
+  } catch (err) {
+    console.warn("Exception saat reset doc_sequence_counters:", err);
+  }
+
+  invalidateAndNotifyDataChange("company_profile");
+  return {
+    success: true,
+    message: "Nomor urut dokumen pengujian berhasil di-reset ke status awal (Belum dipakai).",
+  };
+}
+
+/**
+ * Mereset counter urutan penomoran dokumen kembali ke status awal (Belum dipakai / 0).
+ * Jika `docType` diberikan, hanya me-reset pencacah untuk jenis dokumen tersebut.
+ * Jika `docType` tidak diberikan, me-reset seluruh pencacah dokumen.
+ */
+export async function resetDocSequenceCounters(
+  docType?: DocTypeCode,
+): Promise<{ success: boolean; message: string }> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    const isSuperAdmin =
+      actor.role === "super_admin" || actor.roles?.includes("super_admin");
+    if (!isSuperAdmin) {
+      throw new Error("Hanya Super Admin yang dapat mereset urutan penomoran dokumen.");
+    }
+    const before = structuredClone(demoStore.counters);
+    if (docType) {
+      demoStore.counters = demoStore.counters.filter((c) => c.doc_type !== docType);
+    } else {
+      demoStore.counters = [];
+    }
+    appendDemoAudit(
+      actor,
+      "DELETE",
+      "doc_sequence_counters",
+      docType ?? "ALL",
+      before,
+      demoStore.counters,
+    );
+    invalidateAndNotifyDataChange("company_profile");
+    return {
+      success: true,
+      message: docType
+        ? `Urutan penomoran untuk dokumen ${docType} berhasil di-reset kembali ke status awal (Belum dipakai).`
+        : "Seluruh urutan penomoran dokumen berhasil di-reset kembali ke status awal (Belum dipakai).",
+    };
+  }
+
+  try {
+    // 1. Coba melalui RPC SECURITY DEFINER (bypass RLS dan pasti menghapus record di Postgres)
+    const { data: rpcData, error: rpcErr } = await (supabase.rpc as unknown as (
+      fn: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{ data: { success: boolean; message: string } | null; error: { message: string } | null }>)(
+      "reset_doc_sequence_counters",
+      { p_doc_type: docType ?? null },
+    );
+
+    if (!rpcErr && rpcData?.success) {
+      invalidateAndNotifyDataChange("company_profile");
+      return {
+        success: true,
+        message: rpcData.message,
+      };
+    }
+
+    // 2. Fallback direct delete jika RPC belum ada di database cloud
+    let query = supabase.from("doc_sequence_counters").delete();
+    if (docType) {
+      query = query.eq("doc_type", docType);
+    } else {
+      query = query.gte("last_number", 0);
+    }
+    const { error } = await query;
+    if (error) {
+      console.warn("Peringatan saat reset doc_sequence_counters:", error.message);
+      throw new Error(error.message);
+    }
+  } catch (err) {
+    console.warn("Exception saat reset doc_sequence_counters:", err);
+    throw err;
+  }
+
+  invalidateAndNotifyDataChange("company_profile");
+  return {
+    success: true,
+    message: docType
+      ? `Urutan penomoran untuk dokumen ${docType} berhasil di-reset kembali ke status awal (Belum dipakai).`
+      : "Seluruh urutan penomoran dokumen berhasil di-reset kembali ke status awal (Belum dipakai).",
+  };
+}
+
 export async function setAutoClosingStatus(enabled: boolean): Promise<boolean> {
   demoStore.company.auto_closing_enabled = enabled;
   if (isDemoMode || !supabase) {

@@ -121,7 +121,7 @@ export async function updateQuotation(
     qt.quotation_date = input.quotationDate;
     qt.valid_until = input.validUntil;
     qt.project_title = input.projectTitle.trim();
-    qt.client_need_summary = input.clientNeedSummary.trim() || null,
+    qt.client_need_summary = input.clientNeedSummary.trim() || null;
     qt.estimated_weeks = input.estimatedWeeks;
     qt.revision_limit = input.revisionLimit;
     qt.total_amount = roundRupiah(input.totalAmount);
@@ -382,7 +382,7 @@ export async function updateBakpReport(
     bakp.bakp_date = input.bakpDate;
     bakp.cumulative_percentage = input.cumulativePercentage;
     bakp.billable_amount = roundRupiah(input.billableAmount);
-    bakp.findings_notes = input.findingsNotes.trim() || null,
+    bakp.findings_notes = input.findingsNotes.trim() || null;
     bakp.status = input.status;
     bakp.approved_at = input.status === "approved_by_client" ? (bakp.approved_at ?? new Date().toISOString()) : null;
     return;
@@ -515,7 +515,7 @@ export async function updateUatChecklist(
     const uat = demoStore.uatChecklists.find((u) => u.id === uatId);
     if (!uat) throw new Error("Dokumen UAT tidak ditemukan.");
     uat.test_date = input.testDate;
-    uat.staging_url = input.stagingUrl.trim() || null,
+    uat.staging_url = input.stagingUrl.trim() || null;
     uat.client_tester_name = input.clientTesterName.trim();
     uat.altvira_companion_name = input.altviraCompanionName.trim();
     uat.conclusion = input.conclusion;

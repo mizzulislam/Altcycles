@@ -7,6 +7,9 @@
   "tab_invoices": "Daftar Invoice",
   "tab_aging": "Umur Piutang / Jatuh Tempo",
   "tab_receipts": "Kuitansi Pembayaran",
+  "loading_invoices": "Memuat daftar invoice...",
+  "loading_aging": "Memuat analisis umur piutang...",
+  "loading_receipts": "Memuat daftar kuitansi...",
   "invoice_kind": {
     "down_payment": "Uang Muka (DP)",
     "milestone": "Termin Progres (Wajib BAKP)",

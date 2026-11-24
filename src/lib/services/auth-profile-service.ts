@@ -1,4 +1,4 @@
-import { cachedQuery } from "@/lib/realtime-cache";
+import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type { ProfileRow, PurchaseOrderRow, UserRole } from "@/types/database.types";
 import { appendDemoAudit, demoStore, getDemoActor } from "./demo-store";
@@ -183,6 +183,7 @@ export async function createInternalUser(input: {
     };
     demoStore.profiles.push(row);
     appendDemoAudit(actor, "INSERT", "profiles", row.id, null, row);
+    invalidateAndNotifyDataChange("profiles");
     return;
   }
 
@@ -199,6 +200,7 @@ export async function createInternalUser(input: {
   if (data && typeof data === "object" && "error" in data && data.error) {
     throw new Error(String(data.error));
   }
+  invalidateAndNotifyDataChange("profiles");
 }
 
 export async function updateInternalUserRoles(
@@ -212,7 +214,9 @@ export async function updateInternalUserRoles(
 
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
-    if (actor.role !== "super_admin") {
+    const isSuperAdmin =
+      actor.role === "super_admin" || actor.roles?.includes("super_admin");
+    if (!isSuperAdmin) {
       throw new Error("Hanya Super Admin yang dapat mengubah peran pengguna.");
     }
     if (actor.id === targetUserId) {
@@ -256,7 +260,15 @@ export async function updateInternalUserRoles(
       { event: "USER_ROLES_UPDATED", new_roles: roles, new_active_role: newActiveRole },
     );
 
+    invalidateAndNotifyDataChange("profiles");
     return structuredClone(target);
+  }
+
+  // Pada mode Supabase: pastikan peran aktif di server disinkronkan ke 'super_admin'
+  try {
+    await supabase.rpc("switch_active_role", { p_target_role: "super_admin" });
+  } catch {
+    // Abaikan jika switch_active_role tidak dibutuhkan atau pemanggil sudah super_admin
   }
 
   const { data, error } = await supabase.rpc("update_user_roles", {
@@ -265,13 +277,16 @@ export async function updateInternalUserRoles(
     p_primary_role: primaryRole ?? null,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("profiles");
   return (data as unknown) as ProfileRow;
 }
 
 export async function deleteInternalUser(targetUserId: string): Promise<void> {
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
-    if (actor.role !== "super_admin") {
+    const isSuperAdmin =
+      actor.role === "super_admin" || actor.roles?.includes("super_admin");
+    if (!isSuperAdmin) {
       throw new Error("Hanya Super Admin yang berhak menghapus akun pengguna.");
     }
     if (actor.id === targetUserId) {
@@ -351,13 +366,21 @@ export async function deleteInternalUser(targetUserId: string): Promise<void> {
       target,
       { event: "USER_DELETED", deleted_user_email: target.email },
     );
+    invalidateAndNotifyDataChange("profiles");
     return;
+  }
+
+  try {
+    await supabase.rpc("switch_active_role", { p_target_role: "super_admin" });
+  } catch {
+    // Abaikan jika pemanggil sudah super_admin
   }
 
   const { error } = await supabase.rpc("delete_internal_user", {
     p_target_user_id: targetUserId,
   });
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("profiles");
 }
 
 export async function updateInternalUserRole(
@@ -375,6 +398,7 @@ export async function updateInternalUserRole(
     target.role = role;
     target.updated_at = new Date().toISOString();
     appendDemoAudit(actor, "UPDATE", "profiles", target.id, before, target);
+    invalidateAndNotifyDataChange("profiles");
     return;
   }
 
@@ -383,6 +407,7 @@ export async function updateInternalUserRole(
     .update({ role })
     .eq("id", targetUserId);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("profiles");
 }
 
 export async function toggleInternalUserActive(
@@ -403,6 +428,7 @@ export async function toggleInternalUserActive(
     target.is_active = isActive;
     target.updated_at = new Date().toISOString();
     appendDemoAudit(actor, "UPDATE", "profiles", target.id, before, target);
+    invalidateAndNotifyDataChange("profiles");
     return;
   }
 
@@ -411,4 +437,5 @@ export async function toggleInternalUserActive(
     .update({ is_active: isActive })
     .eq("id", targetUserId);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("profiles");
 }

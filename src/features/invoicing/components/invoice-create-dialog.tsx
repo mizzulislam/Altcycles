@@ -29,7 +29,12 @@ import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-c
 import { cn } from "@/lib/utils";
 import { formatDateI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
-import { getLocalizedAccountName, getLocalizedMilestoneName } from "@/lib/glossary";
+import {
+  INVOICE_KIND_MAP,
+  getLocalizedAccountName,
+  getLocalizedInvoiceKind,
+  getLocalizedMilestoneName,
+} from "@/lib/glossary";
 import type {
   AccountRow,
   ClientPurchaseOrderRow,
@@ -43,15 +48,15 @@ import type {
 import type { ChecklistItem } from "@/lib/document-checklist";
 
 export const INVOICE_KIND_LABELS: Record<InvoiceKind, string> = {
-  down_payment: "Uang Muka (DP)",
-  milestone: "Termin Progres (Wajib BAKP)",
-  final_settlement: "Pelunasan Akhir (Wajib BAST)",
+  down_payment: INVOICE_KIND_MAP.down_payment.id,
+  milestone: INVOICE_KIND_MAP.milestone.id,
+  final_settlement: INVOICE_KIND_MAP.final_settlement.id,
 };
 
 export const INVOICE_KIND_LABELS_EN: Record<InvoiceKind, string> = {
-  down_payment: "Down Payment (DP)",
-  milestone: "Progress Milestone (Requires BAKP)",
-  final_settlement: "Final Settlement (Requires BAST)",
+  down_payment: INVOICE_KIND_MAP.down_payment.en,
+  milestone: INVOICE_KIND_MAP.milestone.en,
+  final_settlement: INVOICE_KIND_MAP.final_settlement.en,
 };
 
 export interface InvoiceCreateDialogProps {
@@ -179,7 +184,9 @@ export function InvoiceCreateDialog({
                         d.setDate(d.getDate() + 14);
                         setDueDate(d.toISOString().split("T")[0]!);
                       }
-                    } catch {}
+                    } catch {
+                      // Abaikan parsing tanggal invalid
+                    }
                   }}
                 />
               </Field>
@@ -209,7 +216,7 @@ export function InvoiceCreateDialog({
                     <SelectGroup>
                       {(["down_payment", "milestone", "final_settlement"] as const).map((k) => (
                         <SelectItem key={k} value={k}>
-                          {t(`invoicing:invoice_kind.${k}`, INVOICE_KIND_LABELS[k])}
+                          {t(`invoicing:invoice_kind.${k}`, getLocalizedInvoiceKind(k, language))}
                         </SelectItem>
                       ))}
                     </SelectGroup>

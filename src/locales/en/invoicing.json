@@ -7,6 +7,9 @@
   "tab_invoices": "Client Invoices List",
   "tab_aging": "AR Aging / Due Dates",
   "tab_receipts": "Payment Receipts",
+  "loading_invoices": "Loading client invoices...",
+  "loading_aging": "Loading accounts receivable aging...",
+  "loading_receipts": "Loading receipts...",
   "invoice_kind": {
     "down_payment": "Down Payment (DP)",
     "milestone": "Progress Milestone (Requires BAKP)",

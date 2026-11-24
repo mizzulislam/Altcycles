@@ -328,9 +328,9 @@ export function buildInvoicePdfSpec(params: {
       accountHolder: params.company.bank_account_holder || "-",
       transferNews: params.invoiceNumber,
       isPaid: params.paymentStatus === "paid" || dueAmount === 0,
-      swiftCode: (params.company as any).swift_code || null,
+      swiftCode: (params.company as { swift_code?: string | null }).swift_code || null,
     },
-    documentNotes: (params as any).documentNotes ?? null,
+    documentNotes: (params as { documentNotes?: string | null }).documentNotes ?? null,
     rightSignatureLabel: isEn
       ? `Sincerely, ${params.company.company_name}`
       : `Hormat kami, ${params.company.company_name}`,

@@ -54,7 +54,7 @@ export function buildSocialFooter(
   },
   spec?: PdfDocumentSpec,
 ): Footer {
-  const isEn = (spec as any)?.lang === "en" || getActiveLanguage() === "en";
+  const isEn = (spec as { lang?: string } | undefined)?.lang === "en" || getActiveLanguage() === "en";
   const entries = getFooterSocialEntries(company);
   const children: Array<Paragraph | Table> = [];
 

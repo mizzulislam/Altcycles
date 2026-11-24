@@ -355,7 +355,7 @@ export async function generateDocumentWord(spec: PdfDocumentSpec): Promise<Blob>
     );
   }
 
-  const isEn = (spec as any)?.lang === "en" || getActiveLanguage() === "en";
+  const isEn = (spec as { lang?: string })?.lang === "en" || getActiveLanguage() === "en";
 
   if (typeof spec.terbilangAmount === "number") {
     bodyChildren.push(

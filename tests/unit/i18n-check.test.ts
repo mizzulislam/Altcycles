@@ -98,10 +98,11 @@ describe("i18n navigation and layout checks", () => {
     const accountingId = (await import("@/locales/id/accounting.json")).default;
     const accountingEn = (await import("@/locales/en/accounting.json")).default;
 
-    function getDeepKeys(obj: Record<string, any>, prefix = ""): string[] {
+    function getDeepKeys(obj: Record<string, unknown>, prefix = ""): string[] {
       return Object.keys(obj).reduce((res: string[], el: string) => {
-        if (typeof obj[el] === "object" && obj[el] !== null && !Array.isArray(obj[el])) {
-          return [...res, ...getDeepKeys(obj[el], prefix + el + ".")];
+        const val = obj[el];
+        if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+          return [...res, ...getDeepKeys(val as Record<string, unknown>, prefix + el + ".")];
         }
         return [...res, prefix + el];
       }, []);
@@ -155,105 +156,86 @@ describe("i18n navigation and layout checks", () => {
     expect(settingsIdKeys).toEqual(settingsEnKeys);
     expect(settingsIdKeys.length).toBeGreaterThan(60);
 
+    function getLeafValue(root: unknown, pathSegments: string[]): unknown {
+      let curr: unknown = root;
+      for (const p of pathSegments) {
+        if (curr === undefined || curr === null || typeof curr !== "object") return undefined;
+        curr = (curr as Record<string, unknown>)[p];
+      }
+      return curr;
+    }
+
     for (const key of settingsIdKeys) {
       const parts = key.split(".");
-      let valId: any = settingsId;
-      let valEn: any = settingsEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(settingsId, parts);
+      const valEn = getLeafValue(settingsEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     for (const key of partiesIdKeys) {
       const parts = key.split(".");
-      let valId: any = partiesId;
-      let valEn: any = partiesEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(partiesId, parts);
+      const valEn = getLeafValue(partiesEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     // Ensure no empty translation values in budgeting and profit sharing
     for (const key of budgetIdKeys) {
       const parts = key.split(".");
-      let valId: any = budgetingId;
-      let valEn: any = budgetingEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(budgetingId, parts);
+      const valEn = getLeafValue(budgetingEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     for (const key of profitIdKeys) {
       const parts = key.split(".");
-      let valId: any = profitSharingId;
-      let valEn: any = profitSharingEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(profitSharingId, parts);
+      const valEn = getLeafValue(profitSharingEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     // Ensure no empty translation values in po and approvals
     for (const key of poIdKeys) {
       const parts = key.split(".");
-      let valId: any = poId;
-      let valEn: any = poEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(poId, parts);
+      const valEn = getLeafValue(poEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     for (const key of apprvIdKeys) {
       const parts = key.split(".");
-      let valId: any = approvalsId;
-      let valEn: any = approvalsEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(approvalsId, parts);
+      const valEn = getLeafValue(approvalsEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
 
     // Ensure no empty translation values
     for (const key of idKeys) {
       const parts = key.split(".");
-      let valId: any = accountingId;
-      let valEn: any = accountingEn;
-      for (const p of parts) {
-        valId = valId[p];
-        valEn = valEn[p];
-      }
+      const valId = getLeafValue(accountingId, parts);
+      const valEn = getLeafValue(accountingEn, parts);
       expect(typeof valId).toBe("string");
-      expect(valId.trim().length).toBeGreaterThan(0);
+      expect((valId as string).trim().length).toBeGreaterThan(0);
       expect(typeof valEn).toBe("string");
-      expect(valEn.trim().length).toBeGreaterThan(0);
+      expect((valEn as string).trim().length).toBeGreaterThan(0);
     }
   });
 
@@ -431,8 +413,8 @@ describe("i18n navigation and layout checks", () => {
     const idDir = path.join(localesDir, "id");
     const enDir = path.join(localesDir, "en");
 
-    function loadNamespaceJson(dir: string) {
-      const map: Record<string, any> = {};
+    function loadNamespaceJson(dir: string): Record<string, unknown> {
+      const map: Record<string, unknown> = {};
       for (const f of fs.readdirSync(dir)) {
         if (f.endsWith(".json")) {
           const ns = f.replace(".json", "");
@@ -446,7 +428,7 @@ describe("i18n navigation and layout checks", () => {
     const enData = loadNamespaceJson(enDir);
     const i18nContent = fs.readFileSync(path.resolve(process.cwd(), "src/lib/i18n.tsx"), "utf8");
 
-    function hasKey(data: Record<string, any>, fullKey: string) {
+    function hasKey(data: Record<string, unknown>, fullKey: string) {
       let ns = "common";
       let subPath = fullKey;
       if (fullKey.includes(":")) {
@@ -471,10 +453,10 @@ describe("i18n navigation and layout checks", () => {
       if (!root) return false;
 
       const segments = subPath.split(".");
-      let curr: any = root;
+      let curr: unknown = root;
       for (const s of segments) {
         if (curr === undefined || curr === null || typeof curr !== "object") return false;
-        curr = curr[s];
+        curr = (curr as Record<string, unknown>)[s];
       }
       return curr !== undefined && curr !== null;
     }
@@ -627,6 +609,15 @@ describe("i18n navigation and layout checks", () => {
         "en",
       ),
     ).toBe("Annual server cost allocation for 42 used days (20 Sep to 31 Oct 2026)");
+
+    // 7. Invoice Kind labels (Fase 5 - I18N-001)
+    const { getLocalizedInvoiceKind } = await import("@/lib/glossary");
+    expect(getLocalizedInvoiceKind("down_payment", "id")).toBe("Uang Muka (DP)");
+    expect(getLocalizedInvoiceKind("down_payment", "en")).toBe("Down Payment (DP)");
+    expect(getLocalizedInvoiceKind("milestone", "id")).toBe("Termin Progres (Wajib BAKP)");
+    expect(getLocalizedInvoiceKind("milestone", "en")).toBe("Progress Milestone (Requires BAKP)");
+    expect(getLocalizedInvoiceKind("final_settlement", "id")).toBe("Pelunasan Akhir (Wajib BAST)");
+    expect(getLocalizedInvoiceKind("final_settlement", "en")).toBe("Final Settlement (Requires BAST)");
   });
 
   it("verifies PDF layout parity (id vs en) and zero Indonesian leakage in English accounting PDFs (Items 1 & 2)", async () => {

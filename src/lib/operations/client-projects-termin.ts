@@ -115,7 +115,7 @@ export async function updateProjectMilestone(
     ms.name = input.name.trim();
     ms.percentage = input.percentage;
     ms.amount = roundRupiah(input.amount);
-    ms.achievement_criteria = input.achievementCriteria.trim() || null,
+    ms.achievement_criteria = input.achievementCriteria.trim() || null;
     ms.status = input.status;
     return;
   }
@@ -618,7 +618,7 @@ export async function updateSalesInvoice(
     } else {
       inv.paid_amount = Math.min(Math.max(1, inv.paid_amount), totalAmount - 1);
     }
-    inv.notes = input.notes.trim() || null,
+    inv.notes = input.notes.trim() || null;
     inv.updated_at = new Date().toISOString();
     invalidateAndNotifyDataChange("sales_invoices");
     return;

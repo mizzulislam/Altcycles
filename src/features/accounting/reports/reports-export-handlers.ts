@@ -71,7 +71,7 @@ export interface ReportExportData {
     rows: Array<{
       code: string;
       name: string;
-      accountType: any;
+      accountType: string;
       totalDebit: number;
       totalCredit: number;
       endingDebit: number;
@@ -191,7 +191,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
             rows: l.rows.map((r) => ({
               date: formatDateID(r.journalDate),
               description: getLocalizedTransactionDescription(r.description, lang),
-              ref: (r as any).referenceNumber || r.journalNumber || "-",
+              ref: (r as { referenceNumber?: string }).referenceNumber || r.journalNumber || "-",
               debit: r.debit,
               credit: r.credit,
               runningBalance: r.runningBalance,
@@ -211,7 +211,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
                 rows: ledgerRows.map((r) => ({
                   date: formatDateID(r.journalDate),
                   description: getLocalizedTransactionDescription(r.description, lang),
-                  ref: (r as any).referenceNumber || r.journalNumber || "-",
+                  ref: (r as { referenceNumber?: string }).referenceNumber || r.journalNumber || "-",
                   debit: r.debit,
                   credit: r.credit,
                   runningBalance: r.runningBalance,

@@ -126,6 +126,33 @@ export const GLOSSARY = {
 } as const;
 
 /**
+ * Pemetaan Jenis / Tipe Invoice Penagihan Klien Bilingual
+ */
+export const INVOICE_KIND_MAP = {
+  down_payment: {
+    id: "Uang Muka (DP)",
+    en: "Down Payment (DP)",
+  },
+  milestone: {
+    id: "Termin Progres (Wajib BAKP)",
+    en: "Progress Milestone (Requires BAKP)",
+  },
+  final_settlement: {
+    id: "Pelunasan Akhir (Wajib BAST)",
+    en: "Final Settlement (Requires BAST)",
+  },
+} as const;
+
+export function getLocalizedInvoiceKind(
+  kind: string | null | undefined,
+  lang: "id" | "en",
+): string {
+  if (!kind) return "";
+  const match = INVOICE_KIND_MAP[kind as keyof typeof INVOICE_KIND_MAP];
+  return match ? match[lang] : kind;
+}
+
+/**
  * Pemetaan Akun Standar (Bagan Akun / CoA) Bilingual
  * Kunci adalah kode akun (code) yang tidak pernah berubah.
  */
@@ -626,7 +653,7 @@ export function translateDynamicText(
   if (!text) return "";
   if (lang === "id") return text;
 
-  let res = text;
+  const res = text;
   const directMap: Record<string, string> = {
     "Proyek": "Project",
     "Paket / Modul": "Package / Module",
@@ -751,7 +778,7 @@ export function getLocalizedTransactionDescription(
     (_m, days, range, tail) => {
       const enRange = getLocalizedPeriodName(String(range), "en");
       if (tail) {
-        let enTail = String(tail)
+        const enTail = String(tail)
           .replace(/total kontrak/gi, "total contract")
           .replace(/hari/gi, "days")
           .replace(/tahun/gi, "year");

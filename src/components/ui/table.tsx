@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/empty";
 
 const Table = React.forwardRef<
   HTMLTableElement,
@@ -83,6 +84,32 @@ const TableCell = React.forwardRef<
   />
 ));
 TableCell.displayName = "TableCell";
+
+export interface TableLoadingRowProps {
+  colSpan: number;
+  message?: string;
+  className?: string;
+}
+
+export function TableLoadingRow({
+  colSpan,
+  message = "Memuat data...",
+  className,
+}: TableLoadingRowProps) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableCell
+        colSpan={colSpan}
+        className={cn("h-32 text-center text-muted-foreground", className)}
+      >
+        <div className="flex items-center justify-center gap-2">
+          <Spinner />
+          <span>{message}</span>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell };
 

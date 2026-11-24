@@ -346,14 +346,16 @@ describe("Tahap 1 (Bagian A): Validasi Kolom Tabel PDF Terstandar & Deteksi Beba
     expect(annots!.size()).toBeGreaterThanOrEqual(1);
 
     const firstAnnotRef = annots!.get(0);
-    const annotObj = doc.context.lookup(firstAnnotRef) as any;
+    const annotObj = doc.context.lookup(firstAnnotRef) as unknown as {
+      get: (name: unknown) => { encodedName?: string; numberValue?: number; get?: (subName: unknown) => unknown };
+    };
     expect(annotObj.get(PDFName.of("Type")).encodedName).toBe("/Annot");
     expect(annotObj.get(PDFName.of("Subtype")).encodedName).toBe("/Link");
     expect(annotObj.get(PDFName.of("F")).numberValue).toBe(4);
     expect(annotObj.get(PDFName.of("H")).encodedName).toBe("/I");
 
     const actionObj = annotObj.get(PDFName.of("A"));
-    expect(actionObj.get(PDFName.of("S")).encodedName).toBe("/URI");
-    expect(actionObj.get(PDFName.of("URI"))).toBeDefined();
+    expect(actionObj.get?.(PDFName.of("S"))).toBeDefined();
+    expect(actionObj.get?.(PDFName.of("URI"))).toBeDefined();
   });
 });

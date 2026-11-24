@@ -864,8 +864,8 @@ export function ReportsPrintContent({
                         <div style={{ fontWeight: 600, color: "#0f172a" }}>
                           {getLocalizedTransactionDescription(r.description, lang)}
                         </div>
-                        {(r as any).journalNumber && (
-                          <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as any).journalNumber}</div>
+                        {(r as { journalNumber?: string }).journalNumber && (
+                          <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as { journalNumber?: string }).journalNumber}</div>
                         )}
                       </td>
                       <td>{renderPrintAmount(r.debit)}</td>
@@ -950,8 +950,8 @@ export function ReportsPrintContent({
                     <div style={{ fontWeight: 600, color: "#0f172a" }}>
                       {getLocalizedTransactionDescription(r.description, lang)}
                     </div>
-                    {(r as any).journalNumber && (
-                      <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as any).journalNumber}</div>
+                    {(r as { journalNumber?: string }).journalNumber && (
+                      <div style={{ fontSize: "8px", color: "#64748b" }}>{(r as { journalNumber?: string }).journalNumber}</div>
                     )}
                   </td>
                   <td>{renderPrintAmount(r.debit)}</td>
