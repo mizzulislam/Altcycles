@@ -7,9 +7,9 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "@/lib/i18n";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import {
-  ChartLegendFooter,
+  ChartLegendRow,
   ChartValueFooter,
-  ChartSummaryRow,
+  ChartSummaryFooter,
 } from "@/components/shared/dashboard-charts";
 import { AdminDashboardPage } from "@/features/master-data/admin-dashboard";
 import { UserDashboardPage } from "@/features/dashboard/user-dashboard";
@@ -57,17 +57,26 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
     });
   });
 
-  it("(a) Komponen bersama ChartLegendFooter dan ChartValueFooter memiliki tinggi dan kelas border yang seragam", () => {
+  it("(a) Komponen bersama ChartSummaryFooter dan ChartValueFooter memiliki tinggi dan kelas border yang seragam", () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
         <div className="grid grid-cols-2">
           <ChartCard
             title="Kartu Kiri"
-            footer={
-              <ChartLegendFooter
+            legend={
+              <ChartLegendRow
                 series={[
                   { key: "a", label: "Seri A", color: "#10b981" },
                   { key: "b", label: "Seri B", color: "#f59e0b" },
+                ]}
+              />
+            }
+            footer={
+              <ChartSummaryFooter
+                items={[
+                  { label: "M1", value: "100" },
+                  { label: "M2", value: "200" },
+                  { label: "M3", value: "300" },
                 ]}
               />
             }
@@ -97,22 +106,27 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
     const leftFooter = footers[0] as HTMLElement;
     const rightFooter = footers[1] as HTMLElement;
 
-    // Pastikan kedua footer memiliki min-height 48px dan padding px-6 py-2.5 sm:py-3
-    expect(leftFooter.className).toContain("min-h-[48px]");
-    expect(rightFooter.className).toContain("min-h-[48px]");
-    expect(leftFooter.className).toContain("px-6");
-    expect(rightFooter.className).toContain("px-6");
+    // Pastikan kedua footer memiliki min-height 64px, border-t, dan bg-muted/10
+    expect(leftFooter.className).toContain("min-h-[64px]");
+    expect(rightFooter.className).toContain("min-h-[64px]");
     expect(leftFooter.className).toContain("border-t");
     expect(rightFooter.className).toContain("border-t");
+    expect(leftFooter.className).toContain("bg-muted/10");
+    expect(rightFooter.className).toContain("bg-muted/10");
   });
 
-  it("(b & d) ChartSummaryRow berada di atas garis footer tanpa garis pemisah atas dan tanpa divide-x", () => {
+  it("(b & d) Susunan DOM kartu kiri: grafik -> Keterangan (tanpa border) -> SATU garis footer -> footer ringkasan", () => {
     const { container } = render(
       <I18nextProvider i18n={i18n}>
         <ChartCard
-          title="Kartu dengan Summary"
-          summary={
-            <ChartSummaryRow
+          title="Kartu Grafik"
+          legend={
+            <ChartLegendRow
+              series={[{ key: "1", label: "Seri 1", color: "#10b981" }]}
+            />
+          }
+          footer={
+            <ChartSummaryFooter
               items={[
                 { label: "Metrik 1", value: "100" },
                 { label: "Metrik 2", value: "200" },
@@ -120,30 +134,30 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
               ]}
             />
           }
-          footer={
-            <ChartLegendFooter
-              series={[{ key: "1", label: "Seri 1", color: "#10b981" }]}
-            />
-          }
         >
-          <div>Area Grafik</div>
+          <div data-testid="chart-area">Area Grafik</div>
         </ChartCard>
       </I18nextProvider>
     );
 
-    // Periksa bahwa summary row tidak memiliki border-t dan divide-x
-    const summaryEl = container.querySelector(".grid.bg-muted\\/10");
-    expect(summaryEl).toBeInTheDocument();
-    expect(summaryEl?.className).not.toContain("border-t");
-    expect(summaryEl?.className).not.toContain("divide-x");
+    // Keterangan berada di dalam CardContent tanpa garis border-t
+    const legendEl = screen.getByText("Keterangan").closest("div");
+    expect(legendEl).toBeInTheDocument();
+    expect(legendEl?.className).not.toContain("border-t");
+    expect(legendEl?.className).not.toContain("border-b");
 
-    // Periksa bahwa footer tetap memiliki border-t
-    const footerEl = container.querySelector(".border-t.border-border\\/70");
-    expect(footerEl).toBeInTheDocument();
-    expect(footerEl).toHaveTextContent("Keterangan");
+    // Tepat satu footer dengan border-t
+    const footers = container.querySelectorAll(".border-t.border-border\\/70");
+    expect(footers.length).toBe(1);
+
+    // Footer memuat baris ringkasan metrik dengan pembatas divide-x
+    const footerEl = footers[0] as HTMLElement;
+    expect(footerEl.className).toContain("divide-x");
+    expect(footerEl).toHaveTextContent("Metrik 1");
+    expect(footerEl).toHaveTextContent("100");
   });
 
-  it("(c) Admin Dashboard merender tepat satu footer per kartu dan footer kanan memuat indikator pertumbuhan", async () => {
+  it("(c) Admin Dashboard merender Keterangan di atas garis dan tepat satu footer ringkasan di kiri serta nilai di kanan", async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -154,7 +168,6 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
       </BrowserRouter>
     );
 
-    // Cari kartu Tren Bulanan & Komposisi Keuangan setelah selesai loading
     const trendsTitle = await screen.findByRole("heading", {
       name: /Tren Pendapatan, Beban, & Arus Kas/i,
     });
@@ -165,34 +178,36 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
     });
     expect(compTitle).toBeInTheDocument();
 
-    // Dapatkan kontainer grid yang memuat kedua kartu tersebut
     const gridContainer = trendsTitle.closest(".grid");
     expect(gridContainer).toBeInTheDocument();
 
-    // Kartu kiri dan kartu kanan
     const cards = gridContainer?.children;
     expect(cards?.length).toBe(2);
 
     const leftCard = cards?.[0] as HTMLElement;
     const rightCard = cards?.[1] as HTMLElement;
 
-    // Verifikasi (b): Tepat satu footer per kartu
+    // Tepat satu footer per kartu
     const leftFooters = leftCard.querySelectorAll(".border-t.border-border\\/70");
     const rightFooters = rightCard.querySelectorAll(".border-t.border-border\\/70");
     expect(leftFooters.length).toBe(1);
     expect(rightFooters.length).toBe(1);
 
-    // Verifikasi (c): Footer kanan memuat indikator pertumbuhan (SVG trending icon)
-    expect(rightFooters[0]?.querySelector("svg")).toBeInTheDocument();
+    // Footer kiri adalah baris ringkasan dengan pembatas vertikal divide-x
+    expect(leftFooters[0]?.className).toContain("divide-x");
+    expect(leftFooters[0]).toHaveTextContent("Total Pendapatan");
+    expect(leftFooters[0]).toHaveTextContent("Total Beban");
+    expect(leftFooters[0]).toHaveTextContent("Laba / Rugi Bersih");
 
-    // Verifikasi (d): Baris ringkasan kiri tidak memiliki border-t dan divide-x
-    const leftSummary = leftCard.querySelector(".grid.bg-muted\\/10");
-    expect(leftSummary).toBeInTheDocument();
-    expect(leftSummary?.className).not.toContain("border-t");
-    expect(leftSummary?.className).not.toContain("divide-x");
+    // Keterangan berada di atas garis footer (di dalam body kartu kiri)
+    const legendInLeftCard = leftCard.querySelector(".text-\\[11px\\].font-medium.text-muted-foreground");
+    expect(legendInLeftCard).toHaveTextContent("Keterangan");
+
+    // Footer kanan memuat indikator pertumbuhan
+    expect(rightFooters[0]?.querySelector("svg")).toBeInTheDocument();
   });
 
-  it("(c) User Dashboard merender tepat satu footer per kartu tanpa footer ganda", async () => {
+  it("(c) User Dashboard merender Keterangan di atas garis dan footer ringkasan di kiri serta Total Klaim di kanan", async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -222,14 +237,17 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
     expect(leftFooters.length).toBe(1);
     expect(rightFooters.length).toBe(1);
 
-    // Periksa bahwa summary kiri tidak memiliki border-t dan divide-x
-    const leftSummary = leftCard.querySelector(".grid.bg-muted\\/10");
-    expect(leftSummary).toBeInTheDocument();
-    expect(leftSummary?.className).not.toContain("border-t");
-    expect(leftSummary?.className).not.toContain("divide-x");
+    // Footer kiri memuat 3 ringkasan nilai PO, diajukan, dicairkan
+    expect(leftFooters[0]?.className).toContain("divide-x");
+    expect(leftFooters[0]).toHaveTextContent("Total Nilai PO");
+    expect(leftFooters[0]).toHaveTextContent("Total Diajukan");
+    expect(leftFooters[0]).toHaveTextContent("Sudah Dicairkan");
+
+    // Footer kanan memuat Total Klaim tunggal tanpa duplikasi
+    expect(rightFooters[0]).toHaveTextContent("Total Klaim");
   });
 
-  it("(e) Super Admin Dashboard memiliki baris Keterangan pada kartu kiri dan satu footer Pengguna Aktif pada kartu kanan", async () => {
+  it("(e) Super Admin Dashboard memiliki baris Keterangan di atas garis dan footer ringkasan log audit di dasar", async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -259,19 +277,16 @@ describe("Dashboard Card Footer Alignment & Shared Architecture", () => {
     expect(leftFooters.length).toBe(1);
     expect(rightFooters.length).toBe(1);
 
-    // Kartu kiri Super Admin kini memuat footer Keterangan dengan legenda interaktif
-    expect(leftFooters[0]).toHaveTextContent("Keterangan");
+    // Baris Keterangan di kartu kiri
+    expect(leftCard).toHaveTextContent("Keterangan");
+
+    // Footer kiri Super Admin memuat 3 operasi log dengan divide-x
+    expect(leftFooters[0]?.className).toContain("divide-x");
     expect(leftFooters[0]).toHaveTextContent("Operasi Tambah");
     expect(leftFooters[0]).toHaveTextContent("Operasi Ubah");
     expect(leftFooters[0]).toHaveTextContent("Operasi Hapus");
 
     // Kartu kanan Super Admin memuat footer tunggal Pengguna Aktif
     expect(rightFooters[0]).toHaveTextContent("Pengguna Aktif");
-
-    // Summary row kiri tidak memiliki garis pemisah
-    const leftSummary = leftCard.querySelector(".grid.bg-muted\\/10");
-    expect(leftSummary).toBeInTheDocument();
-    expect(leftSummary?.className).not.toContain("border-t");
-    expect(leftSummary?.className).not.toContain("divide-x");
   });
 });

@@ -45,8 +45,8 @@ export function ChartCardFooter({
   );
 }
 
-/** Komponen bersama footer kartu yang menampilkan keterangan warna seri interaktif (Item 2) */
-export function ChartLegendFooter({
+/** Komponen bersama baris keterangan warna seri grafik (tanpa border, rapat di dalam area grafik) */
+export function ChartLegendRow({
   series,
   hiddenKeys,
   onToggleSeries,
@@ -61,7 +61,7 @@ export function ChartLegendFooter({
   return (
     <div
       className={cn(
-        "px-6 py-2.5 sm:py-3 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[48px]",
+        "flex items-center justify-between gap-3 text-xs select-none",
         className,
       )}
     >
@@ -85,7 +85,7 @@ export function ChartLegendFooter({
               }
               className={cn(
                 "inline-flex items-center gap-1.5 transition-opacity select-none",
-                onToggleSeries ? "cursor-pointer" : "cursor-default",
+                onToggleSeries ? "cursor-pointer hover:opacity-80 active:scale-95" : "cursor-default",
                 isHidden ? "opacity-35 line-through" : "opacity-100",
               )}
             >
@@ -104,7 +104,9 @@ export function ChartLegendFooter({
   );
 }
 
-/** Komponen bersama footer kartu yang menampilkan nilai total / indikator tunggal selaras dengan ChartLegendFooter */
+export const ChartLegendFooter = ChartLegendRow;
+
+/** Komponen bersama footer kartu yang menampilkan nilai total / indikator tunggal selaras dengan ChartSummaryFooter */
 export function ChartValueFooter({
   label,
   value,
@@ -119,7 +121,7 @@ export function ChartValueFooter({
   return (
     <div
       className={cn(
-        "px-6 py-2.5 sm:py-3 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[48px]",
+        "px-6 py-3.5 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[64px]",
         className,
       )}
     >
@@ -144,10 +146,10 @@ export interface ChartSummaryItem {
 }
 
 /**
- * Baris ringkasan metrik grafik tanpa garis batas atas dan tanpa pembatas vertikal (divide-x).
- * Berada langsung di atas garis footer sebagai bagian dari visualisasi data grafik.
+ * Baris footer ringkasan metrik grafik (grid edge-to-edge dengan garis pembatas atas border-t).
+ * Memiliki pembatas vertikal antar item (divide-x) dan min-h-[64px] selaras dengan ChartValueFooter.
  */
-export function ChartSummaryRow({
+export function ChartSummaryFooter({
   items,
   className,
 }: {
@@ -157,7 +159,7 @@ export function ChartSummaryRow({
   return (
     <div
       className={cn(
-        "grid bg-muted/10 min-h-[58px] sm:min-h-[64px]",
+        "grid bg-muted/10 divide-x divide-border/60 text-xs min-h-[64px] border-t border-border/70",
         items.length === 2 && "grid-cols-2",
         items.length === 3 && "grid-cols-3",
         items.length === 4 && "grid-cols-4",
@@ -168,7 +170,7 @@ export function ChartSummaryRow({
         const content = (
           <div
             className={cn(
-              "py-3.5",
+              "py-3.5 flex flex-col justify-center",
               idx === 0 && "pl-6 pr-4",
               idx > 0 && idx < items.length - 1 && "px-4",
               idx === items.length - 1 && "pl-3.5 pr-6",
@@ -195,8 +197,8 @@ export function ChartSummaryRow({
               type="button"
               onClick={item.onClick}
               className={cn(
-                "text-left transition-opacity cursor-pointer focus-visible:outline-none",
-                item.active === false && "opacity-40 line-through",
+                "text-left transition-opacity cursor-pointer hover:bg-muted/20 active:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                item.active === false && "opacity-40",
               )}
             >
               {content}
@@ -209,6 +211,8 @@ export function ChartSummaryRow({
     </div>
   );
 }
+
+export const ChartSummaryRow = ChartSummaryFooter;
 
 /** Pemilih jenis grafik ringkas bergaya pill terstandar Altcycles. */
 export function ChartTypeSwitcher<T extends string>({

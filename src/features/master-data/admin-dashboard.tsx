@@ -16,8 +16,8 @@ import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
 import {
   buildRupiahHistogramBins,
-  ChartLegendFooter,
-  ChartSummaryRow,
+  ChartLegendRow,
+  ChartSummaryFooter,
   ChartTypeSwitcher,
   ChartValueFooter,
   CompositionChart,
@@ -739,8 +739,31 @@ export function AdminDashboardPage() {
               ]}
             />
           }
-          summary={
-            <ChartSummaryRow
+          legend={
+            <ChartLegendRow
+              series={[
+                {
+                  key: "revenue",
+                  label: t("dashboard:charts.revenue", "Pendapatan"),
+                  color: "#10b981",
+                },
+                {
+                  key: "expense",
+                  label: t("dashboard:charts.expense", "Beban"),
+                  color: "#f59e0b",
+                },
+                {
+                  key: "netCash",
+                  label: t("dashboard:charts.net_cash", "Kas Bersih"),
+                  color: "#0B43C8",
+                },
+              ]}
+              hiddenKeys={hiddenTrendSeries}
+              onToggleSeries={toggleTrendSeries}
+            />
+          }
+          footer={
+            <ChartSummaryFooter
               items={[
                 {
                   label: t("dashboard:charts.total_revenue", "Total Pendapatan"),
@@ -770,29 +793,6 @@ export function AdminDashboardPage() {
                       : "text-destructive",
                 },
               ]}
-            />
-          }
-          footer={
-            <ChartLegendFooter
-              series={[
-                {
-                  key: "revenue",
-                  label: t("dashboard:charts.revenue", "Pendapatan"),
-                  color: "#10b981",
-                },
-                {
-                  key: "expense",
-                  label: t("dashboard:charts.expense", "Beban"),
-                  color: "#f59e0b",
-                },
-                {
-                  key: "netCash",
-                  label: t("dashboard:charts.net_cash", "Kas Bersih"),
-                  color: "#0B43C8",
-                },
-              ]}
-              hiddenKeys={hiddenTrendSeries}
-              onToggleSeries={toggleTrendSeries}
             />
           }
         >

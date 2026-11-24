@@ -13,6 +13,7 @@ export interface DashboardChartCardProps {
   subtitle?: React.ReactNode;
   controls?: React.ReactNode;
   children: React.ReactNode;
+  legend?: React.ReactNode;
   summary?: React.ReactNode;
   footer?: React.ReactNode;
   loading?: boolean;
@@ -27,6 +28,7 @@ export function ChartCard({
   subtitle,
   controls,
   children,
+  legend,
   summary,
   footer,
   loading = false,
@@ -62,7 +64,7 @@ export function ChartCard({
 
       <CardContent
         className={cn(
-          "p-6 flex-1 flex flex-col justify-between gap-5",
+          "p-6 flex-1 flex flex-col justify-between gap-4",
           contentClassName,
         )}
       >
@@ -76,6 +78,11 @@ export function ChartCard({
             <div className="flex-1 flex flex-col justify-center min-h-0">
               {children}
             </div>
+            {legend ? (
+              <div className="shrink-0 mt-auto pt-1">
+                {legend}
+              </div>
+            ) : null}
             {summary ? (
               <div className="shrink-0 -mx-6 -mb-6 mt-auto">
                 {summary}
@@ -85,7 +92,11 @@ export function ChartCard({
         )}
       </CardContent>
 
-      {footer ? footer : null}
+      {footer ? (
+        <div className="shrink-0 mt-auto">
+          {footer}
+        </div>
+      ) : null}
     </Card>
   );
 }

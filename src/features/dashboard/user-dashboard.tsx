@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import {
   buildRupiahHistogramBins,
-  ChartLegendFooter,
-  ChartSummaryRow,
+  ChartLegendRow,
+  ChartSummaryFooter,
   ChartTypeSwitcher,
   ChartValueFooter,
   CompositionChart,
@@ -472,29 +472,8 @@ export function UserDashboardPage() {
               ]}
             />
           }
-          summary={
-            <ChartSummaryRow
-              items={[
-                {
-                  label: t("dashboard:user_dashboard.total_po_val", "Total Nilai PO"),
-                  value: formatRupiah(totalPoNominal),
-                  valueClass: "text-violet-600 dark:text-violet-400",
-                },
-                {
-                  label: t("dashboard:user_dashboard.total_req_val", "Total Diajukan"),
-                  value: formatRupiah(totalReqNominal),
-                  valueClass: "text-amber-600 dark:text-amber-400",
-                },
-                {
-                  label: t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan"),
-                  value: formatRupiah(totalPaidNominal),
-                  valueClass: "text-emerald-600 dark:text-emerald-400",
-                },
-              ]}
-            />
-          }
-          footer={
-            <ChartLegendFooter
+          legend={
+            <ChartLegendRow
               series={[
                 {
                   key: "poTotal",
@@ -514,6 +493,27 @@ export function UserDashboardPage() {
               ]}
               hiddenKeys={hiddenActivitySeries}
               onToggleSeries={toggleActivitySeries}
+            />
+          }
+          footer={
+            <ChartSummaryFooter
+              items={[
+                {
+                  label: t("dashboard:user_dashboard.total_po_val", "Total Nilai PO"),
+                  value: formatRupiah(totalPoNominal),
+                  valueClass: "text-violet-600 dark:text-violet-400",
+                },
+                {
+                  label: t("dashboard:user_dashboard.total_req_val", "Total Diajukan"),
+                  value: formatRupiah(totalReqNominal),
+                  valueClass: "text-amber-600 dark:text-amber-400",
+                },
+                {
+                  label: t("dashboard:user_dashboard.total_paid_val", "Sudah Dicairkan"),
+                  value: formatRupiah(totalPaidNominal),
+                  valueClass: "text-emerald-600 dark:text-emerald-400",
+                },
+              ]}
             />
           }
         >

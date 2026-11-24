@@ -10,8 +10,8 @@ import {
   UsersIcon,
 } from "lucide-react";
 import {
-  ChartLegendFooter,
-  ChartSummaryRow,
+  ChartLegendRow,
+  ChartSummaryFooter,
   ChartTypeSwitcher,
   ChartValueFooter,
   CompositionChart,
@@ -379,8 +379,34 @@ export function SuperAdminDashboardPage() {
               />
             </div>
           }
-          summary={
-            <ChartSummaryRow
+          legend={
+            <ChartLegendRow
+              series={[
+                {
+                  key: "insert",
+                  label: t("settings:super_admin.op_insert_label", "Operasi Tambah"),
+                  color: "#10b981",
+                  textClass: "text-emerald-600 dark:text-emerald-400",
+                },
+                {
+                  key: "update",
+                  label: t("settings:super_admin.op_update_label", "Operasi Ubah"),
+                  color: "#0B43C8",
+                  textClass: "text-primary dark:text-sky-400",
+                },
+                {
+                  key: "delete",
+                  label: t("settings:super_admin.op_delete_label", "Operasi Hapus"),
+                  color: "#f43f5e",
+                  textClass: "text-rose-600 dark:text-rose-400",
+                },
+              ]}
+              hiddenKeys={hiddenAuditSeries}
+              onToggleSeries={toggleAuditSeries}
+            />
+          }
+          footer={
+            <ChartSummaryFooter
               items={[
                 {
                   label: (
@@ -419,32 +445,6 @@ export function SuperAdminDashboardPage() {
                   active: !hiddenAuditSeries.has("delete"),
                 },
               ]}
-            />
-          }
-          footer={
-            <ChartLegendFooter
-              series={[
-                {
-                  key: "insert",
-                  label: t("settings:super_admin.op_insert_label", "Operasi Tambah"),
-                  color: "#10b981",
-                  textClass: "text-emerald-600 dark:text-emerald-400",
-                },
-                {
-                  key: "update",
-                  label: t("settings:super_admin.op_update_label", "Operasi Ubah"),
-                  color: "#0B43C8",
-                  textClass: "text-primary dark:text-sky-400",
-                },
-                {
-                  key: "delete",
-                  label: t("settings:super_admin.op_delete_label", "Operasi Hapus"),
-                  color: "#f43f5e",
-                  textClass: "text-rose-600 dark:text-rose-400",
-                },
-              ]}
-              hiddenKeys={hiddenAuditSeries}
-              onToggleSeries={toggleAuditSeries}
             />
           }
         >
