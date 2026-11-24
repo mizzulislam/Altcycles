@@ -288,25 +288,36 @@ function GameDialogView({ payload, isExiting, onClose }: GameDialogViewProps) {
           id="game-dialog-desc"
           className="text-xs sm:text-sm text-foreground/90 leading-relaxed max-h-[38vh] overflow-y-auto pr-6 no-scrollbar select-text cursor-default"
         >
+          <style>{`
+            @keyframes alt-caret-blink {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0; }
+            }
+            .alt-caret-blink {
+              animation: alt-caret-blink 0.75s steps(1) infinite;
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .alt-caret-blink {
+                animation: none;
+                opacity: 1;
+              }
+            }
+          `}</style>
           {fullText ? (
             <span>
               {fullText.slice(0, charCount)}
               <span
-                className="inline-block ml-0.5 font-bold text-primary dark:text-sky-400 animate-pulse select-none"
+                className="inline-block w-[2px] h-[1.1em] bg-primary dark:bg-sky-400 align-baseline ml-1 select-none alt-caret-blink rounded-xs"
                 aria-hidden="true"
-              >
-                |
-              </span>
+              />
             </span>
           ) : (
             <span>
               {payload.description}
               <span
-                className="inline-block ml-0.5 font-bold text-primary dark:text-sky-400 animate-pulse select-none"
+                className="inline-block w-[2px] h-[1.1em] bg-primary dark:bg-sky-400 align-baseline ml-1 select-none alt-caret-blink rounded-xs"
                 aria-hidden="true"
-              >
-                |
-              </span>
+              />
             </span>
           )}
         </div>

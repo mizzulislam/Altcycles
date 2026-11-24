@@ -255,7 +255,7 @@ describe("GameDialog & CardHeaderWithInfo Components", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("C.1: Dialog merender kursor berkedip (|) khas warna biru Altvira saat efek typewriter aktif", () => {
+  it("C.1: Dialog merender kursor berkedip (|) khas warna biru Altvira dengan align-baseline dan stepped animation", () => {
     render(
       <GameDialogProvider>
         <TestPilotCard />
@@ -270,11 +270,11 @@ describe("GameDialog & CardHeaderWithInfo Components", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
 
-    // Caret berkedip | ada di DOM
-    const caret = dialog.querySelector(".animate-pulse");
+    // Caret berkedip ada di DOM dengan animasi stepped dan warna biru Altvira
+    const caret = dialog.querySelector(".alt-caret-blink");
     expect(caret).toBeInTheDocument();
-    expect(caret).toHaveTextContent("|");
-    expect(caret).toHaveClass("text-primary");
+    expect(caret).toHaveClass("bg-primary");
+    expect(caret).toHaveClass("align-baseline");
   });
 
   it("C.2: Pemindaian menyeluruh berkas di src/features/ memastikan tidak ada CardDescription liar di luar pengecualian resmi", () => {
