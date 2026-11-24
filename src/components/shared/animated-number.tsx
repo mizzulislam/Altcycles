@@ -25,7 +25,8 @@ export function AnimatedNumber({
     // Jika user mengaktifkan prefers-reduced-motion, langsung render nilai akhir
     if (
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)")?.matches
     ) {
       return value;
     }
@@ -37,7 +38,8 @@ export function AnimatedNumber({
   React.useEffect(() => {
     prefersReduced.current =
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)")?.matches;
   }, []);
 
   React.useEffect(() => {

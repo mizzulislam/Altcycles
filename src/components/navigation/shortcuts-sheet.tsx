@@ -250,7 +250,10 @@ export function ShortcutsSheet({ isOpen, onClose, currentRole }: ShortcutsSheetP
                   {t("common:shortcuts.no_results", "Tidak ada pintasan yang cocok")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Coba gunakan kata kunci nama halaman, modul, atau tombol aksi lainnya.
+                  {t(
+                    "common:shortcuts.no_results_desc",
+                    "Coba gunakan kata kunci nama halaman, modul, atau tombol aksi lainnya.",
+                  )}
                 </p>
               </div>
             )}

@@ -105,13 +105,19 @@ export function PortalShell() {
   }, [location.pathname]);
 
   // Hook Pintasan Keyboard Global (Pemicu '/', '?', urutan "G lalu X", dan kombinasi modifier)
+  const handleOpenCommandPalette = React.useCallback(() => {
+    setIsCommandPaletteOpen(true);
+  }, []);
+
+  const handleOpenShortcutsPanel = React.useCallback(() => {
+    setIsCommandPaletteOpen(false);
+    setIsShortcutsPanelOpen(true);
+  }, []);
+
   useGlobalShortcuts({
     currentRole,
-    onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
-    onOpenShortcutsPanel: () => {
-      setIsCommandPaletteOpen(false);
-      setIsShortcutsPanelOpen(true);
-    },
+    onOpenCommandPalette: handleOpenCommandPalette,
+    onOpenShortcutsPanel: handleOpenShortcutsPanel,
     isModalOpen: isCommandPaletteOpen || isShortcutsPanelOpen || notifOpen,
   });
 

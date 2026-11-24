@@ -254,6 +254,12 @@
     "sort_name_asc": "Action Name (A - Z)",
     "sort_name_desc": "Action Name (Z - A)",
     "sort_group": "Group & Module",
-    "sort_status": "Shortcut Status"
+    "sort_status": "Shortcut Status",
+    "no_results_desc": "Try searching by page name, module, or other action keys.",
+    "toast_save_failed": "Failed to save shortcut",
+    "unit_shortcuts": "Shortcuts",
+    "unit_modified": "Modified",
+    "unit_locked": "Locked",
+    "locked_tooltip": "System core shortcut is locked and cannot be modified"
   }
 }

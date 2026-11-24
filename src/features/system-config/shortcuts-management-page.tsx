@@ -19,10 +19,8 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
@@ -49,6 +47,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  BROWSER_RESERVED_COMBOS,
   checkShortcutConflict,
   formatShortcutDisplay,
   getShortcutOverrides,
@@ -62,22 +61,6 @@ import {
 } from "@/lib/navigation-shortcuts-registry";
 import type { UserRole } from "@/types/database.types";
 import { cn } from "@/lib/utils";
-
-const BROWSER_RESERVED_COMBOS = new Set([
-  "mod+w",
-  "ctrl+w",
-  "mod+t",
-  "ctrl+t",
-  "mod+n",
-  "ctrl+n",
-  "mod+q",
-  "ctrl+q",
-  "mod+r",
-  "ctrl+r",
-  "mod+tab",
-  "ctrl+tab",
-  "escape",
-]);
 
 function getRoleBadgeClass(role: UserRole) {
   switch (role) {
@@ -229,7 +212,13 @@ export function ShortcutsManagementPage() {
 
   // Derived statistics
   const totalItems = NAVIGATION_SHORTCUTS_REGISTRY.length;
-  const customCount = Object.keys(overrides).length;
+  const customCount = React.useMemo(() => {
+    return Object.entries(overrides).filter(([id, customKeys]) => {
+      const reg = NAVIGATION_SHORTCUTS_REGISTRY.find((item) => item.id === id);
+      if (!reg || reg.isLocked) return false;
+      return JSON.stringify(reg.defaultKeys) !== JSON.stringify(customKeys);
+    }).length;
+  }, [overrides]);
   const lockedCount = NAVIGATION_SHORTCUTS_REGISTRY.filter((it) => it.isLocked).length;
 
   // Role labels
@@ -318,8 +307,9 @@ export function ShortcutsManagementPage() {
     return list;
   }, [filteredItems, overrides, sortBy, t]);
 
-  // Open Edit Dialog (seluruh tombol bawaan maupun sistem kini bisa diedit)
+  // Open Edit Dialog
   const handleOpenEdit = (item: NavigationShortcutItem) => {
+    if (item.isLocked) return;
     const currentKeys = overrides[item.id] || item.defaultKeys;
     setEditingItem(item);
     setRecordedKeys([...currentKeys]);
@@ -435,11 +425,22 @@ export function ShortcutsManagementPage() {
 
   // Save edited shortcut
   const handleSaveEdit = () => {
-    if (!editingItem || recordedKeys.length === 0 || conflictResult.hasConflict || recordingError) {
+    if (
+      !editingItem ||
+      editingItem.isLocked ||
+      recordedKeys.length === 0 ||
+      (recordedKeys.length === 1 && recordedKeys[0]?.toLowerCase() === "g") ||
+      conflictResult.hasConflict ||
+      recordingError
+    ) {
       return;
     }
 
-    saveShortcutOverride(editingItem.id, recordedKeys);
+    const success = saveShortcutOverride(editingItem.id, recordedKeys);
+    if (!success) {
+      toast.error(t("shortcuts.toast_save_failed", "Gagal menyimpan pintasan"));
+      return;
+    }
     refreshOverrides();
     toast.success(t("shortcuts.toast_saved", "Pintasan keyboard berhasil diperbarui"));
     setEditOpen(false);
@@ -476,76 +477,43 @@ export function ShortcutsManagementPage() {
       {/* 2. Kartu Ringkasan KPI (4 Cards) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Terdaftar */}
-        <Card className="p-5 flex items-center justify-between gap-4 rounded-2xl border-border/80 bg-card shadow-2xs">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("shortcuts.kpi_total", "Total Terdaftar")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {totalItems} Pintasan
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("shortcuts.kpi_total_desc", "Pintasan global di registry")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <KeyboardIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("shortcuts.kpi_total", "Total Terdaftar")}
+          value={totalItems}
+          suffix={` ${t("shortcuts.unit_shortcuts", "Pintasan")}`}
+          subtext={t("shortcuts.kpi_total_desc", "Pintasan global di registry")}
+          icon={KeyboardIcon}
+          iconTone="text-primary dark:text-sky-400 bg-primary/10 border-primary/20"
+        />
 
         {/* Pintasan Kustom */}
-        <Card className="p-5 flex items-center justify-between gap-4 rounded-2xl border-border/80 bg-card shadow-2xs">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("shortcuts.kpi_custom", "Pintasan Kustom")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {customCount} Dimodifikasi
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("shortcuts.kpi_custom_desc", "Dimodifikasi dari bawaan")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <SlidersHorizontalIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("shortcuts.kpi_custom", "Pintasan Kustom")}
+          value={customCount}
+          suffix={` ${t("shortcuts.unit_modified", "Dimodifikasi")}`}
+          subtext={t("shortcuts.kpi_custom_desc", "Dimodifikasi dari bawaan")}
+          icon={SlidersHorizontalIcon}
+          iconTone="text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20"
+        />
 
         {/* Sistem Terkunci */}
-        <Card className="p-5 flex items-center justify-between gap-4 rounded-2xl border-border/80 bg-card shadow-2xs">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("shortcuts.kpi_locked", "Sistem Terkunci")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {lockedCount} Terkunci
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("shortcuts.kpi_locked_desc", "Proteksi tombol inti sistem")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground border border-border">
-            <LockIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("shortcuts.kpi_locked", "Sistem Terkunci")}
+          value={lockedCount}
+          suffix={` ${t("shortcuts.unit_locked", "Terkunci")}`}
+          subtext={t("shortcuts.kpi_locked_desc", "Proteksi tombol inti sistem")}
+          icon={LockIcon}
+          iconTone="text-muted-foreground bg-muted border-border"
+        />
 
         {/* Cakupan Portal */}
-        <Card className="p-5 flex items-center justify-between gap-4 rounded-2xl border-border/80 bg-card shadow-2xs">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("shortcuts.kpi_coverage", "Cakupan Portal")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {t("shortcuts.kpi_coverage_value", "3 Portal")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("shortcuts.kpi_coverage_desc", "Super Admin, Bendahara, User")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <ShieldCheckIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("shortcuts.kpi_coverage", "Cakupan Portal")}
+          displayValue={t("shortcuts.kpi_coverage_value", "3 Portal")}
+          subtext={t("shortcuts.kpi_coverage_desc", "Super Admin, Bendahara, User")}
+          icon={ShieldCheckIcon}
+          iconTone="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+        />
       </div>
 
       {/* 3. Kartu Edge-to-Edge Tabel Pintasan */}
@@ -670,9 +638,12 @@ export function ShortcutsManagementPage() {
                             <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md font-medium text-muted-foreground">
                               {t(item.moduleLabelKey, item.fallbackModuleLabel)}
                             </Badge>
-                            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md font-medium">
-                              {groupLabels[item.group] || item.group}
-                            </Badge>
+                            {t(item.moduleLabelKey, item.fallbackModuleLabel).toLowerCase() !==
+                              (groupLabels[item.group] || item.group).toLowerCase() && (
+                              <Badge variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md font-medium">
+                                {groupLabels[item.group] || item.group}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -761,16 +732,21 @@ export function ShortcutsManagementPage() {
                         )}
                       </TableCell>
 
-                      {/* Aksi (seluruh tombol bawaan bisa diedit) */}
+                      {/* Aksi */}
                       <TableCell className="pr-6 align-top text-center">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
+                            disabled={item.isLocked}
                             onClick={() => handleOpenEdit(item)}
-                            title={t("common:action.edit", "Edit")}
-                            className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                            title={
+                              item.isLocked
+                                ? t("shortcuts.locked_tooltip", "Pintasan inti sistem terkunci dan tidak dapat diubah")
+                                : t("common:action.edit", "Edit")
+                            }
+                            className="size-8 rounded-lg text-primary dark:text-sky-400 hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                           >
                             <PencilIcon className="size-4" />
                             <span className="sr-only">Edit</span>
@@ -779,10 +755,10 @@ export function ShortcutsManagementPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            disabled={!isCustomized}
+                            disabled={!isCustomized || item.isLocked}
                             onClick={() => handleResetSingle(item)}
                             title={t("shortcuts.reset_shortcut", "Reset ke Bawaan")}
-                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 cursor-pointer"
+                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                           >
                             <RotateCcwIcon className="size-4" />
                             <span className="sr-only">Reset</span>

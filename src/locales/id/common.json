@@ -253,6 +253,12 @@
     "sort_name_asc": "Nama Aksi (A - Z)",
     "sort_name_desc": "Nama Aksi (Z - A)",
     "sort_group": "Grup & Modul",
-    "sort_status": "Status Pintasan"
+    "sort_status": "Status Pintasan",
+    "no_results_desc": "Coba gunakan kata kunci nama halaman, modul, atau tombol aksi lainnya.",
+    "toast_save_failed": "Gagal menyimpan pintasan",
+    "unit_shortcuts": "Pintasan",
+    "unit_modified": "Dimodifikasi",
+    "unit_locked": "Terkunci",
+    "locked_tooltip": "Pintasan inti sistem terkunci dan tidak dapat diubah"
   }
 }

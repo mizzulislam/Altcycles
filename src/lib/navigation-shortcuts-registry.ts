@@ -902,6 +902,79 @@ export const SHORTCUT_OVERRIDES_KEY = "altcycles_shortcut_overrides_v1";
 export type ShortcutOverridesMap = Record<string, string[]>;
 
 /**
+ * Daftar kombinasi tombol yang dilindungi oleh peramban web dan sistem operasi.
+ * Kombinasi ini DILARANG dijadikan shortcut agar fungsi native browser (Ctrl+C, Ctrl+T, Ctrl+W, dll)
+ * tidak pernah terinterupsi.
+ */
+export const BROWSER_RESERVED_COMBOS = new Set([
+  // Clipboard & basic editing
+  "mod+c",
+  "ctrl+c",
+  "mod+v",
+  "ctrl+v",
+  "mod+x",
+  "ctrl+x",
+  "mod+a",
+  "ctrl+a",
+  "mod+z",
+  "ctrl+z",
+  "mod+y",
+  "ctrl+y",
+  "mod+shift+z",
+  "ctrl+shift+z",
+  // Tabs & Windows
+  "mod+t",
+  "ctrl+t",
+  "mod+w",
+  "ctrl+w",
+  "mod+n",
+  "ctrl+n",
+  "mod+shift+n",
+  "ctrl+shift+n",
+  "mod+shift+t",
+  "ctrl+shift+t",
+  "mod+tab",
+  "ctrl+tab",
+  "mod+shift+tab",
+  "ctrl+shift+tab",
+  // Page Navigation & Browser Functions
+  "mod+r",
+  "ctrl+r",
+  "ctrl+f5",
+  "f5",
+  "mod+f",
+  "ctrl+f",
+  "mod+g",
+  "ctrl+g",
+  "mod+p",
+  "ctrl+p",
+  "mod+s",
+  "ctrl+s",
+  "mod+h",
+  "ctrl+h",
+  "mod+j",
+  "ctrl+j",
+  "mod+d",
+  "ctrl+d",
+  "mod+l",
+  "ctrl+l",
+  "mod+u",
+  "ctrl+u",
+  "mod+q",
+  "ctrl+q",
+  "escape",
+  // DevTools
+  "f12",
+  "f11",
+  "mod+shift+i",
+  "ctrl+shift+i",
+  "mod+shift+j",
+  "ctrl+shift+j",
+  "mod+shift+c",
+  "ctrl+shift+c",
+]);
+
+/**
  * Mengambil map override kustom pintasan keyboard dari storage
  */
 export function getShortcutOverrides(): ShortcutOverridesMap {
@@ -909,7 +982,19 @@ export function getShortcutOverrides(): ShortcutOverridesMap {
   try {
     const raw = localStorage.getItem(SHORTCUT_OVERRIDES_KEY);
     if (!raw) return {};
-    return JSON.parse(raw) as ShortcutOverridesMap;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+    const cleanMap: ShortcutOverridesMap = {};
+    for (const [key, val] of Object.entries(parsed)) {
+      if (
+        Array.isArray(val) &&
+        val.every((item) => typeof item === "string" && item.trim().length > 0)
+      ) {
+        cleanMap[key] = val.map((s) => s.toLowerCase().trim());
+      }
+    }
+    return cleanMap;
   } catch {
     return {};
   }
@@ -920,7 +1005,18 @@ export function getShortcutOverrides(): ShortcutOverridesMap {
  */
 export function saveShortcutOverride(id: string, newKeys: string[]): boolean {
   const target = NAVIGATION_SHORTCUTS_REGISTRY.find((it) => it.id === id);
-  if (!target) {
+  if (!target || target.isLocked) {
+    return false;
+  }
+
+  // Tolak kombinasi tombol yang dilindungi peramban
+  const normalizedKey = newKeys.map((k) => k.toLowerCase().trim()).join("+");
+  if (BROWSER_RESERVED_COMBOS.has(normalizedKey)) {
+    return false;
+  }
+
+  // Tolak huruf 'g' tunggal tanpa huruf kedua (agar tidak membajak sekuens)
+  if (newKeys.length === 1 && newKeys[0]?.toLowerCase().trim() === "g") {
     return false;
   }
 
@@ -1013,8 +1109,11 @@ export function getEffectiveShortcuts(role: UserRole): NavigationShortcutItem[] 
   const overrides = getShortcutOverrides();
 
   return baseItems.map((item) => {
+    if (item.isLocked) {
+      return item;
+    }
     const override = overrides[item.id];
-    if (override && Array.isArray(override)) {
+    if (override && Array.isArray(override) && override.length > 0) {
       return {
         ...item,
         defaultKeys: override,

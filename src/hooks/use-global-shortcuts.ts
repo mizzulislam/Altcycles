@@ -2,6 +2,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import type { UserRole } from "@/types/database.types";
 import {
+  BROWSER_RESERVED_COMBOS,
   getEffectiveShortcuts,
   type NavigationShortcutItem,
 } from "@/lib/navigation-shortcuts-registry";
@@ -37,7 +38,8 @@ export function isEditableElement(element: EventTarget | null): boolean {
     return true;
   }
 
-  if (element.getAttribute("role") === "textbox") {
+  const role = element.getAttribute("role");
+  if (role === "textbox" || role === "searchbox" || role === "combobox") {
     return true;
   }
 
@@ -46,10 +48,11 @@ export function isEditableElement(element: EventTarget | null): boolean {
 
 /**
  * Hook global untuk mendengarkan pintasan keyboard di seluruh aplikasi Altcycles
- * - Mendukung pemicu tunggal '/' (Command Palette) & '?' (Panel Pintasan)
+ * - Mendukung pemicu '/' & 'Ctrl+K' (Command Palette) & '?' (Panel Pintasan)
  * - Mendukung urutan sekuensial "G lalu X" dengan jeda maksimal 1 detik
  * - Mendukung kombinasi modifier (Ctrl+Shift+J, dsb.)
- * - Menghormati role pengguna aktif dan override kustom dari Super Admin
+ * - Menjaga 100% tombol native peramban (Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+W, dll) agar tidak pernah dibajak
+ * - Mengabaikan event saat modal/dialog aplikasi terbuka atau saat IME composing aktif
  */
 export function useGlobalShortcuts({
   currentRole,
@@ -110,14 +113,26 @@ export function useGlobalShortcuts({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 0. Abaikan IME composition (misal input karakter Jepang/Mandarin/Korea) dan key repeat
+      if (e.isComposing) {
+        return;
+      }
+
       // 1. Jangan jalankan pintasan jika fokus berada di dalam field input/textarea/editable
       if (isEditableElement(e.target)) {
         clearSequence();
         return;
       }
 
-      // 2. Jangan jalankan pintasan jika modal sedang terbuka (kecuali escape)
-      if (isModalOpen) {
+      // 2. Jangan jalankan pintasan jika dialog/modal sedang terbuka
+      const isAnyModalActive =
+        isModalOpen ||
+        Boolean(
+          typeof document !== "undefined" &&
+            document.querySelector('[role="dialog"], [role="alertdialog"]'),
+        );
+
+      if (isAnyModalActive) {
         clearSequence();
         return;
       }
@@ -128,24 +143,49 @@ export function useGlobalShortcuts({
       const hasShift = e.shiftKey;
       const hasAlt = e.altKey;
 
-      // 3. Tangani tombol pemicu '/' untuk Command Palette
-      if (!hasMod && !hasAlt && !hasShift && key === "/") {
+      // 3. JAGA TOMBOL NATIVE PERAMBAN:
+      // Jika kombinasi adalah tombol bawaan browser (Ctrl+C, Ctrl+V, Ctrl+T, Ctrl+W, Ctrl+R, F5, F12, dll),
+      // JANGAN PERNAH panggil e.preventDefault() dan biarkan peramban mengeksekusi fungsinya secara alami.
+      const pressedCombo = [
+        hasMod ? "mod" : null,
+        hasAlt ? "alt" : null,
+        hasShift ? "shift" : null,
+        lowerKey,
+      ]
+        .filter(Boolean)
+        .join("+");
+
+      if (BROWSER_RESERVED_COMBOS.has(pressedCombo)) {
+        clearSequence();
+        return;
+      }
+
+      // 4. Tangani tombol pemicu Command Palette: '/' tanpa modifier ATAU 'Ctrl+K' / 'Cmd+K'
+      const isPaletteTrigger =
+        (!hasMod && !hasAlt && !hasShift && key === "/") ||
+        (hasMod && !hasAlt && !hasShift && lowerKey === "k");
+
+      if (isPaletteTrigger) {
         e.preventDefault();
         clearSequence();
         onOpenCommandPalette();
         return;
       }
 
-      // 4. Tangani tombol '?' (Shift + /) untuk membuka panel pintasan keyboard
-      if (!hasMod && !hasAlt && (key === "?" || (hasShift && key === "/"))) {
+      // 5. Tangani tombol '?' (Shift + / pada layout standar, atau '?' di layout internasional) untuk membuka panel pintasan
+      const isShortcutsPanelTrigger =
+        !hasMod && !hasAlt && (key === "?" || (hasShift && (e.code === "Slash" || key === "?")));
+
+      if (isShortcutsPanelTrigger) {
         e.preventDefault();
         clearSequence();
         onOpenShortcutsPanel();
         return;
       }
 
-      // 5. Tangani pintasan berurutan "G lalu X" (Sequence)
+      // 6. Tangani pintasan berurutan "G lalu X" (Sequence)
       if (pendingSequenceRef.current === "g") {
+        if (e.repeat) return; // Abaikan jika tombol ditekan berulang (held down)
         e.preventDefault();
         const secondKey = lowerKey;
         clearSequence();
@@ -166,8 +206,9 @@ export function useGlobalShortcuts({
         return;
       }
 
-      // Jika tombol 'g' ditekan tanpa modifier, aktifkan jeda urutan sekuensial (~1 detik)
+      // Jika tombol 'g' ditekan tanpa modifier (dan bukan repeat), aktifkan jeda urutan sekuensial (~1 detik)
       if (!hasMod && !hasAlt && !hasShift && lowerKey === "g") {
+        if (e.repeat) return;
         pendingSequenceRef.current = "g";
         if (sequenceTimerRef.current) {
           window.clearTimeout(sequenceTimerRef.current);
@@ -179,7 +220,7 @@ export function useGlobalShortcuts({
         return;
       }
 
-      // 6. Tangani kombinasi tombol dengan Modifier (misalnya Ctrl+Shift+J atau Cmd+Shift+P)
+      // 7. Tangani kombinasi tombol dengan Modifier (misalnya Ctrl+Shift+J)
       if (hasMod) {
         const matchedModifierItem = effectiveItems.find((it) => {
           const keys = it.defaultKeys;
@@ -209,8 +250,10 @@ export function useGlobalShortcuts({
     };
 
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("blur", clearSequence);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("blur", clearSequence);
       clearSequence();
     };
   }, [effectiveItems, executeShortcutItem, isModalOpen, onOpenCommandPalette, onOpenShortcutsPanel]);

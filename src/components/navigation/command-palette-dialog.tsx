@@ -39,7 +39,7 @@ import type { UserRole } from "@/types/database.types";
 import {
   type NavigationShortcutItem,
   getDefaultFrequentFallback,
-  getShortcutsForRole,
+  getEffectiveShortcuts,
   searchRegistry,
 } from "@/lib/navigation-shortcuts-registry";
 import { getFrequentPageIds, recordPageVisit } from "@/lib/navigation-history";
@@ -110,7 +110,7 @@ export function CommandPaletteDialog({
 
   // Mengambil daftar item: Sering Dikunjungi / Pintasan vs Hasil Pencarian
   const allRoleItems = React.useMemo(() => {
-    return getShortcutsForRole(currentRole);
+    return getEffectiveShortcuts(currentRole);
   }, [currentRole]);
 
   const itemsMap = React.useMemo(() => {
@@ -185,6 +185,15 @@ export function CommandPaletteDialog({
     },
     [navigate, onClose, onOpenShortcutsPanel, currentRole],
   );
+
+  // Auto-scroll item aktif ke dalam tampilan container
+  React.useEffect(() => {
+    if (!listRef.current) return;
+    const activeEl = listRef.current.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedIndex]);
 
   // Penanganan tombol keyboard: ArrowDown, ArrowUp, Enter, Escape
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -275,6 +284,15 @@ export function CommandPaletteDialog({
             <input
               ref={inputRef}
               type="text"
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-autocomplete="list"
+              aria-controls="command-palette-results"
+              aria-activedescendant={
+                flatSelectableItems[selectedIndex]
+                  ? `palette-option-${flatSelectableItems[selectedIndex]?.id}`
+                  : undefined
+              }
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -309,6 +327,8 @@ export function CommandPaletteDialog({
           {/* Isi Hasil / Daftar Pintasan */}
           <div
             ref={listRef}
+            id="command-palette-results"
+            role="listbox"
             className="max-h-[360px] overflow-y-auto scroll-smooth p-2 pr-2.5 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overscroll-contain relative"
           >
             {/* Mode Kosong: Menampilkan "Sering Dikunjungi" & "Aksi Cepat" */}
@@ -328,6 +348,9 @@ export function CommandPaletteDialog({
                       return (
                         <button
                           key={item.id}
+                          id={`palette-option-${item.id}`}
+                          role="option"
+                          aria-selected={isSelected}
                           type="button"
                           onClick={() => handleSelectItem(item)}
                           onMouseEnter={() => setSelectedIndex(itemIndex)}
@@ -381,6 +404,9 @@ export function CommandPaletteDialog({
                       return (
                         <button
                           key={item.id}
+                          id={`palette-option-${item.id}`}
+                          role="option"
+                          aria-selected={isSelected}
                           type="button"
                           onClick={() => handleSelectItem(item)}
                           onMouseEnter={() => setSelectedIndex(itemIndex)}
@@ -438,6 +464,9 @@ export function CommandPaletteDialog({
                       return (
                         <button
                           key={item.id}
+                          id={`palette-option-${item.id}`}
+                          role="option"
+                          aria-selected={isSelected}
                           type="button"
                           onClick={() => handleSelectItem(item)}
                           onMouseEnter={() => setSelectedIndex(idx)}
