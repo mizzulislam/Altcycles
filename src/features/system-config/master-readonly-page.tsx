@@ -1,11 +1,8 @@
 import * as React from "react";
 import {
-  BookCheckIcon,
   BookOpenIcon,
   Building2Icon,
-  FlaskConicalIcon,
   FolderKanbanIcon,
-  PercentIcon,
   RotateCcwIcon,
   UsersIcon,
 } from "lucide-react";
@@ -53,7 +50,7 @@ import type {
   ProjectRow,
   VendorRow,
 } from "@/types/database.types";
-import { CurrencySettingsCard } from "./currency-settings-card";
+import { FunctionalCurrencyCard, ExchangeRatesCard } from "./currency-settings-card";
 
 export function MasterReadonlyPage() {
   const { t, language } = useLanguage();
@@ -139,70 +136,58 @@ export function MasterReadonlyPage() {
         </div>
       </div>
 
-      {/* Grid 3 Kolom Kontrol Akuntansi Sejajar */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 items-stretch">
+      {/* Grid 2 Kolom Kontrol Akuntansi & Valuta Fungsional */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         {/* Card 1: Mode Testing / Sandbox Sistem */}
         <Card className={cn(
-          "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4 transition-all",
+          "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-center min-h-[76px] transition-all",
           isTestingMode ? "border-amber-500/50 bg-amber-500/5" : ""
         )}>
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
-                  isTestingMode
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                    : "bg-primary/10 text-primary dark:text-sky-400 border-primary/25"
-                )}>
-                  <FlaskConicalIcon className="size-4.5" />
-                </div>
-                <CardHeaderTitleWithInfo
-                  title={t("settings:master_readonly.testing_mode_title", "Mode Testing & Sandbox")}
-                  description={
-                    isTestingMode
-                      ? t("settings:master_readonly.testing_mode_desc_active", "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi.")
-                      : t("settings:master_readonly.testing_mode_desc_inactive", "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira.")
-                  }
-                  titleClassName="text-sm sm:text-base font-bold"
-                />
-              </div>
-              <label
-                htmlFor="testing-mode-switch"
-                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
-              >
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {isTestingMode ? "Aktif" : "Nonaktif"}
-                </span>
-                <Switch
-                  id="testing-mode-switch"
-                  checked={isTestingMode}
-                  disabled={togglingLock}
-                  aria-label="Toggle Mode Testing & Sandbox"
-                  onCheckedChange={async (enableTesting) => {
-                    setTogglingLock(true);
-                    try {
-                      const nextLockVal = !enableTesting;
-                      await setJournalLockStatus(nextLockVal);
-                      setJournalLockEnabled(nextLockVal);
-                      if (enableTesting) {
-                        toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
-                      } else {
-                        toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
-                      }
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
-                    } finally {
-                      setTogglingLock(false);
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <CardHeaderTitleWithInfo
+              title={t("settings:master_readonly.testing_mode_title", "Mode Testing & Sandbox")}
+              description={
+                isTestingMode
+                  ? t("settings:master_readonly.testing_mode_desc_active", "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi.")
+                  : t("settings:master_readonly.testing_mode_desc_inactive", "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira.")
+              }
+              titleClassName="text-sm sm:text-base font-bold"
+            />
+            <label
+              htmlFor="testing-mode-switch"
+              className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
+            >
+              <span className="text-xs font-semibold text-muted-foreground">
+                {isTestingMode ? "Aktif" : "Nonaktif"}
+              </span>
+              <Switch
+                id="testing-mode-switch"
+                checked={isTestingMode}
+                disabled={togglingLock}
+                aria-label="Toggle Mode Testing & Sandbox"
+                onCheckedChange={async (enableTesting) => {
+                  setTogglingLock(true);
+                  try {
+                    const nextLockVal = !enableTesting;
+                    await setJournalLockStatus(nextLockVal);
+                    setJournalLockEnabled(nextLockVal);
+                    if (enableTesting) {
+                      toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
+                    } else {
+                      toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
                     }
-                  }}
-                />
-              </label>
-            </div>
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
+                  } finally {
+                    setTogglingLock(false);
+                  }
+                }}
+              />
+            </label>
           </div>
 
           {isTestingMode && (
-            <div className="pt-3 border-t border-border/60 flex items-center justify-end">
+            <div className="pt-3 mt-3 border-t border-border/60 flex items-center justify-end">
               <Button
                 type="button"
                 variant="outline"
@@ -219,22 +204,17 @@ export function MasterReadonlyPage() {
         </Card>
 
         {/* Card 2: Kontrol Tutup Buku Otomatis (Auto Closing Books Control) */}
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/25">
-                <BookCheckIcon className="size-4.5" />
-              </div>
-              <CardHeaderTitleWithInfo
-                title={t("settings:master_readonly.auto_close_title", "Tutup Buku Otomatis")}
-                description={
-                  autoClosingEnabled
-                    ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis membuat dan memposting ayat jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Saldo Laba Ditahan saat tutup buku periode.")
-                    : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis nonaktif. Penutupan buku dan jurnal penutup dilakukan manual oleh Bendahara.")
-                }
-                titleClassName="text-sm sm:text-base font-bold"
-              />
-            </div>
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-center min-h-[76px]">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <CardHeaderTitleWithInfo
+              title={t("settings:master_readonly.auto_close_title", "Tutup Buku Otomatis")}
+              description={
+                autoClosingEnabled
+                  ? t("settings:master_readonly.auto_close_desc_active", "Sistem otomatis membuat dan memposting ayat jurnal penutup GAAP/IFRS ke Ikhtisar Laba Rugi serta Saldo Laba Ditahan saat tutup buku periode.")
+                  : t("settings:master_readonly.auto_close_desc_inactive", "Tutup buku otomatis nonaktif. Penutupan buku dan jurnal penutup dilakukan manual oleh Bendahara.")
+              }
+              titleClassName="text-sm sm:text-base font-bold"
+            />
             <label
               htmlFor="auto-closing-switch"
               className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
@@ -269,22 +249,17 @@ export function MasterReadonlyPage() {
         </Card>
 
         {/* Card 3: Kontrol Estimasi PPh 23 (2%) pada Invoice Klien */}
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/25">
-                <PercentIcon className="size-4.5" />
-              </div>
-              <CardHeaderTitleWithInfo
-                title={t("settings:master_readonly.pph23_title", "Estimasi PPh 23 (2%)")}
-                description={
-                  pph23Enabled
-                    ? t("settings:master_readonly.pph23_desc_active", "Menampilkan estimasi potongan PPh 23 sebesar 2% pada cetak invoice klien.")
-                    : t("settings:master_readonly.pph23_desc_inactive", "Faktur klien dicetak standar tanpa estimasi potongan PPh 23.")
-                }
-                titleClassName="text-sm sm:text-base font-bold"
-              />
-            </div>
+        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-center min-h-[76px]">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <CardHeaderTitleWithInfo
+              title={t("settings:master_readonly.pph23_title", "Estimasi PPh 23 (2%)")}
+              description={
+                pph23Enabled
+                  ? t("settings:master_readonly.pph23_desc_active", "Menampilkan estimasi potongan PPh 23 sebesar 2% pada cetak invoice klien.")
+                  : t("settings:master_readonly.pph23_desc_inactive", "Faktur klien dicetak standar tanpa estimasi potongan PPh 23.")
+              }
+              titleClassName="text-sm sm:text-base font-bold"
+            />
             <label
               htmlFor="pph23-estimate-switch"
               className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
@@ -317,10 +292,13 @@ export function MasterReadonlyPage() {
             </label>
           </div>
         </Card>
+
+        {/* Card 4: Pengaturan Mata Uang Fungsional Sistem */}
+        <FunctionalCurrencyCard />
       </div>
 
-      {/* Pengaturan Mata Uang Fungsional & Kurs Valuta Asing */}
-      <CurrencySettingsCard />
+      {/* Card 5: Kurs Konversi Valuta Asing (Valas) ke Rupiah */}
+      <ExchangeRatesCard />
 
       <Tabs defaultValue="coa">
         <TabsList>
