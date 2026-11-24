@@ -945,6 +945,40 @@ export function AdminDashboardPage() {
               </button>
             </div>
           }
+          footer={
+            txFreqMode === "histogram" ? (
+              <ChartSummaryFooter
+                items={[
+                  {
+                    label: t("dashboard:charts.sample_count", "Jumlah Sampel"),
+                    value: `${journalHistogram.totalCount} ${t("dashboard:charts.unit_journals", "Jurnal")}`,
+                  },
+                  {
+                    label: t("dashboard:charts.average_amount", "Rata-Rata"),
+                    value: formatRupiah(journalHistogram.average),
+                  },
+                  {
+                    label: t("dashboard:charts.median_amount", "Median"),
+                    value: formatRupiah(journalHistogram.median),
+                  },
+                ]}
+              />
+            ) : (
+              <ChartSummaryFooter
+                items={[
+                  {
+                    label: t("dashboard:charts.total_tx", "Total Transaksi"),
+                    value: `${totalTxCount} ${t("dashboard:charts.tx_unit", "Jurnal")}`,
+                  },
+                  {
+                    label: t("dashboard:charts.avg_monthly_tx", "Rata-Rata / Bulan"),
+                    value: `${avgTxPerMonth} ${t("dashboard:charts.tx_unit", "Jurnal")}`,
+                    valueClass: "text-primary dark:text-cyan-400",
+                  },
+                ]}
+              />
+            )
+          }
         >
           {txFreqMode === "histogram" ? (
             <HistogramChart
@@ -956,44 +990,25 @@ export function AdminDashboardPage() {
               accentColor="#0B43C8"
               emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Data Jurnal Terposting")}
               emptySubtitle={t("dashboard:charts.empty_trends_desc", "Histogram sebaran nominal muncul otomatis setelah transaksi dicatat.")}
+              showFooter={false}
             />
           ) : (
-            <div className="flex flex-col h-full justify-between space-y-4">
-              <MultiSeriesChart
-                chartType="area"
-                data={txFreqChartData}
-                series={[
-                  {
-                    key: "count",
-                    label: t("dashboard:charts.tx_unit", "Jurnal"),
-                    color: "#0B43C8",
-                    textClass: "text-primary dark:text-sky-400",
-                  },
-                ]}
-                formatValue={(v) => `${v} ${t("dashboard:charts.tx_unit", "Jurnal")}`}
-                formatShortValue={(v) => `${v}`}
-                emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Transaksi")}
-                emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
-              />
-              <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 divide-x divide-border/60 min-h-[58px] items-center">
-                <div className="pl-6 pr-4 py-3">
-                  <p className="text-[10px] text-muted-foreground">
-                    {t("dashboard:charts.total_tx", "Total Transaksi")}
-                  </p>
-                  <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums mt-0.5">
-                    {totalTxCount} {t("dashboard:charts.tx_unit", "Jurnal")}
-                  </p>
-                </div>
-                <div className="p-3">
-                  <p className="text-[10px] text-muted-foreground">
-                    {t("dashboard:charts.avg_monthly_tx", "Rata-Rata / Bulan")}
-                  </p>
-                  <p className="text-xs sm:text-sm font-bold text-primary dark:text-cyan-400 tabular-nums mt-0.5">
-                    {avgTxPerMonth} {t("dashboard:charts.tx_unit", "Jurnal")}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <MultiSeriesChart
+              chartType="area"
+              data={txFreqChartData}
+              series={[
+                {
+                  key: "count",
+                  label: t("dashboard:charts.tx_unit", "Jurnal"),
+                  color: "#0B43C8",
+                  textClass: "text-primary dark:text-sky-400",
+                },
+              ]}
+              formatValue={(v) => `${v} ${t("dashboard:charts.tx_unit", "Jurnal")}`}
+              formatShortValue={(v) => `${v}`}
+              emptyTitle={t("dashboard:charts.empty_trends_title", "Belum Ada Transaksi")}
+              emptySubtitle={t("dashboard:charts.empty_trends_desc", "Visualisasi frekuensi transaksi akan muncul otomatis setelah jurnal dibukukan.")}
+            />
           )}
         </ChartCard>
 
@@ -1012,87 +1027,80 @@ export function AdminDashboardPage() {
               {t("dashboard:charts.link_manage_invoices", "Kelola Tagihan")}
             </Link>
           }
+          footer={
+            <ChartSummaryFooter
+              items={agingBuckets.map((b) => ({
+                label: (
+                  <div className="flex items-center gap-1.5 text-muted-foreground whitespace-normal leading-tight">
+                    <span className={cn("size-2 rounded-full shrink-0", b.dotColor)} />
+                    <span className="text-[10px]">{b.label}</span>
+                  </div>
+                ),
+                value: formatCompactRupiah(b.amount),
+                valueClass: b.amount > 0 ? "text-foreground" : "text-muted-foreground",
+              }))}
+            />
+          }
         >
-          {projectBillingStats.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-6 text-center">
-              {t("dashboard:charts.empty_projects_billing", "Belum ada proyek klien aktif untuk dianalisis.")}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {projectBillingStats.map((pb) => (
-                <div key={pb.id} className="space-y-1">
-                  <div className="flex items-center justify-between gap-3 text-xs">
-                    <Link
-                      to={`/admin/proyek/${pb.id}`}
-                      className="font-semibold text-foreground hover:text-primary truncate"
-                      title={pb.name}
-                    >
-                      {pb.code} &mdash; {pb.name}
-                    </Link>
-                    <span className="text-muted-foreground shrink-0 tabular-nums text-[11px]">
-                      {formatCompactRupiah(pb.billed)} / {formatCompactRupiah(pb.contract)} ({pb.pct}%)
-                    </span>
-                  </div>
-                  <div className="h-2 w-full rounded-none bg-muted/60 overflow-hidden">
-                    <div
-                      style={{ width: `${pb.pct}%` }}
-                      className="h-full rounded-none bg-primary transition-all duration-300"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Progress Bar Umur Piutang */}
-          <div className="pt-3 border-t border-border/60 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-foreground">
-                {t("dashboard:charts.aging_title", "Sebaran Umur Piutang")}
-              </span>
-              <span className="text-muted-foreground tabular-nums text-[11px]">
-                Total: {formatRupiah(outstandingReceivable)}
-              </span>
-            </div>
-            <div className="flex h-2 w-full rounded-none bg-muted/50 overflow-hidden gap-0.5">
-              {outstandingReceivable > 0
-                ? agingBuckets.map((b) =>
-                    b.amount > 0 ? (
+          <div className="flex flex-col justify-center flex-1 space-y-5 py-2">
+            {projectBillingStats.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-6 text-center">
+                {t("dashboard:charts.empty_projects_billing", "Belum ada proyek klien aktif untuk dianalisis.")}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {projectBillingStats.map((pb) => (
+                  <div key={pb.id} className="space-y-1">
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <Link
+                        to={`/admin/proyek/${pb.id}`}
+                        className="font-semibold text-foreground hover:text-primary truncate"
+                        title={pb.name}
+                      >
+                        {pb.code} &mdash; {pb.name}
+                      </Link>
+                      <span className="text-muted-foreground shrink-0 tabular-nums text-[11px]">
+                        {formatCompactRupiah(pb.billed)} / {formatCompactRupiah(pb.contract)} ({pb.pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-none bg-muted/60 overflow-hidden">
                       <div
-                        key={b.label}
-                        style={{
-                          width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
-                        }}
-                        className={cn("h-full rounded-none", b.color)}
-                        title={`${b.label}: ${formatRupiah(b.amount)}`}
+                        style={{ width: `${pb.pct}%` }}
+                        className="h-full rounded-none bg-primary transition-all duration-300"
                       />
-                    ) : null,
-                  )
-                : null}
-            </div>
-          </div>
-
-          {/* Strip Ringkasan Edge-to-Edge 4 Kolom di Bawah Kartu */}
-          <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 divide-x divide-border/60 text-xs">
-            {agingBuckets.map((b, idx) => (
-              <div
-                key={b.label}
-                className={cn(
-                  "py-3",
-                  idx === 0 && "pl-6 pr-3",
-                  idx > 0 && idx < 3 && "p-3",
-                  idx === 3 && "pl-3 pr-6",
-                )}
-              >
-                <div className="flex items-center gap-1.5 text-muted-foreground whitespace-normal leading-tight">
-                  <span className={cn("size-2 rounded-none shrink-0", b.dotColor)} />
-                  <span className="text-[10px]">{b.label}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums mt-1">
-                  {formatCompactRupiah(b.amount)}
-                </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+
+            {/* Progress Bar Umur Piutang */}
+            <div className="pt-3 border-t border-border/60 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-foreground">
+                  {t("dashboard:charts.aging_title", "Sebaran Umur Piutang")}
+                </span>
+                <span className="text-muted-foreground tabular-nums text-[11px]">
+                  Total: {formatRupiah(outstandingReceivable)}
+                </span>
+              </div>
+              <div className="flex h-2 w-full rounded-none bg-muted/50 overflow-hidden gap-0.5">
+                {outstandingReceivable > 0
+                  ? agingBuckets.map((b) =>
+                      b.amount > 0 ? (
+                        <div
+                          key={b.label}
+                          style={{
+                            width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
+                          }}
+                          className={cn("h-full rounded-none", b.color)}
+                          title={`${b.label}: ${formatRupiah(b.amount)}`}
+                        />
+                      ) : null,
+                    )
+                  : null}
+              </div>
+            </div>
           </div>
         </ChartCard>
       </div>

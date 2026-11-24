@@ -46,7 +46,7 @@ export function ChartCard({
     >
       <CardHeader
         className={cn(
-          "px-5 sm:px-6 py-3.5 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 min-h-[56px] shrink-0",
+          "px-5 sm:px-6 py-0 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 h-14 min-h-[56px] shrink-0",
           headerClassName,
         )}
       >

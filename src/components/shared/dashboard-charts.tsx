@@ -121,7 +121,7 @@ export function ChartValueFooter({
   return (
     <div
       className={cn(
-        "px-6 py-3.5 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs min-h-[64px]",
+        "px-6 py-3.5 border-t border-border/70 bg-muted/10 flex items-center justify-between gap-3 text-xs h-[64px] min-h-[64px]",
         className,
       )}
     >
@@ -159,10 +159,10 @@ export function ChartSummaryFooter({
   return (
     <div
       className={cn(
-        "grid bg-muted/10 divide-x divide-border/60 text-xs min-h-[64px] border-t border-border/70",
+        "grid bg-muted/10 divide-x divide-border/60 text-xs h-[64px] min-h-[64px] border-t border-border/70",
         items.length === 2 && "grid-cols-2",
         items.length === 3 && "grid-cols-3",
-        items.length === 4 && "grid-cols-4",
+        items.length === 4 && "grid-cols-2 sm:grid-cols-4",
         className,
       )}
     >
@@ -351,6 +351,7 @@ export function HistogramChart({
   accentColor = "#0B43C8",
   emptyTitle = "Belum Ada Sampel Transaksi",
   emptySubtitle = "Histogram distribusi nominal otomatis muncul setelah ada catatan transaksi.",
+  showFooter = true,
 }: {
   bins: HistogramBin[];
   average: number;
@@ -360,6 +361,7 @@ export function HistogramChart({
   accentColor?: string;
   emptyTitle?: string;
   emptySubtitle?: string;
+  showFooter?: boolean;
 }) {
   const { t } = useLanguage();
   const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
@@ -392,7 +394,7 @@ export function HistogramChart({
   const hoveredBin = hoveredIdx !== null ? bins[hoveredIdx] : null;
 
   return (
-    <div className="flex flex-col h-full justify-between space-y-4 relative">
+    <div className={cn("flex flex-col h-full relative", showFooter ? "justify-between space-y-4" : "justify-center")}>
       {hoveredBin ? (
         <div className="absolute top-1 right-2 z-20 w-44 rounded-xl border border-border/80 bg-popover p-2 text-[11px] shadow-xl pointer-events-none">
           <p className="font-bold text-foreground">{hoveredBin.label}</p>
@@ -543,26 +545,28 @@ export function HistogramChart({
         </svg>
       </div>
 
-      <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs min-h-[58px] items-center">
-        <div className="pl-6 pr-3 py-3 text-center sm:text-left">
-          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.sample_count")}</p>
-          <p className="font-bold text-foreground tabular-nums mt-0.5">
-            {totalCount} {unitLabel}
-          </p>
+      {showFooter ? (
+        <div className="-mx-6 -mb-6 mt-auto border-t border-border/70 bg-muted/10 grid grid-cols-3 divide-x divide-border/60 text-xs min-h-[58px] items-center">
+          <div className="pl-6 pr-3 py-3 text-center sm:text-left">
+            <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.sample_count")}</p>
+            <p className="font-bold text-foreground tabular-nums mt-0.5">
+              {totalCount} {unitLabel}
+            </p>
+          </div>
+          <div className="p-3 text-center sm:text-left">
+            <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.average_amount")}</p>
+            <p className="font-bold text-foreground tabular-nums mt-0.5">
+              {formatRupiah(average)}
+            </p>
+          </div>
+          <div className="p-3 text-center sm:text-left">
+            <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.median_amount")}</p>
+            <p className="font-bold text-foreground tabular-nums mt-0.5">
+              {formatRupiah(median)}
+            </p>
+          </div>
         </div>
-        <div className="p-3 text-center sm:text-left">
-          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.average_amount")}</p>
-          <p className="font-bold text-foreground tabular-nums mt-0.5">
-            {formatRupiah(average)}
-          </p>
-        </div>
-        <div className="p-3 text-center sm:text-left">
-          <p className="text-[10px] text-muted-foreground">{t("dashboard:charts.median_amount")}</p>
-          <p className="font-bold text-foreground tabular-nums mt-0.5">
-            {formatRupiah(median)}
-          </p>
-        </div>
-      </div>
+      ) : null}
     </div>
   );
 }
