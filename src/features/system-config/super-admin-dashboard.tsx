@@ -18,7 +18,6 @@ import {
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -537,14 +536,6 @@ export function SuperAdminDashboardPage() {
         <CardHeaderWithInfo
           title={t("settings:super_admin.card_recent_audit", "Jejak Audit Terbaru")}
           description={t("settings:super_admin.card_recent_audit_desc", "Setiap perubahan konfigurasi, master data, dan status periode tercatat otomatis.")}
-          action={
-            <Button variant="outline" size="sm" asChild className="shrink-0">
-              <Link to="/super-admin/audit-trail">
-                {t("settings:super_admin.btn_all_audits", "Semua Audit")}
-                <ArrowRightIcon className="size-3.5" />
-              </Link>
-            </Button>
-          }
         />
         <CardContent className="p-0">
           <Table>
@@ -608,6 +599,15 @@ export function SuperAdminDashboardPage() {
               )}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-end px-6 py-3 border-t border-border/70 bg-muted/10">
+            <Link
+              to="/super-admin/audit-trail"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
+            >
+              <span>{t("settings:super_admin.btn_all_audits", "Semua Audit")}</span>
+              <ArrowRightIcon className="size-3.5" />
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

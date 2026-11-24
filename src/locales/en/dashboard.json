@@ -226,6 +226,7 @@
     "my_sharing_detail_desc": "List of profit sharing allocations from finalized and approved projects.",
     "portion_pct": "Portion (%)",
     "sharing_amount": "Profit Sharing Amount",
-    "calc_status": "Calculation Status"
+    "calc_status": "Calculation Status",
+    "view_project_details": "View Project Details"
   }
 }

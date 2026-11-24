@@ -773,6 +773,15 @@ export function UserDashboardPage() {
               )}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-end px-6 py-3 border-t border-border/70 bg-muted/10">
+            <Link
+              to="/user/anggaran"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
+            >
+              <span>{t("dashboard:user_dashboard.view_project_details", "Lihat Detail Proyek")}</span>
+              <ArrowRightIcon className="size-3.5" />
+            </Link>
+          </div>
         </CardContent>
       </Card>
 

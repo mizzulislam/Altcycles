@@ -226,6 +226,7 @@
     "my_sharing_detail_desc": "Daftar alokasi pembagian hasil dari proyek yang telah selesai dan disetujui.",
     "portion_pct": "Porsi (%)",
     "sharing_amount": "Nominal Hak Bagi Hasil",
-    "calc_status": "Status Perhitungan"
+    "calc_status": "Status Perhitungan",
+    "view_project_details": "Lihat Detail Proyek"
   }
 }
