@@ -45,14 +45,14 @@ export function FunctionalCurrencyCard({ className }: { className?: string }) {
 
   return (
     <Card className={cn("rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-center min-h-[76px]", className)}>
-      <div className="flex items-center justify-between gap-3 min-w-0">
+      <div className="flex items-center justify-between gap-2.5 min-w-0">
         <CardHeaderTitleWithInfo
           title={t("settings:currency.functional_title", "Mata Uang Fungsional Sistem")}
           description={t("settings:currency.functional_desc", "Transaksi dalam mata uang asing otomatis ditranslasikan ke mata uang fungsional ini.")}
-          titleClassName="text-xs sm:text-sm font-bold whitespace-nowrap shrink-0"
+          titleClassName="text-xs sm:text-sm font-bold"
         />
 
-        <div className="w-40 sm:w-44 shrink-0">
+        <div className="w-40 sm:w-[185px] shrink-0">
           <Select
             value={functionalCurrency}
             onValueChange={handleSelectFunctionalCurrency}
@@ -62,12 +62,12 @@ export function FunctionalCurrencyCard({ className }: { className?: string }) {
                 {selectedCurrInfo ? `${selectedCurrInfo.code} (${selectedCurrInfo.symbol})` : functionalCurrency}
               </span>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="w-[max(var(--radix-select-trigger-width),280px)] min-w-[280px]">
               <SelectGroup>
                 {TOP_10_CURRENCIES.map((c) => (
-                  <SelectItem key={c.code} value={c.code} className="cursor-pointer">
+                  <SelectItem key={c.code} value={c.code} className="cursor-pointer whitespace-nowrap">
                     <span className="font-bold text-xs font-mono">{c.code}</span>
-                    <span className="text-xs text-muted-foreground ml-1.5">
+                    <span className="text-xs text-muted-foreground ml-1.5 whitespace-nowrap">
                       - {c.name} ({c.symbol})
                     </span>
                   </SelectItem>
