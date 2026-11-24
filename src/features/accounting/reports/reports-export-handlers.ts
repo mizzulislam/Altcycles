@@ -254,7 +254,7 @@ export async function exportReportToPdf(data: ReportExportData): Promise<void> {
       successMsg = isEn
         ? "Trial Balance successfully downloaded in PDF (.pdf) format."
         : "Neraca Saldo berhasil diunduh dalam format PDF (.pdf).";
-    } else if (mode === "statements" && layoutMode === "grid") {
+    } else if (mode === "statements" && layoutMode === "grid" && !["laba_rugi", "ekuitas", "neraca", "arus_kas"].includes(activeTab)) {
       const isRows = [
         ...incomeStatement.revenues.map((r) => [
           getLocalizedAccountName(r, lang),

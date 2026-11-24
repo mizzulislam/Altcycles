@@ -501,7 +501,11 @@ export function AccountingReportsPage({
               <IncomeStatementCard
                 incomeStatement={incomeStatement}
                 onDownload={() =>
-                  void exportReportToPdf({ ...exportData, activeTab: "laba_rugi" })
+                  void exportReportToPdf({
+                    ...exportData,
+                    activeTab: "laba_rugi",
+                    layoutMode: "single",
+                  })
                 }
               />
               <EquityStatementCard
@@ -512,7 +516,11 @@ export function AccountingReportsPage({
                 modalDisetorBalance={modalDisetorBalance}
                 totalEndingEquity={totalEndingEquity}
                 onDownload={() =>
-                  void exportReportToPdf({ ...exportData, activeTab: "ekuitas" })
+                  void exportReportToPdf({
+                    ...exportData,
+                    activeTab: "ekuitas",
+                    layoutMode: "single",
+                  })
                 }
               />
               <BalanceSheetCard
@@ -521,13 +529,21 @@ export function AccountingReportsPage({
                 endingRetainedEarnings={endingRetainedEarnings}
                 totalEndingEquity={totalEndingEquity}
                 onDownload={() =>
-                  void exportReportToPdf({ ...exportData, activeTab: "neraca" })
+                  void exportReportToPdf({
+                    ...exportData,
+                    activeTab: "neraca",
+                    layoutMode: "single",
+                  })
                 }
               />
               <CashFlowCard
                 cashFlow={cashFlow}
                 onDownload={() =>
-                  void exportReportToPdf({ ...exportData, activeTab: "arus_kas" })
+                  void exportReportToPdf({
+                    ...exportData,
+                    activeTab: "arus_kas",
+                    layoutMode: "single",
+                  })
                 }
               />
             </div>
