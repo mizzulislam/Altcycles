@@ -479,7 +479,7 @@ export function LoginMediaPage() {
             <div className="h-8 flex items-center mt-1 overflow-hidden">
               <div
                 className={cn(
-                  "flex items-center gap-2 transition-all duration-300 ease-out",
+                  "flex items-center transition-all duration-300 ease-out",
                   tickerAnimating
                     ? "-translate-y-4 opacity-0"
                     : "translate-y-0 opacity-100",
@@ -488,10 +488,6 @@ export function LoginMediaPage() {
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground tabular-nums">
                   {currentTicker.count} {currentTicker.label}
                 </span>
-                <span
-                  className={cn("size-2 rounded-full shrink-0 animate-pulse", currentTicker.dotTone)}
-                  aria-hidden="true"
-                />
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
