@@ -551,8 +551,8 @@ export function PortalShell() {
         </header>
 
         {/* Konten Halaman */}
-        <main className="flex-1 min-w-0 bg-background px-4 sm:px-6 lg:px-8 pt-4 pb-8 overflow-x-clip">
-          <div className="w-full max-w-[1400px] min-w-0 flex flex-col gap-5">
+        <main className="flex-1 flex flex-col min-w-0 bg-background px-4 sm:px-6 lg:px-8 pt-4 pb-8 overflow-x-clip">
+          <div className="w-full max-w-[1400px] min-w-0 flex-1 flex flex-col gap-5">
             <SidebarStateContext.Provider value={isCollapsed}>
               <React.Suspense fallback={<PageLoader />}>
                 <Outlet />

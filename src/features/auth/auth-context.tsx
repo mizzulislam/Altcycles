@@ -104,11 +104,31 @@ export function portalHomeForRole(role: UserRole): string {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const [profile, setProfile] = React.useState<ProfileRow | null>(null);
+  const [profile, setProfile] = React.useState<ProfileRow | null>(() => {
+    if (isDemoMode || !supabase) {
+      const savedEmail = window.sessionStorage.getItem(DEMO_STORAGE_KEY);
+      if (savedEmail) {
+        const found = findDemoProfileByEmail(savedEmail);
+        if (found) {
+          setDemoCurrentUser(found.id);
+          return found;
+        }
+      }
+    }
+    return null;
+  });
   const [tabRole, setTabRole] = React.useState<UserRole | null>(
     () => roleForPathname(window.location.pathname) ?? readTabRoleFromSession(),
   );
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(() => {
+    if (isDemoMode || !supabase) {
+      const savedEmail = window.sessionStorage.getItem(DEMO_STORAGE_KEY);
+      if (savedEmail && findDemoProfileByEmail(savedEmail)) {
+        return false;
+      }
+    }
+    return true;
+  });
   const signingOutThisTabRef = React.useRef(false);
 
   const loadSupabaseProfile = React.useCallback(

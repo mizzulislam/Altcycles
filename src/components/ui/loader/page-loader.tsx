@@ -26,7 +26,7 @@ export interface PageLoaderProps {
 export function PageLoader({
   message,
   className,
-  minHeight = "min-h-[55vh]",
+  minHeight = "flex-1 min-h-[55vh]",
   showTimeoutAction = true,
   timeoutSeconds = 15,
   timeoutMs,
@@ -60,7 +60,7 @@ export function PageLoader({
       aria-live="polite"
       aria-busy="true"
       className={cn(
-        "flex flex-col items-center justify-center p-6 text-center select-none w-full",
+        "flex flex-1 flex-col items-center justify-center p-6 text-center select-none w-full",
         minHeight,
         className,
       )}
