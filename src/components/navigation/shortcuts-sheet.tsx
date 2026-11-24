@@ -142,8 +142,8 @@ export function ShortcutsSheet({ isOpen, onClose, currentRole }: ShortcutsSheetP
           </div>
 
           {/* Bilah Pencarian Pintasan */}
-          <div className="px-5 sm:px-6 py-3 border-b border-border/60 bg-muted/20 shrink-0">
-            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-background border border-border/80 focus-within:ring-2 focus-within:ring-primary/25 focus-within:border-primary/60 transition-all">
+          <div className="px-5 sm:px-6 py-3 border-b border-border/60 bg-card shrink-0">
+            <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-transparent border border-border/80 focus-within:ring-1 focus-within:ring-ring/40 focus-within:border-ring/60 transition-all">
               <Search className="size-4 text-muted-foreground shrink-0" />
               <input
                 ref={inputRef}
