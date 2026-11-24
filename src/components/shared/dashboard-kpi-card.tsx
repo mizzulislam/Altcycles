@@ -133,12 +133,12 @@ export function KpiCard({
         className,
       )}
     >
-      <div className="flex items-stretch justify-between gap-3">
-        <div className="min-w-0 flex-1 flex flex-col justify-between">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-muted-foreground truncate leading-tight">
             {label}
           </p>
-          <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate leading-none">
+          <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate leading-tight py-0.5">
             {displayValue ? (
               displayValue
             ) : (
@@ -148,7 +148,7 @@ export function KpiCard({
         </div>
         <div
           className={cn(
-            "flex self-stretch aspect-square min-w-[48px] sm:min-w-[52px] shrink-0 items-center justify-center rounded-xl border transition-transform duration-150",
+            "flex size-12 sm:size-[52px] shrink-0 items-center justify-center rounded-xl border transition-transform duration-150",
             to && "group-hover:scale-105",
             iconTone,
           )}
