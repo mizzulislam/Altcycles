@@ -720,6 +720,8 @@
     "label_bank_name": "Bank Name",
     "label_bank_account": "Account Number",
     "label_bank_holder": "Account Holder Name",
+    "active_status": "Authenticated Session",
+    "secured_data": "Encryption & Masking Active",
     "not_configured": "Not configured"
   }
 }

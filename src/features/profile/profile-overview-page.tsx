@@ -11,9 +11,9 @@ import {
   UserCheckIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
-import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { getMergedProfileFields } from "@/lib/data-service";
@@ -202,191 +202,213 @@ export function ProfileOverviewPage() {
       {/* =========================================================================
           DAFTAR WEWENANG PERAN YANG SAH (Hanya Peran yang Dimiliki)
           ========================================================================= */}
-      <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
-        <div className="mb-4">
-          <CardHeaderTitleWithInfo
-            title={t("settings:profile_overview.roles_title", {
-              count: availableRoles.length,
-              defaultValue: `Wewenang Peran yang Sah (${availableRoles.length} Peran)`,
-            })}
-            description={t(
-              "settings:profile_overview.roles_desc",
-              "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
-            )}
-            titleClassName="text-sm sm:text-base font-bold"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2.5">
-          {availableRoles.map((role) => {
-            const isActive = role === currentRole;
-            const roleLabel =
-              t(`settings:profile_overview.role_labels.${role}`, ROLE_LABELS[role] || role);
-
-            return (
-              <div
-                key={role}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                  isActive
-                    ? "bg-primary/10 border-primary/50 text-primary dark:text-sky-400 shadow-xs"
-                    : "bg-muted/30 border-border/70 text-muted-foreground"
-                }`}
-              >
-                {isActive ? (
-                  <CheckCircle2Icon className="size-4 text-primary dark:text-sky-400" />
-                ) : (
-                  <span className="size-1.5 rounded-full bg-muted-foreground/60" />
-                )}
-                <span>{roleLabel}</span>
-                {isActive && (
-                  <span className="ml-1 text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/10 px-1.5 py-0.5 rounded-md">
-                    {t("settings:profile_overview.active_mode_badge", "Mode Aktif")}
-                  </span>
-                )}
-              </div>
-            );
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeaderWithInfo
+          title={t("settings:profile_overview.roles_title", {
+            count: availableRoles.length,
+            defaultValue: `Wewenang Peran yang Sah (${availableRoles.length} Peran)`,
           })}
-        </div>
+          description={t(
+            "settings:profile_overview.roles_desc",
+            "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
+          )}
+          titleClassName="text-sm sm:text-base font-bold"
+          headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
+          action={
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="font-medium text-[11px] sm:text-xs">
+                {t("settings:profile_overview.active_status", "Sesi Terautentikasi")}
+              </span>
+            </div>
+          }
+        />
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-wrap gap-2.5 sm:gap-3">
+            {availableRoles.map((role) => {
+              const isActive = role === currentRole;
+              const roleLabel =
+                t(`settings:profile_overview.role_labels.${role}`, ROLE_LABELS[role] || role);
+
+              return (
+                <div
+                  key={role}
+                  className={cn(
+                    "inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all select-none shadow-2xs",
+                    isActive
+                      ? "bg-primary/10 border-primary/40 text-primary dark:text-sky-400 ring-1 ring-primary/20"
+                      : "bg-muted/20 border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                  )}
+                >
+                  {isActive ? (
+                    <CheckCircle2Icon className="size-4 text-primary dark:text-sky-400 shrink-0" />
+                  ) : (
+                    <span className="size-2 rounded-full bg-muted-foreground/40 shrink-0" />
+                  )}
+                  <span>{roleLabel}</span>
+                  {isActive && (
+                    <span className="ml-1 text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/15 border border-primary/25 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      {t("settings:profile_overview.active_mode_badge", "Mode Aktif")}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
       </Card>
 
       {/* =========================================================================
           DATA KEUANGAN & REKENING PRIBADI (Item 2: Default Dimasking + Toggle Lihat)
           ========================================================================= */}
-      <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
-        <div className="mb-4">
-          <CardHeaderTitleWithInfo
-            title={t(
-              "settings:profile_overview.financial_title",
-              "Data Keuangan & Rekening",
-            )}
-            description={t(
-              "settings:profile_overview.financial_desc",
-              "Informasi NPWP dan rekening bank terdaftar untuk keperluan pencairan dana dan bagi hasil proyek.",
-            )}
-            titleClassName="text-sm sm:text-base font-bold"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
-            <div className="flex items-center justify-between gap-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground">
-                {t("settings:profile_overview.label_npwp", "NPWP")}
-              </p>
-              {profile.npwp && (
-                <ActionTooltip
-                  content={
-                    revealNpwp
-                      ? t("settings:profile_overview.btn_hide_npwp", "Sembunyikan NPWP")
-                      : t("settings:profile_overview.btn_show_npwp", "Lihat NPWP")
-                  }
-                >
-                  <button
-                    type="button"
-                    onClick={() => setRevealNpwp((prev) => !prev)}
-                    aria-label={
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeaderWithInfo
+          title={t(
+            "settings:profile_overview.financial_title",
+            "Data Keuangan & Rekening",
+          )}
+          description={t(
+            "settings:profile_overview.financial_desc",
+            "Informasi NPWP dan rekening bank terdaftar untuk keperluan pencairan dana dan bagi hasil proyek.",
+          )}
+          titleClassName="text-sm sm:text-base font-bold"
+          headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
+          action={
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <ShieldCheckIcon className="size-3.5 text-emerald-500 shrink-0" />
+              <span className="font-medium text-[11px] sm:text-xs">
+                {t("settings:profile_overview.secured_data", "Enkripsi & Masking Aktif")}
+              </span>
+            </div>
+          }
+        />
+        <CardContent className="p-5 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-primary/30 transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("settings:profile_overview.label_npwp", "NPWP")}
+                </p>
+                {profile.npwp && (
+                  <ActionTooltip
+                    content={
                       revealNpwp
                         ? t("settings:profile_overview.btn_hide_npwp", "Sembunyikan NPWP")
                         : t("settings:profile_overview.btn_show_npwp", "Lihat NPWP")
                     }
-                    className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    {revealNpwp ? (
-                      <EyeOffIcon className="size-3.5" />
-                    ) : (
-                      <EyeIcon className="size-3.5" />
-                    )}
-                  </button>
-                </ActionTooltip>
-              )}
-            </div>
-            <p
-              data-testid="overview-npwp-value"
-              className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
-            >
-              {profile.npwp
-                ? revealNpwp
-                  ? formatNpwpDisplay(profile.npwp)
-                  : maskNpwp(profile.npwp)
-                : t("settings:profile_overview.not_configured", "Belum diatur")}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              {t("settings:profile_overview.label_bank_name", "Nama Bank")}
-            </p>
-            <p
-              data-testid="overview-bank-name-value"
-              className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate"
-            >
-              {profile.bank_name ||
-                t("settings:profile_overview.not_configured", "Belum diatur")}
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
-            <div className="flex items-center justify-between gap-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground">
-                {t(
-                  "settings:profile_overview.label_bank_account",
-                  "Nomor Rekening",
+                    <button
+                      type="button"
+                      onClick={() => setRevealNpwp((prev) => !prev)}
+                      aria-label={
+                        revealNpwp
+                          ? t("settings:profile_overview.btn_hide_npwp", "Sembunyikan NPWP")
+                          : t("settings:profile_overview.btn_show_npwp", "Lihat NPWP")
+                      }
+                      className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer border border-transparent hover:border-border/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {revealNpwp ? (
+                        <EyeOffIcon className="size-3.5" />
+                      ) : (
+                        <EyeIcon className="size-3.5" />
+                      )}
+                    </button>
+                  </ActionTooltip>
                 )}
+              </div>
+              <p
+                data-testid="overview-npwp-value"
+                className="text-sm sm:text-base font-bold text-foreground font-mono mt-1.5 tabular-nums tracking-tight truncate"
+              >
+                {profile.npwp
+                  ? revealNpwp
+                    ? formatNpwpDisplay(profile.npwp)
+                    : maskNpwp(profile.npwp)
+                  : t("settings:profile_overview.not_configured", "Belum diatur")}
               </p>
-              {profile.bank_account_number && (
-                <ActionTooltip
-                  content={
-                    revealBankAccount
-                      ? t("settings:profile_overview.btn_hide_acc", "Sembunyikan Nomor Rekening")
-                      : t("settings:profile_overview.btn_show_acc", "Lihat Nomor Rekening")
-                  }
-                >
-                  <button
-                    type="button"
-                    onClick={() => setRevealBankAccount((prev) => !prev)}
-                    aria-label={
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-border transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("settings:profile_overview.label_bank_name", "Nama Bank")}
+                </p>
+              </div>
+              <p
+                data-testid="overview-bank-name-value"
+                className="text-sm sm:text-base font-bold text-foreground mt-1.5 truncate tracking-tight"
+              >
+                {profile.bank_name ||
+                  t("settings:profile_overview.not_configured", "Belum diatur")}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-primary/30 transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t(
+                    "settings:profile_overview.label_bank_account",
+                    "Nomor Rekening",
+                  )}
+                </p>
+                {profile.bank_account_number && (
+                  <ActionTooltip
+                    content={
                       revealBankAccount
                         ? t("settings:profile_overview.btn_hide_acc", "Sembunyikan Nomor Rekening")
                         : t("settings:profile_overview.btn_show_acc", "Lihat Nomor Rekening")
                     }
-                    className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    {revealBankAccount ? (
-                      <EyeOffIcon className="size-3.5" />
-                    ) : (
-                      <EyeIcon className="size-3.5" />
-                    )}
-                  </button>
-                </ActionTooltip>
-              )}
+                    <button
+                      type="button"
+                      onClick={() => setRevealBankAccount((prev) => !prev)}
+                      aria-label={
+                        revealBankAccount
+                          ? t("settings:profile_overview.btn_hide_acc", "Sembunyikan Nomor Rekening")
+                          : t("settings:profile_overview.btn_show_acc", "Lihat Nomor Rekening")
+                      }
+                      className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer border border-transparent hover:border-border/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      {revealBankAccount ? (
+                        <EyeOffIcon className="size-3.5" />
+                      ) : (
+                        <EyeIcon className="size-3.5" />
+                      )}
+                    </button>
+                  </ActionTooltip>
+                )}
+              </div>
+              <p
+                data-testid="overview-bank-acc-value"
+                className="text-sm sm:text-base font-bold text-foreground font-mono mt-1.5 tabular-nums tracking-tight truncate"
+              >
+                {profile.bank_account_number
+                  ? revealBankAccount
+                    ? profile.bank_account_number
+                    : maskBankAccountNumber(profile.bank_account_number)
+                  : t("settings:profile_overview.not_configured", "Belum diatur")}
+              </p>
             </div>
-            <p
-              data-testid="overview-bank-acc-value"
-              className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
-            >
-              {profile.bank_account_number
-                ? revealBankAccount
-                  ? profile.bank_account_number
-                  : maskBankAccountNumber(profile.bank_account_number)
-                : t("settings:profile_overview.not_configured", "Belum diatur")}
-            </p>
-          </div>
 
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              {t(
-                "settings:profile_overview.label_bank_holder",
-                "Atas Nama Rekening",
-              )}
-            </p>
-            <p
-              data-testid="overview-bank-holder-value"
-              className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate"
-            >
-              {profile.bank_account_holder ||
-                t("settings:profile_overview.not_configured", "Belum diatur")}
-            </p>
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-border transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t(
+                    "settings:profile_overview.label_bank_holder",
+                    "Atas Nama Rekening",
+                  )}
+                </p>
+              </div>
+              <p
+                data-testid="overview-bank-holder-value"
+                className="text-sm sm:text-base font-bold text-foreground mt-1.5 truncate tracking-tight"
+              >
+                {profile.bank_account_holder ||
+                  t("settings:profile_overview.not_configured", "Belum diatur")}
+              </p>
+            </div>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* =========================================================================

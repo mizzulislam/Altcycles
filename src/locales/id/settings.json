@@ -720,6 +720,8 @@
     "label_bank_name": "Nama Bank",
     "label_bank_account": "Nomor Rekening",
     "label_bank_holder": "Atas Nama Rekening",
+    "active_status": "Sesi Terautentikasi",
+    "secured_data": "Enkripsi & Masking Aktif",
     "not_configured": "Belum diatur"
   }
 }
