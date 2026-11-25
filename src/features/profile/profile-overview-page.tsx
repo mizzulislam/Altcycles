@@ -5,7 +5,6 @@ import {
   ClockIcon,
   EyeIcon,
   EyeOffIcon,
-  LandmarkIcon,
   MailIcon,
   PhoneIcon,
   ShieldCheckIcon,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { getMergedProfileFields } from "@/lib/data-service";
@@ -201,21 +201,19 @@ export function ProfileOverviewPage() {
           DAFTAR WEWENANG PERAN YANG SAH (Hanya Peran yang Dimiliki)
           ========================================================================= */}
       <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
-        <h2 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-          <ShieldCheckIcon className="size-4 text-primary dark:text-sky-400" />
-          <span>
-            {t("settings:profile_overview.roles_title", {
+        <div className="mb-4">
+          <CardHeaderTitleWithInfo
+            title={t("settings:profile_overview.roles_title", {
               count: availableRoles.length,
               defaultValue: `Wewenang Peran yang Sah (${availableRoles.length} Peran)`,
             })}
-          </span>
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">
-          {t(
-            "settings:profile_overview.roles_desc",
-            "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
-          )}
-        </p>
+            description={t(
+              "settings:profile_overview.roles_desc",
+              "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
+            )}
+            titleClassName="text-sm sm:text-base font-bold"
+          />
+        </div>
         <div className="flex flex-wrap gap-2.5">
           {availableRoles.map((role) => {
             const isActive = role === currentRole;
@@ -252,23 +250,25 @@ export function ProfileOverviewPage() {
           DATA KEUANGAN & REKENING PRIBADI (Item 2: Default Dimasking + Toggle Lihat)
           ========================================================================= */}
       <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-            <LandmarkIcon className="size-4 text-primary dark:text-sky-400" />
-            <span>
-              {t(
-                "settings:profile_overview.financial_title",
-                "Data Keuangan & Rekening",
-              )}
-            </span>
-          </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <CardHeaderTitleWithInfo
+            title={t(
+              "settings:profile_overview.financial_title",
+              "Data Keuangan & Rekening",
+            )}
+            description={t(
+              "settings:profile_overview.financial_desc",
+              "Informasi NPWP dan rekening bank terdaftar untuk keperluan pencairan dana dan bagi hasil proyek.",
+            )}
+            titleClassName="text-sm sm:text-base font-bold"
+          />
           {(profile.npwp || profile.bank_account_number) && (
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setRevealSensitive((prev) => !prev)}
-              className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
+              className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
             >
               {revealSensitive ? (
                 <>
@@ -294,12 +294,6 @@ export function ProfileOverviewPage() {
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          {t(
-            "settings:profile_overview.financial_desc",
-            "Informasi NPWP dan rekening bank terdaftar untuk keperluan pencairan dana dan bagi hasil proyek.",
-          )}
-        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
