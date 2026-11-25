@@ -892,6 +892,16 @@ export function getLocalizedTransactionDescription(
     /Koreksi atas (JRN\/[\w/-]+)/gi,
     "Correction for $1",
   );
+  translated = translated.replace(
+    /Penyusutan Aset Tetap:\s*([^\n(]+)\(([^)]+)\)/gi,
+    (_m, assetInfo, per) =>
+      `Fixed Asset Depreciation: ${String(assetInfo).trim()} (${getLocalizedPeriodName(String(per).trim(), "en")})`,
+  );
+  translated = translated.replace(
+    /Akumulasi Penyusutan:\s*([^\n(]+)\(([^)]+)\)/gi,
+    (_m, assetInfo, per) =>
+      `Accumulated Depreciation: ${String(assetInfo).trim()} (${getLocalizedPeriodName(String(per).trim(), "en")})`,
+  );
 
   // 8. Normalisasi singkatan bulan dan "s.d." yang tersisa di dalam tanda kurung tanggal
   translated = translated

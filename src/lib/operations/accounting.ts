@@ -13,6 +13,11 @@ import type {
 import {
   postDemoJournal,
 } from "@/lib/operations/shared";
+import {
+  runPeriodFixedAssetDepreciation,
+} from "@/lib/operations/fixed-assets";
+
+export * from "@/lib/operations/fixed-assets";
 
 // =============================================================================
 // 5. Jurnal Akuntansi, Koreksi, Penutupan Buku, & Pembalik Opsional (UC-23, UC-26)
@@ -321,6 +326,9 @@ export async function runPeriodClosingBook(periodId: string): Promise<void> {
     if (period.status === "closed") {
       throw new Error(`Periode ${period.name} sudah tertutup.`);
     }
+
+    // Otomatisasi Penyusutan Aset Tetap sebelum menghitung penutupan saldo akun nominal (Item 3, Idempoten)
+    await runPeriodFixedAssetDepreciation(periodId);
 
     const retainedAcc = demoStore.accounts.find(
       (a) => a.system_tag === "retained_earnings" && a.is_active,

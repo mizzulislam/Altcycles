@@ -88,9 +88,16 @@ export async function deleteAccount(accountId: string): Promise<void> {
     const idx = demoStore.accounts.findIndex((a) => a.id === accountId);
     const target = demoStore.accounts[idx];
     if (!target) throw new Error("Akun tidak ditemukan.");
-    if (target.used_in_journal_count > 0) {
+    const usedInLines = demoStore.journalLines.some((l) => l.account_id === accountId);
+    if (target.used_in_journal_count > 0 || usedInLines) {
       throw new Error(
         `Akun ${target.code} (${target.name}) sudah digunakan dalam jurnal dan tidak boleh dihapus; silakan nonaktifkan akun tersebut (BR-19).`,
+      );
+    }
+    const hasChildAccounts = demoStore.accounts.some((a) => a.parent_id === accountId);
+    if (hasChildAccounts) {
+      throw new Error(
+        `Akun ${target.code} (${target.name}) merupakan akun induk yang masih memiliki sub-akun dan tidak boleh dihapus.`,
       );
     }
     demoStore.accounts.splice(idx, 1);

@@ -64,6 +64,39 @@ export type CashFlowCategory =
   | "cash_equivalent";
 
 export type PeriodStatus = "open" | "closed";
+export type FixedAssetStatus = "active" | "fully_depreciated" | "disposed";
+export type DepreciationMethod = "straight_line";
+
+export type FixedAssetRow = {
+  id: string;
+  asset_code: string;
+  asset_name: string;
+  acquisition_date: string;
+  acquisition_cost: number;
+  useful_life_months: number;
+  salvage_value: number;
+  depreciation_method: DepreciationMethod;
+  asset_account_id: string;
+  accum_depr_account_id: string;
+  expense_account_id: string;
+  status: FixedAssetStatus;
+  disposed_date?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FixedAssetDepreciationRow = {
+  id: string;
+  asset_id: string;
+  period_id: string;
+  journal_id: string | null;
+  depreciation_amount: number;
+  accumulated_after: number;
+  book_value_after: number;
+  created_at: string;
+};
 export type ProjectCategory = "client" | "internal";
 export type ProjectStatus = "draft" | "active" | "on_hold" | "completed" | "cancelled";
 export type RevenueRecognitionMethod =
