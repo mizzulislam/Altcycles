@@ -650,6 +650,7 @@
     "financial_npwp": "Nomor Pokok Wajib Pajak (NPWP)",
     "financial_npwp_ph": "Contoh: 01.234.567.8-901.000 (opsional)",
     "financial_npwp_desc": "Opsional. Wajib terdiri dari 15 atau 16 digit angka bila diisi.",
+    "financial_ptkp_summary": "Klasifikasi PTKP & TER",
     "financial_bank_name": "Nama Bank",
     "financial_bank_name_ph": "Contoh: BCA / Bank Mandiri / Bank Jago",
     "financial_bank_name_desc": "Nama bank tujuan transfer pencairan dana dan bagi hasil.",

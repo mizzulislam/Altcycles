@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Trans } from "react-i18next";
 import {
   BellIcon,
-  CalculatorIcon,
   CheckCircle2Icon,
   FileSignatureIcon,
   KeyRoundIcon,
@@ -12,7 +11,6 @@ import {
   LockIcon,
   PencilIcon,
   PhoneIcon,
-  ReceiptIcon,
   SaveIcon,
   ShieldAlertIcon,
   Trash2Icon,
@@ -36,7 +34,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -62,7 +59,7 @@ import {
   normalizeNpwp,
   ROLE_LABELS,
 } from "@/lib/formatters";
-import { getPtkpInfo, simulatePph21NonEmployee } from "@/lib/tax-calculation";
+import { getPtkpInfo } from "@/lib/tax-calculation";
 import type { MaritalStatus } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 import { TruncatedTooltipText } from "@/components/shared/page-header";
@@ -125,7 +122,6 @@ export function ProfileSettingsPage() {
   const [bankAccountHolder, setBankAccountHolder] = React.useState(
     profile?.bank_account_holder || "",
   );
-  const [simGross, setSimGross] = React.useState<number>(10_000_000);
   const [isSavingFinancial, setIsSavingFinancial] = React.useState(false);
 
   // Form State Tab Akun (Ganti Kata Sandi)
@@ -162,17 +158,6 @@ export function ProfileSettingsPage() {
   const ptkpInfo = React.useMemo(
     () => getPtkpInfo(maritalStatus, dependentsCount),
     [maritalStatus, dependentsCount],
-  );
-
-  const pphSimulation = React.useMemo(
-    () =>
-      simulatePph21NonEmployee(
-        simGross,
-        Boolean(npwp.trim()),
-        maritalStatus,
-        dependentsCount,
-      ),
-    [simGross, npwp, maritalStatus, dependentsCount],
   );
 
   if (!profile) return null;
@@ -945,23 +930,22 @@ export function ProfileSettingsPage() {
           </Card>
         )}
 
-        {/* TAB 3: DATA KEUANGAN (NPWP, Status Pernikahan/PTKP, Simulasi PPh 21, & Rekening Bank) */}
+        {/* TAB 3: DATA KEUANGAN (NPWP, Status Pernikahan/PTKP, & Rekening Bank) */}
         {activeTab === "financial" && (
           <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
             <CardHeaderWithInfo
-              title={t("settings:profile.card_financial_title", "Data Keuangan & Perpajakan")}
+              title={t("settings:profile.card_financial_title", "Data Keuangan & Rekening Pribadi")}
               description={t(
-                "settings:profile.card_financial_desc",
-                "Pengaturan NPWP, status pernikahan dan tanggungan untuk perhitungan PTKP/PPh 21, serta rekening bank pencairan bagi hasil.",
+                "settings:profile.financial_security_notice",
+                "Data NPWP dan nomor rekening Anda dilindungi kebijakan keamanan tingkat baris (RLS), ditampilkan dengan masking di halaman ikhtisar, serta terhubung langsung sebagai sumber tunggal bagi Bendahara.",
               )}
             />
             <CardContent className="p-5 sm:p-6 space-y-6">
               <form onSubmit={handleSaveFinancial} className="space-y-6">
                 {/* Bagian 1: Status Perpajakan & PTKP */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                    <ReceiptIcon className="size-4 text-primary shrink-0" />
-                    <h3 className="text-sm font-bold text-foreground">
+                  <div className="border-b border-border/60 pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings:profile.section_tax_title", "Status Perpajakan & PTKP")}
                     </h3>
                   </div>
@@ -1027,125 +1011,53 @@ export function ProfileSettingsPage() {
                       <FieldDescription className="text-[11px]">
                         {t(
                           "settings:profile.financial_dependents_count_desc",
-                          "Jumlah anak atau tanggungan keluarga sedarah (maksimal 3 orang sesuai UU HPP).",
+                          "Maksimal 3 tanggungan keluarga sedarah sesuai UU HPP.",
                         )}
                       </FieldDescription>
                     </Field>
-                  </div>
 
-                  {/* Kartu Ringkasan PTKP Otomatis */}
-                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-sky-400">
-                          {t("settings:profile.ptkp_classification", "Klasifikasi PTKP")}
-                        </span>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-2xs">
-                          {ptkpInfo.code}
-                        </span>
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          • {t("settings:profile.ter_category", "Kategori TER")} {ptkpInfo.terCategory}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {ptkpInfo.description}
-                      </p>
-                    </div>
-                    <div className="text-left sm:text-right shrink-0">
-                      <p className="text-[11px] font-medium text-muted-foreground">
-                        {t("settings:profile.ptkp_annual_limit", "Batas Bebas Pajak Tahunan")}
-                      </p>
-                      <p className="text-sm sm:text-base font-bold text-foreground font-mono tabular-nums">
-                        {formatRupiah(ptkpInfo.annualValue)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Field NPWP */}
-                  <Field>
-                    <FieldLabel htmlFor="pf-npwp" className="text-xs font-semibold">
-                      {t("settings:profile.financial_npwp", "Nomor Pokok Wajib Pajak (NPWP)")}
-                    </FieldLabel>
-                    <Input
-                      id="pf-npwp"
-                      type="text"
-                      value={npwp}
-                      onChange={(e) => setNpwp(e.target.value)}
-                      placeholder={t("settings:profile.financial_npwp_ph", "00.000.000.0-000.000")}
-                      className="text-xs h-9 font-mono"
-                    />
-                    <FieldDescription className="text-[11px]">
-                      {t(
-                        "settings:profile.financial_npwp_desc",
-                        "NPWP 15 atau 16 digit. Akun tanpa NPWP dikenakan tarif pajak lebih tinggi (+20%).",
-                      )}
-                    </FieldDescription>
-                  </Field>
-                </div>
-
-                {/* Bagian 2: Simulator Pajak PPh 21 Interaktif */}
-                <div className="p-4 rounded-xl bg-muted/20 border border-border/80 space-y-3.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <CalculatorIcon className="size-4 text-primary shrink-0" />
-                      <h4 className="text-xs sm:text-sm font-bold text-foreground">
-                        {t("settings:profile.simulator_title", "Simulasi Pemotongan PPh 21 (Bagi Hasil Proyek)")}
-                      </h4>
-                    </div>
-                    <span className="text-[11px] text-muted-foreground">
-                      {pphSimulation.formulaNote}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-1 space-y-1">
-                      <label htmlFor="pf-sim-gross" className="text-[11px] font-semibold text-muted-foreground">
-                        {t("settings:profile.simulator_gross_label", "Estimasi Bagi Hasil Bruto")}
-                      </label>
-                      <NumberInput
-                        id="pf-sim-gross"
-                        value={simGross}
-                        onValueChange={(val) => setSimGross(val ?? 0)}
-                        min={0}
-                        allowDecimal={false}
-                        className="h-8 text-xs font-mono font-semibold"
+                    <Field>
+                      <FieldLabel htmlFor="pf-npwp" className="text-xs font-semibold">
+                        {t("settings:profile.financial_npwp", "Nomor Pokok Wajib Pajak (NPWP)")}
+                      </FieldLabel>
+                      <Input
+                        id="pf-npwp"
+                        type="text"
+                        value={npwp}
+                        onChange={(e) => setNpwp(e.target.value)}
+                        placeholder={t("settings:profile.financial_npwp_ph", "00.000.000.0-000.000")}
+                        className="text-xs h-9 tabular-nums"
                       />
-                    </div>
+                      <FieldDescription className="text-[11px]">
+                        {t(
+                          "settings:profile.financial_npwp_desc",
+                          "NPWP 15 atau 16 digit. Akun tanpa NPWP dikenakan tarif pajak lebih tinggi (+20%).",
+                        )}
+                      </FieldDescription>
+                    </Field>
 
-                    <div className="p-2.5 rounded-lg bg-card border border-border/60 flex flex-col justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {t("settings:profile.sim_dpp_label", "DPP (50% Bruto)")}
-                      </p>
-                      <p className="text-xs font-bold text-foreground font-mono tabular-nums">
-                        {formatRupiah(pphSimulation.dpp)}
-                      </p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-card border border-border/60 flex flex-col justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {t("settings:profile.sim_tax_label", "Estimasi PPh 21")} ({pphSimulation.effectiveRatePct}%)
-                      </p>
-                      <p className="text-xs font-bold text-destructive font-mono tabular-nums">
-                        - {formatRupiah(pphSimulation.taxAmount)}
-                      </p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-card border border-border/60 flex flex-col justify-between">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {t("settings:profile.sim_net_label", "Bagi Hasil Bersih")}
-                      </p>
-                      <p className="text-xs font-bold text-primary dark:text-sky-400 font-mono tabular-nums">
-                        {formatRupiah(pphSimulation.netPayout)}
-                      </p>
-                    </div>
+                    <Field>
+                      <FieldLabel htmlFor="pf-ptkp-summary" className="text-xs font-semibold">
+                        {t("settings:profile.financial_ptkp_summary", "Klasifikasi PTKP & TER")}
+                      </FieldLabel>
+                      <Input
+                        id="pf-ptkp-summary"
+                        type="text"
+                        readOnly
+                        value={`${ptkpInfo.code} • TER ${ptkpInfo.terCategory} (${formatRupiah(ptkpInfo.annualValue)}/th)`}
+                        className="text-xs h-9 tabular-nums bg-muted/20 border-border/70 select-none cursor-default font-medium text-foreground"
+                      />
+                      <FieldDescription className="text-[11px]">
+                        {ptkpInfo.description}
+                      </FieldDescription>
+                    </Field>
                   </div>
                 </div>
 
-                {/* Bagian 3: Rekening Bank Pencairan */}
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                    <LandmarkIcon className="size-4 text-primary shrink-0" />
-                    <h3 className="text-sm font-bold text-foreground">
+                {/* Bagian 2: Rekening Bank Pencairan */}
+                <div className="space-y-4 pt-1">
+                  <div className="border-b border-border/60 pb-2">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {t("settings:profile.section_bank_title", "Data Rekening Bank Pencairan")}
                     </h3>
                   </div>
@@ -1169,6 +1081,26 @@ export function ProfileSettingsPage() {
                     </Field>
 
                     <Field>
+                      <FieldLabel htmlFor="pf-bank-acc" className="text-xs font-semibold">
+                        {t("settings:profile.financial_bank_account", "Nomor Rekening")}
+                      </FieldLabel>
+                      <Input
+                        id="pf-bank-acc"
+                        type="text"
+                        inputMode="numeric"
+                        value={bankAccountNumber}
+                        onChange={(e) =>
+                          setBankAccountNumber(e.target.value.replace(/[^\d\s-]/g, ""))
+                        }
+                        placeholder={t("settings:profile.financial_bank_account_ph", "Hanya digit angka, contoh: 1234567890")}
+                        className="text-xs h-9 tabular-nums"
+                      />
+                      <FieldDescription className="text-[11px]">
+                        {t("settings:profile.financial_bank_account_desc", "Nomor rekening tujuan pencairan dana dan bagi hasil.")}
+                      </FieldDescription>
+                    </Field>
+
+                    <Field className="md:col-span-2">
                       <FieldLabel htmlFor="pf-bank-holder" className="text-xs font-semibold">
                         {t("settings:profile.financial_bank_holder", "Atas Nama Rekening")}
                       </FieldLabel>
@@ -1185,31 +1117,6 @@ export function ProfileSettingsPage() {
                       </FieldDescription>
                     </Field>
                   </div>
-
-                  <Field>
-                    <FieldLabel htmlFor="pf-bank-acc" className="text-xs font-semibold">
-                      {t("settings:profile.financial_bank_account", "Nomor Rekening")}
-                    </FieldLabel>
-                    <Input
-                      id="pf-bank-acc"
-                      type="text"
-                      inputMode="numeric"
-                      value={bankAccountNumber}
-                      onChange={(e) =>
-                        setBankAccountNumber(e.target.value.replace(/[^\d\s-]/g, ""))
-                      }
-                      placeholder={t("settings:profile.financial_bank_account_ph", "Hanya digit angka, contoh: 1234567890")}
-                      className="text-xs h-9 font-mono"
-                    />
-                    <FieldDescription className="text-[11px]">
-                      {t("settings:profile.financial_bank_account_desc", "Nomor rekening tujuan pencairan dana dan bagi hasil.")}
-                    </FieldDescription>
-                  </Field>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground flex items-start gap-2.5">
-                  <LandmarkIcon className="size-4 text-primary shrink-0 mt-0.5" />
-                  <span>{t("settings:profile.financial_security_notice", "Data keuangan dan rekening dienkripsi serta dimasking untuk keamanan audit internal.")}</span>
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -1226,7 +1133,7 @@ export function ProfileSettingsPage() {
                     ) : (
                       <>
                         <SaveIcon className="size-3.5" />
-                        <span>{t("settings:profile.btn_save_financial", "Simpan Perubahan")}</span>
+                        <span>{t("settings:profile.btn_save_financial", "Simpan Data Keuangan")}</span>
                       </>
                     )}
                   </Button>

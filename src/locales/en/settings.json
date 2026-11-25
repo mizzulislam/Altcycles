@@ -650,6 +650,7 @@
     "financial_npwp": "Taxpayer Identification Number (NPWP)",
     "financial_npwp_ph": "Example: 01.234.567.8-901.000 (optional)",
     "financial_npwp_desc": "Optional. Must contain 15 or 16 numeric digits if provided.",
+    "financial_ptkp_summary": "PTKP & TER Classification",
     "financial_bank_name": "Bank Name",
     "financial_bank_name_ph": "Example: BCA / Bank Mandiri / Bank Jago",
     "financial_bank_name_desc": "Destination bank name for fund disbursement and profit sharing.",
