@@ -124,7 +124,7 @@ export function JournalsTable({
           </TableHead>
           {isEditMode && (
             <TableHead className="w-[112px] text-center pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
-              {t("accounting:journals.col_action", "Aksi")}
+              {t("accounting:journals.col_actions", "Aksi")}
             </TableHead>
           )}
         </TableRow>
@@ -251,7 +251,7 @@ export function JournalsTable({
                             <span>
                               {acc
                                 ? getLocalizedAccountName(acc, language)
-                                : t("accounting:journals.account_fallback", "Akun")}
+                                : t("accounting:journals.col_account", "Akun")}
                             </span>
                           </div>
                         );
@@ -337,17 +337,17 @@ export function JournalsTable({
                 {isEditMode && (
                   <TableCell className="align-top py-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-1.5 pt-1">
-                      <ActionTooltip content={t("accounting:journals.detail_tooltip", "Lihat detail jurnal")}>
+                      <ActionTooltip content={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}>
                       <button
                         type="button"
                         onClick={() => onOpenDetail(j)}
                         className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer border border-transparent hover:border-border/60"
-                        aria-label={t("accounting:journals.view_tx_title", "Lihat detail transaksi")}
+                        aria-label={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}
                       >
                         <EyeIcon className="size-4" />
                       </button>
                       </ActionTooltip>
-                      <ActionTooltip content={t("accounting:journals.edit_tooltip", "Ubah / Koreksi jurnal")}>
+                      <ActionTooltip content={t("accounting:journals.edit_tx_title", "Edit transaksi")}>
                       <button
                         type="button"
                         onClick={() => {
@@ -363,7 +363,7 @@ export function JournalsTable({
                         <PencilIcon className="size-4" />
                       </button>
                       </ActionTooltip>
-                      <ActionTooltip content={t("accounting:journals.delete_tooltip", "Hapus transaksi ini")}>
+                      <ActionTooltip content={t("accounting:journals.delete_tx_title", "Hapus transaksi")}>
                       <button
                         type="button"
                         onClick={() => onDeleteSingle(j)}
