@@ -6,13 +6,15 @@ Selamat datang di pusat dokumentasi resmi **Altcycles** (Sistem ERP Administrasi
 
 ## 1. Desain & Antarmuka Pengguna (`docs/design-system/`)
 - **[AGENTS.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/AGENTS.md)** — Dokumen aturan baku arsitektur komponen, header halaman, kartu KPI, header tabel, tombol unduh, dan format moneter.
+- **[layout-and-components.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/design-system/layout-and-components.md)** — Standar terpadu header halaman, kartu konten, tabel data, modal dialog, dan dropdown anti-clipping.
 - **[Token Desain & Tema](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/src/index.css)** — Konfigurasi variabel tema Tailwind v4, kontras gelap/terang WCAG AA, dan radius terstandar.
 - **[Motion & Transisi](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/src/lib/motion-tokens.ts)** — Kurva animasi cubic-bezier dan token durasi transisi antarmuka.
 
 ---
 
 ## 2. Standar Teknis & Modul (`docs/standards/`)
-- **[Standar Dokumen & Generator PDF](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/standar-dokumen.md)** — Spesifikasi kertas A4, margin, font header seragam 9.5pt, dan pencegahan tabrakan sel.
+- **[document-pdf-specs.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/standards/document-pdf-specs.md)** — Spesifikasi kertas A4, margin, font header seragam 9.5pt, matriks 11 dokumen & 9 laporan, serta proteksi tabrakan sel.
+- **[i18n-standards.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/standards/i18n-standards.md)** — Kamus resmi istilah baku (ID vs EN), struktur namespace, aturan pencegahan teks literal, dan proteksi CI.
 - **[Pemetaan Akun Akuntansi (COA)](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/ACCOUNTING_MAPPING.md)** — Pemetaan hierarki bagan akun dan aturan penutupan buku.
 - **[Asumsi Bisnis & Penomoran](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/ASSUMPTIONS.md)** — Format nomor invoice, kuitansi, PO, dan pembagian termin proyek.
 - **[Registrasi Pintasan Keyboard](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-pintasan-keyboard.md)** — Peta pemicu shortcut global, urutan 'G lalu X', dan Command Palette.
