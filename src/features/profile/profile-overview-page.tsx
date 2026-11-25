@@ -207,57 +207,6 @@ export function ProfileOverviewPage() {
       </Card>
 
       {/* =========================================================================
-          DAFTAR WEWENANG PERAN YANG SAH (Hanya Peran yang Dimiliki)
-          ========================================================================= */}
-      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeaderWithInfo
-          title={t("settings:profile_overview.roles_title", {
-            count: availableRoles.length,
-            defaultValue: `Wewenang Peran yang Sah (${availableRoles.length} Peran)`,
-          })}
-          description={t(
-            "settings:profile_overview.roles_desc",
-            "Hak akses resmi yang diberikan oleh Super Admin. Anda dapat berpindah mode operasional melalui menu Mode Aktif di header atas.",
-          )}
-          titleClassName="text-sm sm:text-base font-bold"
-          headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
-        />
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-wrap gap-2.5 sm:gap-3">
-            {availableRoles.map((role) => {
-              const isActive = role === currentRole;
-              const roleLabel =
-                t(`settings:profile_overview.role_labels.${role}`, ROLE_LABELS[role] || role);
-
-              return (
-                <div
-                  key={role}
-                  className={cn(
-                    "inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all select-none shadow-2xs",
-                    isActive
-                      ? "bg-primary/10 border-primary/40 text-primary dark:text-sky-400 ring-1 ring-primary/20"
-                      : "bg-muted/20 border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
-                  )}
-                >
-                  {isActive ? (
-                    <CheckCircle2Icon className="size-4 text-primary dark:text-sky-400 shrink-0" />
-                  ) : (
-                    <span className="size-2 rounded-full bg-muted-foreground/40 shrink-0" />
-                  )}
-                  <span>{roleLabel}</span>
-                  {isActive && (
-                    <span className="ml-1 text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/15 border border-primary/25 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                      {t("settings:profile_overview.active_mode_badge", "Mode Aktif")}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* =========================================================================
           DATA KEUANGAN & REKENING PRIBADI (Item 2: Default Dimasking + Toggle Lihat)
           ========================================================================= */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
