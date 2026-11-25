@@ -1,32 +1,20 @@
 import * as React from "react";
 import {
   ArrowUpDownIcon,
-  EyeIcon,
   PencilIcon,
   PlusIcon,
   SlidersHorizontalIcon,
-  Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { type SemanticTone } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { EmptyState, Spinner } from "@/components/ui/empty";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   getCompanyProfile,
   listAccounts,
@@ -36,14 +24,11 @@ import { useLanguage } from "@/lib/i18n";
 import { useRealtimeSync } from "@/lib/realtime-cache";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { JournalsPrintContent } from "./components/journals-print-content";
-import { formatAccountRef, formatDateID, roundRupiah } from "@/lib/formatters";
+import { JournalsTable } from "./components/journals-table";
+import { formatDateID, roundRupiah } from "@/lib/formatters";
 import {
-  getLocalizedAccountName,
   getLocalizedPeriodName,
-  getLocalizedTransactionDescription,
-  formatJournalDateI18n,
 } from "@/lib/glossary";
-import { cn } from "@/lib/utils";
 import {
   createCorrectionJournalEntry,
   createManualOrAdjustmentJournal,
@@ -70,8 +55,6 @@ import {
   exportJournalsToExcel,
   exportJournalsToPdf,
 } from "./components/journals-export-handlers";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
-
 export const JOURNAL_TYPE_LABELS: Record<
   JournalType,
   { label: string; tone: SemanticTone }
@@ -806,327 +789,24 @@ export function JournalsPage({
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table className="w-full min-w-[680px] table-fixed">
-            <TableHeader className="bg-muted/30">
-              <TableRow>
-                {isEditMode && (
-                  <TableHead className="w-12 text-center align-middle px-3">
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={
-                          sortedJournals.length > 0 &&
-                          selectedJournalIds.length === sortedJournals.length
-                        }
-                        indeterminate={
-                          selectedJournalIds.length > 0 &&
-                          selectedJournalIds.length < sortedJournals.length
-                        }
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedJournalIds(
-                              sortedJournals.map((j) => j.id),
-                            );
-                          } else {
-                            setSelectedJournalIds([]);
-                          }
-                        }}
-                        aria-label={t(
-                          "accounting:journals.select_all_aria",
-                          "Pilih semua transaksi",
-                        )}
-                      />
-                    </div>
-                  </TableHead>
-                )}
-                <TableHead
-                  className={cn(
-                    "text-center pl-6 pr-3 font-semibold text-xs sm:text-sm text-foreground/80",
-                    isEditMode ? "w-[120px]" : "w-[140px]",
-                  )}
-                >
-                  {t("accounting:journals.col_date", "Tanggal")}
-                </TableHead>
-                <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
-                  {t("accounting:journals.col_description", "Deskripsi")}
-                </TableHead>
-                <TableHead
-                  className={cn(
-                    "text-center font-semibold text-xs sm:text-sm text-foreground/80",
-                    isEditMode ? "w-[82px]" : "w-[110px]",
-                  )}
-                >
-                  {t("accounting:journals.col_ref", "Ref")}
-                </TableHead>
-                <TableHead
-                  className={cn(
-                    "text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80",
-                    isEditMode ? "w-[155px]" : "w-[195px]",
-                  )}
-                >
-                  {t("accounting:journals.col_debit", "Debit")}
-                </TableHead>
-                <TableHead
-                  className={cn(
-                    "text-center pl-4 pr-6 font-semibold text-xs sm:text-sm text-foreground/80",
-                    isEditMode ? "w-[155px]" : "w-[195px]",
-                  )}
-                >
-                  {t("accounting:journals.col_credit", "Kredit")}
-                </TableHead>
-                {isEditMode && (
-                  <TableHead className="w-[112px] text-center pr-6 font-semibold text-xs sm:text-sm text-foreground/80">
-                    {t("accounting:journals.col_actions", "Aksi")}
-                  </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={isEditMode ? 7 : 5}
-                      className="h-32 text-center text-muted-foreground"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <Spinner />
-                        <span>{t("accounting:journals.loading_journals", "Memuat buku jurnal...")}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : sortedJournals.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={isEditMode ? 7 : 5}
-                      className="h-36 text-center text-muted-foreground"
-                    >
-                      <EmptyState
-                        title={
-                          filterMode === "adjusting"
-                            ? t("accounting:journals.no_adj_journal", "Belum ada Ayat Jurnal Penyesuaian (AJP)")
-                            : t("accounting:journals.no_general_journal", "Belum ada transaksi jurnal umum pada periode ini")
-                        }
-                        description={
-                          filterMode === "adjusting"
-                            ? t(
-                                "accounting:journals.no_adj_journal_desc",
-                                "Gunakan tombol 'Catat Jurnal Penyesuaian' untuk menambahkan penyesuaian beban akrual, amortisasi, atau pengakuan pendapatan sewa/jasa di muka.",
-                              )
-                            : t(
-                                "accounting:journals.no_general_journal_desc",
-                                "Gunakan tombol 'Catat Transaksi' atau sesuaikan saringan periode dan proyek.",
-                              )
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sortedJournals.map((j) => {
-                    const jLines = lines
-                      .filter((l) => l.journal_id === j.id)
-                      .sort((a, b) => a.line_no - b.line_no);
-                    const debitLines = jLines.filter((l) => l.debit > 0);
-                    const creditLines = jLines.filter((l) => l.credit > 0);
-                    const journalRows = [...debitLines, ...creditLines];
-
-                    return (
-                      <TableRow
-                        key={j.id}
-                        className="hover:bg-muted/20 border-b border-border/60 transition-colors"
-                      >
-                        {/* Checkbox Kolom Pilihan saat Edit Mode */}
-                        {isEditMode && (
-                          <TableCell className="align-top py-4 text-center px-3">
-                            <Checkbox
-                              checked={selectedJournalIds.includes(j.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedJournalIds([
-                                    ...selectedJournalIds,
-                                    j.id,
-                                  ]);
-                                } else {
-                                  setSelectedJournalIds(
-                                    selectedJournalIds.filter(
-                                      (id) => id !== j.id,
-                                    ),
-                                  );
-                                }
-                              }}
-                              className="mt-0.5"
-                              aria-label={t(
-                                "accounting:journals.select_row_aria",
-                                {
-                                  number: j.journal_number,
-                                  defaultValue: `Pilih transaksi ${j.journal_number}`,
-                                },
-                              )}
-                            />
-                          </TableCell>
-                        )}
-
-                        {/* TANGGAL: Left-up / top-left alignment */}
-                        <TableCell className="align-top py-4 pl-6 pr-3 text-left whitespace-nowrap">
-                          <span className="font-medium text-xs sm:text-sm text-foreground">
-                            {formatJournalDateI18n(j.journal_date, language)}
-                          </span>
-                        </TableCell>
-
-                        {/* DESKRIPSI */}
-                        <TableCell className="align-top py-4 px-4 min-w-0">
-                          <div className="space-y-1.5 text-xs sm:text-sm leading-5">
-                            {debitLines.map((row, idx) => {
-                              const acc = accountMap.get(row.account_id);
-                              return (
-                                <div
-                                  key={`d-${idx}`}
-                                  className="text-foreground font-medium min-h-5 flex items-center whitespace-normal break-words"
-                                >
-                                  {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.debit_account", "Akun Debit")}
-                                </div>
-                              );
-                            })}
-                            {creditLines.map((row, idx) => {
-                              const acc = accountMap.get(row.account_id);
-                              return (
-                                <div
-                                  key={`c-${idx}`}
-                                  className="text-foreground font-medium min-h-5 flex items-center pl-6 whitespace-normal break-words"
-                                >
-                                  {acc ? getLocalizedAccountName(acc, language) : t("accounting:journals.credit_account", "Akun Kredit")}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {/* Keterangan di bawah baris kredit (membungkus rapi 2 baris jika panjang) */}
-                          <div className="mt-2 max-w-[54ch] text-xs leading-relaxed text-blue-600 dark:text-cyan-400 italic font-medium whitespace-normal break-words">
-                            ({getLocalizedTransactionDescription(j.description, language)})
-                          </div>
-                        </TableCell>
-
-                        {/* REF - seragam font sistem (tanpa font-mono) */}
-                        <TableCell className="align-top py-4 text-center whitespace-nowrap">
-                          <div className="space-y-1.5 text-xs sm:text-sm leading-5">
-                            {journalRows.map((row, idx) => {
-                              const acc = accountMap.get(row.account_id);
-                              return (
-                                <div
-                                  key={`ref-${idx}`}
-                                  className="text-muted-foreground min-h-5 flex items-center justify-center text-xs tabular-nums"
-                                >
-                                  {formatAccountRef(acc?.code)}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </TableCell>
-
-                        {/* DEBIT - seragam font sistem (tanpa font-mono) */}
-                        <TableCell className="align-top py-4 px-4 text-right whitespace-nowrap">
-                          <div className="space-y-1.5 text-xs sm:text-sm leading-5">
-                            {journalRows.map((row, idx) => {
-                              if (row.debit > 0) {
-                                return (
-                                  <div
-                                    key={`deb-${idx}`}
-                                    className="text-foreground font-medium flex justify-between w-full min-h-5 items-center text-xs tabular-nums"
-                                  >
-                                    <span className="text-muted-foreground mr-2 font-normal">
-                                      Rp
-                                    </span>
-                                    <span>
-                                      {row.debit.toLocaleString("id-ID")}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div
-                                  key={`deb-blank-${idx}`}
-                                  className="text-transparent select-none flex justify-between w-full min-h-5 items-center text-xs"
-                                >
-                                  <span>Rp</span>
-                                  <span>-</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </TableCell>
-
-                        {/* KREDIT - seragam font sistem (tanpa font-mono) */}
-                        <TableCell className="align-top py-4 pl-4 pr-6 text-right whitespace-nowrap">
-                          <div className="space-y-1.5 text-xs sm:text-sm leading-5">
-                            {journalRows.map((row, idx) => {
-                              if (row.credit > 0) {
-                                return (
-                                  <div
-                                    key={`cred-${idx}`}
-                                    className="text-foreground font-medium flex justify-between w-full min-h-5 items-center text-xs tabular-nums"
-                                  >
-                                    <span className="text-muted-foreground mr-2 font-normal">
-                                      Rp
-                                    </span>
-                                    <span>
-                                      {row.credit.toLocaleString("id-ID")}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div
-                                  key={`cred-blank-${idx}`}
-                                  className="text-transparent select-none flex justify-between w-full h-5 items-center text-xs"
-                                >
-                                  <span>Rp</span>
-                                  <span>-</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </TableCell>
-
-                        {/* AKSI - Kolom baru saat mode edit aktif: 3 button (Lihat, Edit, Hapus) */}
-                        {isEditMode && (
-                          <TableCell className="align-top py-4 text-center whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <ActionTooltip content={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}>
-                              <button
-                                type="button"
-                                onClick={() => setDetailJournal(j)}
-                                className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                                aria-label={t("accounting:journals.view_detail_title", "Lihat detail transaksi")}
-                              >
-                                <EyeIcon className="size-4" />
-                              </button>
-                              </ActionTooltip>
-                              <ActionTooltip content={t("accounting:journals.edit_tx_title", "Edit transaksi")}>
-                              <button
-                                type="button"
-                                onClick={() => openEditJournal(j)}
-                                className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                                aria-label={t("accounting:journals.edit_tx_title", "Edit transaksi")}
-                              >
-                                <PencilIcon className="size-4" />
-                              </button>
-                              </ActionTooltip>
-                              <ActionTooltip content={t("accounting:journals.delete_tx_title", "Hapus transaksi")}>
-                              <button
-                                type="button"
-                                onClick={() => setDeleteTargetJournal(j)}
-                                className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                                aria-label={t("accounting:journals.delete_tx_title", "Hapus transaksi")}
-                              >
-                                <Trash2Icon className="size-4" />
-                              </button>
-                              </ActionTooltip>
-                            </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+          <JournalsTable
+            loading={loading}
+            sortedJournals={sortedJournals}
+            lines={lines}
+            accounts={accounts}
+            isEditMode={isEditMode}
+            filterMode={filterMode}
+            selectedJournalIds={selectedJournalIds}
+            setSelectedJournalIds={setSelectedJournalIds}
+            onOpenDetail={(j) => {
+              setDetailJournal(j);
+            }}
+            onOpenEdit={openEditJournal}
+            onOpenCorrection={(j) => {
+              setCorrectTarget(j);
+            }}
+            onDeleteSingle={handleDeleteSingle}
+          />
         </CardContent>
       </Card>
 
