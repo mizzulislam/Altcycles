@@ -428,13 +428,13 @@ export function DatePicker({
             if (yearDropdownOpen) setYearDropdownOpen(false);
           }}
           className={cn(
-            "absolute left-0 right-0 top-full mt-1.5 z-50 w-full rounded-2xl border border-border bg-card p-3.5 sm:p-4 shadow-2xl shadow-black/35 backdrop-blur-md animate-in fade-in-0 zoom-in-95 select-none",
+            "absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] rounded-2xl border border-border bg-card p-3 shadow-2xl shadow-black/35 backdrop-blur-md animate-in fade-in-0 zoom-in-95 select-none",
             "dark:border-white/10 dark:bg-[#0c1322] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)]",
           )}
         >
-            {/* Header: Tombol Bulan & Tahun Interaktif dengan Dropdown Chevron */}
-            <div className="flex items-center justify-between mb-3 px-0.5">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Header: Tombol Bulan & Tahun Interaktif dengan Dropdown Chevron (Sebaris Bebas Wrap) */}
+            <div className="flex items-center justify-between mb-2.5 px-0.5 gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 shrink-0">
                 {/* Selector Teks Bulan Interaktif */}
                 <div className="relative">
                   <button
@@ -445,7 +445,7 @@ export function DatePicker({
                       setYearDropdownOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-1 text-xs sm:text-sm font-bold transition-all px-2.5 py-1 rounded-lg border cursor-pointer",
+                      "flex items-center gap-1 text-xs font-semibold transition-all px-2 py-1 rounded-lg border cursor-pointer h-7",
                       monthDropdownOpen
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border/60 hover:border-primary/40",
@@ -455,7 +455,7 @@ export function DatePicker({
                     <span>{MONTH_NAMES_ID[viewMonth]}</span>
                     <ChevronDownIcon
                       className={cn(
-                        "size-3.5 opacity-70 transition-transform duration-200",
+                        "size-3 opacity-70 transition-transform duration-200 shrink-0",
                         monthDropdownOpen && "rotate-180 opacity-100",
                       )}
                     />
@@ -465,7 +465,7 @@ export function DatePicker({
                   {monthDropdownOpen && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute left-0 top-full mt-1.5 z-[100001] w-56 rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-3 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
+                      className="absolute left-0 top-full mt-1.5 z-[100001] w-48 sm:w-52 rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-3 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
                     >
                       {MONTH_NAMES_ID.map((name, idx) => (
                         <button
@@ -476,7 +476,7 @@ export function DatePicker({
                             setMonthDropdownOpen(false);
                           }}
                           className={cn(
-                            "px-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer text-center",
+                            "px-1.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer text-center",
                             viewMonth === idx
                               ? "bg-primary text-primary-foreground font-bold shadow-xs"
                               : "hover:bg-muted text-foreground",
@@ -499,7 +499,7 @@ export function DatePicker({
                       setMonthDropdownOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-1 text-xs sm:text-sm font-bold transition-all px-2.5 py-1 rounded-lg border cursor-pointer",
+                      "flex items-center gap-1 text-xs font-semibold transition-all px-2 py-1 rounded-lg border cursor-pointer h-7 tabular-nums",
                       yearDropdownOpen
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border/60 hover:border-primary/40",
@@ -509,7 +509,7 @@ export function DatePicker({
                     <span>{viewYear}</span>
                     <ChevronDownIcon
                       className={cn(
-                        "size-3.5 opacity-70 transition-transform duration-200",
+                        "size-3 opacity-70 transition-transform duration-200 shrink-0",
                         yearDropdownOpen && "rotate-180 opacity-100",
                       )}
                     />
@@ -519,7 +519,7 @@ export function DatePicker({
                   {yearDropdownOpen && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute left-0 top-full mt-1.5 z-[100001] w-48 max-h-48 overflow-y-auto no-scrollbar rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-2 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
+                      className="absolute left-0 top-full mt-1.5 z-[100001] w-40 max-h-44 overflow-y-auto no-scrollbar rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-2 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
                     >
                       {Array.from({ length: 30 }, (_, i) => viewYear - 15 + i).map((yr) => (
                         <button
@@ -530,7 +530,7 @@ export function DatePicker({
                             setYearDropdownOpen(false);
                           }}
                           className={cn(
-                            "px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer text-center",
+                            "px-2 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer text-center tabular-nums",
                             viewYear === yr
                               ? "bg-primary text-primary-foreground font-bold shadow-xs"
                               : "hover:bg-muted text-foreground",
@@ -545,22 +545,22 @@ export function DatePicker({
               </div>
 
               {/* Tombol Navigasi Prev/Next */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="size-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
+                  className="size-6 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
                   title="Bulan sebelumnya"
                 >
-                  <ChevronLeftIcon className="size-4" />
+                  <ChevronLeftIcon className="size-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="size-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
+                  className="size-6 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
                   title="Bulan berikutnya"
                 >
-                  <ChevronRightIcon className="size-4" />
+                  <ChevronRightIcon className="size-3.5" />
                 </button>
               </div>
             </div>
@@ -572,7 +572,7 @@ export function DatePicker({
                 {DAY_NAMES_ID.map((name) => (
                   <div
                     key={name}
-                    className="text-[11px] font-semibold text-muted-foreground py-1"
+                    className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground py-0.5 select-none"
                   >
                     {name}
                   </div>
@@ -590,7 +590,7 @@ export function DatePicker({
                       handleSelectDay(cell.dateStr, cell.isDisabled)
                     }
                     className={cn(
-                      "w-full h-8 sm:h-9 flex items-center justify-center rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 cursor-pointer",
+                      "w-full h-7 sm:h-8 flex items-center justify-center rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer tabular-nums",
                       cell.isCurrentMonth
                         ? "text-foreground"
                         : "text-muted-foreground/35",
@@ -613,7 +613,7 @@ export function DatePicker({
             </div>
 
             {/* Aksi Bawah Kalender */}
-            <div className="mt-3.5 pt-2.5 border-t border-border/80 flex items-center justify-between text-xs">
+            <div className="mt-2.5 pt-2 border-t border-border/70 flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
