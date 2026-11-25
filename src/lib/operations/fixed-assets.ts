@@ -497,7 +497,17 @@ export async function saveFixedAsset(
   };
 
   if (input.id) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as unknown as {
+      from: (tbl: string) => {
+        update: (vals: unknown) => {
+          eq: (col: string, val: unknown) => {
+            select: (cols: string) => {
+              single: () => Promise<{ data: unknown; error: { message: string } | null }>;
+            };
+          };
+        };
+      };
+    })
       .from("fixed_assets")
       .update({ ...payload, updated_at: now })
       .eq("id", input.id)
@@ -518,7 +528,15 @@ export async function saveFixedAsset(
     return data as FixedAssetRow;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as unknown as {
+    from: (tbl: string) => {
+      insert: (vals: unknown) => {
+        select: (cols: string) => {
+          single: () => Promise<{ data: unknown; error: { message: string } | null }>;
+        };
+      };
+    };
+  })
     .from("fixed_assets")
     .insert(payload)
     .select("*")

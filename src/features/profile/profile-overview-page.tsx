@@ -10,7 +10,6 @@ import {
   ShieldCheckIcon,
   UserCheckIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
@@ -24,7 +23,6 @@ import {
   formatRupiah,
   maskBankAccountNumber,
   maskNpwp,
-  ROLE_LABELS,
 } from "@/lib/formatters";
 import { getPtkpInfo } from "@/lib/tax-calculation";
 import { getRoleShortName } from "@/components/layout/nav-structure";
@@ -86,6 +84,27 @@ export function ProfileOverviewPage() {
     [rawProfile],
   );
 
+  const ptkpInfo = React.useMemo(() => {
+    if (!profile) return null;
+    return getPtkpInfo(profile.marital_status, profile.dependents_count);
+  }, [profile]);
+
+  const sessionTickerItems = React.useMemo(() => {
+    if (!profile) return ["-"];
+    const raw = profile.last_login_at || profile.updated_at;
+    if (!raw) return ["-"];
+    const d = typeof raw === "string" || typeof raw === "number" ? new Date(raw) : (raw as unknown as Date);
+    if (Number.isNaN(d.getTime())) return ["-"];
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yy = String(d.getFullYear()).slice(-2);
+    const dateFormatted = `${dd}/${mm}/${yy}`;
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const timeFormatted = language === "en" ? `${hh}:${min}` : `${hh}.${min} WIB`;
+    return [dateFormatted, timeFormatted];
+  }, [profile, language]);
+
   if (!profile) return null;
 
   const currentRole = activeRole || profile.role;
@@ -102,25 +121,7 @@ export function ProfileOverviewPage() {
   const username =
     profile.username || (profile.email ? (profile.email.split("@")[0] ?? "user").toLowerCase() : "user");
 
-  const ptkpInfo = React.useMemo(
-    () => getPtkpInfo(profile.marital_status, profile.dependents_count),
-    [profile.marital_status, profile.dependents_count],
-  );
-
-  const sessionTickerItems = React.useMemo(() => {
-    const raw = profile.last_login_at || profile.updated_at;
-    if (!raw) return ["-"];
-    const d = raw instanceof Date ? raw : new Date(raw);
-    if (Number.isNaN(d.getTime())) return ["-"];
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yy = String(d.getFullYear()).slice(-2);
-    const dateFormatted = `${dd}/${mm}/${yy}`;
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    const timeFormatted = language === "en" ? `${hh}:${min}` : `${hh}.${min} WIB`;
-    return [dateFormatted, timeFormatted];
-  }, [profile.last_login_at, profile.updated_at, language]);
+  const effectivePtkp = ptkpInfo ?? getPtkpInfo(profile.marital_status, profile.dependents_count);
 
   return (
     <div className="flex flex-col gap-6">
@@ -274,7 +275,7 @@ export function ProfileOverviewPage() {
                   {t("settings:profile_overview.label_ptkp", "Status PTKP")}
                 </p>
                 <span className="text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/10 border border-primary/25 px-1.5 py-0.5 rounded uppercase">
-                  TER {ptkpInfo.terCategory}
+                  TER {effectivePtkp.terCategory}
                 </span>
               </div>
               <div>
@@ -282,10 +283,10 @@ export function ProfileOverviewPage() {
                   data-testid="overview-ptkp-value"
                   className="text-sm sm:text-base font-bold text-foreground mt-1.5 tracking-tight truncate"
                 >
-                  {ptkpInfo.code}
+                  {effectivePtkp.code}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 truncate font-mono">
-                  {formatRupiah(ptkpInfo.annualValue)}/th
+                  {formatRupiah(effectivePtkp.annualValue)}/th
                 </p>
               </div>
             </div>

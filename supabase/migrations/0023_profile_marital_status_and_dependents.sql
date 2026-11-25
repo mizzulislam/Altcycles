@@ -27,6 +27,10 @@ BEGIN
 END $$;
 
 -- Perbarui RPC update_my_profile untuk mendukung marital_status & dependents_count
+-- Drop overload lama (6 parameter dari 0009 dan 11 parameter dari 0022) agar signature tunggal & tidak ambigu di PostgreSQL / pglite
+DROP FUNCTION IF EXISTS public.update_my_profile(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.update_my_profile(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.update_my_profile(
   p_full_name TEXT,
   p_username TEXT DEFAULT NULL,

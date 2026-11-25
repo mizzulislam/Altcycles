@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -190,7 +190,7 @@ describe("Kelompok D — Item 9 (Optimasi Performa Loading Halaman, SWR Cache, &
         id: `notif-perf-${i}`,
         user_id: adminUser.id,
         title: `Notifikasi #${i}`,
-        body: "Uji batas 50 notifikasi",
+        message: "Uji batas 50 notifikasi",
         link_path: "/admin/dashboard",
         is_read: false,
         created_at: new Date(Date.now() - i * 1000).toISOString(),
