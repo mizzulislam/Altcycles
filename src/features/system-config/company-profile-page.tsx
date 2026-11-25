@@ -1,26 +1,18 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  AlertCircleIcon,
   Building2Icon,
-  CheckCircle2Icon,
-  ExternalLinkIcon,
-  FileTextIcon,
   LandmarkIcon,
   Loader2Icon,
   PlusIcon,
   ReceiptIcon,
   SaveIcon,
   Share2Icon,
-  ShieldCheckIcon,
   Trash2Icon,
-  UploadCloudIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
-import { SocialPlatformIcon } from "@/components/shared/social-platform-icon";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,20 +22,9 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { PageLoader } from "@/components/ui/loader";
 import {
   Field,
-  FieldDescription,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getNormalizedSocialLinks,
@@ -55,7 +36,6 @@ import {
   uploadCompanyPkpProof,
 } from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
-import { formatDateTimeI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type {
   BankAccountEntry,
@@ -64,11 +44,13 @@ import type {
 } from "@/types/database.types";
 import { TruncatedTooltipText } from "@/components/shared/page-header";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { CompanyProfileTabSocials } from "./components/company-profile-tab-socials";
+import { CompanyProfileTabTax } from "./components/company-profile-tab-tax";
 
 type CompanyTab = "identitas" | "keuangan" | "sosmed" | "pajak";
 
 export function CompanyProfilePage() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab") as CompanyTab | null;
   const activeTab: CompanyTab =
@@ -251,8 +233,7 @@ export function CompanyProfilePage() {
     }
   }
 
-  async function handleUploadPkpProofFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleUploadPkpProofFile(file: File) {
     if (!file || !company) return;
     setUploadingPkpProof(true);
     try {
@@ -282,9 +263,7 @@ export function CompanyProfilePage() {
       );
     } finally {
       setUploadingPkpProof(false);
-      if (e.target) {
-        e.target.value = "";
-      }
+      
     }
   }
 
@@ -321,21 +300,7 @@ export function CompanyProfilePage() {
     return <PageLoader message={t("settings:company.loading")} />;
   }
 
-  const sampleSubtotal = 10_000_000;
-  const samplePpn = company.pkp_enabled
-    ? roundRupiah((sampleSubtotal * company.ppn_rate) / 100)
-    : 0;
-  const sampleTotal = sampleSubtotal + samplePpn;
-  const hasPkpProof = Boolean(
-    company.pkp_proof_storage_path && company.pkp_proof_storage_path.trim(),
-  );
-  const isPkpProofImage = Boolean(
-    (company.pkp_proof_mime_type &&
-      company.pkp_proof_mime_type.startsWith("image/")) ||
-      (company.pkp_proof_storage_path &&
-        /^data:image\//i.test(company.pkp_proof_storage_path)),
-  );
-
+  
   return (
     <div className="flex flex-col gap-6">
       <div className="min-w-0">
@@ -828,501 +793,30 @@ export function CompanyProfilePage() {
 
         {/* TAB 3: SOSIAL MEDIA FOOTER DOKUMEN */}
         {activeTab === "sosmed" && (
-          <Card>
-            <CardHeaderWithInfo
-              title={t("settings:company.social_accounts_title", {
-                count: socials.length,
-                defaultValue: `Akun Sosial Media Footer Dokumen (${socials.length})`,
-              })}
-              description={t("settings:company.social_accounts_desc", "Ikon platform beserta username di bawah ini otomatis disematkan pada footer setiap dokumen PDF & Word yang diterbitkan sistem.")}
-              action={
-                <Button
-                  type="button"
-                  onClick={handleAddSocialSlot}
-                  className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-                >
-                  <PlusIcon data-icon="inline-start" />
-                  {t("settings:company.add_social_btn", "Tambah Sosial Media")}
-                </Button>
-              }
-            />
-            <CardContent className="pt-5">
-              <form onSubmit={handleSaveCompany} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {socials.map((entry, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                          <SocialPlatformIcon
-                            platform={entry.platform}
-                            className="size-4 text-primary"
-                          />
-                          <span>
-                            {t("settings:company.social_slot_title", {
-                              index: idx + 1,
-                              defaultValue: `Sosial Media #${idx + 1}`,
-                            })}
-                          </span>
-                        </div>
-                        {socials.length > 1 && (
-                          <ActionTooltip content={t("settings:company.remove_social_tooltip", "Hapus sosial media ini")}>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSocialSlot(idx)}
-                            className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                          >
-                            <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">{t("settings:company.remove_social_sr", "Hapus Sosial Media")}</span>
-                          </button>
-                          </ActionTooltip>
-                        )}
-                      </div>
-
-                      <Field>
-                        <FieldLabel className="text-[11px] font-semibold">
-                          {t("settings:company.platform", "Platform")}
-                        </FieldLabel>
-                        <Select
-                          value={entry.platform}
-                          onValueChange={(val) =>
-                            setSocials((prev) =>
-                              prev.map((item, i) =>
-                                i === idx ? { ...item, platform: val } : item,
-                              ),
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-9 text-xs bg-background">
-                            <SelectValue>
-                              <span className="inline-flex items-center gap-2">
-                                <SocialPlatformIcon
-                                  platform={entry.platform}
-                                  className="size-3.5 text-primary"
-                                />
-                                <span>{entry.platform}</span>
-                              </span>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {SOCIAL_PLATFORM_OPTIONS.map((opt) => (
-                                <SelectItem key={opt} value={opt}>
-                                  <span className="inline-flex items-center gap-2">
-                                    <SocialPlatformIcon
-                                      platform={opt}
-                                      className="size-3.5 text-primary"
-                                    />
-                                    <span>{opt}</span>
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-
-                      <Field>
-                        <FieldLabel className="text-[11px] font-semibold">
-                          {t("settings:company.username", "Username / Handle")}
-                        </FieldLabel>
-                        <Input
-                          value={entry.username}
-                          onChange={(e) =>
-                            setSocials((prev) =>
-                              prev.map((item, i) =>
-                                i === idx
-                                  ? { ...item, username: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                          placeholder={t("settings:company.handle_placeholder", "Contoh: @altvira.tech")}
-                          className="h-9 text-xs bg-background"
-                        />
-                      </Field>
-
-                      <Field>
-                        <FieldLabel className="text-[11px] font-semibold">
-                          {t("settings:company.website", "Tautan / URL Profil")}
-                        </FieldLabel>
-                        <Input
-                          value={entry.url ?? ""}
-                          onChange={(e) =>
-                            setSocials((prev) =>
-                              prev.map((item, i) =>
-                                i === idx
-                                  ? { ...item, url: e.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                          placeholder={t("settings:company.url_placeholder", "Contoh: https://instagram.com/altvira.tech")}
-                          className="h-9 text-xs bg-background"
-                        />
-                      </Field>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Live Preview Footer Dokumen */}
-                <div className="rounded-xl border border-border/70 bg-background/60 p-4 space-y-2.5">
-                  <p className="text-[11px] font-semibold text-muted-foreground">
-                    {t("settings:company.preview_footer_title", "Pratinjau Footer Pada Dokumen PDF & Word:")}
-                  </p>
-                  <div className="border-t border-border/80 pt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span className="font-semibold text-primary">
-                      {company.company_name}
-                    </span>
-                    <div className="flex flex-wrap items-center gap-4">
-                      {socials
-                        .filter((s) => s.username.trim())
-                        .map((s, idx) => (
-                          <span
-                            key={idx}
-                            title={s.platform}
-                            className="inline-flex items-center gap-1.5 text-foreground font-medium"
-                          >
-                            <SocialPlatformIcon
-                              platform={s.platform}
-                              className="size-3.5 text-primary"
-                            />
-                            <span>{s.username}</span>
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2 border-t border-border/60">
-                  <Button
-                    type="submit"
-                    disabled={saving}
-                    className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2Icon className="size-3.5 animate-spin" />
-                        <span>{t("common:action.loading", "Menyimpan...")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <SaveIcon className="size-3.5" />
-                        <span>{t("settings:company.btn_save_social", "Simpan Sosial Media Footer")}</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          <CompanyProfileTabSocials
+            socials={socials}
+            setSocials={setSocials}
+            company={company}
+            saving={saving}
+            onAddSlot={handleAddSocialSlot}
+            onRemoveSlot={handleRemoveSocialSlot}
+            onSave={handleSaveCompany}
+          />
         )}
 
         {/* TAB 4: PERPAJAKAN (PKP) */}
         {activeTab === "pajak" && (
-          <Card className="overflow-hidden">
-            <CardHeaderWithInfo
-              title={t("settings:company.tax_pkp_title", "Status Pengusaha Kena Pajak (PKP) & Tarif PPN")}
-              description={t("settings:company.tax_pkp_desc", "Konfigurasi pengenaan Pajak Pertambahan Nilai (PPN) pada dokumen penagihan resmi perusahaan.")}
-              action={
-                <div className="shrink-0">
-                  <StatusBadge
-                    tone={company.pkp_enabled ? "warning" : "info"}
-                    label={
-                      company.pkp_enabled
-                        ? t("settings:company.badge_pkp_active", {
-                            rate: company.ppn_rate,
-                            defaultValue: `PKP Aktif (${company.ppn_rate}% PPN)`,
-                          })
-                        : t("settings:company.badge_non_pkp", "Belum PKP (Non-PKP)")
-                    }
-                  />
-                </div>
-              }
-            />
-
-            <CardContent className="p-6">
-              <form onSubmit={handleSaveCompany} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-                  {/* Kolom Kiri: Status & Kontrol Aktivasi PKP */}
-                  <div className="lg:col-span-7 flex flex-col justify-between gap-4 rounded-2xl border border-border/70 bg-muted/20 p-5">
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={cn(
-                            "size-10 rounded-xl flex items-center justify-center shrink-0 border",
-                            company.pkp_enabled
-                              ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
-                              : "bg-primary/15 text-primary border-primary/30",
-                          )}
-                        >
-                          <ShieldCheckIcon className="size-5" />
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                          <h3 className="text-sm font-bold text-foreground">
-                            {company.pkp_enabled
-                              ? t("settings:company.pkp_mode_active", "Mode Pengusaha Kena Pajak (PKP) Aktif")
-                              : t("settings:company.pkp_mode_inactive", "Mode Non-PKP (Tanpa Pemungutan PPN)")}
-                          </h3>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {company.pkp_enabled
-                              ? t("settings:company.pkp_desc_active", {
-                                  rate: company.ppn_rate,
-                                  defaultValue: `Setiap invoice klien baru akan menghitung otomatis PPN sebesar ${company.ppn_rate}% di atas subtotal tagihan.`,
-                                })
-                              : t("settings:company.pkp_desc_inactive", "Selama perusahaan belum dikukuhkan sebagai PKP, seluruh invoice dan quotation otomatis mencantumkan keterangan resmi bebas PPN.")}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-border/70 bg-card/80 p-4 flex items-center justify-between gap-4">
-                        <div className="space-y-0.5">
-                          <FieldLabel
-                            htmlFor="cp-pkp-sw"
-                            className="text-xs font-bold text-foreground"
-                          >
-                            {t("settings:company.enable_pkp_label", "Aktifkan Status PKP & Perhitungan PPN")}
-                          </FieldLabel>
-                          <FieldDescription className="text-[11px] leading-snug">
-                            {t("settings:company.enable_pkp_desc", {
-                              name: company.legal_entity_name,
-                              defaultValue: `Aktifkan hanya setelah ${company.legal_entity_name} resmi dikukuhkan oleh DJP sebagai PKP.`,
-                            })}
-                          </FieldDescription>
-                        </div>
-                        <Switch
-                          id="cp-pkp-sw"
-                          checked={company.pkp_enabled}
-                          onCheckedChange={(checked) => {
-                            if (checked && !hasPkpProof) {
-                              toast.error(
-                                t(
-                                  "settings:company.pkp_proof_required_toast",
-                                  "Wajib mengunggah bukti pengukuhan PKP (PDF/JPG/PNG maks. 5 MB) sebelum mengaktifkan status PKP.",
-                                ),
-                              );
-                              return;
-                            }
-                            setPendingPkpState(checked);
-                          }}
-                        />
-                      </div>
-
-                      {/* Seksi Dokumen Bukti Pengukuhan PKP Wajib (Item 7) */}
-                      <div className="rounded-xl border border-border/70 bg-card/80 p-4 space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <FieldLabel required className="text-xs font-bold text-foreground">
-                              {t(
-                                "settings:company.pkp_proof_label",
-                                "Dokumen Bukti Pengukuhan PKP (SPPKP)",
-                              )}
-                            </FieldLabel>
-                            <FieldDescription className="text-[11px]">
-                              {t(
-                                "settings:company.pkp_proof_desc",
-                                "Wajib diunggah untuk mengaktifkan status PKP (format PDF, JPG, atau PNG, maks. 5 MB).",
-                              )}
-                            </FieldDescription>
-                          </div>
-                          <input
-                            ref={pkpFileInputRef}
-                            type="file"
-                            data-testid="pkp-proof-file-input"
-                            accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                            onChange={handleUploadPkpProofFile}
-                            className="hidden"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={uploadingPkpProof}
-                            onClick={() => pkpFileInputRef.current?.click()}
-                            className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
-                          >
-                            {uploadingPkpProof ? (
-                              <Loader2Icon className="size-3.5 animate-spin" />
-                            ) : (
-                              <UploadCloudIcon className="size-3.5 text-primary" />
-                            )}
-                            <span>
-                              {hasPkpProof
-                                ? t("settings:company.pkp_proof_replace_btn", "Ganti Bukti")
-                                : t("settings:company.pkp_proof_upload_btn", "Unggah Bukti PKP")}
-                            </span>
-                          </Button>
-                        </div>
-
-                        {hasPkpProof ? (
-                          <div
-                            data-testid="pkp-proof-card"
-                            className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              {isPkpProofImage ? (
-                                <img
-                                  src={company.pkp_proof_storage_path!}
-                                  alt={company.pkp_proof_file_name || "Bukti PKP"}
-                                  className="size-11 rounded-lg object-cover border border-border/70 bg-white shrink-0"
-                                />
-                              ) : (
-                                <div className="size-11 rounded-lg bg-primary/10 border border-primary/25 text-primary flex items-center justify-center shrink-0">
-                                  <FileTextIcon className="size-5" />
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <p
-                                  data-testid="pkp-proof-filename"
-                                  className="text-xs font-bold text-foreground truncate"
-                                >
-                                  {company.pkp_proof_file_name ||
-                                    t(
-                                      "settings:company.pkp_proof_default_name",
-                                      "Surat_Pengukuhan_PKP.pdf",
-                                    )}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {company.pkp_proof_size_bytes
-                                    ? `${Math.max(1, Math.round(company.pkp_proof_size_bytes / 1024))} KB`
-                                    : "PDF / Gambar"}
-                                  {company.pkp_proof_uploaded_at
-                                    ? ` • ${formatDateTimeI18n(company.pkp_proof_uploaded_at, language)}`
-                                    : ""}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <a
-                                href={company.pkp_proof_storage_path!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-foreground transition-colors"
-                              >
-                                <ExternalLinkIcon className="size-3.5 text-primary" />
-                                <span>
-                                  {t("settings:company.pkp_proof_view_btn", "Lihat Bukti")}
-                                </span>
-                              </a>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
-                            <AlertCircleIcon className="size-4 shrink-0 mt-0.5" />
-                            <span>
-                              {t(
-                                "settings:company.pkp_proof_missing_notice",
-                                "Belum ada dokumen bukti pengukuhan PKP yang diunggah. Unggah berkas bukti (PDF/JPG/PNG maks. 5 MB) terlebih dahulu sebelum mengaktifkan status PKP.",
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-[11px] text-muted-foreground">
-                      <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
-                        <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
-                        <span>{t("settings:company.sync_invoices_note", "Sinkron otomatis ke Invoice & Quotation")}</span>
-                      </div>
-                      <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
-                        <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
-                        <span>{t("settings:company.audit_trail_recorded_note", "Perubahan tercatat ke Audit Trail")}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Kolom Kanan: Tarif PPN & Simulasi Perhitungan Invoice */}
-                  <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-2xl border border-border/70 bg-muted/20 p-5">
-                    <Field data-disabled={!company.pkp_enabled}>
-                      <FieldLabel
-                        htmlFor="cp-ppn"
-                        className="text-xs font-bold text-foreground"
-                      >
-                        {t("settings:company.default_vat_rate", "Tarif PPN Default (%)")}
-                      </FieldLabel>
-                      <NumberInput
-                        id="cp-ppn"
-                        allowDecimal
-                        maxDecimals={2}
-                        min={0}
-                        max={100}
-                        disabled={!company.pkp_enabled}
-                        value={company.ppn_rate}
-                        onValueChange={(ppn_rate) =>
-                          setCompany({ ...company, ppn_rate })
-                        }
-                        className="bg-background"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {company.pkp_enabled
-                          ? t("settings:company.vat_active_hint", "Berlaku otomatis untuk penerbitan invoice berikutnya.")
-                          : t("settings:company.vat_inactive_hint", "Aktifkan status PKP di samping untuk mengubah tarif PPN.")}
-                      </FieldDescription>
-                    </Field>
-
-                    <div className="rounded-xl border border-border/70 bg-background/70 p-4 space-y-2.5">
-                      <p className="text-[11px] font-bold text-muted-foreground">
-                        {t("settings:company.simulation_title", "Simulasi Dampak Pada Tagihan Invoice")}
-                      </p>
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between text-muted-foreground">
-                          <span>{t("settings:company.subtotal_services", "Subtotal Jasa")}</span>
-                          <span className="tabular-nums font-medium text-foreground">
-                            {formatRupiah(sampleSubtotal)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-muted-foreground">
-                          <span>
-                            {t("settings:company.vat_label", {
-                              status: company.pkp_enabled ? `${company.ppn_rate}%` : "Non-PKP",
-                              defaultValue: `PPN (${company.pkp_enabled ? `${company.ppn_rate}%` : "Non-PKP"})`,
-                            })}
-                          </span>
-                          <span className="tabular-nums font-medium text-foreground">
-                            {formatRupiah(samplePpn)}
-                          </span>
-                        </div>
-                        <div className="pt-2 border-t border-border/60 flex items-center justify-between font-bold text-foreground">
-                          <span>{t("settings:company.total_billing", "Total Tagihan")}</span>
-                          <span className="tabular-nums text-primary dark:text-cyan-400">
-                            {formatRupiah(sampleTotal)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/60">
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("settings:company.future_docs_only_note", "Pengaturan ini hanya memengaruhi dokumen penagihan yang baru dibuat setelah disimpan.")}
-                  </p>
-                  <Button
-                    type="submit"
-                    disabled={saving || (company.pkp_enabled && !hasPkpProof)}
-                    className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2Icon className="size-3.5 animate-spin" />
-                        <span>{t("common:action.loading", "Menyimpan...")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <SaveIcon className="size-3.5" />
-                        <span>{t("settings:company.btn_save_tax", "Simpan Pengaturan Pajak")}</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          <CompanyProfileTabTax
+            company={company}
+            setCompany={setCompany}
+            saving={saving}
+            uploadingProof={uploadingPkpProof}
+            pkpProofInputRef={pkpFileInputRef}
+            onPkpToggleChange={(checked) => setPendingPkpState(checked)}
+            onUploadPkpProof={handleUploadPkpProofFile}
+            onSave={handleSaveCompany}
+          />
+        )}      </div>
 
       <ConfirmActionDialog
         open={pendingPkpState !== null}
