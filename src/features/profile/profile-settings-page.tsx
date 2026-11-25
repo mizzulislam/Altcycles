@@ -11,6 +11,7 @@ import {
   LockIcon,
   PencilIcon,
   PhoneIcon,
+  ReceiptTextIcon,
   SaveIcon,
   ShieldAlertIcon,
   Trash2Icon,
@@ -949,7 +950,8 @@ export function ProfileSettingsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                   {/* Kolom 1: Status Perpajakan & PTKP */}
                   <div className="space-y-5">
-                    <div className="border-b border-border/60 pb-2.5 flex items-center min-h-[35px]">
+                    <div className="border-b border-border/60 pb-2.5 flex items-center gap-2 min-h-[35px]">
+                      <ReceiptTextIcon className="size-4 text-primary shrink-0" />
                       <h3 className="text-sm font-semibold text-foreground">
                         {t("settings:profile.section_tax_title", "Status Perpajakan & PTKP")}
                       </h3>
@@ -1069,7 +1071,8 @@ export function ProfileSettingsPage() {
 
                   {/* Kolom 2: Data Rekening Bank Pencairan */}
                   <div className="space-y-5">
-                    <div className="border-b border-border/60 pb-2.5 flex items-center min-h-[35px]">
+                    <div className="border-b border-border/60 pb-2.5 flex items-center gap-2 min-h-[35px]">
+                      <LandmarkIcon className="size-4 text-primary shrink-0" />
                       <h3 className="text-sm font-semibold text-foreground">
                         {t("settings:profile.section_bank_title", "Data Rekening Bank Pencairan")}
                       </h3>
