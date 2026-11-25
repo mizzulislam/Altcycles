@@ -704,7 +704,7 @@
     "card_active_mode_title": "Active Mode",
     "card_active_mode_desc": "Can be switched in Header",
     "card_total_roles_title": "Total Roles",
-    "card_total_roles_unit": "Authorized Roles",
+    "card_total_roles_unit": "Roles",
     "card_total_roles_desc": "Multi-role ready to use",
     "card_last_session_title": "Last Session",
     "card_last_session_desc": "Automatic Audit Logging",

@@ -25,6 +25,52 @@ import {
   ROLE_LABELS,
 } from "@/lib/formatters";
 import { getRoleShortName } from "@/components/layout/nav-structure";
+import { cn } from "@/lib/utils";
+
+/**
+ * Sub-komponen Ticker Terisolasi untuk KPI Sesi Terakhir (Format DD/MM/YY + Waktu).
+ * Mengikuti pola CategoryCompositionTicker pada Halaman Media & Banner Login.
+ */
+const LastSessionTicker = React.memo(function LastSessionTicker({
+  items,
+}: {
+  items: string[];
+}) {
+  const [activeIdx, setActiveIdx] = React.useState(0);
+  const [animating, setAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    if (items.length <= 1) return;
+    let innerTimeout: ReturnType<typeof setTimeout> | null = null;
+    const timer = setInterval(() => {
+      setAnimating(true);
+      innerTimeout = setTimeout(() => {
+        setActiveIdx((prev) => (prev + 1) % items.length);
+        setAnimating(false);
+      }, 300);
+    }, 3200);
+
+    return () => {
+      clearInterval(timer);
+      if (innerTimeout) clearTimeout(innerTimeout);
+    };
+  }, [items.length]);
+
+  const currentItem = items[activeIdx] ?? items[0] ?? "-";
+
+  return (
+    <span className="inline-flex items-center overflow-hidden h-7 sm:h-8">
+      <span
+        className={cn(
+          "inline-block transition-all duration-300 ease-out",
+          animating ? "-translate-y-4 opacity-0" : "translate-y-0 opacity-100",
+        )}
+      >
+        {currentItem}
+      </span>
+    </span>
+  );
+});
 
 export function ProfileOverviewPage() {
   const { profile: rawProfile, activeRole, availableRoles } = useAuth();
@@ -51,6 +97,21 @@ export function ProfileOverviewPage() {
 
   const username =
     profile.username || (profile.email ? (profile.email.split("@")[0] ?? "user").toLowerCase() : "user");
+
+  const sessionTickerItems = React.useMemo(() => {
+    const raw = profile.last_login_at || profile.updated_at;
+    if (!raw) return ["-"];
+    const d = raw instanceof Date ? raw : new Date(raw);
+    if (Number.isNaN(d.getTime())) return ["-"];
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yy = String(d.getFullYear()).slice(-2);
+    const dateFormatted = `${dd}/${mm}/${yy}`;
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const timeFormatted = language === "en" ? `${hh}:${min}` : `${hh}.${min} WIB`;
+    return [dateFormatted, timeFormatted];
+  }, [profile.last_login_at, profile.updated_at, language]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -330,7 +391,7 @@ export function ProfileOverviewPage() {
         <KpiCard
           label={t("settings:profile_overview.card_total_roles_title", "Total Peran")}
           value={availableRoles.length}
-          suffix={` ${t("settings:profile_overview.card_total_roles_unit", "Peran Wewenang")}`}
+          suffix={` ${t("settings:profile_overview.card_total_roles_unit", "Peran")}`}
           subtext={t("settings:profile_overview.card_total_roles_desc", "Multi-role siap pakai")}
           icon={ShieldCheckIcon}
           iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
@@ -338,8 +399,7 @@ export function ProfileOverviewPage() {
 
         <KpiCard
           label={t("settings:profile_overview.card_last_session_title", "Sesi Terakhir")}
-          displayValue={formatDateTimeI18n(profile.last_login_at || profile.updated_at, language)}
-          valueClassName="text-sm sm:text-base"
+          displayValue={<LastSessionTicker items={sessionTickerItems} />}
           subtext={t("settings:profile_overview.card_last_session_desc", "Pencatatan Audit Otomatis")}
           icon={ClockIcon}
           iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
