@@ -42,7 +42,7 @@ import {
 import {
   getCompanyProfile,
   listAccounts,
-  listAuditLogs,
+  listAuditLogsSummary,
   listProfiles,
 } from "@/lib/data-service";
 import { formatDateTimeID } from "@/lib/formatters";
@@ -101,7 +101,7 @@ export function SuperAdminDashboardPage() {
           listProfiles(),
           getCompanyProfile(),
           listAccounts(),
-          listAuditLogs(),
+          listAuditLogsSummary(300),
         ]);
         setProfiles(p);
         setCompany(c);

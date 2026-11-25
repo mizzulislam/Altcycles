@@ -67,7 +67,7 @@ import {
   getLocalizedTransactionDescription,
 } from "@/lib/glossary";
 import {
-  getProjectWorkspace,
+  getDashboardBillingSummary,
   listJournalsWithLines,
   listPaymentRequests,
   recordExportLog,
@@ -219,14 +219,14 @@ export function AdminDashboardPage() {
     async function load() {
       setLoading(true);
       try {
-        const [accs, pers, prjs, csts, jRes, paRes, ws] = await Promise.all([
+        const [accs, pers, prjs, csts, jRes, paRes, billingSummary] = await Promise.all([
           listAccounts(),
           listPeriods(),
           listProjects(),
           listCustomers(),
           listJournalsWithLines(),
           listPaymentRequests(),
-          getProjectWorkspace(),
+          getDashboardBillingSummary(),
         ]);
         setAccounts(accs);
         setPeriods(pers);
@@ -235,10 +235,8 @@ export function AdminDashboardPage() {
         setJournals(jRes.journals);
         setLines(jRes.lines);
         setPaymentRequests(paRes.requests);
-        setInvoices(ws.invoices);
-        setPendingClientPos(
-          ws.clientPos.filter((c) => c.status === "pending_verification").length,
-        );
+        setInvoices(billingSummary.invoices);
+        setPendingClientPos(billingSummary.pendingClientPosCount);
       } catch (err) {
         toast.error(
           err instanceof Error

@@ -568,62 +568,66 @@ export function getCachedActiveLoginMedia(): LoginMediaItemRow[] {
 }
 
 export async function listActiveLoginMedia(): Promise<LoginMediaItemRow[]> {
-  const localItems = getCachedActiveLoginMedia();
+  return cachedQuery("login_media:active", async () => {
+    const localItems = getCachedActiveLoginMedia();
 
-  if (isDemoMode || !supabase) {
-    return localItems;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("login_media_items")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: false });
-    if (error) {
-      if (isLoginMediaMissingTableError(error.message)) {
-        return localItems;
-      }
-      throw new Error(error.message);
+    if (isDemoMode || !supabase) {
+      return localItems;
     }
-    const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
-    writeActiveLoginMediaCache(items);
-    return items;
-  } catch {
-    return localItems;
-  }
+
+    try {
+      const { data, error } = await supabase
+        .from("login_media_items")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: false });
+      if (error) {
+        if (isLoginMediaMissingTableError(error.message)) {
+          return localItems;
+        }
+        throw new Error(error.message);
+      }
+      const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
+      writeActiveLoginMediaCache(items);
+      return items;
+    } catch {
+      return localItems;
+    }
+  });
 }
 
 export async function listAllLoginMedia(): Promise<{
   items: LoginMediaItemRow[];
   usingLocalFallback: boolean;
 }> {
-  const localItems = sortLoginMedia(
-    readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []),
-  );
+  return cachedQuery("login_media:all", async () => {
+    const localItems = sortLoginMedia(
+      readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []),
+    );
 
-  if (isDemoMode || !supabase) {
-    return { items: localItems, usingLocalFallback: false };
-  }
-
-  const { data, error } = await supabase
-    .from("login_media_items")
-    .select("*")
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    if (isLoginMediaMissingTableError(error.message)) {
-      return { items: localItems, usingLocalFallback: true };
+    if (isDemoMode || !supabase) {
+      return { items: localItems, usingLocalFallback: false };
     }
-    throw new Error(error.message);
-  }
 
-  const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
-  writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, items);
-  writeActiveLoginMediaCache(items.filter((x) => x.is_active));
-  return { items, usingLocalFallback: false };
+    const { data, error } = await supabase
+      .from("login_media_items")
+      .select("*")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      if (isLoginMediaMissingTableError(error.message)) {
+        return { items: localItems, usingLocalFallback: true };
+      }
+      throw new Error(error.message);
+    }
+
+    const items = sortLoginMedia((data ?? []) as LoginMediaItemRow[]);
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, items);
+    writeActiveLoginMediaCache(items.filter((x) => x.is_active));
+    return { items, usingLocalFallback: false };
+  });
 }
 
 export async function createLoginMediaItem(input: {
@@ -661,8 +665,17 @@ export async function createLoginMediaItem(input: {
     }
     const created = makeLocal();
     const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
-    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia([...prev, created]));
-    appendDemoAudit(actor, "INSERT", "login_media_items", created.id, null, created);
+    const nextAll = sortLoginMedia([...prev, created]);
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+    writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+    appendDemoAudit(actor, "INSERT", "login_media_items", created.id, null, {
+      ...created,
+      image_url:
+        created.image_url.length > 256
+          ? `[MEDIA_URL_${created.image_url.length}_CHARS]`
+          : created.image_url,
+    });
+    invalidateAndNotifyDataChange("login_media");
     return { item: created, savedToCloud: false };
   }
 
@@ -680,7 +693,10 @@ export async function createLoginMediaItem(input: {
     if (isLoginMediaMissingTableError(error.message)) {
       const created = makeLocal();
       const prev = readLocalJson<LoginMediaItemRow[]>(LOGIN_MEDIA_STORAGE_KEY, []);
-      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia([...prev, created]));
+      const nextAll = sortLoginMedia([...prev, created]);
+      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+      writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+      invalidateAndNotifyDataChange("login_media");
       return { item: created, savedToCloud: false };
     }
     throw new Error(error.message);
@@ -691,6 +707,7 @@ export async function createLoginMediaItem(input: {
   const nextAll = sortLoginMedia([...prev.filter((x) => x.id !== created.id), created]);
   writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
   writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+  invalidateAndNotifyDataChange("login_media");
   return { item: created, savedToCloud: true };
 }
 
@@ -724,8 +741,30 @@ export async function updateLoginMediaItem(
     };
     const next = [...prev];
     next[idx] = updated;
-    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia(next));
-    appendDemoAudit(actor, "UPDATE", "login_media_items", id, before, updated);
+    const sortedNext = sortLoginMedia(next);
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortedNext);
+    writeActiveLoginMediaCache(sortedNext.filter((x) => x.is_active));
+    appendDemoAudit(
+      actor,
+      "UPDATE",
+      "login_media_items",
+      id,
+      {
+        ...before,
+        image_url:
+          before.image_url.length > 256
+            ? `[MEDIA_URL_${before.image_url.length}_CHARS]`
+            : before.image_url,
+      },
+      {
+        ...updated,
+        image_url:
+          updated.image_url.length > 256
+            ? `[MEDIA_URL_${updated.image_url.length}_CHARS]`
+            : updated.image_url,
+      },
+    );
+    invalidateAndNotifyDataChange("login_media");
     return { item: updated, savedToCloud: false };
   }
 
@@ -747,7 +786,10 @@ export async function updateLoginMediaItem(
       };
       const next = [...prev];
       next[idx] = updated;
-      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortLoginMedia(next));
+      const sortedNext = sortLoginMedia(next);
+      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, sortedNext);
+      writeActiveLoginMediaCache(sortedNext.filter((x) => x.is_active));
+      invalidateAndNotifyDataChange("login_media");
       return { item: updated, savedToCloud: false };
     }
     throw new Error(error.message);
@@ -757,6 +799,7 @@ export async function updateLoginMediaItem(
   const nextAll = sortLoginMedia([...prev.filter((x) => x.id !== id), updated]);
   writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
   writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+  invalidateAndNotifyDataChange("login_media");
   return { item: updated, savedToCloud: true };
 }
 
@@ -769,23 +812,36 @@ export async function deleteLoginMediaItem(id: string): Promise<void> {
       throw new Error("Hanya Super Admin yang dapat menghapus media login.");
     }
     const target = prev.find((x) => x.id === id);
-    writeLocalJson(
-      LOGIN_MEDIA_STORAGE_KEY,
-      prev.filter((x) => x.id !== id),
-    );
+    const nextAll = prev.filter((x) => x.id !== id);
+    writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+    writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
     if (target) {
-      appendDemoAudit(actor, "DELETE", "login_media_items", id, target, null);
+      appendDemoAudit(
+        actor,
+        "DELETE",
+        "login_media_items",
+        id,
+        {
+          ...target,
+          image_url:
+            target.image_url.length > 256
+              ? `[MEDIA_URL_${target.image_url.length}_CHARS]`
+              : target.image_url,
+        },
+        null,
+      );
     }
+    invalidateAndNotifyDataChange("login_media");
     return;
   }
 
   const { error } = await supabase.from("login_media_items").delete().eq("id", id);
   if (error) {
     if (isLoginMediaMissingTableError(error.message)) {
-      writeLocalJson(
-        LOGIN_MEDIA_STORAGE_KEY,
-        prev.filter((x) => x.id !== id),
-      );
+      const nextAll = prev.filter((x) => x.id !== id);
+      writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
+      writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+      invalidateAndNotifyDataChange("login_media");
       return;
     }
     throw new Error(error.message);
@@ -794,29 +850,32 @@ export async function deleteLoginMediaItem(id: string): Promise<void> {
   const nextAll = prev.filter((x) => x.id !== id);
   writeLocalJson(LOGIN_MEDIA_STORAGE_KEY, nextAll);
   writeActiveLoginMediaCache(nextAll.filter((x) => x.is_active));
+  invalidateAndNotifyDataChange("login_media");
 }
 
 export async function listDocSequences(): Promise<{
   sequences: DocSequenceRow[];
   counters: DocSequenceCounterRow[];
 }> {
-  if (isDemoMode || !supabase) {
-    getDemoActor();
+  return cachedQuery("doc_sequences:list", async () => {
+    if (isDemoMode || !supabase) {
+      getDemoActor();
+      return {
+        sequences: structuredClone(demoStore.sequences),
+        counters: structuredClone(demoStore.counters),
+      };
+    }
+    const [seqRes, cntRes] = await Promise.all([
+      supabase.from("doc_sequences").select("*").order("doc_type"),
+      supabase.from("doc_sequence_counters").select("*"),
+    ]);
+    if (seqRes.error) throw new Error(seqRes.error.message);
+    if (cntRes.error) throw new Error(cntRes.error.message);
     return {
-      sequences: structuredClone(demoStore.sequences),
-      counters: structuredClone(demoStore.counters),
+      sequences: seqRes.data ?? [],
+      counters: cntRes.data ?? [],
     };
-  }
-  const [seqRes, cntRes] = await Promise.all([
-    supabase.from("doc_sequences").select("*").order("doc_type"),
-    supabase.from("doc_sequence_counters").select("*"),
-  ]);
-  if (seqRes.error) throw new Error(seqRes.error.message);
-  if (cntRes.error) throw new Error(cntRes.error.message);
-  return {
-    sequences: seqRes.data ?? [],
-    counters: cntRes.data ?? [],
-  };
+  });
 }
 
 export async function updateDocSequence(
@@ -839,6 +898,7 @@ export async function updateDocSequence(
       updated_at: new Date().toISOString(),
     });
     appendDemoAudit(actor, "UPDATE", "doc_sequences", docType, before, target);
+    invalidateAndNotifyDataChange("doc_sequences");
     return;
   }
 
@@ -847,6 +907,7 @@ export async function updateDocSequence(
     .update(patch)
     .eq("doc_type", docType);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("doc_sequences");
 }
 
 export async function bulkUpdateDocSequencesResetPeriod(
@@ -880,6 +941,7 @@ export async function bulkUpdateDocSequencesResetPeriod(
       before,
       demoStore.sequences,
     );
+    invalidateAndNotifyDataChange("doc_sequences");
     return;
   }
 
@@ -915,19 +977,22 @@ export async function bulkUpdateDocSequencesResetPeriod(
       }
     }
   }
+  invalidateAndNotifyDataChange("doc_sequences");
 }
 
 export async function listDocTemplates(): Promise<DocTemplateRow[]> {
-  if (isDemoMode || !supabase) {
-    getDemoActor();
-    return structuredClone(demoStore.templates);
-  }
-  const { data, error } = await supabase
-    .from("doc_templates")
-    .select("*")
-    .order("doc_type");
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return cachedQuery("doc_templates:list", async () => {
+    if (isDemoMode || !supabase) {
+      getDemoActor();
+      return structuredClone(demoStore.templates);
+    }
+    const { data, error } = await supabase
+      .from("doc_templates")
+      .select("*")
+      .order("doc_type");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function updateDocTemplate(
@@ -948,6 +1013,7 @@ export async function updateDocTemplate(
     target.updated_by = actor.id;
     target.updated_at = new Date().toISOString();
     appendDemoAudit(actor, "UPDATE", "doc_templates", docType, before, target);
+    invalidateAndNotifyDataChange("doc_templates");
     return;
   }
 
@@ -956,25 +1022,73 @@ export async function updateDocTemplate(
     .update(patch)
     .eq("doc_type", docType);
   if (error) throw new Error(error.message);
+  invalidateAndNotifyDataChange("doc_templates");
 }
 
 // =============================================================================
-// 3. Audit Trail (Super Admin Read-Only)
+// 3. Audit Trail (Super Admin Read-Only) — Dioptimasi dengan Cache & Batas Baris (Item 9)
 // =============================================================================
-export async function listAuditLogs(): Promise<AuditLogRow[]> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    if (actor.role !== "super_admin") {
-      throw new Error("Hanya Super Admin yang dapat membaca Audit Trail.");
+export interface ListAuditLogsOptions {
+  limit?: number;
+  summaryOnly?: boolean;
+}
+
+export async function listAuditLogs(
+  options?: ListAuditLogsOptions,
+): Promise<AuditLogRow[]> {
+  const limit = Math.max(1, Math.min(1000, options?.limit ?? 300));
+  const summaryOnly = Boolean(options?.summaryOnly);
+  const cacheKey = `audit_logs:list:${limit}:${summaryOnly ? "summary" : "full"}`;
+
+  return cachedQuery(cacheKey, async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      if (actor.role !== "super_admin") {
+        throw new Error("Hanya Super Admin yang dapat membaca Audit Trail.");
+      }
+      const sliced = demoStore.auditLogs.slice(0, limit);
+      if (summaryOnly) {
+        return sliced.map((row) => ({
+          ...row,
+          old_data: null,
+          new_data: null,
+        }));
+      }
+      return structuredClone(sliced);
     }
-    return structuredClone(demoStore.auditLogs);
-  }
-  const { data, error } = await supabase
-    .from("audit_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(1000);
-  if (error) throw new Error(error.message);
-  return data ?? [];
+
+    if (summaryOnly) {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("id, actor_id, actor_role, action, entity_name, entity_id, created_at")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit);
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as Array<Omit<AuditLogRow, "old_data" | "new_data">>).map(
+        (row) => ({
+          ...row,
+          old_data: null,
+          new_data: null,
+        }),
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+}
+
+/**
+ * Mengambil ringkasan metadata Audit Trail tanpa kolom JSONB `old_data` dan `new_data`
+ * untuk kebutuhan grafik/agregasi di Dashboard Super Admin (hemat >90% ukuran payload).
+ */
+export async function listAuditLogsSummary(limit = 300): Promise<AuditLogRow[]> {
+  return listAuditLogs({ limit, summaryOnly: true });
 }

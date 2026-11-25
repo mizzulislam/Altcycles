@@ -99,11 +99,13 @@ export function PortalShell() {
     };
     updateTestingMode();
     window.addEventListener("altcycles:journal-lock-changed", updateTestingMode);
+    window.addEventListener("altcycles:data-updated", updateTestingMode);
     return () => {
       mounted = false;
       window.removeEventListener("altcycles:journal-lock-changed", updateTestingMode);
+      window.removeEventListener("altcycles:data-updated", updateTestingMode);
     };
-  }, [location.pathname]);
+  }, []);
 
   // Hook Pintasan Keyboard Global (Pemicu '/', '?', urutan "G lalu X", dan kombinasi modifier)
   const handleOpenCommandPalette = React.useCallback(() => {

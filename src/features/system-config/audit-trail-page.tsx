@@ -72,46 +72,69 @@ export function AuditTrailPage() {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [selected, setSelected] = React.useState<AuditLogRow | null>(null);
 
+  const deferredSearch = React.useDeferredValue(search);
+  const tRef = React.useRef(t);
+  tRef.current = t;
+
   React.useEffect(() => {
+    let mounted = true;
     async function load() {
       setLoading(true);
       try {
-        const data = await listAuditLogs();
-        setLogs(data);
+        const data = await listAuditLogs({ limit: 300 });
+        if (mounted) setLogs(data);
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : t("settings:audit.loading", "Gagal memuat riwayat audit trail."),
-        );
+        if (mounted) {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : tRef.current("settings:audit.loading", "Gagal memuat riwayat audit trail."),
+          );
+        }
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     void load();
-  }, [t]);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Pra-indeks teks pencarian & timestamp sekali saat daftar log berubah (eliminasi O(N log N) Date.parse di comparator)
+  const indexedLogs = React.useMemo(
+    () =>
+      logs.map((row) => ({
+        row,
+        searchKey: `${row.entity_name} ${row.entity_id} ${row.actor_role ?? ""}`.toLowerCase(),
+        createdAtMs: Date.parse(row.created_at) || 0,
+      })),
+    [logs],
+  );
 
   const filtered = React.useMemo(() => {
-    const matched = logs.filter((l) => {
-      const matchText =
-        l.entity_name.toLowerCase().includes(search.toLowerCase()) ||
-        l.entity_id.toLowerCase().includes(search.toLowerCase()) ||
-        (l.actor_role ?? "").toLowerCase().includes(search.toLowerCase());
-      const matchAction = actionFilter === "all" || l.action === actionFilter;
+    const q = deferredSearch.trim().toLowerCase();
+    const matched = indexedLogs.filter((entry) => {
+      const matchText = !q || entry.searchKey.includes(q);
+      const matchAction = actionFilter === "all" || entry.row.action === actionFilter;
       return matchText && matchAction;
     });
 
-    return [...matched].sort((a, b) => {
-      const timeA = new Date(a.created_at).getTime();
-      const timeB = new Date(b.created_at).getTime();
-      if (timeA !== timeB) {
-        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
-      }
-      return sortOrder === "asc" ? a.id - b.id : b.id - a.id;
-    });
-  }, [logs, search, actionFilter, sortOrder]);
+    return matched
+      .sort((a, b) => {
+        if (a.createdAtMs !== b.createdAtMs) {
+          return sortOrder === "asc"
+            ? a.createdAtMs - b.createdAtMs
+            : b.createdAtMs - a.createdAtMs;
+        }
+        return sortOrder === "asc" ? a.row.id - b.row.id : b.row.id - a.row.id;
+      })
+      .map((entry) => entry.row);
+  }, [indexedLogs, deferredSearch, actionFilter, sortOrder]);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [search, actionFilter, sortOrder, pageSize]);
+  }, [deferredSearch, actionFilter, sortOrder, pageSize]);
 
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));

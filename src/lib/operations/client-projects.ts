@@ -43,6 +43,46 @@ export interface ProjectWorkspaceBundle {
   receipts: ReceiptRow[];
 }
 
+export interface DashboardBillingSummary {
+  invoices: SalesInvoiceRow[];
+  pendingClientPosCount: number;
+}
+
+/**
+ * Query ringan khusus Dashboard Bendahara (`/admin/dashboard`) — Item 9.
+ * Hanya mengambil `sales_invoices` dan jumlah `client_purchase_orders` berstatus
+ * `pending_verification` (2 tabel), menggantikan `getProjectWorkspace()` penuh (12 tabel).
+ */
+export async function getDashboardBillingSummary(): Promise<DashboardBillingSummary> {
+  return cachedQuery("workspace:dashboard_billing_summary", async () => {
+    if (isDemoMode || !supabase) {
+      getDemoActor();
+      return {
+        invoices: structuredClone(demoStore.salesInvoices),
+        pendingClientPosCount: demoStore.clientPos.filter(
+          (c) => c.status === "pending_verification",
+        ).length,
+      };
+    }
+
+    const [invRes, cpoRes] = await Promise.all([
+      supabase
+        .from("sales_invoices")
+        .select("*")
+        .order("invoice_date", { ascending: false }),
+      supabase
+        .from("client_purchase_orders")
+        .select("id, status")
+        .eq("status", "pending_verification"),
+    ]);
+
+    return {
+      invoices: (invRes.data as SalesInvoiceRow[]) ?? [],
+      pendingClientPosCount: (cpoRes.data ?? []).length,
+    };
+  });
+}
+
 export async function getProjectWorkspace(
   projectId?: string,
 ): Promise<ProjectWorkspaceBundle> {

@@ -17,19 +17,22 @@ import type {
 // 1. Notifikasi dalam Aplikasi (UC-03) & Log Ekspor (UC-29, UC-39)
 // =============================================================================
 export async function listMyNotifications(): Promise<NotificationRow[]> {
-  if (isDemoMode || !supabase) {
-    const actor = getDemoActor();
-    return demoStore.notifications
-      .filter((n) => n.user_id === actor.id)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  }
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return cachedQuery("notifications:my", async () => {
+    if (isDemoMode || !supabase) {
+      const actor = getDemoActor();
+      return demoStore.notifications
+        .filter((n) => n.user_id === actor.id)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .slice(0, 50);
+    }
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
@@ -38,6 +41,7 @@ export async function markAllNotificationsRead(): Promise<void> {
     for (const n of demoStore.notifications) {
       if (n.user_id === actor.id) n.is_read = true;
     }
+    invalidateAndNotifyDataChange("notifications");
     return;
   }
   const {
@@ -49,6 +53,7 @@ export async function markAllNotificationsRead(): Promise<void> {
     .update({ is_read: true })
     .eq("user_id", user.id)
     .eq("is_read", false);
+  invalidateAndNotifyDataChange("notifications");
 }
 
 export async function recordExportLog(

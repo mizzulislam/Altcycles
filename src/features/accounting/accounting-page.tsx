@@ -11,11 +11,22 @@ import {
   ScrollTextIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
-import { JournalsPage, JOURNAL_TYPE_LABELS } from "@/features/accounting/journals-page";
-import { AccountingReportsPage } from "@/features/accounting/reports-page";
-import { PeriodsPage } from "@/features/master-data/periods-page";
-import { CoaAccountsPage } from "@/features/master-data/coa-accounts-page";
+import { JournalsPage } from "@/features/accounting/journals-page";
+import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
+
+const AccountingReportsPage = React.lazy(async () => {
+  const mod = await import("@/features/accounting/reports-page");
+  return { default: mod.AccountingReportsPage };
+});
+const PeriodsPage = React.lazy(async () => {
+  const mod = await import("@/features/master-data/periods-page");
+  return { default: mod.PeriodsPage };
+});
+const CoaAccountsPage = React.lazy(async () => {
+  const mod = await import("@/features/master-data/coa-accounts-page");
+  return { default: mod.CoaAccountsPage };
+});
 import {
   Dialog,
   DialogContent,
@@ -534,66 +545,68 @@ export function AccountingPage() {
 
       {/* Render Komponen Sesuai Siklus Aktif */}
       <div className="w-full">
-        {normalizedTab === "jurnal" && (
-          <JournalsPage
-            hideHeader
-            filterMode="all"
-            externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-            externalProjectFilter={projectFilter}
-            externalTypeFilter={typeFilter}
-          />
-        )}
-        {normalizedTab === "buku_besar" && (
-          <AccountingReportsPage
-            hideHeader
-            mode="ledger"
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-            externalProjectFilter={projectFilter}
-          />
-        )}
-        {normalizedTab === "neraca_saldo" && (
-          <AccountingReportsPage
-            hideHeader
-            mode="trial_balance"
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-            externalProjectFilter={projectFilter}
-          />
-        )}
-        {normalizedTab === "penyesuaian" && (
-          <JournalsPage
-            hideHeader
-            filterMode="adjusting"
-            externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-            externalProjectFilter={projectFilter}
-            externalTypeFilter={typeFilter}
-          />
-        )}
-        {normalizedTab === "laporan" && (
-          <AccountingReportsPage
-            hideHeader
-            mode="statements"
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-            externalProjectFilter={projectFilter}
-          />
-        )}
-        {normalizedTab === "tutup_buku" && (
-          <PeriodsPage
-            hideHeader
-            externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
-            externalStartDate={periodFilter.startDate}
-            externalEndDate={periodFilter.endDate}
-          />
-        )}
-        {normalizedTab === "coa" && (
-          <CoaAccountsPage hideHeader />
-        )}
+        <React.Suspense fallback={<PageLoader />}>
+          {normalizedTab === "jurnal" && (
+            <JournalsPage
+              hideHeader
+              filterMode="all"
+              externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+              externalProjectFilter={projectFilter}
+              externalTypeFilter={typeFilter}
+            />
+          )}
+          {normalizedTab === "buku_besar" && (
+            <AccountingReportsPage
+              hideHeader
+              mode="ledger"
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+              externalProjectFilter={projectFilter}
+            />
+          )}
+          {normalizedTab === "neraca_saldo" && (
+            <AccountingReportsPage
+              hideHeader
+              mode="trial_balance"
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+              externalProjectFilter={projectFilter}
+            />
+          )}
+          {normalizedTab === "penyesuaian" && (
+            <JournalsPage
+              hideHeader
+              filterMode="adjusting"
+              externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+              externalProjectFilter={projectFilter}
+              externalTypeFilter={typeFilter}
+            />
+          )}
+          {normalizedTab === "laporan" && (
+            <AccountingReportsPage
+              hideHeader
+              mode="statements"
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+              externalProjectFilter={projectFilter}
+            />
+          )}
+          {normalizedTab === "tutup_buku" && (
+            <PeriodsPage
+              hideHeader
+              externalPeriodFilter={periodFilter.selectedPeriodId || periodFilter.preset}
+              externalStartDate={periodFilter.startDate}
+              externalEndDate={periodFilter.endDate}
+            />
+          )}
+          {normalizedTab === "coa" && (
+            <CoaAccountsPage hideHeader />
+          )}
+        </React.Suspense>
       </div>
     </div>
   );

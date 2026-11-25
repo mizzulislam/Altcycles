@@ -73,6 +73,69 @@ import type {
   LoginMediaItemRow,
 } from "@/types/database.types";
 
+interface CategoryTickerItem {
+  count: number;
+  label: string;
+  dotTone: string;
+}
+
+/**
+ * Sub-komponen terisolasi untuk Cycling Ticker KPI ke-3 (Item 9).
+ * Mengisolasi state interval 3,2 detik agar tidak memicu re-render penuh pada
+ * seluruh halaman LoginMediaPage, pratinjau carousel, maupun tabel galeri gambar.
+ */
+const CategoryCompositionTicker = React.memo(function CategoryCompositionTicker({
+  items,
+}: {
+  items: CategoryTickerItem[];
+}) {
+  const [activeTickerIdx, setActiveTickerIdx] = React.useState(0);
+  const [tickerAnimating, setTickerAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    if (items.length <= 1) return;
+    let innerTimeout: ReturnType<typeof setTimeout> | null = null;
+    const timer = setInterval(() => {
+      setTickerAnimating(true);
+      innerTimeout = setTimeout(() => {
+        setActiveTickerIdx((prev) => (prev + 1) % items.length);
+        setTickerAnimating(false);
+      }, 300);
+    }, 3200);
+
+    return () => {
+      clearInterval(timer);
+      if (innerTimeout) clearTimeout(innerTimeout);
+    };
+  }, [items.length]);
+
+  const currentTicker = items[activeTickerIdx] ?? items[0] ?? {
+    count: 0,
+    label: "",
+    dotTone: "bg-sky-400",
+  };
+
+  return (
+    <div className="h-8 flex items-center mt-1 overflow-hidden">
+      <div
+        className={cn(
+          "flex items-center transition-all duration-300 ease-out",
+          tickerAnimating
+            ? "-translate-y-4 opacity-0"
+            : "translate-y-0 opacity-100",
+        )}
+      >
+        <span
+          data-testid="login-media-category-ticker"
+          className="text-xl sm:text-2xl font-bold tracking-tight text-foreground tabular-nums"
+        >
+          {currentTicker.count} {currentTicker.label}
+        </span>
+      </div>
+    </div>
+  );
+});
+
 export function LoginMediaPage() {
   const { t, language } = useLanguage();
   const categoryMeta: Record<
@@ -151,6 +214,9 @@ export function LoginMediaPage() {
   const [deleteTarget, setDeleteTarget] =
     React.useState<LoginMediaItemRow | null>(null);
 
+  const tRef = React.useRef(t);
+  tRef.current = t;
+
   const loadItems = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -161,12 +227,12 @@ export function LoginMediaPage() {
       toast.error(
         err instanceof Error
           ? err.message
-          : t("settings:login_media.toast_load_err"),
+          : tRef.current("settings:login_media.toast_load_err"),
       );
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   React.useEffect(() => {
     void loadItems();
@@ -300,9 +366,11 @@ export function LoginMediaPage() {
     }
   }
 
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
+
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, categoryFilter, statusFilter, sortOrder, pageSize]);
+  }, [deferredSearchQuery, categoryFilter, statusFilter, sortOrder, pageSize]);
 
   // Daftar kategori untuk Cycling Ticker KPI Komposisi Kategori
   const bannerCount = items.filter((i) => i.category === "banner").length;
@@ -327,26 +395,11 @@ export function LoginMediaPage() {
     },
   ], [bannerCount, flyerCount, medsosCount, t]);
 
-  const [activeTickerIdx, setActiveTickerIdx] = React.useState(0);
-  const [tickerAnimating, setTickerAnimating] = React.useState(false);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setTickerAnimating(true);
-      setTimeout(() => {
-        setActiveTickerIdx((prev) => (prev + 1) % categoryTickerItems.length);
-        setTickerAnimating(false);
-      }, 300);
-    }, 3200);
-
-    return () => clearInterval(timer);
-  }, [categoryTickerItems.length]);
-
   if (loading) {
     return <PageLoader message={t("settings:login_media.loading_gallery")} />;
   }
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
   const filteredItems = items
     .filter((it) => {
       if (categoryFilter !== "all" && it.category !== categoryFilter) {
@@ -395,7 +448,6 @@ export function LoginMediaPage() {
     pageNumbers.push(totalPages);
   }
   const previewSlide = activeItems[previewIdx] ?? null;
-  const currentTicker = categoryTickerItems[activeTickerIdx] ?? categoryTickerItems[0]!;
 
   return (
     <div className="flex flex-col gap-6">
@@ -472,20 +524,7 @@ export function LoginMediaPage() {
             <p className="text-xs font-medium text-muted-foreground">
               {t("settings:login_media.kpi_composition")}
             </p>
-            <div className="h-8 flex items-center mt-1 overflow-hidden">
-              <div
-                className={cn(
-                  "flex items-center transition-all duration-300 ease-out",
-                  tickerAnimating
-                    ? "-translate-y-4 opacity-0"
-                    : "translate-y-0 opacity-100",
-                )}
-              >
-                <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  {currentTicker.count} {currentTicker.label}
-                </span>
-              </div>
-            </div>
+            <CategoryCompositionTicker items={categoryTickerItems} />
             <p className="text-[11px] text-muted-foreground mt-1 truncate">
               {t("settings:login_media.kpi_comp_count", {
                 banner: bannerCount,
@@ -826,6 +865,8 @@ export function LoginMediaPage() {
                           <img
                             src={row.image_url}
                             alt={row.title}
+                            loading="lazy"
+                            decoding="async"
                             className="size-full object-cover"
                           />
                         </div>
