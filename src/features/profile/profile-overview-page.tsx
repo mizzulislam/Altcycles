@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { getMergedProfileFields } from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
@@ -307,74 +308,42 @@ export function ProfileOverviewPage() {
       </Card>
 
       {/* =========================================================================
-          GRID STATISTIK RINGKASAN AKUN (Hierarki Tipografi Rapi & Proporsional ala My Tax)
+          GRID STATISTIK RINGKASAN AKUN (Komponen Tunggal KpiCard — Item 10)
           ========================================================================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {/* Card 1: Status Akun */}
-        <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("settings:profile_overview.card_status_title", "Status Akun")}
-          </p>
-          <div className="flex items-center gap-2 my-1">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <p className="text-base sm:text-lg font-bold text-foreground">
-              {t("settings:profile_overview.card_status_value", "Aktif & Sah")}
-            </p>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            {t("settings:profile_overview.card_status_desc", "Otorisasi RLS Terverifikasi")}
-          </p>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label={t("settings:profile_overview.card_status_title", "Status Akun")}
+          displayValue={t("settings:profile_overview.card_status_value", "Aktif & Sah")}
+          subtext={t("settings:profile_overview.card_status_desc", "Otorisasi RLS Terverifikasi")}
+          icon={CheckCircle2Icon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+        />
 
-        {/* Card 2: Mode Aktif */}
-        <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("settings:profile_overview.card_active_mode_title", "Mode Aktif")}
-          </p>
-          <div className="flex items-center gap-2 my-1">
-            <UserCheckIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
-            <p className="text-base sm:text-lg font-bold text-foreground capitalize truncate">
-              {getRoleShortName(currentRole, t)}
-            </p>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            {t("settings:profile_overview.card_active_mode_desc", "Dapat dialihkan di Header")}
-          </p>
-        </Card>
+        <KpiCard
+          label={t("settings:profile_overview.card_active_mode_title", "Mode Aktif")}
+          displayValue={getRoleShortName(currentRole, t)}
+          subtext={t("settings:profile_overview.card_active_mode_desc", "Dapat dialihkan di Header")}
+          icon={UserCheckIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        {/* Card 3: Total Peran */}
-        <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("settings:profile_overview.card_total_roles_title", "Total Peran")}
-          </p>
-          <div className="flex items-baseline gap-1.5 my-1">
-            <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">
-              {availableRoles.length}
-            </p>
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t("settings:profile_overview.card_total_roles_unit", "Peran Wewenang")}
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            {t("settings:profile_overview.card_total_roles_desc", "Multi-role siap pakai")}
-          </p>
-        </Card>
+        <KpiCard
+          label={t("settings:profile_overview.card_total_roles_title", "Total Peran")}
+          value={availableRoles.length}
+          suffix={` ${t("settings:profile_overview.card_total_roles_unit", "Peran Wewenang")}`}
+          subtext={t("settings:profile_overview.card_total_roles_desc", "Multi-role siap pakai")}
+          icon={ShieldCheckIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
 
-        {/* Card 4: Sesi Terakhir */}
-        <Card className="p-4 sm:p-5 border-border/75 rounded-2xl shadow-2xs bg-card/60 flex flex-col justify-between min-h-[110px]">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("settings:profile_overview.card_last_session_title", "Sesi Terakhir")}
-          </p>
-          <div className="flex items-center gap-1.5 my-1">
-            <ClockIcon className="size-4 text-primary dark:text-sky-400 shrink-0" />
-            <p className="text-xs sm:text-sm font-bold text-foreground truncate tabular-nums">
-              {formatDateTimeI18n(profile.last_login_at || profile.updated_at, language)}
-            </p>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            {t("settings:profile_overview.card_last_session_desc", "Pencatatan Audit Otomatis")}
-          </p>
-        </Card>
+        <KpiCard
+          label={t("settings:profile_overview.card_last_session_title", "Sesi Terakhir")}
+          displayValue={formatDateTimeI18n(profile.last_login_at || profile.updated_at, language)}
+          valueClassName="text-sm sm:text-base"
+          subtext={t("settings:profile_overview.card_last_session_desc", "Pencatatan Audit Otomatis")}
+          icon={ClockIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
       </div>
     </div>
   );

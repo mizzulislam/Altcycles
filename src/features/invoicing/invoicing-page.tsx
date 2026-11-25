@@ -93,6 +93,7 @@ import {
   makeReceiptSpec as buildReceiptSpecHelper,
   type InvoiceSpecBuilderContext,
 } from "./components/invoice-spec-builder";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 export function InvoicingPage() {
   const { t, language } = useLanguage();
@@ -592,13 +593,13 @@ export function InvoicingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("invoicing.page_title", "Invoice Penagihan, Umur Piutang, & Kuitansi")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t("invoicing.page_desc", "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.")}
-          </p>
+          </TruncatedTooltipText>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <ExportDownloadMenu

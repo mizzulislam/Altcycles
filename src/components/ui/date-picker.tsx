@@ -450,7 +450,7 @@ export function DatePicker({
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border/60 hover:border-primary/40",
                     )}
-                    title="Pilih Bulan"
+                    aria-label="Pilih Bulan"
                   >
                     <span>{MONTH_NAMES_ID[viewMonth]}</span>
                     <ChevronDownIcon
@@ -504,7 +504,7 @@ export function DatePicker({
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border/60 hover:border-primary/40",
                     )}
-                    title="Pilih Tahun"
+                    aria-label="Pilih Tahun"
                   >
                     <span>{viewYear}</span>
                     <ChevronDownIcon
@@ -550,7 +550,7 @@ export function DatePicker({
                   type="button"
                   onClick={handlePrev}
                   className="size-6 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
-                  title="Bulan sebelumnya"
+                  aria-label="Bulan sebelumnya"
                 >
                   <ChevronLeftIcon className="size-3.5" />
                 </button>
@@ -558,7 +558,7 @@ export function DatePicker({
                   type="button"
                   onClick={handleNext}
                   className="size-6 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
-                  title="Bulan berikutnya"
+                  aria-label="Bulan berikutnya"
                 >
                   <ChevronRightIcon className="size-3.5" />
                 </button>

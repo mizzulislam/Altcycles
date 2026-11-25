@@ -14,6 +14,7 @@ import {
   GoogleGLogo,
 } from "@/components/shared/google-drive-picker-dialog";
 import { Button } from "@/components/ui/button";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   Dialog,
   DialogContent,
@@ -427,14 +428,16 @@ export function AvatarUploadDialog({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleDisconnectGoogle}
-                    title="Ganti atau putuskan akun Google"
-                    className="text-xs text-muted-foreground hover:text-destructive hover:underline cursor-pointer px-2 py-1 shrink-0"
-                  >
-                    Ganti Akun
-                  </button>
+                  <ActionTooltip content="Ganti atau putuskan akun Google" side="top">
+                    <button
+                      type="button"
+                      onClick={handleDisconnectGoogle}
+                      aria-label="Ganti atau putuskan akun Google"
+                      className="text-xs text-muted-foreground hover:text-destructive hover:underline cursor-pointer px-2 py-1 shrink-0"
+                    >
+                      Ganti Akun
+                    </button>
+                  </ActionTooltip>
                 </div>
 
                 <div className="pt-1">

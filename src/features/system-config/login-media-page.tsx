@@ -19,8 +19,11 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
+import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -452,22 +455,16 @@ export function LoginMediaPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("settings:login_media.header_title")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("settings:login_media.header_desc")}
-          </p>
-        </div>
-        <div className="shrink-0">
+      <PageHeader
+        title={t("settings:login_media.header_title")}
+        description={t("settings:login_media.header_desc")}
+        actions={
           <Button type="button" onClick={openCreateDialog}>
             <PlusIcon className="size-4" />
             <span>{t("settings:login_media.btn_add")}</span>
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {usingLocalFallback ? (
         <Alert variant="info">
@@ -479,64 +476,43 @@ export function LoginMediaPage() {
         </Alert>
       ) : null}
 
-      {/* 3 Kartu KPI */}
+      {/* 3 Kartu KPI (Komponen Tunggal KpiCard — Item 10) */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:login_media.kpi_total")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {items.length} {t("settings:login_media.unit_content")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("settings:login_media.kpi_total_desc")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <ImageIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:login_media.kpi_total")}
+          value={items.length}
+          suffix={` ${t("settings:login_media.unit_content")}`}
+          subtext={t("settings:login_media.kpi_total_desc")}
+          icon={ImageIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:login_media.kpi_active")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {activeItems.length} {t("settings:login_media.unit_live")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {activeItems.length > 1
-                ? t("settings:login_media.kpi_active_desc_carousel")
-                : activeItems.length === 1
-                  ? t("settings:login_media.kpi_active_desc_static")
-                  : t("settings:login_media.kpi_active_desc_default")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <EyeIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:login_media.kpi_active")}
+          value={activeItems.length}
+          suffix={` ${t("settings:login_media.unit_live")}`}
+          subtext={
+            activeItems.length > 1
+              ? t("settings:login_media.kpi_active_desc_carousel")
+              : activeItems.length === 1
+                ? t("settings:login_media.kpi_active_desc_static")
+                : t("settings:login_media.kpi_active_desc_default")
+          }
+          icon={EyeIcon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+        />
 
-        <Card className="p-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("settings:login_media.kpi_composition")}
-            </p>
-            <CategoryCompositionTicker items={categoryTickerItems} />
-            <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {t("settings:login_media.kpi_comp_count", {
-                banner: bannerCount,
-                flyer: flyerCount,
-                medsos: medsosCount,
-              })}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <LayersIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("settings:login_media.kpi_composition")}
+          displayValue={<CategoryCompositionTicker items={categoryTickerItems} />}
+          subtext={t("settings:login_media.kpi_comp_count", {
+            banner: bannerCount,
+            flyer: flyerCount,
+            medsos: medsosCount,
+          })}
+          icon={LayersIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
       </div>
 
       {/* Pratinjau Langsung Panel Kiri Halaman Login */}
@@ -897,18 +873,19 @@ export function LoginMediaPage() {
                       </TableCell>
                       <TableCell className="px-3 text-center whitespace-nowrap">
                         {row.link_url ? (
-                          <a
-                            href={row.link_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs sm:text-sm leading-5 font-medium text-foreground hover:text-primary dark:hover:text-sky-400 transition-colors max-w-32 truncate"
-                            title={row.link_url}
-                          >
-                            <span className="truncate">
-                              {t("settings:login_media.open_link")}
-                            </span>
-                            <ExternalLinkIcon className="size-3.5 shrink-0" />
-                          </a>
+                          <ActionTooltip content={row.link_url} side="top">
+                            <a
+                              href={row.link_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs sm:text-sm leading-5 font-medium text-foreground hover:text-primary dark:hover:text-sky-400 transition-colors max-w-32 truncate"
+                            >
+                              <span className="truncate">
+                                {t("settings:login_media.open_link")}
+                              </span>
+                              <ExternalLinkIcon className="size-3.5 shrink-0" />
+                            </a>
+                          </ActionTooltip>
                         ) : (
                           <span className="text-xs sm:text-sm leading-5 text-muted-foreground">
                             -

@@ -25,6 +25,7 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import {
   isDateInPeriod,
   PeriodFilter,
@@ -320,46 +321,49 @@ export function UserDashboardPage() {
     },
   ];
 
+  const welcomeFullText = `${t("user_portal.welcome", "Selamat datang")}, ${profile?.full_name ?? "Rekan"}. ${t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}`;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("user_portal.dashboard_title", "Dasbor Anggota Tim")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+      <PageHeader
+        title={t("user_portal.dashboard_title", "Dasbor Anggota Tim")}
+        description={
+          <>
             {t("user_portal.welcome", "Selamat datang")},{" "}
             <span className="font-semibold text-foreground">
               {profile?.full_name ?? "Rekan"}
             </span>
             . {t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-2.5">
-          <PeriodFilter
-            value={periodFilter}
-            onChange={(val, start, end) => {
-              setPeriodFilter(val);
-              setFilterStartDate(start ?? "");
-              setFilterEndDate(end ?? "");
-            }}
-            startDate={filterStartDate}
-            endDate={filterEndDate}
-          />
-          <Button
-            type="button"
-            size="sm"
-            asChild
-            className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
-          >
-            <Link to="/user/pembayaran">
-              <PlusIcon className="size-4" />
-              <span>{t("user_portal.submit_payment", "Ajukan Pembayaran")}</span>
-            </Link>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        descriptionTooltip={welcomeFullText}
+        actions={
+          <>
+            <PeriodFilter
+              value={periodFilter}
+              onChange={(val, start, end) => {
+                setPeriodFilter(val);
+                setFilterStartDate(start ?? "");
+                setFilterEndDate(end ?? "");
+              }}
+              startDate={filterStartDate}
+              endDate={filterEndDate}
+            />
+            <Button
+              type="button"
+              size="sm"
+              asChild
+              className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
+            >
+              <Link to="/user/pembayaran">
+                <PlusIcon className="size-4" />
+                <span>{t("user_portal.submit_payment", "Ajukan Pembayaran")}</span>
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* 4 Kartu KPI Utama */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -691,28 +695,28 @@ export function UserDashboardPage() {
               <div
                 style={{ width: `${(paidPa / requests.length) * 100}%` }}
                 className="h-full bg-emerald-500"
-                title={`${t("dashboard:user_dashboard.status_paid", "Dibayar Lunas")}: ${paidPa}`}
+                aria-label={`${t("dashboard:user_dashboard.status_paid", "Dibayar Lunas")}: ${paidPa}`}
               />
             ) : null}
             {approvedPa > 0 ? (
               <div
                 style={{ width: `${(approvedPa / requests.length) * 100}%` }}
                 className="h-full bg-amber-500"
-                title={`${t("dashboard:user_dashboard.status_approved", "Disetujui / Siap Cair")}: ${approvedPa}`}
+                aria-label={`${t("dashboard:user_dashboard.status_approved", "Disetujui / Siap Cair")}: ${approvedPa}`}
               />
             ) : null}
             {pendingPa > 0 ? (
               <div
                 style={{ width: `${(pendingPa / requests.length) * 100}%` }}
                 className="h-full bg-sky-500"
-                title={`${t("dashboard:user_dashboard.status_submitted", "Menunggu Admin")}: ${pendingPa}`}
+                aria-label={`${t("dashboard:user_dashboard.status_submitted", "Menunggu Admin")}: ${pendingPa}`}
               />
             ) : null}
             {rejectedPa > 0 ? (
               <div
                 style={{ width: `${(rejectedPa / requests.length) * 100}%` }}
                 className="h-full bg-rose-500"
-                title={`${t("dashboard:user_dashboard.status_rejected", "Perlu Revisi")}: ${rejectedPa}`}
+                aria-label={`${t("dashboard:user_dashboard.status_rejected", "Perlu Revisi")}: ${rejectedPa}`}
               />
             ) : null}
           </div>

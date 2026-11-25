@@ -92,6 +92,7 @@ import type {
 } from "@/types/database.types";
 import { PeriodListTable } from "@/features/master-data/components/period-list-table";
 import { PeriodCreateDialog } from "@/features/master-data/components/period-create-dialog";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 export interface CoaAccountsPageProps {
   hideHeader?: boolean;
@@ -535,12 +536,12 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
       {!hideHeader ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {t("accounting:coa.title", "Setup Akuntansi")}
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+            </TruncatedTooltipText>
+            <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
               {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
-            </p>
+            </TruncatedTooltipText>
           </div>
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Button

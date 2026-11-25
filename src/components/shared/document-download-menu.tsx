@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { ChevronDownIcon, DownloadIcon, FileTextIcon, Loader2Icon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -107,62 +108,64 @@ export function DocumentDownloadMenu({
   return (
     <div className={cn("inline-flex", className)}>
       {variant === "button" ? (
-        <button
-          ref={triggerRef}
-          type="button"
-          disabled={loadingFmt !== null}
-          onClick={() => setOpen((prev) => !prev)}
-          className={cn(
-            "inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
-            size === "sm"
-              ? "h-8 px-3 text-xs"
-              : "h-9 px-3.5 text-xs sm:text-sm",
-            "hover:bg-muted/70 hover:border-primary/40",
-            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-            "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
-            open && "border-primary/60 ring-2 ring-primary/20",
-            buttonClassName,
-          )}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          title={title}
-        >
-          <span className="flex items-center gap-2">
+        <ActionTooltip content={title} side="top" disabled={open || !title}>
+          <button
+            ref={triggerRef}
+            type="button"
+            disabled={loadingFmt !== null}
+            onClick={() => setOpen((prev) => !prev)}
+            className={cn(
+              "inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
+              size === "sm"
+                ? "h-8 px-3 text-xs"
+                : "h-9 px-3.5 text-xs sm:text-sm",
+              "hover:bg-muted/70 hover:border-primary/40",
+              "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+              "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
+              open && "border-primary/60 ring-2 ring-primary/20",
+              buttonClassName,
+            )}
+            aria-haspopup="menu"
+            aria-expanded={open}
+          >
+            <span className="flex items-center gap-2">
+              {loadingFmt ? (
+                <Loader2Icon className="size-4 animate-spin text-primary" />
+              ) : (
+                <DownloadIcon className="size-4 text-primary" />
+              )}
+              <span>{displayLabel}</span>
+            </span>
+            <ChevronDownIcon
+              className={cn(
+                "size-3.5 text-muted-foreground transition-transform duration-200",
+                open && "rotate-180",
+              )}
+            />
+          </button>
+        </ActionTooltip>
+      ) : (
+        <ActionTooltip content={title} side="top" disabled={open || !title}>
+          <button
+            ref={triggerRef}
+            type="button"
+            disabled={loadingFmt !== null}
+            onClick={() => setOpen((prev) => !prev)}
+            className={cn(
+              "inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none disabled:active:scale-100",
+              buttonClassName,
+            )}
+            aria-haspopup="menu"
+            aria-expanded={open}
+          >
             {loadingFmt ? (
               <Loader2Icon className="size-4 animate-spin text-primary" />
             ) : (
-              <DownloadIcon className="size-4 text-primary" />
+              <DownloadIcon className="size-4" />
             )}
-            <span>{displayLabel}</span>
-          </span>
-          <ChevronDownIcon
-            className={cn(
-              "size-3.5 text-muted-foreground transition-transform duration-200",
-              open && "rotate-180",
-            )}
-          />
-        </button>
-      ) : (
-        <button
-          ref={triggerRef}
-          type="button"
-          title={title}
-          disabled={loadingFmt !== null}
-          onClick={() => setOpen((prev) => !prev)}
-          className={cn(
-            "inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none disabled:active:scale-100",
-            buttonClassName,
-          )}
-          aria-haspopup="menu"
-          aria-expanded={open}
-        >
-          {loadingFmt ? (
-            <Loader2Icon className="size-4 animate-spin text-primary" />
-          ) : (
-            <DownloadIcon className="size-4" />
-          )}
-          <span className="sr-only">{title}</span>
-        </button>
+            <span className="sr-only">{title}</span>
+          </button>
+        </ActionTooltip>
       )}
 
       {open &&

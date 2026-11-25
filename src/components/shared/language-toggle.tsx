@@ -1,5 +1,6 @@
 import * as React from "react";
 import { CheckIcon, LanguagesIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -118,34 +119,37 @@ export function LanguageToggle({
     lg: "size-4.5",
   }[size];
 
+  const tooltipLabel = language === "en" ? "Select Language" : "Pilih Bahasa";
+
   return (
     <div className="relative inline-block" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={language === "en" ? "Select Language" : "Pilih Bahasa"}
-        aria-expanded={isOpen}
-        title={language === "en" ? "Select Language" : "Pilih Bahasa"}
-        style={style}
-        className={cn(
-          "inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border group",
-          "bg-card/95 border-border hover:bg-muted/60 hover:border-primary/40 shadow-2xs backdrop-blur-md",
-          "active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground",
-          sizeClasses,
-          className,
-        )}
-      >
-        <LanguagesIcon
+      <ActionTooltip content={tooltipLabel} side="bottom" disabled={isOpen}>
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-label={tooltipLabel}
+          aria-expanded={isOpen}
+          style={style}
           className={cn(
-            iconSizes,
-            "shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-foreground",
-            isOpen && "text-primary scale-110",
+            "inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border group",
+            "bg-card/95 border-border hover:bg-muted/60 hover:border-primary/40 shadow-2xs backdrop-blur-md",
+            "active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground",
+            sizeClasses,
+            className,
           )}
-        />
-        <span className="sr-only">
-          {language === "en" ? "Select Language" : "Pilih Bahasa"}
-        </span>
-      </button>
+        >
+          <LanguagesIcon
+            className={cn(
+              iconSizes,
+              "shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-foreground",
+              isOpen && "text-primary scale-110",
+            )}
+          />
+          <span className="sr-only">
+            {tooltipLabel}
+          </span>
+        </button>
+      </ActionTooltip>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">

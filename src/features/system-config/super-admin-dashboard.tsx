@@ -24,6 +24,7 @@ import {
 } from "@/components/shared/dashboard-period-filter";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Card,
@@ -268,16 +269,10 @@ export function SuperAdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("settings:super_admin.dashboard_title", "Dasbor Pengelola Sistem")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("settings:super_admin.dashboard_desc", "Pantau kesehatan sistem, aktivitas pengguna internal, dan konfigurasi master aplikasi.")}
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-2.5">
+      <PageHeader
+        title={t("settings:super_admin.dashboard_title", "Dasbor Pengelola Sistem")}
+        description={t("settings:super_admin.dashboard_desc", "Pantau kesehatan sistem, aktivitas pengguna internal, dan konfigurasi master aplikasi.")}
+        actions={
           <PeriodFilter
             value={periodFilter}
             onChange={(val, start, end) => {
@@ -288,8 +283,8 @@ export function SuperAdminDashboardPage() {
             startDate={filterStartDate}
             endDate={filterEndDate}
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* 4 Kartu KPI Utama Terstandar */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

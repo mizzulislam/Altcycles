@@ -62,6 +62,8 @@ import type {
   CompanyProfileRow,
   SocialMediaEntry,
 } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 type CompanyTab = "identitas" | "keuangan" | "sosmed" | "pajak";
 
@@ -336,13 +338,13 @@ export function CompanyProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+      <div className="min-w-0">
+        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("settings:company.page_title", "Profil Perusahaan")}
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+        </TruncatedTooltipText>
+        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
           {t("settings:company.page_desc", "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.")}
-        </p>
+        </TruncatedTooltipText>
       </div>
 
       {/* Tab Navigasi 4-Kolom (Tinggi & Gaya Diselaraskan dengan Standar Tab Halaman) */}
@@ -717,15 +719,16 @@ export function CompanyProfilePage() {
                             </span>
                           </div>
                           {idx > 0 ? (
+                            <ActionTooltip content={t("settings:company.remove_bank_tooltip", "Hapus rekening ini")}>
                             <button
                               type="button"
-                              title={t("settings:company.remove_bank_tooltip", "Hapus rekening ini")}
                               onClick={() => handleRemoveBankSlot(idx)}
                               className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                             >
                               <Trash2Icon className="size-3.5" />
                               <span className="sr-only">{t("settings:company.remove_bank_sr", "Hapus Rekening")}</span>
                             </button>
+                            </ActionTooltip>
                           ) : null}
                         </div>
                         {content}
@@ -865,15 +868,16 @@ export function CompanyProfilePage() {
                           </span>
                         </div>
                         {socials.length > 1 && (
+                          <ActionTooltip content={t("settings:company.remove_social_tooltip", "Hapus sosial media ini")}>
                           <button
                             type="button"
-                            title={t("settings:company.remove_social_tooltip", "Hapus sosial media ini")}
                             onClick={() => handleRemoveSocialSlot(idx)}
                             className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                           >
                             <Trash2Icon className="size-3.5" />
                             <span className="sr-only">{t("settings:company.remove_social_sr", "Hapus Sosial Media")}</span>
                           </button>
+                          </ActionTooltip>
                         )}
                       </div>
 

@@ -12,6 +12,7 @@ import {
   type ShortcutGroup,
 } from "@/lib/navigation-shortcuts-registry";
 import { ModalOverlayScrollbar } from "@/components/ui/modal-overlay-scrollbar";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 export interface ShortcutsSheetProps {
   isOpen: boolean;
@@ -154,17 +155,19 @@ export function ShortcutsSheet({ isOpen, onClose, currentRole }: ShortcutsSheetP
                 className="w-full bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none leading-normal"
               />
               {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    inputRef.current?.focus();
-                  }}
-                  className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors cursor-pointer"
-                  title={t("common:action.reset", "Reset")}
-                >
-                  <X className="size-3.5" />
-                </button>
+                <ActionTooltip content={t("common:action.reset", "Reset")} side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    aria-label={t("common:action.reset", "Reset")}
+                    className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </ActionTooltip>
               )}
             </div>
           </div>

@@ -394,7 +394,7 @@ export function SpkCharterFields({
                       })
                     }
                     className="size-8 text-destructive shrink-0"
-                    title="Hapus kategori"
+                    tooltip="Hapus kategori"
                   >
                     <Trash2Icon className="size-3.5" />
                   </Button>

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/shared/animated-number";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ export interface DashboardKpiCardProps {
   label: string;
   value?: number;
   displayValue?: React.ReactNode;
+  valueClassName?: string;
   formatter?: (val: number) => string;
   suffix?: string;
   subtext?: React.ReactNode;
@@ -86,6 +88,7 @@ export function KpiCard({
   label,
   value,
   displayValue,
+  valueClassName,
   formatter,
   suffix,
   subtext,
@@ -127,6 +130,7 @@ export function KpiCard({
 
   const content = (
     <Card
+      data-slot="kpi-card"
       className={cn(
         "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-3.5 h-full transition-all duration-150",
         to && "group hover:border-primary/50 hover:bg-muted/15 cursor-pointer",
@@ -135,16 +139,24 @@ export function KpiCard({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-muted-foreground truncate leading-tight">
+          <TruncatedTooltipText
+            as="p"
+            className="text-xs font-medium text-muted-foreground leading-tight"
+          >
             {label}
-          </p>
-          <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate leading-tight py-0.5">
+          </TruncatedTooltipText>
+          <div
+            className={cn(
+              "text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate leading-tight py-0.5",
+              valueClassName,
+            )}
+          >
             {displayValue ? (
               displayValue
             ) : (
               <AnimatedNumber value={value ?? 0} formatter={formatter} suffix={suffix} />
             )}
-          </p>
+          </div>
         </div>
         <div
           className={cn(
@@ -158,7 +170,7 @@ export function KpiCard({
       </div>
 
       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50 min-h-[26px]">
-        <div className="min-w-0 flex items-center gap-1.5 text-[11px] leading-tight">
+        <div className="min-w-0 flex-1 flex items-center gap-1.5 text-[11px] leading-tight">
           {hasChange ? (
             <span
               className={cn(
@@ -175,13 +187,13 @@ export function KpiCard({
             </span>
           ) : null}
           {changeLabel ? (
-            <span className="text-muted-foreground truncate" title={changeLabel}>
+            <TruncatedTooltipText as="span" className="text-muted-foreground">
               {changeLabel}
-            </span>
+            </TruncatedTooltipText>
           ) : subtext ? (
-            <span className="text-muted-foreground truncate">
+            <TruncatedTooltipText as="span" className="text-muted-foreground">
               {subtext}
-            </span>
+            </TruncatedTooltipText>
           ) : null}
         </div>
 

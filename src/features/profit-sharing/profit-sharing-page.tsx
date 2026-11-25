@@ -82,6 +82,7 @@ import type {
   ProfitSharingSchemeRow,
   ProjectRow,
 } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 interface DraftRecipient {
   recipientName: string;
@@ -361,13 +362,13 @@ export function ProfitSharingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("profit_sharing:page_title")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t("profit_sharing:page_desc")}
-          </p>
+          </TruncatedTooltipText>
         </div>
         {result ? (
           <div className="flex items-center gap-2.5 shrink-0">

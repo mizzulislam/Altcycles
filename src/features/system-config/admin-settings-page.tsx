@@ -54,6 +54,7 @@ import type {
   DocSequenceRow,
   DocTemplateRow,
 } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 const RESET_PERIOD_KEYS: Record<DocSequenceRow["reset_period"], string> = {
   monthly: "settings:admin_settings.reset_monthly",
@@ -214,13 +215,13 @@ export function AdminSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+      <div className="min-w-0">
+        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("settings:admin_settings.title")}
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+        </TruncatedTooltipText>
+        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
           {t("settings:admin_settings.subtitle")}
-        </p>
+        </TruncatedTooltipText>
       </div>
 
       {/* Card 1: Format Penomoran Dokumen */}

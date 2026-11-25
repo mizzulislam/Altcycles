@@ -11,6 +11,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 import { Card } from "@/components/ui/card";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Select,
@@ -66,28 +68,21 @@ export function ProjectDetailHeader({
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {t("projects:header.title", "Dokumen & Termin Proyek")}
-            </h1>
-            {project.is_eliminated ? (
-              <StatusBadge
-                tone="success"
-                label={t("projects:summary.eliminated_badge", "WIP & Penagihan Tereliminasi 100%")}
-              />
-            ) : null}
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t(
-              "projects:header.subtitle",
-              "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek.",
-            )}
-          </p>
-        </div>
-
-        <div className="shrink-0">
+      <PageHeader
+        title={t("projects:header.title", "Dokumen & Termin Proyek")}
+        badge={
+          project.is_eliminated ? (
+            <StatusBadge
+              tone="success"
+              label={t("projects:summary.eliminated_badge", "WIP & Penagihan Tereliminasi 100%")}
+            />
+          ) : null
+        }
+        description={t(
+          "projects:header.subtitle",
+          "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek.",
+        )}
+        actions={
           <Select
             value={project.id}
             onValueChange={(nextId) => {
@@ -108,15 +103,15 @@ export function ProjectDetailHeader({
             <SelectContent align="end">
               <SelectGroup>
                 {allProjects.map((p) => (
-                  <SelectItem key={p.id} value={p.id} title={p.name}>
+                  <SelectItem key={p.id} value={p.id}>
                     {p.code}
                   </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        }
+      />
 
       {/* Informasi Proyek: 2 Kelompok Seimbang */}
       <Card className="rounded-2xl border-border/80 bg-card px-6 py-4 shadow-2xs">
@@ -166,62 +161,37 @@ export function ProjectDetailHeader({
 
       {/* Ringkasan Eksekutif Proyek */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("projects:summary.contract_value", "Nilai Kontrak Proyek")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(project.contract_value)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {customer?.name ?? t("projects:summary.internal_project", "Proyek Internal")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("projects:summary.contract_value", "Nilai Kontrak Proyek")}
+          displayValue={formatRupiah(project.contract_value)}
+          subtext={customer?.name ?? t("projects:summary.internal_project", "Proyek Internal")}
+          icon={WalletIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("projects:summary.progress", "Progres Penyelesaian Proyek")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {maxProgressPct}%
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {t("projects:summary.structured_milestones", {
-                count: bundle.milestones.length,
-                defaultValue: `${bundle.milestones.length} termin terstruktur`,
-              })}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <TrendingUpIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("projects:summary.progress", "Progres Penyelesaian Proyek")}
+          value={maxProgressPct}
+          suffix="%"
+          subtext={t("projects:summary.structured_milestones", {
+            count: bundle.milestones.length,
+            defaultValue: `${bundle.milestones.length} termin terstruktur`,
+          })}
+          icon={TrendingUpIcon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("projects:summary.docs_completeness", "Kelengkapan Dokumen & PO")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {totalDocsCount} {t("projects:summary.docs_unit", "Dokumen")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1 truncate">
-              {t("projects:summary.docs_verified", {
-                count: verifiedClientPosCount,
-                defaultValue: `${verifiedClientPosCount} PO klien terverifikasi`,
-              })}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <FileTextIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("projects:summary.docs_completeness", "Kelengkapan Dokumen & PO")}
+          value={totalDocsCount}
+          suffix={` ${t("projects:summary.docs_unit", "Dokumen")}`}
+          subtext={t("projects:summary.docs_verified", {
+            count: verifiedClientPosCount,
+            defaultValue: `${verifiedClientPosCount} PO klien terverifikasi`,
+          })}
+          icon={FileTextIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
       </div>
 
       {/* Bar Navigasi Tab Dokumen & Termin Proyek */}

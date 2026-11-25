@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
@@ -450,29 +451,25 @@ export function ShortcutsManagementPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* 1. Header Halaman Terstandar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("shortcuts.management_title", "Pintasan Keyboard")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t(
-              "shortcuts.management_desc",
-              "Konfigurasi dan kelola pemetaan pintasan keyboard global untuk seluruh portal dan peran pengguna.",
-            )}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setResetAllOpen(true)}
-          disabled={customCount === 0}
-          className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold shrink-0 gap-2 border-border/80"
-        >
-          <RotateCcwIcon className="size-4" />
-          <span>{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
-        </Button>
-      </div>
+      <PageHeader
+        title={t("shortcuts.management_title", "Pintasan Keyboard")}
+        description={t(
+          "shortcuts.management_desc",
+          "Konfigurasi dan kelola pemetaan pintasan keyboard global untuk seluruh portal dan peran pengguna.",
+        )}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setResetAllOpen(true)}
+            disabled={customCount === 0}
+            className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold shrink-0 gap-2 border-border/80"
+          >
+            <RotateCcwIcon className="size-4" />
+            <span>{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
+          </Button>
+        }
+      />
 
       {/* 2. Kartu Ringkasan KPI (4 Cards) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

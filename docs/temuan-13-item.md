@@ -407,3 +407,12 @@ Saat ini, judul halaman (`<h1>`) dan subjudul (`<p>`) ditulis secara manual di *
    - Untuk data lama yang kebetulan sudah berstatus `pkp_enabled = true` tetapi belum memiliki berkas bukti PKP: halaman tidak diblokir dan menampilkan banner peringatan ramah di tab Perpajakan (PKP). Saat Super Admin menyunting dan menekan tombol **"Simpan Pengaturan Pajak"** pada tab Perpajakan selama toggle PKP masih aktif, sistem akan mewajibkan unggah berkas bukti PKP terlebih dahulu (sementara penyimpanan di tab lain seperti *Identitas*, *Rekening & TTD*, dan *Sosial Media* tetap diizinkan tanpa terblokir). Apakah Anda setuju dengan aturan ini?
 6. **`perlu keputusanku: ya` — Konvensi Bulan Parsial pada Desain Penyusutan Aset Tetap (Item 3):**
    - Untuk aset tetap yang diperoleh di tengah bulan, apakah Anda memilih **Prorata Hari Aktual di Bulan Pertama** ($\text{Beban Bulanan} \times \frac{\text{Hari Aktif}}{\text{Total Hari Bulan}}$, dengan *clamping* nilai sisa di bulan terakhir) seperti diusulkan pada Bagian C.2, atau **Konvensi Bulan Penuh** (perolehan tanggal 1–15 dihitung 1 bulan penuh, tanggal >15 mulai disusutkan bulan berikutnya)?
+
+---
+
+### Temuan Tambahan Saat Eksekusi Kelompok E
+
+1. **Regresi Kelompok D (sudah diperbaiki di Kelompok E):** `accounting-page.tsx` memakai `JOURNAL_TYPE_LABELS` tanpa import setelah refaktor lazy-load Kelompok D (`tsc` TS2304; berpotensi `ReferenceError` saat filter jenis jurnal dirender). Diperbaiki dengan menambahkan import bernama dari `journals-page`.
+2. **Tipe Supabase belum memuat tabel `fixed_assets` (belum diperbaiki):** `src/lib/operations/fixed-assets.ts` baris 502 dan 523 gagal `tsc` (argumen bertipe `never`) karena `database.types.ts` belum diregenerasi setelah migrasi aset tetap. Perlu regenerasi tipe setelah migrasi disetujui/dijalankan. `perlu keputusanku: ya`.
+3. **Label tooltip `LanguageToggle` masih literal (belum diperbaiki):** `Pilih Bahasa` / `Select Language` dipilih berdasarkan bahasa aktif, bukan lewat kunci i18n. Perilaku tetap bilingual; dicatat agar dipindah ke kunci i18n bila diinginkan.
+4. **Penjaga CI anti-`title=`:** diimplementasikan sebagai tes `tests/unit/group-e-ui-consistency.test.tsx` (parser TypeScript AST) alih-alih aturan ESLint, agar tidak menambah dependensi/plugin lint.

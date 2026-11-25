@@ -27,6 +27,8 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
+import { PageHeader, TruncatedTooltipText } from "@/components/shared/page-header";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   isDateInPeriod,
   PeriodFilter,
@@ -593,38 +595,34 @@ export function AdminDashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* A1: Header Halaman + Filter Periode Global + Unduh/Ekspor */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("dashboard.title", "Dasbor Keuangan & Akuntansi")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t(
-              "dashboard.subtitle",
-              "Pantau likuiditas kas, kinerja laba rugi, piutang, dan aktivitas jurnal perusahaan.",
-            )}
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-2.5">
-          <PeriodFilter
-            value={periodFilter}
-            onChange={(val, start, end) => {
-              setPeriodFilter(val);
-              setFilterStartDate(start ?? "");
-              setFilterEndDate(end ?? "");
-            }}
-            startDate={filterStartDate}
-            endDate={filterEndDate}
-            periods={periods}
-          />
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={handleBackupExport}
-            onExportPdf={handleBackupExportPdf}
-            onExportCsv={handleBackupExportCsv}
-          />
-        </div>
-      </div>
+      <PageHeader
+        title={t("dashboard.title", "Dasbor Keuangan & Akuntansi")}
+        description={t(
+          "dashboard.subtitle",
+          "Pantau likuiditas kas, kinerja laba rugi, piutang, dan aktivitas jurnal perusahaan.",
+        )}
+        actions={
+          <>
+            <PeriodFilter
+              value={periodFilter}
+              onChange={(val, start, end) => {
+                setPeriodFilter(val);
+                setFilterStartDate(start ?? "");
+                setFilterEndDate(end ?? "");
+              }}
+              startDate={filterStartDate}
+              endDate={filterEndDate}
+              periods={periods}
+            />
+            <ExportDownloadMenu
+              label={t("common:action.export_download", "Unduh / Ekspor")}
+              onExportExcel={handleBackupExport}
+              onExportPdf={handleBackupExportPdf}
+              onExportCsv={handleBackupExportCsv}
+            />
+          </>
+        }
+      />
 
       {/* A2: Baris 1, Empat Kartu KPI Utama (KpiCard) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1045,10 +1043,14 @@ export function AdminDashboardPage() {
                     <div className="flex items-center justify-between gap-3 text-xs">
                       <Link
                         to={`/admin/proyek/${pb.id}`}
-                        className="font-semibold text-foreground hover:text-primary truncate"
-                        title={pb.name}
+                        className="font-semibold text-foreground hover:text-primary min-w-0 flex-1"
                       >
-                        {pb.code} &mdash; {pb.name}
+                        <TruncatedTooltipText
+                          as="span"
+                          tooltipText={`${pb.code} \u2014 ${pb.name}`}
+                        >
+                          {pb.code} &mdash; {pb.name}
+                        </TruncatedTooltipText>
                       </Link>
                       <span className="text-muted-foreground shrink-0 tabular-nums text-[11px]">
                         {formatCompactRupiah(pb.billed)} / {formatCompactRupiah(pb.contract)} ({pb.pct}%)
@@ -1079,14 +1081,18 @@ export function AdminDashboardPage() {
                 {outstandingReceivable > 0
                   ? agingBuckets.map((b) =>
                       b.amount > 0 ? (
-                        <div
+                        <ActionTooltip
                           key={b.label}
-                          style={{
-                            width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
-                          }}
-                          className={cn("h-full rounded-none", b.color)}
-                          title={`${b.label}: ${formatRupiah(b.amount)}`}
-                        />
+                          content={`${b.label}: ${formatRupiah(b.amount)}`}
+                          side="top"
+                        >
+                          <div
+                            style={{
+                              width: `${Math.max(4, (b.amount / outstandingReceivable) * 100)}%`,
+                            }}
+                            className={cn("h-full rounded-none", b.color)}
+                          />
+                        </ActionTooltip>
                       ) : null,
                     )
                   : null}
@@ -1168,9 +1174,9 @@ export function AdminDashboardPage() {
                       {j.journal_number}
                     </TableCell>
                     <TableCell className="px-3 text-left align-top text-xs sm:text-sm leading-5 text-foreground/90 max-w-sm">
-                      <p className="truncate" title={desc}>
+                      <TruncatedTooltipText as="p" tooltipText={desc}>
                         {desc}
-                      </p>
+                      </TruncatedTooltipText>
                     </TableCell>
                     <TableCell className="px-3 text-left align-top text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
                       {mainAcc ? (

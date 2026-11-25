@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader, TruncatedTooltipText } from "@/components/shared/page-header";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -302,38 +304,38 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {mode === "admin"
-              ? t("budgeting:admin.page_title")
-              : t("budgeting:user.page_title")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {mode === "admin"
-              ? t("budgeting:admin.page_desc")
-              : t("budgeting:user.page_desc")}
-          </p>
-        </div>
-        {mode === "admin" && selectedProjectId ? (
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <ExportDownloadMenu
-              label={t("common:action.export_download")}
-              onExportExcel={handleExportExcel}
-              onExportPdf={handleExportPdf}
-              onExportCsv={handleExportCsv}
-            />
-            <Button
-              type="button"
-              onClick={() => openBudgetEditor(false)}
-              className="shrink-0 cursor-pointer shadow-2xs"
-            >
-              <PlusIcon className="size-4" />
-              <span>{t("budgeting:admin.btn_set_budget")}</span>
-            </Button>
-          </div>
-        ) : null}
-      </div>
+      <PageHeader
+        title={
+          mode === "admin"
+            ? t("budgeting:admin.page_title")
+            : t("budgeting:user.page_title")
+        }
+        description={
+          mode === "admin"
+            ? t("budgeting:admin.page_desc")
+            : t("budgeting:user.page_desc")
+        }
+        actions={
+          mode === "admin" && selectedProjectId ? (
+            <>
+              <ExportDownloadMenu
+                label={t("common:action.export_download")}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onExportCsv={handleExportCsv}
+              />
+              <Button
+                type="button"
+                onClick={() => openBudgetEditor(false)}
+                className="shrink-0 cursor-pointer shadow-2xs"
+              >
+                <PlusIcon className="size-4" />
+                <span>{t("budgeting:admin.btn_set_budget")}</span>
+              </Button>
+            </>
+          ) : null
+        }
+      />
 
       {projects.length > 0 ? (
         <Card className="rounded-2xl border-border/80 bg-card px-5 py-3.5 shadow-2xs">
@@ -391,72 +393,42 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
 
       {/* Ringkasan KPI Anggaran Proyek */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("budgeting:common.kpi_ceiling")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalBudget)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {rows.length > 0
-                ? t("budgeting:common.kpi_ceiling_desc_active", { count: rows.length })
-                : t("budgeting:common.kpi_ceiling_desc_empty")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("budgeting:common.kpi_ceiling")}
+          displayValue={formatRupiah(totalBudget)}
+          subtext={
+            rows.length > 0
+              ? t("budgeting:common.kpi_ceiling_desc_active", { count: rows.length })
+              : t("budgeting:common.kpi_ceiling_desc_empty")
+          }
+          icon={WalletIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("budgeting:common.kpi_realization")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalActual)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">
-              {t("budgeting:common.kpi_realization_desc", { pct: totalAbsorptionPct })}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <TrendingUpIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("budgeting:common.kpi_realization")}
+          displayValue={formatRupiah(totalActual)}
+          subtext={t("budgeting:common.kpi_realization_desc", { pct: totalAbsorptionPct })}
+          icon={TrendingUpIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("budgeting:common.kpi_remaining")}
-            </p>
-            <p
-              className={`text-xl sm:text-2xl font-bold tracking-tight mt-1 tabular-nums ${
-                totalRemaining < 0
-                  ? "text-destructive"
-                  : "text-foreground"
-              }`}
-            >
-              {formatRupiah(totalRemaining)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {totalRemaining < 0
-                ? t("budgeting:common.kpi_remaining_desc_negative")
-                : t("budgeting:common.kpi_remaining_desc_positive")}
-            </p>
-          </div>
-          <div
-            className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${
-              totalRemaining < 0
-                ? "bg-destructive/10 text-destructive border-destructive/20"
-                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-            }`}
-          >
-            <PiggyBankIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("budgeting:common.kpi_remaining")}
+          displayValue={formatRupiah(totalRemaining)}
+          valueClassName={totalRemaining < 0 ? "text-destructive" : undefined}
+          subtext={
+            totalRemaining < 0
+              ? t("budgeting:common.kpi_remaining_desc_negative")
+              : t("budgeting:common.kpi_remaining_desc_positive")
+          }
+          icon={PiggyBankIcon}
+          iconTone={
+            totalRemaining < 0
+              ? "bg-destructive/10 text-destructive border-destructive/20"
+              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          }
+        />
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
@@ -651,13 +623,17 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                       >
                         <label
                           htmlFor={`alloc-${acc.id}`}
-                          className="sm:col-span-7 text-xs sm:text-sm font-medium text-foreground truncate"
-                          title={`${acc.code}: ${getLocalizedAccountName(acc, language)}`}
+                          className="sm:col-span-7 text-xs sm:text-sm font-medium text-foreground min-w-0"
                         >
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {acc.code}
-                          </span>{" "}
-                          &mdash; {getLocalizedAccountName(acc, language)}
+                          <TruncatedTooltipText
+                            as="span"
+                            tooltipText={`${acc.code}: ${getLocalizedAccountName(acc, language)}`}
+                          >
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {acc.code}
+                            </span>{" "}
+                            &mdash; {getLocalizedAccountName(acc, language)}
+                          </TruncatedTooltipText>
                         </label>
                         <div className="sm:col-span-5">
                           <NumberInput

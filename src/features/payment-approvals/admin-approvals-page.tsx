@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { GoogleDriveIcon } from "@/components/shared/google-drive-picker-dialog";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
@@ -392,81 +394,54 @@ export function AdminApprovalsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
-          </p>
-        </div>
-        <div className="shrink-0">
+      <PageHeader
+        title={t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
+        description={t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
+        actions={
           <ExportDownloadMenu
             label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* Ringkasan KPI Persetujuan & Pencairan */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pendingCount} {t("approvals:admin.unit_submissions", "Pengajuan")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {pendingCount > 0
-                ? t("approvals:admin.kpi_pending_desc_active", "Menunggu verifikasi & otorisasi bendahara")
-                : t("approvals:admin.kpi_pending_desc_empty", "Tidak ada antrean pengajuan baru")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ClockIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
+          value={pendingCount}
+          suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
+          subtext={
+            pendingCount > 0
+              ? t("approvals:admin.kpi_pending_desc_active", "Menunggu verifikasi & otorisasi bendahara")
+              : t("approvals:admin.kpi_pending_desc_empty", "Tidak ada antrean pengajuan baru")
+          }
+          icon={ClockIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {approvedUnpaidCount} {t("approvals:admin.unit_submissions", "Pengajuan")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {approvedUnpaidCount > 0
-                ? t("approvals:admin.kpi_ready_desc_active", "Menunggu realisasi transfer kas/bank")
-                : t("approvals:admin.kpi_ready_desc_empty", "Seluruh pengajuan disetujui telah cair")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
+          value={approvedUnpaidCount}
+          suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
+          subtext={
+            approvedUnpaidCount > 0
+              ? t("approvals:admin.kpi_ready_desc_active", "Menunggu realisasi transfer kas/bank")
+              : t("approvals:admin.kpi_ready_desc_empty", "Seluruh pengajuan disetujui telah cair")
+          }
+          icon={WalletIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalPaidAmount)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2Icon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
+          displayValue={formatRupiah(totalPaidAmount)}
+          subtext={t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}
+          icon={CheckCircle2Icon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+        />
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">

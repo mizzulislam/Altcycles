@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -36,10 +37,25 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  tooltip?: React.ReactNode;
+  tooltipSide?: "top" | "bottom" | "left" | "right";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      children,
+      title,
+      tooltip,
+      tooltipSide = "top",
+      ...props
+    },
+    ref,
+  ) => {
     const Comp = asChild ? Slot : "button";
     const isCancel =
       typeof children === "string" &&
@@ -49,7 +65,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       isCancel && (!variant || variant === "outline" || variant === "ghost")
         ? "hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/30 active:bg-rose-500/20"
         : "";
-    return (
+
+    const tooltipContent = tooltip ?? title;
+    const buttonNode = (
       <Comp
         className={cn(
           buttonVariants({ variant, size, className }),
@@ -61,6 +79,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </Comp>
     );
+
+    if (tooltipContent) {
+      return (
+        <ActionTooltip content={tooltipContent} side={tooltipSide}>
+          {buttonNode}
+        </ActionTooltip>
+      );
+    }
+
+    return buttonNode;
   },
 );
 Button.displayName = "Button";

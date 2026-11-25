@@ -43,6 +43,7 @@ import {
 import { listAuditLogs } from "@/lib/data-service";
 import { formatDateTimeID } from "@/lib/formatters";
 import type { AuditLogRow } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 25, 50, 100, 250] as const;
 
@@ -147,13 +148,13 @@ export function AuditTrailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+      <div className="min-w-0">
+        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("settings:audit.title", "Jejak Audit Sistem (Audit Trail)")}
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+        </TruncatedTooltipText>
+        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
           {t("settings:audit.subtitle", "Telusuri catatan historis perubahan data dan aktivitas penting pengguna yang terekam permanen.")}
-        </p>
+        </TruncatedTooltipText>
       </div>
 
       <Card className="overflow-hidden">

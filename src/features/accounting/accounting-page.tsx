@@ -11,7 +11,9 @@ import {
   ScrollTextIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
-import { JournalsPage } from "@/features/accounting/journals-page";
+import { JournalsPage, JOURNAL_TYPE_LABELS } from "@/features/accounting/journals-page";
+import { PageHeader } from "@/components/shared/page-header";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 
@@ -246,16 +248,10 @@ export function AccountingPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman Utama Siklus Akuntansi */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex-1 min-w-0 max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {t("accounting.title", "Siklus Akuntansi & Laporan Keuangan")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("accounting.subtitle", "Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan secara terpadu.")}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={t("accounting.title", "Siklus Akuntansi & Laporan Keuangan")}
+        description={t("accounting.subtitle", "Kelola seluruh tahapan siklus akuntansi dan pembukuan keuangan secara terpadu.")}
+      />
 
       {/* Navigasi Tab Siklus Akuntansi & Button Filter */}
       <div className="bg-card rounded-2xl p-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shadow-2xs border border-border/80 w-full">
@@ -271,26 +267,26 @@ export function AccountingPage() {
             const translatedDesc = t(`accounting:tabs.${tab.id}_desc`, tab.description);
 
             return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleTabChange(tab.id)}
-                className={cn(
-                  "shrink-0 h-10 inline-flex items-center gap-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                )}
-                title={translatedDesc}
-              >
-                <Icon
+              <ActionTooltip key={tab.id} content={translatedDesc} side="top">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
                   className={cn(
-                    "size-4 shrink-0 transition-colors",
-                    isActive ? "text-primary-foreground" : "text-muted-foreground",
+                    "shrink-0 h-10 inline-flex items-center gap-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                   )}
-                />
-                <span className="whitespace-nowrap">{translatedLabel}</span>
-              </button>
+                >
+                  <Icon
+                    className={cn(
+                      "size-4 shrink-0 transition-colors",
+                      isActive ? "text-primary-foreground" : "text-muted-foreground",
+                    )}
+                  />
+                  <span className="whitespace-nowrap">{translatedLabel}</span>
+                </button>
+              </ActionTooltip>
             );
           })}
         </div>

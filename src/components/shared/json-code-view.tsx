@@ -1,5 +1,6 @@
 import * as React from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 
 type TokenKind =
@@ -218,19 +219,22 @@ export function JsonCodeView({
         className,
       )}
     >
-      <button
-        type="button"
-        onClick={() => void handleCopy()}
-        title="Salin JSON"
-        aria-label="Salin JSON"
-        className="absolute right-2.5 top-2 z-10 inline-flex size-7 items-center justify-center rounded-lg border border-border/70 bg-background/85 text-muted-foreground opacity-0 backdrop-blur-xs transition-all hover:text-foreground group-hover:opacity-100 focus:opacity-100 cursor-pointer"
-      >
-        {copied ? (
-          <CheckIcon className="size-3.5 text-emerald-500" />
-        ) : (
-          <CopyIcon className="size-3.5" />
-        )}
-      </button>
+      <div className="absolute right-2.5 top-2 z-10">
+        <ActionTooltip content="Salin JSON" side="left">
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            aria-label="Salin JSON"
+            className="inline-flex size-7 items-center justify-center rounded-lg border border-border/70 bg-background/85 text-muted-foreground opacity-0 backdrop-blur-xs transition-all hover:text-foreground group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+          >
+            {copied ? (
+              <CheckIcon className="size-3.5 text-emerald-500" />
+            ) : (
+              <CopyIcon className="size-3.5" />
+            )}
+          </button>
+        </ActionTooltip>
+      </div>
 
       <div className="max-h-80 overflow-auto py-2.5 font-mono text-xs leading-relaxed">
         <div className="min-w-max">

@@ -18,6 +18,8 @@ import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -511,90 +513,65 @@ export function UserPaymentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("approvals:user.page_title")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("approvals:user.page_desc")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <ExportDownloadMenu
-            label={t("common:action.export_download")}
-            onExportExcel={handleExportExcel}
-            onExportPdf={handleExportPdf}
-            onExportCsv={handleExportCsv}
-          />
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-            className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
-          >
-            <PlusIcon className="size-4" />
-            <span>{t("approvals:user.btn_create")}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t("approvals:user.page_title")}
+        description={t("approvals:user.page_desc")}
+        actions={
+          <>
+            <ExportDownloadMenu
+              label={t("common:action.export_download")}
+              onExportExcel={handleExportExcel}
+              onExportPdf={handleExportPdf}
+              onExportCsv={handleExportCsv}
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+              className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
+            >
+              <PlusIcon className="size-4" />
+              <span>{t("approvals:user.btn_create")}</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Ringkasan KPI Pengajuan Pembayaran */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:user.kpi_pending")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {pendingCount} {t("approvals:user.unit_submissions")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {pendingCount > 0
-                ? t("approvals:user.kpi_pending_desc_active")
-                : t("approvals:user.kpi_pending_desc_empty")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <ClockIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:user.kpi_pending")}
+          value={pendingCount}
+          suffix={` ${t("approvals:user.unit_submissions")}`}
+          subtext={
+            pendingCount > 0
+              ? t("approvals:user.kpi_pending_desc_active")
+              : t("approvals:user.kpi_pending_desc_empty")
+          }
+          icon={ClockIcon}
+          iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:user.kpi_ready")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {approvedCount} {t("approvals:user.unit_submissions")}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {approvedCount > 0
-                ? t("approvals:user.kpi_ready_desc_active")
-                : t("approvals:user.kpi_ready_desc_empty")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
-            <WalletIcon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:user.kpi_ready")}
+          value={approvedCount}
+          suffix={` ${t("approvals:user.unit_submissions")}`}
+          subtext={
+            approvedCount > 0
+              ? t("approvals:user.kpi_ready_desc_active")
+              : t("approvals:user.kpi_ready_desc_empty")
+          }
+          icon={WalletIcon}
+          iconTone="bg-primary/10 text-primary dark:text-sky-400 border-primary/20"
+        />
 
-        <Card className="rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t("approvals:user.kpi_paid")}
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums">
-              {formatRupiah(totalPaidAmount)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {t("approvals:user.kpi_paid_desc")}
-            </p>
-          </div>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2Icon className="size-5" />
-          </div>
-        </Card>
+        <KpiCard
+          label={t("approvals:user.kpi_paid")}
+          displayValue={formatRupiah(totalPaidAmount)}
+          subtext={t("approvals:user.kpi_paid_desc")}
+          icon={CheckCircle2Icon}
+          iconTone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+        />
       </div>
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">

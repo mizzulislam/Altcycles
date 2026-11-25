@@ -60,6 +60,7 @@ import {
 import { formatDateTimeID } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type { ProfileRow, UserRole } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 const ALL_ROLES: { id: UserRole; label: string; descKey: string; fallbackDesc: string }[] = [
   { id: "super_admin", label: "Super Admin", descKey: "settings:users.role_desc_super_admin", fallbackDesc: "Pengelola Sistem & Akun" },
@@ -411,13 +412,13 @@ export function UsersManagementPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("settings:users.page_title", "Manajemen Akun & Peran Internal")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t("settings:users.page_desc", "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.")}
-          </p>
+          </TruncatedTooltipText>
         </div>
         <Button
           type="button"

@@ -51,6 +51,7 @@ import type {
   VendorRow,
 } from "@/types/database.types";
 import { FunctionalCurrencyCard, ExchangeRatesCard } from "./currency-settings-card";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 export function MasterReadonlyPage() {
   const { t, language } = useLanguage();
@@ -128,13 +129,13 @@ export function MasterReadonlyPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("settings:master_readonly.controls_title", "Pengaturan & Kontrol Akuntansi")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t("settings:master_readonly.controls_desc", "Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master.")}
-          </p>
+          </TruncatedTooltipText>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   BarChart3,
   BookOpen,
@@ -306,17 +307,19 @@ export function CommandPaletteDialog({
             />
             <div className="flex items-center gap-2 shrink-0">
               {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    inputRef.current?.focus();
-                  }}
-                  className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted/60 transition-colors cursor-pointer"
-                  title={t("common:action.reset", "Reset")}
-                >
-                  <X className="size-3.5" />
-                </button>
+                <ActionTooltip content={t("common:action.reset", "Reset")} side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    aria-label={t("common:action.reset", "Reset")}
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted/60 transition-colors cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </ActionTooltip>
               )}
               <kbd className="hidden sm:inline-flex items-center justify-center font-mono text-[10px] font-medium px-2 py-0.5 rounded-md border border-border/80 bg-muted/60 text-muted-foreground shadow-2xs select-none">
                 Esc

@@ -95,6 +95,7 @@ import type {
   PurchaseOrderRow,
   VendorRow,
 } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 const PO_STATUS_META: Record<
   PoStatus,
@@ -606,17 +607,17 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {mode === "admin"
               ? t("po:title", "Seluruh Purchase Order Pembelian Vendor")
               : t("po:my_title", "Purchase Order Pembelian Saya")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {mode === "admin"
               ? t("po:subtitle", "Kelola penerbitan, persetujuan status, dan dokumen purchase order vendor.")
               : t("po:my_subtitle", "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.")}
-          </p>
+          </TruncatedTooltipText>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           {mode === "admin" ? (

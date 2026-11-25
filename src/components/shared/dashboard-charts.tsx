@@ -1,5 +1,6 @@
 import * as React from "react";
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -71,18 +72,16 @@ export function ChartLegendRow({
       <div className="flex flex-wrap items-center justify-end gap-3 text-[11px] font-medium">
         {series.map((s) => {
           const isHidden = hiddenKeys?.has(s.key) ?? false;
-          return (
+          const legendTooltip = onToggleSeries
+            ? isHidden
+              ? `Tampilkan seri ${s.label}`
+              : `Sembunyikan seri ${s.label}`
+            : undefined;
+          const btnNode = (
             <button
               key={s.key}
               type="button"
               onClick={() => onToggleSeries?.(s.key)}
-              title={
-                onToggleSeries
-                  ? isHidden
-                    ? `Tampilkan seri ${s.label}`
-                    : `Sembunyikan seri ${s.label}`
-                  : undefined
-              }
               className={cn(
                 "inline-flex items-center gap-1.5 transition-opacity select-none",
                 onToggleSeries ? "cursor-pointer hover:opacity-80 active:scale-95" : "cursor-default",
@@ -97,6 +96,13 @@ export function ChartLegendRow({
                 {s.label}
               </span>
             </button>
+          );
+          return legendTooltip ? (
+            <ActionTooltip key={s.key} content={legendTooltip} side="top">
+              {btnNode}
+            </ActionTooltip>
+          ) : (
+            btnNode
           );
         })}
       </div>
@@ -239,23 +245,23 @@ export function ChartTypeSwitcher<T extends string>({
         const Icon = opt.icon;
         const active = opt.value === value;
         return (
-          <button
-            key={opt.value}
-            type="button"
-            title={opt.title ?? opt.label}
-            aria-pressed={active}
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-              active
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/60",
-            )}
-          >
-            {Icon ? <Icon className="size-3.5" /> : null}
-            <span>{opt.label}</span>
-          </button>
+          <ActionTooltip key={opt.value} content={opt.title ?? opt.label} side="top">
+            <button
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(opt.value)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                active
+                  ? "bg-primary text-primary-foreground shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/60",
+              )}
+            >
+              {Icon ? <Icon className="size-3.5" /> : null}
+              <span>{opt.label}</span>
+            </button>
+          </ActionTooltip>
         );
       })}
     </div>

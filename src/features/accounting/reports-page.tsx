@@ -54,6 +54,7 @@ import {
 import { TrialBalanceView } from "./reports/trial-balance-view";
 import { GeneralLedgerView } from "./reports/general-ledger-view";
 import { ReportsPrintContent } from "./reports/reports-print-content";
+import { PageHeader } from "@/components/shared/page-header";
 
 export type ActiveReportTab =
   | "buku_besar"
@@ -382,27 +383,21 @@ export function AccountingReportsPage({
   return (
     <div className="flex flex-col gap-6">
       {!hideHeader && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1 min-w-0 max-w-xl">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("accounting:reports.accrual_title", "Laporan Keuangan Akrual")}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              {t(
-                "accounting:reports.accrual_subtitle",
-                "Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.",
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
+        <PageHeader
+          title={t("accounting:reports.accrual_title", "Laporan Keuangan Akrual")}
+          description={t(
+            "accounting:reports.accrual_subtitle",
+            "Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.",
+          )}
+          actions={
             <ExportDownloadMenu
               label={t("common:action.export_download", "Unduh / Ekspor")}
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
             />
-          </div>
-        </div>
+          }
+        />
       )}
 
       {hideHeader && mode === "statements" && (

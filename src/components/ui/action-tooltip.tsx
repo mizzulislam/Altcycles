@@ -23,6 +23,7 @@ export function ActionTooltip({
   className,
   disabled = false,
 }: ActionTooltipProps) {
+  const tooltipId = React.useId();
   const [isVisible, setIsVisible] = React.useState(false);
   const [coords, setCoords] = React.useState<{ top: number; left: number }>({
     top: 0,
@@ -59,6 +60,10 @@ export function ActionTooltip({
       else top = rect.bottom;
     }
 
+    if (typeof window !== "undefined" && window.innerWidth > 0) {
+      left = Math.max(12, Math.min(left, window.innerWidth - 12));
+    }
+
     setCoords({ top, left });
   }, [side, align, offset]);
 
@@ -82,6 +87,12 @@ export function ActionTooltip({
   }, []);
 
   React.useEffect(() => {
+    if (disabled && isVisible) {
+      setIsVisible(false);
+    }
+  }, [disabled, isVisible]);
+
+  React.useEffect(() => {
     return () => {
       if (timeoutRef.current !== null) {
         window.clearTimeout(timeoutRef.current);
@@ -92,13 +103,20 @@ export function ActionTooltip({
   React.useEffect(() => {
     if (!isVisible) return;
     const handleScroll = () => calculatePosition();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        hide();
+      }
+    };
     window.addEventListener("scroll", handleScroll, true);
     window.addEventListener("resize", handleScroll);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleScroll);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isVisible, calculatePosition]);
+  }, [isVisible, calculatePosition, hide]);
 
   const getTransformClasses = () => {
     if (side === "top") {
@@ -133,6 +151,7 @@ export function ActionTooltip({
     <>
       <span
         ref={triggerRef}
+        aria-describedby={isVisible ? tooltipId : undefined}
         className="inline-flex max-w-full"
         onMouseEnter={show}
         onMouseLeave={hide}
@@ -145,14 +164,14 @@ export function ActionTooltip({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            id={tooltipId}
             style={{
               top: `${coords.top}px`,
               left: `${coords.left}px`,
             }}
             className={cn(
-              "fixed pointer-events-none z-[9999] whitespace-nowrap",
-              "rounded-full bg-white text-slate-900 border border-slate-200/90 shadow-xl",
-              "dark:bg-slate-900 dark:text-slate-100 dark:border-slate-800 dark:shadow-black/60",
+              "fixed pointer-events-none z-[9999] max-w-xs sm:max-w-md truncate",
+              "rounded-full bg-popover text-popover-foreground border border-border shadow-xl",
               "px-3.5 py-1.5 text-xs font-bold tracking-tight leading-none",
               "animate-in fade-in zoom-in-95 duration-150",
               getTransformClasses(),

@@ -20,6 +20,7 @@ import type { CustomerRow, ServiceProductRow, VendorRow } from "@/types/database
 import { VendorTabContent } from "./parties/vendor-tab-content";
 import { CustomerTabContent } from "./parties/customer-tab-content";
 import { ProductServiceTabContent } from "./parties/product-service-tab-content";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 export function PartiesMasterPage() {
   const { t } = useLanguage();
@@ -117,15 +118,15 @@ export function PartiesMasterPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1 min-w-0 max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("parties.title", "Master Data Vendor & Pelanggan")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t(
               "parties.subtitle",
               "Kelola direktori mitra vendor pengadaan, basis data pelanggan resmi, serta katalog produk dan layanan profesional perusahaan.",
             )}
-          </p>
+          </TruncatedTooltipText>
         </div>
       </div>
 

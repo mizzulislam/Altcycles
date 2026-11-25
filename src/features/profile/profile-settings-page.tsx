@@ -52,6 +52,7 @@ import {
   ROLE_LABELS,
 } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 type SettingsTab = "profil" | "personal" | "financial" | "account" | "notifications";
 
@@ -429,13 +430,13 @@ export function ProfileSettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+      <div className="min-w-0">
+        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("settings:profile.title")}
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+        </TruncatedTooltipText>
+        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
           {t("settings:profile.subtitle")}
-        </p>
+        </TruncatedTooltipText>
       </div>
 
       {/* =========================================================================

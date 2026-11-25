@@ -32,6 +32,7 @@ import { PeriodClosingDetailDialog } from "@/features/master-data/components/per
 import { PeriodClosingTable } from "@/features/master-data/components/period-closing-table";
 import { PeriodManualClosingDialog } from "@/features/master-data/components/period-manual-closing-dialog";
 import { PeriodReversingDialog } from "@/features/master-data/components/period-reversing-dialog";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
 
 export interface PeriodsPageProps {
   hideHeader?: boolean;
@@ -220,12 +221,12 @@ export function PeriodsPage({
       {!hideHeader ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1 min-w-0 max-w-2xl">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {t("accounting:closing.page_title", "Tutup Buku & Periode Akuntansi")}
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+            </TruncatedTooltipText>
+            <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
               {t("accounting:closing.page_subtitle", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.")}
-            </p>
+            </TruncatedTooltipText>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <Button

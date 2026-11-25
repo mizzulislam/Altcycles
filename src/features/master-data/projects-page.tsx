@@ -86,6 +86,8 @@ import type {
   ProjectRow,
   ProjectStatus,
 } from "@/types/database.types";
+import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 const PROJECT_STATUS_META: Record<
   ProjectStatus,
@@ -344,16 +346,16 @@ export function ProjectsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("projects.title", "Master Proyek & Penugasan Tim")}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+          </TruncatedTooltipText>
+          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t(
               "projects.subtitle",
               "Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.",
             )}
-          </p>
+          </TruncatedTooltipText>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <ExportDownloadMenu
@@ -582,33 +584,36 @@ export function ProjectsPage() {
                       <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
                         {isEditMode ? (
                           <div className="flex items-center justify-center gap-1 -my-1.5">
+                            <ActionTooltip content={t("common:action.view")}>
                             <button
                               type="button"
                               onClick={() => setViewProject(p)}
                               className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                              title={t("common:action.view")}
                               aria-label={t("common:action.view")}
                             >
                               <EyeIcon className="size-4" />
                             </button>
+                            </ActionTooltip>
+                            <ActionTooltip content={t("common:action.edit")}>
                             <button
                               type="button"
                               onClick={() => openEdit(p)}
                               className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                              title={t("common:action.edit")}
                               aria-label={t("common:action.edit")}
                             >
                               <PencilIcon className="size-4" />
                             </button>
+                            </ActionTooltip>
+                            <ActionTooltip content={t("common:action.delete")}>
                             <button
                               type="button"
                               onClick={() => setDeleteTargetIds([p.id])}
                               className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                              title={t("common:action.delete")}
                               aria-label={t("common:action.delete")}
                             >
                               <Trash2Icon className="size-4" />
                             </button>
+                            </ActionTooltip>
                           </div>
                         ) : (
                           <div className="flex justify-center items-center -my-1.5">

@@ -52,7 +52,6 @@ export function ThemeToggle({
       type="button"
       onClick={toggleTheme}
       aria-label={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
-      title={isDark ? "Mode Terang (Klik untuk beralih)" : "Mode Gelap (Klik untuk beralih)"}
       style={floatingStyle}
       className={`inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border ${
         isDark

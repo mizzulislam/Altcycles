@@ -33,6 +33,7 @@ import type {
   JournalLineRow,
   JournalRow,
 } from "@/types/database.types";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 function formatJournalDate(val: string | null | undefined, lang: "id" | "en" = "id"): string {
   if (!val) return "-";
@@ -426,33 +427,36 @@ export function PeriodClosingTable({
                     {isEditMode && (
                       <TableCell className="align-top py-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
+                          <ActionTooltip content={t("accounting:closing.view_detail_title", "Lihat detail transaksi")}>
                           <button
                             type="button"
                             onClick={() => onViewDetailJournal(j)}
                             className="p-1.5 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-emerald-500/20"
-                            title={t("accounting:closing.view_detail_title", "Lihat detail transaksi")}
                             aria-label={t("accounting:closing.view_detail_title", "Lihat detail transaksi")}
                           >
                             <EyeIcon className="size-4" />
                           </button>
+                          </ActionTooltip>
+                          <ActionTooltip content={t("accounting:closing.edit_tx_title", "Edit transaksi")}>
                           <button
                             type="button"
                             onClick={() => onEditClosingJournal(j)}
                             className="p-1.5 text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-sky-500/20"
-                            title={t("accounting:closing.edit_tx_title", "Edit transaksi")}
                             aria-label={t("accounting:closing.edit_tx_title", "Edit transaksi")}
                           >
                             <PencilIcon className="size-4" />
                           </button>
+                          </ActionTooltip>
+                          <ActionTooltip content={t("accounting:closing.delete_tx_title", "Hapus transaksi")}>
                           <button
                             type="button"
                             onClick={() => onDeleteSingleClosing(j)}
                             className="p-1.5 text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                            title={t("accounting:closing.delete_tx_title", "Hapus transaksi")}
                             aria-label={t("accounting:closing.delete_tx_title", "Hapus transaksi")}
                           >
                             <Trash2Icon className="size-4" />
                           </button>
+                          </ActionTooltip>
                         </div>
                       </TableCell>
                     )}
