@@ -18,7 +18,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,6 @@ import {
 import { Spinner } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -48,6 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { FixedAssetDialog } from "./coa/fixed-asset-dialog";
 import {
   deleteAccount,
   deletePeriod,
@@ -1312,308 +1311,17 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onConfirm={handleDeleteAccount}
       />
 
-      {/* Dialog Form Tambah / Ubah Aset Tetap (Item 3) */}
-      <Dialog open={assetDialogOpen} onOpenChange={setAssetDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {assetForm.id
-                ? t(
-                    "accounting:fixed_assets.dialog_edit_title",
-                    "Ubah Data Aset Tetap",
-                  )
-                : t(
-                    "accounting:fixed_assets.dialog_add_title",
-                    "Tambah Aset Tetap Baru",
-                  )}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSaveAsset}>
-            <FieldGroup className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="fa-code" required>
-                    {t("accounting:fixed_assets.field_code", "Kode Aset")}
-                  </FieldLabel>
-                  <Input
-                    id="fa-code"
-                    required
-                    value={assetForm.asset_code}
-                    onChange={(e) =>
-                      setAssetForm({ ...assetForm, asset_code: e.target.value })
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fa-name" required>
-                    {t("accounting:fixed_assets.field_name", "Nama Aset Tetap")}
-                  </FieldLabel>
-                  <Input
-                    id="fa-name"
-                    required
-                    placeholder={t(
-                      "accounting:fixed_assets.field_name_ph",
-                      "Contoh: MacBook Pro M3 Engineering",
-                    )}
-                    value={assetForm.asset_name}
-                    onChange={(e) =>
-                      setAssetForm({ ...assetForm, asset_name: e.target.value })
-                    }
-                  />
-                </Field>
-              </div>
+      {/* Dialog Form Tambah / Ubah Aset Tetap (Item 3 - Modular) */}
+      <FixedAssetDialog
+        open={assetDialogOpen}
+        onOpenChange={setAssetDialogOpen}
+        form={assetForm}
+        setForm={setAssetForm}
+        accounts={accounts}
+        saving={savingAsset}
+        onSubmit={handleSaveAsset}
+      />
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field>
-                  <FieldLabel htmlFor="fa-acq-date" required>
-                    {t(
-                      "accounting:fixed_assets.field_acq_date",
-                      "Tanggal Perolehan",
-                    )}
-                  </FieldLabel>
-                  <DatePicker
-                    id="fa-acq-date"
-                    value={assetForm.acquisition_date}
-                    onChange={(acquisition_date) =>
-                      setAssetForm({ ...assetForm, acquisition_date })
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fa-cost" required>
-                    {t(
-                      "accounting:fixed_assets.field_cost",
-                      "Harga Perolehan (Rp)",
-                    )}
-                  </FieldLabel>
-                  <NumberInput
-                    id="fa-cost"
-                    allowDecimal={false}
-                    min={0}
-                    required
-                    value={assetForm.acquisition_cost}
-                    onValueChange={(acquisition_cost) =>
-                      setAssetForm({ ...assetForm, acquisition_cost })
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fa-salvage" required>
-                    {t(
-                      "accounting:fixed_assets.field_salvage",
-                      "Nilai Sisa / Residu (Rp)",
-                    )}
-                  </FieldLabel>
-                  <NumberInput
-                    id="fa-salvage"
-                    allowDecimal={false}
-                    min={0}
-                    required
-                    value={assetForm.salvage_value}
-                    onValueChange={(salvage_value) =>
-                      setAssetForm({ ...assetForm, salvage_value })
-                    }
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field>
-                  <FieldLabel htmlFor="fa-life" required>
-                    {t(
-                      "accounting:fixed_assets.field_life_months",
-                      "Umur Manfaat (Bulan)",
-                    )}
-                  </FieldLabel>
-                  <NumberInput
-                    id="fa-life"
-                    allowDecimal={false}
-                    min={1}
-                    max={600}
-                    required
-                    value={assetForm.useful_life_months}
-                    onValueChange={(useful_life_months) =>
-                      setAssetForm({
-                        ...assetForm,
-                        useful_life_months: Math.max(1, useful_life_months),
-                      })
-                    }
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fa-status">
-                    {t("accounting:fixed_assets.field_status", "Status Aset")}
-                  </FieldLabel>
-                  <Select
-                    value={assetForm.status}
-                    onValueChange={(val) =>
-                      setAssetForm({
-                        ...assetForm,
-                        status: val as FixedAssetStatus,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="fa-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="active">
-                          {t("accounting:fixed_assets.status_active", "Aktif")}
-                        </SelectItem>
-                        <SelectItem value="fully_depreciated">
-                          {t(
-                            "accounting:fixed_assets.status_fully_depreciated",
-                            "Disusutkan Penuh",
-                          )}
-                        </SelectItem>
-                        <SelectItem value="disposed">
-                          {t("accounting:fixed_assets.status_disposed", "Dilepas")}
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="fa-disp-date">
-                    {t(
-                      "accounting:fixed_assets.field_disposed_date",
-                      "Tanggal Pelepasan (Opsional)",
-                    )}
-                  </FieldLabel>
-                  <DatePicker
-                    id="fa-disp-date"
-                    value={assetForm.disposed_date}
-                    onChange={(disposed_date) =>
-                      setAssetForm({ ...assetForm, disposed_date })
-                    }
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field>
-                  <FieldLabel htmlFor="fa-acc-asset" required>
-                    {t(
-                      "accounting:fixed_assets.field_asset_account",
-                      "Akun Aset Tetap",
-                    )}
-                  </FieldLabel>
-                  <Select
-                    value={assetForm.asset_account_id}
-                    onValueChange={(asset_account_id) =>
-                      setAssetForm({ ...assetForm, asset_account_id })
-                    }
-                  >
-                    <SelectTrigger id="fa-acc-asset">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {accounts
-                          .filter(
-                            (a) => a.account_type === "asset" && a.is_postable,
-                          )
-                          .map((a) => (
-                            <SelectItem key={a.id} value={a.id}>
-                              {a.code} - {getLocalizedAccountName(a, language)}
-                            </SelectItem>
-                          ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="fa-acc-accum" required>
-                    {t(
-                      "accounting:fixed_assets.field_accum_account",
-                      "Akun Akumulasi Penyusutan",
-                    )}
-                  </FieldLabel>
-                  <Select
-                    value={assetForm.accum_depr_account_id}
-                    onValueChange={(accum_depr_account_id) =>
-                      setAssetForm({ ...assetForm, accum_depr_account_id })
-                    }
-                  >
-                    <SelectTrigger id="fa-acc-accum">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {accounts
-                          .filter(
-                            (a) =>
-                              (a.account_type === "contra_asset" ||
-                                a.account_type === "asset") &&
-                              a.is_postable,
-                          )
-                          .map((a) => (
-                            <SelectItem key={a.id} value={a.id}>
-                              {a.code} - {getLocalizedAccountName(a, language)}
-                            </SelectItem>
-                          ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="fa-acc-exp" required>
-                    {t(
-                      "accounting:fixed_assets.field_expense_account",
-                      "Akun Beban Penyusutan",
-                    )}
-                  </FieldLabel>
-                  <Select
-                    value={assetForm.expense_account_id}
-                    onValueChange={(expense_account_id) =>
-                      setAssetForm({ ...assetForm, expense_account_id })
-                    }
-                  >
-                    <SelectTrigger id="fa-acc-exp">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {accounts
-                          .filter(
-                            (a) => a.account_type === "expense" && a.is_postable,
-                          )
-                          .map((a) => (
-                            <SelectItem key={a.id} value={a.id}>
-                              {a.code} - {getLocalizedAccountName(a, language)}
-                            </SelectItem>
-                          ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setAssetDialogOpen(false)}
-                  disabled={savingAsset}
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit" disabled={savingAsset}>
-                  {savingAsset
-                    ? t("common:saving", "Menyimpan...")
-                    : t(
-                        "accounting:fixed_assets.btn_save_asset",
-                        "Simpan Aset Tetap",
-                      )}
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog Konfirmasi Hapus Aset Tetap */}
       <ConfirmActionDialog
