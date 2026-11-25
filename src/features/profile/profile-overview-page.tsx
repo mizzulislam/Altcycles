@@ -214,14 +214,6 @@ export function ProfileOverviewPage() {
           )}
           titleClassName="text-sm sm:text-base font-bold"
           headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
-          action={
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="font-medium text-[11px] sm:text-xs">
-                {t("settings:profile_overview.active_status", "Sesi Terautentikasi")}
-              </span>
-            </div>
-          }
         />
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-wrap gap-2.5 sm:gap-3">
@@ -273,14 +265,6 @@ export function ProfileOverviewPage() {
           )}
           titleClassName="text-sm sm:text-base font-bold"
           headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
-          action={
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <ShieldCheckIcon className="size-3.5 text-emerald-500 shrink-0" />
-              <span className="font-medium text-[11px] sm:text-xs">
-                {t("settings:profile_overview.secured_data", "Enkripsi & Masking Aktif")}
-              </span>
-            </div>
-          }
         />
         <CardContent className="p-5 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
