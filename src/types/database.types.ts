@@ -157,6 +157,8 @@ export type InvoiceDocStatus = "draft" | "issued" | "cancelled";
 export type InvoicePaymentStatus = "unpaid" | "partial" | "paid" | "cancelled";
 export type ProfitSharingStatus = "draft_simulation" | "finalized";
 
+export type MaritalStatus = "single" | "married" | "widowed";
+
 export type ProfileRow = {
   id: string;
   full_name: string;
@@ -173,6 +175,8 @@ export type ProfileRow = {
   bank_account_number?: string | null;
   bank_account_holder?: string | null;
   signature_storage_path?: string | null;
+  marital_status?: MaritalStatus | null;
+  dependents_count?: number | null;
   is_active: boolean;
   last_login_at: string | null;
   created_by: string | null;

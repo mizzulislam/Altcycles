@@ -8,7 +8,7 @@ import {
 } from "@/lib/formatters";
 import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
-import type { ProfileRow, PurchaseOrderRow, UserRole } from "@/types/database.types";
+import type { MaritalStatus, ProfileRow, PurchaseOrderRow, UserRole } from "@/types/database.types";
 import { appendDemoAudit, demoStore, getDemoActor } from "./demo-store";
 import { readLocalJson, writeLocalJson } from "./storage-helpers";
 
@@ -21,6 +21,8 @@ type ProfileExtFields = Pick<
   | "bank_account_number"
   | "bank_account_holder"
   | "signature_storage_path"
+  | "marital_status"
+  | "dependents_count"
 >;
 
 function readProfileExtMap(): Record<string, Partial<ProfileExtFields>> {
@@ -61,6 +63,16 @@ export function getMergedProfileFields(
       ext.signature_storage_path ??
       demoMatch?.signature_storage_path ??
       null,
+    marital_status:
+      profile.marital_status ??
+      ext.marital_status ??
+      demoMatch?.marital_status ??
+      "single",
+    dependents_count:
+      profile.dependents_count ??
+      ext.dependents_count ??
+      demoMatch?.dependents_count ??
+      0,
   };
 }
 
@@ -120,6 +132,8 @@ export async function updateMyProfile(payload: {
   bankAccountNumber?: string | null;
   bankAccountHolder?: string | null;
   signatureStoragePath?: string | null;
+  maritalStatus?: MaritalStatus | null;
+  dependentsCount?: number | null;
 }): Promise<ProfileRow> {
   if (!payload.fullName.trim()) {
     throw new Error("Nama lengkap wajib diisi.");
@@ -154,6 +168,18 @@ export async function updateMyProfile(payload: {
       ? payload.signatureStoragePath?.trim() || null
       : undefined;
 
+  const normalizedMaritalStatus =
+    payload.maritalStatus !== undefined
+      ? (payload.maritalStatus as MaritalStatus) || "single"
+      : undefined;
+
+  const normalizedDependents =
+    payload.dependentsCount !== undefined && payload.dependentsCount !== null
+      ? Math.max(0, Math.min(3, Math.floor(payload.dependentsCount)))
+      : payload.dependentsCount === null
+        ? 0
+        : undefined;
+
   const syncExtAndDemo = (userId: string, baseRow?: Partial<ProfileRow>) => {
     const extPatch: Partial<ProfileExtFields> = {};
     if (normalizedNpwp !== undefined) extPatch.npwp = normalizedNpwp;
@@ -162,6 +188,12 @@ export async function updateMyProfile(payload: {
     if (normalizedBankHolder !== undefined) extPatch.bank_account_holder = normalizedBankHolder;
     if (normalizedSignaturePath !== undefined) {
       extPatch.signature_storage_path = normalizedSignaturePath;
+    }
+    if (normalizedMaritalStatus !== undefined) {
+      extPatch.marital_status = normalizedMaritalStatus;
+    }
+    if (normalizedDependents !== undefined) {
+      extPatch.dependents_count = normalizedDependents;
     }
     if (Object.keys(extPatch).length > 0) {
       saveProfileExt(userId, extPatch);
@@ -203,6 +235,12 @@ export async function updateMyProfile(payload: {
     if (normalizedSignaturePath !== undefined) {
       actor.signature_storage_path = normalizedSignaturePath;
     }
+    if (normalizedMaritalStatus !== undefined) {
+      actor.marital_status = normalizedMaritalStatus;
+    }
+    if (normalizedDependents !== undefined) {
+      actor.dependents_count = normalizedDependents;
+    }
     actor.updated_at = new Date().toISOString();
     syncExtAndDemo(actor.id, actor);
     appendDemoAudit(
@@ -239,6 +277,12 @@ export async function updateMyProfile(payload: {
     ...(normalizedSignaturePath !== undefined
       ? { p_signature_storage_path: normalizedSignaturePath ?? "" }
       : {}),
+    ...(normalizedMaritalStatus !== undefined
+      ? { p_marital_status: normalizedMaritalStatus }
+      : {}),
+    ...(normalizedDependents !== undefined
+      ? { p_dependents_count: normalizedDependents }
+      : {}),
   };
 
   let { data, error } = await supabase.rpc("update_my_profile", extendedRpcArgs);
@@ -247,7 +291,8 @@ export async function updateMyProfile(payload: {
     (error.message.includes("function") ||
       error.message.includes("schema cache") ||
       error.message.includes("p_npwp") ||
-      error.message.includes("p_signature"))
+      error.message.includes("p_signature") ||
+      error.message.includes("p_marital"))
   ) {
     const fallbackRes = await supabase.rpc("update_my_profile", baseRpcArgs);
     data = fallbackRes.data;

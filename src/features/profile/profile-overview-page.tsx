@@ -21,10 +21,12 @@ import { useLanguage } from "@/lib/i18n";
 import {
   formatDateTimeI18n,
   formatNpwpDisplay,
+  formatRupiah,
   maskBankAccountNumber,
   maskNpwp,
   ROLE_LABELS,
 } from "@/lib/formatters";
+import { getPtkpInfo } from "@/lib/tax-calculation";
 import { getRoleShortName } from "@/components/layout/nav-structure";
 import { cn } from "@/lib/utils";
 
@@ -99,6 +101,11 @@ export function ProfileOverviewPage() {
 
   const username =
     profile.username || (profile.email ? (profile.email.split("@")[0] ?? "user").toLowerCase() : "user");
+
+  const ptkpInfo = React.useMemo(
+    () => getPtkpInfo(profile.marital_status, profile.dependents_count),
+    [profile.marital_status, profile.dependents_count],
+  );
 
   const sessionTickerItems = React.useMemo(() => {
     const raw = profile.last_login_at || profile.updated_at;
@@ -267,7 +274,7 @@ export function ProfileOverviewPage() {
           headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
         />
         <CardContent className="p-5 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
             <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-primary/30 transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
               <div className="flex items-center justify-between gap-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -310,6 +317,28 @@ export function ProfileOverviewPage() {
                     : maskNpwp(profile.npwp)
                   : t("settings:profile_overview.not_configured", "Belum diatur")}
               </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-border transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
+              <div className="flex items-center justify-between gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("settings:profile_overview.label_ptkp", "Status PTKP")}
+                </p>
+                <span className="text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/10 border border-primary/25 px-1.5 py-0.5 rounded uppercase">
+                  TER {ptkpInfo.terCategory}
+                </span>
+              </div>
+              <div>
+                <p
+                  data-testid="overview-ptkp-value"
+                  className="text-sm sm:text-base font-bold text-foreground mt-1.5 tracking-tight truncate"
+                >
+                  {ptkpInfo.code}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 truncate font-mono">
+                  {formatRupiah(ptkpInfo.annualValue)}/th
+                </p>
+              </div>
             </div>
 
             <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-border transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
