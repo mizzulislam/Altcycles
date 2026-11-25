@@ -83,7 +83,7 @@ export function getNavStructureForRole(
           type: "item",
           to: "/super-admin/profil-perusahaan",
           key: "nav.company_profile",
-          label: translate("nav.company_profile", "Profil Perusahaan (Altvira)"),
+          label: translate("nav.company_profile", "Profil Perusahaan"),
           icon: Building2Icon,
         },
         {

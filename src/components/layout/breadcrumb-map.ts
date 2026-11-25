@@ -43,7 +43,7 @@ export function getHeaderBreadcrumbs(
     "/user/pembayaran": translate("nav.my_payments", "Pengajuan Pembayaran"),
     "/user/anggaran": translate("nav.my_budget", "Budgeting Proyek"),
     "/super-admin/dashboard": translate("nav.dashboard_system", "Dashboard Sistem"),
-    "/super-admin/profil-perusahaan": translate("nav.company_profile", "Profil Perusahaan (Altvira)"),
+    "/super-admin/profil-perusahaan": translate("nav.company_profile", "Profil Perusahaan"),
     "/super-admin/administrasi": translate("nav.admin_settings", "Administrasi & Penomoran"),
     "/super-admin/pengguna": translate("nav.users_management", "Manajemen Pengguna"),
     "/super-admin/konfigurasi": translate("nav.accounting_controls", "Konfigurasi Sistem"),

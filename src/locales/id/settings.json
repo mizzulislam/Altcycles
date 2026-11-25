@@ -1,7 +1,7 @@
 {
   "company": {
-    "page_title": "Profil Perusahaan (Altvira)",
-    "page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan & paraf, akun sosial media footer dokumen, serta status perpajakan.",
+    "page_title": "Profil Perusahaan",
+    "page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.",
     "tab_identity": "Identitas & Logo",
     "tab_accounts": "Rekening & TTD",
     "tab_social": "Sosial Media Footer",
@@ -118,6 +118,19 @@
     "confirm_pkp_activate_desc": "Setelah diaktifkan, invoice baru akan menyertakan perhitungan PPN. Perubahan ini dicatat pada Audit Trail.",
     "confirm_pkp_deactivate_desc": "Invoice baru akan kembali diterbitkan tanpa PPN sesuai status belum PKP.",
     "toast_tax_updated": "Status pengaturan pajak berhasil diperbarui.",
+    "social_error_required": "Setiap akun sosial media wajib memiliki Platform dan Username/Handle.",
+    "social_error_invalid_url": "Format URL sosial media tidak valid. Gunakan awalan https:// atau http://.",
+    "social_error_duplicate": "Akun sosial media duplikat terdeteksi untuk {{platform}} ({{username}}).",
+    "pkp_proof_label": "Dokumen Bukti Pengukuhan PKP (SPPKP)",
+    "pkp_proof_desc": "Wajib diunggah untuk mengaktifkan status PKP (format PDF, JPG, atau PNG, maks. 5 MB).",
+    "pkp_proof_upload_btn": "Unggah Bukti PKP",
+    "pkp_proof_replace_btn": "Ganti Bukti",
+    "pkp_proof_view_btn": "Lihat Bukti",
+    "pkp_proof_default_name": "Surat_Pengukuhan_PKP.pdf",
+    "pkp_proof_missing_notice": "Belum ada dokumen bukti pengukuhan PKP yang diunggah. Unggah berkas bukti (PDF/JPG/PNG maks. 5 MB) terlebih dahulu sebelum mengaktifkan status PKP.",
+    "pkp_proof_required_toast": "Wajib mengunggah bukti pengukuhan PKP (PDF/JPG/PNG maks. 5 MB) sebelum mengaktifkan status PKP.",
+    "pkp_proof_uploaded_toast": "Bukti pengukuhan PKP berhasil diunggah dan disimpan.",
+    "pkp_proof_upload_error": "Gagal mengunggah bukti pengukuhan PKP.",
     "loading": "Memuat profil perusahaan..."
   },
   "admin_settings": {

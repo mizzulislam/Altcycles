@@ -1,8 +1,11 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  AlertCircleIcon,
   Building2Icon,
   CheckCircle2Icon,
+  ExternalLinkIcon,
+  FileTextIcon,
   LandmarkIcon,
   Loader2Icon,
   PlusIcon,
@@ -11,6 +14,7 @@ import {
   Share2Icon,
   ShieldCheckIcon,
   Trash2Icon,
+  UploadCloudIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
@@ -45,9 +49,13 @@ import {
   getNormalizedSocialLinks,
   SOCIAL_PLATFORM_OPTIONS,
 } from "@/lib/asset-utils";
-import { getCompanyProfile, updateCompanyProfile } from "@/lib/data-service";
+import {
+  getCompanyProfile,
+  updateCompanyProfile,
+  uploadCompanyPkpProof,
+} from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
-import { formatRupiah, roundRupiah } from "@/lib/formatters";
+import { formatDateTimeI18n, formatRupiah, roundRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type {
   BankAccountEntry,
@@ -58,7 +66,7 @@ import type {
 type CompanyTab = "identitas" | "keuangan" | "sosmed" | "pajak";
 
 export function CompanyProfilePage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab") as CompanyTab | null;
   const activeTab: CompanyTab =
@@ -72,6 +80,8 @@ export function CompanyProfilePage() {
 
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [uploadingPkpProof, setUploadingPkpProof] = React.useState(false);
+  const pkpFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
   const [bankAccounts, setBankAccounts] = React.useState<BankAccountEntry[]>([]);
   const [socials, setSocials] = React.useState<SocialMediaEntry[]>([]);
@@ -119,6 +129,66 @@ export function CompanyProfilePage() {
   async function handleSaveCompany(e: React.FormEvent) {
     e.preventDefault();
     if (!company) return;
+
+    // Validasi sosial media di klien (Item 6)
+    const seenSocials = new Set<string>();
+    const cleanedSocials: SocialMediaEntry[] = [];
+    for (let i = 0; i < socials.length; i++) {
+      const s = socials[i]!;
+      const platform = (s.platform || "").trim();
+      const username = (s.username || "").trim();
+      const url = (s.url || "").trim();
+      if (!platform || !username) {
+        toast.error(
+          t(
+            "settings:company.social_error_required",
+            `Sosial Media #${i + 1}: Platform dan Username/Handle wajib diisi.`,
+          ),
+        );
+        return;
+      }
+      if (url && !/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url)) {
+        toast.error(
+          t(
+            "settings:company.social_error_invalid_url",
+            `Sosial Media #${i + 1}: Format URL tidak valid. Gunakan awalan https:// atau http://.`,
+          ),
+        );
+        return;
+      }
+      const dedupKey = `${platform.toLowerCase()}::${username.toLowerCase()}`;
+      if (seenSocials.has(dedupKey)) {
+        toast.error(
+          t("settings:company.social_error_duplicate", {
+            platform,
+            username,
+            defaultValue: `Akun sosial media duplikat terdeteksi untuk ${platform} (${username}).`,
+          }),
+        );
+        return;
+      }
+      seenSocials.add(dedupKey);
+      cleanedSocials.push({
+        platform,
+        username,
+        url: url || undefined,
+      });
+    }
+
+    // Validasi bukti PKP saat status PKP aktif (Item 7)
+    if (
+      company.pkp_enabled &&
+      (!company.pkp_proof_storage_path || !company.pkp_proof_storage_path.trim())
+    ) {
+      toast.error(
+        t(
+          "settings:company.pkp_proof_required_toast",
+          "Wajib mengunggah bukti pengukuhan PKP (PDF/JPG/PNG maks. 5 MB) sebelum menyimpan status PKP aktif.",
+        ),
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       const cleanedBanks = (bankAccounts.length > 0
@@ -153,19 +223,22 @@ export function CompanyProfilePage() {
         signer_title: company.signer_title.trim(),
         tax_id_number: (company.tax_id_number ?? "").trim() || null,
         signer_signature_path: company.signer_signature_path ?? null,
-        signer_paraf_path: company.signer_paraf_path ?? null,
-        social_links_json: socials.map((s) => ({
-          platform: s.platform.trim() || "Instagram",
-          username: s.username.trim(),
-          url: s.url?.trim() || undefined,
-        })),
+        social_links_json: cleanedSocials,
         ppn_rate: company.ppn_rate,
+        pkp_proof_storage_path: company.pkp_proof_storage_path ?? null,
+        pkp_proof_file_name: company.pkp_proof_file_name ?? null,
+        pkp_proof_mime_type: company.pkp_proof_mime_type ?? null,
+        pkp_proof_size_bytes: company.pkp_proof_size_bytes ?? null,
+        pkp_proof_uploaded_at: company.pkp_proof_uploaded_at ?? null,
       });
       setCompany(updated);
       setBankAccounts(normalizeBankAccounts(updated));
       setSocials(getNormalizedSocialLinks(updated));
       toast.success(
-        "Profil perusahaan Altvira berhasil disimpan dan dicatat ke Audit Trail.",
+        t(
+          "settings:company.toast_saved",
+          "Profil perusahaan berhasil diperbarui.",
+        ),
       );
     } catch (err) {
       toast.error(
@@ -173,6 +246,43 @@ export function CompanyProfilePage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleUploadPkpProofFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !company) return;
+    setUploadingPkpProof(true);
+    try {
+      const uploaded = await uploadCompanyPkpProof(file);
+      const updated = await updateCompanyProfile({
+        pkp_proof_storage_path: uploaded.storagePath,
+        pkp_proof_file_name: uploaded.fileName,
+        pkp_proof_mime_type: uploaded.mimeType,
+        pkp_proof_size_bytes: uploaded.sizeBytes,
+        pkp_proof_uploaded_at: uploaded.uploadedAt,
+      });
+      setCompany(updated);
+      toast.success(
+        t(
+          "settings:company.pkp_proof_uploaded_toast",
+          "Bukti pengukuhan PKP berhasil diunggah dan disimpan.",
+        ),
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t(
+              "settings:company.pkp_proof_upload_error",
+              "Gagal mengunggah bukti pengukuhan PKP.",
+            ),
+      );
+    } finally {
+      setUploadingPkpProof(false);
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   }
 
@@ -214,15 +324,24 @@ export function CompanyProfilePage() {
     ? roundRupiah((sampleSubtotal * company.ppn_rate) / 100)
     : 0;
   const sampleTotal = sampleSubtotal + samplePpn;
+  const hasPkpProof = Boolean(
+    company.pkp_proof_storage_path && company.pkp_proof_storage_path.trim(),
+  );
+  const isPkpProofImage = Boolean(
+    (company.pkp_proof_mime_type &&
+      company.pkp_proof_mime_type.startsWith("image/")) ||
+      (company.pkp_proof_storage_path &&
+        /^data:image\//i.test(company.pkp_proof_storage_path)),
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {t("company.page_title", "Profil Perusahaan (Altvira)")}
+          {t("settings:company.page_title", "Profil Perusahaan")}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          {t("company.page_desc", "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan & paraf, akun sosial media footer dokumen, serta status perpajakan.")}
+          {t("settings:company.page_desc", "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.")}
         </p>
       </div>
 
@@ -615,72 +734,69 @@ export function CompanyProfilePage() {
                   })}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <Field>
-                    <FieldLabel htmlFor="cp-signer" required className="text-xs font-semibold">
-                      {t("settings:company.default_signer_name", "Nama Penandatangan Default")}
-                    </FieldLabel>
-                    <Input
-                      id="cp-signer"
-                      required
-                      value={company.signer_name}
-                      onChange={(e) =>
-                        setCompany({ ...company, signer_name: e.target.value })
-                      }
-                      className="text-xs h-9"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="cp-title" required className="text-xs font-semibold">
-                      {t("settings:company.signer_title", "Jabatan Penandatangan")}
-                    </FieldLabel>
-                    <Input
-                      id="cp-title"
-                      required
-                      value={company.signer_title}
-                      onChange={(e) =>
-                        setCompany({ ...company, signer_title: e.target.value })
-                      }
-                      className="text-xs h-9"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="cp-tax-id" className="text-xs font-semibold">
-                      {t("settings:company.tax_id_npwp_nik", "NPWP / NIK")}
-                    </FieldLabel>
-                    <Input
-                      id="cp-tax-id"
-                      value={company.tax_id_number ?? ""}
-                      onChange={(e) =>
-                        setCompany({ ...company, tax_id_number: e.target.value })
-                      }
-                      placeholder={t("settings:company.tax_id_placeholder", "Contoh: 00.000.000.0-000.000 atau NIK")}
-                      className="text-xs h-9 tabular-nums"
-                    />
-                  </Field>
-                </div>
+                {/* Grid Penuh & Proporsional: Identitas Pejabat Penandatangan (Kiri) + Gambar Tanda Tangan (Kanan) Tanpa Ruang Kosong (Item 5) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                  <div className="lg:col-span-7 rounded-xl border border-border/70 bg-muted/20 p-4 flex flex-col justify-between gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field>
+                        <FieldLabel htmlFor="cp-signer" required className="text-xs font-semibold">
+                          {t("settings:company.default_signer_name", "Nama Penandatangan Default")}
+                        </FieldLabel>
+                        <Input
+                          id="cp-signer"
+                          required
+                          value={company.signer_name}
+                          onChange={(e) =>
+                            setCompany({ ...company, signer_name: e.target.value })
+                          }
+                          className="text-xs h-9 bg-background"
+                        />
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="cp-title" required className="text-xs font-semibold">
+                          {t("settings:company.signer_title", "Jabatan Penandatangan")}
+                        </FieldLabel>
+                        <Input
+                          id="cp-title"
+                          required
+                          value={company.signer_title}
+                          onChange={(e) =>
+                            setCompany({ ...company, signer_title: e.target.value })
+                          }
+                          className="text-xs h-9 bg-background"
+                        />
+                      </Field>
+                    </div>
+                    <Field>
+                      <FieldLabel htmlFor="cp-tax-id" className="text-xs font-semibold">
+                        {t("settings:company.tax_id_npwp_nik", "NPWP / NIK")}
+                      </FieldLabel>
+                      <Input
+                        id="cp-tax-id"
+                        value={company.tax_id_number ?? ""}
+                        onChange={(e) =>
+                          setCompany({ ...company, tax_id_number: e.target.value })
+                        }
+                        placeholder={t("settings:company.tax_id_placeholder", "Contoh: 00.000.000.0-000.000 atau NIK")}
+                        className="text-xs h-9 tabular-nums bg-background"
+                      />
+                    </Field>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <ImageAssetUploadBox
-                    label={t("settings:company.signature_img_label", "Gambar Tanda Tangan (TTD)")}
-                    helperText={t("settings:company.upload_source_hint", "Lokal / Google Drive")}
-                    emptyTitle={t("settings:company.upload_signature_title", "Upload Gambar Tanda Tangan")}
-                    emptySubtitle={t("settings:company.upload_signature_subtitle", "Klik untuk memilih PNG transparan dari Lokal / Google Drive")}
-                    value={company.signer_signature_path}
-                    onChange={(next) =>
-                      setCompany({ ...company, signer_signature_path: next })
-                    }
-                  />
-                  <ImageAssetUploadBox
-                    label={t("settings:company.paraf_img_label", "Gambar Paraf Pihak Pertama")}
-                    helperText={t("settings:company.upload_source_hint", "Lokal / Google Drive")}
-                    emptyTitle={t("settings:company.upload_paraf_title", "Upload Gambar Paraf")}
-                    emptySubtitle={t("settings:company.upload_paraf_subtitle", "Klik untuk memilih PNG transparan dari Lokal / Google Drive")}
-                    value={company.signer_paraf_path}
-                    onChange={(next) =>
-                      setCompany({ ...company, signer_paraf_path: next })
-                    }
-                  />
+                  <div className="lg:col-span-5 flex flex-col">
+                    <ImageAssetUploadBox
+                      label={t("settings:company.signature_img_label", "Gambar Tanda Tangan (TTD)")}
+                      helperText={t("settings:company.upload_source_hint", "Lokal / Google Drive")}
+                      emptyTitle={t("settings:company.upload_signature_title", "Upload Gambar Tanda Tangan")}
+                      emptySubtitle={t("settings:company.upload_signature_subtitle", "Klik untuk memilih PNG transparan dari Lokal / Google Drive")}
+                      value={company.signer_signature_path}
+                      onChange={(next) =>
+                        setCompany({ ...company, signer_signature_path: next })
+                      }
+                      previewHeightClassName="h-[116px]"
+                      className="h-full flex-1"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-2 border-t border-border/60">
@@ -975,8 +1091,130 @@ export function CompanyProfilePage() {
                         <Switch
                           id="cp-pkp-sw"
                           checked={company.pkp_enabled}
-                          onCheckedChange={(checked) => setPendingPkpState(checked)}
+                          onCheckedChange={(checked) => {
+                            if (checked && !hasPkpProof) {
+                              toast.error(
+                                t(
+                                  "settings:company.pkp_proof_required_toast",
+                                  "Wajib mengunggah bukti pengukuhan PKP (PDF/JPG/PNG maks. 5 MB) sebelum mengaktifkan status PKP.",
+                                ),
+                              );
+                              return;
+                            }
+                            setPendingPkpState(checked);
+                          }}
                         />
+                      </div>
+
+                      {/* Seksi Dokumen Bukti Pengukuhan PKP Wajib (Item 7) */}
+                      <div className="rounded-xl border border-border/70 bg-card/80 p-4 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <FieldLabel required className="text-xs font-bold text-foreground">
+                              {t(
+                                "settings:company.pkp_proof_label",
+                                "Dokumen Bukti Pengukuhan PKP (SPPKP)",
+                              )}
+                            </FieldLabel>
+                            <FieldDescription className="text-[11px]">
+                              {t(
+                                "settings:company.pkp_proof_desc",
+                                "Wajib diunggah untuk mengaktifkan status PKP (format PDF, JPG, atau PNG, maks. 5 MB).",
+                              )}
+                            </FieldDescription>
+                          </div>
+                          <input
+                            ref={pkpFileInputRef}
+                            type="file"
+                            data-testid="pkp-proof-file-input"
+                            accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                            onChange={handleUploadPkpProofFile}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploadingPkpProof}
+                            onClick={() => pkpFileInputRef.current?.click()}
+                            className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
+                          >
+                            {uploadingPkpProof ? (
+                              <Loader2Icon className="size-3.5 animate-spin" />
+                            ) : (
+                              <UploadCloudIcon className="size-3.5 text-primary" />
+                            )}
+                            <span>
+                              {hasPkpProof
+                                ? t("settings:company.pkp_proof_replace_btn", "Ganti Bukti")
+                                : t("settings:company.pkp_proof_upload_btn", "Unggah Bukti PKP")}
+                            </span>
+                          </Button>
+                        </div>
+
+                        {hasPkpProof ? (
+                          <div
+                            data-testid="pkp-proof-card"
+                            className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {isPkpProofImage ? (
+                                <img
+                                  src={company.pkp_proof_storage_path!}
+                                  alt={company.pkp_proof_file_name || "Bukti PKP"}
+                                  className="size-11 rounded-lg object-cover border border-border/70 bg-white shrink-0"
+                                />
+                              ) : (
+                                <div className="size-11 rounded-lg bg-primary/10 border border-primary/25 text-primary flex items-center justify-center shrink-0">
+                                  <FileTextIcon className="size-5" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p
+                                  data-testid="pkp-proof-filename"
+                                  className="text-xs font-bold text-foreground truncate"
+                                >
+                                  {company.pkp_proof_file_name ||
+                                    t(
+                                      "settings:company.pkp_proof_default_name",
+                                      "Surat_Pengukuhan_PKP.pdf",
+                                    )}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {company.pkp_proof_size_bytes
+                                    ? `${Math.max(1, Math.round(company.pkp_proof_size_bytes / 1024))} KB`
+                                    : "PDF / Gambar"}
+                                  {company.pkp_proof_uploaded_at
+                                    ? ` • ${formatDateTimeI18n(company.pkp_proof_uploaded_at, language)}`
+                                    : ""}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <a
+                                href={company.pkp_proof_storage_path!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-border/80 bg-background hover:bg-muted text-xs font-semibold text-foreground transition-colors"
+                              >
+                                <ExternalLinkIcon className="size-3.5 text-primary" />
+                                <span>
+                                  {t("settings:company.pkp_proof_view_btn", "Lihat Bukti")}
+                                </span>
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+                            <AlertCircleIcon className="size-4 shrink-0 mt-0.5" />
+                            <span>
+                              {t(
+                                "settings:company.pkp_proof_missing_notice",
+                                "Belum ada dokumen bukti pengukuhan PKP yang diunggah. Unggah berkas bukti (PDF/JPG/PNG maks. 5 MB) terlebih dahulu sebelum mengaktifkan status PKP.",
+                              )}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1060,7 +1298,7 @@ export function CompanyProfilePage() {
                   </p>
                   <Button
                     type="submit"
-                    disabled={saving}
+                    disabled={saving || (company.pkp_enabled && !hasPkpProof)}
                     className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
                   >
                     {saving ? (

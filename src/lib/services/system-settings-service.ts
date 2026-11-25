@@ -54,27 +54,203 @@ export async function getCompanyProfile(): Promise<CompanyProfileRow> {
       logo_storage_path: data.logo_storage_path ?? localExt.logo_storage_path ?? null,
       tagline: data.tagline ?? localExt.tagline ?? "ADAPT TODAY, INNOVATE TOMORROW",
       signing_city: data.signing_city ?? localExt.signing_city ?? "Bogor",
+      telephone_fax: data.telephone_fax ?? localExt.telephone_fax ?? null,
+      website: data.website ?? localExt.website ?? null,
       signer_signature_path: data.signer_signature_path ?? localExt.signer_signature_path ?? null,
       signer_paraf_path: data.signer_paraf_path ?? localExt.signer_paraf_path ?? null,
-      bank_accounts_json: localExt.bank_accounts_json ?? [
-        {
-          bank_name: data.bank_name,
-          account_number: data.bank_account_number,
-          account_holder: data.bank_account_holder,
-        },
-      ],
-      social_links_json: data.social_links_json ?? localExt.social_links_json ?? [
-        { platform: "Instagram", username: "@altvira.tech" },
-        { platform: "LinkedIn", username: "altvira-technology" },
-        { platform: "TikTok", username: "@altvira.tech" },
-      ],
+      pkp_proof_storage_path:
+        data.pkp_proof_storage_path ?? localExt.pkp_proof_storage_path ?? null,
+      pkp_proof_file_name:
+        data.pkp_proof_file_name ?? localExt.pkp_proof_file_name ?? null,
+      pkp_proof_mime_type:
+        data.pkp_proof_mime_type ?? localExt.pkp_proof_mime_type ?? null,
+      pkp_proof_size_bytes:
+        data.pkp_proof_size_bytes ?? localExt.pkp_proof_size_bytes ?? null,
+      pkp_proof_uploaded_at:
+        (data as Partial<CompanyProfileRow>).pkp_proof_uploaded_at ??
+        localExt.pkp_proof_uploaded_at ??
+        null,
+      bank_accounts_json:
+        data.bank_accounts_json ??
+        localExt.bank_accounts_json ?? [
+          {
+            bank_name: data.bank_name,
+            account_number: data.bank_account_number,
+            account_holder: data.bank_account_holder,
+          },
+        ],
+      social_links_json:
+        localExt.social_links_json ??
+        data.social_links_json ?? [
+          { platform: "Instagram", username: "@altvira.tech" },
+          { platform: "LinkedIn", username: "altvira-technology" },
+          { platform: "TikTok", username: "@altvira.tech" },
+        ],
     };
   });
+}
+
+export interface UploadedPkpProofMetadata {
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+}
+
+export async function uploadCompanyPkpProof(
+  file: File,
+): Promise<UploadedPkpProofMetadata> {
+  const allowedMimes = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+  ];
+  const extLower = (file.name.split(".").pop() || "").toLowerCase();
+  const allowedExts = ["pdf", "png", "jpg", "jpeg"];
+
+  if (
+    !allowedMimes.includes((file.type || "").toLowerCase()) &&
+    !allowedExts.includes(extLower)
+  ) {
+    throw new Error(
+      "Format berkas bukti PKP tidak didukung. Gunakan PDF, JPG, atau PNG.",
+    );
+  }
+  if (file.size <= 0) {
+    throw new Error("Berkas bukti PKP kosong atau tidak valid.");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("Ukuran berkas bukti PKP melebihi batas maksimal 5 MB.");
+  }
+
+  const uploadedAt = new Date().toISOString();
+  const resolvedMime =
+    file.type ||
+    (extLower === "pdf"
+      ? "application/pdf"
+      : extLower === "png"
+        ? "image/png"
+        : "image/jpeg");
+
+  const readAsDataUrl = () =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Gagal membaca berkas bukti PKP."));
+        }
+      };
+      reader.onerror = () => reject(new Error("Gagal memproses berkas bukti PKP."));
+      reader.readAsDataURL(file);
+    });
+
+  if (isDemoMode || !supabase) {
+    const dataUrl = await readAsDataUrl();
+    return {
+      storagePath: dataUrl,
+      fileName: file.name,
+      mimeType: resolvedMime,
+      sizeBytes: file.size,
+      uploadedAt,
+    };
+  }
+
+  const safeExt = allowedExts.includes(extLower) ? extLower : "pdf";
+  const filePath = `company-pkp/pkp-proof-${Date.now()}.${safeExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("altcycles-files")
+    .upload(filePath, file, { upsert: true, contentType: resolvedMime });
+
+  if (uploadError) {
+    const fallbackUrl = await readAsDataUrl();
+    return {
+      storagePath: fallbackUrl,
+      fileName: file.name,
+      mimeType: resolvedMime,
+      sizeBytes: file.size,
+      uploadedAt,
+    };
+  }
+
+  const { data: signedData, error: signedErr } = await supabase.storage
+    .from("altcycles-files")
+    .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+
+  const storagePath =
+    !signedErr && signedData?.signedUrl
+      ? signedData.signedUrl
+      : await readAsDataUrl();
+
+  return {
+    storagePath,
+    fileName: file.name,
+    mimeType: resolvedMime,
+    sizeBytes: file.size,
+    uploadedAt,
+  };
 }
 
 export async function updateCompanyProfile(
   patch: Partial<CompanyProfileRow>,
 ): Promise<CompanyProfileRow> {
+  // Validasi akun sosial media jika disertakan pada patch (Item 6)
+  if (patch.social_links_json !== undefined && patch.social_links_json !== null) {
+    const seen = new Set<string>();
+    for (const item of patch.social_links_json) {
+      const platform = (item.platform || "").trim();
+      const username = (item.username || "").trim();
+      const url = (item.url || "").trim();
+      if (!platform || !username) {
+        throw new Error(
+          "Setiap akun sosial media wajib memiliki platform dan username/handle.",
+        );
+      }
+      if (url && !/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(url)) {
+        throw new Error(
+          `Format URL sosial media "${url}" tidak valid. Gunakan awalan https:// atau http://.`,
+        );
+      }
+      const dedupKey = `${platform.toLowerCase()}::${username.toLowerCase()}`;
+      if (seen.has(dedupKey)) {
+        throw new Error(
+          `Akun sosial media duplikat terdeteksi untuk ${platform} (${username}).`,
+        );
+      }
+      seen.add(dedupKey);
+    }
+  }
+
+  const prevExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
+
+  // Validasi Bukti Pengukuhan PKP wajib saat pkp_enabled diaktifkan atau disimpan sebagai aktif (Item 7)
+  if (patch.pkp_enabled === true) {
+    const effectiveProofPath =
+      patch.pkp_proof_storage_path ??
+      demoStore.company.pkp_proof_storage_path ??
+      prevExt.pkp_proof_storage_path ??
+      null;
+    if (!effectiveProofPath || !String(effectiveProofPath).trim()) {
+      throw new Error(
+        "Wajib mengunggah dokumen bukti pengukuhan PKP (PDF, JPG, atau PNG maks. 5 MB) sebelum mengaktifkan status PKP.",
+      );
+    }
+  }
+
+  // Jika toggle PKP dimatikan (pkp_enabled = false), jangan hapus bukti lama
+  const safePatch: Partial<CompanyProfileRow> = { ...patch };
+  if (safePatch.pkp_enabled === false) {
+    delete safePatch.pkp_proof_storage_path;
+    delete safePatch.pkp_proof_file_name;
+    delete safePatch.pkp_proof_mime_type;
+    delete safePatch.pkp_proof_size_bytes;
+    delete safePatch.pkp_proof_uploaded_at;
+  }
+
   const extKeys: Array<keyof CompanyProfileRow> = [
     "tagline",
     "signing_city",
@@ -86,12 +262,16 @@ export async function updateCompanyProfile(
     "logo_storage_path",
     "telephone_fax",
     "website",
+    "pkp_proof_storage_path",
+    "pkp_proof_file_name",
+    "pkp_proof_mime_type",
+    "pkp_proof_size_bytes",
+    "pkp_proof_uploaded_at",
   ];
-  const prevExt = readLocalJson<Partial<CompanyProfileRow>>(COMPANY_EXT_STORAGE_KEY, {});
   const nextExt: Partial<CompanyProfileRow> = { ...prevExt };
   for (const k of extKeys) {
-    if (k in patch) {
-      (nextExt as Record<string, unknown>)[k] = patch[k];
+    if (k in safePatch) {
+      (nextExt as Record<string, unknown>)[k] = safePatch[k];
     }
   }
   writeLocalJson(COMPANY_EXT_STORAGE_KEY, nextExt);
@@ -104,7 +284,7 @@ export async function updateCompanyProfile(
     const before = structuredClone(demoStore.company);
     demoStore.company = {
       ...demoStore.company,
-      ...patch,
+      ...safePatch,
       id: 1,
       updated_by: actor.id,
       updated_at: new Date().toISOString(),
@@ -116,7 +296,7 @@ export async function updateCompanyProfile(
 
   const { data, error } = await supabase
     .from("company_profile")
-    .update(patch)
+    .update(safePatch)
     .eq("id", 1)
     .select("*")
     .single();
@@ -125,9 +305,9 @@ export async function updateCompanyProfile(
     return { ...nextExt, ...data };
   }
 
-  // Fallback jika kolom baru (migrasi 0014/0015) belum diterapkan di database cloud
+  // Fallback jika kolom baru (migrasi 0014/0015/0018/0022) belum diterapkan di database cloud
   if (error.message.includes("column") || error.message.includes("schema cache")) {
-    const corePatch: Record<string, unknown> = { ...patch };
+    const corePatch: Record<string, unknown> = { ...safePatch };
     delete corePatch.tagline;
     delete corePatch.signing_city;
     delete corePatch.tax_id_number;
@@ -135,6 +315,13 @@ export async function updateCompanyProfile(
     delete corePatch.signer_paraf_path;
     delete corePatch.social_links_json;
     delete corePatch.bank_accounts_json;
+    delete corePatch.telephone_fax;
+    delete corePatch.website;
+    delete corePatch.pkp_proof_storage_path;
+    delete corePatch.pkp_proof_file_name;
+    delete corePatch.pkp_proof_mime_type;
+    delete corePatch.pkp_proof_size_bytes;
+    delete corePatch.pkp_proof_uploaded_at;
     if (Object.keys(corePatch).length > 0) {
       const { data: coreData, error: coreErr } = await supabase
         .from("company_profile")

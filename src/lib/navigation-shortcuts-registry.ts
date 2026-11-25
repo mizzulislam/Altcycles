@@ -120,7 +120,7 @@ export const NAVIGATION_SHORTCUTS_REGISTRY: NavigationShortcutItem[] = [
     id: "nav_super_company_profile",
     type: "page",
     titleKey: "common:nav.company_profile",
-    fallbackTitle: "Profil Perusahaan (Altvira)",
+    fallbackTitle: "Profil Perusahaan",
     module: "system",
     moduleLabelKey: "common:search.modules.system",
     fallbackModuleLabel: "Sistem Super Admin",

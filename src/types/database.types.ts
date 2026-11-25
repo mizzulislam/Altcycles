@@ -184,6 +184,11 @@ export type CompanyProfileRow = {
   pkp_enabled: boolean;
   ppn_rate: number;
   pph_enabled: boolean;
+  pkp_proof_storage_path?: string | null;
+  pkp_proof_file_name?: string | null;
+  pkp_proof_mime_type?: string | null;
+  pkp_proof_size_bytes?: number | null;
+  pkp_proof_uploaded_at?: string | null;
   journal_lock_enabled?: boolean;
   auto_closing_enabled?: boolean;
   updated_by: string | null;

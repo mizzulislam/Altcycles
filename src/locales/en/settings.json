@@ -1,7 +1,7 @@
 {
   "company": {
-    "page_title": "Company Profile (Altvira)",
-    "page_desc": "Manage letterhead identity, official logo, transfer bank accounts, signature & initial assets, document footer social media accounts, and tax status.",
+    "page_title": "Company Profile",
+    "page_desc": "Manage letterhead identity, official logo, transfer bank accounts, signature assets, document footer social media accounts, and tax status.",
     "tab_identity": "Identity & Logo",
     "tab_accounts": "Accounts & Signatures",
     "tab_social": "Footer Social Media",
@@ -118,6 +118,19 @@
     "confirm_pkp_activate_desc": "Once activated, new invoices will include VAT calculations. This action is logged in the Audit Trail.",
     "confirm_pkp_deactivate_desc": "New invoices will revert to non-VAT billing according to non-PKP status.",
     "toast_tax_updated": "Tax configuration status updated successfully.",
+    "social_error_required": "Every social media account must have a Platform and Username/Handle.",
+    "social_error_invalid_url": "Invalid social media URL format. Please start with https:// or http://.",
+    "social_error_duplicate": "Duplicate social media account detected for {{platform}} ({{username}}).",
+    "pkp_proof_label": "PKP Designation Proof Document (SPPKP)",
+    "pkp_proof_desc": "Required to activate PKP status (PDF, JPG, or PNG format, max 5 MB).",
+    "pkp_proof_upload_btn": "Upload PKP Proof",
+    "pkp_proof_replace_btn": "Replace Proof",
+    "pkp_proof_view_btn": "View Proof",
+    "pkp_proof_default_name": "PKP_Designation_Certificate.pdf",
+    "pkp_proof_missing_notice": "No PKP designation proof document uploaded yet. Upload a proof file (PDF/JPG/PNG max 5 MB) before activating PKP status.",
+    "pkp_proof_required_toast": "You must upload a PKP designation proof document (PDF/JPG/PNG max 5 MB) before activating PKP status.",
+    "pkp_proof_uploaded_toast": "PKP designation proof uploaded and saved successfully.",
+    "pkp_proof_upload_error": "Failed to upload PKP designation proof.",
     "loading": "Loading company profile..."
   },
   "admin_settings": {

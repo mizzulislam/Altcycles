@@ -104,7 +104,7 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "nav.my_po": "PO Pembelian Saya",
     "nav.my_payments": "Pengajuan Pembayaran",
     "nav.my_budget": "Anggaran Proyek Saya",
-    "nav.company_profile": "Profil Perusahaan (Altvira)",
+    "nav.company_profile": "Profil Perusahaan",
     "nav.admin_settings": "Administrasi & Penomoran",
     "nav.users_management": "Pengguna & Peran",
     "nav.accounting_controls": "Pengaturan & Kontrol Akuntansi",
@@ -496,8 +496,8 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "profit_sharing.subtitle": "Hitung pembagian laba bersih proyek bagi anggota tim dan finalisasi pencairan hak bagi hasil.",
 
     // Profil Perusahaan
-    "company.page_title": "Profil Perusahaan (Altvira)",
-    "company.page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan & paraf, akun sosial media footer dokumen, serta status perpajakan.",
+    "company.page_title": "Profil Perusahaan",
+    "company.page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.",
     "company.tab_identity": "Identitas & Logo",
     "company.tab_accounts": "Rekening & TTD",
     "company.tab_social": "Sosial Media Footer",
@@ -570,7 +570,7 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "nav.my_po": "My Purchase Orders",
     "nav.my_payments": "Payment Requests",
     "nav.my_budget": "My Project Budget",
-    "nav.company_profile": "Company Profile (Altvira)",
+    "nav.company_profile": "Company Profile",
     "nav.admin_settings": "Administration & Numbering",
     "nav.users_management": "Users & Roles",
     "nav.accounting_controls": "Accounting Controls & Setup",
@@ -962,7 +962,7 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "profit_sharing.subtitle": "Calculate net profit distributions for team members and finalize profit payout disbursements.",
 
     // Profil Perusahaan
-    "company.page_title": "Company Profile (Altvira)",
+    "company.page_title": "Company Profile",
     "company.page_desc": "Manage letterhead identity, official logo, bank accounts, digital signatures, footer social media links, and taxation status.",
     "company.tab_identity": "Identity & Logo",
     "company.tab_accounts": "Bank Accounts & Signatures",
