@@ -20,12 +20,26 @@
   },
   "filter": {
     "label": "Filter Periode",
+    "modal_title": "Filter Rentang Waktu & Periode",
     "presets_title": "Pilihan Cepat",
     "periods_title": "Periode Buku Akuntansi",
+    "periods_subtitle": "Pilih periode pembukuan resmi yang terdaftar di master data.",
+    "custom_range": "Kustom Rentang Tanggal",
+    "start_date": "Tanggal Mulai",
+    "end_date": "Tanggal Selesai",
+    "select_start": "Pilih tanggal mulai...",
+    "select_end": "Pilih tanggal selesai...",
     "this_month": "Bulan Ini",
     "last_month": "Bulan Lalu",
     "this_year": "Tahun Ini",
-    "all_periods": "Semua Periode"
+    "all_periods": "Semua Periode",
+    "apply": "Terapkan Filter",
+    "reset": "Reset ke Semua Periode",
+    "cancel": "Batal",
+    "custom_active": "Kustom",
+    "start_after_end_err": "Tanggal mulai tidak boleh melebihi tanggal selesai.",
+    "active_badge": "Aktif",
+    "closed_badge": "Tutup"
   },
   "shortcuts": {
     "title": "Pintasan Cepat Modul Keuangan",

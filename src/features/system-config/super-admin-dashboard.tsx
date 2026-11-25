@@ -17,6 +17,11 @@ import {
   CompositionChart,
   MultiSeriesChart,
 } from "@/components/shared/dashboard-charts";
+import {
+  isDateInPeriod,
+  PeriodFilter,
+  type DashboardPeriodPreset,
+} from "@/components/shared/dashboard-period-filter";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -57,9 +62,21 @@ export function SuperAdminDashboardPage() {
   const [company, setCompany] = React.useState<CompanyProfileRow | null>(null);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [allLogs, setAllLogs] = React.useState<AuditLogRow[]>([]);
-  const [recentLogs, setRecentLogs] = React.useState<AuditLogRow[]>([]);
 
   const [auditViewMode, setAuditViewMode] = React.useState<"daily" | "entity">("daily");
+
+  // Filter Periode Terpadu Super Admin
+  const [periodFilter, setPeriodFilter] = React.useState<DashboardPeriodPreset>("all");
+  const [filterStartDate, setFilterStartDate] = React.useState<string>("");
+  const [filterEndDate, setFilterEndDate] = React.useState<string>("");
+
+  const filteredLogs = React.useMemo(() => {
+    return allLogs.filter((log) =>
+      isDateInPeriod(log.created_at, periodFilter, filterStartDate, filterEndDate),
+    );
+  }, [allLogs, periodFilter, filterStartDate, filterEndDate]);
+
+  const recentLogs = React.useMemo(() => filteredLogs.slice(0, 8), [filteredLogs]);
   const [auditChartType, setAuditChartType] = React.useState<"column" | "area">("column");
   const [hiddenAuditSeries, setHiddenAuditSeries] = React.useState<Set<string>>(new Set());
   const toggleAuditSeries = React.useCallback((key: string) => {
@@ -90,7 +107,6 @@ export function SuperAdminDashboardPage() {
         setCompany(c);
         setAccounts(accs);
         setAllLogs(logs);
-        setRecentLogs(logs.slice(0, 8));
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Gagal memuat ringkasan sistem.",
@@ -126,7 +142,7 @@ export function SuperAdminDashboardPage() {
   let totalUpdates = 0;
   let totalDeletes = 0;
 
-  for (const log of allLogs) {
+  for (const log of filteredLogs) {
     const act = log.action.toUpperCase();
     const isIns = act === "INSERT";
     const isUpd = act === "UPDATE";
@@ -260,6 +276,18 @@ export function SuperAdminDashboardPage() {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
             {t("settings:super_admin.dashboard_desc", "Pantau kesehatan sistem, aktivitas pengguna internal, dan konfigurasi master aplikasi.")}
           </p>
+        </div>
+        <div className="shrink-0 flex items-center gap-2.5">
+          <PeriodFilter
+            value={periodFilter}
+            onChange={(val, start, end) => {
+              setPeriodFilter(val);
+              setFilterStartDate(start ?? "");
+              setFilterEndDate(end ?? "");
+            }}
+            startDate={filterStartDate}
+            endDate={filterEndDate}
+          />
         </div>
       </div>
 

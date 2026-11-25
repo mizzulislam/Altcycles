@@ -28,6 +28,7 @@ import {
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import {
+  isDateInPeriod,
   PeriodFilter,
   type DashboardPeriodPreset,
 } from "@/components/shared/dashboard-period-filter";
@@ -191,6 +192,8 @@ export function AdminDashboardPage() {
 
   // Filter Periode Global Terpadu
   const [periodFilter, setPeriodFilter] = React.useState<DashboardPeriodPreset>("all");
+  const [filterStartDate, setFilterStartDate] = React.useState<string>("");
+  const [filterEndDate, setFilterEndDate] = React.useState<string>("");
 
   // Kontrol Switcher Tampilan Grafik
   const [trendChartType, setTrendChartType] = React.useState<MultiSeriesChartKind>("column");
@@ -251,32 +254,16 @@ export function AdminDashboardPage() {
 
   // Filter Data berdasarkan PeriodFilter Global
   const filteredJournals = React.useMemo(() => {
-    if (periodFilter === "all") return journals;
-    const now = new Date();
-    if (periodFilter === "this_month") {
-      const curMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      return journals.filter((j) => j.journal_date.startsWith(curMonth));
-    }
-    if (periodFilter === "last_month") {
-      const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
-      return journals.filter((j) => j.journal_date.startsWith(prevMonth));
-    }
-    if (periodFilter === "this_year") {
-      const curYear = String(now.getFullYear());
-      return journals.filter((j) => j.journal_date.startsWith(curYear));
-    }
-    const matchedPeriod = periods.find((p) => p.id === periodFilter);
-    if (matchedPeriod) {
-      return journals.filter(
-        (j) =>
-          j.period_id === matchedPeriod.id ||
-          (j.journal_date >= matchedPeriod.start_date &&
-            j.journal_date <= matchedPeriod.end_date),
-      );
-    }
-    return journals;
-  }, [journals, periodFilter, periods]);
+    return journals.filter((j) =>
+      isDateInPeriod(
+        j.journal_date,
+        periodFilter,
+        filterStartDate,
+        filterEndDate,
+        periods,
+      ),
+    );
+  }, [journals, periodFilter, filterStartDate, filterEndDate, periods]);
 
   const filteredJournalIds = React.useMemo(
     () => new Set(filteredJournals.map((j) => j.id)),
@@ -623,7 +610,13 @@ export function AdminDashboardPage() {
         <div className="shrink-0 flex items-center gap-2.5">
           <PeriodFilter
             value={periodFilter}
-            onChange={setPeriodFilter}
+            onChange={(val, start, end) => {
+              setPeriodFilter(val);
+              setFilterStartDate(start ?? "");
+              setFilterEndDate(end ?? "");
+            }}
+            startDate={filterStartDate}
+            endDate={filterEndDate}
             periods={periods}
           />
           <ExportDownloadMenu

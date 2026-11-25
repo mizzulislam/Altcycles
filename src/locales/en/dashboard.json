@@ -20,12 +20,26 @@
   },
   "filter": {
     "label": "Period Filter",
+    "modal_title": "Filter Time Range & Period",
     "presets_title": "Quick Presets",
     "periods_title": "Accounting Book Periods",
+    "periods_subtitle": "Select official accounting book periods registered in master data.",
+    "custom_range": "Custom Date Range",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "select_start": "Select start date...",
+    "select_end": "Select end date...",
     "this_month": "This Month",
     "last_month": "Last Month",
     "this_year": "This Year",
-    "all_periods": "All Periods"
+    "all_periods": "All Periods",
+    "apply": "Apply Filter",
+    "reset": "Reset to All Periods",
+    "cancel": "Cancel",
+    "custom_active": "Custom",
+    "start_after_end_err": "Start date cannot be after end date.",
+    "active_badge": "Active",
+    "closed_badge": "Closed"
   },
   "shortcuts": {
     "title": "Financial Module Quick Shortcuts",

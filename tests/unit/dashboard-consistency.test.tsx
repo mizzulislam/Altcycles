@@ -103,7 +103,7 @@ describe("Dashboard Consistency & Shared Components", () => {
     );
 
     // Filter trigger hadir dan bisa diakses
-    const trigger = screen.getByRole("combobox");
+    const trigger = screen.getByRole("button", { name: /filter periode/i });
     expect(trigger).toBeInTheDocument();
   });
 

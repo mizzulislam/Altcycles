@@ -25,6 +25,11 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
+import {
+  isDateInPeriod,
+  PeriodFilter,
+  type DashboardPeriodPreset,
+} from "@/components/shared/dashboard-period-filter";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +105,24 @@ export function UserDashboardPage() {
   }, []);
   const [compDataset, setCompDataset] = React.useState<"claims" | "sharing">("claims");
 
+  // Filter Periode Terpadu Anggota Tim
+  const [periodFilter, setPeriodFilter] = React.useState<DashboardPeriodPreset>("all");
+  const [filterStartDate, setFilterStartDate] = React.useState<string>("");
+  const [filterEndDate, setFilterEndDate] = React.useState<string>("");
+
+  const filteredPos = React.useMemo(() => {
+    return pos.filter((p) =>
+      isDateInPeriod(p.po_date, periodFilter, filterStartDate, filterEndDate),
+    );
+  }, [pos, periodFilter, filterStartDate, filterEndDate]);
+
+  const filteredRequests = React.useMemo(() => {
+    return requests.filter((r) => {
+      const d = r.submitted_at ?? r.created_at;
+      return isDateInPeriod(d, periodFilter, filterStartDate, filterEndDate);
+    });
+  }, [requests, periodFilter, filterStartDate, filterEndDate]);
+
   React.useEffect(() => {
     async function load() {
       setLoading(true);
@@ -133,10 +156,10 @@ export function UserDashboardPage() {
     );
   }
 
-  const pendingPa = requests.filter((r) => r.status === "submitted").length;
-  const approvedPa = requests.filter((r) => r.status === "approved").length;
-  const paidPa = requests.filter((r) => r.status === "paid").length;
-  const rejectedPa = requests.filter((r) => r.status === "rejected").length;
+  const pendingPa = filteredRequests.filter((r) => r.status === "submitted").length;
+  const approvedPa = filteredRequests.filter((r) => r.status === "approved").length;
+  const paidPa = filteredRequests.filter((r) => r.status === "paid").length;
+  const rejectedPa = filteredRequests.filter((r) => r.status === "rejected").length;
   const totalMyShare = sharingLines.reduce((s, l) => s + l.share_amount, 0);
 
   // Agregasi aktivitas bulanan PO Pembelian & Pengajuan Pembayaran
@@ -144,7 +167,7 @@ export function UserDashboardPage() {
     string,
     { poTotal: number; reqTotal: number; paidTotal: number }
   >();
-  for (const po of pos) {
+  for (const po of filteredPos) {
     const mk = po.po_date.slice(0, 7);
     if (!/^\d{4}-\d{2}$/.test(mk)) continue;
     const cur = activityMonthMap.get(mk) ?? {
@@ -155,7 +178,7 @@ export function UserDashboardPage() {
     cur.poTotal += po.total_amount;
     activityMonthMap.set(mk, cur);
   }
-  for (const req of requests) {
+  for (const req of filteredRequests) {
     const reqDate = req.submitted_at ?? req.created_at;
     const mk = reqDate.slice(0, 7);
     if (!/^\d{4}-\d{2}$/.test(mk)) continue;
@@ -189,15 +212,15 @@ export function UserDashboardPage() {
       };
     });
 
-  const totalPoNominal = pos.reduce((s, p) => s + p.total_amount, 0);
-  const totalReqNominal = requests.reduce((s, r) => s + r.amount, 0);
-  const totalPaidNominal = requests
+  const totalPoNominal = filteredPos.reduce((s, p) => s + p.total_amount, 0);
+  const totalReqNominal = filteredRequests.reduce((s, r) => s + r.amount, 0);
+  const totalPaidNominal = filteredRequests
     .filter((r) => r.status === "paid")
     .reduce((s, r) => s + r.amount, 0);
 
   const userTxHistogram = buildRupiahHistogramBins([
-    ...pos.map((p) => p.total_amount),
-    ...requests.map((r) => r.amount),
+    ...filteredPos.map((p) => p.total_amount),
+    ...filteredRequests.map((r) => r.amount),
   ]);
 
   const claimStatusSlices = [
@@ -210,7 +233,7 @@ export function UserDashboardPage() {
     },
     {
       label: t("dashboard:user_dashboard.status_approved", "Disetujui / Siap Cair"),
-      value: requests
+      value: filteredRequests
         .filter((r) => r.status === "approved")
         .reduce((s, r) => s + r.amount, 0),
       count: approvedPa,
@@ -219,7 +242,7 @@ export function UserDashboardPage() {
     },
     {
       label: t("dashboard:user_dashboard.status_submitted", "Menunggu Admin"),
-      value: requests
+      value: filteredRequests
         .filter((r) => r.status === "submitted")
         .reduce((s, r) => s + r.amount, 0),
       count: pendingPa,
@@ -228,7 +251,7 @@ export function UserDashboardPage() {
     },
     {
       label: t("dashboard:user_dashboard.status_rejected", "Perlu Revisi"),
-      value: requests
+      value: filteredRequests
         .filter((r) => r.status === "rejected")
         .reduce((s, r) => s + r.amount, 0),
       count: rejectedPa,
@@ -313,7 +336,17 @@ export function UserDashboardPage() {
             . {t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-2.5">
+          <PeriodFilter
+            value={periodFilter}
+            onChange={(val, start, end) => {
+              setPeriodFilter(val);
+              setFilterStartDate(start ?? "");
+              setFilterEndDate(end ?? "");
+            }}
+            startDate={filterStartDate}
+            endDate={filterEndDate}
+          />
           <Button
             type="button"
             size="sm"
@@ -347,23 +380,23 @@ export function UserDashboardPage() {
 
         <KpiCard
           label={t("user_portal.kpi_po", "PO Pembelian Vendor")}
-          value={pos.length}
+          value={filteredPos.length}
           suffix={` ${t("user_portal.documents", "Dokumen")}`}
           subtext={
-            pos.length > 0
+            filteredPos.length > 0
               ? t("user_portal.kpi_po_sub", "Dokumen pengadaan barang/jasa")
               : t("user_portal.kpi_po_empty", "Belum ada PO pembelian tercatat")
           }
           icon={ShoppingCartIcon}
           iconTone="bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20"
           to="/user/po"
-          sparklineData={pos.length > 1 ? pos.map((p) => p.total_amount) : [0, pos.length]}
+          sparklineData={filteredPos.length > 1 ? filteredPos.map((p) => p.total_amount) : [0, filteredPos.length]}
           changePercent={null}
         />
 
         <KpiCard
           label={t("user_portal.kpi_claims", "Pengajuan Pembayaran")}
-          value={requests.length}
+          value={filteredRequests.length}
           suffix={` ${t("user_portal.submissions", "Pengajuan")}`}
           subtext={
             pendingPa > 0
@@ -375,7 +408,7 @@ export function UserDashboardPage() {
           icon={ReceiptTextIcon}
           iconTone="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
           to="/user/pembayaran"
-          sparklineData={requests.length > 1 ? requests.map((r) => r.amount) : [0, requests.length]}
+          sparklineData={filteredRequests.length > 1 ? filteredRequests.map((r) => r.amount) : [0, filteredRequests.length]}
           changePercent={null}
         />
 
