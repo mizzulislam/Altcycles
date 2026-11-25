@@ -164,6 +164,8 @@
     "field_asset_account": "Fixed Asset Account",
     "field_accum_account": "Accumulated Depreciation Account",
     "field_expense_account": "Depreciation Expense Account",
+    "field_notes": "Additional Notes",
+    "notes_ph": "Serial number, warranty, asset placement location...",
     "btn_save_asset": "Save Fixed Asset",
     "delete_title": "Delete Fixed Asset {{code}}?",
     "delete_desc": "Fixed asset {{name}} without posted depreciation history will be removed from the register.",

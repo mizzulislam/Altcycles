@@ -117,7 +117,7 @@ export function FixedAssetDialog({
 
               <Field>
                 <FieldLabel htmlFor="fa-cost" required>
-                  {t("accounting:fixed_assets.field_acq_cost", "Harga Perolehan (IDR)")}
+                  {t("accounting:fixed_assets.field_cost", "Harga Perolehan (Rp)")}
                 </FieldLabel>
                 <NumberInput
                   id="fa-cost"
@@ -133,7 +133,7 @@ export function FixedAssetDialog({
 
               <Field>
                 <FieldLabel htmlFor="fa-salvage">
-                  {t("accounting:fixed_assets.field_salvage", "Nilai Residu (IDR)")}
+                  {t("accounting:fixed_assets.field_salvage", "Nilai Sisa / Residu (Rp)")}
                 </FieldLabel>
                 <NumberInput
                   id="fa-salvage"
@@ -151,7 +151,7 @@ export function FixedAssetDialog({
             <div className="grid gap-4 sm:grid-cols-3">
               <Field>
                 <FieldLabel htmlFor="fa-life" required>
-                  {t("accounting:fixed_assets.field_useful_life", "Masa Manfaat (Bulan)")}
+                  {t("accounting:fixed_assets.field_life_months", "Umur Manfaat (Bulan)")}
                 </FieldLabel>
                 <NumberInput
                   id="fa-life"

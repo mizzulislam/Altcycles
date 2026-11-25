@@ -164,6 +164,8 @@
     "field_asset_account": "Akun Aset Tetap",
     "field_accum_account": "Akun Akumulasi Penyusutan",
     "field_expense_account": "Akun Beban Penyusutan",
+    "field_notes": "Catatan Tambahan",
+    "notes_ph": "Nomor seri, garansi, lokasi penempatan aset...",
     "btn_save_asset": "Simpan Aset Tetap",
     "delete_title": "Hapus Aset Tetap {{code}}?",
     "delete_desc": "Aset tetap {{name}} yang belum memiliki riwayat jurnal penyusutan akan dihapus dari register.",
