@@ -9,6 +9,7 @@ export interface TruncatedTooltipTextProps {
   side?: "top" | "bottom" | "left" | "right";
   align?: "start" | "center" | "end";
   className?: string;
+  wrapperClassName?: string;
   "data-testid"?: string;
 }
 
@@ -24,6 +25,7 @@ export function TruncatedTooltipText({
   side = "bottom",
   align = "start",
   className,
+  wrapperClassName,
   "data-testid": dataTestId,
 }: TruncatedTooltipTextProps) {
   const elRef = React.useRef<HTMLElement | null>(null);
@@ -82,12 +84,18 @@ export function TruncatedTooltipText({
     return elementNode;
   }
 
+  const isBlock = Component !== "span";
+
   return (
     <ActionTooltip
       content={resolvedFullText}
       side={side}
       align={align}
       disabled={!isTruncated}
+      wrapperClassName={cn(
+        isBlock ? "block w-full max-w-full" : "inline-flex max-w-full",
+        wrapperClassName,
+      )}
     >
       {elementNode}
     </ActionTooltip>

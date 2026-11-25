@@ -10,6 +10,7 @@ export interface ActionTooltipProps {
   offset?: number;
   delayMs?: number;
   className?: string;
+  wrapperClassName?: string;
   disabled?: boolean;
 }
 
@@ -21,6 +22,7 @@ export function ActionTooltip({
   offset = 8,
   delayMs = 150,
   className,
+  wrapperClassName,
   disabled = false,
 }: ActionTooltipProps) {
   const tooltipId = React.useId();
@@ -152,7 +154,7 @@ export function ActionTooltip({
       <span
         ref={triggerRef}
         aria-describedby={isVisible ? tooltipId : undefined}
-        className="inline-flex max-w-full"
+        className={cn("max-w-full", wrapperClassName || "inline-flex")}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}

@@ -106,6 +106,11 @@ describe("Item 12 - PageHeader & TruncatedTooltipText", () => {
     for (const cls of ["whitespace-nowrap", "overflow-hidden", "text-ellipsis"]) {
       expect(desc.className).toContain(cls);
     }
+    // Memastikan wrapper tooltip adalah block penuh agar judul dan deskripsi tidak pernah sebaris
+    expect(h1.parentElement?.className).toContain("block");
+    expect(h1.parentElement?.className).toContain("w-full");
+    expect(desc.parentElement?.className).toContain("block");
+    expect(desc.parentElement?.className).toContain("w-full");
   });
 
   it("tooltip hanya muncul bila teks benar-benar terpotong", async () => {
