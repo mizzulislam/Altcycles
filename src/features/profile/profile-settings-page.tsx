@@ -942,180 +942,215 @@ export function ProfileSettingsPage() {
             />
             <CardContent className="p-5 sm:p-6 space-y-6">
               <form onSubmit={handleSaveFinancial} className="space-y-6">
-                {/* Bagian 1: Status Perpajakan & PTKP */}
-                <div className="space-y-4">
-                  <div className="border-b border-border/60 pb-2">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {t("settings:profile.section_tax_title", "Status Perpajakan & PTKP")}
-                    </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                  {/* Kolom 1: Status Perpajakan & PTKP */}
+                  <div className="space-y-5">
+                    <div className="border-b border-border/60 pb-2.5 flex items-center min-h-[35px]">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t("settings:profile.section_tax_title", "Status Perpajakan & PTKP")}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* Field 1: Status Pernikahan */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-marital-status" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_marital_status", "Status Pernikahan")}
+                        </FieldLabel>
+                        <Select
+                          value={maritalStatus}
+                          onValueChange={(val) => setMaritalStatus(val as MaritalStatus)}
+                        >
+                          <SelectTrigger id="pf-marital-status" className="h-9 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="single">
+                              {t("settings:profile.marital_single", "Belum Menikah (TK)")}
+                            </SelectItem>
+                            <SelectItem value="married">
+                              {t("settings:profile.marital_married", "Menikah (K)")}
+                            </SelectItem>
+                            <SelectItem value="widowed">
+                              {t("settings:profile.marital_widowed", "Duda / Janda (TK)")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t(
+                            "settings:profile.financial_marital_status_desc",
+                            "Menentukan klasifikasi status dasar Penghasilan Tidak Kena Pajak (PTKP).",
+                          )}
+                        </FieldDescription>
+                      </Field>
+
+                      {/* Field 2: Jumlah Tanggungan */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-dependents-count" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_dependents_count", "Jumlah Tanggungan")}
+                        </FieldLabel>
+                        <Select
+                          value={String(dependentsCount)}
+                          onValueChange={(val) => setDependentsCount(Number(val))}
+                        >
+                          <SelectTrigger id="pf-dependents-count" className="h-9 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">
+                              {t("settings:profile.dependents_0", "0 Tanggungan")}
+                            </SelectItem>
+                            <SelectItem value="1">
+                              {t("settings:profile.dependents_1", "1 Tanggungan")}
+                            </SelectItem>
+                            <SelectItem value="2">
+                              {t("settings:profile.dependents_2", "2 Tanggungan")}
+                            </SelectItem>
+                            <SelectItem value="3">
+                              {t("settings:profile.dependents_3", "3 Tanggungan (Maksimal)")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t(
+                            "settings:profile.financial_dependents_count_desc",
+                            "Maksimal 3 tanggungan keluarga sedarah sesuai UU HPP.",
+                          )}
+                        </FieldDescription>
+                      </Field>
+
+                      {/* Field 3: Nomor Pokok Wajib Pajak (NPWP) */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-npwp" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_npwp", "Nomor Pokok Wajib Pajak (NPWP)")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-npwp"
+                          type="text"
+                          value={npwp}
+                          onChange={(e) => setNpwp(e.target.value)}
+                          placeholder={t("settings:profile.financial_npwp_ph", "00.000.000.0-000.000")}
+                          className="text-xs h-9 tabular-nums"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t(
+                            "settings:profile.financial_npwp_desc",
+                            "NPWP 15 atau 16 digit. Akun tanpa NPWP dikenakan tarif pajak lebih tinggi (+20%).",
+                          )}
+                        </FieldDescription>
+                      </Field>
+
+                      {/* Field 4: Klasifikasi PTKP & TER (Tidak bisa diedit - warna teks dan visual dibedakan) */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-ptkp-summary" className="text-xs font-semibold h-4 flex items-center text-muted-foreground">
+                          {t("settings:profile.financial_ptkp_summary", "Klasifikasi PTKP & TER")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-ptkp-summary"
+                          type="text"
+                          readOnly
+                          tabIndex={-1}
+                          value={`${ptkpInfo.code} • TER ${ptkpInfo.terCategory} (${formatRupiah(ptkpInfo.annualValue)}/th)`}
+                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium focus-visible:ring-0 focus-visible:border-border/60"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
+                          {ptkpInfo.description}
+                        </FieldDescription>
+                      </Field>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Field>
-                      <FieldLabel htmlFor="pf-marital-status" className="text-xs font-semibold">
-                        {t("settings:profile.financial_marital_status", "Status Pernikahan")}
-                      </FieldLabel>
-                      <Select
-                        value={maritalStatus}
-                        onValueChange={(val) => setMaritalStatus(val as MaritalStatus)}
-                      >
-                        <SelectTrigger id="pf-marital-status" className="h-9 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="single">
-                            {t("settings:profile.marital_single", "Belum Menikah (TK)")}
-                          </SelectItem>
-                          <SelectItem value="married">
-                            {t("settings:profile.marital_married", "Menikah (K)")}
-                          </SelectItem>
-                          <SelectItem value="widowed">
-                            {t("settings:profile.marital_widowed", "Duda / Janda (TK)")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FieldDescription className="text-[11px]">
-                        {t(
-                          "settings:profile.financial_marital_status_desc",
-                          "Menentukan klasifikasi status dasar Penghasilan Tidak Kena Pajak (PTKP).",
-                        )}
-                      </FieldDescription>
-                    </Field>
+                  {/* Kolom 2: Data Rekening Bank Pencairan */}
+                  <div className="space-y-5">
+                    <div className="border-b border-border/60 pb-2.5 flex items-center min-h-[35px]">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        {t("settings:profile.section_bank_title", "Data Rekening Bank Pencairan")}
+                      </h3>
+                    </div>
 
-                    <Field>
-                      <FieldLabel htmlFor="pf-dependents-count" className="text-xs font-semibold">
-                        {t("settings:profile.financial_dependents_count", "Jumlah Tanggungan")}
-                      </FieldLabel>
-                      <Select
-                        value={String(dependentsCount)}
-                        onValueChange={(val) => setDependentsCount(Number(val))}
-                      >
-                        <SelectTrigger id="pf-dependents-count" className="h-9 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">
-                            {t("settings:profile.dependents_0", "0 Tanggungan")}
-                          </SelectItem>
-                          <SelectItem value="1">
-                            {t("settings:profile.dependents_1", "1 Tanggungan")}
-                          </SelectItem>
-                          <SelectItem value="2">
-                            {t("settings:profile.dependents_2", "2 Tanggungan")}
-                          </SelectItem>
-                          <SelectItem value="3">
-                            {t("settings:profile.dependents_3", "3 Tanggungan (Maksimal)")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FieldDescription className="text-[11px]">
-                        {t(
-                          "settings:profile.financial_dependents_count_desc",
-                          "Maksimal 3 tanggungan keluarga sedarah sesuai UU HPP.",
-                        )}
-                      </FieldDescription>
-                    </Field>
+                    <div className="space-y-5">
+                      {/* Field 1: Nama Bank */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-bank-name" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_bank_name", "Nama Bank")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-bank-name"
+                          type="text"
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder={t("settings:profile.financial_bank_name_ph", "Contoh: Bank Central Asia (BCA)")}
+                          className="text-xs h-9"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t("settings:profile.financial_bank_name_desc", "Nama institusi perbankan resmi di Indonesia.")}
+                        </FieldDescription>
+                      </Field>
 
-                    <Field>
-                      <FieldLabel htmlFor="pf-npwp" className="text-xs font-semibold">
-                        {t("settings:profile.financial_npwp", "Nomor Pokok Wajib Pajak (NPWP)")}
-                      </FieldLabel>
-                      <Input
-                        id="pf-npwp"
-                        type="text"
-                        value={npwp}
-                        onChange={(e) => setNpwp(e.target.value)}
-                        placeholder={t("settings:profile.financial_npwp_ph", "00.000.000.0-000.000")}
-                        className="text-xs h-9 tabular-nums"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {t(
-                          "settings:profile.financial_npwp_desc",
-                          "NPWP 15 atau 16 digit. Akun tanpa NPWP dikenakan tarif pajak lebih tinggi (+20%).",
-                        )}
-                      </FieldDescription>
-                    </Field>
+                      {/* Field 2: Nomor Rekening */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-bank-acc" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_bank_account", "Nomor Rekening")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-bank-acc"
+                          type="text"
+                          inputMode="numeric"
+                          value={bankAccountNumber}
+                          onChange={(e) =>
+                            setBankAccountNumber(e.target.value.replace(/[^\d\s-]/g, ""))
+                          }
+                          placeholder={t("settings:profile.financial_bank_account_ph", "Hanya digit angka, contoh: 1234567890")}
+                          className="text-xs h-9 tabular-nums"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t("settings:profile.financial_bank_account_desc", "Nomor rekening tujuan pencairan dana dan bagi hasil.")}
+                        </FieldDescription>
+                      </Field>
 
-                    <Field>
-                      <FieldLabel htmlFor="pf-ptkp-summary" className="text-xs font-semibold">
-                        {t("settings:profile.financial_ptkp_summary", "Klasifikasi PTKP & TER")}
-                      </FieldLabel>
-                      <Input
-                        id="pf-ptkp-summary"
-                        type="text"
-                        readOnly
-                        value={`${ptkpInfo.code} • TER ${ptkpInfo.terCategory} (${formatRupiah(ptkpInfo.annualValue)}/th)`}
-                        className="text-xs h-9 tabular-nums bg-muted/20 border-border/70 select-none cursor-default font-medium text-foreground"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {ptkpInfo.description}
-                      </FieldDescription>
-                    </Field>
-                  </div>
-                </div>
+                      {/* Field 3: Atas Nama Rekening */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-bank-holder" className="text-xs font-semibold h-4 flex items-center">
+                          {t("settings:profile.financial_bank_holder", "Atas Nama Rekening")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-bank-holder"
+                          type="text"
+                          value={bankAccountHolder}
+                          onChange={(e) => setBankAccountHolder(e.target.value)}
+                          placeholder={t("settings:profile.financial_bank_holder_ph", "Nama pemilik rekening sesuai buku tabungan")}
+                          className="text-xs h-9"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                          {t("settings:profile.financial_bank_holder_desc", "Harus sesuai dengan nama pemilik rekening yang sah.")}
+                        </FieldDescription>
+                      </Field>
 
-                {/* Bagian 2: Rekening Bank Pencairan */}
-                <div className="space-y-4 pt-1">
-                  <div className="border-b border-border/60 pb-2">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {t("settings:profile.section_bank_title", "Data Rekening Bank Pencairan")}
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Field>
-                      <FieldLabel htmlFor="pf-bank-name" className="text-xs font-semibold">
-                        {t("settings:profile.financial_bank_name", "Nama Bank")}
-                      </FieldLabel>
-                      <Input
-                        id="pf-bank-name"
-                        type="text"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder={t("settings:profile.financial_bank_name_ph", "Contoh: Bank Central Asia (BCA)")}
-                        className="text-xs h-9"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {t("settings:profile.financial_bank_name_desc", "Nama institusi perbankan resmi di Indonesia.")}
-                      </FieldDescription>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="pf-bank-acc" className="text-xs font-semibold">
-                        {t("settings:profile.financial_bank_account", "Nomor Rekening")}
-                      </FieldLabel>
-                      <Input
-                        id="pf-bank-acc"
-                        type="text"
-                        inputMode="numeric"
-                        value={bankAccountNumber}
-                        onChange={(e) =>
-                          setBankAccountNumber(e.target.value.replace(/[^\d\s-]/g, ""))
-                        }
-                        placeholder={t("settings:profile.financial_bank_account_ph", "Hanya digit angka, contoh: 1234567890")}
-                        className="text-xs h-9 tabular-nums"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {t("settings:profile.financial_bank_account_desc", "Nomor rekening tujuan pencairan dana dan bagi hasil.")}
-                      </FieldDescription>
-                    </Field>
-
-                    <Field className="md:col-span-2">
-                      <FieldLabel htmlFor="pf-bank-holder" className="text-xs font-semibold">
-                        {t("settings:profile.financial_bank_holder", "Atas Nama Rekening")}
-                      </FieldLabel>
-                      <Input
-                        id="pf-bank-holder"
-                        type="text"
-                        value={bankAccountHolder}
-                        onChange={(e) => setBankAccountHolder(e.target.value)}
-                        placeholder={t("settings:profile.financial_bank_holder_ph", "Nama pemilik rekening sesuai buku tabungan")}
-                        className="text-xs h-9"
-                      />
-                      <FieldDescription className="text-[11px]">
-                        {t("settings:profile.financial_bank_holder_desc", "Harus sesuai dengan nama pemilik rekening yang sah.")}
-                      </FieldDescription>
-                    </Field>
+                      {/* Field 4: Status Rekening Pencairan (Tidak bisa diedit - selaras dengan PTKP) */}
+                      <Field className="space-y-1.5">
+                        <FieldLabel htmlFor="pf-bank-status" className="text-xs font-semibold h-4 flex items-center text-muted-foreground">
+                          {t("settings:profile.financial_bank_status", "Status Rekening Pencairan")}
+                        </FieldLabel>
+                        <Input
+                          id="pf-bank-status"
+                          type="text"
+                          readOnly
+                          tabIndex={-1}
+                          value={
+                            bankAccountNumber.trim()
+                              ? t("settings:profile.bank_status_ready", "Terdaftar • Siap Digunakan")
+                              : t("settings:profile.bank_status_empty", "Belum Diatur (Pencairan Ditangguhkan)")
+                          }
+                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium focus-visible:ring-0 focus-visible:border-border/60"
+                        />
+                        <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
+                          {t(
+                            "settings:profile.financial_bank_status_desc",
+                            "Status kesiapan data rekening untuk pencairan dana dan bagi hasil.",
+                          )}
+                        </FieldDescription>
+                      </Field>
+                    </div>
                   </div>
                 </div>
 
