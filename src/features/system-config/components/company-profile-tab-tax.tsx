@@ -130,11 +130,11 @@ export function CompanyProfileTabTax({
                 <div className="rounded-xl border border-border/70 bg-card/80 p-4 flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">
-                      {t("settings:company.switch_pkp_title", "Aktifkan Perhitungan PPN")}
+                      {t("settings:company.enable_pkp_label", "Aktifkan Status PKP & Perhitungan PPN")}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       {t(
-                        "settings:company.switch_pkp_desc",
+                        "settings:company.pkp_proof_desc",
                         "Memerlukan berkas dokumen bukti pengukuhan PKP yang sah.",
                       )}
                     </p>
@@ -153,7 +153,7 @@ export function CompanyProfileTabTax({
                       <span>{t("settings:company.pkp_proof_label", "Dokumen Bukti Pengukuhan PKP")}</span>
                       {company.pkp_enabled && (
                         <span className="text-[10px] text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
-                          {t("settings:company.pkp_proof_required_badge", "Wajib")}
+                          {t("settings:company.badge_pkp_active", "Wajib")}
                         </span>
                       )}
                     </FieldLabel>
@@ -183,15 +183,15 @@ export function CompanyProfileTabTax({
                         {uploadingProof ? (
                           <>
                             <Loader2Icon className="size-3.5 animate-spin" />
-                            <span>{t("settings:company.pkp_uploading_btn", "Mengunggah...")}</span>
+                            <span>{t("common:action.loading", "Mengunggah...")}</span>
                           </>
                         ) : (
                           <>
                             <UploadIcon className="size-3.5 text-primary" />
                             <span>
                               {hasPkpProof
-                                ? t("settings:company.pkp_replace_btn", "Ganti Bukti")
-                                : t("settings:company.pkp_upload_btn", "Unggah Bukti")}
+                                ? t("settings:company.pkp_proof_replace_btn", "Ganti Bukti")
+                                : t("settings:company.pkp_proof_upload_btn", "Unggah Bukti")}
                             </span>
                           </>
                         )}
