@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { useAuth } from "@/features/auth/auth-context";
@@ -75,7 +76,8 @@ const LastSessionTicker = React.memo(function LastSessionTicker({
 export function ProfileOverviewPage() {
   const { profile: rawProfile, activeRole, availableRoles } = useAuth();
   const { t, language } = useLanguage();
-  const [revealSensitive, setRevealSensitive] = React.useState(false);
+  const [revealNpwp, setRevealNpwp] = React.useState(false);
+  const [revealBankAccount, setRevealBankAccount] = React.useState(false);
 
   const profile = React.useMemo(
     () => getMergedProfileFields(rawProfile),
@@ -250,7 +252,7 @@ export function ProfileOverviewPage() {
           DATA KEUANGAN & REKENING PRIBADI (Item 2: Default Dimasking + Toggle Lihat)
           ========================================================================= */}
       <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="mb-4">
           <CardHeaderTitleWithInfo
             title={t(
               "settings:profile_overview.financial_title",
@@ -262,57 +264,54 @@ export function ProfileOverviewPage() {
             )}
             titleClassName="text-sm sm:text-base font-bold"
           />
-          {(profile.npwp || profile.bank_account_number) && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setRevealSensitive((prev) => !prev)}
-              className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer shrink-0"
-            >
-              {revealSensitive ? (
-                <>
-                  <EyeOffIcon className="size-3.5" />
-                  <span>
-                    {t(
-                      "settings:profile_overview.btn_hide_sensitive",
-                      "Sembunyikan Data",
-                    )}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <EyeIcon className="size-3.5" />
-                  <span>
-                    {t(
-                      "settings:profile_overview.btn_show_sensitive",
-                      "Lihat Data Lengkap",
-                    )}
-                  </span>
-                </>
-              )}
-            </Button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              {t("settings:profile_overview.label_npwp", "NPWP")}
-            </p>
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
+            <div className="flex items-center justify-between gap-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("settings:profile_overview.label_npwp", "NPWP")}
+              </p>
+              {profile.npwp && (
+                <ActionTooltip
+                  content={
+                    revealNpwp
+                      ? t("settings:profile_overview.btn_hide_npwp", "Sembunyikan NPWP")
+                      : t("settings:profile_overview.btn_show_npwp", "Lihat NPWP")
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => setRevealNpwp((prev) => !prev)}
+                    aria-label={
+                      revealNpwp
+                        ? t("settings:profile_overview.btn_hide_npwp", "Sembunyikan NPWP")
+                        : t("settings:profile_overview.btn_show_npwp", "Lihat NPWP")
+                    }
+                    className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {revealNpwp ? (
+                      <EyeOffIcon className="size-3.5" />
+                    ) : (
+                      <EyeIcon className="size-3.5" />
+                    )}
+                  </button>
+                </ActionTooltip>
+              )}
+            </div>
             <p
               data-testid="overview-npwp-value"
               className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
             >
               {profile.npwp
-                ? revealSensitive
+                ? revealNpwp
                   ? formatNpwpDisplay(profile.npwp)
                   : maskNpwp(profile.npwp)
                 : t("settings:profile_overview.not_configured", "Belum diatur")}
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
             <p className="text-[11px] font-medium text-muted-foreground">
               {t("settings:profile_overview.label_bank_name", "Nama Bank")}
             </p>
@@ -325,26 +324,54 @@ export function ProfileOverviewPage() {
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              {t(
-                "settings:profile_overview.label_bank_account",
-                "Nomor Rekening",
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
+            <div className="flex items-center justify-between gap-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t(
+                  "settings:profile_overview.label_bank_account",
+                  "Nomor Rekening",
+                )}
+              </p>
+              {profile.bank_account_number && (
+                <ActionTooltip
+                  content={
+                    revealBankAccount
+                      ? t("settings:profile_overview.btn_hide_acc", "Sembunyikan Nomor Rekening")
+                      : t("settings:profile_overview.btn_show_acc", "Lihat Nomor Rekening")
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => setRevealBankAccount((prev) => !prev)}
+                    aria-label={
+                      revealBankAccount
+                        ? t("settings:profile_overview.btn_hide_acc", "Sembunyikan Nomor Rekening")
+                        : t("settings:profile_overview.btn_show_acc", "Lihat Nomor Rekening")
+                    }
+                    className="size-6 -mr-1 -mt-1 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    {revealBankAccount ? (
+                      <EyeOffIcon className="size-3.5" />
+                    ) : (
+                      <EyeIcon className="size-3.5" />
+                    )}
+                  </button>
+                </ActionTooltip>
               )}
-            </p>
+            </div>
             <p
               data-testid="overview-bank-acc-value"
               className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
             >
               {profile.bank_account_number
-                ? revealSensitive
+                ? revealBankAccount
                   ? profile.bank_account_number
                   : maskBankAccountNumber(profile.bank_account_number)
                 : t("settings:profile_overview.not_configured", "Belum diatur")}
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70 flex flex-col justify-between min-h-[74px]">
             <p className="text-[11px] font-medium text-muted-foreground">
               {t(
                 "settings:profile_overview.label_bank_holder",

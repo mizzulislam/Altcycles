@@ -307,17 +307,24 @@ describe("Kelompok A — Item 1, 2, dan 4 (Pelanggan, Data Keuangan, & TTD PDF)"
       expect(npwpOverview.textContent).toBe("••.•••.•••.•-•••.000");
       expect(accOverview.textContent).toBe("•••• •••• 2849");
 
-      // Klik tombol "Lihat Data Lengkap" -> tampil penuh untuk pemilik
-      const toggleRevealBtn = screen.getByRole("button", {
-        name: /Lihat Data Lengkap|Show Full Data/i,
+      // Klik icon mata pada container NPWP & Nomor Rekening -> tampil penuh untuk pemilik
+      const toggleNpwpBtn = screen.getByRole("button", {
+        name: /Lihat NPWP|Show Tax ID/i,
       });
-      fireEvent.click(toggleRevealBtn);
+      const toggleAccBtn = screen.getByRole("button", {
+        name: /Lihat Nomor Rekening|Show Account Number/i,
+      });
+      fireEvent.click(toggleNpwpBtn);
+      fireEvent.click(toggleAccBtn);
       expect(npwpOverview.textContent).toBe("09.876.543.2-109.000");
       expect(accOverview.textContent).toBe("103289122849");
 
-      // Klik kembali "Sembunyikan Data" -> kembali dimasking
+      // Klik kembali untuk menyembunyikan -> kembali dimasking
       fireEvent.click(
-        screen.getByRole("button", { name: /Sembunyikan Data|Hide Data/i }),
+        screen.getByRole("button", { name: /Sembunyikan NPWP|Hide Tax ID/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /Sembunyikan Nomor Rekening|Hide Account Number/i }),
       );
       expect(npwpOverview.textContent).toBe("••.•••.•••.•-•••.000");
       expect(accOverview.textContent).toBe("•••• •••• 2849");
