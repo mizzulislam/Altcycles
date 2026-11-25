@@ -59,6 +59,7 @@ import {
   listProjects,
   listVendors,
 } from "@/lib/data-service";
+import { resolveDocumentSigner } from "@/lib/pdf/document-signer-config";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
 import {
@@ -442,8 +443,22 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
       ],
       leftSignatureLabel: t("po:doc_spec.sig_prepared_by", "Dibuat Oleh,"),
       leftSignatureName: company.signer_name,
+      leftSignatureImageUrl: resolveDocumentSigner({
+        docType: "POP",
+        slot: "left",
+        company,
+        signerUserId: po.created_by,
+        signerName: company.signer_name,
+        signerJobTitle: company.signer_title,
+      }).signatureImageUrl,
       thirdSignatureLabel: t("po:doc_spec.sig_reviewed_by", "Diverifikasi & Disetujui,"),
       thirdSignatureName: t("po:doc_spec.sig_finance_director", "Direktur Keuangan"),
+      thirdSignatureImageUrl: resolveDocumentSigner({
+        docType: "POP",
+        slot: "third",
+        company,
+        signerJobTitle: "Direktur Keuangan",
+      }).signatureImageUrl,
       rightSignatureLabel: `${t("po:doc_spec.sig_vendor_accepted", "Disetujui Rekanan,")} ${vendor?.name ?? ""}`,
       rightSignatureName: vendor?.contact_name ?? t("po:doc_spec.sig_vendor_rep", "Perwakilan Vendor"),
       footerDocNumber: po.po_number,

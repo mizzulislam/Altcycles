@@ -35,6 +35,9 @@
   "col_recipient": "Recipient",
   "col_percentage": "Percentage",
   "col_share_entitlement": "Profit Sharing Entitlement",
+  "recipient_bank_not_set": "Bank account not set in profile",
+  "show_financial_data": "Show bank account data",
+  "hide_financial_data": "Hide bank account data",
   "modals": {
     "scheme_title": "Set Project Profit Sharing Scheme (Must Total 100%)",
     "scheme_hint": "Link row to User account if the recipient is an internal team member.",

@@ -25,6 +25,7 @@ import {
   fitDimensions,
   wrapTextByWidth,
 } from "./pdf-engine";
+import { resolveDocumentSigner } from "./document-signer-config";
 
 
 /**
@@ -44,6 +45,20 @@ export async function generateSpkProjectCharterPdf(params: {
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  const resolvedP1SigUrl = resolveDocumentSigner({
+    docType: "SPK",
+    slot: "left",
+    company,
+    signerName: content.partyOne?.name || company.signer_name,
+    signerJobTitle: content.partyOne?.title || company.signer_title,
+  }).signatureImageUrl;
+
+  const resolvedP2SigUrl = resolveDocumentSigner({
+    docType: "SPK",
+    slot: "right",
+    customerSignatureUrl: content.partyTwoSignatureUrl ?? null,
+  }).signatureImageUrl;
+
   const [
     companyLogo,
     clientLogo,
@@ -56,9 +71,9 @@ export async function generateSpkProjectCharterPdf(params: {
     embedOptionalImage(pdfDoc, content.clientLogoDataUrl),
     embedOptionalImage(
       pdfDoc,
-      content.partyOneSignatureUrl ?? company.signer_signature_path,
+      resolvedP1SigUrl ?? content.partyOneSignatureUrl ?? company.signer_signature_path,
     ),
-    embedOptionalImage(pdfDoc, content.partyTwoSignatureUrl),
+    embedOptionalImage(pdfDoc, resolvedP2SigUrl),
     embedOptionalImage(
       pdfDoc,
       content.partyOneParafUrl ?? company.signer_paraf_path,

@@ -1,21 +1,39 @@
+import * as React from "react";
 import {
   CalendarIcon,
   CheckCircle2Icon,
   ClockIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LandmarkIcon,
   MailIcon,
   PhoneIcon,
   ShieldCheckIcon,
   UserCheckIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/auth-context";
+import { getMergedProfileFields } from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
-import { formatDateTimeI18n, ROLE_LABELS } from "@/lib/formatters";
+import {
+  formatDateTimeI18n,
+  formatNpwpDisplay,
+  maskBankAccountNumber,
+  maskNpwp,
+  ROLE_LABELS,
+} from "@/lib/formatters";
 import { getRoleShortName } from "@/components/layout/nav-structure";
 
 export function ProfileOverviewPage() {
-  const { profile, activeRole, availableRoles } = useAuth();
+  const { profile: rawProfile, activeRole, availableRoles } = useAuth();
   const { t, language } = useLanguage();
+  const [revealSensitive, setRevealSensitive] = React.useState(false);
+
+  const profile = React.useMemo(
+    () => getMergedProfileFields(rawProfile),
+    [rawProfile],
+  );
 
   if (!profile) return null;
 
@@ -165,6 +183,126 @@ export function ProfileOverviewPage() {
               </div>
             );
           })}
+        </div>
+      </Card>
+
+      {/* =========================================================================
+          DATA KEUANGAN & REKENING PRIBADI (Item 2: Default Dimasking + Toggle Lihat)
+          ========================================================================= */}
+      <Card className="p-6 border-border/80 shadow-2xs rounded-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <LandmarkIcon className="size-4 text-primary dark:text-sky-400" />
+            <span>
+              {t(
+                "settings:profile_overview.financial_title",
+                "Data Keuangan & Rekening",
+              )}
+            </span>
+          </h2>
+          {(profile.npwp || profile.bank_account_number) && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRevealSensitive((prev) => !prev)}
+              className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
+            >
+              {revealSensitive ? (
+                <>
+                  <EyeOffIcon className="size-3.5" />
+                  <span>
+                    {t(
+                      "settings:profile_overview.btn_hide_sensitive",
+                      "Sembunyikan Data",
+                    )}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <EyeIcon className="size-3.5" />
+                  <span>
+                    {t(
+                      "settings:profile_overview.btn_show_sensitive",
+                      "Lihat Data Lengkap",
+                    )}
+                  </span>
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          {t(
+            "settings:profile_overview.financial_desc",
+            "Informasi NPWP dan rekening bank terdaftar untuk keperluan pencairan dana dan bagi hasil proyek.",
+          )}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t("settings:profile_overview.label_npwp", "NPWP")}
+            </p>
+            <p
+              data-testid="overview-npwp-value"
+              className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
+            >
+              {profile.npwp
+                ? revealSensitive
+                  ? formatNpwpDisplay(profile.npwp)
+                  : maskNpwp(profile.npwp)
+                : t("settings:profile_overview.not_configured", "Belum diatur")}
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t("settings:profile_overview.label_bank_name", "Nama Bank")}
+            </p>
+            <p
+              data-testid="overview-bank-name-value"
+              className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate"
+            >
+              {profile.bank_name ||
+                t("settings:profile_overview.not_configured", "Belum diatur")}
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t(
+                "settings:profile_overview.label_bank_account",
+                "Nomor Rekening",
+              )}
+            </p>
+            <p
+              data-testid="overview-bank-acc-value"
+              className="text-xs sm:text-sm font-bold text-foreground font-mono mt-1 tabular-nums"
+            >
+              {profile.bank_account_number
+                ? revealSensitive
+                  ? profile.bank_account_number
+                  : maskBankAccountNumber(profile.bank_account_number)
+                : t("settings:profile_overview.not_configured", "Belum diatur")}
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-muted/25 border border-border/70">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {t(
+                "settings:profile_overview.label_bank_holder",
+                "Atas Nama Rekening",
+              )}
+            </p>
+            <p
+              data-testid="overview-bank-holder-value"
+              className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate"
+            >
+              {profile.bank_account_holder ||
+                t("settings:profile_overview.not_configured", "Belum diatur")}
+            </p>
+          </div>
         </div>
       </Card>
 

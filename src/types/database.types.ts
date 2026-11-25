@@ -135,6 +135,11 @@ export type ProfileRow = {
   phone_number?: string | null;
   job_title?: string | null;
   bio?: string | null;
+  npwp?: string | null;
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  bank_account_holder?: string | null;
+  signature_storage_path?: string | null;
   is_active: boolean;
   last_login_at: string | null;
   created_by: string | null;
@@ -306,6 +311,8 @@ export type CustomerRow = {
   phone: string | null;
   npwp: string | null;
   address: string | null;
+  shipping_address?: string | null;
+  shipping_same_as_office?: boolean;
   logo_storage_path?: string | null;
   signature_storage_path?: string | null;
   paraf_storage_path?: string | null;

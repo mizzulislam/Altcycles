@@ -1,4 +1,9 @@
-import { inferRevenueMethodFromTerms } from "@/lib/formatters";
+import {
+  inferRevenueMethodFromTerms,
+  isValidNpwp,
+  maskNpwp,
+  normalizeNpwp,
+} from "@/lib/formatters";
 import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type {
@@ -133,6 +138,10 @@ export async function listCustomers(): Promise<CustomerRow[]> {
     return (data ?? []).map((c) => ({
       ...(extMap[c.id] ?? {}),
       ...c,
+      npwp: c.npwp ?? extMap[c.id]?.npwp ?? null,
+      shipping_address: c.shipping_address ?? extMap[c.id]?.shipping_address ?? null,
+      shipping_same_as_office:
+        c.shipping_same_as_office ?? extMap[c.id]?.shipping_same_as_office ?? false,
       logo_storage_path: c.logo_storage_path ?? extMap[c.id]?.logo_storage_path ?? null,
       signature_storage_path: c.signature_storage_path ?? extMap[c.id]?.signature_storage_path ?? null,
       paraf_storage_path: c.paraf_storage_path ?? extMap[c.id]?.paraf_storage_path ?? null,
@@ -144,10 +153,33 @@ export async function saveCustomer(
   input: Pick<CustomerRow, "code" | "name"> &
     Partial<CustomerRow> & { id?: string },
 ): Promise<void> {
-  const extPatch: Partial<CustomerRow> = {};
-  if ("logo_storage_path" in input) extPatch.logo_storage_path = input.logo_storage_path ?? null;
-  if ("signature_storage_path" in input) extPatch.signature_storage_path = input.signature_storage_path ?? null;
-  if ("paraf_storage_path" in input) extPatch.paraf_storage_path = input.paraf_storage_path ?? null;
+  const rawNpwp = input.npwp?.trim() || "";
+  if (rawNpwp && !isValidNpwp(rawNpwp)) {
+    throw new Error("Format NPWP tidak valid. NPWP wajib berisi 15 atau 16 digit angka.");
+  }
+  const normalizedNpwp = rawNpwp ? normalizeNpwp(rawNpwp) : null;
+  const sameAsOffice = Boolean(input.shipping_same_as_office);
+  const resolvedAddress = input.address?.trim() || null;
+  const resolvedShippingAddress = sameAsOffice
+    ? resolvedAddress
+    : input.shipping_address?.trim() || null;
+
+  const normalizedInput: typeof input = {
+    ...input,
+    npwp: normalizedNpwp,
+    address: resolvedAddress,
+    shipping_address: resolvedShippingAddress,
+    shipping_same_as_office: sameAsOffice,
+  };
+
+  const extPatch: Partial<CustomerRow> = {
+    npwp: normalizedNpwp,
+    shipping_address: resolvedShippingAddress,
+    shipping_same_as_office: sameAsOffice,
+  };
+  if ("logo_storage_path" in normalizedInput) extPatch.logo_storage_path = normalizedInput.logo_storage_path ?? null;
+  if ("signature_storage_path" in normalizedInput) extPatch.signature_storage_path = normalizedInput.signature_storage_path ?? null;
+  if ("paraf_storage_path" in normalizedInput) extPatch.paraf_storage_path = normalizedInput.paraf_storage_path ?? null;
 
   const saveCustomerExt = (custId: string) => {
     if (Object.keys(extPatch).length === 0) return;
@@ -156,49 +188,73 @@ export async function saveCustomer(
     writeLocalJson(CUSTOMER_EXT_STORAGE_KEY, extMap);
   };
 
+  const maskCustomerAudit = (row: CustomerRow | null) => {
+    if (!row) return null;
+    return {
+      ...row,
+      npwp: row.npwp ? maskNpwp(row.npwp) : null,
+    };
+  };
+
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
     if (actor.role !== "admin") {
       throw new Error("Hanya Admin yang dapat mengelola Pelanggan.");
     }
     const now = new Date().toISOString();
-    if (input.id) {
-      const target = demoStore.customers.find((c) => c.id === input.id);
+    if (normalizedInput.id) {
+      const target = demoStore.customers.find((c) => c.id === normalizedInput.id);
       if (!target) throw new Error("Pelanggan tidak ditemukan.");
       const before = structuredClone(target);
-      Object.assign(target, input, { updated_at: now });
+      Object.assign(target, normalizedInput, { updated_at: now });
       saveCustomerExt(target.id);
-      appendDemoAudit(actor, "UPDATE", "customers", target.id, before, target);
+      appendDemoAudit(
+        actor,
+        "UPDATE",
+        "customers",
+        target.id,
+        maskCustomerAudit(before),
+        maskCustomerAudit(target),
+      );
     } else {
       const created: CustomerRow = {
         id: crypto.randomUUID(),
-        code: input.code.trim(),
-        name: input.name.trim(),
-        company_name: input.company_name ?? null,
-        contact_person: input.contact_person ?? null,
-        contact_title: input.contact_title ?? null,
-        email: input.email ?? null,
-        phone: input.phone ?? null,
-        npwp: input.npwp ?? null,
-        address: input.address ?? null,
-        logo_storage_path: input.logo_storage_path ?? null,
-        signature_storage_path: input.signature_storage_path ?? null,
-        paraf_storage_path: input.paraf_storage_path ?? null,
-        is_active: input.is_active ?? true,
+        code: normalizedInput.code.trim(),
+        name: normalizedInput.name.trim(),
+        company_name: normalizedInput.company_name ?? null,
+        contact_person: normalizedInput.contact_person ?? null,
+        contact_title: normalizedInput.contact_title ?? null,
+        email: normalizedInput.email ?? null,
+        phone: normalizedInput.phone ?? null,
+        npwp: normalizedNpwp,
+        address: resolvedAddress,
+        shipping_address: resolvedShippingAddress,
+        shipping_same_as_office: sameAsOffice,
+        logo_storage_path: normalizedInput.logo_storage_path ?? null,
+        signature_storage_path: normalizedInput.signature_storage_path ?? null,
+        paraf_storage_path: normalizedInput.paraf_storage_path ?? null,
+        is_active: normalizedInput.is_active ?? true,
         created_by: actor.id,
         created_at: now,
         updated_at: now,
       };
       demoStore.customers.push(created);
       saveCustomerExt(created.id);
-      appendDemoAudit(actor, "INSERT", "customers", created.id, null, created);
+      appendDemoAudit(
+        actor,
+        "INSERT",
+        "customers",
+        created.id,
+        null,
+        maskCustomerAudit(created),
+      );
     }
     invalidateAndNotifyDataChange("customers");
     return;
   }
 
-  if (input.id) {
-    const { id, ...patch } = input;
+  if (normalizedInput.id) {
+    const { id, ...patch } = normalizedInput;
     saveCustomerExt(id);
     const { error } = await supabase
       .from("customers")
@@ -209,6 +265,8 @@ export async function saveCustomer(
       delete corePatch.logo_storage_path;
       delete corePatch.signature_storage_path;
       delete corePatch.paraf_storage_path;
+      delete corePatch.shipping_address;
+      delete corePatch.shipping_same_as_office;
       const { error: coreErr } = await supabase
         .from("customers")
         .update(corePatch as Partial<CustomerRow>)
@@ -220,15 +278,17 @@ export async function saveCustomer(
     if (error) throw new Error(error.message);
     invalidateAndNotifyDataChange("customers");
   } else {
-    const { data, error } = await supabase.from("customers").insert(input).select("id").single();
+    const { data, error } = await supabase.from("customers").insert(normalizedInput).select("id").single();
     if (error && (error.message.includes("column") || error.message.includes("schema cache"))) {
-      const coreInput: Record<string, unknown> = { ...input };
+      const coreInput: Record<string, unknown> = { ...normalizedInput };
       delete coreInput.logo_storage_path;
       delete coreInput.signature_storage_path;
       delete coreInput.paraf_storage_path;
+      delete coreInput.shipping_address;
+      delete coreInput.shipping_same_as_office;
       const { data: coreCreated, error: coreErr } = await supabase
         .from("customers")
-        .insert(coreInput as unknown as typeof input)
+        .insert(coreInput as unknown as typeof normalizedInput)
         .select("id")
         .single();
       if (coreErr) throw new Error(coreErr.message);

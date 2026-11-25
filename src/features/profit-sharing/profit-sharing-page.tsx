@@ -2,6 +2,8 @@ import * as React from "react";
 import {
   CalculatorIcon,
   CoinsIcon,
+  EyeIcon,
+  EyeOffIcon,
   LockIcon,
   PlusIcon,
   Trash2Icon,
@@ -59,7 +61,13 @@ import { getCompanyProfile, listProfiles, listProjects } from "@/lib/data-servic
 import { useLanguage } from "@/lib/i18n";
 import { downloadCsvFile } from "@/lib/csv-exporter";
 import { downloadExcelSheet } from "@/lib/excel-exporter";
-import { formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
+import {
+  formatDateTimeI18n,
+  formatNpwpDisplay,
+  formatRupiah,
+  maskBankAccountNumber,
+  maskNpwp,
+} from "@/lib/formatters";
 import {
   getProfitSharingBundle,
   recordExportLog,
@@ -107,6 +115,12 @@ export function ProfitSharingPage() {
     DraftRecipient[]
   >([]);
   const [savingScheme, setSavingScheme] = React.useState(false);
+  const [revealedUserIds, setRevealedUserIds] = React.useState<Record<string, boolean>>({});
+
+  const profileById = React.useMemo(
+    () => new Map(profiles.map((p) => [p.id, p])),
+    [profiles],
+  );
 
   React.useEffect(() => {
     async function init() {
@@ -530,16 +544,85 @@ export function ProfitSharingPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    schemes.map((s) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="pl-6 pr-3 font-medium text-foreground">
-                          {s.recipient_name}
-                        </TableCell>
-                        <TableCell className="pl-2 pr-6 text-center font-semibold text-foreground tabular-nums">
-                          {s.percentage}%
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    schemes.map((s) => {
+                      const member = s.recipient_user_id
+                        ? profileById.get(s.recipient_user_id)
+                        : undefined;
+                      const isRevealed = Boolean(
+                        s.recipient_user_id && revealedUserIds[s.recipient_user_id],
+                      );
+                      return (
+                        <TableRow key={s.id}>
+                          <TableCell className="pl-6 pr-3 font-medium text-foreground">
+                            <div>{s.recipient_name}</div>
+                            {member ? (
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-normal text-muted-foreground">
+                                {member.bank_name && member.bank_account_number ? (
+                                  <span className="font-mono">
+                                    {member.bank_name}:{" "}
+                                    {isRevealed
+                                      ? member.bank_account_number
+                                      : maskBankAccountNumber(member.bank_account_number)}
+                                    {member.bank_account_holder
+                                      ? ` (${member.bank_account_holder})`
+                                      : ""}
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {t(
+                                      "profit_sharing:recipient_bank_not_set",
+                                      "Rekening belum diatur di profil",
+                                    )}
+                                  </span>
+                                )}
+                                {member.npwp ? (
+                                  <span className="font-mono">
+                                    NPWP:{" "}
+                                    {isRevealed
+                                      ? formatNpwpDisplay(member.npwp)
+                                      : maskNpwp(member.npwp)}
+                                  </span>
+                                ) : null}
+                                {(member.bank_account_number || member.npwp) &&
+                                s.recipient_user_id ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setRevealedUserIds((prev) => ({
+                                        ...prev,
+                                        [s.recipient_user_id!]:
+                                          !prev[s.recipient_user_id!],
+                                      }))
+                                    }
+                                    aria-label={
+                                      isRevealed
+                                        ? t(
+                                            "profit_sharing:hide_financial_data",
+                                            "Sembunyikan data rekening",
+                                          )
+                                        : t(
+                                            "profit_sharing:show_financial_data",
+                                            "Lihat data rekening",
+                                          )
+                                    }
+                                    className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                                  >
+                                    {isRevealed ? (
+                                      <EyeOffIcon className="size-3" />
+                                    ) : (
+                                      <EyeIcon className="size-3" />
+                                    )}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </TableCell>
+                          <TableCell className="pl-2 pr-6 text-center font-semibold text-foreground tabular-nums">
+                            {s.percentage}%
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

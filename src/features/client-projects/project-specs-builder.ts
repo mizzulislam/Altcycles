@@ -5,6 +5,7 @@ import {
   generateDocumentPdf,
   generateSpkProjectCharterPdf,
 } from "@/lib/pdf-generator";
+import { resolveDocumentSigner } from "@/lib/pdf/document-signer-config";
 import {
   downloadWordBlob,
   generateDocumentWord,
@@ -138,10 +139,21 @@ export function makeQuotationSpec(
         ],
     leftSignatureLabel: isEn ? "Approved By (Client)," : "Disetujui Oleh (Klien),",
     leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
-    leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "QT",
+      slot: "left",
+      customerSignatureUrl: customer?.signature_storage_path ?? null,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn ? `Sincerely, ${company.company_name}` : `Hormat kami, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
-    rightSignatureImageUrl: company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "QT",
+      slot: "right",
+      company,
+      signerUserId: qt.created_by,
+      signerName: company.signer_name,
+      signerJobTitle: company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: qt.quotation_number,
   };
 }
@@ -242,10 +254,21 @@ export function makeSowDocSpec(
         ],
     leftSignatureLabel: isEn ? "Approved by Client," : "Disetujui Pihak Klien,",
     leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
-    leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "SOW",
+      slot: "left",
+      customerSignatureUrl: customer?.signature_storage_path ?? null,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
-    rightSignatureImageUrl: company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "SOW",
+      slot: "right",
+      company,
+      signerUserId: doc.uploaded_by,
+      signerName: company.signer_name,
+      signerJobTitle: company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: doc.doc_number,
   };
 }
@@ -384,10 +407,21 @@ export function makeBakpSpec(
         ],
     leftSignatureLabel: isEn ? "Approved by Client," : "Disetujui Pihak Klien,",
     leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
-    leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "BAKP",
+      slot: "left",
+      customerSignatureUrl: customer?.signature_storage_path ?? null,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
-    rightSignatureImageUrl: company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "BAKP",
+      slot: "right",
+      company,
+      signerUserId: bakp.created_by,
+      signerName: company.signer_name,
+      signerJobTitle: company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: bakp.bakp_number,
   };
 }
@@ -520,14 +554,24 @@ export function makeUatSpec(
       : isEn
         ? `${uat.client_tester_name} - Client Tester`
         : `${uat.client_tester_name} - Penguji Pihak Klien`,
-    leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "UAT",
+      slot: "left",
+      customerSignatureUrl: customer?.signature_storage_path ?? null,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn ? "Altvira Technical Companion," : "Pendamping Teknis Altvira,",
     rightSignatureName: uat.altvira_companion_name.includes(" - ")
       ? uat.altvira_companion_name
       : isEn
         ? `${uat.altvira_companion_name} - Altvira Technical Companion`
         : `${uat.altvira_companion_name} - Pendamping Teknis Altvira`,
-    rightSignatureImageUrl: company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "UAT",
+      slot: "right",
+      company,
+      signerUserId: uat.created_by,
+      signerName: uat.altvira_companion_name,
+    }).signatureImageUrl,
     footerDocNumber: uat.uat_number,
   };
 }
@@ -633,10 +677,21 @@ export function makeBastSpec(
         ],
     leftSignatureLabel: isEn ? "Deliverables Recipient (Client)," : "Penerima Hasil Pekerjaan (Klien),",
     leftSignatureName: `${customer?.contact_person || customer?.company_name || customer?.name || (isEn ? "Client Representative" : "Perwakilan Klien")} - ${customer?.contact_title || (isEn ? "Client Party" : "Pihak Klien")}`,
-    leftSignatureImageUrl: customer?.signature_storage_path ?? null,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "BAST",
+      slot: "left",
+      customerSignatureUrl: customer?.signature_storage_path ?? null,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn ? `Contractor, ${company.company_name}` : `Pelaksana, ${company.company_name}`,
     rightSignatureName: `${company.signer_name} - ${company.signer_title}`,
-    rightSignatureImageUrl: company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "BAST",
+      slot: "right",
+      company,
+      signerUserId: bast.created_by,
+      signerName: company.signer_name,
+      signerJobTitle: company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: bast.bast_number,
   };
 }

@@ -1,10 +1,11 @@
 import * as React from "react";
-import { PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -17,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -30,6 +31,12 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanyProfile, saveCustomer } from "@/lib/data-service";
+import {
+  formatNpwpDisplay,
+  isValidNpwp,
+  maskNpwp,
+  normalizeNpwp,
+} from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { recordExportLog } from "@/lib/operations-service";
 import { downloadCsvFile } from "@/lib/csv-exporter";
@@ -55,6 +62,7 @@ export function CustomerTabContent({
 }: CustomerTabContentProps) {
   const { t } = useLanguage();
   const [cstOpen, setCstOpen] = React.useState(false);
+  const [revealedNpwpIds, setRevealedNpwpIds] = React.useState<Record<string, boolean>>({});
   const [cstForm, setCstForm] = React.useState({
     id: undefined as string | undefined,
     code: "",
@@ -64,7 +72,10 @@ export function CustomerTabContent({
     contact_title: "",
     email: "",
     phone: "",
+    npwp: "",
     address: "",
+    shipping_address: "",
+    shipping_same_as_office: false,
     logo_storage_path: null as string | null,
     signature_storage_path: null as string | null,
     paraf_storage_path: null as string | null,
@@ -73,8 +84,25 @@ export function CustomerTabContent({
 
   async function submitCustomer(e: React.FormEvent) {
     e.preventDefault();
+    const trimmedNpwp = cstForm.npwp.trim();
+    if (trimmedNpwp && !isValidNpwp(trimmedNpwp)) {
+      toast.error(
+        t(
+          "parties:customers.toast_npwp_invalid",
+          "Format NPWP tidak valid. Masukkan 15 atau 16 digit angka.",
+        ),
+      );
+      return;
+    }
     try {
-      await saveCustomer(cstForm);
+      await saveCustomer({
+        ...cstForm,
+        npwp: trimmedNpwp ? normalizeNpwp(trimmedNpwp) : null,
+        shipping_address: cstForm.shipping_same_as_office
+          ? cstForm.address
+          : cstForm.shipping_address,
+        shipping_same_as_office: cstForm.shipping_same_as_office,
+      });
       toast.success(t("parties:customers.toast_saved", "Data pelanggan berhasil disimpan."));
       setCstOpen(false);
       await onReload();
@@ -101,7 +129,9 @@ export function CustomerTabContent({
         { header: t("parties:customers.modal_pic_title", "Jabatan"), width: 20 },
         { header: t("parties:customers.modal_email", "Email"), width: 24 },
         { header: t("parties:customers.modal_phone", "Telepon"), width: 18 },
-        { header: t("parties:customers.modal_address", "Alamat"), width: 36 },
+        { header: t("parties:customers.modal_npwp", "NPWP"), width: 22 },
+        { header: t("parties:customers.modal_address", "Alamat Kantor"), width: 36 },
+        { header: t("parties:customers.modal_shipping_address", "Alamat Pengiriman"), width: 36 },
         { header: t("parties:customers.col_status", "Status"), width: 14 },
       ],
       rows: customers.map((c) => [
@@ -112,7 +142,9 @@ export function CustomerTabContent({
         c.contact_title ?? "-",
         c.email ?? "-",
         c.phone ?? "-",
+        formatNpwpDisplay(c.npwp),
         c.address ?? "-",
+        (c.shipping_same_as_office ? c.address : c.shipping_address) ?? "-",
         c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     });
@@ -178,7 +210,9 @@ export function CustomerTabContent({
         t("parties:customers.modal_pic_title", "Jabatan"),
         t("parties:customers.modal_email", "Email"),
         t("parties:customers.modal_phone", "Telepon"),
-        t("parties:customers.modal_address", "Alamat"),
+        t("parties:customers.modal_npwp", "NPWP"),
+        t("parties:customers.modal_address", "Alamat Kantor"),
+        t("parties:customers.modal_shipping_address", "Alamat Pengiriman"),
         t("parties:customers.col_status", "Status"),
       ],
       customers.map((c) => [
@@ -189,7 +223,9 @@ export function CustomerTabContent({
         c.contact_title ?? "-",
         c.email ?? "-",
         c.phone ?? "-",
+        formatNpwpDisplay(c.npwp),
         c.address ?? "-",
+        (c.shipping_same_as_office ? c.address : c.shipping_address) ?? "-",
         c.is_active ? t("common:status.active", "Aktif") : t("common:status.inactive", "Nonaktif"),
       ]),
     );
@@ -225,7 +261,10 @@ export function CustomerTabContent({
                     contact_title: "",
                     email: "",
                     phone: "",
+                    npwp: "",
                     address: "",
+                    shipping_address: "",
+                    shipping_same_as_office: false,
                     logo_storage_path: null,
                     signature_storage_path: null,
                     paraf_storage_path: null,
@@ -275,7 +314,40 @@ export function CustomerTabContent({
                     <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
                       {c.code}
                     </TableCell>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{c.name}</div>
+                      {c.npwp ? (
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground font-mono">
+                          <span>
+                            {t("parties:customers.npwp_short", "NPWP")}:{" "}
+                            {revealedNpwpIds[c.id]
+                              ? formatNpwpDisplay(c.npwp)
+                              : maskNpwp(c.npwp)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRevealedNpwpIds((prev) => ({
+                                ...prev,
+                                [c.id]: !prev[c.id],
+                              }))
+                            }
+                            aria-label={
+                              revealedNpwpIds[c.id]
+                                ? t("parties:customers.hide_npwp", "Sembunyikan NPWP")
+                                : t("parties:customers.show_npwp", "Lihat NPWP")
+                            }
+                            className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                          >
+                            {revealedNpwpIds[c.id] ? (
+                              <EyeOffIcon className="size-3" />
+                            ) : (
+                              <EyeIcon className="size-3" />
+                            )}
+                          </button>
+                        </div>
+                      ) : null}
+                    </TableCell>
                     <TableCell className="text-xs">
                       <div>{c.contact_person ?? "-"}</div>
                       <div className="text-muted-foreground">
@@ -303,6 +375,7 @@ export function CustomerTabContent({
                           variant="ghost"
                           size="icon"
                           onClick={() => {
+                            const sameAsOffice = Boolean(c.shipping_same_as_office);
                             setCstForm({
                               id: c.id,
                               code: c.code,
@@ -312,7 +385,12 @@ export function CustomerTabContent({
                               contact_title: c.contact_title ?? "",
                               email: c.email ?? "",
                               phone: c.phone ?? "",
+                              npwp: c.npwp ? formatNpwpDisplay(c.npwp) : "",
                               address: c.address ?? "",
+                              shipping_address: sameAsOffice
+                                ? (c.address ?? "")
+                                : (c.shipping_address ?? ""),
+                              shipping_same_as_office: sameAsOffice,
                               logo_storage_path: c.logo_storage_path ?? null,
                               signature_storage_path: c.signature_storage_path ?? null,
                               paraf_storage_path: c.paraf_storage_path ?? null,
@@ -434,7 +512,7 @@ export function CustomerTabContent({
                   />
                 </Field>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <Field>
                   <FieldLabel htmlFor="c-email">
                     {t("parties:customers.modal_email", "Email")}
@@ -460,6 +538,28 @@ export function CustomerTabContent({
                     }
                   />
                 </Field>
+                <Field>
+                  <FieldLabel htmlFor="c-npwp">
+                    {t("parties:customers.modal_npwp", "NPWP")}
+                  </FieldLabel>
+                  <Input
+                    id="c-npwp"
+                    placeholder={t(
+                      "parties:customers.modal_npwp_placeholder",
+                      "15 atau 16 digit (mis. 01.234.567.8-901.000)",
+                    )}
+                    value={cstForm.npwp}
+                    onChange={(e) =>
+                      setCstForm({ ...cstForm, npwp: e.target.value })
+                    }
+                  />
+                  <FieldDescription className="text-[11px]">
+                    {t(
+                      "parties:customers.modal_npwp_desc",
+                      "Opsional, format 15 atau 16 digit angka.",
+                    )}
+                  </FieldDescription>
+                </Field>
               </div>
               <Field>
                 <FieldLabel htmlFor="c-addr">
@@ -468,9 +568,76 @@ export function CustomerTabContent({
                 <Textarea
                   id="c-addr"
                   value={cstForm.address}
-                  onChange={(e) =>
-                    setCstForm({ ...cstForm, address: e.target.value })
+                  onChange={(e) => {
+                    const nextAddress = e.target.value;
+                    setCstForm((prev) => ({
+                      ...prev,
+                      address: nextAddress,
+                      shipping_address: prev.shipping_same_as_office
+                        ? nextAddress
+                        : prev.shipping_address,
+                    }));
+                  }}
+                />
+              </Field>
+              <Field>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <FieldLabel htmlFor="c-ship-addr">
+                    {t(
+                      "parties:customers.modal_shipping_address",
+                      "Alamat Pengiriman",
+                    )}
+                  </FieldLabel>
+                  <label
+                    htmlFor="c-ship-same"
+                    className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer select-none"
+                  >
+                    <Checkbox
+                      id="c-ship-same"
+                      checked={cstForm.shipping_same_as_office}
+                      onCheckedChange={(checked) => {
+                        const isChecked = checked === true;
+                        setCstForm((prev) => ({
+                          ...prev,
+                          shipping_same_as_office: isChecked,
+                          shipping_address: isChecked
+                            ? prev.address
+                            : prev.shipping_address,
+                        }));
+                      }}
+                    />
+                    <span>
+                      {t(
+                        "parties:customers.modal_shipping_same_as_office",
+                        "Samakan dengan alamat kantor",
+                      )}
+                    </span>
+                  </label>
+                </div>
+                <Textarea
+                  id="c-ship-addr"
+                  readOnly={cstForm.shipping_same_as_office}
+                  placeholder={t(
+                    "parties:customers.modal_shipping_address_placeholder",
+                    "Alamat tujuan pengiriman dokumen atau perangkat...",
+                  )}
+                  className={
+                    cstForm.shipping_same_as_office
+                      ? "bg-muted/40 text-muted-foreground cursor-not-allowed"
+                      : undefined
                   }
+                  value={
+                    cstForm.shipping_same_as_office
+                      ? cstForm.address
+                      : cstForm.shipping_address
+                  }
+                  onChange={(e) => {
+                    if (cstForm.shipping_same_as_office) return;
+                    setCstForm({
+                      ...cstForm,
+                      shipping_address: e.target.value,
+                    });
+                  }}
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-3">

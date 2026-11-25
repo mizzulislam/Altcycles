@@ -1,7 +1,81 @@
+import {
+  isValidBankAccountNumber,
+  isValidNpwp,
+  maskBankAccountNumber,
+  maskNpwp,
+  normalizeBankAccountNumber,
+  normalizeNpwp,
+} from "@/lib/formatters";
 import { cachedQuery, invalidateAndNotifyDataChange } from "@/lib/realtime-cache";
 import { isDemoMode, supabase } from "@/lib/supabase";
 import type { ProfileRow, PurchaseOrderRow, UserRole } from "@/types/database.types";
 import { appendDemoAudit, demoStore, getDemoActor } from "./demo-store";
+import { readLocalJson, writeLocalJson } from "./storage-helpers";
+
+const PROFILE_EXT_STORAGE_KEY = "altcycles_profiles_ext_v1";
+
+type ProfileExtFields = Pick<
+  ProfileRow,
+  | "npwp"
+  | "bank_name"
+  | "bank_account_number"
+  | "bank_account_holder"
+  | "signature_storage_path"
+>;
+
+function readProfileExtMap(): Record<string, Partial<ProfileExtFields>> {
+  return readLocalJson<Record<string, Partial<ProfileExtFields>>>(
+    PROFILE_EXT_STORAGE_KEY,
+    {},
+  );
+}
+
+function saveProfileExt(userId: string, patch: Partial<ProfileExtFields>): void {
+  const map = readProfileExtMap();
+  map[userId] = { ...(map[userId] ?? {}), ...patch };
+  writeLocalJson(PROFILE_EXT_STORAGE_KEY, map);
+}
+
+export function getMergedProfileFields(
+  profile: ProfileRow | null | undefined,
+): ProfileRow | null {
+  if (!profile) return null;
+  const ext = readProfileExtMap()[profile.id] ?? {};
+  const demoMatch = demoStore.profiles.find((p) => p.id === profile.id);
+  return {
+    ...profile,
+    npwp: profile.npwp ?? ext.npwp ?? demoMatch?.npwp ?? null,
+    bank_name: profile.bank_name ?? ext.bank_name ?? demoMatch?.bank_name ?? null,
+    bank_account_number:
+      profile.bank_account_number ??
+      ext.bank_account_number ??
+      demoMatch?.bank_account_number ??
+      null,
+    bank_account_holder:
+      profile.bank_account_holder ??
+      ext.bank_account_holder ??
+      demoMatch?.bank_account_holder ??
+      null,
+    signature_storage_path:
+      profile.signature_storage_path ??
+      ext.signature_storage_path ??
+      demoMatch?.signature_storage_path ??
+      null,
+  };
+}
+
+function maskProfileForAudit(row: ProfileRow): Record<string, unknown> {
+  return {
+    ...row,
+    npwp: row.npwp ? maskNpwp(row.npwp) : null,
+    bank_account_number: row.bank_account_number
+      ? maskBankAccountNumber(row.bank_account_number)
+      : null,
+    signature_storage_path: row.signature_storage_path
+      ? "[PROTECTED_SIGNATURE_ASSET]"
+      : null,
+  };
+}
 
 // =============================================================================
 // 1. Profil & Manajemen Pengguna (Super Admin & Multi-Role)
@@ -41,12 +115,69 @@ export async function updateMyProfile(payload: {
   jobTitle?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
+  npwp?: string | null;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankAccountHolder?: string | null;
+  signatureStoragePath?: string | null;
 }): Promise<ProfileRow> {
+  if (!payload.fullName.trim()) {
+    throw new Error("Nama lengkap wajib diisi.");
+  }
+
+  let normalizedNpwp: string | null | undefined = undefined;
+  if (payload.npwp !== undefined) {
+    const rawNpwp = payload.npwp?.trim() || "";
+    if (rawNpwp && !isValidNpwp(rawNpwp)) {
+      throw new Error("Format NPWP tidak valid. NPWP wajib berisi 15 atau 16 digit angka.");
+    }
+    normalizedNpwp = rawNpwp ? normalizeNpwp(rawNpwp) : null;
+  }
+
+  let normalizedBankAcc: string | null | undefined = undefined;
+  if (payload.bankAccountNumber !== undefined) {
+    const rawAcc = payload.bankAccountNumber?.trim() || "";
+    if (rawAcc && !isValidBankAccountNumber(rawAcc)) {
+      throw new Error("Nomor rekening bank wajib berisi 5 hingga 30 digit angka.");
+    }
+    normalizedBankAcc = rawAcc ? normalizeBankAccountNumber(rawAcc) : null;
+  }
+
+  const normalizedBankName =
+    payload.bankName !== undefined ? payload.bankName?.trim() || null : undefined;
+  const normalizedBankHolder =
+    payload.bankAccountHolder !== undefined
+      ? payload.bankAccountHolder?.trim() || null
+      : undefined;
+  const normalizedSignaturePath =
+    payload.signatureStoragePath !== undefined
+      ? payload.signatureStoragePath?.trim() || null
+      : undefined;
+
+  const syncExtAndDemo = (userId: string, baseRow?: Partial<ProfileRow>) => {
+    const extPatch: Partial<ProfileExtFields> = {};
+    if (normalizedNpwp !== undefined) extPatch.npwp = normalizedNpwp;
+    if (normalizedBankName !== undefined) extPatch.bank_name = normalizedBankName;
+    if (normalizedBankAcc !== undefined) extPatch.bank_account_number = normalizedBankAcc;
+    if (normalizedBankHolder !== undefined) extPatch.bank_account_holder = normalizedBankHolder;
+    if (normalizedSignaturePath !== undefined) {
+      extPatch.signature_storage_path = normalizedSignaturePath;
+    }
+    if (Object.keys(extPatch).length > 0) {
+      saveProfileExt(userId, extPatch);
+    }
+    const demoTarget = demoStore.profiles.find(
+      (p) =>
+        p.id === userId ||
+        (baseRow?.email && p.email.toLowerCase() === baseRow.email.toLowerCase()),
+    );
+    if (demoTarget) {
+      Object.assign(demoTarget, extPatch);
+    }
+  };
+
   if (isDemoMode || !supabase) {
     const actor = getDemoActor();
-    if (!payload.fullName.trim()) {
-      throw new Error("Nama lengkap wajib diisi.");
-    }
     if (payload.username?.trim()) {
       const uname = payload.username.trim().toLowerCase();
       const conflict = demoStore.profiles.some(
@@ -65,21 +196,133 @@ export async function updateMyProfile(payload: {
     if (payload.avatarUrl !== undefined) {
       actor.avatar_url = payload.avatarUrl ? payload.avatarUrl.trim() : null;
     }
+    if (normalizedNpwp !== undefined) actor.npwp = normalizedNpwp;
+    if (normalizedBankName !== undefined) actor.bank_name = normalizedBankName;
+    if (normalizedBankAcc !== undefined) actor.bank_account_number = normalizedBankAcc;
+    if (normalizedBankHolder !== undefined) actor.bank_account_holder = normalizedBankHolder;
+    if (normalizedSignaturePath !== undefined) {
+      actor.signature_storage_path = normalizedSignaturePath;
+    }
     actor.updated_at = new Date().toISOString();
-    appendDemoAudit(actor, "UPDATE", "profiles", actor.id, before, actor);
+    syncExtAndDemo(actor.id, actor);
+    appendDemoAudit(
+      actor,
+      "UPDATE",
+      "profiles",
+      actor.id,
+      maskProfileForAudit(before),
+      maskProfileForAudit(actor),
+    );
+    invalidateAndNotifyDataChange("profiles");
     return structuredClone(actor);
   }
 
-  const { data, error } = await supabase.rpc("update_my_profile", {
+  const baseRpcArgs = {
     p_full_name: payload.fullName.trim(),
     p_username: payload.username?.trim() || null,
     p_phone_number: payload.phoneNumber?.trim() || null,
     p_job_title: payload.jobTitle?.trim() || null,
     p_bio: payload.bio?.trim() || null,
     p_avatar_url: payload.avatarUrl ? payload.avatarUrl.trim() : null,
-  });
+  };
+
+  const extendedRpcArgs = {
+    ...baseRpcArgs,
+    ...(normalizedNpwp !== undefined ? { p_npwp: normalizedNpwp ?? "" } : {}),
+    ...(normalizedBankName !== undefined ? { p_bank_name: normalizedBankName ?? "" } : {}),
+    ...(normalizedBankAcc !== undefined
+      ? { p_bank_account_number: normalizedBankAcc ?? "" }
+      : {}),
+    ...(normalizedBankHolder !== undefined
+      ? { p_bank_account_holder: normalizedBankHolder ?? "" }
+      : {}),
+    ...(normalizedSignaturePath !== undefined
+      ? { p_signature_storage_path: normalizedSignaturePath ?? "" }
+      : {}),
+  };
+
+  let { data, error } = await supabase.rpc("update_my_profile", extendedRpcArgs);
+  if (
+    error &&
+    (error.message.includes("function") ||
+      error.message.includes("schema cache") ||
+      error.message.includes("p_npwp") ||
+      error.message.includes("p_signature"))
+  ) {
+    const fallbackRes = await supabase.rpc("update_my_profile", baseRpcArgs);
+    data = fallbackRes.data;
+    error = fallbackRes.error;
+  }
   if (error) throw new Error(error.message);
-  return (data as unknown) as ProfileRow;
+
+  const updatedRow = (data as unknown) as ProfileRow;
+  if (updatedRow?.id) {
+    syncExtAndDemo(updatedRow.id, updatedRow);
+  }
+  invalidateAndNotifyDataChange("profiles");
+  return getMergedProfileFields(updatedRow) ?? updatedRow;
+}
+
+export async function uploadProfileSignature(file: File): Promise<string> {
+  const allowedMimes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  const extLower = (file.name.split(".").pop() || "").toLowerCase();
+  const allowedExts = ["png", "jpg", "jpeg", "webp"];
+
+  if (
+    !allowedMimes.includes((file.type || "").toLowerCase()) &&
+    !allowedExts.includes(extLower)
+  ) {
+    throw new Error(
+      "Format berkas tanda tangan tidak didukung. Gunakan PNG, JPG, atau WEBP.",
+    );
+  }
+  if (file.size <= 0) {
+    throw new Error("Berkas tanda tangan kosong atau tidak valid.");
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("Ukuran berkas tanda tangan melebihi batas maksimal 2 MB.");
+  }
+
+  const readAsDataUrl = () =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Gagal membaca berkas tanda tangan."));
+        }
+      };
+      reader.onerror = () => reject(new Error("Gagal memproses berkas tanda tangan."));
+      reader.readAsDataURL(file);
+    });
+
+  if (isDemoMode || !supabase) {
+    return readAsDataUrl();
+  }
+
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData?.user?.id || "user";
+  const safeExt = allowedExts.includes(extLower) ? extLower : "png";
+  const filePath = `signatures/${userId}/${Date.now()}.${safeExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("altcycles-files")
+    .upload(filePath, file, { upsert: true, contentType: file.type || "image/png" });
+
+  if (uploadError) {
+    return readAsDataUrl();
+  }
+
+  const { data: signedData, error: signedErr } = await supabase.storage
+    .from("altcycles-files")
+    .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+
+  if (!signedErr && signedData?.signedUrl) {
+    return signedData.signedUrl;
+  }
+
+  return readAsDataUrl();
 }
 
 export async function uploadProfileAvatar(file: File): Promise<string> {
@@ -136,18 +379,18 @@ export async function listProfiles(): Promise<ProfileRow[]> {
     if (isDemoMode || !supabase) {
       const actor = getDemoActor();
       if (actor.role === "user") {
-        return [actor];
+        return [getMergedProfileFields(actor) ?? actor];
       }
-      return [...demoStore.profiles].sort((a, b) =>
-        a.full_name.localeCompare(b.full_name),
-      );
+      return [...demoStore.profiles]
+        .map((p) => getMergedProfileFields(p) ?? p)
+        .sort((a, b) => a.full_name.localeCompare(b.full_name));
     }
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .order("full_name", { ascending: true });
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((p) => getMergedProfileFields(p) ?? p);
   });
 }
 

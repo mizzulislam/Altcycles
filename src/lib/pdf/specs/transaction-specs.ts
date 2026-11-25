@@ -11,7 +11,9 @@ import type {
   ClientPoItemJson,
   CompanyProfileRow,
   PaymentRequestStatus,
+  ProfileRow,
 } from "@/types/database.types";
+import { resolveDocumentSigner } from "../document-signer-config";
 import type {
   DocStatusVariant,
   PdfDocumentSpec,
@@ -335,7 +337,13 @@ export function buildInvoicePdfSpec(params: {
       ? `Sincerely, ${params.company.company_name}`
       : `Hormat kami, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
-    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "INV",
+      slot: "right",
+      company: params.company,
+      signerName: params.company.signer_name,
+      signerJobTitle: params.company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: params.invoiceNumber,
     refDocNumber:
       params.bakpNumber ||
@@ -451,7 +459,13 @@ export function buildReceiptPdfSpec(params: {
       ? `Received By, ${params.company.company_name}`
       : `Penerima, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
-    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "KW",
+      slot: "right",
+      company: params.company,
+      signerName: params.company.signer_name,
+      signerJobTitle: params.company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: params.receiptNumber,
     refDocNumber: params.invoiceNumber || "-",
     docStatus: "paid",
@@ -587,7 +601,13 @@ export function buildClientPoPdfSpec(params: {
       ? `Accepted By, ${params.company.company_name}`
       : `Diterima Oleh, ${params.company.company_name}`,
     rightSignatureName: `${params.company.signer_name} - ${params.company.signer_title}`,
-    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "CLIENT_PO",
+      slot: "right",
+      company: params.company,
+      signerName: params.company.signer_name,
+      signerJobTitle: params.company.signer_title,
+    }).signatureImageUrl,
     footerDocNumber: params.poNumber,
     refDocNumber: params.quotationReference || "-",
     docStatus: params.statusLabel,
@@ -603,8 +623,10 @@ export function buildPaymentApprovalPdfSpec(params: {
   requestNumber: string;
   revisionNo?: number;
   requestDate: string;
+  requesterId?: string | null;
   requesterName: string;
   requesterRole?: string;
+  requesterSignatureUrl?: string | null;
   projectName?: string | null;
   expenseAccountName?: string | null;
   recipientName: string;
@@ -613,11 +635,14 @@ export function buildPaymentApprovalPdfSpec(params: {
   amount: number;
   status: PaymentRequestStatus | string;
   statusLabel?: string;
+  approverId?: string | null;
   approverName?: string | null;
+  approverSignatureUrl?: string | null;
   approvedAt?: string | null;
   paidDate?: string | null;
   rejectionReason?: string | null;
   attachmentNames?: string[];
+  profiles?: ProfileRow[];
   lang?: "id" | "en";
 }): PdfDocumentSpec {
   const lang = params.lang ?? getActiveLanguage();
@@ -773,13 +798,32 @@ export function buildPaymentApprovalPdfSpec(params: {
       ? "Submitted By (Requester),"
       : "Diajukan Oleh (Pemohon),",
     leftSignatureName: leftSigDisplay,
+    leftSignatureImageUrl: resolveDocumentSigner({
+      docType: "PA",
+      slot: "left",
+      company: params.company,
+      profiles: params.profiles,
+      signerUserId: params.requesterId,
+      signerName: params.requesterName,
+      signerJobTitle: params.requesterRole,
+      explicitSignatureUrl: params.requesterSignatureUrl,
+    }).signatureImageUrl,
     rightSignatureLabel: isEn
       ? "Approved By (Finance / Admin),"
       : "Disetujui Oleh (Finance / Admin),",
     rightSignatureName:
       params.approverName ??
       `${params.company.signer_name} - ${params.company.signer_title}`,
-    rightSignatureImageUrl: params.company.signer_signature_path ?? null,
+    rightSignatureImageUrl: resolveDocumentSigner({
+      docType: "PA",
+      slot: "right",
+      company: params.company,
+      profiles: params.profiles,
+      signerUserId: params.approverId,
+      signerName: params.approverName ?? params.company.signer_name,
+      signerJobTitle: params.company.signer_title,
+      explicitSignatureUrl: params.approverSignatureUrl,
+    }).signatureImageUrl,
     footerDocNumber: params.requestNumber,
     refDocNumber: "-",
     docStatus: params.status,

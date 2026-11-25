@@ -4,7 +4,9 @@ import { Trans } from "react-i18next";
 import {
   BellIcon,
   CheckCircle2Icon,
+  FileSignatureIcon,
   KeyRoundIcon,
+  LandmarkIcon,
   Loader2Icon,
   LockIcon,
   PencilIcon,
@@ -35,21 +37,38 @@ import { Textarea } from "@/components/ui/textarea";
 import { AvatarUploadDialog } from "@/components/shared/avatar-upload-dialog";
 import { useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
-import { updateMyProfile, uploadProfileAvatar } from "@/lib/data-service";
-import { ROLE_LABELS } from "@/lib/formatters";
+import {
+  getMergedProfileFields,
+  updateMyProfile,
+  uploadProfileAvatar,
+  uploadProfileSignature,
+} from "@/lib/data-service";
+import {
+  formatNpwpDisplay,
+  isValidBankAccountNumber,
+  isValidNpwp,
+  normalizeBankAccountNumber,
+  normalizeNpwp,
+  ROLE_LABELS,
+} from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
-type SettingsTab = "profil" | "personal" | "account" | "notifications";
+type SettingsTab = "profil" | "personal" | "financial" | "account" | "notifications";
 
 export function ProfileSettingsPage() {
   const { t } = useLanguage();
-  const { profile, updatePassword, refreshProfile, availableRoles } = useAuth();
+  const { profile: rawProfile, updatePassword, refreshProfile, availableRoles } = useAuth();
+  const profile = React.useMemo(
+    () => getMergedProfileFields(rawProfile),
+    [rawProfile],
+  );
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Sinkronisasi Tab dengan URL (?tab=...)
   const tabParam = searchParams.get("tab") as SettingsTab | null;
   const activeTab: SettingsTab =
-    tabParam && ["profil", "personal", "account", "notifications"].includes(tabParam)
+    tabParam &&
+    ["profil", "personal", "financial", "account", "notifications"].includes(tabParam)
       ? tabParam
       : "profil";
 
@@ -66,9 +85,27 @@ export function ProfileSettingsPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
 
-  // Form State Tab Data Pribadi
+  // Form State Tab Data Pribadi & Tanda Tangan Digital (Item 4)
   const [phoneNumber, setPhoneNumber] = React.useState(profile?.phone_number || "");
   const [jobTitle, setJobTitle] = React.useState(profile?.job_title || "");
+  const [signatureUrl, setSignatureUrl] = React.useState(
+    profile?.signature_storage_path || "",
+  );
+  const [isUploadingSignature, setIsUploadingSignature] = React.useState(false);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = React.useState(false);
+
+  // Form State Tab Data Keuangan (Item 2)
+  const [npwp, setNpwp] = React.useState(
+    profile?.npwp ? formatNpwpDisplay(profile.npwp) : "",
+  );
+  const [bankName, setBankName] = React.useState(profile?.bank_name || "");
+  const [bankAccountNumber, setBankAccountNumber] = React.useState(
+    profile?.bank_account_number || "",
+  );
+  const [bankAccountHolder, setBankAccountHolder] = React.useState(
+    profile?.bank_account_holder || "",
+  );
+  const [isSavingFinancial, setIsSavingFinancial] = React.useState(false);
 
   // Form State Tab Akun (Ganti Kata Sandi)
   const [newPassword, setNewPassword] = React.useState("");
@@ -91,6 +128,11 @@ export function ProfileSettingsPage() {
       setAvatarUrl(profile.avatar_url || "");
       setPhoneNumber(profile.phone_number || "");
       setJobTitle(profile.job_title || "");
+      setSignatureUrl(profile.signature_storage_path || "");
+      setNpwp(profile.npwp ? formatNpwpDisplay(profile.npwp) : "");
+      setBankName(profile.bank_name || "");
+      setBankAccountNumber(profile.bank_account_number || "");
+      setBankAccountHolder(profile.bank_account_holder || "");
     }
   }, [profile]);
 
@@ -198,6 +240,7 @@ export function ProfileSettingsPage() {
         jobTitle: jobTitle.trim() || null,
         bio: bio.trim() || null,
         avatarUrl: avatarUrl || null,
+        signatureStoragePath: signatureUrl || null,
       });
       await refreshProfile();
       toast.success(t("settings:profile.toast_profile_updated"));
@@ -207,6 +250,152 @@ export function ProfileSettingsPage() {
       );
     } finally {
       setIsSavingProfile(false);
+    }
+  }
+
+  // Handle Upload & Simpan Tanda Tangan Digital Pengguna (Item 4)
+  async function handleSelectSignatureFile(file: File) {
+    setIsUploadingSignature(true);
+    try {
+      const uploadedSigUrl = await uploadProfileSignature(file);
+      setSignatureUrl(uploadedSigUrl);
+      await updateMyProfile({
+        fullName: fullName.trim() || profile!.full_name,
+        username: username.trim() || null,
+        phoneNumber: phoneNumber.trim() || null,
+        jobTitle: jobTitle.trim() || null,
+        bio: bio.trim() || null,
+        avatarUrl: avatarUrl || null,
+        signatureStoragePath: uploadedSigUrl,
+      });
+      await refreshProfile();
+      toast.success(t("settings:profile.toast_signature_updated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("settings:profile.toast_signature_upload_fail"),
+      );
+      throw err;
+    } finally {
+      setIsUploadingSignature(false);
+    }
+  }
+
+  async function handleSelectSignatureDriveUrl(driveDirectUrl: string) {
+    setIsUploadingSignature(true);
+    try {
+      setSignatureUrl(driveDirectUrl);
+      await updateMyProfile({
+        fullName: fullName.trim() || profile!.full_name,
+        username: username.trim() || null,
+        phoneNumber: phoneNumber.trim() || null,
+        jobTitle: jobTitle.trim() || null,
+        bio: bio.trim() || null,
+        avatarUrl: avatarUrl || null,
+        signatureStoragePath: driveDirectUrl,
+      });
+      await refreshProfile();
+      toast.success(t("settings:profile.toast_signature_updated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("settings:profile.toast_signature_upload_fail"),
+      );
+      throw err;
+    } finally {
+      setIsUploadingSignature(false);
+    }
+  }
+
+  async function handleRemoveSignature(e?: React.MouseEvent) {
+    if (e) e.stopPropagation();
+    setIsUploadingSignature(true);
+    try {
+      setSignatureUrl("");
+      await updateMyProfile({
+        fullName: fullName.trim() || profile!.full_name,
+        username: username.trim() || null,
+        phoneNumber: phoneNumber.trim() || null,
+        jobTitle: jobTitle.trim() || null,
+        bio: bio.trim() || null,
+        avatarUrl: avatarUrl || null,
+        signatureStoragePath: null,
+      });
+      await refreshProfile();
+      toast.success(t("settings:profile.toast_signature_removed"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("settings:profile.toast_signature_remove_fail"),
+      );
+    } finally {
+      setIsUploadingSignature(false);
+    }
+  }
+
+  // Handle Simpan Data Keuangan Pengguna (Item 2)
+  async function handleSaveFinancial(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedNpwp = npwp.trim();
+    if (trimmedNpwp && !isValidNpwp(trimmedNpwp)) {
+      toast.error(t("settings:profile.toast_npwp_invalid"));
+      return;
+    }
+
+    const trimmedBankName = bankName.trim();
+    const trimmedBankAcc = bankAccountNumber.trim();
+    const trimmedBankHolder = bankAccountHolder.trim();
+    const hasAnyBankField = Boolean(
+      trimmedBankName || trimmedBankAcc || trimmedBankHolder,
+    );
+
+    if (
+      hasAnyBankField &&
+      (!trimmedBankName || !trimmedBankAcc || !trimmedBankHolder)
+    ) {
+      toast.error(t("settings:profile.toast_bank_incomplete"));
+      return;
+    }
+
+    if (trimmedBankAcc && !isValidBankAccountNumber(trimmedBankAcc)) {
+      toast.error(t("settings:profile.toast_bank_acc_invalid"));
+      return;
+    }
+
+    setIsSavingFinancial(true);
+    try {
+      const normalizedNpwp = trimmedNpwp ? normalizeNpwp(trimmedNpwp) : null;
+      const normalizedBankAcc = trimmedBankAcc
+        ? normalizeBankAccountNumber(trimmedBankAcc)
+        : null;
+      await updateMyProfile({
+        fullName: fullName.trim() || profile!.full_name,
+        username: username.trim() || null,
+        phoneNumber: phoneNumber.trim() || null,
+        jobTitle: jobTitle.trim() || null,
+        bio: bio.trim() || null,
+        avatarUrl: avatarUrl || null,
+        npwp: normalizedNpwp,
+        bankName: trimmedBankName || null,
+        bankAccountNumber: normalizedBankAcc,
+        bankAccountHolder: trimmedBankHolder || null,
+        signatureStoragePath: signatureUrl || null,
+      });
+      setNpwp(normalizedNpwp ? formatNpwpDisplay(normalizedNpwp) : "");
+      setBankAccountNumber(normalizedBankAcc || "");
+      await refreshProfile();
+      toast.success(t("settings:profile.toast_financial_updated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("settings:profile.toast_financial_update_fail"),
+      );
+    } finally {
+      setIsSavingFinancial(false);
     }
   }
 
@@ -250,9 +439,9 @@ export function ProfileSettingsPage() {
       </div>
 
       {/* =========================================================================
-          TAB NAVIGASI HORIZONTAL DI ATAS (Grid 4-Kolom Tinggi Seragam)
+          TAB NAVIGASI HORIZONTAL DI ATAS (Grid 5-Kolom Sama Lebar & Tinggi Seragam)
           ========================================================================= */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">
         <button
           type="button"
           onClick={() => handleTabChange("profil")}
@@ -279,6 +468,20 @@ export function ProfileSettingsPage() {
         >
           <PhoneIcon className="size-4 shrink-0" />
           <span className="truncate">{t("settings:profile.tab_personal")}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("financial")}
+          className={cn(
+            "flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
+            activeTab === "financial"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+          )}
+        >
+          <LandmarkIcon className="size-4 shrink-0" />
+          <span className="truncate">{t("settings:profile.tab_financial")}</span>
         </button>
 
         <button
@@ -566,6 +769,90 @@ export function ProfileSettingsPage() {
                   </Field>
                 </div>
 
+                {/* Spesimen Tanda Tangan Digital Pengguna untuk Pengesahan Dokumen PDF (Item 4) */}
+                <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileSignatureIcon className="size-4 text-primary" />
+                      <FieldLabel className="text-xs font-bold text-foreground">
+                        {t("settings:profile.signature_label")}
+                      </FieldLabel>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">
+                      {t("settings:profile.signature_hint")}
+                    </span>
+                  </div>
+
+                  {signatureUrl ? (
+                    <div className="group relative w-full h-[108px] rounded-2xl overflow-hidden border border-border/80 shadow-xs bg-white dark:bg-slate-100 flex items-center justify-center p-3">
+                      <img
+                        src={signatureUrl}
+                        alt={t("settings:profile.signature_label")}
+                        className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      />
+
+                      <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-3">
+                        <ActionTooltip
+                          content={t("settings:profile.signature_change_tooltip")}
+                          side="top"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setIsSignatureDialogOpen(true)}
+                            disabled={isUploadingSignature}
+                            aria-label={t("settings:profile.signature_change_aria")}
+                            className="size-9 rounded-xl bg-white/20 hover:bg-white/35 text-white backdrop-blur-md border border-white/30 flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                          >
+                            <PencilIcon className="size-4" />
+                          </button>
+                        </ActionTooltip>
+
+                        <ActionTooltip
+                          content={t("settings:profile.signature_delete_tooltip")}
+                          side="top"
+                        >
+                          <button
+                            type="button"
+                            onClick={handleRemoveSignature}
+                            disabled={isUploadingSignature}
+                            aria-label={t("settings:profile.signature_delete_aria")}
+                            className="size-9 rounded-xl bg-destructive/80 hover:bg-destructive text-white backdrop-blur-md border border-white/30 flex items-center justify-center shadow-md transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                          >
+                            <Trash2Icon className="size-4" />
+                          </button>
+                        </ActionTooltip>
+                      </div>
+
+                      {isUploadingSignature && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center text-white z-10">
+                          <Loader2Icon className="size-6 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsSignatureDialogOpen(true)}
+                      disabled={isUploadingSignature}
+                      className="group relative w-full h-[108px] rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/60 dark:border-border/60 dark:hover:border-primary/50 bg-card/60 hover:bg-muted/40 transition-all cursor-pointer flex flex-col items-center justify-center p-3 text-center overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="size-8 rounded-full bg-primary/10 text-primary dark:bg-primary/20 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                        <UploadCloudIcon className="size-4.5" />
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {t("settings:profile.signature_upload_btn")}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {t("settings:profile.signature_upload_sub")}
+                      </p>
+                    </button>
+                  )}
+
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {t("settings:profile.signature_desc")}
+                  </p>
+                </div>
+
                 {/* Informasi Peran Aktif & Hak Akses (Lebar Penuh) */}
                 <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-3">
                   <div className="flex items-center gap-2">
@@ -596,7 +883,7 @@ export function ProfileSettingsPage() {
                 <div className="flex justify-end pt-2">
                   <Button
                     type="submit"
-                    disabled={isSavingProfile}
+                    disabled={isSavingProfile || isUploadingSignature}
                     className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
                   >
                     {isSavingProfile ? (
@@ -608,6 +895,119 @@ export function ProfileSettingsPage() {
                       <>
                         <SaveIcon className="size-3.5" />
                         <span>{t("settings:profile.btn_save_personal")}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* TAB 3: DATA KEUANGAN (Item 2: NPWP & Rekening Bank Pribadi) */}
+        {activeTab === "financial" && (
+          <Card>
+            <CardHeaderWithInfo
+              title={t("settings:profile.card_financial_title")}
+              description={t("settings:profile.card_financial_desc")}
+            />
+            <CardContent className="pt-5 space-y-6">
+              <form onSubmit={handleSaveFinancial} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field>
+                    <FieldLabel htmlFor="pf-npwp" className="text-xs font-semibold">
+                      {t("settings:profile.financial_npwp")}
+                    </FieldLabel>
+                    <Input
+                      id="pf-npwp"
+                      type="text"
+                      value={npwp}
+                      onChange={(e) => setNpwp(e.target.value)}
+                      placeholder={t("settings:profile.financial_npwp_ph")}
+                      className="text-xs h-9 font-mono"
+                    />
+                    <FieldDescription className="text-[11px]">
+                      {t("settings:profile.financial_npwp_desc")}
+                    </FieldDescription>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="pf-bank-name" className="text-xs font-semibold">
+                      {t("settings:profile.financial_bank_name")}
+                    </FieldLabel>
+                    <Input
+                      id="pf-bank-name"
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder={t("settings:profile.financial_bank_name_ph")}
+                      className="text-xs h-9"
+                    />
+                    <FieldDescription className="text-[11px]">
+                      {t("settings:profile.financial_bank_name_desc")}
+                    </FieldDescription>
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field>
+                    <FieldLabel htmlFor="pf-bank-acc" className="text-xs font-semibold">
+                      {t("settings:profile.financial_bank_account")}
+                    </FieldLabel>
+                    <Input
+                      id="pf-bank-acc"
+                      type="text"
+                      inputMode="numeric"
+                      value={bankAccountNumber}
+                      onChange={(e) =>
+                        setBankAccountNumber(e.target.value.replace(/[^\d\s-]/g, ""))
+                      }
+                      placeholder={t("settings:profile.financial_bank_account_ph")}
+                      className="text-xs h-9 font-mono"
+                    />
+                    <FieldDescription className="text-[11px]">
+                      {t("settings:profile.financial_bank_account_desc")}
+                    </FieldDescription>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="pf-bank-holder" className="text-xs font-semibold">
+                      {t("settings:profile.financial_bank_holder")}
+                    </FieldLabel>
+                    <Input
+                      id="pf-bank-holder"
+                      type="text"
+                      value={bankAccountHolder}
+                      onChange={(e) => setBankAccountHolder(e.target.value)}
+                      placeholder={t("settings:profile.financial_bank_holder_ph")}
+                      className="text-xs h-9"
+                    />
+                    <FieldDescription className="text-[11px]">
+                      {t("settings:profile.financial_bank_holder_desc")}
+                    </FieldDescription>
+                  </Field>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground flex items-start gap-2.5">
+                  <LandmarkIcon className="size-4 text-primary shrink-0 mt-0.5" />
+                  <span>{t("settings:profile.financial_security_notice")}</span>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    type="submit"
+                    disabled={isSavingFinancial}
+                    className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
+                  >
+                    {isSavingFinancial ? (
+                      <>
+                        <Loader2Icon className="size-3.5 animate-spin" />
+                        <span>{t("settings:profile.btn_saving")}</span>
+                      </>
+                    ) : (
+                      <>
+                        <SaveIcon className="size-3.5" />
+                        <span>{t("settings:profile.btn_save_financial")}</span>
                       </>
                     )}
                   </Button>
@@ -772,6 +1172,19 @@ export function ProfileSettingsPage() {
         onSelectLocalFile={handleSelectLocalFile}
         onSelectGoogleDriveUrl={handleSelectGoogleDriveUrl}
         isProcessing={isUploadingAvatar}
+      />
+
+      {/* Dialog Modal Pemilih Gambar Tanda Tangan Pengguna (Item 4) */}
+      <AvatarUploadDialog
+        open={isSignatureDialogOpen}
+        onOpenChange={setIsSignatureDialogOpen}
+        currentAvatarUrl={signatureUrl}
+        onSelectLocalFile={handleSelectSignatureFile}
+        onSelectGoogleDriveUrl={handleSelectSignatureDriveUrl}
+        isProcessing={isUploadingSignature}
+        dialogTitle={t("settings:profile.signature_dialog_title")}
+        maxSizeMb={2}
+        containPreview
       />
     </div>
   );

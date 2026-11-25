@@ -589,3 +589,81 @@ export const ACCOUNT_TYPE_LABELS = {
   expense: "Beban",
 } as const;
 
+/**
+ * Menormalisasi input NPWP dengan membuang semua karakter non-digit.
+ */
+export function normalizeNpwp(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return String(raw).replace(/\D/g, "");
+}
+
+/**
+ * Memvalidasi apakah NPWP terdiri dari tepat 15 atau 16 digit angka.
+ */
+export function isValidNpwp(raw: string | null | undefined): boolean {
+  const digits = normalizeNpwp(raw);
+  return /^\d{15,16}$/.test(digits);
+}
+
+/**
+ * Memformat NPWP 15 digit menjadi XX.XXX.XXX.X-XXX.XXX atau 16 digit menjadi XXXX XXXX XXXX XXXX.
+ */
+export function formatNpwpDisplay(raw: string | null | undefined): string {
+  if (!raw || !String(raw).trim()) return "-";
+  const d = normalizeNpwp(raw);
+  if (d.length === 15) {
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}.${d.slice(8, 9)}-${d.slice(9, 12)}.${d.slice(12, 15)}`;
+  }
+  if (d.length === 16) {
+    return `${d.slice(0, 4)} ${d.slice(4, 8)} ${d.slice(8, 12)} ${d.slice(12, 16)}`;
+  }
+  return String(raw).trim();
+}
+
+/**
+ * Melakukan masking pada NPWP untuk tampilan daftar/ikhtisar (mis. ••.•••.•••.•-•••.000).
+ */
+export function maskNpwp(raw: string | null | undefined): string {
+  if (!raw || !String(raw).trim()) return "-";
+  const d = normalizeNpwp(raw);
+  if (!d) return "-";
+  if (d.length === 15) {
+    return `••.•••.•••.•-•••.${d.slice(12, 15)}`;
+  }
+  if (d.length === 16) {
+    return `•••• •••• •••• ${d.slice(12, 16)}`;
+  }
+  if (d.length <= 4) {
+    return "••••";
+  }
+  return `${"•".repeat(Math.max(4, d.length - 4))}${d.slice(-4)}`;
+}
+
+/**
+ * Menormalisasi nomor rekening bank (hanya menyisakan karakter tanpa spasi/strip).
+ */
+export function normalizeBankAccountNumber(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return String(raw).replace(/[\s-]+/g, "").trim();
+}
+
+/**
+ * Memvalidasi nomor rekening bank (wajib angka 5 s/d 30 digit).
+ */
+export function isValidBankAccountNumber(raw: string | null | undefined): boolean {
+  const cleaned = normalizeBankAccountNumber(raw);
+  return /^[0-9]{5,30}$/.test(cleaned);
+}
+
+/**
+ * Melakukan masking nomor rekening bank (mis. •••• •••• 2849).
+ */
+export function maskBankAccountNumber(raw: string | null | undefined): string {
+  if (!raw || !String(raw).trim()) return "-";
+  const d = normalizeBankAccountNumber(raw);
+  if (!d) return "-";
+  if (d.length <= 4) return "••••";
+  return `•••• •••• ${d.slice(-4)}`;
+}
+
+

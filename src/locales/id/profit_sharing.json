@@ -35,6 +35,9 @@
   "col_recipient": "Penerima",
   "col_percentage": "Persentase",
   "col_share_entitlement": "Hak Bagi Hasil",
+  "recipient_bank_not_set": "Rekening belum diatur di profil",
+  "show_financial_data": "Lihat data rekening",
+  "hide_financial_data": "Sembunyikan data rekening",
   "modals": {
     "scheme_title": "Atur Skema Bagi Hasil Proyek (Wajib 100%)",
     "scheme_hint": "Tautkan baris ke akun User jika penerima merupakan anggota tim internal.",
