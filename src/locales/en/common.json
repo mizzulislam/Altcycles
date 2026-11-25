@@ -267,5 +267,11 @@
     "unit_modified": "Modified",
     "unit_locked": "Locked",
     "locked_tooltip": "System core shortcut is locked and cannot be modified"
+  },
+  "not_found": {
+    "title": "Page Not Found",
+    "desc": "The link you navigated to might be mistyped, moved, or your internal role does not have authorization for this route.",
+    "code": "404",
+    "back_home": "Back to Home"
   }
 }

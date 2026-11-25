@@ -266,5 +266,11 @@
     "unit_modified": "Dimodifikasi",
     "unit_locked": "Terkunci",
     "locked_tooltip": "Pintasan inti sistem terkunci dan tidak dapat diubah"
+  },
+  "not_found": {
+    "title": "Halaman Tidak Ditemukan",
+    "desc": "Tautan yang Anda tuju mungkin salah ketik, telah dipindahkan, atau hak akses akun Anda tidak mencakup rute ini.",
+    "code": "404",
+    "back_home": "Kembali ke Beranda"
   }
 }

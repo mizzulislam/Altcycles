@@ -122,6 +122,10 @@ const UserPaymentsPage = lazyPage(
   () => import("@/features/payment-approvals/user-payments-page"),
   "UserPaymentsPage",
 );
+const NotFoundPage = lazyPage(
+  () => import("@/features/not-found/not-found-page"),
+  "NotFoundPage",
+);
 
 function RouteFallback() {
   return <FullScreenLoader />;
@@ -268,7 +272,7 @@ export function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </React.Suspense>
           <Toaster richColors position="bottom-right" />
