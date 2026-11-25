@@ -163,7 +163,7 @@ export function ProfileOverviewPage() {
               </h1>
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                 <span className="font-semibold text-foreground/80">@{username}</span>
-                <span>•</span>
+                <span className="text-muted-foreground/60">-</span>
                 <span>{profile.job_title || t("settings:profile_overview.default_job_title", "Anggota Tim Altvira")}</span>
               </p>
             </div>

@@ -699,7 +699,9 @@ export function ProfileSettingsPage() {
                       type="email"
                       disabled
                       value={profile.email}
-                      className="text-xs h-9 bg-muted/40 cursor-not-allowed opacity-90"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onFocus={(e) => e.currentTarget.blur()}
+                      className="text-xs h-9 bg-muted/40 cursor-not-allowed select-none caret-transparent opacity-90 disabled:opacity-90 disabled:cursor-not-allowed"
                     />
                     <FieldDescription className="text-[11px]">
                       {t("settings:profile.email_desc")}
@@ -719,7 +721,9 @@ export function ProfileSettingsPage() {
                       type="text"
                       disabled
                       value={t(`common:role.${profile.role}`) || ROLE_LABELS[profile.role] || profile.role}
-                      className="text-xs h-9 bg-muted/40 cursor-not-allowed opacity-90"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onFocus={(e) => e.currentTarget.blur()}
+                      className="text-xs h-9 bg-muted/40 cursor-not-allowed select-none caret-transparent opacity-90 disabled:opacity-90 disabled:cursor-not-allowed"
                     />
                     <FieldDescription className="text-[11px]">
                       {t("settings:profile.current_role_desc")}
@@ -1040,7 +1044,7 @@ export function ProfileSettingsPage() {
                         </FieldDescription>
                       </Field>
 
-                      {/* Field 4: Klasifikasi PTKP & TER (Tidak bisa diedit - warna teks dan visual dibedakan) */}
+                      {/* Field 4: Klasifikasi PTKP & TER (Tidak bisa diedit - warna teks dan visual dibedakan, tanpa caret) */}
                       <Field className="space-y-1.5">
                         <FieldLabel htmlFor="pf-ptkp-summary" className="text-xs font-semibold h-4 flex items-center text-muted-foreground">
                           {t("settings:profile.financial_ptkp_summary", "Klasifikasi PTKP & TER")}
@@ -1049,9 +1053,12 @@ export function ProfileSettingsPage() {
                           id="pf-ptkp-summary"
                           type="text"
                           readOnly
+                          disabled
                           tabIndex={-1}
-                          value={`${ptkpInfo.code} • TER ${ptkpInfo.terCategory} (${formatRupiah(ptkpInfo.annualValue)}/th)`}
-                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium focus-visible:ring-0 focus-visible:border-border/60"
+                          value={`${ptkpInfo.code} - TER ${ptkpInfo.terCategory} (${formatRupiah(ptkpInfo.annualValue)}/th)`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onFocus={(e) => e.currentTarget.blur()}
+                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
                         />
                         <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
                           {ptkpInfo.description}
@@ -1126,7 +1133,7 @@ export function ProfileSettingsPage() {
                         </FieldDescription>
                       </Field>
 
-                      {/* Field 4: Status Rekening Pencairan (Tidak bisa diedit - selaras dengan PTKP) */}
+                      {/* Field 4: Status Rekening Pencairan (Tidak bisa diedit - selaras dengan PTKP, tanpa caret) */}
                       <Field className="space-y-1.5">
                         <FieldLabel htmlFor="pf-bank-status" className="text-xs font-semibold h-4 flex items-center text-muted-foreground">
                           {t("settings:profile.financial_bank_status", "Status Rekening Pencairan")}
@@ -1135,13 +1142,16 @@ export function ProfileSettingsPage() {
                           id="pf-bank-status"
                           type="text"
                           readOnly
+                          disabled
                           tabIndex={-1}
                           value={
                             bankAccountNumber.trim()
-                              ? t("settings:profile.bank_status_ready", "Terdaftar • Siap Digunakan")
+                              ? t("settings:profile.bank_status_ready", "Terdaftar - Siap Digunakan")
                               : t("settings:profile.bank_status_empty", "Belum Diatur (Pencairan Ditangguhkan)")
                           }
-                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium focus-visible:ring-0 focus-visible:border-border/60"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onFocus={(e) => e.currentTarget.blur()}
+                          className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
                         />
                         <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
                           {t(
