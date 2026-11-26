@@ -112,4 +112,14 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     expect(kpiSource).toContain("sm:p-5");
     expect(loginSource).toContain("lg:p-12");
   });
+
+  it("Fix Mobile Drawer: ShellSidebar di mobile drawer selalu lebar penuh dan teks menu tidak hilang saat isCollapsed", () => {
+    const sidebarSource = fs.readFileSync(path.resolve(process.cwd(), "src/components/layout/shell-sidebar.tsx"), "utf-8");
+    // Di mobile drawer selalu w-full, pembatasan w-16 hanya di desktop collapsed md:w-16
+    expect(sidebarSource).toContain('isCollapsed ? "w-full md:w-16 md:flex md:items-center md:justify-center" : "w-full"');
+    // Navigasi selalu expanded di mobile drawer
+    expect(sidebarSource).toContain('md:w-16 md:flex md:flex-col md:items-center');
+    // Target sentuh ramah jempol min-h-[44px]
+    expect(sidebarSource).toContain("min-h-[44px]");
+  });
 });

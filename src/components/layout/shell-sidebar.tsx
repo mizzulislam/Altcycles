@@ -82,7 +82,7 @@ export function ShellSidebar({
       <div
         className={cn(
           "flex h-16 shrink-0 items-center border-b border-white/15 px-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isCollapsed ? "justify-center" : "justify-start gap-3",
+          isCollapsed ? "justify-start md:justify-center" : "justify-start gap-3",
         )}
       >
         <ActionTooltip
@@ -97,7 +97,7 @@ export function ShellSidebar({
               "group relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl",
               "bg-white/20 text-white ring-1 ring-white/40 shadow-lg focus:outline-none focus:ring-white/60",
               "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/30 cursor-pointer",
-              isCollapsed && "scale-95 rounded-lg",
+              isCollapsed && "md:scale-95 md:rounded-lg",
             )}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none" />
@@ -136,12 +136,12 @@ export function ShellSidebar({
           </button>
         </ActionTooltip>
 
-        {/* Nama Aplikasi & Subtitle */}
+        {/* Nama Aplikasi & Subtitle (Di mobile drawer selalu tampil penuh, di desktop menghormati isCollapsed) */}
         <div
           className={cn(
-            "grid overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] select-none",
+            "grid overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] select-none ml-3 md:ml-0",
             isCollapsed
-              ? "w-0 translate-x-2 opacity-0 pointer-events-none"
+              ? "w-[170px] translate-x-0 opacity-100 md:w-0 md:translate-x-2 md:opacity-0 md:pointer-events-none"
               : "w-[170px] translate-x-0 opacity-100",
           )}
         >
@@ -159,21 +159,25 @@ export function ShellSidebar({
           variant="ghost"
           size="icon"
           onClick={() => setMobileOpen(false)}
-          className="ml-auto inline-flex md:hidden size-8 rounded-lg text-white/80 hover:text-white hover:bg-white/15"
+          className="ml-auto inline-flex md:hidden size-9 rounded-xl text-white/80 hover:text-white hover:bg-white/15"
+          aria-label={t("common:action.close", "Tutup")}
         >
-          <XIcon className="size-4" />
+          <XIcon className="size-5" />
         </Button>
       </div>
 
       {/* =====================================================================
           DAFTAR NAVIGASI (Dinamis Sesuai Peran Aktif)
-          Rata Tengah Sempurna 1 Garis Vertikal saat Collapsed
+          Di Mobile Drawer SELALU Tampil Penuh dengan Ikon + Label (i18n)
+          Di Desktop: Rata Tengah Sempurna 1 Garis Vertikal saat Collapsed
           ===================================================================== */}
       <MotionConfig reducedMotion="user">
         <nav
           className={cn(
-            "flex-1 overflow-y-auto space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
-            isCollapsed ? "p-0 py-3 w-16 flex flex-col items-center" : "p-3 w-full",
+            "flex-1 overflow-y-auto space-y-2 overscroll-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+            isCollapsed
+              ? "p-3 w-full md:p-0 md:py-3 md:w-16 md:flex md:flex-col md:items-center"
+              : "p-3 w-full",
           )}
         >
           {navStructure.map((entry) => {
@@ -181,58 +185,60 @@ export function ShellSidebar({
               const Icon = entry.icon;
               const itemLabel = entry.key ? t(entry.key, entry.label) : entry.label;
 
-              if (isCollapsed) {
-                return (
-                  <div key={entry.to} className="w-16 flex items-center justify-center py-0.5">
-                    <ActionTooltip content={itemLabel} side="right">
-                      <NavLink
-                        to={entry.to}
-                        onClick={() => setMobileOpen(false)}
-                        className={({ isActive }) =>
-                          cn(
-                            "flex size-10 items-center justify-center rounded-xl text-xs font-medium transition-all duration-200",
-                            isActive
-                              ? "bg-white/25 text-white font-bold shadow-xs"
-                              : "text-white/80 hover:bg-white/15 hover:text-white",
-                          )
-                        }
-                      >
-                        <Icon className="size-4.5 shrink-0 text-white" />
-                      </NavLink>
-                    </ActionTooltip>
-                  </div>
-                );
-              }
-
               return (
-                <NavLink
-                  key={entry.to}
-                  to={entry.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      "group relative flex h-10 items-center rounded-xl text-xs font-medium transition-all duration-200 justify-start gap-3 px-3",
-                      isActive
-                        ? "bg-white/25 text-white font-bold shadow-xs"
-                        : "text-white/80 hover:bg-white/15 hover:text-white",
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-5 rounded-r-full bg-white transition-all duration-200" />
-                      )}
-                      <Icon
-                        className={cn(
-                          "size-4 shrink-0 transition-transform duration-200",
-                          isActive ? "text-white" : "text-white/80 group-hover:text-white",
-                        )}
-                      />
-                      <span className="truncate">{itemLabel}</span>
-                    </>
+                <React.Fragment key={entry.to}>
+                  {/* Tampilan Desktop Collapsed (Hanya aktif di desktop md: saat isCollapsed) */}
+                  {isCollapsed && (
+                    <div className="hidden md:flex w-16 items-center justify-center py-0.5">
+                      <ActionTooltip content={itemLabel} side="right">
+                        <NavLink
+                          to={entry.to}
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              "flex size-10 items-center justify-center rounded-xl text-xs font-medium transition-all duration-200",
+                              isActive
+                                ? "bg-white/25 text-white font-bold shadow-xs"
+                                : "text-white/80 hover:bg-white/15 hover:text-white",
+                            )
+                          }
+                        >
+                          <Icon className="size-4.5 shrink-0 text-white" />
+                        </NavLink>
+                      </ActionTooltip>
+                    </div>
                   )}
-                </NavLink>
+
+                  {/* Tampilan Expanded (Selalu tampil di mobile drawer, dan di desktop saat tidak collapsed) */}
+                  <NavLink
+                    to={entry.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "group relative flex min-h-[44px] md:h-10 items-center rounded-xl text-xs font-medium transition-all duration-200 justify-start gap-3 px-3.5 md:px-3",
+                        isCollapsed && "md:hidden",
+                        isActive
+                          ? "bg-white/25 text-white font-bold shadow-xs"
+                          : "text-white/80 hover:bg-white/15 hover:text-white",
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-5 rounded-r-full bg-white transition-all duration-200" />
+                        )}
+                        <Icon
+                          className={cn(
+                            "size-4 shrink-0 transition-transform duration-200",
+                            isActive ? "text-white" : "text-white/80 group-hover:text-white",
+                          )}
+                        />
+                        <span className="truncate">{itemLabel}</span>
+                      </>
+                    )}
+                  </NavLink>
+                </React.Fragment>
               );
             }
 
@@ -244,133 +250,134 @@ export function ShellSidebar({
               (item) => location.pathname === item.to,
             );
 
-            if (isCollapsed) {
-              return (
-                <div key={entry.id} className="w-16 flex items-center justify-center py-0.5">
-                  <ActionTooltip
-                    content={`${groupLabel} (${entry.items.length} menu)`}
-                    side="right"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (entry.hubPath) {
-                          navigate(entry.hubPath);
-                        } else {
-                          toggleCollapsed();
-                        }
-                      }}
-                      className={cn(
-                        "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer",
-                        isChildActive
-                          ? "bg-white/25 text-white font-bold shadow-xs"
-                          : "text-white/80 hover:bg-white/15 hover:text-white",
-                      )}
-                    >
-                      {isChildActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />
-                      )}
-                      <GroupIcon className="size-4.5 shrink-0" />
-                      {isChildActive && (
-                        <span className="absolute top-2 right-2 size-1.5 rounded-full bg-white" />
-                      )}
-                    </button>
-                  </ActionTooltip>
-                </div>
-              );
-            }
-
-            // Mode Expanded
             return (
-              <div key={entry.id} className="pt-2 pb-1">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(entry.id)}
-                  className={cn(
-                    "w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
-                    isChildActive
-                      ? "text-white bg-white/15 font-bold"
-                      : "text-white/80 hover:bg-white/10 hover:text-white",
-                  )}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <GroupIcon className="size-4 shrink-0 opacity-90" />
-                    <span className="truncate">{groupLabel}</span>
-                  </div>
-                  <ChevronDownIcon
-                    className={cn(
-                      "size-3.5 shrink-0 text-white/70 transition-transform duration-200",
-                      isGroupOpen ? "rotate-0" : "-rotate-90",
-                    )}
-                  />
-                </button>
-
-                <div
-                  className={cn(
-                    "grid transition-all duration-200 ease-in-out overflow-hidden motion-reduce:transition-none",
-                    isGroupOpen
-                      ? "grid-rows-[1fr] opacity-100 mt-1"
-                      : "grid-rows-[0fr] opacity-0 mt-0",
-                  )}
-                >
-                  <div className="min-h-0 relative ml-4 pl-3.5 space-y-1">
-                    {/* Track garis vertikal sejajar persis dengan indikator bulat aktif */}
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute left-0 top-1.5 bottom-1.5 w-[11px] flex justify-center"
+              <React.Fragment key={entry.id}>
+                {/* Tampilan Desktop Collapsed (Hanya aktif di desktop md: saat isCollapsed) */}
+                {isCollapsed && (
+                  <div className="hidden md:flex w-16 items-center justify-center py-0.5">
+                    <ActionTooltip
+                      content={`${groupLabel} (${entry.items.length} menu)`}
+                      side="right"
                     >
-                      <span className="w-px h-full bg-white/25" />
-                    </span>
-                    {entry.items.map((subItem) => {
-                      const SubIcon = subItem.icon;
-                      const subLabel = subItem.key ? t(subItem.key, subItem.label) : subItem.label;
-                      return (
-                        <NavLink
-                          key={subItem.to}
-                          to={subItem.to}
-                          onClick={() => setMobileOpen(false)}
-                          className={({ isActive }) =>
-                            cn(
-                              "group relative flex h-8.5 items-center rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
-                              isActive
-                                ? "bg-white/25 text-white font-semibold shadow-2xs"
-                                : "text-white/75 hover:bg-white/15 hover:text-white",
-                            )
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (entry.hubPath) {
+                            navigate(entry.hubPath);
+                          } else {
+                            toggleCollapsed();
                           }
-                        >
-                          {({ isActive }) => (
-                            <>
-                              {isActive && (
-                                <motion.span
-                                  layoutId={`sidebar-submenu-dot-${entry.id}`}
-                                  transition={{
-                                    type: "spring",
-                                    stiffness: 420,
-                                    damping: 32,
-                                    mass: 0.75,
-                                  }}
-                                  className="pointer-events-none absolute -left-3.5 inset-y-0 w-[11px] flex items-center justify-center z-10"
-                                >
-                                  <span className="size-[7px] rounded-full bg-white ring-2 ring-[#0B43C8] shadow-xs" />
-                                </motion.span>
-                              )}
-                              <SubIcon
-                                className={cn(
-                                  "size-3.5 mr-2 shrink-0 transition-colors",
-                                  isActive
-                                    ? "text-white"
-                                    : "text-white/75 group-hover:text-white",
+                        }}
+                        className={cn(
+                          "group relative flex size-10 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer",
+                          isChildActive
+                            ? "bg-white/25 text-white font-bold shadow-xs"
+                            : "text-white/80 hover:bg-white/15 hover:text-white",
+                        )}
+                      >
+                        {isChildActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />
+                        )}
+                        <GroupIcon className="size-4.5 shrink-0" />
+                        {isChildActive && (
+                          <span className="absolute top-2 right-2 size-1.5 rounded-full bg-white" />
+                        )}
+                      </button>
+                    </ActionTooltip>
+                  </div>
+                )}
+
+                {/* Tampilan Expanded (Selalu tampil di mobile drawer, dan di desktop saat tidak collapsed) */}
+                <div className={cn("pt-2 pb-1", isCollapsed && "md:hidden")}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(entry.id)}
+                    className={cn(
+                      "w-full flex min-h-[44px] md:h-9 items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
+                      isChildActive
+                        ? "text-white bg-white/15 font-bold"
+                        : "text-white/80 hover:bg-white/10 hover:text-white",
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <GroupIcon className="size-4 shrink-0 opacity-90" />
+                      <span className="truncate">{groupLabel}</span>
+                    </div>
+                    <ChevronDownIcon
+                      className={cn(
+                        "size-3.5 shrink-0 text-white/70 transition-transform duration-200",
+                        isGroupOpen ? "rotate-0" : "-rotate-90",
+                      )}
+                    />
+                  </button>
+
+                  <div
+                    className={cn(
+                      "grid transition-all duration-200 ease-in-out overflow-hidden motion-reduce:transition-none",
+                      isGroupOpen
+                        ? "grid-rows-[1fr] opacity-100 mt-1"
+                        : "grid-rows-[0fr] opacity-0 mt-0",
+                    )}
+                  >
+                    <div className="min-h-0 relative ml-4 pl-3.5 space-y-1">
+                      {/* Track garis vertikal sejajar persis dengan indikator bulat aktif */}
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-0 top-1.5 bottom-1.5 w-[11px] flex justify-center"
+                      >
+                        <span className="w-px h-full bg-white/25" />
+                      </span>
+                      {entry.items.map((subItem) => {
+                        const SubIcon = subItem.icon;
+                        const subLabel = subItem.key ? t(subItem.key, subItem.label) : subItem.label;
+                        return (
+                          <NavLink
+                            key={subItem.to}
+                            to={subItem.to}
+                            onClick={() => setMobileOpen(false)}
+                            className={({ isActive }) =>
+                              cn(
+                                "group relative flex min-h-[40px] md:h-8.5 items-center rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
+                                isActive
+                                  ? "bg-white/25 text-white font-semibold shadow-2xs"
+                                  : "text-white/75 hover:bg-white/15 hover:text-white",
+                              )
+                            }
+                          >
+                            {({ isActive }) => (
+                              <>
+                                {isActive && (
+                                  <motion.span
+                                    layoutId={`sidebar-submenu-dot-${entry.id}`}
+                                    transition={{
+                                      type: "spring",
+                                      stiffness: 420,
+                                      damping: 32,
+                                      mass: 0.75,
+                                    }}
+                                    className="pointer-events-none absolute -left-3.5 inset-y-0 w-[11px] flex items-center justify-center z-10"
+                                  >
+                                    <span className="size-[7px] rounded-full bg-white ring-2 ring-[#0B43C8] shadow-xs" />
+                                  </motion.span>
                                 )}
-                              />
-                              <span className="truncate">{subLabel}</span>
-                            </>
-                          )}
-                        </NavLink>
-                      );
-                    })}
+                                <SubIcon
+                                  className={cn(
+                                    "size-3.5 mr-2 shrink-0 transition-colors",
+                                    isActive
+                                      ? "text-white"
+                                      : "text-white/75 group-hover:text-white",
+                                  )}
+                                />
+                                <span className="truncate">{subLabel}</span>
+                              </>
+                            )}
+                          </NavLink>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })}
         </nav>
@@ -378,12 +385,12 @@ export function ShellSidebar({
 
       {/* =========================================================================
           MENU USER DI UJUNG BAWAH SIDEBAR (Poin 4 - Mengikuti Splitz)
-          Rata Tengah Sempurna 1 Garis Vertikal saat Collapsed (Tidak Bergeser)
+          Di Mobile Drawer SELALU Lebar Penuh (w-full), Rata Tengah di Desktop Collapsed
           ========================================================================= */}
       <div
         className={cn(
-          "relative shrink-0 border-t border-white/15 bg-black/15 transition-all duration-300 p-3",
-          isCollapsed ? "w-16 flex items-center justify-center" : "w-full",
+          "relative shrink-0 border-t border-white/15 bg-black/20 transition-all duration-300 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          isCollapsed ? "w-full md:w-16 md:flex md:items-center md:justify-center" : "w-full",
         )}
         ref={userMenuRef}
       >
@@ -394,20 +401,19 @@ export function ShellSidebar({
               "absolute z-50 bg-card border border-border/90 rounded-2xl shadow-xl py-1.5 min-w-[210px] overflow-hidden text-foreground",
               "animate-in fade-in zoom-in-95 duration-150",
               isCollapsed
-                ? "left-full bottom-2 ml-2"
+                ? "bottom-full left-2 right-2 mb-2 w-auto md:left-full md:bottom-2 md:right-auto md:ml-2 md:min-w-[210px]"
                 : "bottom-full left-2 right-2 mb-2 w-auto",
             )}
           >
-            {isCollapsed && (
-              <div className="px-4 py-2 border-b border-border/60 mb-1">
-                <p className="text-xs font-bold text-foreground truncate">
-                  {profile.full_name}
-                </p>
-                <p className="text-[10px] text-muted-foreground truncate capitalize">
-                  {getRoleShortName(currentRole, t)}
-                </p>
-              </div>
-            )}
+            {/* Header info akun di popover desktop collapsed */}
+            <div className={cn("px-4 py-2 border-b border-border/60 mb-1", !isCollapsed && "hidden", "hidden md:block")}>
+              <p className="text-xs font-bold text-foreground truncate">
+                {profile.full_name}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate capitalize">
+                {getRoleShortName(currentRole, t)}
+              </p>
+            </div>
 
             <button
               type="button"
@@ -447,13 +453,13 @@ export function ShellSidebar({
         )}
 
         {/* Utilitas Mobile: Pengalih Tema & Bahasa (Hanya tampil di mobile drawer, tersembunyi di desktop md:hidden) */}
-        <div className="flex md:hidden items-center justify-between border-t border-white/15 pt-2 pb-2 mb-1 px-1">
+        <div className="flex md:hidden items-center justify-between border-b border-white/15 pb-2.5 mb-2.5 px-1 w-full">
           <span className="text-[11px] font-semibold tracking-wide uppercase text-white/80">
             {t("common:action.settings", "Pengaturan")}
           </span>
           <div className="flex items-center gap-2">
-            <LanguageToggle size="sm" className="size-8 rounded-xl border border-white/30 bg-white/10 text-white" />
-            <ThemeToggle size="sm" className="size-8 rounded-xl border border-white/30 bg-white/10 text-white" />
+            <LanguageToggle size="sm" className="size-9 rounded-xl border border-white/30 bg-white/10 text-white" />
+            <ThemeToggle size="sm" className="size-9 rounded-xl border border-white/30 bg-white/10 text-white" />
           </div>
         </div>
 
@@ -463,10 +469,12 @@ export function ShellSidebar({
           onClick={() => setIsUserMenuOpen((prev) => !prev)}
           aria-expanded={isUserMenuOpen}
           className={cn(
-            "flex items-center rounded-2xl transition-all duration-200 cursor-pointer text-left group",
+            "flex items-center rounded-2xl transition-all duration-200 cursor-pointer text-left group min-h-[44px]",
             "hover:bg-white/15 focus:outline-hidden",
             isUserMenuOpen && "bg-white/20",
-            isCollapsed ? "size-10 justify-center p-0" : "w-full justify-between h-11 px-0.5 py-1",
+            isCollapsed
+              ? "w-full justify-between h-11 px-0.5 py-1 md:size-10 md:justify-center md:p-0"
+              : "w-full justify-between h-11 px-0.5 py-1",
           )}
         >
           <div className="flex items-center min-w-0">
@@ -482,26 +490,24 @@ export function ShellSidebar({
               )}
             </div>
 
-            {!isCollapsed && (
-              <div className="ml-2.5 min-w-0 text-left">
-                <p className="text-xs font-bold truncate text-white leading-tight">
-                  {profile.full_name || "User"}
-                </p>
-                <p className="text-[10px] text-white/75 truncate leading-tight mt-0.5">
-                  {getRoleShortName(currentRole, t)}
-                </p>
-              </div>
-            )}
+            {/* Nama user selalu tampil di mobile drawer, di desktop menghormati isCollapsed */}
+            <div className={cn("ml-2.5 min-w-0 text-left", isCollapsed && "md:hidden")}>
+              <p className="text-xs font-bold truncate text-white leading-tight">
+                {profile.full_name || "User"}
+              </p>
+              <p className="text-[10px] text-white/75 truncate leading-tight mt-0.5">
+                {getRoleShortName(currentRole, t)}
+              </p>
+            </div>
           </div>
 
-          {!isCollapsed && (
-            <ChevronUpIcon
-              className={cn(
-                "size-4 text-white/80 transition-transform duration-200 shrink-0 mr-1",
-                isUserMenuOpen && "rotate-180",
-              )}
-            />
-          )}
+          <ChevronUpIcon
+            className={cn(
+              "size-4 text-white/80 transition-transform duration-200 shrink-0 mr-1",
+              isCollapsed && "md:hidden",
+              isUserMenuOpen && "rotate-180",
+            )}
+          />
         </button>
       </div>
     </aside>
