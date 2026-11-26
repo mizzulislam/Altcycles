@@ -32,4 +32,5 @@ Selamat datang di pusat dokumentasi resmi **Altcycles** (Sistem ERP Administrasi
 - **[bidang-g-aturan-desain-token.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-publish/bidang-g-aturan-desain-token.md)** — Sumber kebenaran desain dan pencegahan CI.
 - **[bidang-h-performa-rilis.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-publish/bidang-h-performa-rilis.md)** — Checklist kesiapan rilis produksi.
 - **[audit-mobile.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-mobile.md)** — Laporan audit UI/UX mobile & tablet serta rencana implementasi 6 paket aditif (desktop terkunci).
+- **[temuan-mobile.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/temuan-mobile.md)** — Catatan temuan, log verifikasi, dan observasi responsif mobile/tablet pasca-implementasi.
 - **[rencana-implementasi.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-publish/rencana-implementasi.md)** — Rencana bertahap 10 paket kerja rilis.
