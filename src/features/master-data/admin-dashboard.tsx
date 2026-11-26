@@ -624,8 +624,8 @@ export function AdminDashboardPage() {
         }
       />
 
-      {/* A2: Baris 1, Empat Kartu KPI Utama (KpiCard) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* A2: Baris 1, Empat Kartu KPI Utama (Flexbox Modern + Mobile Anti-Long Scroll Carousel) */}
+      <div className="flexbox-kpi-grid mobile-kpi-carousel sm:grid sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* KPI 1: Kas & Bank */}
         <KpiCard
           label={t("dashboard.kpi.ending_cash", "Kas & Bank Terkini")}

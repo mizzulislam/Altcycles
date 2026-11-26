@@ -365,8 +365,8 @@ export function UserDashboardPage() {
         }
       />
 
-      {/* 4 Kartu KPI Utama */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 4 Kartu KPI Utama (Flexbox Modern + Mobile Anti-Long Scroll Carousel) */}
+      <div className="flexbox-kpi-grid mobile-kpi-carousel sm:grid sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label={t("user_portal.kpi_projects", "Proyek Ditugaskan")}
           value={projects.length}

@@ -286,8 +286,8 @@ export function SuperAdminDashboardPage() {
         }
       />
 
-      {/* 4 Kartu KPI Utama Terstandar */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 4 Kartu KPI Utama Terstandar (Flexbox Modern + Mobile Anti-Long Scroll Carousel) */}
+      <div className="flexbox-kpi-grid mobile-kpi-carousel sm:grid sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label={t("settings:super_admin.kpi_users", "Pengguna Internal")}
           value={activeUsers}
