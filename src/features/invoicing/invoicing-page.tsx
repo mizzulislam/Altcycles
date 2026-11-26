@@ -576,9 +576,10 @@ export function InvoicingPage() {
             {t("invoicing.page_desc", "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.")}
           </TruncatedTooltipText>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
           <ExportDownloadMenu
             label={t("action.export_download", "Unduh / Ekspor")}
+            className="w-full sm:w-auto"
             onExportExcel={handleExportInvoicesExcel}
             onExportPdf={handleExportInvoicesPdf}
             onExportCsv={handleExportInvoicesCsv}
@@ -586,7 +587,7 @@ export function InvoicingPage() {
           <Button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="shrink-0"
+            className="w-full sm:w-auto min-h-10 sm:min-h-9 shrink-0"
           >
             <PlusIcon className="size-4" />
             <span>{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>

@@ -604,7 +604,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
               : t("po:my_subtitle", "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.")}
           </TruncatedTooltipText>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
           {mode === "admin" ? (
             <ExportDownloadMenu
               label={t("common:action.export_download", "Unduh / Ekspor")}
@@ -617,7 +617,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
             type="button"
             size="sm"
             onClick={handleOpenCreate}
-            className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
+            className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs w-full sm:w-auto"
           >
             <PlusIcon className="size-4" />
             <span>{t("po:btn_create", "Buat PO Vendor")}</span>

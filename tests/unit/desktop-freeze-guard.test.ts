@@ -89,4 +89,11 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     // Di sidebar utilitas mobile dibatasi md:hidden
     expect(sidebarContent).toContain("flex md:hidden");
   });
+
+  it("Paket M4: tombol aksi transaksi di desktop tetap sm:flex-row / sm:w-auto tanpa mengubah tata letak desktop", () => {
+    const exportBtn = fs.readFileSync(path.resolve(process.cwd(), "src/components/shared/export-download-menu.tsx"), "utf-8");
+    const buttonSource = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/button.tsx"), "utf-8");
+    expect(exportBtn).toContain("w-full sm:w-auto");
+    expect(buttonSource).toContain("sm:after:hidden");
+  });
 });

@@ -357,7 +357,7 @@ export function ProjectsPage() {
             )}
           </TruncatedTooltipText>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
           <ExportDownloadMenu
             label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
@@ -367,7 +367,7 @@ export function ProjectsPage() {
           <Button
             type="button"
             onClick={openNew}
-            className="shrink-0"
+            className="shrink-0 w-full sm:w-auto"
           >
             <PlusIcon className="size-4" />
             <span>{t("projects.add_button", "Tambah Proyek")}</span>

@@ -133,7 +133,7 @@ export function ExportDownloadMenu({
         disabled={disabled || isLoading}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
+          "w-full sm:w-auto min-h-10 sm:min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
           "hover:bg-muted/70 hover:border-primary/40",
           "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
           "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
