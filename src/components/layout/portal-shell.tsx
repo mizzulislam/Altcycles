@@ -344,8 +344,6 @@ export function PortalShell() {
               <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full" />
             )}
           </Button>
-          <LanguageToggle size="sm" className="size-9 rounded-xl border border-border/80" />
-          <ThemeToggle size="sm" className="size-9 rounded-xl" />
           <Button
             type="button"
             variant="ghost"

@@ -12,6 +12,8 @@ import {
   XIcon,
 } from "lucide-react";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
+import { LanguageToggle } from "@/components/shared/language-toggle";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
@@ -443,6 +445,17 @@ export function ShellSidebar({
             </button>
           </div>
         )}
+
+        {/* Utilitas Mobile: Pengalih Tema & Bahasa (Hanya tampil di mobile drawer, tersembunyi di desktop md:hidden) */}
+        <div className="flex md:hidden items-center justify-between border-t border-white/15 pt-2 pb-2 mb-1 px-1">
+          <span className="text-[11px] font-semibold tracking-wide uppercase text-white/80">
+            {t("common:action.settings", "Pengaturan")}
+          </span>
+          <div className="flex items-center gap-2">
+            <LanguageToggle size="sm" className="size-8 rounded-xl border border-white/30 bg-white/10 text-white" />
+            <ThemeToggle size="sm" className="size-8 rounded-xl border border-white/30 bg-white/10 text-white" />
+          </div>
+        </div>
 
         {/* Trigger Kartu Profil Utama di Bagian Bawah */}
         <button

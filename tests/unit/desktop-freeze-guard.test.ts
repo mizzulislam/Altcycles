@@ -77,4 +77,16 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     expect(cmdContent).toContain("sm:top-1/2 sm:-translate-y-1/2");
     expect(confirmContent).toContain("w-full sm:w-auto");
   });
+
+  it("Memastikan header mobile ringkas dan kontrol utilitas di sidebar terisolasi md:hidden (MB-02)", () => {
+    const shellContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/layout/portal-shell.tsx"), "utf-8");
+    const sidebarContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/layout/shell-sidebar.tsx"), "utf-8");
+
+    // Di header desktop tombol tetap ada lengkap
+    expect(shellContent).toContain("hidden md:flex h-16");
+    expect(shellContent).toContain("LanguageToggle");
+    expect(shellContent).toContain("ThemeToggle");
+    // Di sidebar utilitas mobile dibatasi md:hidden
+    expect(sidebarContent).toContain("flex md:hidden");
+  });
 });
