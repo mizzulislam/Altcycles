@@ -105,4 +105,11 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     // Auto scroll TabsTrigger diisolasi untuk lebar < 1024
     expect(tabsSource).toContain("window.innerWidth < 1024");
   });
+
+  it("Paket M6: KpiCard dan LoginPage mempertahankan padding desktop lg:p-12 dan sm:p-5 / sm:p-6", () => {
+    const kpiSource = fs.readFileSync(path.resolve(process.cwd(), "src/components/shared/dashboard-kpi-card.tsx"), "utf-8");
+    const loginSource = fs.readFileSync(path.resolve(process.cwd(), "src/features/auth/login-page.tsx"), "utf-8");
+    expect(kpiSource).toContain("sm:p-5");
+    expect(loginSource).toContain("lg:p-12");
+  });
 });

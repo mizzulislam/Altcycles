@@ -132,7 +132,7 @@ export function KpiCard({
     <Card
       data-slot="kpi-card"
       className={cn(
-        "rounded-2xl border-border/80 bg-card p-5 shadow-2xs flex flex-col justify-between gap-3.5 h-full transition-all duration-150",
+        "rounded-2xl border-border/80 bg-card p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-3.5 h-full transition-all duration-150",
         to && "group hover:border-primary/50 hover:bg-muted/15 cursor-pointer",
         className,
       )}

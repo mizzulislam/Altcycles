@@ -610,7 +610,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       {/* =====================================================================
           KOLOM KANAN: Form Masuk / Buat Akun (Gaya Splitz Bersih & Minimalis)
           ===================================================================== */}
-      <div className="flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12">
+      <div className="flex flex-col justify-center items-center px-4 py-8 sm:p-10 lg:p-12">
         <div className="w-full max-w-[440px] space-y-6">
           {/* Brand Logo Header (Menyesuaikan variant secara otomatis dengan tema aktif) */}
           <div className="flex flex-col items-center text-center -mt-4 mb-3">
