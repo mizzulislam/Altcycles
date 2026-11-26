@@ -57,7 +57,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={handleRef}
         className={cn(
-          "fixed left-1/2 top-1/2 z-[101] grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-5 sm:p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] max-h-[90vh] overflow-y-auto overflow-x-hidden scroll-smooth [&>*]:min-w-0 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          "fixed left-1/2 top-1/2 z-[101] grid w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-border/80 dark:border-white/15 bg-background p-4 sm:p-6 shadow-2xl dark:shadow-[0_0_50px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.8)] max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden scroll-smooth [&>*]:min-w-0 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
           MOTION_CLASSES.dialogContent,
           className,
         )}
@@ -98,7 +98,7 @@ function DialogHeader({
   return (
     <div
       className={cn(
-        "sticky -top-5 sm:-top-6 z-30 -mt-5 -mx-5 sm:-mt-6 sm:-mx-6 px-5 py-4 sm:px-6 sm:py-4 bg-background border-b border-border/70 dark:border-white/10 flex items-center justify-between gap-4 shadow-2xs",
+        "sticky -top-4 sm:-top-6 z-30 -mt-4 -mx-4 sm:-mt-6 sm:-mx-6 px-4 py-3 sm:px-6 sm:py-4 bg-background border-b border-border/70 dark:border-white/10 flex items-center justify-between gap-4 shadow-2xs",
         className,
       )}
       {...props}

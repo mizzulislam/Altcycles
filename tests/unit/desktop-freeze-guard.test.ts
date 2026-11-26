@@ -65,4 +65,16 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     const htmlContent = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf-8");
     expect(htmlContent).toContain("viewport-fit=cover");
   });
+
+  it("Memastikan DialogContent dan CommandPalette adaptif dvh di mobile dan tetap mengunci layout desktop (MB-06, MB-10)", () => {
+    const dialogContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/dialog.tsx"), "utf-8");
+    const cmdContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/navigation/command-palette-dialog.tsx"), "utf-8");
+    const confirmContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/shared/confirm-dialog.tsx"), "utf-8");
+
+    expect(dialogContent).toContain("max-h-[90dvh] sm:max-h-[90vh]");
+    expect(dialogContent).toContain("p-4 sm:p-6");
+    expect(cmdContent).toContain("max-h-[85dvh] sm:max-h-[600px]");
+    expect(cmdContent).toContain("sm:top-1/2 sm:-translate-y-1/2");
+    expect(confirmContent).toContain("w-full sm:w-auto");
+  });
 });

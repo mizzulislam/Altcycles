@@ -273,14 +273,14 @@ export function CommandPaletteDialog({
         <DialogPrimitive.Content
           onKeyDown={handleKeyDown}
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[121] w-[calc(100%-2rem)] max-w-xl rounded-2xl border border-border/80 bg-card shadow-2xl text-card-foreground outline-none overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          className="fixed left-1/2 top-4 -translate-x-1/2 translate-y-0 sm:top-1/2 sm:-translate-y-1/2 z-[121] w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-xl max-h-[85dvh] sm:max-h-[600px] rounded-2xl border border-border/80 bg-card shadow-2xl text-card-foreground outline-none overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150"
         >
           <DialogPrimitive.Title className="sr-only">
             {t("common:search.placeholder", "Cari halaman...")}
           </DialogPrimitive.Title>
 
           {/* Baris Input Pencarian */}
-          <div className="flex items-center px-6 sm:px-7 py-4 border-b border-border/70 bg-card">
+          <div className="flex items-center px-4 sm:px-7 py-3.5 sm:py-4 border-b border-border/70 bg-card shrink-0">
             <Search className="size-4.5 text-muted-foreground/80 shrink-0" />
             <input
               ref={inputRef}
@@ -303,7 +303,7 @@ export function CommandPaletteDialog({
                 "common:search.modal_placeholder",
                 "Ketik perintah, nama halaman, atau kata kunci...",
               )}
-              className="w-full bg-transparent text-sm sm:text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none mx-4 px-2 py-0.5 leading-normal"
+              className="w-full bg-transparent text-base sm:text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none mx-3 sm:mx-4 px-2 py-0.5 leading-normal"
             />
             <div className="flex items-center gap-2 shrink-0">
               {searchQuery && (

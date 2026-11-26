@@ -94,8 +94,8 @@ export function ConfirmActionDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="w-[calc(100%-2rem)] sm:max-w-lg p-6 gap-4">
-        <AlertDialogHeader className="-mx-6 -mt-6 px-6 py-4 border-b border-border/70 dark:border-white/10">
+      <AlertDialogContent className="w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] sm:max-w-lg p-4 sm:p-6 gap-4 max-h-[90dvh] overflow-y-auto">
+        <AlertDialogHeader className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 py-3 sm:px-6 sm:py-4 border-b border-border/70 dark:border-white/10">
           <AlertDialogTitle>{title}</AlertDialogTitle>
         </AlertDialogHeader>
 
@@ -159,13 +159,14 @@ export function ConfirmActionDialog({
           ) : null}
         </div>
 
-        <AlertDialogFooter className="pt-4 border-t border-border/70 dark:border-white/10">
-          <AlertDialogCancel disabled={submitting}>{effectiveCancelLabel}</AlertDialogCancel>
+        <AlertDialogFooter className="pt-4 border-t border-border/70 dark:border-white/10 flex flex-col-reverse sm:flex-row gap-2">
+          <AlertDialogCancel disabled={submitting} className="w-full sm:w-auto">{effectiveCancelLabel}</AlertDialogCancel>
           <Button
             type="button"
             variant={destructive ? "destructive" : "default"}
             disabled={submitting || !isConfirmTextValid}
             onClick={handleConfirm}
+            className="w-full sm:w-auto"
           >
             {submitting ? <Spinner data-icon="inline-start" /> : null}
             {effectiveConfirmLabel}
