@@ -22,16 +22,40 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "group inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.97] motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:bg-muted/70 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, onClick, ...props }, ref) => {
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Pada perangkat mobile / tablet, sentuhan pada tab akan menggulirkan tab aktif ke tengah pandangan secara halus
+    if (window.innerWidth < 1024) {
+      triggerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+    onClick?.(e);
+  };
+
+  return (
+    <TabsPrimitive.Trigger
+      ref={(node) => {
+        triggerRef.current = node;
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      }}
+      onClick={handleClick}
+      className={cn(
+        "group inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.97] motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground hover:bg-muted/70 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
 const TabsContent = React.forwardRef<

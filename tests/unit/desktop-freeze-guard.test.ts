@@ -96,4 +96,13 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
     expect(exportBtn).toContain("w-full sm:w-auto");
     expect(buttonSource).toContain("sm:after:hidden");
   });
+
+  it("Paket M5: Table dan Tabs mengisolasi edge fade hint dan auto-scroll hanya di mobile tanpa menggeser desktop", () => {
+    const tableSource = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/table.tsx"), "utf-8");
+    const tabsSource = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/tabs.tsx"), "utf-8");
+    // Edge fade hint terisolasi dengan lg:hidden
+    expect(tableSource).toContain("lg:hidden");
+    // Auto scroll TabsTrigger diisolasi untuk lebar < 1024
+    expect(tabsSource).toContain("window.innerWidth < 1024");
+  });
 });

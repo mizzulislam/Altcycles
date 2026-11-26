@@ -6,11 +6,16 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-x-auto overflow-y-hidden max-w-full touch-pan-x @container">
+  <div className="relative w-full overflow-x-auto overflow-y-hidden max-w-full touch-pan-x @container group/table">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
+    />
+    {/* Petunjuk scroll horizontal halus hanya di layar kecil / sempit saat konten meluap */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card/80 to-transparent lg:hidden opacity-75 transition-opacity"
     />
   </div>
 ));
