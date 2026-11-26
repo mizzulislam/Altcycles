@@ -29,6 +29,7 @@
     "reason": "Reason",
     "reason_placeholder": "Enter reason...",
     "delete_selected": "Delete Selected",
+    "settings": "Settings",
     "locked": "Locked",
     "acknowledge_warning": "I Understand Risks & Proceed Anyway"
   },
