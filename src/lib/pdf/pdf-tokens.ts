@@ -209,6 +209,10 @@ export const DOCUMENT_TITLE_MAPPINGS: Record<string, DocumentTitleMapping> = {
     headerTitle: "LAPORAN KEUANGAN",
     fullTitle: "LAPORAN KEUANGAN LENGKAP",
   },
+  "RINGKASAN EKSEKUTIF DASBOR KEUANGAN": {
+    headerTitle: "RINGKASAN DASBOR",
+    fullTitle: "RINGKASAN EKSEKUTIF DASBOR KEUANGAN",
+  },
 };
 
 /**
@@ -352,6 +356,10 @@ export const DOCUMENT_TITLE_MAPPINGS_EN: Record<string, DocumentTitleMapping> = 
   "PROJECTS LIST & TEAM ASSIGNMENTS": {
     headerTitle: "PROJECTS LIST",
     fullTitle: "PROJECTS LIST AND TEAM ASSIGNMENTS",
+  },
+  "EXECUTIVE FINANCIAL DASHBOARD SUMMARY": {
+    headerTitle: "DASHBOARD SUMMARY",
+    fullTitle: "EXECUTIVE FINANCIAL DASHBOARD SUMMARY",
   },
 };
 

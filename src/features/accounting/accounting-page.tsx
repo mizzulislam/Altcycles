@@ -3,8 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import {
   ArchiveIcon,
   BookOpenIcon,
-  CalendarDaysIcon,
   FileBarChart2Icon,
+  FilterIcon,
   FolderTreeIcon,
   RotateCcwIcon,
   ScaleIcon,
@@ -304,12 +304,7 @@ export function AccountingPage() {
             )}
           >
             <div className="flex items-center gap-2 truncate">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-cyan-400">
-                <CalendarDaysIcon className="size-3.5" />
-              </span>
-              <span className="text-muted-foreground text-xs font-normal">
-                {t("accounting:filter.btn_label", "Filter:")}
-              </span>
+              <FilterIcon className="size-4 text-primary shrink-0" />
               <span className="font-semibold text-foreground truncate">
                 {periodFilter.preset === "all"
                   ? t("accounting:filter.all_periods", "Semua Periode")
@@ -327,7 +322,6 @@ export function AccountingPage() {
                 </span>
               )}
             </div>
-            <SlidersHorizontalIcon className="size-3.5 text-muted-foreground shrink-0 ml-1" />
           </button>
 
           {/* Modal Dialog Filter Terpadu (Lebar max-w-3xl lega seperti Modal Catat Transaksi) */}

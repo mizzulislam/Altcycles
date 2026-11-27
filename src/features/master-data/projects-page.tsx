@@ -16,6 +16,7 @@ import { getLocalizedRevenueMethod } from "@/lib/glossary";
 import { useSidebarCollapsed } from "@/components/layout/portal-shell";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,8 @@ export function ProjectsPage() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [sortKey, setSortKey] = React.useState<"start_date" | "code" | "name" | "contract_amount">("start_date");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = React.useState<string[]>([]);
   const [viewProject, setViewProject] = React.useState<ProjectRow | null>(null);
@@ -225,7 +228,7 @@ export function ProjectsPage() {
   const previewMethod = inferRevenueMethodFromTerms(termCount);
 
   const filteredProjects = React.useMemo(() => {
-    return projects.filter((p) => {
+    const list = projects.filter((p) => {
       if (statusFilter !== "all" && p.status !== statusFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -236,7 +239,21 @@ export function ProjectsPage() {
       }
       return true;
     });
-  }, [projects, statusFilter, search]);
+
+    return list.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "code") {
+        cmp = a.code.localeCompare(b.code);
+      } else if (sortKey === "name") {
+        cmp = a.name.localeCompare(b.name);
+      } else if (sortKey === "contract_amount") {
+        cmp = a.contract_value - b.contract_value;
+      } else {
+        cmp = (a.start_date ?? "").localeCompare(b.start_date ?? "") || a.code.localeCompare(b.code);
+      }
+      return sortOrder === "asc" ? cmp : -cmp;
+    });
+  }, [projects, statusFilter, search, sortKey, sortOrder]);
 
   async function handleExportExcel() {
     await downloadExcelSheet({
@@ -375,15 +392,15 @@ export function ProjectsPage() {
                   <ActionTooltip content={t("status.all", "Semua Status")}>
                     <SelectTrigger
                       aria-label={t("status.all", "Semua Status")}
-                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                     >
-                      <FilterIcon className="size-4 text-primary" />
+                      <FilterIcon className="size-4 text-primary shrink-0" />
                     </SelectTrigger>
                   </ActionTooltip>
                 ) : (
                   <SelectTrigger
                     aria-label={t("status.all", "Semua Status")}
-                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
                   >
                     <FilterIcon className="size-3.5 shrink-0" />
                     <SelectValue placeholder={t("status.all", "Semua Status")} />
@@ -401,6 +418,23 @@ export function ProjectsPage() {
                 </SelectContent>
               </Select>
 
+              <TableSortMenu
+                sortKey={sortKey}
+                sortOrder={sortOrder}
+                options={[
+                  { value: "start_date", label: t("projects:modal.field_start_date", "Tanggal Mulai") },
+                  { value: "code", label: t("projects:col_code", "Kode Proyek") },
+                  { value: "name", label: t("projects:col_name", "Nama Proyek") },
+                  { value: "contract_amount", label: t("projects:modal.field_contract_value", "Nilai Kontrak") },
+                ]}
+                onSortChange={(key, order) => {
+                  setSortKey(key as "start_date" | "code" | "name" | "contract_amount");
+                  setSortOrder(order);
+                }}
+                defaultSortKey="start_date"
+                defaultSortOrder="desc"
+              />
+
               {!isEditMode ? (
                 <ActionTooltip content={t("action.edit", "Edit")}>
                   <Button
@@ -409,10 +443,10 @@ export function ProjectsPage() {
                     size="icon"
                     onClick={() => setIsEditMode(true)}
                     disabled={filteredProjects.length === 0}
-                    className="size-9 rounded-xl cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                    className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 transition-colors disabled:opacity-50"
                     aria-label={t("action.edit", "Edit")}
                   >
-                    <PencilIcon className="size-4" />
+                    <PencilIcon className="size-4 text-primary" />
                     <span className="sr-only">{t("action.edit", "Edit")}</span>
                   </Button>
                 </ActionTooltip>
@@ -455,13 +489,13 @@ export function ProjectsPage() {
               <ActionTooltip content={t("projects.add_button", "Tambah Proyek")}>
                 <Button
                   type="button"
-                  variant="default"
+                  variant="outline"
                   size="icon"
                   onClick={openNew}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
                   aria-label={t("projects.add_button", "Tambah Proyek")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary" />
                   <span className="sr-only">{t("projects.add_button", "Tambah Proyek")}</span>
                 </Button>
               </ActionTooltip>

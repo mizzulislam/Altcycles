@@ -47,6 +47,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingPo, setEditingPo] = React.useState<PurchaseOrderRow | null>(null);
+  const [sortField, setSortField] = React.useState<"date" | "number" | "vendor" | "amount">("date");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedPoIds, setSelectedPoIds] = React.useState<string[]>([]);
@@ -269,18 +270,21 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
 
   const sortedOrders = React.useMemo(() => {
     return [...filtered].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return (
-          a.po_date.localeCompare(b.po_date) ||
-          a.po_number.localeCompare(b.po_number)
-        );
+      let cmp = 0;
+      if (sortField === "number") {
+        cmp = a.po_number.localeCompare(b.po_number);
+      } else if (sortField === "vendor") {
+        const vA = vendors.find((v) => v.id === a.vendor_id)?.name ?? "";
+        const vB = vendors.find((v) => v.id === b.vendor_id)?.name ?? "";
+        cmp = vA.localeCompare(vB);
+      } else if (sortField === "amount") {
+        cmp = a.total_amount - b.total_amount;
+      } else {
+        cmp = a.po_date.localeCompare(b.po_date) || a.po_number.localeCompare(b.po_number);
       }
-      return (
-        b.po_date.localeCompare(a.po_date) ||
-        b.po_number.localeCompare(a.po_number)
-      );
+      return sortOrder === "asc" ? cmp : -cmp;
     });
-  }, [filtered, sortOrder]);
+  }, [filtered, sortField, sortOrder]);
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
@@ -311,6 +315,8 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         mode={mode}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        sortField={sortField}
+        setSortField={setSortField}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
         isEditing={isEditing}

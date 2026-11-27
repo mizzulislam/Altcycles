@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ArrowUpDownIcon,
   PencilIcon,
   PlusIcon,
   SlidersHorizontalIcon,
@@ -9,12 +8,12 @@ import { toast } from "sonner";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { type SemanticTone } from "@/components/shared/status-badge";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   getCompanyProfile,
@@ -108,6 +107,7 @@ export function JournalsPage({
   const [typeFilter] = React.useState(
     filterMode === "adjusting" ? "adjustment" : initialTypeFilter,
   );
+  const [sortKey, setSortKey] = React.useState<"date" | "number" | "description">("date");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
 
   // Form Jurnal Baru & Edit (Umum / Penyesuaian)
@@ -537,18 +537,19 @@ export function JournalsPage({
 
   const sortedJournals = React.useMemo(() => {
     return [...filteredJournals].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return (
+      let cmp = 0;
+      if (sortKey === "date") {
+        cmp =
           a.journal_date.localeCompare(b.journal_date) ||
-          a.journal_number.localeCompare(b.journal_number)
-        );
+          a.journal_number.localeCompare(b.journal_number);
+      } else if (sortKey === "number") {
+        cmp = a.journal_number.localeCompare(b.journal_number);
+      } else if (sortKey === "description") {
+        cmp = a.description.localeCompare(b.description);
       }
-      return (
-        b.journal_date.localeCompare(a.journal_date) ||
-        b.journal_number.localeCompare(a.journal_number)
-      );
+      return sortOrder === "asc" ? cmp : -cmp;
     });
-  }, [filteredJournals, sortOrder]);
+  }, [filteredJournals, sortKey, sortOrder]);
 
   const printAreaId = `altcycles-journal-print-${filterMode}`;
 
@@ -613,27 +614,6 @@ export function JournalsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {filterMode === "adjusting"
-              ? t("accounting:journals.adj_title", "Riwayat Jurnal Penyesuaian & Koreksi")
-              : t("accounting:journals.general_title", "Riwayat Jurnal Umum")}
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-            {filterMode === "adjusting"
-              ? t(
-                  "accounting:journals.adj_subtitle",
-                  "Kelola penyesuaian akrual, amortisasi, dan penerbitan jurnal koreksi transaksi dengan jejak audit.",
-                )
-              : t(
-                  "accounting:journals.general_subtitle",
-                  "Daftar historis seluruh transaksi akuntansi keuangan secara kronologis.",
-                )}
-          </p>
-        </div>
-      </div>
-
       {/* Penerapan Asumsi Akuntansi Keuangan - Tampil pada Tab Jurnal Penyesuaian (Splitz Style) */}
       {filterMode === "adjusting" && (
         <Card className="p-5 border-border/80 bg-card shadow-xs">
@@ -705,121 +685,120 @@ export function JournalsPage({
       )}
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4.5 max-sm:px-4 max-sm:py-3.5 border-b border-border/60 gap-3">
-          <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">
-            {filterMode === "adjusting"
+        <CardHeaderWithInfo
+          title={
+            filterMode === "adjusting"
               ? t("accounting:journals.adj_book", "Buku Jurnal Penyesuaian (AJP)")
-              : t("accounting:journals.daily_book", "Buku Jurnal Harian")}
-          </CardTitle>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {sortOrder === "desc" ? (
-              <ActionTooltip content={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setSortOrder("asc")}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                  aria-label={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}
-                >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
-                  <span className="sr-only">{t("accounting:journals.order", "Urutan:")}</span>
-                </Button>
-              </ActionTooltip>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder("desc")}
-                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
-              >
-                <ArrowUpDownIcon className="size-3.5 shrink-0" />
-                <span className="truncate">
-                  {t("accounting:journals.order", "Urutan:")}{" "}
-                  {t("accounting:journals.order_oldest", "Terlama")}
-                </span>
-              </Button>
-            )}
+              : t("accounting:journals.daily_book", "Buku Jurnal Harian")
+          }
+          description={
+            filterMode === "adjusting"
+              ? t(
+                  "accounting:journals.adj_subtitle",
+                  "Kelola penyesuaian akrual, amortisasi, dan penerbitan jurnal koreksi transaksi dengan jejak audit.",
+                )
+              : t(
+                  "accounting:journals.general_subtitle",
+                  "Daftar historis seluruh transaksi akuntansi keuangan secara kronologis.",
+                )
+          }
+          controls={
+            <div className="flex flex-wrap items-center gap-2.5">
+              <TableSortMenu
+                options={[
+                  { key: "date", label: t("accounting:journals.col_date", "Tanggal Transaksi") },
+                  { key: "number", label: t("accounting:journals.col_number", "Nomor Bukti") },
+                  { key: "description", label: t("accounting:journals.col_desc", "Keterangan") },
+                ]}
+                selectedKey={sortKey}
+                sortDirection={sortOrder}
+                onSortChange={(key, dir) => {
+                  setSortKey(key as any);
+                  setSortOrder(dir);
+                }}
+                defaultKey="date"
+                defaultDirection="desc"
+              />
 
-            {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (
-              <ActionTooltip content={t("common:action.edit", "Edit")}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setIsEditMode(true)}
-                  className="size-9 rounded-xl cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs shrink-0"
-                  aria-label={t("common:action.edit", "Edit")}
-                >
-                  <PencilIcon className="size-4" />
-                  <span className="sr-only">{t("common:action.edit", "Edit")}</span>
-                </Button>
-              </ActionTooltip>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsEditMode(false);
-                    setSelectedJournalIds([]);
-                  }}
-                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setIsBatchDeleteDialogOpen(true)}
-                  disabled={selectedJournalIds.length === 0}
-                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
-                >
-                  {t("common:action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
-                </Button>
-              </div>
-            )}
+              {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (
+                <ActionTooltip content={t("common:action.edit", "Edit")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsEditMode(true)}
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                    aria-label={t("common:action.edit", "Edit")}
+                  >
+                    <PencilIcon className="size-4" />
+                    <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+                  </Button>
+                </ActionTooltip>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setSelectedJournalIds([]);
+                    }}
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                  >
+                    {t("common:action.cancel", "Batal")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsBatchDeleteDialogOpen(true)}
+                    disabled={selectedJournalIds.length === 0}
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                  >
+                    {t("common:action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
+                  </Button>
+                </div>
+              )}
 
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportExcel}
-              onExportPdf={handleExportPdf}
-              onExportCsv={handleExportCsv}
-              size="icon"
-            />
-
-            <ActionTooltip
-              content={
-                filterMode === "adjusting"
-                  ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
-                  : t("accounting:journals.btn_record", "Catat Transaksi")
-              }
-            >
-              <Button
-                type="button"
-                variant="default"
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onExportCsv={handleExportCsv}
                 size="icon"
-                onClick={openNewJournal}
-                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                aria-label={
+              />
+
+              <ActionTooltip
+                content={
                   filterMode === "adjusting"
                     ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
                     : t("accounting:journals.btn_record", "Catat Transaksi")
                 }
               >
-                <PlusIcon className="size-4" />
-                <span className="sr-only">
-                  {filterMode === "adjusting"
-                    ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
-                    : t("accounting:journals.btn_record", "Catat Transaksi")}
-                </span>
-              </Button>
-            </ActionTooltip>
-          </div>
-        </CardHeader>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={openNewJournal}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                  aria-label={
+                    filterMode === "adjusting"
+                      ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                      : t("accounting:journals.btn_record", "Catat Transaksi")
+                  }
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">
+                    {filterMode === "adjusting"
+                      ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                      : t("accounting:journals.btn_record", "Catat Transaksi")}
+                  </span>
+                </Button>
+              </ActionTooltip>
+            </div>
+          }
+        />
         <CardContent className="p-0">
           <JournalsTable
             loading={loading}

@@ -37,6 +37,12 @@
     "aging": "Umur Piutang (AR Aging)",
     "receipts": "Kuitansi Pembayaran"
   },
+  "col": {
+    "date": "Tanggal Invoice",
+    "due_date": "Jatuh Tempo",
+    "number": "Nomor Tagihan",
+    "amount": "Total Tagihan"
+  },
   "table": {
     "invoice_list_title": "Daftar Invoice Klien",
     "invoice_list_desc": "Klik ikon catat bayar pada baris invoice ketika dana klien masuk ke rekening bank perusahaan untuk menerbitkan kuitansi otomatis.",

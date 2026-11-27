@@ -1,7 +1,6 @@
 import * as React from "react";
 import {
   AlertTriangleIcon,
-  ArrowUpDownIcon,
   FolderKanbanIcon,
   PencilIcon,
   PiggyBankIcon,
@@ -16,6 +15,7 @@ import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { PageHeader, TruncatedTooltipText } from "@/components/shared/page-header";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -83,16 +83,26 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
   const [thresholdPct, setThresholdPct] = React.useState(80);
   const [allocations, setAllocations] = React.useState<Record<string, number>>({});
   const [saving, setSaving] = React.useState(false);
+  const [sortKey, setSortKey] = React.useState<"code" | "name" | "ceiling" | "realization" | "remaining">("code");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
 
   const sortedRows = React.useMemo(() => {
     return [...rows].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.account_code.localeCompare(b.account_code);
+      let cmp = 0;
+      if (sortKey === "name") {
+        cmp = a.account_name.localeCompare(b.account_name);
+      } else if (sortKey === "ceiling") {
+        cmp = a.allocated_amount - b.allocated_amount;
+      } else if (sortKey === "realization") {
+        cmp = a.realized_amount - b.realized_amount;
+      } else if (sortKey === "remaining") {
+        cmp = a.remaining_amount - b.remaining_amount;
+      } else {
+        cmp = a.account_code.localeCompare(b.account_code);
       }
-      return b.account_code.localeCompare(a.account_code);
+      return sortOrder === "asc" ? cmp : -cmp;
     });
-  }, [rows, sortOrder]);
+  }, [rows, sortKey, sortOrder]);
 
   React.useEffect(() => {
     async function init() {
@@ -417,35 +427,23 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
           title={t("budgeting:common.card_title")}
           description={t("budgeting:common.card_desc")}
           controls={
-            <div className="flex items-center gap-2.5 shrink-0 justify-end w-full sm:w-auto">
-              {sortOrder === "desc" ? (
-                <ActionTooltip content={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setSortOrder("asc")}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                    aria-label={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}
-                  >
-                    <ArrowUpDownIcon className="size-4 text-primary" />
-                    <span className="sr-only">{t("common:action.order", "Urutan")}</span>
-                  </Button>
-                </ActionTooltip>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder("desc")}
-                  className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
-                >
-                  <ArrowUpDownIcon className="size-3.5 shrink-0" />
-                  <span className="truncate">
-                    {t("common:action.order", "Urutan")}: {t("common:action.oldest", "Terlama")}
-                  </span>
-                </Button>
-              )}
+            <div className="flex items-center gap-2 shrink-0 justify-end w-full sm:w-auto">
+              <TableSortMenu
+                options={[
+                  { key: "code", label: t("budgeting:common.col_account", "Akun") },
+                  { key: "ceiling", label: t("budgeting:common.col_ceiling", "Pagu Anggaran") },
+                  { key: "realization", label: t("budgeting:common.col_realization", "Realisasi") },
+                  { key: "remaining", label: t("budgeting:common.col_remaining", "Sisa Anggaran") },
+                ]}
+                selectedKey={sortKey}
+                sortDirection={sortOrder}
+                onSortChange={(key, dir) => {
+                  setSortKey(key as any);
+                  setSortOrder(dir);
+                }}
+                defaultKey="code"
+                defaultDirection="asc"
+              />
               {mode === "admin" && (
                 <ActionTooltip content={t("common:action.edit", "Edit")}>
                   <Button
@@ -453,7 +451,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     variant="outline"
                     size="icon"
                     onClick={() => openBudgetEditor(true)}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
                     aria-label={t("common:action.edit", "Edit")}
                   >
                     <PencilIcon className="size-4" />
@@ -474,10 +472,10 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                   <ActionTooltip content={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}>
                     <Button
                       type="button"
-                      variant="default"
+                      variant="outline"
                       size="icon"
                       onClick={() => openBudgetEditor(false)}
-                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
                       aria-label={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}
                     >
                       <PlusIcon className="size-4" />

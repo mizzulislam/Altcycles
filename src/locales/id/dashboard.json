@@ -180,6 +180,7 @@
     "col_indicator": "Indikator / Kategori",
     "col_value": "Nilai (IDR)",
     "col_unit": "Satuan / Keterangan",
+    "col_tx_count": "Aktivitas",
     "col_details": "Rincian",
     "col_month": "Bulan / Periode",
     "col_revenue": "Pendapatan",

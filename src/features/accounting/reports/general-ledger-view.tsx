@@ -1,4 +1,6 @@
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { Card, CardContent } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Select,
   SelectContent,
@@ -61,27 +63,22 @@ export function GeneralLedgerView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {t("accounting:reports.tab_general_ledger", "Buku Besar")}
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-            {t("accounting:tabs.buku_besar_desc", "Mutasi debit-kredit dan saldo berjalan per akun COA")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={onExportExcel}
-            onExportPdf={onExportPdf}
-            onExportCsv={onExportCsv}
-          />
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-2xs space-y-6">
-        <div className="max-w-md">
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+        <CardHeaderWithInfo
+          title={t("accounting:reports.tab_general_ledger", "Buku Besar")}
+          description={t("accounting:tabs.buku_besar_desc", "Mutasi debit-kredit dan saldo berjalan per akun COA")}
+          controls={
+            <ExportDownloadMenu
+              label={t("common:action.export_download", "Unduh / Ekspor")}
+              onExportExcel={onExportExcel}
+              onExportPdf={onExportPdf}
+              onExportCsv={onExportCsv}
+              size="icon"
+            />
+          }
+        />
+        <CardContent className="p-6 space-y-6">
+          <div className="max-w-md">
           <label className="block text-sm font-medium text-foreground mb-2">
             {t("accounting:reports.select_account", "Pilih Akun")}
           </label>
@@ -289,7 +286,8 @@ export function GeneralLedgerView({
             </div>
           </div>
         ) : null}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

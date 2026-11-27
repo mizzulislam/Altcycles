@@ -208,6 +208,8 @@
     "order_newest": "Newest",
     "order_oldest": "Oldest",
     "col_date": "Date",
+    "col_number": "Proof Number",
+    "col_desc": "Description",
     "col_description": "Description",
     "col_ref": "Ref",
     "col_debit": "Debit",

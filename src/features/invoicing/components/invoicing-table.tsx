@@ -1,10 +1,11 @@
 import * as React from "react";
-import { ArrowUpDownIcon, BanknoteIcon, FileTextIcon, FilterIcon, PlusIcon } from "lucide-react";
+import { BanknoteIcon, FileTextIcon, FilterIcon, PlusIcon } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +48,8 @@ export interface InvoicingTableProps {
   setIsEditingInvoices: (val: boolean) => void;
   selectedInvoiceIds: string[];
   setSelectedInvoiceIds: React.Dispatch<React.SetStateAction<string[]>>;
+  invoiceSortField?: "date" | "due_date" | "number" | "amount";
+  setInvoiceSortField?: (val: "date" | "due_date" | "number" | "amount") => void;
   invoiceSortOrder: "asc" | "desc";
   setInvoiceSortOrder: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
   onRecordPayment: (inv: SalesInvoiceRow) => void;
@@ -73,6 +76,8 @@ export function InvoicingTable({
   setIsEditingInvoices,
   selectedInvoiceIds,
   setSelectedInvoiceIds,
+  invoiceSortField = "date",
+  setInvoiceSortField,
   invoiceSortOrder,
   setInvoiceSortOrder,
   onRecordPayment,
@@ -105,15 +110,15 @@ export function InvoicingTable({
                 <ActionTooltip content={t("common:status.all", "Semua Status")}>
                   <SelectTrigger
                     aria-label={t("common:status.all", "Semua Status")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                   >
-                    <FilterIcon className="size-4 text-primary" />
+                    <FilterIcon className="size-4 text-primary shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (
                 <SelectTrigger
                   aria-label={t("common:status.all", "Semua Status")}
-                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
                 >
                   <FilterIcon className="size-3.5 shrink-0" />
                   <SelectValue placeholder={t("common:status.all", "Semua Status")} />
@@ -130,34 +135,22 @@ export function InvoicingTable({
               </SelectContent>
             </Select>
 
-            {invoiceSortOrder === "desc" ? (
-              <ActionTooltip content={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setInvoiceSortOrder("asc")}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                  aria-label={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}
-                >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
-                  <span className="sr-only">{t("common:action.order", "Urutan")}</span>
-                </Button>
-              </ActionTooltip>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setInvoiceSortOrder("desc")}
-                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
-              >
-                <ArrowUpDownIcon className="size-3.5 shrink-0" />
-                <span className="truncate">
-                  {t("common:action.order", "Urutan")}: {t("common:action.oldest", "Terlama")}
-                </span>
-              </Button>
-            )}
+            <TableSortMenu
+              sortKey={invoiceSortField}
+              sortOrder={invoiceSortOrder}
+              options={[
+                { value: "date", label: t("invoicing:col.date", "Tanggal Invoice") },
+                { value: "due_date", label: t("invoicing:col.due_date", "Jatuh Tempo") },
+                { value: "number", label: t("invoicing:col.number", "Nomor Tagihan") },
+                { value: "amount", label: t("invoicing:col.amount", "Total Tagihan") },
+              ]}
+              onSortChange={(key, order) => {
+                setInvoiceSortField?.(key as "date" | "due_date" | "number" | "amount");
+                setInvoiceSortOrder(order);
+              }}
+              defaultSortKey="date"
+              defaultSortOrder="desc"
+            />
 
             <SectionEditControls
               hasItems={sortedInvoices.length > 0}
@@ -186,13 +179,13 @@ export function InvoicingTable({
               <ActionTooltip content={t("invoicing.issue_invoice", "Terbitkan Invoice")}>
                 <Button
                   type="button"
-                  variant="default"
+                  variant="outline"
                   size="icon"
                   onClick={onCreateInvoice}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
                   aria-label={t("invoicing.issue_invoice", "Terbitkan Invoice")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary" />
                   <span className="sr-only">{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
                 </Button>
               </ActionTooltip>

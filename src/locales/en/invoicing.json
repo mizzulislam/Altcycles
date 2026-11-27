@@ -37,6 +37,12 @@
     "aging": "AR Aging / Due Dates",
     "receipts": "Payment Receipts"
   },
+  "col": {
+    "date": "Invoice Date",
+    "due_date": "Due Date",
+    "number": "Invoice Number",
+    "amount": "Total Amount"
+  },
   "table": {
     "invoice_list_title": "Client Invoices List",
     "invoice_list_desc": "Click the record payment icon on an invoice row when client funds arrive in the company bank account to issue official receipts automatically.",

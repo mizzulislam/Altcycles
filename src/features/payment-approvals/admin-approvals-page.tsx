@@ -16,6 +16,7 @@ import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
@@ -113,6 +114,8 @@ export function AdminApprovalsPage() {
   const [projects, setProjects] = React.useState<ProjectRow[]>([]);
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
+  const [sortKey, setSortKey] = React.useState<"date" | "number" | "amount" | "requester">("date");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc");
   const [loading, setLoading] = React.useState(true);
 
   // Dialog Persetujuan (dengan tanggal akuntansi untuk posting akrual D Beban / K Utang)
@@ -193,13 +196,28 @@ export function AdminApprovalsPage() {
     [accounts],
   );
 
-  const filteredRequests = React.useMemo(
-    () =>
+  const filteredRequests = React.useMemo(() => {
+    const list =
       statusFilter === "ALL"
-        ? requests
-        : requests.filter((r) => r.status === statusFilter),
-    [requests, statusFilter],
-  );
+        ? [...requests]
+        : requests.filter((r) => r.status === statusFilter);
+
+    return list.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "date") {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortKey === "number") {
+        cmp = a.request_number.localeCompare(b.request_number);
+      } else if (sortKey === "amount") {
+        cmp = a.amount - b.amount;
+      } else if (sortKey === "requester") {
+        const nameA = profileMap.get(a.requester_id) ?? "";
+        const nameB = profileMap.get(b.requester_id) ?? "";
+        cmp = nameA.localeCompare(nameB);
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [requests, statusFilter, sortKey, sortDirection, profileMap]);
 
   async function handleConfirmApprove(e: React.FormEvent) {
     e.preventDefault();
@@ -451,15 +469,15 @@ export function AdminApprovalsPage() {
                   <ActionTooltip content={t("approvals:admin.filter_status_placeholder", "Filter status")}>
                     <SelectTrigger
                       aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
-                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                     >
-                      <FilterIcon className="size-4 text-primary" />
+                      <FilterIcon className="size-4 text-primary shrink-0" />
                     </SelectTrigger>
                   </ActionTooltip>
                 ) : (
                   <SelectTrigger
                     aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
-                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
                   >
                     <FilterIcon className="size-3.5 shrink-0" />
                     <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
@@ -475,6 +493,21 @@ export function AdminApprovalsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              <TableSortMenu
+                options={[
+                  { key: "date", label: t("approvals:admin.col_number_date", "Tanggal & Nomor") },
+                  { key: "amount", label: t("approvals:admin.col_amount", "Nominal") },
+                  { key: "requester", label: t("approvals:modals.requester_name", "Pemohon") },
+                ]}
+                selectedKey={sortKey}
+                sortDirection={sortDirection}
+                onSortChange={(key, dir) => {
+                  setSortKey(key as any);
+                  setSortDirection(dir);
+                }}
+                defaultKey="date"
+                defaultDirection="desc"
+              />
               <ExportDownloadMenu
                 label={t("common:action.export_download", "Unduh / Ekspor")}
                 onExportExcel={handleExportExcel}

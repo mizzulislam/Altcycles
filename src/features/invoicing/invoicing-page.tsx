@@ -82,6 +82,7 @@ export function InvoicingPage() {
   const [activeTab, setActiveTab] = React.useState<"invoices" | "aging" | "receipts">("invoices");
 
   // Sort & Edit Mode untuk Daftar Invoice Klien dan Kuitansi Bukti Pembayaran
+  const [invoiceSortField, setInvoiceSortField] = React.useState<"date" | "due_date" | "number" | "amount">("date");
   const [invoiceSortOrder, setInvoiceSortOrder] = React.useState<"asc" | "desc">("desc");
   const [invoiceStatusFilter, setInvoiceStatusFilter] = React.useState<string>("all");
   const [receiptSortOrder, setReceiptSortOrder] = React.useState<"asc" | "desc">("desc");
@@ -397,18 +398,19 @@ export function InvoicingPage() {
 
   const sortedInvoices = React.useMemo(() => {
     return [...filteredInvoices].sort((a, b) => {
-      if (invoiceSortOrder === "asc") {
-        return (
-          a.invoice_date.localeCompare(b.invoice_date) ||
-          a.invoice_number.localeCompare(b.invoice_number)
-        );
+      let cmp = 0;
+      if (invoiceSortField === "due_date") {
+        cmp = a.due_date.localeCompare(b.due_date);
+      } else if (invoiceSortField === "number") {
+        cmp = a.invoice_number.localeCompare(b.invoice_number);
+      } else if (invoiceSortField === "amount") {
+        cmp = a.total_amount - b.total_amount;
+      } else {
+        cmp = a.invoice_date.localeCompare(b.invoice_date) || a.invoice_number.localeCompare(b.invoice_number);
       }
-      return (
-        b.invoice_date.localeCompare(a.invoice_date) ||
-        b.invoice_number.localeCompare(a.invoice_number)
-      );
+      return invoiceSortOrder === "asc" ? cmp : -cmp;
     });
-  }, [filteredInvoices, invoiceSortOrder]);
+  }, [filteredInvoices, invoiceSortField, invoiceSortOrder]);
 
   const sortedReceipts = React.useMemo(() => {
     const list = bundle?.receipts ?? [];
@@ -665,6 +667,8 @@ export function InvoicingPage() {
           setIsEditingInvoices={setIsEditingInvoices}
           selectedInvoiceIds={selectedInvoiceIds}
           setSelectedInvoiceIds={setSelectedInvoiceIds}
+          invoiceSortField={invoiceSortField}
+          setInvoiceSortField={setInvoiceSortField}
           invoiceSortOrder={invoiceSortOrder}
           setInvoiceSortOrder={setInvoiceSortOrder}
           onRecordPayment={(inv) => {

@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ArrowUpDownIcon,
   BanIcon,
   CheckCircle2Icon,
   FileTextIcon,
@@ -20,6 +19,7 @@ import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { SectionEditControls } from "@/features/client-projects/components/project-detail-shared";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import {
   Select,
   SelectContent,
@@ -80,6 +80,8 @@ interface PoTableProps {
   mode: "user" | "admin";
   statusFilter: string;
   setStatusFilter: (val: string) => void;
+  sortField?: "date" | "number" | "vendor" | "amount";
+  setSortField?: (val: "date" | "number" | "vendor" | "amount") => void;
   sortOrder: "asc" | "desc";
   setSortOrder: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
   isEditing: boolean;
@@ -108,6 +110,8 @@ export function PoTable({
   mode,
   statusFilter,
   setStatusFilter,
+  sortField = "date",
+  setSortField,
   sortOrder,
   setSortOrder,
   isEditing,
@@ -149,15 +153,15 @@ export function PoTable({
                 <ActionTooltip content={t("po:status_all", "Semua Status")}>
                   <SelectTrigger
                     aria-label={t("po:status_all", "Semua Status")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                   >
-                    <FilterIcon className="size-4 text-primary" />
+                    <FilterIcon className="size-4 text-primary shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (
                 <SelectTrigger
                   aria-label={t("po:status_all", "Semua Status")}
-                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
                 >
                   <FilterIcon className="size-3.5 shrink-0" />
                   <SelectValue />
@@ -184,34 +188,22 @@ export function PoTable({
               </SelectContent>
             </Select>
 
-            {sortOrder === "desc" ? (
-              <ActionTooltip content={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setSortOrder("asc")}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                  aria-label={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}
-                >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
-                  <span className="sr-only">{t("common:action.order", "Urutan")}</span>
-                </Button>
-              </ActionTooltip>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder("desc")}
-                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
-              >
-                <ArrowUpDownIcon className="size-3.5 shrink-0" />
-                <span className="truncate">
-                  {t("common:action.order", "Urutan")}: {t("common:action.oldest", "Terlama")}
-                </span>
-              </Button>
-            )}
+            <TableSortMenu
+              sortKey={sortField}
+              sortOrder={sortOrder}
+              options={[
+                { value: "date", label: t("po:col_date", "Tanggal PO") },
+                { value: "number", label: t("po:col_po_number", "Nomor PO") },
+                { value: "vendor", label: t("po:col_vendor", "Vendor / Rekanan") },
+                { value: "amount", label: t("po:col_total", "Total Nilai") },
+              ]}
+              onSortChange={(key, order) => {
+                setSortField?.(key as "date" | "number" | "vendor" | "amount");
+                setSortOrder(order);
+              }}
+              defaultSortKey="date"
+              defaultSortOrder="desc"
+            />
 
             <SectionEditControls
               hasItems={sortedOrders.length > 0}
@@ -240,13 +232,13 @@ export function PoTable({
               <ActionTooltip content={t("po:btn_create", "Buat PO Vendor")}>
                 <Button
                   type="button"
-                  variant="default"
+                  variant="outline"
                   size="icon"
                   onClick={onOpenCreate}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
                   aria-label={t("po:btn_create", "Buat PO Vendor")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary" />
                   <span className="sr-only">{t("po:btn_create", "Buat PO Vendor")}</span>
                 </Button>
               </ActionTooltip>

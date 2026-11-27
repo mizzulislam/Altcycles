@@ -3,6 +3,8 @@ import {
   CheckCircle2Icon,
 } from "lucide-react";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { Card } from "@/components/ui/card";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { getLocalizedAccountName } from "@/lib/glossary";
@@ -46,26 +48,20 @@ export function TrialBalanceView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {t("accounting:reports.tab_trial_balance", "Neraca Saldo")}
-          </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-            {t("accounting:tabs.neraca_saldo_desc", "Verifikasi keseimbangan total debit vs kredit (balancing check)")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={onExportExcel}
-            onExportPdf={onExportPdf}
-            onExportCsv={onExportCsv}
-          />
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs">
+      <Card className="rounded-2xl border-border/80 bg-card overflow-hidden shadow-2xs">
+        <CardHeaderWithInfo
+          title={t("accounting:reports.tab_trial_balance", "Neraca Saldo")}
+          description={t("accounting:tabs.neraca_saldo_desc", "Verifikasi keseimbangan total debit vs kredit (balancing check)")}
+          controls={
+            <ExportDownloadMenu
+              label={t("common:action.export_download", "Unduh / Ekspor")}
+              onExportExcel={onExportExcel}
+              onExportPdf={onExportPdf}
+              onExportCsv={onExportCsv}
+              size="icon"
+            />
+          }
+        />
         {/* Status Bar & Selector Sebelum/Setelah Penyesuaian (Splitz Feature) */}
         <div
           className={cn(
@@ -185,7 +181,7 @@ export function TrialBalanceView({
             </tfoot>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

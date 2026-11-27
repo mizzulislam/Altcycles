@@ -27,6 +27,7 @@
     "confirm_continue": "Ya, Lanjutkan",
     "reason": "Alasan",
     "reason_placeholder": "Masukkan alasan...",
+    "sort": "Urutkan",
     "delete_selected": "Hapus Pilihan",
     "settings": "Pengaturan",
     "locked": "Terkunci",
@@ -35,6 +36,14 @@
   "app": {
     "name": "Altcycles",
     "tagline": "ERP Keuangan"
+  },
+  "sort": {
+    "ascending": "Terlama / Menaik (A-Z)",
+    "descending": "Terbaru / Menurun (Z-A)",
+    "short_asc": "Terlama",
+    "short_desc": "Terbaru",
+    "field_title": "Urutkan Berdasarkan",
+    "order_title": "Arah Urutan"
   },
   "card_info": "Informasi {{title}}",
   "card_info_generic": "Informasi kartu",

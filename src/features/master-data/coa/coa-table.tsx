@@ -89,9 +89,9 @@ export function CoaTable({
                 <ActionTooltip content={t("accounting:coa.all_types", "Semua Tipe Akun")}>
                   <SelectTrigger
                     aria-label={t("accounting:coa.all_types", "Semua Tipe Akun")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 bg-background [&>svg]:hidden [&>span]:hidden"
+                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                   >
-                    <FilterIcon className="size-4 text-primary" />
+                    <FilterIcon className="size-4 text-primary shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (

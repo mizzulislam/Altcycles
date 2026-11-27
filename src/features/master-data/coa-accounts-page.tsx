@@ -484,18 +484,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
             "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.",
           )}
         />
-      ) : (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {t("accounting:coa.title", "Setup Akuntansi")}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
-            </p>
-          </div>
-        </div>
-      )}
+      ) : null}
 
       {/* 1. Card Daftar Periode Bulanan (Dipindahkan dari Tab Tutup Buku) */}
       <PeriodListTable

@@ -224,18 +224,7 @@ export function PeriodsPage({
             "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.",
           )}
         />
-      ) : (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {t("accounting:closing.tab_heading", "Tutup Buku (Closing the Books)")}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              {t("accounting:closing.tab_subheading", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kontrol periode pembukuan.")}
-            </p>
-          </div>
-        </div>
-      )}
+      ) : null}
 
       {/* 1. Alur & Langkah Jurnal Penutup (GAAP/IFRS) */}
       <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">

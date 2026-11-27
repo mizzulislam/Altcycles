@@ -208,6 +208,8 @@
     "order_newest": "Terbaru",
     "order_oldest": "Terlama",
     "col_date": "Tanggal",
+    "col_number": "Nomor Bukti",
+    "col_desc": "Keterangan",
     "col_description": "Deskripsi",
     "col_ref": "Ref",
     "col_debit": "Debit",

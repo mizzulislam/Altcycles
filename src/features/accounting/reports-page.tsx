@@ -21,6 +21,7 @@ import {
 } from "@/lib/data-service";
 import { useLanguage } from "@/lib/i18n";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { listJournalsWithLines } from "@/lib/operations-service";
 import type {
   AccountRow,
@@ -392,24 +393,16 @@ export function AccountingReportsPage({
         />
       )}
 
-      {hideHeader && mode === "statements" && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {t("accounting:reports.title", "Laporan Keuangan")}
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-              {t(
-                "accounting:reports.subtitle",
-                "Laporan kinerja laba rugi, posisi keuangan, neraca saldo, dan arus kas.",
-              )}
-            </p>
-          </div>
-        </div>
-      )}
-
       {mode === "statements" ? (
         <div className="rounded-3xl border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-6">
+          <CardHeaderWithInfo
+            title={t("accounting:reports.title", "Laporan Keuangan")}
+            description={t(
+              "accounting:reports.subtitle",
+              "Laporan kinerja laba rugi, posisi keuangan, neraca saldo, dan arus kas.",
+            )}
+            headerClassName="px-0 py-0 pb-4 border-b border-border/60"
+          />
           {/* Top Bar with Segmented Selector & Layout Toggle */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-5">
             <div className="flex items-center gap-3">

@@ -180,6 +180,7 @@
     "col_indicator": "Indicator / Category",
     "col_value": "Value (IDR)",
     "col_unit": "Unit / Remarks",
+    "col_tx_count": "Activity",
     "col_details": "Details",
     "col_month": "Month / Period",
     "col_revenue": "Revenue",

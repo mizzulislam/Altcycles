@@ -438,9 +438,9 @@ export function UsersManagementPage() {
                   <ActionTooltip content={t("settings:users.filter_role_placeholder", "Filter peran")}>
                     <SelectTrigger
                       aria-label={t("settings:users.filter_role_placeholder", "Filter peran")}
-                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
                     >
-                      <FilterIcon className="size-4 text-primary" />
+                      <FilterIcon className="size-4 text-primary shrink-0" />
                     </SelectTrigger>
                   </ActionTooltip>
                 ) : (
