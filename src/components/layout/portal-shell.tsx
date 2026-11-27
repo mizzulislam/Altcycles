@@ -11,7 +11,6 @@ import {
   SearchIcon,
   XIcon,
 } from "lucide-react";
-import { AltviraLogoMark } from "@/components/shared/altvira-logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
@@ -314,18 +313,26 @@ export function PortalShell() {
         />
       )}
 
-      {/* Header Mobile */}
-      <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden sticky top-0 z-40">
-        <div className="flex items-center gap-2.5">
-          <AltviraLogoMark size={26} iconVariant="transparent" />
-          <span className="font-bold text-sm tracking-tight">Altcycles</span>
-        </div>
-        <div className="flex items-center gap-1.5">
+      {/* Header Mobile dengan Safe Area Dinamis */}
+      <header className="flex h-[max(3.5rem,calc(env(safe-area-inset-top)+3rem))] pt-[env(safe-area-inset-top)] items-center justify-between border-b bg-card px-4 md:hidden sticky top-0 z-40">
+        <div className="flex items-center">
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="size-9 rounded-xl relative"
+            className="size-9 rounded-xl text-foreground hover:bg-muted/60"
+            aria-label={t("header.open_nav", "Buka menu navigasi")}
+            onClick={() => setMobileOpen((prev) => !prev)}
+          >
+            {mobileOpen ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}
+          </Button>
+        </div>
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-9 rounded-xl relative text-muted-foreground hover:text-foreground hover:bg-muted/60"
             aria-label={t("common:search.placeholder", "Cari halaman...")}
             onClick={() => setIsCommandPaletteOpen(true)}
           >
@@ -335,7 +342,7 @@ export function PortalShell() {
             type="button"
             variant="ghost"
             size="icon"
-            className="size-9 rounded-xl relative"
+            className="size-9 rounded-xl relative text-muted-foreground hover:text-foreground hover:bg-muted/60"
             aria-label={t("header.notifications", "Notifikasi")}
             onClick={() => void handleOpenNotifications()}
           >
@@ -344,16 +351,12 @@ export function PortalShell() {
               <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full" />
             )}
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9 rounded-xl"
-            aria-label={t("header.open_nav", "Buka menu navigasi")}
-            onClick={() => setMobileOpen((prev) => !prev)}
-          >
-            {mobileOpen ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}
-          </Button>
+          <div className="flex items-center">
+            <LanguageToggle size="sm" className="size-9 rounded-xl border border-transparent hover:border-border/60 bg-transparent hover:bg-muted/60 shadow-none text-muted-foreground hover:text-foreground" />
+          </div>
+          <div className="flex items-center">
+            <ThemeToggle size="sm" className="size-9 rounded-xl border border-transparent hover:border-border/60 bg-transparent hover:bg-muted/60 shadow-none text-muted-foreground hover:text-foreground" />
+          </div>
         </div>
       </header>
 
@@ -551,7 +554,7 @@ export function PortalShell() {
         </header>
 
         {/* Konten Halaman */}
-        <main className="flex-1 flex flex-col min-w-0 bg-background px-4 sm:px-6 lg:px-8 pt-4 pb-8 overflow-x-clip">
+        <main className="flex-1 flex flex-col min-w-0 bg-background max-sm:px-[clamp(1rem,6.36vw,1.5625rem)] px-4 sm:px-6 lg:px-8 pt-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1.5rem))] overflow-x-clip">
           <div className="w-full max-w-[1400px] min-w-0 flex-1 flex flex-col gap-5">
             <SidebarStateContext.Provider value={isCollapsed}>
               <React.Suspense fallback={<PageLoader />}>
