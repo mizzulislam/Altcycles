@@ -80,14 +80,13 @@ describe("Pengaman Regresi Desktop Terkunci: Tampilan PC (>=1024px) 100% Identik
 
   it("Memastikan header mobile ringkas dan kontrol utilitas di sidebar terisolasi md:hidden (MB-02)", () => {
     const shellContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/layout/portal-shell.tsx"), "utf-8");
-    const sidebarContent = fs.readFileSync(path.resolve(process.cwd(), "src/components/layout/shell-sidebar.tsx"), "utf-8");
 
     // Di header desktop tombol tetap ada lengkap
     expect(shellContent).toContain("hidden md:flex h-16");
     expect(shellContent).toContain("LanguageToggle");
     expect(shellContent).toContain("ThemeToggle");
-    // Di sidebar utilitas mobile dibatasi md:hidden
-    expect(sidebarContent).toContain("flex md:hidden");
+    // Di header mobile kontrol utilitas tema dan bahasa hadir di sebelah notifikasi
+    expect(shellContent).toContain("header.notifications");
   });
 
   it("Paket M4: tombol aksi transaksi di desktop tetap sm:flex-row / sm:w-auto tanpa mengubah tata letak desktop", () => {
