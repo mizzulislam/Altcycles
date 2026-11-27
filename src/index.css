@@ -1,9 +1,5 @@
 @import "tailwindcss" source("../src");
 
-@theme {
-  --font-sans: Montserrat, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, sans-serif;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
