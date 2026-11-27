@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import type { ViewDetailState } from "@/features/client-projects/components/project-detail-shared";
 import { buildArAging } from "@/lib/accounting-engine";
@@ -65,7 +66,7 @@ import {
   makeReceiptSpec as buildReceiptSpecHelper,
   type InvoiceSpecBuilderContext,
 } from "./components/invoice-spec-builder";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+// PageHeader imported above
 import { InvoicingTable } from "./components/invoicing-table";
 import { InvoiceAgingTable } from "./components/invoice-aging-table";
 import { InvoiceReceiptsTable } from "./components/invoice-receipts-table";
@@ -85,6 +86,7 @@ export function InvoicingPage() {
 
   // Sort & Edit Mode untuk Daftar Invoice Klien dan Kuitansi Bukti Pembayaran
   const [invoiceSortOrder, setInvoiceSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = React.useState<string>("all");
   const [receiptSortOrder, setReceiptSortOrder] = React.useState<"asc" | "desc">("desc");
   const [isEditingInvoices, setIsEditingInvoices] = React.useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = React.useState<string[]>([]);
@@ -384,9 +386,20 @@ export function InvoicingPage() {
     return buildInvoiceSpecHelper(inv, specContext);
   }
 
-  const sortedInvoices = React.useMemo(() => {
+  const filteredInvoices = React.useMemo(() => {
     const list = bundle?.invoices ?? [];
-    return [...list].sort((a, b) => {
+    if (invoiceStatusFilter === "all") return list;
+    if (invoiceStatusFilter === "overdue") {
+      const today = new Date().toISOString().slice(0, 10);
+      return list.filter(
+        (i) => i.payment_status !== "paid" && i.due_date < today,
+      );
+    }
+    return list.filter((i) => i.payment_status === invoiceStatusFilter);
+  }, [bundle?.invoices, invoiceStatusFilter]);
+
+  const sortedInvoices = React.useMemo(() => {
+    return [...filteredInvoices].sort((a, b) => {
       if (invoiceSortOrder === "asc") {
         return (
           a.invoice_date.localeCompare(b.invoice_date) ||
@@ -398,7 +411,7 @@ export function InvoicingPage() {
         b.invoice_number.localeCompare(a.invoice_number)
       );
     });
-  }, [bundle?.invoices, invoiceSortOrder]);
+  }, [filteredInvoices, invoiceSortOrder]);
 
   const sortedReceipts = React.useMemo(() => {
     const list = bundle?.receipts ?? [];
@@ -567,33 +580,35 @@ export function InvoicingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("invoicing.page_title", "Invoice Penagihan, Umur Piutang, & Kuitansi")}
-          </TruncatedTooltipText>
-          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("invoicing.page_desc", "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.")}
-          </TruncatedTooltipText>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
-          <ExportDownloadMenu
-            label={t("action.export_download", "Unduh / Ekspor")}
-            className="w-full sm:w-auto"
-            onExportExcel={handleExportInvoicesExcel}
-            onExportPdf={handleExportInvoicesPdf}
-            onExportCsv={handleExportInvoicesCsv}
-          />
-          <Button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="w-full sm:w-auto min-h-10 sm:min-h-9 shrink-0"
-          >
-            <PlusIcon className="size-4" />
-            <span>{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t("invoicing.page_title", "Invoice Penagihan, Umur Piutang, & Kuitansi")}
+        description={t(
+          "invoicing.page_desc",
+          "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.",
+        )}
+        mobileFloating
+        actions={
+          <>
+            <ExportDownloadMenu
+              label={t("action.export_download", "Unduh / Ekspor")}
+              className="w-auto"
+              onExportExcel={handleExportInvoicesExcel}
+              onExportPdf={handleExportInvoicesPdf}
+              onExportCsv={handleExportInvoicesCsv}
+              mobileFloating
+            />
+            <Button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="w-auto max-sm:size-9 max-sm:p-0 min-h-9 shrink-0"
+              aria-label={t("invoicing.issue_invoice", "Terbitkan Invoice")}
+            >
+              <PlusIcon className="size-4" />
+              <span className="max-sm:hidden">{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Ringkasan KPI Penagihan & Piutang */}
       <InvoiceKpiSummary
@@ -669,6 +684,8 @@ export function InvoicingPage() {
           loading={loading}
           projectMap={projectMap}
           customerMap={customerMap}
+          invoiceStatusFilter={invoiceStatusFilter}
+          setInvoiceStatusFilter={setInvoiceStatusFilter}
           isEditingInvoices={isEditingInvoices}
           setIsEditingInvoices={setIsEditingInvoices}
           selectedInvoiceIds={selectedInvoiceIds}

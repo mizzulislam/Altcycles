@@ -8,6 +8,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -31,6 +39,8 @@ export interface InvoicingTableProps {
   loading: boolean;
   projectMap: Map<string, ProjectRow>;
   customerMap: Map<string, CustomerRow>;
+  invoiceStatusFilter: string;
+  setInvoiceStatusFilter: (status: string) => void;
   isEditingInvoices: boolean;
   setIsEditingInvoices: (val: boolean) => void;
   selectedInvoiceIds: string[];
@@ -51,6 +61,8 @@ export function InvoicingTable({
   loading,
   projectMap,
   customerMap,
+  invoiceStatusFilter,
+  setInvoiceStatusFilter,
   isEditingInvoices,
   setIsEditingInvoices,
   selectedInvoiceIds,
@@ -77,7 +89,23 @@ export function InvoicingTable({
         )}
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         controls={
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 sm:w-auto shrink-0">
+            <div className="w-full sm:w-44 shrink-0">
+              <Select value={invoiceStatusFilter} onValueChange={setInvoiceStatusFilter}>
+                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+                  <SelectValue placeholder={t("common:status.all", "Semua Status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">{t("common:status.all", "Semua Status")}</SelectItem>
+                    <SelectItem value="unpaid">{t("invoicing:status.unpaid", "Belum Lunas")}</SelectItem>
+                    <SelectItem value="partial">{t("invoicing:status.partial", "Sebagian Terbayar")}</SelectItem>
+                    <SelectItem value="paid">{t("invoicing:status.paid", "Lunas")}</SelectItem>
+                    <SelectItem value="overdue">{t("invoicing:status.overdue", "Jatuh Tempo")}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -85,27 +113,29 @@ export function InvoicingTable({
               onClick={() =>
                 setInvoiceSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
               }
-              className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+              className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer w-full sm:w-auto shrink-0 justify-center"
             >
-              <ArrowUpDownIcon className="size-3.5" />
-              <span>
+              <ArrowUpDownIcon className="size-3.5 shrink-0" />
+              <span className="truncate">
                 {t("common:action.order", "Urutan")}:{" "}
                 {invoiceSortOrder === "asc"
                   ? t("common:action.oldest", "Terlama")
                   : t("common:action.newest", "Terbaru")}
               </span>
             </Button>
-            <SectionEditControls
-              hasItems={sortedInvoices.length > 0}
-              isEditing={isEditingInvoices}
-              selectedCount={selectedInvoiceIds.length}
-              onStartEdit={() => setIsEditingInvoices(true)}
-              onCancelEdit={() => {
-                setIsEditingInvoices(false);
-                setSelectedInvoiceIds([]);
-              }}
-              onDeleteSelected={onDeleteSelected}
-            />
+            <div className="col-span-2 sm:col-span-1 sm:w-auto">
+              <SectionEditControls
+                hasItems={sortedInvoices.length > 0}
+                isEditing={isEditingInvoices}
+                selectedCount={selectedInvoiceIds.length}
+                onStartEdit={() => setIsEditingInvoices(true)}
+                onCancelEdit={() => {
+                  setIsEditingInvoices(false);
+                  setSelectedInvoiceIds([]);
+                }}
+                onDeleteSelected={onDeleteSelected}
+              />
+            </div>
           </div>
         }
       />
@@ -137,25 +167,25 @@ export function InvoicingTable({
                   </div>
                 </TableHead>
               )}
-              <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_invoice_no", "Nomor Invoice")}
               </TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_date_due", "Tanggal & Jatuh Tempo")}
               </TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_project_client", "Proyek & Klien")}
               </TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_total_billing", "Total Tagihan")}
               </TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_paid", "Terbayar")}
               </TableHead>
-              <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+              <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                 {t("invoicing:table.col_status", "Status")}
               </TableHead>
-              <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+              <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap w-28 max-sm:w-20">
                 {t("invoicing:table.col_actions", "Aksi")}
               </TableHead>
             </TableRow>
@@ -218,10 +248,10 @@ export function InvoicingTable({
                         />
                       </TableCell>
                     )}
-                    <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
                       {inv.invoice_number}
                     </TableCell>
-                    <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
+                    <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5 text-center whitespace-nowrap">
                       <div className="text-foreground">
                         {t("invoicing:table.issued_date", {
                           date: formatDateI18n(inv.invoice_date, language),
@@ -233,7 +263,7 @@ export function InvoicingTable({
                         })}
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 py-3.5 text-xs sm:text-sm leading-5">
+                    <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5">
                       <div className="font-medium text-foreground">
                         {prj ? `${prj.code} — ${prj.name}` : "-"}
                       </div>
@@ -241,13 +271,13 @@ export function InvoicingTable({
                         {cust?.name ?? t("common:nav.parties", "Klien")}
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                    <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                       <MonetaryCell amount={inv.total_amount} />
                     </TableCell>
-                    <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                    <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                       <MonetaryCell amount={inv.paid_amount} className="font-normal" />
                     </TableCell>
-                    <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                    <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                       <div className="inline-flex items-center min-h-5 -my-px">
                         <StatusBadge
                           tone={
@@ -261,7 +291,7 @@ export function InvoicingTable({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                    <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                       {isEditingInvoices ? (
                         <RowEditActionButtons
                           onView={() =>

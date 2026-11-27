@@ -43,7 +43,7 @@ import {
 import { listAuditLogs } from "@/lib/data-service";
 import { formatDateTimeID } from "@/lib/formatters";
 import type { AuditLogRow } from "@/types/database.types";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 25, 50, 100, 250] as const;
 
@@ -148,14 +148,13 @@ export function AuditTrailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="min-w-0">
-        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {t("settings:audit.title", "Jejak Audit Sistem (Audit Trail)")}
-        </TruncatedTooltipText>
-        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          {t("settings:audit.subtitle", "Telusuri catatan historis perubahan data dan aktivitas penting pengguna yang terekam permanen.")}
-        </TruncatedTooltipText>
-      </div>
+      <PageHeader
+        title={t("settings:audit.title", "Jejak Audit Sistem (Audit Trail)")}
+        description={t(
+          "settings:audit.subtitle",
+          "Telusuri catatan historis perubahan data dan aktivitas penting pengguna yang terekam permanen.",
+        )}
+      />
 
       <Card className="overflow-hidden">
         <CardHeaderWithInfo
@@ -205,13 +204,13 @@ export function AuditTrailPage() {
           <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_id", "ID")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_timestamp", "Waktu Kejadian")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_actor", "Pelaku & Peran")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_action", "Tindakan")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_entity", "Entitas")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("table.code", "ID Entitas")}</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("common:table.actions", "Aksi")}</TableHead>
+                  <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_id", "ID")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_timestamp", "Waktu Kejadian")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_actor", "Pelaku & Peran")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_action", "Tindakan")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:audit.col_entity", "Entitas")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("table.code", "ID Entitas")}</TableHead>
+                  <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("common:table.actions", "Aksi")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,16 +238,16 @@ export function AuditTrailPage() {
                 ) : (
                   paginatedRows.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="pl-6 pr-3 text-center font-mono font-semibold whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-semibold whitespace-nowrap">
                         #{row.id}
                       </TableCell>
-                      <TableCell className="px-3 whitespace-nowrap tabular-nums text-muted-foreground">
+                      <TableCell className="px-3 max-sm:px-2 whitespace-nowrap tabular-nums text-muted-foreground">
                         {formatDateTimeID(row.created_at)}
                       </TableCell>
-                      <TableCell className="px-3 text-center font-medium">
+                      <TableCell className="px-3 max-sm:px-2 text-center font-medium">
                         {row.actor_role ?? "sistem"}
                       </TableCell>
-                      <TableCell className="px-3 text-center whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={
@@ -261,13 +260,13 @@ export function AuditTrailPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 font-mono font-medium">
+                      <TableCell className="px-3 max-sm:px-2 font-mono font-medium">
                         {row.entity_name}
                       </TableCell>
-                      <TableCell className="px-3 font-mono text-muted-foreground max-w-44 truncate">
+                      <TableCell className="px-3 max-sm:px-2 font-mono text-muted-foreground max-w-44 truncate">
                         {row.entity_id}
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center -my-1">
                           <Button
                             type="button"

@@ -83,7 +83,7 @@ import type {
   ProfitSharingSchemeRow,
   ProjectRow,
 } from "@/types/database.types";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 interface DraftRecipient {
   recipientName: string;
@@ -426,26 +426,22 @@ export function ProfitSharingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("profit_sharing:page_title")}
-          </TruncatedTooltipText>
-          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("profit_sharing:page_desc")}
-          </TruncatedTooltipText>
-        </div>
-        {result ? (
-          <div className="flex items-center gap-2.5 shrink-0">
+      <PageHeader
+        title={t("profit_sharing:page_title")}
+        description={t("profit_sharing:page_desc")}
+        mobileFloating={Boolean(result)}
+        actions={
+          result ? (
             <ExportDownloadMenu
               label={t("common:action.export_download")}
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
+              mobileFloating
             />
-          </div>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <Card className="@container rounded-2xl border-border/80 bg-card shadow-2xs overflow-visible">
         <CardHeader className="p-5 sm:p-6 pb-5 border-b border-border/70">
@@ -583,8 +579,8 @@ export function ProfitSharingPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold">{t("profit_sharing:col_recipient_name")}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold w-32">{t("profit_sharing:col_share_pct")}</TableHead>
+                    <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold">{t("profit_sharing:col_recipient_name")}</TableHead>
+                    <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold w-32 max-sm:w-24">{t("profit_sharing:col_share_pct")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -619,7 +615,7 @@ export function ProfitSharingPage() {
                       );
                       return (
                         <TableRow key={s.id}>
-                          <TableCell className="pl-6 pr-3 font-medium text-foreground">
+                          <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-medium text-foreground">
                             <div>{s.recipient_name}</div>
                             {member ? (
                               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-normal text-muted-foreground">
@@ -686,7 +682,7 @@ export function ProfitSharingPage() {
                               </div>
                             ) : null}
                           </TableCell>
-                          <TableCell className="pl-2 pr-6 text-center font-semibold text-foreground tabular-nums">
+                          <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold text-foreground tabular-nums">
                             {s.percentage}%
                           </TableCell>
                         </TableRow>
@@ -788,21 +784,21 @@ export function ProfitSharingPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/20 hover:bg-muted/20">
-                        <TableHead className="pl-6 pr-3 text-center font-semibold">{t("profit_sharing:col_recipient")}</TableHead>
-                        <TableHead className="px-3 text-center font-semibold w-28">{t("profit_sharing:col_percentage")}</TableHead>
-                        <TableHead className="pl-3 pr-6 text-center font-semibold w-48">{t("profit_sharing:col_share_entitlement")}</TableHead>
+                        <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold">{t("profit_sharing:col_recipient")}</TableHead>
+                        <TableHead className="px-3 max-sm:px-2 text-center font-semibold w-28 max-sm:w-20">{t("profit_sharing:col_percentage")}</TableHead>
+                        <TableHead className="pl-3 pr-6 max-sm:pl-2 max-sm:pr-3 text-center font-semibold w-48 max-sm:w-36">{t("profit_sharing:col_share_entitlement")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {lines.map((l) => (
                         <TableRow key={l.id}>
-                          <TableCell className="pl-6 pr-3 font-medium text-foreground">
+                          <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-medium text-foreground">
                             {l.recipient_name}
                           </TableCell>
-                          <TableCell className="px-3 text-center tabular-nums text-foreground">
+                          <TableCell className="px-3 max-sm:px-2 text-center tabular-nums text-foreground">
                             {l.percentage}%
                           </TableCell>
-                          <TableCell className="pl-3 pr-6 whitespace-nowrap">
+                          <TableCell className="pl-3 pr-6 max-sm:pl-2 max-sm:pr-3 whitespace-nowrap">
                             <MonetaryCell amount={l.share_amount} />
                           </TableCell>
                         </TableRow>

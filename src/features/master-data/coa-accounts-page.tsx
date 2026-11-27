@@ -1,52 +1,9 @@
 import * as React from "react";
-import {
-  CalculatorIcon,
-  LayersIcon,
-  PencilIcon,
-  PlusIcon,
-  PowerIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { FixedAssetDialog } from "./coa/fixed-asset-dialog";
+import { PageHeader } from "@/components/shared/page-header";
 import {
   deleteAccount,
   deletePeriod,
@@ -56,11 +13,6 @@ import {
   saveAccount,
 } from "@/lib/data-service";
 import {
-  formatDateI18n,
-  formatRupiah,
-  roundRupiah,
-} from "@/lib/formatters";
-import {
   deleteFixedAsset,
   listFixedAssets,
   runPeriodClosingBook,
@@ -69,14 +21,10 @@ import {
 } from "@/lib/operations-service";
 import { useRealtimeSync } from "@/lib/realtime-cache";
 import { useLanguage } from "@/lib/i18n";
+import { formatRupiah } from "@/lib/formatters";
 import {
   getLocalizedAccountName,
-  getLocalizedAccountDescription,
-  getLocalizedAccountType,
-  getLocalizedNormalBalance,
   getLocalizedPeriodName,
-  getLocalizedSystemTag,
-  SYSTEM_TAG_MAP,
 } from "@/lib/glossary";
 import type {
   AccountRow,
@@ -91,7 +39,10 @@ import type {
 } from "@/types/database.types";
 import { PeriodListTable } from "@/features/master-data/components/period-list-table";
 import { PeriodCreateDialog } from "@/features/master-data/components/period-create-dialog";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { CoaTable } from "./coa/coa-table";
+import { FixedAssetTable } from "./coa/fixed-asset-table";
+import { CoaFormDialog } from "./coa/coa-form-dialog";
+import { FixedAssetDialog } from "./coa/fixed-asset-dialog";
 
 export interface CoaAccountsPageProps {
   hideHeader?: boolean;
@@ -117,11 +68,9 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
   const [code, setCode] = React.useState("");
   const [name, setName] = React.useState("");
   const [accountType, setAccountType] = React.useState<AccountType>("expense");
-  const [normalBalance, setNormalBalance] =
-    React.useState<NormalBalance>("debit");
+  const [normalBalance, setNormalBalance] = React.useState<NormalBalance>("debit");
   const [systemTag, setSystemTag] = React.useState<AccountSystemTag>("none");
-  const [cashFlowCategory, setCashFlowCategory] =
-    React.useState<CashFlowCategory>("operating");
+  const [cashFlowCategory, setCashFlowCategory] = React.useState<CashFlowCategory>("operating");
   const [isPostable, setIsPostable] = React.useState(true);
   const [isActive, setIsActive] = React.useState(true);
   const [description, setDescription] = React.useState("");
@@ -131,16 +80,13 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
   const [toggleTarget, setToggleTarget] = React.useState<AccountRow | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<AccountRow | null>(null);
 
-  // State Register & Otomatisasi Penyusutan Aset Tetap (Item 3)
+  // State Register & Otomatisasi Penyusutan Aset Tetap
   const [fixedAssets, setFixedAssets] = React.useState<FixedAssetRow[]>([]);
-  const [depreciations, setDepreciations] = React.useState<
-    FixedAssetDepreciationRow[]
-  >([]);
+  const [depreciations, setDepreciations] = React.useState<FixedAssetDepreciationRow[]>([]);
   const [runningDepr, setRunningDepr] = React.useState(false);
   const [assetDialogOpen, setAssetDialogOpen] = React.useState(false);
   const [savingAsset, setSavingAsset] = React.useState(false);
-  const [deleteAssetTarget, setDeleteAssetTarget] =
-    React.useState<FixedAssetRow | null>(null);
+  const [deleteAssetTarget, setDeleteAssetTarget] = React.useState<FixedAssetRow | null>(null);
   const [assetForm, setAssetForm] = React.useState({
     id: undefined as string | undefined,
     asset_code: "",
@@ -368,7 +314,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
     }
   }
 
-  // Aksi Register & Penyusutan Aset Tetap (Item 3)
+  // Aksi Register & Penyusutan Aset Tetap
   function openNewAssetDialog() {
     const defaultAssetAcc =
       accounts.find((a) => a.code === "1-2101") ??
@@ -533,35 +479,37 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
   return (
     <div className="flex flex-col gap-6">
       {!hideHeader ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 flex-1 max-w-2xl">
-            <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {t("accounting:coa.title", "Setup Akuntansi")}
-            </TruncatedTooltipText>
-            <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
-            </TruncatedTooltipText>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCreatePeriodOpen(true)}
-              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-            >
-              <PlusIcon className="size-4" />
-              <span>{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
-            </Button>
-            <Button
-              type="button"
-              onClick={openNewDialog}
-              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-            >
-              <PlusIcon className="size-4" />
-              <span>{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title={t("accounting:coa.title", "Setup Akuntansi")}
+          description={t(
+            "accounting:coa.subtitle",
+            "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.",
+          )}
+          mobileFloating
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreatePeriodOpen(true)}
+                className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+                aria-label={t("accounting:coa.btn_open_period", "Buka Periode Baru")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="max-sm:hidden">{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
+              </Button>
+              <Button
+                type="button"
+                onClick={openNewDialog}
+                className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+                aria-label={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="max-sm:hidden">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
+              </Button>
+            </>
+          }
+        />
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
@@ -572,23 +520,25 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => setCreatePeriodOpen(true)}
-              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+              className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+              title={t("accounting:coa.btn_open_period", "Buka Periode Baru")}
             >
               <PlusIcon className="size-4" />
-              <span>{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
+              <span className="max-sm:hidden">{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
             </Button>
             <Button
               type="button"
               onClick={openNewDialog}
-              className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+              className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
+              title={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
             >
               <PlusIcon className="size-4" />
-              <span>{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
+              <span className="max-sm:hidden">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
             </Button>
           </div>
         </div>
@@ -603,439 +553,31 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onDeletePeriod={setDeletePeriodTarget}
       />
 
-      {/* 2. Card Daftar Bagan Akun (Chart of Accounts) */}
-      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeaderWithInfo
-          title={t("accounting:coa.card_coa_title", "Daftar Bagan Akun")}
-          description={t("accounting:coa.card_coa_desc", "Struktur klasifikasi akun buku besar untuk penjurnalan dan pelaporan keuangan.")}
-          headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
-          controls={
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <Input
-                placeholder={t("accounting:coa.search_placeholder", "Cari kode atau nama akun...")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-56 sm:w-64 h-9 rounded-xl bg-background"
-              />
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
-                  <SelectValue placeholder={t("accounting:coa.all_types", "Semua Tipe Akun")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">{t("accounting:coa.all_types", "Semua Tipe Akun")}</SelectItem>
-                    <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
-                    <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
-                    <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
-                    <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
-                    <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
-                    <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          }
-        />
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-32 pl-6 text-center">{t("accounting:coa.col_code", "Kode")}</TableHead>
-                <TableHead className="text-center">{t("accounting:coa.col_name", "Nama Akun")}</TableHead>
-                <TableHead className="w-32 text-center">{t("accounting:coa.col_type", "Tipe")}</TableHead>
-                <TableHead className="w-32 text-center">{t("accounting:coa.col_balance", "Saldo Normal")}</TableHead>
-                <TableHead className="w-48 text-center">{t("accounting:coa.col_system_tag", "Tag Sistem")}</TableHead>
-                <TableHead className="w-28 text-center">{t("accounting:coa.col_status", "Status")}</TableHead>
-                <TableHead className="w-28 text-center pr-6">{t("accounting:coa.col_actions", "Aksi")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="py-12 text-center text-muted-foreground"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner />
-                      <span>{t("accounting:coa.loading_accounts", "Memuat bagan akun...")}</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="py-12 text-center text-muted-foreground"
-                  >
-                    {t("accounting:coa.empty_accounts", "Tidak ada akun yang sesuai dengan filter.")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((acc) => {
-                  const isHeader = !acc.is_postable;
-                  const hasChildAccounts = accounts.some(
-                    (child) => child.parent_id === acc.id,
-                  );
-                  const usedInFixedAsset = fixedAssets.some(
-                    (fa) =>
-                      fa.asset_account_id === acc.id ||
-                      fa.accum_depr_account_id === acc.id ||
-                      fa.expense_account_id === acc.id,
-                  );
-                  const canSafelyDelete =
-                    acc.used_in_journal_count === 0 &&
-                    !hasChildAccounts &&
-                    !usedInFixedAsset;
+      {/* 2. Card Daftar Bagan Akun (Chart of Accounts) - Modular */}
+      <CoaTable
+        accounts={accounts}
+        filtered={filtered}
+        fixedAssets={fixedAssets}
+        loading={loading}
+        search={search}
+        onSearchChange={setSearch}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        onEditAccount={openEditDialog}
+        onToggleActive={setToggleTarget}
+        onDeleteAccount={setDeleteTarget}
+      />
 
-                  return (
-                    <TableRow key={acc.id} className={isHeader ? "bg-muted/20" : ""}>
-                      <TableCell className="font-mono text-xs font-semibold pl-6 align-top">
-                        {acc.code}
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <div className={cn("font-medium text-foreground", isHeader && "font-bold tracking-wide")}>
-                          {getLocalizedAccountName(acc, language)}
-                        </div>
-                        {acc.description && (
-                          <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                            {getLocalizedAccountDescription(acc.code, acc.description, language)}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-center align-top">
-                        {getLocalizedAccountType(acc.account_type, language)}
-                      </TableCell>
-                      <TableCell className="text-xs text-center font-medium capitalize align-top">
-                        {getLocalizedNormalBalance(acc.normal_balance, language)}
-                      </TableCell>
-                      <TableCell className="text-center align-top">
-                        {isHeader ? (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        ) : acc.system_tag && acc.system_tag !== "none" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                            <span className="size-1.5 rounded-full bg-sky-400" />
-                            {getLocalizedSystemTag(acc.system_tag, language)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center align-top">
-                        <div className="-my-px inline-flex justify-center">
-                          <StatusBadge
-                            tone={acc.is_active ? "success" : "secondary"}
-                            label={acc.is_active ? t("accounting:coa.status_active", "Aktif") : t("accounting:coa.status_inactive", "Nonaktif")}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center pr-6 align-top">
-                        <div className="flex items-center justify-center gap-1 -my-1.5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditDialog(acc)}
-                            title={t("accounting:coa.tooltip_edit_account", "Ubah Akun")}
-                            className="size-8 rounded-lg cursor-pointer"
-                          >
-                            <PencilIcon className="size-3.5" />
-                            <span className="sr-only">{t("accounting:coa.tooltip_edit_account", "Ubah Akun")}</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setToggleTarget(acc)}
-                            title={
-                              acc.is_active
-                                ? t("accounting:coa.tooltip_deactivate_account", "Nonaktifkan Akun")
-                                : t("accounting:coa.tooltip_activate_account", "Aktifkan Akun")
-                            }
-                            className={cn(
-                              "size-8 rounded-lg cursor-pointer",
-                              acc.is_active
-                                ? "text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 dark:text-amber-400"
-                                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
-                            )}
-                          >
-                            <PowerIcon className="size-3.5" />
-                            <span className="sr-only">
-                              {acc.is_active
-                                ? t("accounting:coa.tooltip_deactivate_account", "Nonaktifkan Akun")
-                                : t("accounting:coa.tooltip_activate_account", "Aktifkan Akun")}
-                            </span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={!canSafelyDelete}
-                            onClick={() => {
-                              if (!canSafelyDelete) return;
-                              setDeleteTarget(acc);
-                            }}
-                            title={
-                              canSafelyDelete
-                                ? t("accounting:coa.tooltip_delete_account", "Hapus Akun")
-                                : t(
-                                    "accounting:coa.tooltip_delete_disabled_in_use",
-                                    "Akun sudah memiliki transaksi/referensi; gunakan Nonaktifkan",
-                                  )
-                            }
-                            className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed"
-                          >
-                            <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">{t("accounting:coa.tooltip_delete_account", "Hapus Akun")}</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* 3. Card Register & Otomatisasi Penyusutan Aset Tetap (Item 3) */}
-      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeaderWithInfo
-          title={t(
-            "accounting:fixed_assets.card_title",
-            "Register & Otomatisasi Penyusutan Aset Tetap",
-          )}
-          description={t(
-            "accounting:fixed_assets.card_desc",
-            "Perhitungan penyusutan metode garis lurus (straight-line) dengan pembuatan Ayat Jurnal Penyesuaian otomatis saat proses tutup buku periode.",
-          )}
-          headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
-          controls={
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={runningDepr || fixedAssets.length === 0}
-                onClick={handleRunOpenPeriodDepreciation}
-                className="h-9 rounded-xl px-3.5 text-xs font-semibold cursor-pointer gap-1.5"
-              >
-                {runningDepr ? (
-                  <Spinner className="size-3.5" />
-                ) : (
-                  <CalculatorIcon className="size-3.5 text-primary" />
-                )}
-                <span>
-                  {t(
-                    "accounting:fixed_assets.btn_run_depreciation",
-                    "Jalankan Penyusutan Periode Terbuka",
-                  )}
-                </span>
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={openNewAssetDialog}
-                className="h-9 rounded-xl px-3.5 text-xs font-semibold cursor-pointer gap-1.5"
-              >
-                <PlusIcon className="size-3.5" />
-                <span>
-                  {t("accounting:fixed_assets.btn_add_asset", "Tambah Aset Tetap")}
-                </span>
-              </Button>
-            </div>
-          }
-        />
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 text-center">
-                  {t("accounting:fixed_assets.col_asset", "Kode & Nama Aset")}
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  {t("accounting:fixed_assets.col_acq_date", "Tgl Perolehan")}
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  {t("accounting:fixed_assets.col_cost", "Harga Perolehan")}
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  {t("accounting:fixed_assets.col_salvage", "Nilai Sisa")}
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  {t("accounting:fixed_assets.col_life", "Umur Manfaat")}
-                </TableHead>
-                <TableHead className="text-center whitespace-nowrap">
-                  {t("accounting:fixed_assets.col_book_value", "Nilai Buku Bersih")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("accounting:fixed_assets.col_status", "Status")}
-                </TableHead>
-                <TableHead className="pr-6 text-center">
-                  {t("accounting:coa.col_actions", "Aksi")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fixedAssets.length === 0 ? (
-                <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="p-0">
-                    <div className="flex flex-col items-center justify-center py-10 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
-                      <div className="flex size-11 items-center justify-center rounded-full bg-muted/60 mb-2.5 text-muted-foreground">
-                        <LayersIcon className="size-5" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-foreground">
-                        {t(
-                          "accounting:fixed_assets.empty_title",
-                          "Belum Ada Aset Tetap Terdaftar",
-                        )}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1 max-w-md">
-                        {t(
-                          "accounting:fixed_assets.empty_desc",
-                          "Tambahkan aset tetap (peralatan, perangkat keras, atau inventaris) untuk mengotomatisasi perhitungan dan jurnal penyesuaian penyusutan bulanan.",
-                        )}
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                fixedAssets.map((fa) => {
-                  const assetDeprs = depreciations.filter(
-                    (d) => d.asset_id === fa.id,
-                  );
-                  const totalAccum = assetDeprs.reduce(
-                    (sum, d) => sum + d.depreciation_amount,
-                    0,
-                  );
-                  const netBookValue = Math.max(
-                    fa.salvage_value,
-                    fa.acquisition_cost - totalAccum,
-                  );
-                  const monthlyEst = roundRupiah(
-                    Math.max(0, fa.acquisition_cost - fa.salvage_value) /
-                      Math.max(1, fa.useful_life_months),
-                  );
-                  const canDeleteAsset = assetDeprs.length === 0;
-
-                  const statusLabel =
-                    fa.status === "fully_depreciated"
-                      ? t(
-                          "accounting:fixed_assets.status_fully_depreciated",
-                          "Disusutkan Penuh",
-                        )
-                      : fa.status === "disposed"
-                        ? t("accounting:fixed_assets.status_disposed", "Dilepas")
-                        : t("accounting:fixed_assets.status_active", "Aktif");
-                  const statusTone =
-                    fa.status === "active"
-                      ? "success"
-                      : fa.status === "fully_depreciated"
-                        ? "info"
-                        : "secondary";
-
-                  return (
-                    <TableRow key={fa.id}>
-                      <TableCell className="pl-6 align-top">
-                        <div className="font-mono text-xs font-semibold text-primary">
-                          {fa.asset_code}
-                        </div>
-                        <div className="font-medium text-foreground">
-                          {fa.asset_name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-center whitespace-nowrap align-top">
-                        {formatDateI18n(fa.acquisition_date, language)}
-                      </TableCell>
-                      <TableCell className="align-top whitespace-nowrap">
-                        <MonetaryCell amount={fa.acquisition_cost} />
-                      </TableCell>
-                      <TableCell className="align-top whitespace-nowrap">
-                        <MonetaryCell amount={fa.salvage_value} />
-                      </TableCell>
-                      <TableCell className="text-xs text-center align-top whitespace-nowrap">
-                        <div className="font-semibold text-foreground tabular-nums">
-                          {fa.useful_life_months}{" "}
-                          {t("accounting:fixed_assets.months_unit", "Bulan")}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground tabular-nums">
-                          {formatRupiah(monthlyEst)}/
-                          {t("accounting:fixed_assets.per_month_short", "bln")}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-top whitespace-nowrap">
-                        <MonetaryCell amount={netBookValue} />
-                        {totalAccum > 0 ? (
-                          <div className="text-[11px] text-muted-foreground text-right tabular-nums mt-0.5">
-                            {t("accounting:fixed_assets.accum_short", "Akum")}:{" "}
-                            {formatRupiah(totalAccum)}
-                          </div>
-                        ) : null}
-                      </TableCell>
-                      <TableCell className="text-center align-top">
-                        <div className="-my-px inline-flex justify-center">
-                          <StatusBadge tone={statusTone} label={statusLabel} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="pr-6 text-center align-top">
-                        <div className="flex items-center justify-center gap-1 -my-1.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditAssetDialog(fa)}
-                            title={t(
-                              "accounting:fixed_assets.tooltip_edit",
-                              "Ubah Aset Tetap",
-                            )}
-                            className="size-8 rounded-lg cursor-pointer"
-                          >
-                            <PencilIcon className="size-3.5" />
-                            <span className="sr-only">
-                              {t(
-                                "accounting:fixed_assets.tooltip_edit",
-                                "Ubah Aset Tetap",
-                              )}
-                            </span>
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            disabled={!canDeleteAsset}
-                            onClick={() => {
-                              if (!canDeleteAsset) return;
-                              setDeleteAssetTarget(fa);
-                            }}
-                            title={
-                              canDeleteAsset
-                                ? t(
-                                    "accounting:fixed_assets.tooltip_delete",
-                                    "Hapus Aset Tetap",
-                                  )
-                                : t(
-                                    "accounting:fixed_assets.tooltip_delete_disabled",
-                                    "Aset sudah memiliki jurnal penyusutan terposting",
-                                  )
-                            }
-                            className="size-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed"
-                          >
-                            <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">
-                              {t(
-                                "accounting:fixed_assets.tooltip_delete",
-                                "Hapus Aset Tetap",
-                              )}
-                            </span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* 3. Card Register & Otomatisasi Penyusutan Aset Tetap - Modular */}
+      <FixedAssetTable
+        fixedAssets={fixedAssets}
+        depreciations={depreciations}
+        runningDepr={runningDepr}
+        onRunOpenPeriodDepreciation={handleRunOpenPeriodDepreciation}
+        onOpenNewAssetDialog={openNewAssetDialog}
+        onOpenEditAssetDialog={openEditAssetDialog}
+        onDeleteAsset={setDeleteAssetTarget}
+      />
 
       {/* Dialog Buka Periode Baru */}
       <PeriodCreateDialog
@@ -1100,161 +642,28 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onConfirm={handleDeletePeriod}
       />
 
-      {/* Dialog Form Tambah / Ubah Akun */}
-      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editingId
-                ? t("accounting:coa.dialog_edit_title", "Ubah Akun Buku Besar")
-                : t("accounting:coa.dialog_add_title", "Tambah Akun Baru")}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSave}>
-            <FieldGroup className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="acc-code" required>
-                    {t("accounting:coa.field_code", "Kode Akun")}
-                  </FieldLabel>
-                  <Input
-                    id="acc-code"
-                    required
-                    placeholder={t("accounting:coa.code_placeholder", "Contoh: 5-1501")}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="acc-type" required>
-                    {t("accounting:coa.field_type", "Tipe Akun")}
-                  </FieldLabel>
-                  <Select
-                    value={accountType}
-                    onValueChange={(val) =>
-                      handleAccountTypeChange(val as AccountType)
-                    }
-                  >
-                    <SelectTrigger id="acc-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="asset">{t("accounting:account_types.asset", "Aset")}</SelectItem>
-                        <SelectItem value="contra_asset">{t("accounting:account_types.contra_asset", "Kontra-Aset")}</SelectItem>
-                        <SelectItem value="liability">{t("accounting:account_types.liability", "Liabilitas")}</SelectItem>
-                        <SelectItem value="equity">{t("accounting:account_types.equity", "Ekuitas")}</SelectItem>
-                        <SelectItem value="revenue">{t("accounting:account_types.revenue", "Pendapatan")}</SelectItem>
-                        <SelectItem value="expense">{t("accounting:account_types.expense", "Beban")}</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <Field>
-                <FieldLabel htmlFor="acc-name" required>
-                  {t("accounting:coa.field_name", "Nama Akun")}
-                </FieldLabel>
-                <Input
-                  id="acc-name"
-                  required
-                  placeholder={t("accounting:coa.name_placeholder", "Contoh: Beban Pengujian Keamanan Proyek")}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </Field>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="acc-balance" required>
-                    {t("accounting:coa.field_normal_balance", "Saldo Normal")}
-                  </FieldLabel>
-                  <Select
-                    value={normalBalance}
-                    onValueChange={(val) =>
-                      setNormalBalance(val as NormalBalance)
-                    }
-                  >
-                    <SelectTrigger id="acc-balance">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="debit">{t("accounting:normal_balance.debit", "Debit")}</SelectItem>
-                        <SelectItem value="credit">{t("accounting:normal_balance.credit", "Kredit")}</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="acc-tag">
-                    {t("accounting:coa.field_system_tag", "Penanda Otomasi Sistem")}
-                  </FieldLabel>
-                  <Select
-                    value={systemTag}
-                    onValueChange={(val) =>
-                      setSystemTag(val as AccountSystemTag)
-                    }
-                  >
-                    <SelectTrigger id="acc-tag">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {(Object.keys(SYSTEM_TAG_MAP) as AccountSystemTag[]).map((tagKey) => (
-                          <SelectItem key={tagKey} value={tagKey}>
-                            {SYSTEM_TAG_MAP[tagKey]?.[language] ?? tagKey}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-
-              <Field orientation="horizontal">
-                <FieldLabel htmlFor="acc-postable">
-                  {t("accounting:coa.field_postable", "Dapat Diposting Langsung ke Jurnal")}
-                </FieldLabel>
-                <Switch
-                  id="acc-postable"
-                  checked={isPostable}
-                  onCheckedChange={setIsPostable}
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="acc-desc">
-                  {t("accounting:coa.field_description", "Keterangan")}
-                </FieldLabel>
-                <Textarea
-                  id="acc-desc"
-                  placeholder={t("accounting:coa.desc_placeholder", "Deskripsi singkat fungsi dan peruntukan akun ini...")}
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </Field>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditorOpen(false)}
-                  disabled={saving}
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? t("common:saving", "Menyimpan...") : t("accounting:coa.btn_save_account", "Simpan Akun")}
-                </Button>
-              </DialogFooter>
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog Form Tambah / Ubah Akun - Modular */}
+      <CoaFormDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        editingId={editingId}
+        code={code}
+        setCode={setCode}
+        name={name}
+        setName={setName}
+        accountType={accountType}
+        onAccountTypeChange={handleAccountTypeChange}
+        normalBalance={normalBalance}
+        setNormalBalance={setNormalBalance}
+        systemTag={systemTag}
+        setSystemTag={setSystemTag}
+        isPostable={isPostable}
+        setIsPostable={setIsPostable}
+        description={description}
+        setDescription={setDescription}
+        saving={saving}
+        onSubmit={handleSave}
+      />
 
       {/* Dialog Konfirmasi Ubah Status Aktif Akun */}
       <ConfirmActionDialog
@@ -1311,7 +720,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onConfirm={handleDeleteAccount}
       />
 
-      {/* Dialog Form Tambah / Ubah Aset Tetap (Item 3 - Modular) */}
+      {/* Dialog Form Tambah / Ubah Aset Tetap - Modular */}
       <FixedAssetDialog
         open={assetDialogOpen}
         onOpenChange={setAssetDialogOpen}
@@ -1321,7 +730,6 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         saving={savingAsset}
         onSubmit={handleSaveAsset}
       />
-
 
       {/* Dialog Konfirmasi Hapus Aset Tetap */}
       <ConfirmActionDialog

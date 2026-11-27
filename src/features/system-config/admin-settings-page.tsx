@@ -54,7 +54,7 @@ import type {
   DocSequenceRow,
   DocTemplateRow,
 } from "@/types/database.types";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 const RESET_PERIOD_KEYS: Record<DocSequenceRow["reset_period"], string> = {
   monthly: "settings:admin_settings.reset_monthly",
@@ -215,14 +215,10 @@ export function AdminSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="min-w-0">
-        <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {t("settings:admin_settings.title")}
-        </TruncatedTooltipText>
-        <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-          {t("settings:admin_settings.subtitle")}
-        </TruncatedTooltipText>
-      </div>
+      <PageHeader
+        title={t("settings:admin_settings.title")}
+        description={t("settings:admin_settings.subtitle")}
+      />
 
       {/* Card 1: Format Penomoran Dokumen */}
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
@@ -273,15 +269,15 @@ export function AdminSettingsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type", "Jenis Dokumen")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_pattern", "Pola Nomor")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_sample_output", "Contoh Output")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_digits", "Digit")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_reset", "Periode Reset")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_last_sequence", "Urutan Terakhir")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type", "Jenis Dokumen")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_pattern", "Pola Nomor")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_sample_output", "Contoh Output")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_digits", "Digit")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_reset", "Periode Reset")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_last_sequence", "Urutan Terakhir")}</TableHead>
                 {isEditingSeq && (
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions", "Aksi")}</TableHead>
+                  <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions", "Aksi")}</TableHead>
                 )}
               </TableRow>
             </TableHeader>
@@ -292,7 +288,7 @@ export function AdminSettingsPage() {
                   .sort((a, b) => b.period_key.localeCompare(a.period_key))[0];
                 return (
                   <TableRow key={seq.doc_type}>
-                    <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
                       {seq.doc_type}
                     </TableCell>
                     <TableCell className="px-3 py-3.5 align-top text-xs sm:text-sm leading-5 font-medium text-foreground">
@@ -330,7 +326,7 @@ export function AdminSettingsPage() {
                       )}
                     </TableCell>
                     {isEditingSeq && (
-                      <TableCell className="pl-2 pr-6 py-3.5 align-top text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 align-top text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
                           <Button
                             type="button"
@@ -377,17 +373,17 @@ export function AdminSettingsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_version")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_notes")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_code")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_doc_type")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_version")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_notes")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("settings:admin_settings.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {templates.map((tmpl) => (
                 <TableRow key={tmpl.doc_type}>
-                  <TableCell className="pl-6 pr-3 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
+                  <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 align-top text-center font-mono text-xs sm:text-sm leading-5 font-medium whitespace-nowrap">
                     {tmpl.doc_type}
                   </TableCell>
                   <TableCell className="px-3 py-3.5 align-top text-xs sm:text-sm leading-5 font-medium text-foreground">
@@ -401,7 +397,7 @@ export function AdminSettingsPage() {
                   <TableCell className="px-3 py-3.5 align-top text-xs sm:text-sm leading-5 text-muted-foreground max-w-md">
                     <p className="line-clamp-2">{tmpl.footer_notes ?? "-"}</p>
                   </TableCell>
-                  <TableCell className="pl-2 pr-6 py-3.5 align-top text-center whitespace-nowrap">
+                  <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 align-top text-center whitespace-nowrap">
                     <div className="flex justify-center items-center -my-1.5">
                       <Button
                         type="button"

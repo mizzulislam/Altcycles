@@ -32,7 +32,7 @@ import { PeriodClosingDetailDialog } from "@/features/master-data/components/per
 import { PeriodClosingTable } from "@/features/master-data/components/period-closing-table";
 import { PeriodManualClosingDialog } from "@/features/master-data/components/period-manual-closing-dialog";
 import { PeriodReversingDialog } from "@/features/master-data/components/period-reversing-dialog";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 export interface PeriodsPageProps {
   hideHeader?: boolean;
@@ -219,27 +219,26 @@ export function PeriodsPage({
     <div className="flex flex-col gap-6">
       {/* Header Halaman Tab Tutup Buku */}
       {!hideHeader ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex-1 min-w-0 max-w-2xl">
-            <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {t("accounting:closing.page_title", "Tutup Buku & Periode Akuntansi")}
-            </TruncatedTooltipText>
-            <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              {t("accounting:closing.page_subtitle", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.")}
-            </TruncatedTooltipText>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <PageHeader
+          title={t("accounting:closing.page_title", "Tutup Buku & Periode Akuntansi")}
+          description={t(
+            "accounting:closing.page_subtitle",
+            "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.",
+          )}
+          mobileFloating
+          actions={
             <Button
               type="button"
               variant="outline"
               onClick={() => setReverseOpen(true)}
               className="shrink-0 cursor-pointer shadow-xs gap-1.5"
+              aria-label={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}
             >
               <RotateCcwIcon className="size-4" />
               <span>{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
             </Button>
-          </div>
-        </div>
+          }
+        />
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">

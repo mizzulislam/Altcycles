@@ -51,7 +51,7 @@ import type {
   VendorRow,
 } from "@/types/database.types";
 import { FunctionalCurrencyCard, ExchangeRatesCard } from "./currency-settings-card";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 export function MasterReadonlyPage() {
   const { t, language } = useLanguage();
@@ -128,16 +128,13 @@ export function MasterReadonlyPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("settings:master_readonly.controls_title", "Pengaturan & Kontrol Akuntansi")}
-          </TruncatedTooltipText>
-          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("settings:master_readonly.controls_desc", "Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master.")}
-          </TruncatedTooltipText>
-        </div>
-      </div>
+      <PageHeader
+        title={t("settings:master_readonly.controls_title", "Pengaturan & Kontrol Akuntansi")}
+        description={t(
+          "settings:master_readonly.controls_desc",
+          "Kelola kontrol kunci jurnal serta tinjau struktur bagan akun dan entitas master.",
+        )}
+      />
 
       {/* Grid 2 Kolom Kontrol Akuntansi & Valuta Fungsional */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
@@ -345,18 +342,18 @@ export function MasterReadonlyPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_account_name", "Nama Akun")}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_type", "Tipe")}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_normal_balance", "Saldo Normal")}</TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_system_tag", "Penanda Sistem")}</TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
+                    <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_code", "Kode")}</TableHead>
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_account_name", "Nama Akun")}</TableHead>
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_type", "Tipe")}</TableHead>
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_normal_balance", "Saldo Normal")}</TableHead>
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_system_tag", "Penanda Sistem")}</TableHead>
+                    <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("settings:master_readonly.col_status", "Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {accounts.map((acc) => (
                     <TableRow key={acc.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">
                         {acc.code}
                       </TableCell>
                       <TableCell className="px-3 font-medium">
@@ -371,7 +368,7 @@ export function MasterReadonlyPage() {
                       <TableCell className="px-3 font-mono text-muted-foreground text-center">
                         {acc.system_tag}
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={acc.is_active ? "success" : "secondary"}
@@ -408,7 +405,7 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {projects.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">
                         {p.code}
                       </TableCell>
                       <TableCell className="px-3 font-medium">{p.name}</TableCell>
@@ -421,7 +418,7 @@ export function MasterReadonlyPage() {
                       <TableCell className="px-3 text-center text-muted-foreground">
                         {REVENUE_METHOD_LABELS[p.revenue_method]}
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge tone="info" label={p.status} />
                         </div>
@@ -454,7 +451,7 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {vendors.map((v) => (
                     <TableRow key={v.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">{v.code}</TableCell>
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">{v.code}</TableCell>
                       <TableCell className="px-3 font-medium">{v.name}</TableCell>
                       <TableCell className="px-3 text-center">{v.contact_name ?? "-"}</TableCell>
                       <TableCell className="px-3 text-xs">
@@ -467,7 +464,7 @@ export function MasterReadonlyPage() {
                           "-"
                         )}
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={v.is_active ? "success" : "secondary"}
@@ -503,11 +500,11 @@ export function MasterReadonlyPage() {
                 <TableBody>
                   {customers.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell className="pl-6 pr-3 font-mono font-medium text-center whitespace-nowrap">{c.code}</TableCell>
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">{c.code}</TableCell>
                       <TableCell className="px-3 font-medium">{c.name}</TableCell>
                       <TableCell className="px-3 text-center">{c.contact_person ?? "-"}</TableCell>
                       <TableCell className="px-3 text-center text-muted-foreground">{c.email ?? "-"}</TableCell>
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={c.is_active ? "success" : "secondary"}

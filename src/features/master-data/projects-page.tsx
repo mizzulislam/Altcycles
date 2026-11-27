@@ -86,7 +86,7 @@ import type {
   ProjectRow,
   ProjectStatus,
 } from "@/types/database.types";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 const PROJECT_STATUS_META: Record<
@@ -345,35 +345,34 @@ export function ProjectsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("projects.title", "Master Proyek & Penugasan Tim")}
-          </TruncatedTooltipText>
-          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t(
-              "projects.subtitle",
-              "Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.",
-            )}
-          </TruncatedTooltipText>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={handleExportExcel}
-            onExportPdf={handleExportPdf}
-            onExportCsv={handleExportCsv}
-          />
-          <Button
-            type="button"
-            onClick={openNew}
-            className="shrink-0 w-full sm:w-auto"
-          >
-            <PlusIcon className="size-4" />
-            <span>{t("projects.add_button", "Tambah Proyek")}</span>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t("projects.title", "Master Proyek & Penugasan Tim")}
+        description={t(
+          "projects.subtitle",
+          "Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.",
+        )}
+        mobileFloating
+        actions={
+          <>
+            <ExportDownloadMenu
+              label={t("common:action.export_download", "Unduh / Ekspor")}
+              onExportExcel={handleExportExcel}
+              onExportPdf={handleExportPdf}
+              onExportCsv={handleExportCsv}
+              mobileFloating
+            />
+            <Button
+              type="button"
+              onClick={openNew}
+              className="shrink-0 w-auto max-sm:size-9 max-sm:p-0"
+              aria-label={t("projects.add_button", "Tambah Proyek")}
+            >
+              <PlusIcon className="size-4" />
+              <span className="max-sm:hidden">{t("projects.add_button", "Tambah Proyek")}</span>
+            </Button>
+          </>
+        }
+      />
 
       <Card className="overflow-hidden">
         <CardHeaderWithInfo
@@ -384,7 +383,7 @@ export function ProjectsPage() {
           )}
           headerClassName="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
           controls={
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 shrink-0">
+            <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:flex-row sm:items-center sm:gap-2.5 sm:w-auto shrink-0">
               <Input
                 placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
                 value={search}
@@ -407,19 +406,21 @@ export function ProjectsPage() {
                 </SelectContent>
               </Select>
 
-              {filteredProjects.length === 0 && !isEditMode ? null : !isEditMode ? (
+              {!isEditMode ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditMode(true)}
-                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
+                  disabled={filteredProjects.length === 0}
+                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs w-full sm:w-auto justify-center disabled:opacity-50"
+                  aria-label={t("action.edit", "Edit")}
                 >
                   <PencilIcon className="size-3.5" />
-                  <span>{t("action.edit", "Edit")}</span>
+                  <span className="max-sm:hidden">{t("action.edit", "Edit")}</span>
                 </Button>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="col-span-3 sm:col-span-1 flex items-center gap-2 w-full sm:w-auto">
                   <Button
                     type="button"
                     variant="outline"
@@ -428,7 +429,7 @@ export function ProjectsPage() {
                       setIsEditMode(false);
                       setSelectedProjectIds([]);
                     }}
-                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer flex-1 sm:flex-initial"
                   >
                     {t("action.cancel", "Batal")}
                   </Button>
@@ -438,7 +439,7 @@ export function ProjectsPage() {
                     size="sm"
                     onClick={() => setDeleteTargetIds(selectedProjectIds)}
                     disabled={selectedProjectIds.length === 0}
-                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer flex-1 sm:flex-initial"
                   >
                     {t("action.delete_selected", "Hapus Pilihan")} ({selectedProjectIds.length})
                   </Button>
@@ -475,14 +476,14 @@ export function ProjectsPage() {
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("projects.col_code", "Kode")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_name", "Nama Proyek")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_period", "Periode")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_contract_val", "Nilai Kontrak")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_milestones", "Termin")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_team", "Anggota Tim")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("projects.col_status", "Status")}</TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("projects.col_actions", "Aksi")}</TableHead>
+                  <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("projects.col_code", "Kode")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_name", "Nama Proyek")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_period", "Periode")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_contract_val", "Nilai Kontrak")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_milestones", "Termin")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_team", "Anggota Tim")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("projects.col_status", "Status")}</TableHead>
+                  <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("projects.col_actions", "Aksi")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -539,12 +540,12 @@ export function ProjectsPage() {
                           />
                         </TableCell>
                       )}
-                      <TableCell className="pl-6 pr-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
                         {p.code}
                       </TableCell>
                       <TableCell
                         className={cn(
-                          "px-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground",
+                          "px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5 font-medium text-foreground",
                           !isSidebarCollapsed ? "max-w-[205px]" : "max-w-[290px]",
                         )}
                       >
@@ -555,17 +556,17 @@ export function ProjectsPage() {
                           {p.name}
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
                         {formatDateI18n(p.start_date, language)} &minus;{" "}
                         {formatDateI18n(p.target_end_date, language)}
                       </TableCell>
-                      <TableCell className="px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={p.contract_value} />
                       </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 font-semibold text-foreground whitespace-nowrap">
                         {p.term_count} {t("projects:milestones_count", "Termin")}
                       </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone="secondary"
@@ -573,7 +574,7 @@ export function ProjectsPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={statusMeta.tone}
@@ -581,7 +582,7 @@ export function ProjectsPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         {isEditMode ? (
                           <div className="flex items-center justify-center gap-1 -my-1.5">
                             <ActionTooltip content={t("common:action.view")}>

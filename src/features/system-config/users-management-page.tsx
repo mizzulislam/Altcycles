@@ -60,7 +60,7 @@ import {
 import { formatDateTimeID } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import type { ProfileRow, UserRole } from "@/types/database.types";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 
 const ALL_ROLES: { id: UserRole; label: string; descKey: string; fallbackDesc: string }[] = [
   { id: "super_admin", label: "Super Admin", descKey: "settings:users.role_desc_super_admin", fallbackDesc: "Pengelola Sistem & Akun" },
@@ -411,24 +411,25 @@ export function UsersManagementPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <TruncatedTooltipText as="h1" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t("settings:users.page_title", "Manajemen Akun & Peran Internal")}
-          </TruncatedTooltipText>
-          <TruncatedTooltipText as="p" className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-            {t("settings:users.page_desc", "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.")}
-          </TruncatedTooltipText>
-        </div>
-        <Button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="shrink-0"
-        >
-          <PlusIcon className="size-4" />
-          <span>{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
-        </Button>
-      </div>
+      <PageHeader
+        title={t("settings:users.page_title", "Manajemen Akun & Peran Internal")}
+        description={t(
+          "settings:users.page_desc",
+          "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.",
+        )}
+        mobileFloating
+        actions={
+          <Button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0 max-sm:size-9 max-sm:p-0 w-auto"
+            aria-label={t("settings:users.add_account_btn", "Tambah Akun Internal")}
+          >
+            <PlusIcon className="size-4" />
+            <span className="max-sm:hidden">{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
+          </Button>
+        }
+      />
 
       <Card className="overflow-visible">
         <CardHeaderWithInfo
@@ -462,20 +463,20 @@ export function UsersManagementPage() {
           <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                  <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
                     {t("settings:users.col_full_name", "Nama Lengkap")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("settings:users.col_email", "Email")}</TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[200px]">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("settings:users.col_email", "Email")}</TableHead>
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap min-w-[200px] max-sm:min-w-[160px]">
                     {t("settings:users.col_roles_multi", "Peran (Multi-Role)")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                     {t("settings:users.col_status", "Status")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                     {t("settings:users.col_last_login", "Terakhir Login")}
                   </TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                  <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">
                     {t("settings:users.col_actions", "Aksi")}
                   </TableHead>
                 </TableRow>
@@ -508,7 +509,7 @@ export function UsersManagementPage() {
 
                   return (
                     <TableRow key={u.id}>
-                      <TableCell className="pl-6 pr-3 font-medium">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-medium">
                         <div className="flex flex-col">
                           <span>{u.full_name}</span>
                           {isSelf ? (
@@ -518,10 +519,10 @@ export function UsersManagementPage() {
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 text-muted-foreground">{u.email}</TableCell>
+                      <TableCell className="px-3 max-sm:px-2 text-muted-foreground">{u.email}</TableCell>
 
                       {/* KOLOM PERAN DENGAN DROPDOWN BERCENTANG (PORTAL ANTI-CLIPPING) */}
-                      <TableCell className="px-3" data-role-dropdown>
+                      <TableCell className="px-3 max-sm:px-2" data-role-dropdown>
                         <UserRolesDropdownCell
                           user={u}
                           isSelf={isSelf}
@@ -529,7 +530,7 @@ export function UsersManagementPage() {
                         />
                       </TableCell>
 
-                      <TableCell className="px-3 text-center whitespace-nowrap">
+                      <TableCell className="px-3 max-sm:px-2 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           <StatusBadge
                             tone={u.is_active ? "success" : "destructive"}
@@ -537,12 +538,12 @@ export function UsersManagementPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="px-3 text-center text-muted-foreground whitespace-nowrap tabular-nums">
+                      <TableCell className="px-3 max-sm:px-2 text-center text-muted-foreground whitespace-nowrap tabular-nums">
                         {formatDateTimeID(u.last_login_at)}
                       </TableCell>
 
                       {/* KOLOM TINDAKAN: NONAKTIFKAN + HAPUS */}
-                      <TableCell className="pl-2 pr-6 text-center whitespace-nowrap">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <Button
                             type="button"
