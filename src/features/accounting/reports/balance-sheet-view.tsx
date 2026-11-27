@@ -1,5 +1,4 @@
 import { DownloadIcon } from "lucide-react";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -243,19 +242,7 @@ export function BalanceSheetView({
             : "Menyajikan posisi Aset, Liabilitas, Ekuitas, serta Aset/Liabilitas Kontrak proyek secara akrual."
         }
         headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
-        controls={
-          <div className="flex items-center gap-3">
-            <StatusBadge
-              tone={balanceSheet.isBalanced ? "success" : "destructive"}
-              label={
-                balanceSheet.isBalanced
-                  ? (language === "en" ? "Balance Sheet Balanced" : "Neraca Seimbang")
-                  : (language === "en" ? "Balance Sheet Difference" : "Selisih Neraca")
-              }
-            />
-            {navigationControls}
-          </div>
-        }
+        controls={navigationControls}
       />
       <CardContent className="p-0">
         <div className="overflow-x-auto">
