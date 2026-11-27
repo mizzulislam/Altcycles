@@ -167,7 +167,7 @@ export async function exportJournalsToExcel({
   try {
     const lang = getActiveLanguage();
     const isEn = lang === "en";
-    const exportRows: Array<Array<string | number>> = [];
+    const exportRows: Array<Array<any>> = [];
     for (const j of filteredJournals) {
       const jLines = lines
         .filter((l) => l.journal_id === j.id)
@@ -175,13 +175,14 @@ export async function exportJournalsToExcel({
       const prj = j.project_id ? projectMap.get(j.project_id) : undefined;
       for (const l of jLines) {
         const acc = accountMap.get(l.account_id);
+        const descText = getLocalizedTransactionDescription(l.description || j.description, lang);
         exportRows.push([
           j.journal_number,
           formatDateID(j.journal_date),
           getLocalizedJournalType(j.journal_type, lang),
           prj ? prj.code : "-",
           acc ? `${acc.code}: ${getLocalizedAccountName(acc, lang)}` : "-",
-          getLocalizedTransactionDescription(l.description || j.description, lang),
+          { value: descText, fontStyle: "italic" },
           l.debit,
           l.credit,
         ]);

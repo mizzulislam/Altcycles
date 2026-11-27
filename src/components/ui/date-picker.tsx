@@ -6,6 +6,8 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 
 export interface DatePickerProps {
   id?: string;
@@ -18,6 +20,7 @@ export interface DatePickerProps {
   minDate?: string;
   maxDate?: string;
   required?: boolean;
+  iconOnly?: boolean;
 }
 
 const MONTH_NAMES_ID = [
@@ -119,6 +122,7 @@ export function DatePicker({
   minDate,
   maxDate,
   required = false,
+  iconOnly = false,
 }: DatePickerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -356,7 +360,13 @@ export function DatePicker({
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", className)}>
+    <div
+      ref={containerRef}
+      className={cn(
+        iconOnly ? "relative inline-block" : "relative w-full",
+        className,
+      )}
+    >
       {/* Hidden input untuk form HTML standar & validasi form */}
       {name && (
         <input
@@ -367,56 +377,81 @@ export function DatePicker({
         />
       )}
 
-      {/* Field Input Langsung (Format MM/DD/YYYY) dengan Tombol Kalender Terpadu */}
-      <div
-        ref={triggerRef}
-        data-slot="input"
-        className={cn(
-          "group relative flex h-9 w-full items-center rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] shadow-xs transition-all duration-150",
-          "hover:border-primary/60 dark:hover:border-cyan-500/50",
-          "focus-within:border-primary dark:focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-cyan-400/20",
-          isOpen && "border-primary dark:border-cyan-400 ring-2 ring-primary/20 dark:ring-cyan-400/20",
-          disabled && "opacity-50 cursor-not-allowed",
-        )}
-      >
-        <input
-          ref={inputRef}
-          id={id}
-          type="text"
-          data-inner-input="true"
-          disabled={disabled}
-          placeholder={placeholder}
-          value={typedText}
-          onChange={handleInputChange}
-          onBlur={handleInputBlur}
-          onKeyDown={handleInputKeyDown}
-          onClick={() => {
-            if (!isOpen) openCalendar();
-          }}
-          required={required}
-          className="h-full w-full rounded-xl !bg-transparent px-3 py-1 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden !border-0 !ring-0"
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-          autoComplete="off"
-        />
-
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => {
-            if (isOpen) {
-              setIsOpen(false);
-            } else {
-              openCalendar();
-            }
-          }}
-          tabIndex={-1}
-          aria-label="Buka kalender"
-          className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-lg text-primary dark:text-cyan-400 hover:bg-primary/10 transition-colors cursor-pointer"
+      {iconOnly ? (
+        <ActionTooltip content={`${placeholder || "Pilih Tanggal"}${value ? `: ${value}` : ""}`}>
+          <button
+            ref={triggerRef as any}
+            id={id}
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              if (isOpen) {
+                setIsOpen(false);
+              } else {
+                openCalendar();
+              }
+            }}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            aria-label={placeholder || "Pilih Tanggal"}
+            className={cn(TOOLBAR_BUTTON_CLASS, disabled && "opacity-50 cursor-not-allowed")}
+          >
+            <CalendarIcon className="size-4 text-primary-foreground shrink-0" />
+            <span className="sr-only">{placeholder || "Pilih Tanggal"}</span>
+          </button>
+        </ActionTooltip>
+      ) : (
+        /* Field Input Langsung (Format MM/DD/YYYY) dengan Tombol Kalender Terpadu */
+        <div
+          ref={triggerRef}
+          data-slot="input"
+          className={cn(
+            "group relative flex h-9 w-full items-center rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] shadow-xs transition-all duration-150",
+            "hover:border-primary/60 dark:hover:border-cyan-500/50",
+            "focus-within:border-primary dark:focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-cyan-400/20",
+            isOpen && "border-primary dark:border-cyan-400 ring-2 ring-primary/20 dark:ring-cyan-400/20",
+            disabled && "opacity-50 cursor-not-allowed",
+          )}
         >
-          <CalendarIcon className="size-4 transition-transform duration-150 group-hover:scale-110" />
-        </button>
-      </div>
+          <input
+            ref={inputRef}
+            id={id}
+            type="text"
+            data-inner-input="true"
+            disabled={disabled}
+            placeholder={placeholder}
+            value={typedText}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            onKeyDown={handleInputKeyDown}
+            onClick={() => {
+              if (!isOpen) openCalendar();
+            }}
+            required={required}
+            className="h-full w-full rounded-xl !bg-transparent px-3 py-1 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-hidden !border-0 !ring-0"
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            autoComplete="off"
+          />
+
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              if (isOpen) {
+                setIsOpen(false);
+              } else {
+                openCalendar();
+              }
+            }}
+            tabIndex={-1}
+            aria-label="Buka kalender"
+            className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-lg text-primary dark:text-cyan-400 hover:bg-primary/10 transition-colors cursor-pointer"
+          >
+            <CalendarIcon className="size-4 transition-transform duration-150 group-hover:scale-110" />
+          </button>
+        </div>
+      )}
 
       {/* Popover Kalender Modern (Menyatu langsung di bawah field, bebas konflik modal) */}
       {isOpen && (
@@ -428,7 +463,8 @@ export function DatePicker({
             if (yearDropdownOpen) setYearDropdownOpen(false);
           }}
           className={cn(
-            "absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] rounded-2xl border border-border bg-card p-3 shadow-2xl shadow-black/35 backdrop-blur-md animate-in fade-in-0 zoom-in-95 select-none",
+            "absolute top-full mt-1.5 z-50 rounded-2xl border border-border bg-card p-3 shadow-2xl shadow-black/35 backdrop-blur-md animate-in fade-in-0 zoom-in-95 select-none",
+            iconOnly ? "right-0 w-72 min-w-[280px]" : "left-0 w-full min-w-[240px]",
             "dark:border-white/10 dark:bg-card dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)]",
           )}
         >

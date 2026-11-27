@@ -21,7 +21,7 @@
     "filter_paid": "Paid / Disbursed",
     "col_number_date": "Number & Date",
     "col_requester_project": "Requester & Project",
-    "col_amount": "Requested Amount (IDR)",
+    "col_amount": "Requested Amount",
     "col_purpose": "Expense Description",
     "col_status": "Status",
     "col_actions": "Actions",

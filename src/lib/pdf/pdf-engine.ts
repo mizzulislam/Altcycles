@@ -417,6 +417,7 @@ async function renderDocumentPdfInternal(
   const pdfDoc = await PDFDocument.create();
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fontOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
   const [
     companyLogo,
@@ -1950,7 +1951,7 @@ async function renderDocumentPdfInternal(
                 x: drawX,
                 y: y - lIdx * cellLineH,
                 size: cellFontSize,
-                font: rowFont,
+                font: isJournalMemo ? fontOblique : rowFont,
                 color: isJournalMemo ? BRAND_BLUE : (isSecondaryLine ? TEXT_MUTED : TEXT_DARK),
               },
               "D-table-cell",

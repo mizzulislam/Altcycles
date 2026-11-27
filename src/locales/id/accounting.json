@@ -356,6 +356,7 @@
     "balanced": "Seimbang",
     "unbalanced": "Tidak Seimbang",
     "select_account": "Pilih Akun Buku Besar",
+    "filter_accounts": "Filter Akun Buku Besar",
     "all_accounts": "Pilih Semua Akun",
     "running_balance": "Saldo Berjalan",
     "balanced_status": "Buku Kas Seimbang (Balanced)",

@@ -542,7 +542,7 @@ export function AdminApprovalsPage() {
                   {t("approvals:modals.attachments", "Bukti Lampiran")}
                 </TableHead>
                 <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-40 max-sm:w-32">
-                  {t("approvals:admin.col_amount", "Nominal Pengajuan (IDR)")}
+                  {t("approvals:admin.col_amount", "Nominal Pengajuan")}
                 </TableHead>
                 <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:admin.col_status", "Status")}

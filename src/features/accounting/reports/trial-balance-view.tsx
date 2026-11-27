@@ -1,11 +1,6 @@
-import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
-} from "lucide-react";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { Card } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { getLocalizedAccountName } from "@/lib/glossary";
 import { cn } from "@/lib/utils";
@@ -38,8 +33,6 @@ export function TrialBalanceView({
   trialBalance,
   balanceType,
   setBalanceType,
-  isBalanced,
-  balanceDifference,
   onExportExcel,
   onExportPdf,
   onExportCsv,
@@ -51,74 +44,54 @@ export function TrialBalanceView({
       <Card className="rounded-2xl border-border/80 bg-card overflow-hidden shadow-2xs">
         <CardHeaderWithInfo
           title={t("accounting:reports.tab_trial_balance", "Neraca Saldo")}
-          description={t("accounting:tabs.neraca_saldo_desc", "Verifikasi keseimbangan total debit vs kredit (balancing check)")}
+          description={t(
+            "accounting:tabs.neraca_saldo_desc",
+            "Verifikasi keseimbangan total debit vs kredit (balancing check)",
+          )}
           controls={
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={onExportExcel}
-              onExportPdf={onExportPdf}
-              onExportCsv={onExportCsv}
-              size="icon"
-            />
+            <div className="flex items-center gap-2">
+              {/* Selector Sebelum Penyesuaian vs Setelah Penyesuaian */}
+              <div className="flex bg-muted/40 p-1 rounded-xl border border-border/70 shadow-xs text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setBalanceType("unadjusted")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-all cursor-pointer",
+                    balanceType === "unadjusted"
+                      ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {language === "en"
+                    ? "Sebelum Penyesuaian"
+                    : "Sebelum Penyesuaian"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBalanceType("adjusted")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg transition-all cursor-pointer",
+                    balanceType === "adjusted"
+                      ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {language === "en"
+                    ? "Setelah Penyesuaian"
+                    : "Setelah Penyesuaian"}
+                </button>
+              </div>
+
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={onExportExcel}
+                onExportPdf={onExportPdf}
+                onExportCsv={onExportCsv}
+                size="icon"
+              />
+            </div>
           }
         />
-        {/* Status Bar & Selector Sebelum/Setelah Penyesuaian (Splitz Feature) */}
-        <div
-          className={cn(
-            "p-4 border-b border-border/70 flex flex-col md:flex-row md:items-center justify-between gap-4",
-            isBalanced
-              ? "bg-primary/10 border-primary/20 text-primary dark:text-cyan-400"
-              : "bg-rose-500/10 border-rose-500/20 text-rose-500",
-          )}
-        >
-          <div className="flex items-center">
-            {isBalanced ? (
-              <>
-                <CheckCircle2Icon className="size-5 text-primary dark:text-cyan-400 mr-2 shrink-0" />
-                <span className="text-primary dark:text-cyan-300 font-semibold text-sm">
-                  {t("accounting:reports.balanced_status", "Buku Kas Seimbang (Balanced)")}
-                </span>
-              </>
-            ) : (
-              <>
-                <AlertCircleIcon className="size-5 text-rose-500 mr-2 shrink-0" />
-                <span className="text-rose-700 dark:text-rose-300 font-semibold text-sm">
-                  {language === "en"
-                    ? `Warning: Difference between Debit and Credit (${formatRupiah(balanceDifference)})!`
-                    : `Peringatan: Terdapat selisih antara Debit dan Kredit (${formatRupiah(balanceDifference)})!`}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Selector Sebelum Penyesuaian vs Setelah Penyesuaian */}
-          <div className="flex bg-muted/40 p-1 rounded-xl border border-border/70 shadow-xs text-xs font-semibold self-start md:self-auto">
-            <button
-              type="button"
-              onClick={() => setBalanceType("unadjusted")}
-              className={cn(
-                "px-3 py-1.5 rounded-lg transition-all cursor-pointer",
-                balanceType === "unadjusted"
-                  ? "bg-primary text-primary-foreground shadow-xs font-bold"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {language === "en" ? "Unadjusted Trial Balance" : "Sebelum Penyesuaian"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBalanceType("adjusted")}
-              className={cn(
-                "px-3 py-1.5 rounded-lg transition-all cursor-pointer",
-                balanceType === "adjusted"
-                  ? "bg-primary text-primary-foreground shadow-xs font-bold"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {language === "en" ? "Adjusted Trial Balance" : "Setelah Penyesuaian"}
-            </button>
-          </div>
-        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -168,13 +141,13 @@ export function TrialBalanceView({
             </tbody>
             <tfoot className="bg-muted/30 border-t-2 border-border/80 font-bold">
               <tr>
-                <td colSpan={2} className="px-6 py-4 text-right font-bold text-xs text-foreground">
+                <td colSpan={2} className="px-6 py-4 text-right font-bold text-sm text-foreground">
                   {language === "en" ? "Grand Total:" : "Total Keseluruhan:"}
                 </td>
-                <td className="px-6 py-4 text-right font-bold text-xs text-foreground">
+                <td className="px-6 py-4 text-right font-bold text-sm text-foreground">
                   {formatSplitzCurrency(trialBalance.sumEndingDebit)}
                 </td>
-                <td className="px-6 py-4 text-right font-bold text-xs text-foreground">
+                <td className="px-6 py-4 text-right font-bold text-sm text-foreground">
                   {formatSplitzCurrency(trialBalance.sumEndingCredit)}
                 </td>
               </tr>

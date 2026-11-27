@@ -16,6 +16,7 @@ import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Card,
@@ -463,11 +464,9 @@ export function ProfitSharingPage() {
               <ActionTooltip content={t("profit_sharing:btn_open_scheme")}>
                 <Button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   disabled={isFinalized}
                   onClick={openSchemeEditor}
-                  className="size-10 rounded-xl cursor-pointer shrink-0"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("profit_sharing:btn_open_scheme")}
                 >
                   <PlusIcon className="size-4 shrink-0" />
@@ -477,11 +476,9 @@ export function ProfitSharingPage() {
               <ActionTooltip content={t("profit_sharing:btn_run_simulation")}>
                 <Button
                   type="button"
-                  variant="secondary"
-                  size="icon"
                   disabled={isFinalized || schemes.length === 0 || simulating}
                   onClick={() => void handleRunSimulation()}
-                  className="size-10 rounded-xl cursor-pointer shrink-0"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("profit_sharing:btn_run_simulation")}
                 >
                   {simulating ? (
@@ -495,11 +492,9 @@ export function ProfitSharingPage() {
               <ActionTooltip content={t("profit_sharing:btn_finalize")}>
                 <Button
                   type="button"
-                  variant="default"
-                  size="icon"
                   disabled={isFinalized || schemes.length === 0}
                   onClick={() => setFinalizeConfirmOpen(true)}
-                  className="size-10 rounded-xl cursor-pointer shrink-0 shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("profit_sharing:btn_finalize")}
                 >
                   <LockIcon className="size-4 shrink-0" />

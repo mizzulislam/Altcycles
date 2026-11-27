@@ -3,8 +3,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   BookOpenIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   LayoutGridIcon,
 } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { PageLoader } from "@/components/ui/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -402,82 +406,101 @@ export function AccountingReportsPage({
               "Laporan kinerja laba rugi, posisi keuangan, neraca saldo, dan arus kas.",
             )}
             headerClassName="px-0 py-0 pb-4 border-b border-border/60"
-          />
-          {/* Top Bar with Segmented Selector & Layout Toggle */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-5">
-            <div className="flex items-center gap-3">
-              {layoutMode === "single" ? (
-                <div className="flex items-center gap-1.5 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
-                  <div className="flex items-center gap-1 px-1">
-                    {[
-                      { label: t("accounting:reports.tab_income_statement", "Laba Rugi"), value: "laba_rugi" },
-                      { label: t("accounting:reports.tab_equity", "Perubahan Ekuitas"), value: "ekuitas" },
-                      { label: t("accounting:reports.tab_balance_short", "Neraca"), value: "neraca" },
-                      { label: t("accounting:reports.tab_cash_flow", "Arus Kas"), value: "arus_kas" },
-                    ].map((tab) => (
+            controls={
+              <div className="flex items-center gap-2">
+                {layoutMode === "single" && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-foreground mr-1 hidden sm:inline-block">
+                      {activeTab === "laba_rugi"
+                        ? t("accounting:reports.tab_income_statement", "Laba Rugi")
+                        : activeTab === "ekuitas"
+                          ? t("accounting:reports.tab_equity", "Perubahan Ekuitas")
+                          : activeTab === "neraca"
+                            ? t("accounting:reports.tab_balance_short", "Neraca")
+                            : t("accounting:reports.tab_cash_flow", "Arus Kas")}
+                    </span>
+                    <ActionTooltip content={t("common:action.previous", "Sebelumnya")}>
                       <button
-                        key={tab.value}
                         type="button"
-                        onClick={() => setActiveTab(tab.value as ActiveReportTab)}
-                        className={cn(
-                          "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                          activeTab === tab.value
-                            ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
-                        )}
+                        onClick={() => {
+                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
+                          const idx = tabs.indexOf(activeTab);
+                          const prevIdx = (idx - 1 + tabs.length) % tabs.length;
+                          setActiveTab(tabs[prevIdx]!);
+                        }}
+                        className={TOOLBAR_BUTTON_CLASS}
+                        aria-label={t("common:action.previous", "Laporan Sebelumnya")}
                       >
-                        {tab.label}
+                        <ChevronLeftIcon className="size-4" />
+                        <span className="sr-only">{t("common:action.previous", "Sebelumnya")}</span>
                       </button>
-                    ))}
+                    </ActionTooltip>
+                    <ActionTooltip content={t("common:action.next", "Selanjutnya")}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
+                          const idx = tabs.indexOf(activeTab);
+                          const nextIdx = (idx + 1) % tabs.length;
+                          setActiveTab(tabs[nextIdx]!);
+                        }}
+                        className={TOOLBAR_BUTTON_CLASS}
+                        aria-label={t("common:action.next", "Laporan Selanjutnya")}
+                      >
+                        <ChevronRightIcon className="size-4" />
+                        <span className="sr-only">{t("common:action.next", "Selanjutnya")}</span>
+                      </button>
+                    </ActionTooltip>
                   </div>
-                </div>
-              ) : (
-                <span className="text-sm font-semibold text-muted-foreground pl-1">
-                  {t("accounting:reports.layout_showing_all", "Menampilkan Semua Laporan (4 Dokumen)")}
-                </span>
-              )}
-            </div>
+                )}
 
-            {/* Toggle Layout Mode & Export Menu */}
-            <div className="flex items-center gap-2 self-end md:self-auto">
-              <ExportDownloadMenu
-                label={t("common:action.export_download", "Unduh / Ekspor")}
-                onExportExcel={handleExportActiveExcel}
-                onExportPdf={handleExportActivePdf}
-                onExportCsv={handleExportCsv}
-                size="icon"
-                mobileFloating
-              />
-              <div className="flex items-center gap-1 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode("grid")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                    layoutMode === "grid"
-                      ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
-                  )}
-                >
-                  <LayoutGridIcon className="size-3.5" />
-                  <span>{t("accounting:reports.layout_all", "Semua Laporan")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode("single")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                    layoutMode === "single"
-                      ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
-                  )}
-                >
-                  <BookOpenIcon className="size-3.5" />
-                  <span>{t("accounting:reports.layout_single", "Satu Halaman")}</span>
-                </button>
+                {/* Toggle Layout Mode (Icon Only) */}
+                <div className="flex items-center gap-1 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
+                  <ActionTooltip content={t("accounting:reports.layout_all", "Semua Laporan")}>
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode("grid")}
+                      className={cn(
+                        "size-7 flex items-center justify-center rounded-lg transition-all cursor-pointer",
+                        layoutMode === "grid"
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
+                      )}
+                      aria-label={t("accounting:reports.layout_all", "Semua Laporan")}
+                    >
+                      <LayoutGridIcon className="size-3.5" />
+                      <span className="sr-only">{t("accounting:reports.layout_all", "Semua Laporan")}</span>
+                    </button>
+                  </ActionTooltip>
+                  <ActionTooltip content={t("accounting:reports.layout_single", "Satu Halaman")}>
+                    <button
+                      type="button"
+                      onClick={() => setLayoutMode("single")}
+                      className={cn(
+                        "size-7 flex items-center justify-center rounded-lg transition-all cursor-pointer",
+                        layoutMode === "single"
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
+                      )}
+                      aria-label={t("accounting:reports.layout_single", "Satu Halaman")}
+                    >
+                      <BookOpenIcon className="size-3.5" />
+                      <span className="sr-only">{t("accounting:reports.layout_single", "Satu Halaman")}</span>
+                    </button>
+                  </ActionTooltip>
+                </div>
+
+                <ExportDownloadMenu
+                  label={t("common:action.export_download", "Unduh / Ekspor")}
+                  onExportExcel={handleExportActiveExcel}
+                  onExportPdf={handleExportActivePdf}
+                  onExportCsv={handleExportCsv}
+                  size="icon"
+                  mobileFloating
+                />
               </div>
-            </div>
-          </div>
+            }
+          />
 
           {/* Content Area */}
           {layoutMode === "grid" ? (

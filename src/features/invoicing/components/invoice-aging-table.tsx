@@ -43,18 +43,13 @@ export function InvoiceAgingTable({
           "invoicing:aging.card_desc",
           "Klasifikasi piutang klien berdasarkan keterlambatan jatuh tempo untuk mitigasi arus kas dan penagihan berkala.",
         )}
-        headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
         controls={
-          <div className="w-full sm:w-60 shrink-0 space-y-1">
-            <div className="h-6 flex items-center">
-              <span className="text-xs font-semibold text-foreground">
-                {t("invoicing:action.filter_aging", "Tanggal Acuan Perhitungan")}
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
             <DatePicker
+              iconOnly
+              placeholder={t("invoicing:action.filter_aging", "Tanggal Acuan Perhitungan")}
               value={agingRefDate}
               onChange={setAgingRefDate}
-              className="w-full [&_[data-slot=input]]:h-8 [&_[data-inner-input=true]]:text-xs"
             />
           </div>
         }

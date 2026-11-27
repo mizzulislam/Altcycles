@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ArrowUpDownIcon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
@@ -8,6 +7,8 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import {
   Card,
   CardContent,
@@ -103,47 +104,29 @@ export function PeriodClosingTable({
         description={t("accounting:closing.table_card_desc", "Historis entri jurnal penutup akun nominal yang tersimpan pada sistem pembukuan.")}
         headerClassName="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 px-6 py-4"
         controls={
-          <div className="flex flex-wrap items-center gap-2.5">
-            {sortOrder === "desc" ? (
-              <ActionTooltip content={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={onToggleSortOrder}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
-                  aria-label={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}
-                >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
-                  <span className="sr-only">{t("accounting:journals.order", "Urutan:")}</span>
-                </Button>
-              </ActionTooltip>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onToggleSortOrder}
-                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer border-primary/40 bg-primary/5 text-primary"
-              >
-                <ArrowUpDownIcon className="size-3.5 shrink-0" />
-                <span className="truncate">
-                  {t("accounting:journals.order", "Urutan:")}{" "}
-                  {sortOrder === "asc"
-                    ? t("accounting:journals.order_oldest", "Terlama")
-                    : t("accounting:journals.order_newest", "Terbaru")}
-                </span>
-              </Button>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            <TableSortMenu
+              options={[
+                { key: "date", label: t("accounting:journals.col_date", "Tanggal") },
+              ]}
+              selectedKey="date"
+              sortDirection={sortOrder}
+              onSortChange={(_, dir) => {
+                if (dir !== sortOrder && onToggleSortOrder) {
+                  onToggleSortOrder();
+                }
+              }}
+              defaultKey="date"
+              defaultDirection="asc"
+            />
 
             {!isEditMode ? (
               <ActionTooltip content={t("common:action.edit", "Edit")}>
                 <Button
                   type="button"
-                  variant="outline"
                   size="icon"
                   onClick={() => setIsEditMode(true)}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10 shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("common:action.edit", "Edit")}
                 >
                   <PencilIcon className="size-4" />
@@ -184,10 +167,9 @@ export function PeriodClosingTable({
               <ActionTooltip content={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}>
                 <Button
                   type="button"
-                  variant="outline"
                   size="icon"
                   onClick={onOpenReversing}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}
                 >
                   <RotateCcwIcon className="size-4" />
@@ -199,10 +181,9 @@ export function PeriodClosingTable({
             <ActionTooltip content={t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}>
               <Button
                 type="button"
-                variant="default"
                 size="icon"
                 onClick={onOpenManualClosing}
-                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                className={TOOLBAR_BUTTON_CLASS}
                 aria-label={t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}
               >
                 <PlusIcon className="size-4" />

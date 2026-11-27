@@ -5,7 +5,18 @@ export interface ExcelColumnSpec {
   width?: number;
 }
 
-export type ExcelCellPrimitive = string | number | boolean | null | undefined;
+export type ExcelCellPrimitive =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | {
+      value: string | number | boolean | null | undefined;
+      fontStyle?: "italic";
+      fontWeight?: "bold";
+      color?: string;
+    };
 
 /**
  * Membangun Blob .xlsx (Microsoft Excel) secara universal di peramban maupun Node/Vitest.
@@ -22,13 +33,38 @@ export async function createExcelBlob(params: {
 
   const bodyRows = params.rows.map((r) =>
     r.map((cell) => {
-      if (typeof cell === "number") {
-        return { type: Number, value: cell, format: "#,##0" };
+      let rawVal: string | number | boolean | null | undefined = cell as any;
+      let fontStyle: "italic" | undefined;
+      let fontWeight: "bold" | undefined;
+      let color: string | undefined;
+
+      if (cell != null && typeof cell === "object") {
+        rawVal = cell.value;
+        fontStyle = cell.fontStyle;
+        fontWeight = cell.fontWeight;
+        color = cell.color;
       }
-      if (typeof cell === "boolean") {
-        return { type: Boolean, value: cell };
+
+      if (typeof rawVal === "number") {
+        return {
+          type: Number,
+          value: rawVal,
+          format: "#,##0",
+          fontStyle,
+          fontWeight,
+          color,
+        };
       }
-      return { type: String, value: cell == null ? "" : String(cell) };
+      if (typeof rawVal === "boolean") {
+        return { type: Boolean, value: rawVal, fontStyle, fontWeight, color };
+      }
+      return {
+        type: String,
+        value: rawVal == null ? "" : String(rawVal),
+        fontStyle,
+        fontWeight,
+        color,
+      };
     }),
   );
 

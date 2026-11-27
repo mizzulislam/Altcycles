@@ -21,7 +21,7 @@
     "filter_paid": "Dibayar Lunas",
     "col_number_date": "Nomor & Tanggal",
     "col_requester_project": "Pemohon & Proyek",
-    "col_amount": "Nominal Pengajuan (IDR)",
+    "col_amount": "Nominal Pengajuan",
     "col_purpose": "Keterangan Pengeluaran",
     "col_status": "Status",
     "col_actions": "Aksi",

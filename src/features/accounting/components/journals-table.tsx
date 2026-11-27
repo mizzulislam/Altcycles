@@ -261,7 +261,7 @@ export function JournalsTable({
 
                     {/* Teks Keterangan Transaksi di Paling Bawah, Selalu Mulai di Ujung Kiri Kolom */}
                     {j.description && (
-                      <div className="pt-1.5 font-medium text-xs sm:text-sm text-primary dark:text-sky-400 leading-snug">
+                      <div className="pt-1.5 font-medium text-xs sm:text-sm italic text-primary dark:text-sky-400 leading-snug">
                         {getLocalizedTransactionDescription(j.description, language)}
                       </div>
                     )}

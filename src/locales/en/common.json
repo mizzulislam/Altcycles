@@ -18,6 +18,8 @@
     "close": "Close",
     "confirm": "Confirm",
     "back": "Back",
+    "previous": "Previous",
+    "next": "Next",
     "refresh": "Refresh",
     "order": "Order",
     "oldest": "Oldest",
