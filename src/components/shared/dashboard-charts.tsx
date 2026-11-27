@@ -180,13 +180,13 @@ export function ChartSummaryFooter({
         if (total === 4) {
           cellPadding = cn(
             cellPadding,
-            // Kolom kiri (idx 0 & 2): sejajar rapi dengan padding kartu (pl-4 di mobile, sm:pl-6 di desktop)
-            (idx === 0 || idx === 2) && "pl-4 sm:pl-6 pr-2 sm:pr-4",
+            // Kolom kiri (idx 0 & 2): sejajar rapi dengan padding kartu (pl-4 di mobile, sm:pl-5 di desktop)
+            (idx === 0 || idx === 2) && "pl-4 sm:pl-5 pr-2 sm:pr-2.5",
             // Kolom kanan (idx 1 & 3): memiliki border pemisah kiri dan padding kanan seimbang
-            (idx === 1 || idx === 3) && "pl-3.5 sm:pl-4 pr-4 sm:pr-6 border-l border-border/60",
+            (idx === 1 || idx === 3) && "pl-3 sm:pl-3.5 pr-4 sm:pr-5 border-l border-border/60",
             // Pada desktop: 4 kolom sejajar 1 baris (idx 2 & 3 diselaraskan tanpa border-t)
-            idx === 2 && "sm:px-4 sm:border-l sm:border-border/60",
-            idx === 3 && "sm:pl-3.5 sm:pr-6",
+            idx === 2 && "sm:px-3 sm:border-l sm:border-border/60",
+            idx === 3 && "sm:pl-3 sm:pr-5",
             // Pada mobile: baris ke-2 (idx 2 & 3) diberi border pemisah horizontal atas
             (idx === 2 || idx === 3) && "border-t border-border/60 sm:border-t-0",
           );
@@ -208,7 +208,7 @@ export function ChartSummaryFooter({
 
         const content = (
           <div className={cellPadding}>
-            <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate">
+            <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate whitespace-nowrap">
               {item.label}
             </div>
             <p

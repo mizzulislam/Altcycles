@@ -1245,9 +1245,9 @@ export function AdminDashboardPage() {
             <ChartSummaryFooter
               items={agingBuckets.map((b) => ({
                 label: (
-                  <div className="flex items-center gap-1.5 text-muted-foreground whitespace-normal leading-tight">
+                  <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap min-w-0">
                     <span className={cn("size-2 rounded-full shrink-0", b.dotColor)} />
-                    <span className="text-[10px]">{b.label}</span>
+                    <span className="text-[10px] sm:text-[11px] font-medium tracking-tight whitespace-nowrap truncate">{b.label}</span>
                   </div>
                 ),
                 value: formatCompactRupiah(b.amount),
