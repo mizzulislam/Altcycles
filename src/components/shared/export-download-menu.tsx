@@ -8,6 +8,7 @@ import {
   Loader2Icon,
   TableIcon,
 } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export interface ExportDownloadMenuProps {
   disabled?: boolean;
   className?: string;
   align?: "start" | "end";
+  mobileFloating?: boolean;
 }
 
 export function ExportDownloadMenu({
@@ -29,6 +31,7 @@ export function ExportDownloadMenu({
   disabled = false,
   className,
   align = "end",
+  mobileFloating = false,
 }: ExportDownloadMenuProps) {
   const { t } = useLanguage();
   const isDefaultOrSingleUnduh =
@@ -125,38 +128,80 @@ export function ExportDownloadMenu({
 
   const isLoading = loadingType !== null;
 
-  return (
-    <div className={cn("inline-block text-left", className)}>
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={disabled || isLoading}
-        onClick={() => setIsOpen((prev) => !prev)}
+  const triggerButton = (
+    <button
+      ref={triggerRef}
+      type="button"
+      disabled={disabled || isLoading}
+      onClick={() => setIsOpen((prev) => !prev)}
+      aria-label={displayLabel}
+      className={cn(
+        "w-full sm:w-auto min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
+        "hover:bg-muted/70 hover:border-primary/40",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+        "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
+        isOpen && "border-primary/60 ring-2 ring-primary/20",
+        mobileFloating && [
+          "max-sm:fixed max-sm:bottom-6 max-sm:right-5 max-sm:z-50",
+          "max-sm:size-12 max-sm:min-h-12 max-sm:rounded-2xl max-sm:p-0 max-sm:justify-center",
+          "max-sm:bg-primary/15 max-sm:border-primary/30 max-sm:text-primary max-sm:hover:bg-primary/25",
+          "max-sm:dark:bg-primary max-sm:dark:border-primary/50 max-sm:dark:text-white max-sm:dark:hover:bg-primary/90",
+          "max-sm:shadow-xl max-sm:shadow-black/25",
+        ],
+      )}
+      aria-haspopup="menu"
+      aria-expanded={isOpen}
+    >
+      <span
         className={cn(
-          "w-full sm:w-auto min-h-10 sm:min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
-          "hover:bg-muted/70 hover:border-primary/40",
-          "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-          "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
-          isOpen && "border-primary/60 ring-2 ring-primary/20",
+          "flex items-center gap-1.5 sm:gap-2 truncate",
+          mobileFloating && "max-sm:justify-center max-sm:w-full",
         )}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
       >
-        <span className="flex items-center gap-2">
-          {isLoading ? (
-            <Loader2Icon className="size-4 animate-spin text-primary" />
-          ) : (
-            <DownloadIcon className="size-4 text-primary" />
-          )}
-          <span>{displayLabel}</span>
+        {isLoading ? (
+          <Loader2Icon
+            className={cn(
+              "size-4 animate-spin text-primary shrink-0",
+              mobileFloating && "max-sm:size-5 max-sm:text-current",
+            )}
+          />
+        ) : (
+          <DownloadIcon
+            className={cn(
+              "size-4 text-primary shrink-0",
+              mobileFloating && "max-sm:size-5 max-sm:text-current",
+            )}
+          />
+        )}
+        <span className={cn("truncate", mobileFloating && "max-sm:hidden")}>
+          {displayLabel}
         </span>
-        <ChevronDownIcon
-          className={cn(
-            "size-3.5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180",
-          )}
-        />
-      </button>
+      </span>
+      <ChevronDownIcon
+        className={cn(
+          "size-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ml-0.5",
+          isOpen && "rotate-180",
+          mobileFloating && "max-sm:hidden",
+        )}
+      />
+    </button>
+  );
+
+  return (
+    <div
+      className={cn(
+        "inline-block w-full sm:w-auto text-left",
+        mobileFloating && "max-sm:contents",
+        className,
+      )}
+    >
+      {mobileFloating ? (
+        <ActionTooltip content={displayLabel} side="left">
+          {triggerButton}
+        </ActionTooltip>
+      ) : (
+        triggerButton
+      )}
 
       {isOpen &&
         coords &&

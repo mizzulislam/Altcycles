@@ -22,6 +22,7 @@ export interface DashboardKpiCardProps {
   changeLabel?: string;
   invertChangeTone?: boolean;
   className?: string;
+  compactMobile?: boolean;
 }
 
 /** Mini Sparkline SVG rendering without external dependencies */
@@ -100,6 +101,7 @@ export function KpiCard({
   changeLabel,
   invertChangeTone = false,
   className,
+  compactMobile = false,
 }: DashboardKpiCardProps) {
   const hasChange = changePercent !== null && changePercent !== undefined && !Number.isNaN(changePercent);
   const isPositive = (changePercent ?? 0) >= 0;
@@ -133,21 +135,27 @@ export function KpiCard({
       data-slot="kpi-card"
       className={cn(
         "rounded-2xl border-border/80 bg-card p-4 sm:p-5 shadow-2xs flex flex-col justify-between gap-3 sm:gap-3.5 h-full transition-all duration-150",
+        compactMobile
+          ? "max-sm:px-3.5 max-sm:py-2.5 max-sm:gap-1.5"
+          : "max-sm:p-3 max-sm:gap-2.5",
         to && "group hover:border-primary/50 hover:bg-muted/15 cursor-pointer",
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between max-sm:gap-2 gap-3">
         <div className="min-w-0 flex-1">
           <TruncatedTooltipText
             as="p"
-            className="text-xs font-medium text-muted-foreground leading-tight"
+            className="max-sm:text-[11px] text-xs font-medium text-muted-foreground leading-tight"
           >
             {label}
           </TruncatedTooltipText>
           <div
             className={cn(
-              "text-xl sm:text-2xl font-bold tracking-tight text-foreground mt-1 tabular-nums truncate leading-tight py-0.5",
+              "text-xl sm:text-2xl font-bold tracking-tight text-foreground tabular-nums truncate leading-tight",
+              compactMobile
+                ? "max-sm:text-[17px] max-sm:leading-tight max-sm:mt-0 max-sm:py-0"
+                : "max-sm:text-base max-sm:mt-0.5 mt-1 py-0.5",
               valueClassName,
             )}
           >
@@ -161,16 +169,31 @@ export function KpiCard({
         <div
           className={cn(
             "flex size-12 sm:size-[52px] shrink-0 items-center justify-center rounded-xl border transition-transform duration-150",
+            compactMobile
+              ? "max-sm:size-8 max-sm:rounded-lg"
+              : "max-sm:size-9",
             to && "group-hover:scale-105",
             iconTone,
           )}
         >
-          <Icon className="size-6 sm:size-6.5" />
+          <Icon
+            className={cn(
+              "size-6 sm:size-6.5",
+              compactMobile ? "max-sm:size-4" : "max-sm:size-4.5",
+            )}
+          />
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50 min-h-[26px]">
-        <div className="min-w-0 flex-1 flex items-center gap-1.5 text-[11px] leading-tight">
+      <div
+        className={cn(
+          "flex items-center justify-between gap-2 pt-1 border-t border-border/50 min-h-[26px]",
+          compactMobile
+            ? "max-sm:min-h-0 max-sm:pt-1 max-sm:border-border/40"
+            : "max-sm:min-h-[22px]",
+        )}
+      >
+        <div className="min-w-0 flex-1 flex items-center gap-1.5 overflow-hidden max-sm:text-[10px] text-[11px] leading-tight">
           {hasChange ? (
             <span
               className={cn(
@@ -187,20 +210,30 @@ export function KpiCard({
             </span>
           ) : null}
           {changeLabel ? (
-            <TruncatedTooltipText as="span" className="text-muted-foreground">
+            <TruncatedTooltipText
+              as="span"
+              wrapperClassName="min-w-0 flex-1 truncate"
+              className="text-muted-foreground truncate"
+            >
               {changeLabel}
             </TruncatedTooltipText>
           ) : subtext ? (
-            <TruncatedTooltipText as="span" className="text-muted-foreground">
+            <TruncatedTooltipText
+              as="span"
+              wrapperClassName="min-w-0 flex-1 truncate"
+              className="text-muted-foreground truncate"
+            >
               {subtext}
             </TruncatedTooltipText>
           ) : null}
         </div>
 
         {sparklineData && sparklineData.length >= 2 ? (
-          <MiniSparkline data={sparklineData} color={sparklineColor} />
+          <div className="max-sm:hidden shrink-0 pl-1.5">
+            <MiniSparkline data={sparklineData} color={sparklineColor} />
+          </div>
         ) : (
-          <div className="w-[58px] h-[22px] shrink-0" aria-hidden="true" />
+          <div className="max-sm:hidden w-[58px] h-[22px] shrink-0" aria-hidden="true" />
         )}
       </div>
     </Card>

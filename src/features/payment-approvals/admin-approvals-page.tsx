@@ -403,13 +403,15 @@ export function AdminApprovalsPage() {
             onExportExcel={handleExportExcel}
             onExportPdf={handleExportPdf}
             onExportCsv={handleExportCsv}
+            mobileFloating
           />
         }
       />
 
       {/* Ringkasan KPI Persetujuan & Pencairan */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <KpiCard
+          compactMobile
           label={t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
           value={pendingCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -423,6 +425,7 @@ export function AdminApprovalsPage() {
         />
 
         <KpiCard
+          compactMobile
           label={t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
           value={approvedUnpaidCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -436,6 +439,7 @@ export function AdminApprovalsPage() {
         />
 
         <KpiCard
+          compactMobile
           label={t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
           displayValue={formatRupiah(totalPaidAmount)}
           subtext={t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}
@@ -471,25 +475,25 @@ export function AdminApprovalsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:admin.col_number_date", "Nomor & Tanggal")}
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:admin.col_requester_project", "Pemohon & Proyek")}
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:admin.col_purpose", "Keterangan Pengeluaran")}
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:modals.attachments", "Bukti Lampiran")}
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-40 max-sm:w-32">
                   {t("approvals:admin.col_amount", "Nominal Pengajuan (IDR)")}
                 </TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                   {t("approvals:admin.col_status", "Status")}
                 </TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap w-28 max-sm:w-20">
                   {t("approvals:admin.col_actions", "Aksi")}
                 </TableHead>
               </TableRow>
@@ -526,7 +530,7 @@ export function AdminApprovalsPage() {
 
                   return (
                     <TableRow key={req.id}>
-                      <TableCell className="align-top pl-6 pr-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <div className="font-mono text-xs sm:text-sm leading-5 font-semibold text-foreground">
                           {req.request_number}
                           {req.revision_no > 0 ? ` (Rev.${req.revision_no})` : ""}
@@ -535,7 +539,7 @@ export function AdminApprovalsPage() {
                           {formatDateTimeI18n(req.submitted_at ?? req.created_at, language)}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         <div className="text-xs sm:text-sm leading-5 font-medium text-foreground">
                           {profileMap.get(req.requester_id) ?? t("common:role.team_member", "Anggota Tim")}
                         </div>
@@ -546,7 +550,7 @@ export function AdminApprovalsPage() {
                           {accountMap.get(req.expense_account_id) ?? "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         <div className="text-xs sm:text-sm leading-5 font-medium text-foreground">
                           {req.purpose}
                         </div>
@@ -562,7 +566,7 @@ export function AdminApprovalsPage() {
                           </div>
                         ) : null}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         {reqAttachments.length === 0 ? (
                           <span className="text-xs sm:text-sm leading-5 text-muted-foreground">-</span>
                         ) : (
@@ -621,10 +625,10 @@ export function AdminApprovalsPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={req.amount} />
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="inline-flex flex-col items-center gap-1 min-h-5 -my-px">
                           <StatusBadge tone={meta.tone} label={meta.label} />
                           {req.paid_date ? (
@@ -634,7 +638,7 @@ export function AdminApprovalsPage() {
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="align-top pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="flex justify-center items-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
                             title={t("approvals:admin.btn_detail", "Unduh Form PA (PDF / Word)")}
