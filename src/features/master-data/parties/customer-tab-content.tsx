@@ -317,7 +317,7 @@ export function CustomerTabContent({
               ) : (
                 customers.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-medium">
                       {c.code}
                     </TableCell>
                     <TableCell className="px-3 max-sm:px-2 font-medium">

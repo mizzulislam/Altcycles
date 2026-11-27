@@ -606,11 +606,9 @@ export function AdminDashboardPage() {
   async function handleBackupExportPdf() {
     const comp = await getCompanyProfile();
 
-    function makeAsciiBar(pct: number, width = 6): string {
+    function makeAsciiBar(pct: number, _width = 6): string {
       const clamped = Math.max(0, Math.min(100, Math.round(pct)));
-      const filled = Math.round((clamped / 100) * width);
-      const empty = width - filled;
-      return `[${"=".repeat(filled)}${"-".repeat(empty)}] ${clamped}%`;
+      return `${clamped}%`;
     }
 
     const trendRows: string[][] = monthlySeries.map((m) => {
@@ -705,6 +703,7 @@ export function AdminDashboardPage() {
         title: "3. STATUS REALISASI & PENAGIHAN KONTRAK PROYEK",
         subtitle: "Realisasi penerbitan invoice penagihan dibandingkan komitmen kontrak per proyek",
         badge: `${projects.length} Proyek`,
+        badgeLabel: "Total Proyek",
         tableColumns: [
           { header: t("dashboard:export.col_project_code", "Kode Proyek"), widthRatio: 0.18, align: "left" as const },
           { header: t("dashboard:export.col_project_name", "Nama Proyek"), widthRatio: 0.32, align: "left" as const },
@@ -712,7 +711,7 @@ export function AdminDashboardPage() {
           { header: t("dashboard:export.col_billed_val", "Tertagih"), widthRatio: 0.18, align: "right" as const },
           { header: "Grafik Termin", widthRatio: 0.12, align: "center" as const },
         ],
-        tableRows: projectRows.length > 0 ? projectRows : [["-", "Tidak ada proyek aktif", "Rp0", "Rp0", "[--------] 0%"]],
+        tableRows: projectRows.length > 0 ? projectRows : [["-", "Tidak ada proyek aktif", "Rp0", "Rp0", "0%"]],
         summaryRows: [
           { label: "Total Komitmen Kontrak", value: formatRupiah(totalContract) },
           { label: "Total Tertagih", value: formatRupiah(totalInvoiced) },

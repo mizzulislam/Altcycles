@@ -408,54 +408,8 @@ export function AccountingReportsPage({
             headerClassName="px-0 py-0 pb-4 border-b border-border/60"
             controls={
               <div className="flex items-center gap-2">
-                {layoutMode === "single" && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-foreground mr-1 hidden sm:inline-block">
-                      {activeTab === "laba_rugi"
-                        ? t("accounting:reports.tab_income_statement", "Laba Rugi")
-                        : activeTab === "ekuitas"
-                          ? t("accounting:reports.tab_equity", "Perubahan Ekuitas")
-                          : activeTab === "neraca"
-                            ? t("accounting:reports.tab_balance_short", "Neraca")
-                            : t("accounting:reports.tab_cash_flow", "Arus Kas")}
-                    </span>
-                    <ActionTooltip content={t("common:action.previous", "Sebelumnya")}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
-                          const idx = tabs.indexOf(activeTab);
-                          const prevIdx = (idx - 1 + tabs.length) % tabs.length;
-                          setActiveTab(tabs[prevIdx]!);
-                        }}
-                        className={TOOLBAR_BUTTON_CLASS}
-                        aria-label={t("common:action.previous", "Laporan Sebelumnya")}
-                      >
-                        <ChevronLeftIcon className="size-4" />
-                        <span className="sr-only">{t("common:action.previous", "Sebelumnya")}</span>
-                      </button>
-                    </ActionTooltip>
-                    <ActionTooltip content={t("common:action.next", "Selanjutnya")}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
-                          const idx = tabs.indexOf(activeTab);
-                          const nextIdx = (idx + 1) % tabs.length;
-                          setActiveTab(tabs[nextIdx]!);
-                        }}
-                        className={TOOLBAR_BUTTON_CLASS}
-                        aria-label={t("common:action.next", "Laporan Selanjutnya")}
-                      >
-                        <ChevronRightIcon className="size-4" />
-                        <span className="sr-only">{t("common:action.next", "Selanjutnya")}</span>
-                      </button>
-                    </ActionTooltip>
-                  </div>
-                )}
-
                 {/* Toggle Layout Mode (Icon Only) */}
-                <div className="flex items-center gap-1 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
+                <div className="flex items-center gap-1 bg-muted/40 border border-border/70 rounded-xl p-1 shadow-xs">
                   <ActionTooltip content={t("accounting:reports.layout_all", "Semua Laporan")}>
                     <button
                       type="button"
@@ -556,40 +510,87 @@ export function AccountingReportsPage({
             </div>
           ) : (
             <div className="w-full">
-              {activeTab === "laba_rugi" && (
-                <IncomeStatementView
-                  incomeStatement={incomeStatement}
-                  startDate={startDate}
-                  endDate={endDate}
-                  projectFilter={projectFilter}
-                  projects={projects}
-                />
-              )}
-              {activeTab === "ekuitas" && (
-                <EquityStatementView
-                  startDate={startDate}
-                  endDate={endDate}
-                  beginningRetainedEarnings={beginningRetainedEarnings}
-                  netProfit={netIncome}
-                  dividends={dividends}
-                  endingRetainedEarnings={endingRetainedEarnings}
-                  modalDisetorBalance={modalDisetorBalance}
-                  totalEndingEquity={totalEndingEquity}
-                />
-              )}
-              {activeTab === "neraca" && (
-                <BalanceSheetView
-                  balanceSheet={balanceSheet}
-                  endDate={endDate}
-                />
-              )}
-              {activeTab === "arus_kas" && (
-                <CashFlowView
-                  cashFlow={cashFlow}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
+              {(() => {
+                const reportNavigation = (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <ActionTooltip content={t("common:action.previous", "Sebelumnya")}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
+                          const idx = tabs.indexOf(activeTab);
+                          const prevIdx = (idx - 1 + tabs.length) % tabs.length;
+                          setActiveTab(tabs[prevIdx]!);
+                        }}
+                        className={TOOLBAR_BUTTON_CLASS}
+                        aria-label={t("common:action.previous", "Laporan Sebelumnya")}
+                      >
+                        <ChevronLeftIcon className="size-4" />
+                        <span className="sr-only">{t("common:action.previous", "Sebelumnya")}</span>
+                      </button>
+                    </ActionTooltip>
+                    <ActionTooltip content={t("common:action.next", "Selanjutnya")}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tabs: ActiveReportTab[] = ["laba_rugi", "ekuitas", "neraca", "arus_kas"];
+                          const idx = tabs.indexOf(activeTab);
+                          const nextIdx = (idx + 1) % tabs.length;
+                          setActiveTab(tabs[nextIdx]!);
+                        }}
+                        className={TOOLBAR_BUTTON_CLASS}
+                        aria-label={t("common:action.next", "Laporan Selanjutnya")}
+                      >
+                        <ChevronRightIcon className="size-4" />
+                        <span className="sr-only">{t("common:action.next", "Selanjutnya")}</span>
+                      </button>
+                    </ActionTooltip>
+                  </div>
+                );
+
+                return (
+                  <>
+                    {activeTab === "laba_rugi" && (
+                      <IncomeStatementView
+                        incomeStatement={incomeStatement}
+                        startDate={startDate}
+                        endDate={endDate}
+                        projectFilter={projectFilter}
+                        projects={projects}
+                        navigationControls={reportNavigation}
+                      />
+                    )}
+                    {activeTab === "ekuitas" && (
+                      <EquityStatementView
+                        startDate={startDate}
+                        endDate={endDate}
+                        beginningRetainedEarnings={beginningRetainedEarnings}
+                        netProfit={netIncome}
+                        dividends={dividends}
+                        endingRetainedEarnings={endingRetainedEarnings}
+                        modalDisetorBalance={modalDisetorBalance}
+                        totalEndingEquity={totalEndingEquity}
+                        navigationControls={reportNavigation}
+                      />
+                    )}
+                    {activeTab === "neraca" && (
+                      <BalanceSheetView
+                        balanceSheet={balanceSheet}
+                        endDate={endDate}
+                        navigationControls={reportNavigation}
+                      />
+                    )}
+                    {activeTab === "arus_kas" && (
+                      <CashFlowView
+                        cashFlow={cashFlow}
+                        startDate={startDate}
+                        endDate={endDate}
+                        navigationControls={reportNavigation}
+                      />
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

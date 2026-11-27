@@ -97,6 +97,7 @@ export interface PdfDocumentSection {
   title?: string;
   subtitle?: string;
   badge?: string;
+  badgeLabel?: string;
   metaRows?: PdfKeyValue[];
   tableColumns: PdfTableColumn[];
   tableRows: string[][];

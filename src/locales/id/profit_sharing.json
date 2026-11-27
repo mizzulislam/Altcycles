@@ -39,6 +39,8 @@
   "show_financial_data": "Lihat data rekening",
   "hide_financial_data": "Sembunyikan data rekening",
   "btn_tax_simulation": "Simulasi PPh 21",
+  "btn_reset_scheme": "Reset Skema & Simulasi",
+  "toast_reset_success": "Data skema dan simulasi draf bagi hasil berhasil direset.",
   "tax_modal_title": "Simulasi Pajak PPh 21 Bagi Hasil",
   "tax_modal_rule_title": "Dasar Perhitungan PPh 21 Bukan Pegawai (PMK 168/2023):",
   "tax_modal_rule_desc": "Dasar Pengenaan Pajak (DPP) dihitung 50% dari bruto, dikenakan Tarif Progresif Pasal 17 Ayat (1) Huruf a UU PPh berdasarkan status PTKP. Anggota tanpa NPWP dikenakan penalti tarif 20% lebih tinggi.",
@@ -68,7 +70,10 @@
     "saving": "Menyimpan...",
     "finalize_confirm_title": "Finalisasi & Kunci Bagi Hasil Proyek Ini?",
     "finalize_confirm_desc": "Setelah difinalisasi, skema dan nominal terkunci permanen serta sistem otomatis menerbitkan jurnal Beban Bagi Hasil pada Utang Bagi Hasil.",
-    "finalize_confirm_btn": "Ya, Finalisasi & Posting Jurnal"
+    "finalize_confirm_btn": "Ya, Finalisasi & Posting Jurnal",
+    "reset_confirm_title": "Reset Skema & Hasil Simulasi",
+    "reset_confirm_desc": "Apakah Anda yakin ingin menghapus data skema dan hasil draf simulasi bagi hasil proyek ini? Data yang belum difinalisasi akan dihapus.",
+    "reset_confirm_btn": "Ya, Reset Data"
   },
   "export": {
     "excel_filename": "Bagi_Hasil_{{code}}.xlsx",

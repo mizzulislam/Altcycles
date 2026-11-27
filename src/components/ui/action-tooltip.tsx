@@ -27,9 +27,14 @@ export function ActionTooltip({
 }: ActionTooltipProps) {
   const tooltipId = React.useId();
   const [isVisible, setIsVisible] = React.useState(false);
-  const [coords, setCoords] = React.useState<{ top: number; left: number }>({
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+    effectiveAlign: "start" | "center" | "end";
+  }>({
     top: 0,
     left: 0,
+    effectiveAlign: align,
   });
   const timeoutRef = React.useRef<number | null>(null);
   const triggerRef = React.useRef<HTMLSpanElement | null>(null);
@@ -37,36 +42,53 @@ export function ActionTooltip({
   const calculatePosition = React.useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    const viewportW = typeof window !== "undefined" ? window.innerWidth : 1024;
     let top = 0;
     let left = 0;
 
+    let computedAlign = align;
+    if (align === "center") {
+      const centerX = rect.left + rect.width / 2;
+      if (centerX > viewportW - 160) {
+        computedAlign = "end";
+      } else if (centerX < 160) {
+        computedAlign = "start";
+      }
+    }
+
     if (side === "top") {
       top = rect.top - offset;
-      if (align === "center") left = rect.left + rect.width / 2;
-      else if (align === "start") left = rect.left;
+      if (computedAlign === "center") left = rect.left + rect.width / 2;
+      else if (computedAlign === "start") left = rect.left;
       else left = rect.right;
     } else if (side === "bottom") {
       top = rect.bottom + offset;
-      if (align === "center") left = rect.left + rect.width / 2;
-      else if (align === "start") left = rect.left;
+      if (computedAlign === "center") left = rect.left + rect.width / 2;
+      else if (computedAlign === "start") left = rect.left;
       else left = rect.right;
     } else if (side === "left") {
       left = rect.left - offset;
-      if (align === "center") top = rect.top + rect.height / 2;
-      else if (align === "start") top = rect.top;
+      if (computedAlign === "center") top = rect.top + rect.height / 2;
+      else if (computedAlign === "start") top = rect.top;
       else top = rect.bottom;
     } else if (side === "right") {
       left = rect.right + offset;
-      if (align === "center") top = rect.top + rect.height / 2;
-      else if (align === "start") top = rect.top;
+      if (computedAlign === "center") top = rect.top + rect.height / 2;
+      else if (computedAlign === "start") top = rect.top;
       else top = rect.bottom;
     }
 
     if (typeof window !== "undefined" && window.innerWidth > 0) {
-      left = Math.max(12, Math.min(left, window.innerWidth - 12));
+      if (computedAlign === "end") {
+        left = Math.min(left, window.innerWidth - 12);
+      } else if (computedAlign === "start") {
+        left = Math.max(12, left);
+      } else {
+        left = Math.max(12, Math.min(left, window.innerWidth - 12));
+      }
     }
 
-    setCoords({ top, left });
+    setCoords({ top, left, effectiveAlign: computedAlign });
   }, [side, align, offset]);
 
   const show = React.useCallback(() => {
@@ -120,31 +142,31 @@ export function ActionTooltip({
     };
   }, [isVisible, calculatePosition, hide]);
 
-  const getTransformClasses = () => {
+  const getTransformClasses = (curAlign: "start" | "center" | "end" = coords.effectiveAlign) => {
     if (side === "top") {
-      return align === "center"
+      return curAlign === "center"
         ? "-translate-x-1/2 -translate-y-full"
-        : align === "start"
+        : curAlign === "start"
         ? "-translate-y-full"
         : "-translate-x-full -translate-y-full";
     }
     if (side === "bottom") {
-      return align === "center"
+      return curAlign === "center"
         ? "-translate-x-1/2"
-        : align === "start"
+        : curAlign === "start"
         ? ""
         : "-translate-x-full";
     }
     if (side === "left") {
-      return align === "center"
+      return curAlign === "center"
         ? "-translate-x-full -translate-y-1/2"
-        : align === "start"
+        : curAlign === "start"
         ? "-translate-x-full"
         : "-translate-x-full -translate-y-full";
     }
-    return align === "center"
+    return curAlign === "center"
       ? "-translate-y-1/2"
-      : align === "start"
+      : curAlign === "start"
       ? ""
       : "-translate-y-full";
   };

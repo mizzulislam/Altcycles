@@ -830,8 +830,8 @@ async function renderDocumentPdfInternal(
       color: BORDER_GRAY,
     });
 
-    // 7. Baris Abu Judul Lengkap (rata tengah / middle di baris abu)
-    if (docTitleConfig.fullTitleBar) {
+    // 7. Baris Abu Judul Lengkap (hanya muncul di halaman pertama saja sesuai arahan)
+    if (docTitleConfig.fullTitleBar && pageIndex === 0) {
       const barTopMargin = 6;
       const cleanTitle = sanitizePdfText(docTitleConfig.fullTitleBar);
       const titleFontSize = 9.5;
@@ -1487,7 +1487,11 @@ async function renderDocumentPdfInternal(
         if (sec.badge) {
           const badgeText = sanitizePdfText(sec.badge);
           const badgeW = fontBold.widthOfTextAtSize(badgeText, 10.5);
-          const badgeLabel = isEnPdf ? "Ending Balance" : "Saldo Akhir";
+          const badgeLabel = sec.badgeLabel
+            ? sanitizePdfText(sec.badgeLabel)
+            : /proyek|project/i.test(badgeText)
+              ? (isEnPdf ? "Total Projects" : "Total Proyek")
+              : (isEnPdf ? "Ending Balance" : "Saldo Akhir");
           drawTrackedText(
             badgeLabel,
             {
@@ -3109,7 +3113,6 @@ async function renderDocumentPdfInternal(
     pages.push(page);
     pageIndex = pages.length - 1;
     y = pageHeight - marginTop;
-    drawDocumentHeader();
 
     const isEn = Boolean(
       spec.language?.startsWith("en") || getActiveLanguage() === "en",

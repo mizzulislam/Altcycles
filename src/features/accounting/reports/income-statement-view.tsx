@@ -144,6 +144,7 @@ interface IncomeStatementViewProps {
   projectFilter: string;
   projects: ProjectRow[];
   incomeStatement: IncomeStatementData;
+  navigationControls?: React.ReactNode;
 }
 
 export function IncomeStatementView({
@@ -152,6 +153,7 @@ export function IncomeStatementView({
   projectFilter,
   projects,
   incomeStatement,
+  navigationControls,
 }: IncomeStatementViewProps) {
   const { t, language } = useLanguage();
 
@@ -166,12 +168,15 @@ export function IncomeStatementView({
         }
         headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
         controls={
-          projectFilter !== "ALL" ? (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400">
-              {language === "en" ? "Project: " : "Proyek: "}
-              {projects.find((p) => p.id === projectFilter)?.name ?? projectFilter}
-            </span>
-          ) : null
+          <div className="flex items-center gap-2">
+            {projectFilter !== "ALL" ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400">
+                {language === "en" ? "Project: " : "Proyek: "}
+                {projects.find((p) => p.id === projectFilter)?.name ?? projectFilter}
+              </span>
+            ) : null}
+            {navigationControls}
+          </div>
         }
       />
       <CardContent className="p-0">

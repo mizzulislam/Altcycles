@@ -125,6 +125,39 @@ export async function saveProfitSharingScheme(
   if (error) throw new Error(error.message);
 }
 
+export async function resetProfitSharingData(projectId: string): Promise<void> {
+  if (isDemoMode || !supabase) {
+    const actor = getDemoActor();
+    if (actor.role !== "admin") throw new Error("Hanya Admin yang berwenang.");
+    const existing = demoStore.profitSharingResults.find(
+      (r) => r.project_id === projectId,
+    );
+    if (existing?.status === "finalized") {
+      throw new Error("Bagi hasil proyek ini sudah difinalisasi dan terkunci (BR-9).");
+    }
+    demoStore.profitSharingSchemes = demoStore.profitSharingSchemes.filter(
+      (s) => s.project_id !== projectId,
+    );
+    const resultIdsToRemove = demoStore.profitSharingResults
+      .filter((r) => r.project_id === projectId)
+      .map((r) => r.id);
+    demoStore.profitSharingResults = demoStore.profitSharingResults.filter(
+      (r) => r.project_id !== projectId,
+    );
+    demoStore.profitSharingLines = demoStore.profitSharingLines.filter(
+      (l) => !resultIdsToRemove.includes(l.result_id),
+    );
+    return;
+  }
+
+  await supabase.from("profit_sharing_schemes").delete().eq("project_id", projectId);
+  await supabase
+    .from("profit_sharing_results")
+    .delete()
+    .eq("project_id", projectId)
+    .neq("status", "finalized");
+}
+
 export async function runProjectProfitSharing(params: {
   projectId: string;
   finalize: boolean;

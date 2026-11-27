@@ -6,10 +6,13 @@ import {
   EyeOffIcon,
   LockIcon,
   PlusIcon,
+  ReceiptTextIcon,
+  RotateCcwIcon,
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -73,6 +76,7 @@ import {
 import {
   getProfitSharingBundle,
   recordExportLog,
+  resetProfitSharingData,
   runProjectProfitSharing,
   saveProfitSharingScheme,
 } from "@/lib/operations-service";
@@ -112,6 +116,8 @@ export function ProfitSharingPage() {
   const [manualSharedCost, setManualSharedCost] = React.useState(0);
   const [simulating, setSimulating] = React.useState(false);
   const [finalizeConfirmOpen, setFinalizeConfirmOpen] = React.useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);
+  const [_resettingData, setResettingData] = React.useState(false);
 
   // Dialog Atur Skema Penerima 100% (BR-10)
   const [schemeOpen, setSchemeOpen] = React.useState(false);
@@ -317,6 +323,30 @@ export function ProfitSharingPage() {
       );
     } finally {
       setSimulating(false);
+    }
+  }
+
+  async function handleResetData() {
+    if (!selectedProjectId) return;
+    setResettingData(true);
+    try {
+      await resetProfitSharingData(selectedProjectId);
+      setSchemes([]);
+      setResult(null);
+      setLines([]);
+      toast.success(
+        t(
+          "profit_sharing:toast_reset_success",
+          "Data skema dan simulasi draf bagi hasil berhasil direset.",
+        ),
+      );
+      setResetConfirmOpen(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mereset data bagi hasil.",
+      );
+    } finally {
+      setResettingData(false);
     }
   }
 
@@ -578,6 +608,20 @@ export function ProfitSharingPage() {
             <CardHeaderWithInfo
               title={t("profit_sharing:scheme_card_title")}
               description={t("profit_sharing:scheme_card_desc")}
+              controls={
+                <ActionTooltip content={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}>
+                  <button
+                    type="button"
+                    disabled={isFinalized || (schemes.length === 0 && !result)}
+                    onClick={() => setResetConfirmOpen(true)}
+                    className={cn(TOOLBAR_BUTTON_CLASS, "disabled:opacity-40 disabled:cursor-not-allowed")}
+                    aria-label={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}
+                  >
+                    <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
+                    <span className="sr-only">{t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}</span>
+                  </button>
+                </ActionTooltip>
+              }
             />
             <CardContent className="p-0 flex-1 flex flex-col">
               <Table>
@@ -709,23 +753,18 @@ export function ProfitSharingPage() {
               headerClassName="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               controls={
                 result ? (
-                  <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setTaxModalOpen(true)}
-                      className="h-8 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
-                    >
-                      <CalculatorIcon className="size-3.5 text-primary" />
-                      <span>{t("profit_sharing:btn_tax_simulation", "Simulasi PPh 21")}</span>
-                    </Button>
-                    <StatusBadge
-                      tone={isFinalized ? "success" : "warning"}
-                      label={
-                        isFinalized ? t("profit_sharing:badge_finalized") : t("profit_sharing:badge_draft")
-                      }
-                    />
+                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                    <ActionTooltip content={t("profit_sharing:btn_tax_simulation", "Simulasi PPh 21")}>
+                      <button
+                        type="button"
+                        onClick={() => setTaxModalOpen(true)}
+                        className={TOOLBAR_BUTTON_CLASS}
+                        aria-label={t("profit_sharing:btn_tax_simulation", "Simulasi PPh 21")}
+                      >
+                        <ReceiptTextIcon className="size-4 text-primary-foreground shrink-0" />
+                        <span className="sr-only">{t("profit_sharing:btn_tax_simulation", "Simulasi PPh 21")}</span>
+                      </button>
+                    </ActionTooltip>
                   </div>
                 ) : null
               }
@@ -1026,7 +1065,7 @@ export function ProfitSharingPage() {
                       <TableRow key={row.id}>
                         <TableCell className="pl-4 pr-2 font-medium text-foreground">
                           <div>{row.name}</div>
-                          <div className="text-[11px] text-muted-foreground font-mono">
+                          <div className="text-[11px] text-muted-foreground">
                             {row.isCompany
                               ? t("profit_sharing:modals.company_internal_share", "Bagian Kas Perusahaan")
                               : row.hasNpwp
@@ -1038,21 +1077,21 @@ export function ProfitSharingPage() {
                           {row.isCompany ? (
                             <span className="text-muted-foreground">-</span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary dark:text-sky-400 font-semibold font-mono text-[11px]">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary dark:text-sky-400 font-semibold text-[11px]">
                               {row.ptkpCode}
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="px-2 text-right font-mono text-xs tabular-nums">
+                        <TableCell className="px-2 text-right text-xs tabular-nums font-medium text-foreground">
                           {formatRupiah(row.gross)}
                         </TableCell>
-                        <TableCell className="px-2 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                        <TableCell className="px-2 text-right text-xs tabular-nums text-muted-foreground">
                           {formatRupiah(row.dpp)}
                         </TableCell>
-                        <TableCell className="px-2 text-right font-mono text-xs tabular-nums text-destructive font-semibold">
+                        <TableCell className="px-2 text-right text-xs tabular-nums text-destructive font-semibold">
                           {row.tax > 0 ? `- ${formatRupiah(row.tax)}` : "Rp 0"}
                         </TableCell>
-                        <TableCell className="pl-2 pr-4 text-right font-mono text-xs tabular-nums text-primary dark:text-sky-400 font-bold">
+                        <TableCell className="pl-2 pr-4 text-right text-xs tabular-nums text-primary dark:text-sky-400 font-bold">
                           {formatRupiah(row.net)}
                         </TableCell>
                       </TableRow>
@@ -1062,12 +1101,12 @@ export function ProfitSharingPage() {
               </Table>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-muted/20 border border-border/80 text-xs font-semibold">
-              <span className="text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/30 border border-border/80">
+              <span className="text-sm font-bold text-foreground">
                 {t("profit_sharing:total_summary", "Total Estimasi Pemotongan:")}
               </span>
-              <div className="flex flex-wrap items-center gap-4 font-mono tabular-nums">
-                <span>Bruto: {formatRupiah(totalSimGross)}</span>
+              <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base font-bold tabular-nums">
+                <span className="text-foreground">Bruto: {formatRupiah(totalSimGross)}</span>
                 <span className="text-destructive">PPh 21: - {formatRupiah(totalSimTax)}</span>
                 <span className="text-primary dark:text-sky-400 font-bold">Netto: {formatRupiah(totalSimNet)}</span>
               </div>
@@ -1107,6 +1146,20 @@ export function ProfitSharingPage() {
           );
           await loadProjectSharing();
         }}
+      />
+
+      {/* Konfirmasi Reset Skema & Hasil Simulasi */}
+      <ConfirmActionDialog
+        open={resetConfirmOpen}
+        onOpenChange={setResetConfirmOpen}
+        title={t("profit_sharing:modals.reset_confirm_title", "Reset Skema & Hasil Simulasi")}
+        description={t(
+          "profit_sharing:modals.reset_confirm_desc",
+          "Apakah Anda yakin ingin menghapus data skema dan hasil draf simulasi bagi hasil proyek ini? Data yang belum difinalisasi akan dihapus.",
+        )}
+        destructive
+        confirmLabel={t("profit_sharing:modals.reset_confirm_btn", "Ya, Reset Data")}
+        onConfirm={handleResetData}
       />
     </div>
   );

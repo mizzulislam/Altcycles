@@ -112,12 +112,14 @@ interface CashFlowViewProps {
   startDate: string;
   endDate: string;
   cashFlow: CashFlowData;
+  navigationControls?: React.ReactNode;
 }
 
 export function CashFlowView({
   startDate,
   endDate,
   cashFlow,
+  navigationControls,
 }: CashFlowViewProps) {
   const { language } = useLanguage();
 
@@ -131,6 +133,7 @@ export function CashFlowView({
             : `Klasifikasi aktivitas Operasi, Investasi, dan Pendanaan secara langsung dari mutasi kas periode ${formatDateI18n(startDate, language)} - ${formatDateI18n(endDate, language)}.`
         }
         headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
+        controls={navigationControls}
       />
       <CardContent className="p-0">
         <div className="overflow-x-auto">

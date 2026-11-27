@@ -192,9 +192,14 @@ export function BalanceSheetCard({
 interface BalanceSheetViewProps {
   endDate: string;
   balanceSheet: BalanceSheetData;
+  navigationControls?: React.ReactNode;
 }
 
-export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProps) {
+export function BalanceSheetView({
+  endDate,
+  balanceSheet,
+  navigationControls,
+}: BalanceSheetViewProps) {
   const { t, language } = useLanguage();
   const currentAssets = balanceSheet.assets.filter(
     (a) => a.code.startsWith("1-1") || a.code.startsWith("1-2"),
@@ -248,6 +253,7 @@ export function BalanceSheetView({ endDate, balanceSheet }: BalanceSheetViewProp
                   : (language === "en" ? "Balance Sheet Difference" : "Selisih Neraca")
               }
             />
+            {navigationControls}
           </div>
         }
       />

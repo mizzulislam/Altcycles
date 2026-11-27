@@ -63,7 +63,9 @@ const LastSessionTicker = React.memo(function LastSessionTicker({
 
   return (
     <span className={cn("inline-flex items-center overflow-hidden h-7 sm:h-8", className)}>
+      <span className="sr-only">{items.join(" ")}</span>
       <span
+        aria-hidden="true"
         className={cn(
           "inline-block transition-all duration-300 ease-out",
           animating ? "-translate-y-4 opacity-0" : "translate-y-0 opacity-100",
@@ -276,9 +278,6 @@ export function ProfileOverviewPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("settings:profile_overview.label_ptkp", "Status PTKP")}
                 </p>
-                <span className="text-[10px] font-bold text-primary dark:text-sky-400 bg-primary/10 border border-primary/25 px-1.5 py-0.5 rounded uppercase">
-                  TER {effectivePtkp.terCategory}
-                </span>
               </div>
               <p
                 data-testid="overview-ptkp-value"
@@ -288,6 +287,7 @@ export function ProfileOverviewPage() {
                   className="h-6"
                   items={[
                     effectivePtkp.code,
+                    `TER ${effectivePtkp.terCategory}`,
                     `${formatRupiah(effectivePtkp.annualValue)}/th`,
                   ]}
                 />

@@ -132,6 +132,7 @@ interface EquityStatementViewProps {
   endingRetainedEarnings: number;
   modalDisetorBalance: number;
   totalEndingEquity: number;
+  navigationControls?: React.ReactNode;
 }
 
 export function EquityStatementView({
@@ -143,6 +144,7 @@ export function EquityStatementView({
   endingRetainedEarnings,
   modalDisetorBalance,
   totalEndingEquity,
+  navigationControls,
 }: EquityStatementViewProps) {
   const { t, language } = useLanguage();
 
@@ -155,6 +157,7 @@ export function EquityStatementView({
         })}
         description={`${t("accounting:reports.equity_report_desc", "Menyajikan mutasi laba ditahan dan saldo modal disetor selama periode")} ${formatDateI18n(startDate, language)} - ${formatDateI18n(endDate, language)}.`}
         headerClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-border/70"
+        controls={navigationControls}
       />
       <CardContent className="p-0">
         <div className="overflow-x-auto">

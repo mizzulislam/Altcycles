@@ -273,7 +273,7 @@ export function VendorTabContent({
               ) : (
                 vendors.map((v) => (
                   <TableRow key={v.id}>
-                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-medium">
                       {v.code}
                     </TableCell>
                     <TableCell className="px-3 max-sm:px-2 font-medium">{v.name}</TableCell>

@@ -39,6 +39,8 @@
   "show_financial_data": "Show bank account data",
   "hide_financial_data": "Hide bank account data",
   "btn_tax_simulation": "PPh 21 Tax Simulation",
+  "btn_reset_scheme": "Reset Scheme & Simulation",
+  "toast_reset_success": "Profit sharing scheme and simulation draft reset successfully.",
   "tax_modal_title": "PPh 21 Profit Sharing Tax Simulation",
   "tax_modal_rule_title": "PPh 21 Non-Employee Withholding Basis (PMK 168/2023):",
   "tax_modal_rule_desc": "Tax Base (DPP) is calculated as 50% of gross profit share, subject to progressive Article 17 Paragraph (1) Letter a rates according to PTKP status. Members without NPWP incur a 20% tax surcharge.",
@@ -68,7 +70,10 @@
     "saving": "Saving...",
     "finalize_confirm_title": "Finalize & Lock Profit Sharing for This Project?",
     "finalize_confirm_desc": "Once finalized, scheme and amounts are permanently locked and the system automatically posts Profit Sharing Expense to Profit Sharing Payable journal.",
-    "finalize_confirm_btn": "Yes, Finalize & Post Journal"
+    "finalize_confirm_btn": "Yes, Finalize & Post Journal",
+    "reset_confirm_title": "Reset Scheme & Simulation Results",
+    "reset_confirm_desc": "Are you sure you want to reset the scheme and draft calculation results for this project? Unfinalized data will be cleared.",
+    "reset_confirm_btn": "Yes, Reset Data"
   },
   "export": {
     "excel_filename": "Profit_Sharing_{{code}}.xlsx",

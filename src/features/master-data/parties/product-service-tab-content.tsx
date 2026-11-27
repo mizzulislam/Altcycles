@@ -285,7 +285,7 @@ export function ProductServiceTabContent({
                   const loc = getLocalizedCatalogProduct(p, language);
                   return (
                     <TableRow key={p.id}>
-                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-medium">
                         {p.code}
                       </TableCell>
                       <TableCell className="px-3 max-sm:px-2 font-medium text-foreground">
