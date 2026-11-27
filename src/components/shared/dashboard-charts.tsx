@@ -147,6 +147,7 @@ export interface ChartSummaryItem {
   label: React.ReactNode;
   value: React.ReactNode;
   valueClass?: string;
+  tooltip?: string;
   onClick?: () => void;
   active?: boolean;
 }
@@ -206,11 +207,21 @@ export function ChartSummaryFooter({
           );
         }
 
-        const content = (
-          <div className={cellPadding}>
-            <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate whitespace-nowrap">
+        const labelNode = item.tooltip ? (
+          <ActionTooltip content={item.tooltip} side="top">
+            <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate whitespace-nowrap cursor-default">
               {item.label}
             </div>
+          </ActionTooltip>
+        ) : (
+          <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate whitespace-nowrap">
+            {item.label}
+          </div>
+        );
+
+        const content = (
+          <div className={cellPadding}>
+            {labelNode}
             <p
               className={cn(
                 "text-xs sm:text-sm font-bold tabular-nums mt-0.5 truncate",

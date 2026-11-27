@@ -34,8 +34,10 @@ import { cn } from "@/lib/utils";
  */
 const LastSessionTicker = React.memo(function LastSessionTicker({
   items,
+  className,
 }: {
   items: string[];
+  className?: string;
 }) {
   const [activeIdx, setActiveIdx] = React.useState(0);
   const [animating, setAnimating] = React.useState(false);
@@ -60,7 +62,7 @@ const LastSessionTicker = React.memo(function LastSessionTicker({
   const currentItem = items[activeIdx] ?? items[0] ?? "-";
 
   return (
-    <span className="inline-flex items-center overflow-hidden h-7 sm:h-8">
+    <span className={cn("inline-flex items-center overflow-hidden h-7 sm:h-8", className)}>
       <span
         className={cn(
           "inline-block transition-all duration-300 ease-out",
@@ -278,17 +280,18 @@ export function ProfileOverviewPage() {
                   TER {effectivePtkp.terCategory}
                 </span>
               </div>
-              <div>
-                <p
-                  data-testid="overview-ptkp-value"
-                  className="text-sm sm:text-base font-bold text-foreground mt-1.5 tracking-tight truncate"
-                >
-                  {effectivePtkp.code}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 truncate font-mono">
-                  {formatRupiah(effectivePtkp.annualValue)}/th
-                </p>
-              </div>
+              <p
+                data-testid="overview-ptkp-value"
+                className="text-sm sm:text-base font-bold text-foreground mt-1.5 tracking-tight truncate flex items-center h-6"
+              >
+                <LastSessionTicker
+                  className="h-6"
+                  items={[
+                    effectivePtkp.code,
+                    `${formatRupiah(effectivePtkp.annualValue)}/th`,
+                  ]}
+                />
+              </p>
             </div>
 
             <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-border transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">

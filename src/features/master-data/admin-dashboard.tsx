@@ -1310,10 +1310,17 @@ export function AdminDashboardPage() {
           footer={
             <ChartSummaryFooter
               items={agingBuckets.map((b) => ({
+                tooltip: `${b.label}: ${formatCompactRupiah(b.amount)}`,
                 label: (
                   <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap min-w-0">
                     <span className={cn("size-2 rounded-full shrink-0", b.dotColor)} />
-                    <span className="text-[10px] sm:text-[11px] font-medium tracking-tight whitespace-nowrap truncate">{b.label}</span>
+                    <TruncatedTooltipText
+                      as="span"
+                      tooltipText={b.label}
+                      className="text-[10px] sm:text-[11px] font-medium tracking-tight whitespace-nowrap truncate min-w-0 block"
+                    >
+                      {b.label}
+                    </TruncatedTooltipText>
                   </div>
                 ),
                 value: formatCompactRupiah(b.amount),
