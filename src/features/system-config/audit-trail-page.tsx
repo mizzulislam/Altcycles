@@ -194,7 +194,7 @@ export function AuditTrailPage() {
               >
                 <ArrowUpDownIcon className="size-3.5" />
                 <span>
-                  {t("common:action.order", "Urutan:")} {sortOrder === "asc" ? t("common:action.oldest", "Terlama") : t("common:action.newest", "Terbaru")}
+                  {t("common:action.order", "Urutan:")} {sortOrder === "asc" ? t("common:sort.ascending", "Ascending (A-Z)") : t("common:sort.descending", "Descending (Z-A)")}
                 </span>
               </Button>
             </div>

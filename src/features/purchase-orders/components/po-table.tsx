@@ -209,7 +209,7 @@ export function PoTable({
                 setSortOrder(order);
               }}
               defaultSortKey="date"
-              defaultSortOrder="desc"
+              defaultSortOrder="asc"
             />
 
             <SectionEditControls

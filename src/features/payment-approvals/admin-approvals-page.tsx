@@ -119,7 +119,7 @@ export function AdminApprovalsPage() {
   const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
   const [sortKey, setSortKey] = React.useState<"date" | "number" | "amount" | "requester">("date");
-  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc");
   const [loading, setLoading] = React.useState(true);
 
   // Dialog Persetujuan (dengan tanggal akuntansi untuk posting akrual D Beban / K Utang)
@@ -512,7 +512,7 @@ export function AdminApprovalsPage() {
                   setSortDirection(dir);
                 }}
                 defaultKey="date"
-                defaultDirection="desc"
+                defaultDirection="asc"
               />
               <ExportDownloadMenu
                 label={t("common:action.export_download", "Unduh / Ekspor")}

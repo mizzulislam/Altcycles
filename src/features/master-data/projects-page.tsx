@@ -117,7 +117,7 @@ export function ProjectsPage() {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [sortKey, setSortKey] = React.useState<"start_date" | "code" | "name" | "contract_amount">("start_date");
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = React.useState<string[]>([]);
   const [viewProject, setViewProject] = React.useState<ProjectRow | null>(null);
@@ -438,7 +438,7 @@ export function ProjectsPage() {
                   setSortOrder(order);
                 }}
                 defaultSortKey="start_date"
-                defaultSortOrder="desc"
+                defaultSortOrder="asc"
               />
 
               {!isEditMode ? (

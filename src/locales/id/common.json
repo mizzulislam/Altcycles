@@ -38,10 +38,10 @@
     "tagline": "ERP Keuangan"
   },
   "sort": {
-    "ascending": "Terlama / Menaik (A-Z)",
-    "descending": "Terbaru / Menurun (Z-A)",
-    "short_asc": "Terlama",
-    "short_desc": "Terbaru",
+    "ascending": "Ascending (A-Z)",
+    "descending": "Descending (Z-A)",
+    "short_asc": "Ascending",
+    "short_desc": "Descending",
     "field_title": "Urutkan Berdasarkan",
     "order_title": "Arah Urutan"
   },

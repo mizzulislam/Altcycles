@@ -39,10 +39,10 @@
     "tagline": "Financial ERP"
   },
   "sort": {
-    "ascending": "Oldest / Ascending (A-Z)",
-    "descending": "Newest / Descending (Z-A)",
-    "short_asc": "Oldest",
-    "short_desc": "Newest",
+    "ascending": "Ascending (A-Z)",
+    "descending": "Descending (Z-A)",
+    "short_asc": "Ascending",
+    "short_desc": "Descending",
     "field_title": "Sort By",
     "order_title": "Sort Direction"
   },

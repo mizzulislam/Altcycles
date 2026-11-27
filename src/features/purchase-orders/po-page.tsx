@@ -48,7 +48,7 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingPo, setEditingPo] = React.useState<PurchaseOrderRow | null>(null);
   const [sortField, setSortField] = React.useState<"date" | "number" | "vendor" | "amount">("date");
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedPoIds, setSelectedPoIds] = React.useState<string[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);

@@ -121,16 +121,14 @@ export function MilestonesTab({
                   bundle.milestones.length > 0
                     ? t("projects:milestones.btn_reset", "Atur Ulang Termin")
                     : t("projects:milestones.btn_setup", "Atur Termin");
+                const tooltipText = isResetDisabled
+                  ? t("projects:milestones.btn_reset_disabled_title")
+                  : buttonLabel;
                 return (
-                  <ActionTooltip content={buttonLabel}>
+                  <ActionTooltip content={tooltipText}>
                     <button
                       type="button"
                       disabled={isResetDisabled}
-                      title={
-                        isResetDisabled
-                          ? t("projects:milestones.btn_reset_disabled_title")
-                          : buttonLabel
-                      }
                       onClick={openMilestonesEditor}
                       className={TOOLBAR_BUTTON_CLASS}
                       aria-label={buttonLabel}

@@ -109,7 +109,7 @@ export function JournalsPage({
     filterMode === "adjusting" ? "adjustment" : initialTypeFilter,
   );
   const [sortKey, setSortKey] = React.useState<"date" | "number" | "description">("date");
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
 
   // Form Jurnal Baru & Edit (Umum / Penyesuaian)
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -718,7 +718,7 @@ export function JournalsPage({
                   setSortOrder(dir);
                 }}
                 defaultKey="date"
-                defaultDirection="desc"
+                defaultDirection="asc"
               />
 
               {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (

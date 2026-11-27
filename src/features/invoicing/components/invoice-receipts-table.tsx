@@ -84,8 +84,8 @@ export function InvoiceReceiptsTable({
               <span>
                 {t("common:action.order", "Urutan")}:{" "}
                 {receiptSortOrder === "asc"
-                  ? t("common:action.oldest", "Terlama")
-                  : t("common:action.newest", "Terbaru")}
+                  ? t("common:sort.ascending", "Ascending (A-Z)")
+                  : t("common:sort.descending", "Descending (Z-A)")}
               </span>
             </button>
             <SectionEditControls

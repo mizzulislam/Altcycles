@@ -66,7 +66,7 @@ export function PeriodsPage({
   const [reverseOpen, setReverseOpen] = React.useState(false);
 
   // Closing journal table state
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [selectedClosingIds, setSelectedClosingIds] = React.useState<string[]>([]);
   const [selectedDetailJournal, setSelectedDetailJournal] = React.useState<JournalRow | null>(null);

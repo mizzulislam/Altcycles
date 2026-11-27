@@ -156,7 +156,7 @@ export function InvoicingTable({
                 setInvoiceSortOrder(order);
               }}
               defaultSortKey="date"
-              defaultSortOrder="desc"
+              defaultSortOrder="asc"
             />
 
             <SectionEditControls

@@ -83,9 +83,9 @@ export function InvoicingPage() {
 
   // Sort & Edit Mode untuk Daftar Invoice Klien dan Kuitansi Bukti Pembayaran
   const [invoiceSortField, setInvoiceSortField] = React.useState<"date" | "due_date" | "number" | "amount">("date");
-  const [invoiceSortOrder, setInvoiceSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [invoiceSortOrder, setInvoiceSortOrder] = React.useState<"asc" | "desc">("asc");
   const [invoiceStatusFilter, setInvoiceStatusFilter] = React.useState<string>("all");
-  const [receiptSortOrder, setReceiptSortOrder] = React.useState<"asc" | "desc">("desc");
+  const [receiptSortOrder, setReceiptSortOrder] = React.useState<"asc" | "desc">("asc");
   const [isEditingInvoices, setIsEditingInvoices] = React.useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = React.useState<string[]>([]);
   const [isEditingReceipts, setIsEditingReceipts] = React.useState(false);

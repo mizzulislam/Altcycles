@@ -57,9 +57,9 @@ export function TableSortMenu<T extends string = string>({
   const getOptValue = (opt?: SortFieldOption<T>): T => (opt ? (opt.value ?? opt.key) : "") as T;
 
   const activeKey = (sortKey ?? selectedKey ?? getOptValue(options[0])) as T;
-  const activeOrder = (sortOrder ?? sortDirection ?? "desc") as "asc" | "desc";
+  const activeOrder = (sortOrder ?? sortDirection ?? "asc") as "asc" | "desc";
   const effectiveDefaultKey = (defaultSortKey ?? defaultKey ?? getOptValue(options[0])) as T;
-  const effectiveDefaultOrder = (defaultSortOrder ?? defaultDirection ?? "desc") as "asc" | "desc";
+  const effectiveDefaultOrder = (defaultSortOrder ?? defaultDirection ?? "asc") as "asc" | "desc";
 
   const isDefault =
     activeKey === effectiveDefaultKey && activeOrder === effectiveDefaultOrder;
@@ -67,9 +67,9 @@ export function TableSortMenu<T extends string = string>({
   const currentOption = options.find((opt) => getOptValue(opt) === activeKey) ?? options[0];
 
   const resolvedAscLabel =
-    ascLabel || t("common:sort.ascending", "Terlama / Menaik (A-Z)");
+    ascLabel || t("common:sort.ascending", "Ascending (A-Z)");
   const resolvedDescLabel =
-    descLabel || t("common:sort.descending", "Terbaru / Menurun (Z-A)");
+    descLabel || t("common:sort.descending", "Descending (Z-A)");
 
   const updatePosition = React.useCallback(() => {
     if (!triggerRef.current) return null;
@@ -138,8 +138,8 @@ export function TableSortMenu<T extends string = string>({
   const activeDisplayLabel =
     buttonLabel ||
     (activeOrder === "desc"
-      ? `${currentOption?.label ?? ""} (${t("common:sort.short_desc", "Terbaru")})`
-      : `${currentOption?.label ?? ""} (${t("common:sort.short_asc", "Terlama")})`);
+      ? `${currentOption?.label ?? ""} (${t("common:sort.short_desc", "Descending")})`
+      : `${currentOption?.label ?? ""} (${t("common:sort.short_asc", "Ascending")})`);
 
   const trigger = isDefault ? (
     <ActionTooltip content={t("common:action.sort", "Urutan data")}>
@@ -234,24 +234,6 @@ export function TableSortMenu<T extends string = string>({
               <button
                 type="button"
                 role="menuitemradio"
-                aria-checked={activeOrder === "desc"}
-                onClick={() => {
-                  onSortChange(activeKey, "desc");
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-colors text-left",
-                  activeOrder === "desc"
-                    ? "bg-primary/15 text-primary font-semibold dark:text-sky-300"
-                    : "text-foreground hover:bg-muted/70",
-                )}
-              >
-                <span className="truncate">{resolvedDescLabel}</span>
-              </button>
-
-              <button
-                type="button"
-                role="menuitemradio"
                 aria-checked={activeOrder === "asc"}
                 onClick={() => {
                   onSortChange(activeKey, "asc");
@@ -265,6 +247,24 @@ export function TableSortMenu<T extends string = string>({
                 )}
               >
                 <span className="truncate">{resolvedAscLabel}</span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={activeOrder === "desc"}
+                onClick={() => {
+                  onSortChange(activeKey, "desc");
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-colors text-left",
+                  activeOrder === "desc"
+                    ? "bg-primary/15 text-primary font-semibold dark:text-sky-300"
+                    : "text-foreground hover:bg-muted/70",
+                )}
+              >
+                <span className="truncate">{resolvedDescLabel}</span>
               </button>
             </div>
           </div>,
