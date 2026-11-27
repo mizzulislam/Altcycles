@@ -35,7 +35,12 @@ export const SOCIAL_PLATFORM_OPTIONS = [
  */
 export async function fileToOptimizedDataUrl(
   file: File,
-  options: { maxWidth?: number; maxHeight?: number } = {},
+  options: {
+    maxWidth?: number;
+    maxHeight?: number;
+    format?: "png" | "webp" | "jpeg";
+    quality?: number;
+  } = {},
 ): Promise<string> {
   if (file.size > 3 * 1024 * 1024) {
     throw new Error("Ukuran berkas gambar maksimal 3 MB.");
@@ -46,6 +51,8 @@ export async function fileToOptimizedDataUrl(
 
   const maxWidth = options.maxWidth ?? 640;
   const maxHeight = options.maxHeight ?? 320;
+  const targetFormat = options.format ?? "png";
+  const quality = Math.min(1, Math.max(0.1, options.quality ?? 0.82));
 
   const objectUrl = URL.createObjectURL(file);
   try {
@@ -70,7 +77,20 @@ export async function fileToOptimizedDataUrl(
     ctx.clearRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0, width, height);
 
-    // Selalu simpan sebagai PNG agar transparansi tanda tangan/logo tetap terjaga & kompatibel dengan pdf-lib/docx
+    if (targetFormat === "webp") {
+      try {
+        const webpUrl = canvas.toDataURL("image/webp", quality);
+        if (webpUrl.startsWith("data:image/webp")) {
+          return webpUrl;
+        }
+      } catch {
+        // Fallback jika browser lawas tidak mendukung canvas toDataURL WebP
+      }
+    } else if (targetFormat === "jpeg") {
+      return canvas.toDataURL("image/jpeg", quality);
+    }
+
+    // Default: simpan sebagai PNG agar transparansi tanda tangan/logo tetap terjaga & kompatibel dengan pdf-lib/docx
     return canvas.toDataURL("image/png");
   } finally {
     URL.revokeObjectURL(objectUrl);

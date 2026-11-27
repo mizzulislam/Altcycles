@@ -133,6 +133,7 @@
   "status": {
     "draft": "Draft",
     "sent": "Sent",
+    "partial": "Partially Paid",
     "partially_paid": "Partially Paid",
     "paid": "Paid in Full",
     "unpaid": "Unpaid",

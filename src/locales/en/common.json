@@ -57,6 +57,8 @@
     "remember_me": "Remember me",
     "signin_button": "Sign In",
     "signup_button": "Register",
+    "signin_google": "Sign in with Google",
+    "signup_google": "Sign up with Google",
     "or": "or",
     "buyer_portal_short_link": "Project client? Track with PO number →",
     "buyer_portal_text": "Project client?",

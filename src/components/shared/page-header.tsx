@@ -172,7 +172,7 @@ export function PageHeader({
       <div className="min-w-0 flex-1">
         {badge ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 block w-full">
               <TruncatedTooltipText
                 as="h1"
                 tooltipText={titleTooltip}
@@ -213,7 +213,7 @@ export function PageHeader({
             <div className="shrink-0">{badge}</div>
           </div>
         ) : (
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 block w-full">
             <TruncatedTooltipText
               as="h1"
               tooltipText={titleTooltip}
@@ -253,43 +253,52 @@ export function PageHeader({
           </div>
         )}
         {description ? (
-          <TruncatedTooltipText
-            as="p"
-            tooltipText={descriptionTooltip}
-            className="hidden sm:block text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed"
-          >
-            {description}
-          </TruncatedTooltipText>
+          <div className="min-w-0 flex-1 block w-full">
+            <TruncatedTooltipText
+              as="p"
+              tooltipText={descriptionTooltip}
+              className="hidden sm:block text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed"
+            >
+              {description}
+            </TruncatedTooltipText>
+          </div>
         ) : null}
       </div>
       {actions ? (
-        <>
-          {/* Desktop: Tetap di Header sebelah kanan sejajar */}
-          <div className="hidden sm:flex sm:items-end sm:gap-2 shrink-0 sm:w-auto">
-            {actions}
-          </div>
+        isFloating ? (
+          <>
+            {/* Desktop: Tetap di Header sebelah kanan sejajar */}
+            <div className="hidden sm:flex sm:items-end sm:gap-2 shrink-0 sm:w-auto">
+              {actions}
+            </div>
 
-          {/* Mobile: Floating Action Button (FAB) jika isFloating true, atau jika actions dalam div / default grid 2 */}
-          {isFloating ? (
+            {/* Mobile: Floating Action Button (FAB) jika isFloating true */}
             <div className="sm:hidden fixed bottom-6 right-5 z-50 flex flex-row items-center gap-2.5 pointer-events-auto [filter:drop-shadow(0_10px_15px_rgba(0,0,0,0.15))]">
               <div className="flex flex-row items-center gap-2.5 [&>div]:!flex [&>div]:!flex-row [&>div]:!items-center [&>div]:!gap-2.5 [&>div]:!w-auto [&>div]:!m-0 [&>div]:!p-0 [&_button,&_a]:!relative [&_button,&_a]:!inset-auto [&_button,&_a]:size-12 [&_button,&_a]:rounded-2xl [&_button,&_a]:p-0 [&_button,&_a]:shadow-xl [&_button,&_a]:flex [&_button,&_a]:items-center [&_button,&_a]:justify-center [&_button,&_a]:bg-primary/15 [&_button,&_a]:border [&_button,&_a]:border-primary/30 [&_button,&_a]:text-primary dark:[&_button,&_a]:bg-primary dark:[&_button,&_a]:border-primary/50 dark:[&_button,&_a]:text-white [&_svg]:!size-5.5 [&_svg]:!text-current [&_svg]:!shrink-0 [&_svg.text-muted-foreground]:!hidden [&_svg.lucide-chevron-down]:!hidden [&_span:not(:has(svg))]:!hidden [&_span:has(svg)]:!flex [&_span:has(svg)]:!items-center [&_span:has(svg)]:!justify-center [&_span:has(svg)]:!gap-0 [&_span:has(svg)]:!p-0 [&_span:has(svg)]:!m-0">
                 {actions}
               </div>
             </div>
-          ) : isActionsInDiv ? (
-            <div className="sm:hidden w-full mt-3">{actions}</div>
-          ) : childCount === 1 ? (
-            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
-              <div className="col-start-2 w-full">
+          </>
+        ) : (
+          <div
+            className={cn(
+              "shrink-0 sm:w-auto sm:flex sm:items-end sm:gap-2",
+              isActionsInDiv
+                ? "w-full mt-3 sm:mt-0"
+                : childCount === 1
+                  ? "w-full mt-3 sm:mt-0 grid grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center"
+                  : "w-full mt-3 sm:mt-0 grid grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center",
+            )}
+          >
+            {childCount === 1 && !isActionsInDiv ? (
+              <div className="col-start-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2">
                 {actions}
               </div>
-            </div>
-          ) : (
-            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
-              {actions}
-            </div>
-          )}
-        </>
+            ) : (
+              actions
+            )}
+          </div>
+        )
       ) : null}
     </div>
   );

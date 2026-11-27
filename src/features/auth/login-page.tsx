@@ -131,6 +131,18 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   const [activeSlideIndex, setActiveSlideIndex] = React.useState(0);
   const [isBannerHovered, setIsBannerHovered] = React.useState(false);
 
+  // Status pemuatan & fallback per slide agar tidak pernah menampilkan layar gelap/kosong
+  const [loadedSlideIds, setLoadedSlideIds] = React.useState<Record<string, boolean>>({});
+  const [failedSlideIds, setFailedSlideIds] = React.useState<Record<string, boolean>>({});
+
+  const markSlideLoaded = React.useCallback((id: string) => {
+    setLoadedSlideIds((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
+
+  const markSlideFailed = React.useCallback((id: string) => {
+    setFailedSlideIds((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
+
   React.useEffect(() => {
     let active = true;
     void listActiveLoginMedia()
@@ -159,27 +171,39 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
     };
   }, []);
 
-  // Preload seluruh gambar slide agar perpindahan carousel maupun reload instan
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    for (const slide of mediaSlides) {
-      const preloader = new Image();
-      preloader.src = slide.image_url;
-    }
-  }, [mediaSlides]);
-
   const effectiveSlideCount = mediaSlides.length;
+  const safeSlideIndex =
+    effectiveSlideCount > 0 ? activeSlideIndex % effectiveSlideCount : 0;
+
+  // Prefetch bertahap: dahulukan slide aktif dan slide berikutnya agar tidak membebani jaringan/CPU di awal
+  React.useEffect(() => {
+    if (typeof window === "undefined" || mediaSlides.length === 0) return;
+    const currentSlide = mediaSlides[safeSlideIndex];
+    if (currentSlide && !loadedSlideIds[currentSlide.id] && !failedSlideIds[currentSlide.id]) {
+      const img = new Image();
+      img.onload = () => markSlideLoaded(currentSlide.id);
+      img.onerror = () => markSlideFailed(currentSlide.id);
+      img.src = currentSlide.image_url;
+    }
+    // Prefetch slide berikutnya secara bertahap
+    const nextIdx = (safeSlideIndex + 1) % mediaSlides.length;
+    const nextSlide = mediaSlides[nextIdx];
+    if (nextSlide && !loadedSlideIds[nextSlide.id] && !failedSlideIds[nextSlide.id]) {
+      const nextImg = new Image();
+      nextImg.onload = () => markSlideLoaded(nextSlide.id);
+      nextImg.onerror = () => markSlideFailed(nextSlide.id);
+      nextImg.src = nextSlide.image_url;
+    }
+  }, [mediaSlides, safeSlideIndex, loadedSlideIds, failedSlideIds, markSlideLoaded, markSlideFailed]);
 
   React.useEffect(() => {
     if (effectiveSlideCount <= 1 || isBannerHovered) return;
     const timer = window.setInterval(() => {
       setActiveSlideIndex((prev) => (prev + 1) % effectiveSlideCount);
-    }, 3200);
+    }, 5500); // 5.5 detik: durasi nyaman untuk membaca banner & waktu decode gambar aman
     return () => window.clearInterval(timer);
   }, [effectiveSlideCount, isBannerHovered]);
 
-  const safeSlideIndex =
-    effectiveSlideCount > 0 ? activeSlideIndex % effectiveSlideCount : 0;
   const currentMedia = mediaSlides[safeSlideIndex] ?? null;
   const displayCategoryLabels = {
     banner: "Banner Utama",
@@ -451,24 +475,50 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             <div className="relative w-full h-full">
               {mediaSlides.map((slide, idx) => {
                 const isSlideActive = idx === safeSlideIndex;
+                const isLoaded = Boolean(loadedSlideIds[slide.id]);
+                const isFailed = Boolean(failedSlideIds[slide.id]);
+
                 return (
                   <div
                     key={slide.id}
                     aria-hidden={!isSlideActive}
-                    className={`absolute inset-0 transition-opacity duration-500 ease-out ${
+                    className={`absolute inset-0 transition-opacity duration-700 ease-out ${
                       isSlideActive
                         ? "opacity-100 z-10"
                         : "opacity-0 z-0 pointer-events-none"
                     }`}
                   >
-                    {slide.category === "banner" ? (
+                    {/* Shimmer halus saat gambar slide sedang diunduh/decode */}
+                    {!isLoaded && !isFailed && (
+                      <div className="absolute inset-0 z-0 bg-slate-950 flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:44px_44px]" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-sky-500/10 to-slate-950 animate-pulse" />
+                      </div>
+                    )}
+
+                    {isFailed ? (
+                      /* Fallback elegan jika gambar gagal dimuat */
+                      <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center p-8 text-center">
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:44px_44px]" />
+                        <div className="relative z-10 space-y-2 max-w-sm">
+                          <span className="text-[11px] font-bold uppercase tracking-widest text-sky-400">
+                            Altcycles ERP
+                          </span>
+                          <h3 className="text-base font-bold text-white">{slide.title}</h3>
+                        </div>
+                      </div>
+                    ) : slide.category === "banner" ? (
                       <img
                         src={slide.image_url}
                         alt={slide.title}
-                        loading="eager"
+                        loading={idx === 0 ? "eager" : "lazy"}
                         decoding="async"
                         fetchPriority={idx === 0 ? "high" : "auto"}
-                        className="w-full h-full object-cover"
+                        onLoad={() => markSlideLoaded(slide.id)}
+                        onError={() => markSlideFailed(slide.id)}
+                        className={`w-full h-full object-cover transition-opacity duration-500 ${
+                          isLoaded ? "opacity-100" : "opacity-0"
+                        }`}
                       />
                     ) : (
                       <div className="relative w-full h-full flex items-center justify-center p-10 bg-slate-950">
@@ -476,17 +526,21 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           src={slide.image_url}
                           alt=""
                           aria-hidden="true"
-                          loading="eager"
+                          loading="lazy"
                           decoding="async"
                           className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-35"
                         />
                         <img
                           src={slide.image_url}
                           alt={slide.title}
-                          loading="eager"
+                          loading={idx === 0 ? "eager" : "lazy"}
                           decoding="async"
                           fetchPriority={idx === 0 ? "high" : "auto"}
-                          className="relative z-10 max-h-[78vh] max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/15"
+                          onLoad={() => markSlideLoaded(slide.id)}
+                          onError={() => markSlideFailed(slide.id)}
+                          className={`relative z-10 max-h-[78vh] max-w-full rounded-2xl object-contain shadow-2xl ring-1 ring-white/15 transition-opacity duration-500 ${
+                            isLoaded ? "opacity-100" : "opacity-0"
+                          }`}
                         />
                       </div>
                     )}

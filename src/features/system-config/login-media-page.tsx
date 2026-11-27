@@ -1153,6 +1153,8 @@ export function LoginMediaPage() {
                 onChange={setImageUrlInput}
                 maxWidth={1440}
                 maxHeight={1800}
+                format="webp"
+                quality={0.82}
                 containImage={categoryInput !== "banner"}
                 previewHeightClassName="h-44"
               />

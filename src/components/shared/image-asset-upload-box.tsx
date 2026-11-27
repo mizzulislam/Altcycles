@@ -16,6 +16,8 @@ export interface ImageAssetUploadBoxProps {
   onChange: (nextDataUrl: string | null) => void;
   maxWidth?: number;
   maxHeight?: number;
+  format?: "png" | "webp" | "jpeg";
+  quality?: number;
   containImage?: boolean;
   required?: boolean;
   previewHeightClassName?: string;
@@ -31,6 +33,8 @@ export function ImageAssetUploadBox({
   onChange,
   maxWidth = 640,
   maxHeight = 320,
+  format,
+  quality,
   containImage = true,
   required = false,
   previewHeightClassName = "h-[96px]",
@@ -45,6 +49,8 @@ export function ImageAssetUploadBox({
       const optimized = await fileToOptimizedDataUrl(file, {
         maxWidth,
         maxHeight,
+        format,
+        quality,
       });
       onChange(optimized);
       toast.success(`${label} berhasil diperbarui.`);

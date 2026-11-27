@@ -133,6 +133,7 @@
   "status": {
     "draft": "Draf",
     "sent": "Terkirim",
+    "partial": "Sebagian Terbayar",
     "partially_paid": "Sebagian Terbayar",
     "paid": "Lunas",
     "unpaid": "Belum Lunas",
