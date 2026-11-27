@@ -593,7 +593,7 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       {/* A1: Header Halaman + Filter Periode Global + Unduh/Ekspor */}
       <PageHeader
         title={t("dashboard.title", "Dasbor Keuangan & Akuntansi")}
@@ -602,7 +602,7 @@ export function AdminDashboardPage() {
           "Pantau likuiditas kas, kinerja laba rugi, piutang, dan aktivitas jurnal perusahaan.",
         )}
         actions={
-          <>
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
             <PeriodFilter
               value={periodFilter}
               onChange={(val, start, end) => {
@@ -620,7 +620,7 @@ export function AdminDashboardPage() {
               onExportPdf={handleBackupExportPdf}
               onExportCsv={handleBackupExportCsv}
             />
-          </>
+          </div>
         }
       />
 
@@ -907,32 +907,24 @@ export function AdminDashboardPage() {
             "Jumlah jurnal terposting per bulan kalender.",
           )}
           controls={
-            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setTxFreqMode("area")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                  txFreqMode === "area"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("dashboard:charts.types.area", "Area")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTxFreqMode("histogram")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                  txFreqMode === "histogram"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("dashboard:charts.types.histogram", "Histogram")}
-              </button>
-            </div>
+            <ChartTypeSwitcher
+              value={txFreqMode}
+              onChange={(val) => setTxFreqMode(val as "area" | "histogram")}
+              options={[
+                {
+                  value: "area",
+                  label: t("dashboard:charts.types.area", "Area"),
+                  title: t("dashboard:charts.types.area_title", "Area Chart"),
+                  icon: ActivityIcon,
+                },
+                {
+                  value: "histogram",
+                  label: t("dashboard:charts.types.histogram", "Histogram"),
+                  title: t("dashboard:charts.types.histogram_title", "Histogram"),
+                  icon: BarChart3Icon,
+                },
+              ]}
+            />
           }
           footer={
             txFreqMode === "histogram" ? (

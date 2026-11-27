@@ -203,7 +203,7 @@ describe("Polesan Mobile Halaman Persetujuan Pembayaran & Shared Components", ()
     expect(infoButton).toBeInTheDocument();
   });
 
-  it("PageHeader mobile: multiple floating action buttons tersusun vertikal di pojok kanan bawah", () => {
+  it("PageHeader mobile: multiple floating action buttons tersusun horizontal di pojok kanan bawah dengan icon terlihat", () => {
     const { container } = render(
       <PageHeader
         title="Anggaran Proyek"
@@ -222,9 +222,13 @@ describe("Polesan Mobile Halaman Persetujuan Pembayaran & Shared Components", ()
 
     const fabContainer = container.querySelector(".sm\\:hidden.fixed.bottom-6.right-5");
     expect(fabContainer).toBeInTheDocument();
+    expect(fabContainer?.className).toContain("flex-row");
     const buttons = fabContainer?.querySelectorAll("button");
-    // Ada 2 tombol aksi melayang
+    // Ada 2 tombol aksi melayang horizontal
     expect(buttons?.length).toBe(2);
+    // Memastikan icon SVG tetap dirender di dalam tombol melayang
+    const svgs = fabContainer?.querySelectorAll("svg");
+    expect(svgs && svgs.length > 0).toBe(true);
   });
 
   it("Empty state adaptif dvh: halaman mobile mengisi layar dengan struktur flex kolom & flex-1 tanpa tinggi tetap", () => {
