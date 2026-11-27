@@ -75,6 +75,7 @@ import {
   recordExportLog,
 } from "@/lib/operations-service";
 import { downloadPdfBytes, generateDocumentPdf } from "@/lib/pdf-generator";
+import { renderDashboardChartsToPng } from "@/lib/pdf/dashboard-chart-renderer";
 import { cn } from "@/lib/utils";
 import type {
   AccountRow,
@@ -566,6 +567,26 @@ export function AdminDashboardPage() {
     for (const p of projectBillingStats) {
       rows.push([p.code, p.name, p.contract, `${formatRupiah(p.billed)} (${p.pct}%)`]);
     }
+    rows.push(["", "", "", ""]);
+
+    // Seksi 4: 5 Transaksi Jurnal Terakhir
+    rows.push([
+      t("dashboard:charts.col_date", "Tanggal"),
+      t("dashboard:charts.col_journal_no", "No. Jurnal"),
+      t("dashboard:charts.col_desc", "Keterangan"),
+      t("dashboard:charts.col_amount", "Nominal (IDR)"),
+    ]);
+    for (const j of recentJournals) {
+      const jLines = lines.filter((l) => l.journal_id === j.id);
+      const totalDebit = jLines.reduce((s, l) => s + l.debit, 0);
+      const desc = getLocalizedTransactionDescription(j.description, language);
+      rows.push([
+        formatDateI18n(j.journal_date, language),
+        j.journal_number,
+        desc,
+        totalDebit,
+      ]);
+    }
 
     await downloadExcelSheet({
       fileName: t("dashboard:export.excel_filename"),
@@ -713,7 +734,40 @@ export function AdminDashboardPage() {
           { label: "Total Saldo Kas & Bank", value: formatRupiah(cashPosition.endingCash) },
         ],
       },
+      {
+        title: "5. CATATAN 5 TRANSAKSI JURNAL TERAKHIR",
+        subtitle: t("dashboard:charts.recent_5_tx_subtitle", "Catatan transaksi jurnal terposting paling mutakhir"),
+        tableColumns: [
+          { header: t("dashboard:charts.col_date", "Tanggal"), widthRatio: 0.14, align: "center" as const },
+          { header: t("dashboard:charts.col_journal_no", "No. Jurnal"), widthRatio: 0.18, align: "center" as const },
+          { header: t("dashboard:charts.col_desc", "Keterangan"), widthRatio: 0.36, align: "left" as const },
+          { header: t("dashboard:charts.col_main_account", "Akun Utama"), widthRatio: 0.18, align: "left" as const },
+          { header: t("dashboard:charts.col_amount", "Nominal"), widthRatio: 0.14, align: "right" as const },
+        ],
+        tableRows: recentJournals.map((j) => {
+          const jLines = lines.filter((l) => l.journal_id === j.id);
+          const firstLine = jLines[0];
+          const mainAcc = firstLine ? accMap.get(firstLine.account_id) : null;
+          const totalDebit = jLines.reduce((s, l) => s + l.debit, 0);
+          const desc = getLocalizedTransactionDescription(j.description, language);
+          return [
+            formatDateI18n(j.journal_date, language),
+            j.journal_number,
+            desc,
+            mainAcc ? `${mainAcc.code} - ${mainAcc.name}` : "-",
+            formatRupiah(totalDebit),
+          ];
+        }),
+      },
     ];
+
+    const chartAttachments = await renderDashboardChartsToPng({
+      monthlySeries,
+      incomeStatement,
+      agingBuckets,
+      totalReceivable: outstandingReceivable,
+      language,
+    });
 
     const bytes = await generateDocumentPdf({
       orientation: "landscape",
@@ -746,6 +800,7 @@ export function AdminDashboardPage() {
         },
       ],
       sections,
+      chartAttachments,
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
     downloadPdfBytes(bytes, t("dashboard:export.excel_filename").replace(".xlsx", ".pdf"));
@@ -809,6 +864,17 @@ export function AdminDashboardPage() {
     }
     for (const p of projectBillingStats) {
       rows.push([p.code, p.name, p.contract, `Billed: ${p.billed} (${p.pct}%)`]);
+    }
+    for (const j of recentJournals) {
+      const jLines = lines.filter((l) => l.journal_id === j.id);
+      const totalDebit = jLines.reduce((s, l) => s + l.debit, 0);
+      const desc = getLocalizedTransactionDescription(j.description, language);
+      rows.push([
+        "5 Transaksi Terakhir",
+        totalDebit,
+        j.journal_number,
+        `${formatDateI18n(j.journal_date, language)} - ${desc}`,
+      ]);
     }
 
     downloadCsvFile(

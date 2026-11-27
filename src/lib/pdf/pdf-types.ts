@@ -79,6 +79,13 @@ export interface PdfDocumentSpec {
   watermarkText?: string | null;
   bannerBox?: PdfBannerBox;
   sections?: PdfDocumentSection[];
+  chartAttachments?: PdfChartAttachment[];
+}
+
+export interface PdfChartAttachment {
+  title: string;
+  subtitle?: string;
+  imageBytes: Uint8Array;
 }
 
 export interface PdfBannerBox {

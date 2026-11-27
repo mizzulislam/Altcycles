@@ -3101,6 +3101,115 @@ async function renderDocumentPdfInternal(
   }
 
   // ==========================================================================
+  // KOMPONEN 7B: HALAMAN KHUSUS LAMPIRAN GRAFIK (JIKA TERSEDIA)
+  // ==========================================================================
+  if (spec.chartAttachments && spec.chartAttachments.length > 0) {
+    page = pdfDoc.addPage([pageWidth, pageHeight]);
+    pages.push(page);
+    pageIndex = pages.length - 1;
+    y = pageHeight - marginTop;
+    drawDocumentHeader();
+
+    const isEn = Boolean(
+      spec.language?.startsWith("en") || getActiveLanguage() === "en",
+    );
+    const lampiranH = 34;
+    const lampiranTopY = y;
+    const lampiranBottomY = lampiranTopY - lampiranH;
+
+    page.drawRectangle({
+      x: marginX,
+      y: lampiranBottomY,
+      width: contentWidth,
+      height: lampiranH,
+      color: CHIP_BG,
+      borderColor: BORDER_GRAY,
+      borderWidth: 0.75,
+    });
+
+    const lampiranTitle = isEn
+      ? "ATTACHMENT: FINANCIAL DASHBOARD CHARTS & VISUALIZATIONS"
+      : "LAMPIRAN: VISUALISASI GRAFIK DASBOR KEUANGAN";
+    const lampiranSub = isEn
+      ? "Visual representation of financial trends, revenue & expense breakdown, AR aging, and transaction activity"
+      : "Visualisasi grafik tren kinerja keuangan bulanan, komposisi pendapatan & beban, serta sebaran umur piutang";
+
+    drawTrackedText(
+      lampiranTitle,
+      {
+        x: marginX + 10,
+        y: lampiranTopY - 14,
+        size: 9.5,
+        font: fontBold,
+        color: TEXT_DARK,
+      },
+      "D-lampiran-title",
+    );
+
+    drawTrackedText(
+      lampiranSub,
+      {
+        x: marginX + 10,
+        y: lampiranTopY - 26,
+        size: 8,
+        font: fontRegular,
+        color: TEXT_LABEL,
+      },
+      "D-lampiran-sub",
+    );
+
+    y = lampiranBottomY - 12;
+
+    const chartGapX = 14;
+    const chartGapY = 12;
+    const chartW = (contentWidth - chartGapX) / 2;
+    const chartH = 168;
+
+    for (let i = 0; i < spec.chartAttachments.length; i++) {
+      const chart = spec.chartAttachments[i]!;
+      const row = Math.floor(i / 2);
+      const col = i % 2;
+
+      const chartX = marginX + col * (chartW + chartGapX);
+      const chartY = y - (row + 1) * chartH - row * chartGapY;
+
+      // Draw container frame
+      page.drawRectangle({
+        x: chartX,
+        y: chartY,
+        width: chartW,
+        height: chartH,
+        color: rgb(1, 1, 1),
+        borderColor: BORDER_GRAY,
+        borderWidth: 0.75,
+      });
+
+      // Embed & draw chart image
+      try {
+        const embeddedImg = await pdfDoc.embedPng(chart.imageBytes);
+        page.drawImage(embeddedImg, {
+          x: chartX + 1,
+          y: chartY + 1,
+          width: chartW - 2,
+          height: chartH - 2,
+        });
+      } catch (err) {
+        drawTrackedText(
+          chart.title,
+          {
+            x: chartX + 10,
+            y: chartY + chartH - 20,
+            size: 9,
+            font: fontBold,
+            color: TEXT_DARK,
+          },
+          "D-chart-fallback-title",
+        );
+      }
+    }
+  }
+
+  // ==========================================================================
   // KOMPONEN 8: FOOTER (ZONA I) DI SETIAP HALAMAN
   // ==========================================================================
   await drawSocialMediaFooters({
