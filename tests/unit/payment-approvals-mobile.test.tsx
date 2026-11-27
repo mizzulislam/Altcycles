@@ -147,4 +147,56 @@ describe("Polesan Mobile Halaman Persetujuan Pembayaran & Shared Components", ()
     expect(rootDiv).toBeInTheDocument();
     expect(rootDiv.scrollWidth).toBeLessThanOrEqual(375);
   });
+
+  it("KPI Opsi B mobile: mendukung tata letak horizontal scrollable (snap-x, w-[82%])", () => {
+    const { container } = render(
+      <BrowserRouter>
+        <div className="flex sm:grid gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar sm:grid-cols-3 snap-x snap-mandatory pb-1">
+          <KpiCard
+            compactMobile
+            className="w-[82%] sm:w-auto shrink-0 snap-start"
+            label="Menunggu Persetujuan Admin"
+            value={0}
+            icon={ClockIcon}
+          />
+          <KpiCard
+            compactMobile
+            className="w-[82%] sm:w-auto shrink-0 snap-start"
+            label="Disetujui & Siap Dicairkan"
+            value={0}
+            icon={ClockIcon}
+          />
+        </div>
+      </BrowserRouter>,
+    );
+
+    const kpiRow = container.querySelector(".overflow-x-auto.snap-x");
+    expect(kpiRow).toBeInTheDocument();
+    const cards = container.querySelectorAll(".snap-start");
+    expect(cards.length).toBe(2);
+    expect(cards[0]?.className).toContain("w-[82%]");
+  });
+
+  it("Empty state adaptif dvh: halaman mobile mengisi layar dengan struktur flex kolom & flex-1 tanpa tinggi tetap", () => {
+    const { container } = render(
+      <div className="flex flex-col gap-4 sm:gap-6 max-sm:flex-1 max-sm:min-h-[calc(100dvh-5.5rem)]">
+        <PageHeader title="Persetujuan" />
+        <div className="rounded-2xl max-sm:flex-1 max-sm:flex max-sm:flex-col">
+          <div className="max-sm:flex-1 max-sm:flex max-sm:flex-col">
+            <div className="max-sm:h-full max-sm:flex-1 max-sm:min-h-0 flex flex-col items-center justify-center">
+              <span>Tidak Ada Pengajuan Pembayaran</span>
+            </div>
+          </div>
+        </div>
+      </div>,
+    );
+
+    const root = container.querySelector(".max-sm\\:min-h-\\[calc\\(100dvh-5\\.5rem\\)\\]");
+    expect(root).toBeInTheDocument();
+    const card = container.querySelector(".max-sm\\:flex-1");
+    expect(card).toBeInTheDocument();
+    const emptyState = screen.getByText("Tidak Ada Pengajuan Pembayaran").parentElement;
+    expect(emptyState?.className).toContain("max-sm:flex-1");
+    expect(emptyState?.className).toContain("max-sm:h-full");
+  });
 });

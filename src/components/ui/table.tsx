@@ -4,9 +4,14 @@ import { Spinner } from "@/components/ui/empty";
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-x-auto overflow-y-hidden max-w-full touch-pan-x @container group/table">
+  React.HTMLAttributes<HTMLTableElement> & { wrapperClassName?: string }
+>(({ className, wrapperClassName, ...props }, ref) => (
+  <div
+    className={cn(
+      "relative w-full overflow-x-auto overflow-y-hidden max-w-full touch-pan-x @container group/table",
+      wrapperClassName,
+    )}
+  >
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}

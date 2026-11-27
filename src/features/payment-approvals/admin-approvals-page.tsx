@@ -58,6 +58,7 @@ import {
   TableLoadingRow,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
 import { getCompanyProfile, listAccounts, listProfiles, listProjects } from "@/lib/data-service";
@@ -393,7 +394,7 @@ export function AdminApprovalsPage() {
     .reduce((s, r) => s + r.amount, 0);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:gap-6 max-sm:flex-1 max-sm:min-h-[calc(100dvh-5.5rem)]">
       <PageHeader
         title={t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
         description={t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
@@ -408,10 +409,11 @@ export function AdminApprovalsPage() {
         }
       />
 
-      {/* Ringkasan KPI Persetujuan & Pencairan */}
-      <div className="grid gap-2.5 sm:gap-4 grid-cols-1 sm:grid-cols-3">
+      {/* Ringkasan KPI Persetujuan & Pencairan (Opsi B: horizontal scroll di mobile) */}
+      <div className="flex sm:grid gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar sm:grid-cols-3 snap-x snap-mandatory pb-1 shrink-0">
         <KpiCard
           compactMobile
+          className="w-[82%] sm:w-auto shrink-0 snap-start"
           label={t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
           value={pendingCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -426,6 +428,7 @@ export function AdminApprovalsPage() {
 
         <KpiCard
           compactMobile
+          className="w-[82%] sm:w-auto shrink-0 snap-start"
           label={t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
           value={approvedUnpaidCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -440,6 +443,7 @@ export function AdminApprovalsPage() {
 
         <KpiCard
           compactMobile
+          className="w-[82%] sm:w-auto shrink-0 snap-start"
           label={t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
           displayValue={formatRupiah(totalPaidAmount)}
           subtext={t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}
@@ -448,7 +452,7 @@ export function AdminApprovalsPage() {
         />
       </div>
 
-      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+      <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden max-sm:flex-1 max-sm:flex max-sm:flex-col">
         <CardHeaderWithInfo
           title={t("approvals:admin.card_title", "Daftar Pengajuan Pembayaran Tim")}
           description={t("approvals:admin.card_desc", "Periksa bukti lampiran pengeluaran sebelum menyetujui atau menolak permohonan dana.")}
@@ -471,8 +475,8 @@ export function AdminApprovalsPage() {
             </div>
           }
         />
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 max-sm:flex-1 max-sm:flex max-sm:flex-col">
+          <Table wrapperClassName="max-sm:flex-1 max-sm:flex max-sm:flex-col" className="max-sm:flex-1 max-sm:h-full">
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
                 <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
@@ -498,16 +502,16 @@ export function AdminApprovalsPage() {
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className={cn(filteredRequests.length === 0 && "max-sm:h-full")}>
               {loading ? (
                 <TableLoadingRow
                   colSpan={7}
                   message={t("common:action.loading", "Memuat data...")}
                 />
               ) : filteredRequests.length === 0 ? (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={7} className="p-0">
-                      <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
+                  <TableRow className={cn("hover:bg-transparent", "max-sm:h-full")}>
+                    <TableCell colSpan={7} className="p-0 align-middle max-sm:h-full">
+                      <div className="flex flex-col items-center justify-center py-8 px-4 text-center border-t border-dashed border-border/70 bg-muted/10 max-sm:h-full max-sm:flex-1 max-sm:min-h-0">
                         <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
                           <ReceiptTextIcon className="size-6" />
                         </div>

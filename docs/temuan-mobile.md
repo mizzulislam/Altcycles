@@ -73,7 +73,13 @@ Dokumen ini mencatat log verifikasi, temuan observasi, dan status pengujian resp
    - Menggunakan prop aditif `compactMobile` pada `KpiCard`.
    - Padding `max-sm:px-3.5 max-sm:py-2.5 max-sm:gap-1.5`, ikon `max-sm:size-8`, svg `max-sm:size-4`, nominal `max-sm:text-[17px]`, subtext tetap tampil.
    - Tinggi per kartu tercapai ~78px (memenuhi target <= 84px).
-   - Opsi A (3 baris ringkas bertumpuk) diaktifkan sebagai default dengan total tinggi ~254px (dibandingkan Opsi B horizontal scroll ~82px).
-4. **Catatan Audit Pengujian (Pra-ada di Luar Lingkup Langkah 1):**
+   - Pengguna menyetujui **Opsi B** (tiga kartu dalam satu baris dengan geser horizontal / carousel: `overflow-x-auto no-scrollbar snap-x snap-mandatory`, lebar `w-[82%]` peek-in) dengan total tinggi hanya **~82 px**, menghemat ~298 px ruang vertikal layar.
+4. **Halaman Adaptif dvh & Empty State Fleksibel (Langkah 2: Item 3):**
+   - Kontainer root halaman mobile menggunakan `max-sm:flex-1 max-sm:min-h-[calc(100dvh-5.5rem)]` sehingga mengisi penuh tinggi layar ponsel secara alami.
+   - Kartu daftar dan `CardContent` di mobile menggunakan `max-sm:flex-1 max-sm:flex max-sm:flex-col`.
+   - `Table` dilengkapi prop aditif `wrapperClassName` untuk meneruskan kelas flex ke pembungkus tabel.
+   - Empty state tidak lagi memiliki tinggi statis kaku, melainkan menggunakan `max-sm:flex-1 max-sm:h-full max-sm:min-h-0` sehingga berada persis di tengah ruang vertikal yang tersisa saat data kosong.
+   - Saat data banyak, tabel bertambah tinggi secara wajar dan halaman dapat di-scroll lancar.
+5. **Catatan Audit Pengujian (Pra-ada di Luar Lingkup):**
    - `tests/unit/i18n-check.test.ts`: Kunci terjemahan `auth.signup_google` pada `login-page.tsx`.
    - `tests/unit/dashboard-card-footer-alignment.test.tsx`: Pengujian pra-ada mengharapkan `divide-x` pada `ChartSummaryFooter`.
