@@ -88,40 +88,13 @@ export function ProjectDetailHeader({
       <Card className="rounded-2xl border-border/80 bg-card px-6 py-4 shadow-2xs">
         <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-8">
           <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
-            <div className="flex items-start justify-between gap-3 min-w-0">
-              <div className="min-w-0 space-y-0.5">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  {t("projects:summary.code", "Kode Proyek")}
-                </p>
-                <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
-                  {project.code}
-                </p>
-              </div>
-              <Select
-                value={project.id}
-                onValueChange={(nextId) => {
-                  if (nextId && nextId !== project.id) {
-                    onSwitchProject(nextId);
-                  }
-                }}
-              >
-                <SelectTrigger
-                  aria-label={t("projects:header.switch_project", "Pindah ke proyek lain")}
-                  className="h-8.5 w-auto min-w-[150px] max-w-[210px] rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer shrink-0 gap-2"
-                >
-                  <FolderKanbanIcon className="size-3.5 text-primary shrink-0" />
-                  <SelectValue placeholder={t("projects:header.select_project", "Pilih kode proyek")} />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  <SelectGroup>
-                    {allProjects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.code}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("projects:summary.code", "Kode Proyek")}
+              </p>
+              <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
+                {project.code}
+              </p>
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">
@@ -193,69 +166,99 @@ export function ProjectDetailHeader({
       </div>
 
       {/* Bar Navigasi Tab Dokumen & Termin Proyek */}
-      <div className="bg-card rounded-2xl p-2 flex items-center gap-1.5 shadow-2xs border border-border/80 w-full overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {[
-          {
-            id: "termin" as const,
-            label: t("projects:tabs.milestones", "Termin & Progres"),
-            badge: `${maxProgressPct}%`,
-            icon: CalendarCheck2Icon,
-          },
-          {
-            id: "quotation_po" as const,
-            label: t("projects:tabs.quotation_po", "Quotation & PO Klien"),
-            badge: String(bundle.clientPos.length),
-            icon: FileCheck2Icon,
-          },
-          {
-            id: "sow_spk" as const,
-            label: t("projects:tabs.sow_spk", "SoW & SPK"),
-            badge: String(bundle.documents.length),
-            icon: FileSignatureIcon,
-          },
-          {
-            id: "bakp_uat_bast" as const,
-            label: t("projects:tabs.bakp_uat_bast", "BAKP, UAT, & BAST"),
-            badge: String(
-              bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
-            ),
-            icon: ClipboardCheckIcon,
-          },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={cn(
-                "shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-              )}
-            >
-              <Icon
+      <div className="bg-card rounded-2xl p-2 flex items-center justify-between gap-2 shadow-2xs border border-border/80 w-full">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden min-w-0">
+          {[
+            {
+              id: "termin" as const,
+              label: t("projects:tabs.milestones", "Termin & Progres"),
+              badge: `${maxProgressPct}%`,
+              icon: CalendarCheck2Icon,
+            },
+            {
+              id: "quotation_po" as const,
+              label: t("projects:tabs.quotation_po", "Quotation & PO Klien"),
+              badge: String(bundle.clientPos.length),
+              icon: FileCheck2Icon,
+            },
+            {
+              id: "sow_spk" as const,
+              label: t("projects:tabs.sow_spk", "SoW & SPK"),
+              badge: String(bundle.documents.length),
+              icon: FileSignatureIcon,
+            },
+            {
+              id: "bakp_uat_bast" as const,
+              label: t("projects:tabs.bakp_uat_bast", "BAKP, UAT, & BAST"),
+              badge: String(
+                bundle.bakpList.length + bundle.uatList.length + bundle.bastList.length,
+              ),
+              icon: ClipboardCheckIcon,
+            },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "size-4 shrink-0 transition-colors",
-                  isActive ? "text-primary-foreground" : "text-muted-foreground",
-                )}
-              />
-              <span className="whitespace-nowrap">{tab.label}</span>
-              <span
-                className={cn(
-                  "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-bold leading-none tabular-nums",
+                  "shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
                   isActive
-                    ? "bg-primary-foreground text-primary"
-                    : "bg-muted text-muted-foreground",
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                 )}
               >
-                {tab.badge}
-              </span>
-            </button>
-          );
-        })}
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    isActive ? "text-primary-foreground" : "text-muted-foreground",
+                  )}
+                />
+                <span className="whitespace-nowrap">{tab.label}</span>
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-bold leading-none tabular-nums",
+                    isActive
+                      ? "bg-primary-foreground text-primary"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {tab.badge}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="shrink-0 pl-2">
+          <Select
+            value={project.id}
+            onValueChange={(nextId) => {
+              if (nextId && nextId !== project.id) {
+                onSwitchProject(nextId);
+              }
+            }}
+          >
+            <SelectTrigger
+              aria-label={t("projects:header.switch_project", "Pindah ke proyek lain")}
+              className="h-9 w-auto min-w-[150px] max-w-[210px] rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer shrink-0 gap-2 hover:bg-muted/70 hover:border-primary/40"
+            >
+              <FolderKanbanIcon className="size-3.5 text-primary shrink-0" />
+              <SelectValue placeholder={t("projects:header.select_project", "Pilih kode proyek")} />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectGroup>
+                {allProjects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.code}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );
