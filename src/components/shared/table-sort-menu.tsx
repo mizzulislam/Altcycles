@@ -3,6 +3,10 @@ import { createPortal } from "react-dom";
 import { ArrowUpDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { useLanguage } from "@/lib/i18n";
 
 export interface SortFieldOption<T extends string = string> {
@@ -146,12 +150,12 @@ export function TableSortMenu<T extends string = string>({
         aria-label={t("common:action.sort", "Urutan data")}
         aria-expanded={isOpen}
         className={cn(
-          "size-9 min-w-9 p-0 inline-flex items-center justify-center rounded-xl border border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer select-none shrink-0",
-          isOpen && "border-primary/60 ring-2 ring-primary/20",
+          TOOLBAR_BUTTON_CLASS,
+          isOpen && "ring-2 ring-primary/30",
           className,
         )}
       >
-        <ArrowUpDownIcon className="size-4 text-primary shrink-0" />
+        <ArrowUpDownIcon className="size-4 text-primary-foreground shrink-0" />
         <span className="sr-only">{t("common:action.sort", "Urutan data")}</span>
       </button>
     </ActionTooltip>
@@ -162,12 +166,12 @@ export function TableSortMenu<T extends string = string>({
       onClick={() => setIsOpen((prev) => !prev)}
       aria-expanded={isOpen}
       className={cn(
-        "h-9 w-auto max-w-[240px] inline-flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3 text-xs sm:text-sm font-semibold text-primary shadow-2xs hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer select-none shrink-0",
-        isOpen && "ring-2 ring-primary/20",
+        TOOLBAR_ACTIVE_EXPANDED_CLASS,
+        isOpen && "ring-2 ring-primary/30",
         className,
       )}
     >
-      <ArrowUpDownIcon className="size-3.5 shrink-0" />
+      <ArrowUpDownIcon className="size-3.5 text-primary-foreground shrink-0" />
       <span className="truncate">{activeDisplayLabel}</span>
     </button>
   );

@@ -9,6 +9,7 @@ import {
   TableIcon,
 } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -141,9 +142,9 @@ export function ExportDownloadMenu({
       aria-label={displayLabel}
       className={cn(
         isIcon
-          ? "size-9 min-h-9 p-0 inline-flex items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none hover:bg-muted/70 hover:border-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 shrink-0"
+          ? TOOLBAR_BUTTON_CLASS
           : "w-full sm:w-auto min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none hover:bg-muted/70 hover:border-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
-        isOpen && "border-primary/60 ring-2 ring-primary/20",
+        isOpen && "ring-2 ring-primary/30",
         !isIcon &&
           mobileFloating && [
             "max-sm:fixed max-sm:bottom-6 max-sm:right-5 max-sm:z-50",
@@ -159,9 +160,9 @@ export function ExportDownloadMenu({
     >
       {isIcon ? (
         isLoading ? (
-          <Loader2Icon className="size-4 animate-spin text-primary" />
+          <Loader2Icon className="size-4 animate-spin text-primary-foreground" />
         ) : (
-          <DownloadIcon className="size-4 text-primary" />
+          <DownloadIcon className="size-4 text-primary-foreground" />
         )
       ) : (
         <>

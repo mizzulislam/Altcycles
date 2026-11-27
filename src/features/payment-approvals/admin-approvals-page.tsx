@@ -17,6 +17,10 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
@@ -468,18 +472,20 @@ export function AdminApprovalsPage() {
                 {statusFilter === "ALL" ? (
                   <ActionTooltip content={t("approvals:admin.filter_status_placeholder", "Filter status")}>
                     <SelectTrigger
+                      data-toolbar="true"
                       aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
-                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
+                      className={cn(TOOLBAR_BUTTON_CLASS, "[&>svg:last-child]:hidden [&>span]:hidden")}
                     >
-                      <FilterIcon className="size-4 text-primary shrink-0" />
+                      <FilterIcon className="size-4 text-primary-foreground shrink-0" />
                     </SelectTrigger>
                   </ActionTooltip>
                 ) : (
                   <SelectTrigger
+                    data-toolbar="true"
                     aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
-                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
+                    className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "[&>svg:last-child]:hidden")}
                   >
-                    <FilterIcon className="size-3.5 shrink-0" />
+                    <FilterIcon className="size-3.5 text-primary-foreground shrink-0" />
                     <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
                   </SelectTrigger>
                 )}

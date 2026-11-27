@@ -1,6 +1,7 @@
 import { CheckCircle2Icon, PlusIcon } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import {
   Card,
   CardContent,
@@ -123,18 +124,16 @@ export function AcceptanceDocsTab({
                     : t("projects:acceptance.btn_create_bakp")
                 }
               >
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   disabled={bundle.milestones.length === 0}
                   onClick={openBakpDialog}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("projects:acceptance.btn_create_bakp")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("projects:acceptance.btn_create_bakp")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }
@@ -306,17 +305,15 @@ export function AcceptanceDocsTab({
                 }
               />
               <ActionTooltip content={t("projects:acceptance.btn_record_uat")}>
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   onClick={openUatDialog}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("projects:acceptance.btn_record_uat")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("projects:acceptance.btn_record_uat")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }
@@ -481,10 +478,8 @@ export function AcceptanceDocsTab({
                     : (language === "en" ? "Issue BAST (Attachment A.8)" : "Terbitkan BAST (Lampiran A.8)")
                 }
               >
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   disabled={
                     !bundle.uatList.some(
                       (u) =>
@@ -493,12 +488,12 @@ export function AcceptanceDocsTab({
                     )
                   }
                   onClick={openBastDialog}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={language === "en" ? "Issue BAST" : "Terbitkan BAST"}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{language === "en" ? "Issue BAST" : "Terbitkan BAST"}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }

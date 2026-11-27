@@ -10,6 +10,7 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { type SemanticTone } from "@/components/shared/status-badge";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -722,17 +723,15 @@ export function JournalsPage({
 
               {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (
                 <ActionTooltip content={t("common:action.edit", "Edit")}>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="icon"
                     onClick={() => setIsEditMode(true)}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                    className={TOOLBAR_BUTTON_CLASS}
                     aria-label={t("common:action.edit", "Edit")}
                   >
-                    <PencilIcon className="size-4" />
+                    <PencilIcon className="size-4 text-primary-foreground shrink-0" />
                     <span className="sr-only">{t("common:action.edit", "Edit")}</span>
-                  </Button>
+                  </button>
                 </ActionTooltip>
               ) : (
                 <div className="flex items-center gap-2">

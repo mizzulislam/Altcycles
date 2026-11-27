@@ -16,6 +16,7 @@ import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { PageHeader, TruncatedTooltipText } from "@/components/shared/page-header";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -446,17 +447,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               />
               {mode === "admin" && (
                 <ActionTooltip content={t("common:action.edit", "Edit")}>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="icon"
                     onClick={() => openBudgetEditor(true)}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                    className={TOOLBAR_BUTTON_CLASS}
                     aria-label={t("common:action.edit", "Edit")}
                   >
-                    <PencilIcon className="size-4" />
+                    <PencilIcon className="size-4 text-primary-foreground shrink-0" />
                     <span className="sr-only">{t("common:action.edit", "Edit")}</span>
-                  </Button>
+                  </button>
                 </ActionTooltip>
               )}
               {mode === "admin" && selectedProjectId && (
@@ -470,17 +469,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     mobileFloating
                   />
                   <ActionTooltip content={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}>
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="icon"
                       onClick={() => openBudgetEditor(false)}
-                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                      className={TOOLBAR_BUTTON_CLASS}
                       aria-label={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}
                     >
-                      <PlusIcon className="size-4" />
+                      <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                       <span className="sr-only">{t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}</span>
-                    </Button>
+                    </button>
                   </ActionTooltip>
                 </>
               )}

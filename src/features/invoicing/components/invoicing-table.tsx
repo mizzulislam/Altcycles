@@ -6,6 +6,11 @@ import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
@@ -109,18 +114,20 @@ export function InvoicingTable({
               {invoiceStatusFilter === "all" ? (
                 <ActionTooltip content={t("common:status.all", "Semua Status")}>
                   <SelectTrigger
+                    data-toolbar="true"
                     aria-label={t("common:status.all", "Semua Status")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
+                    className={cn(TOOLBAR_BUTTON_CLASS, "[&>svg:last-child]:hidden [&>span]:hidden")}
                   >
-                    <FilterIcon className="size-4 text-primary shrink-0" />
+                    <FilterIcon className="size-4 text-primary-foreground shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (
                 <SelectTrigger
+                  data-toolbar="true"
                   aria-label={t("common:status.all", "Semua Status")}
-                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
+                  className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "[&>svg:last-child]:hidden")}
                 >
-                  <FilterIcon className="size-3.5 shrink-0" />
+                  <FilterIcon className="size-3.5 text-primary-foreground shrink-0" />
                   <SelectValue placeholder={t("common:status.all", "Semua Status")} />
                 </SelectTrigger>
               )}
@@ -177,17 +184,15 @@ export function InvoicingTable({
 
             {onCreateInvoice && (
               <ActionTooltip content={t("invoicing.issue_invoice", "Terbitkan Invoice")}>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={onCreateInvoice}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("invoicing.issue_invoice", "Terbitkan Invoice")}
                 >
-                  <PlusIcon className="size-4 text-primary" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             )}
           </div>

@@ -21,6 +21,11 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { SectionEditControls } from "@/features/client-projects/components/project-detail-shared";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
+import { cn } from "@/lib/utils";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -152,18 +157,20 @@ export function PoTable({
               {statusFilter === "ALL" ? (
                 <ActionTooltip content={t("po:status_all", "Semua Status")}>
                   <SelectTrigger
+                    data-toolbar="true"
                     aria-label={t("po:status_all", "Semua Status")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
+                    className={cn(TOOLBAR_BUTTON_CLASS, "[&>svg:last-child]:hidden [&>span]:hidden")}
                   >
-                    <FilterIcon className="size-4 text-primary shrink-0" />
+                    <FilterIcon className="size-4 text-primary-foreground shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (
                 <SelectTrigger
+                  data-toolbar="true"
                   aria-label={t("po:status_all", "Semua Status")}
-                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
+                  className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "[&>svg:last-child]:hidden")}
                 >
-                  <FilterIcon className="size-3.5 shrink-0" />
+                  <FilterIcon className="size-3.5 text-primary-foreground shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
               )}
@@ -230,17 +237,15 @@ export function PoTable({
 
             {onOpenCreate && (
               <ActionTooltip content={t("po:btn_create", "Buat PO Vendor")}>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={onOpenCreate}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("po:btn_create", "Buat PO Vendor")}
                 >
-                  <PlusIcon className="size-4 text-primary" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("po:btn_create", "Buat PO Vendor")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             )}
           </div>

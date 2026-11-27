@@ -1,6 +1,6 @@
 import { PlusIcon, RotateCcwIcon } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
-import { Button } from "@/components/ui/button";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import {
   Card,
   CardContent,
@@ -123,10 +123,8 @@ export function MilestonesTab({
                     : t("projects:milestones.btn_setup", "Atur Termin");
                 return (
                   <ActionTooltip content={buttonLabel}>
-                    <Button
+                    <button
                       type="button"
-                      variant="default"
-                      size="icon"
                       disabled={isResetDisabled}
                       title={
                         isResetDisabled
@@ -134,16 +132,16 @@ export function MilestonesTab({
                           : buttonLabel
                       }
                       onClick={openMilestonesEditor}
-                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                      className={TOOLBAR_BUTTON_CLASS}
                       aria-label={buttonLabel}
                     >
                       {bundle.milestones.length > 0 ? (
-                        <RotateCcwIcon className="size-4" />
+                        <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
                       ) : (
-                        <PlusIcon className="size-4" />
+                        <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                       )}
                       <span className="sr-only">{buttonLabel}</span>
-                    </Button>
+                    </button>
                   </ActionTooltip>
                 );
               })()}
@@ -321,17 +319,15 @@ export function MilestonesTab({
                 }
               />
               <ActionTooltip content={t("projects:milestones.btn_record_progress")}>
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   onClick={openRecordProgressDialog}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("projects:milestones.btn_record_progress")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("projects:milestones.btn_record_progress")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }

@@ -224,10 +224,17 @@ textarea,
 select,
 [data-slot="input"],
 [data-slot="textarea"],
-[data-slot="select-trigger"] {
+[data-slot="select-trigger"]:not([data-toolbar="true"]) {
   border-radius: 0.625rem !important;
   background-color: var(--field-bg) !important;
   border-color: var(--field-border) !important;
+}
+
+[data-slot="select-trigger"][data-toolbar="true"] {
+  border-radius: 0.75rem !important; /* Standar konsisten rounded-xl (12px) */
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: transparent !important;
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([data-inner-input="true"]):focus,

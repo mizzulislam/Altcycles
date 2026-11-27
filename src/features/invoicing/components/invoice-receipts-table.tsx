@@ -2,7 +2,7 @@ import * as React from "react";
 import { ArrowUpDownIcon, ReceiptIcon } from "lucide-react";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { Button } from "@/components/ui/button";
+import { TOOLBAR_ACTIVE_EXPANDED_CLASS } from "@/components/shared/toolbar-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
@@ -73,23 +73,21 @@ export function InvoiceReceiptsTable({
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         controls={
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() =>
                 setReceiptSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
               }
-              className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
+              className={TOOLBAR_ACTIVE_EXPANDED_CLASS}
             >
-              <ArrowUpDownIcon className="size-3.5" />
+              <ArrowUpDownIcon className="size-3.5 text-primary-foreground shrink-0" />
               <span>
                 {t("common:action.order", "Urutan")}:{" "}
                 {receiptSortOrder === "asc"
                   ? t("common:action.oldest", "Terlama")
                   : t("common:action.newest", "Terbaru")}
               </span>
-            </Button>
+            </button>
             <SectionEditControls
               hasItems={sortedReceipts.length > 0}
               isEditing={isEditingReceipts}

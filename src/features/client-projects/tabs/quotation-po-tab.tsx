@@ -1,6 +1,7 @@
 import { CheckCircle2Icon, PlusIcon, XCircleIcon } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import {
   Card,
   CardContent,
@@ -124,17 +125,15 @@ export function QuotationPoTab({
                 }
               />
               <ActionTooltip content={t("projects:quotations.btn_create")}>
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   onClick={onOpenCreateQuotation}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("projects:quotations.btn_create")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("projects:quotations.btn_create")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }

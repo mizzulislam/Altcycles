@@ -17,6 +17,10 @@ import { useSidebarCollapsed } from "@/components/layout/portal-shell";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -391,18 +395,20 @@ export function ProjectsPage() {
                 {statusFilter === "all" ? (
                   <ActionTooltip content={t("status.all", "Semua Status")}>
                     <SelectTrigger
+                      data-toolbar="true"
                       aria-label={t("status.all", "Semua Status")}
-                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
+                      className={cn(TOOLBAR_BUTTON_CLASS, "[&>svg:last-child]:hidden [&>span]:hidden")}
                     >
-                      <FilterIcon className="size-4 text-primary shrink-0" />
+                      <FilterIcon className="size-4 text-primary-foreground shrink-0" />
                     </SelectTrigger>
                   </ActionTooltip>
                 ) : (
                   <SelectTrigger
+                    data-toolbar="true"
                     aria-label={t("status.all", "Semua Status")}
-                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/10 text-primary shadow-2xs"
+                    className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "[&>svg:last-child]:hidden")}
                   >
-                    <FilterIcon className="size-3.5 shrink-0" />
+                    <FilterIcon className="size-3.5 text-primary-foreground shrink-0" />
                     <SelectValue placeholder={t("status.all", "Semua Status")} />
                   </SelectTrigger>
                 )}
@@ -437,18 +443,16 @@ export function ProjectsPage() {
 
               {!isEditMode ? (
                 <ActionTooltip content={t("action.edit", "Edit")}>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="icon"
                     onClick={() => setIsEditMode(true)}
                     disabled={filteredProjects.length === 0}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 transition-colors disabled:opacity-50"
+                    className={cn(TOOLBAR_BUTTON_CLASS, "disabled:opacity-50")}
                     aria-label={t("action.edit", "Edit")}
                   >
-                    <PencilIcon className="size-4 text-primary" />
+                    <PencilIcon className="size-4 text-primary-foreground shrink-0" />
                     <span className="sr-only">{t("action.edit", "Edit")}</span>
-                  </Button>
+                  </button>
                 </ActionTooltip>
               ) : (
                 <div className="flex items-center gap-2">
@@ -487,17 +491,15 @@ export function ProjectsPage() {
               />
 
               <ActionTooltip content={t("projects.add_button", "Tambah Proyek")}>
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={openNew}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("projects.add_button", "Tambah Proyek")}
                 >
-                  <PlusIcon className="size-4 text-primary" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("projects.add_button", "Tambah Proyek")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }

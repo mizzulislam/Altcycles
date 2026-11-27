@@ -1,6 +1,10 @@
 import { FilterIcon, PencilIcon, PlusIcon, PowerIcon, Trash2Icon } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,18 +92,20 @@ export function CoaTable({
               {typeFilter === "all" ? (
                 <ActionTooltip content={t("accounting:coa.all_types", "Semua Tipe Akun")}>
                   <SelectTrigger
+                    data-toolbar="true"
                     aria-label={t("accounting:coa.all_types", "Semua Tipe Akun")}
-                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 border-border/80 bg-card text-foreground shadow-2xs hover:bg-muted/70 hover:border-primary/40 [&>svg:last-child]:hidden [&>span]:hidden"
+                    className={cn(TOOLBAR_BUTTON_CLASS, "[&>svg:last-child]:hidden [&>span]:hidden")}
                   >
-                    <FilterIcon className="size-4 text-primary shrink-0" />
+                    <FilterIcon className="size-4 text-primary-foreground shrink-0" />
                   </SelectTrigger>
                 </ActionTooltip>
               ) : (
                 <SelectTrigger
+                  data-toolbar="true"
                   aria-label={t("accounting:coa.all_types", "Semua Tipe Akun")}
-                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "[&>svg:last-child]:hidden")}
                 >
-                  <FilterIcon className="size-3.5 shrink-0" />
+                  <FilterIcon className="size-3.5 text-primary-foreground shrink-0" />
                   <SelectValue
                     placeholder={t(
                       "accounting:coa.all_types",
@@ -140,17 +146,15 @@ export function CoaTable({
 
             {onOpenNewAccount && (
               <ActionTooltip content={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}>
-                <Button
+                <button
                   type="button"
-                  variant="default"
-                  size="icon"
                   onClick={onOpenNewAccount}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
-                </Button>
+                </button>
               </ActionTooltip>
             )}
           </div>
