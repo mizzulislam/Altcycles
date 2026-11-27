@@ -775,25 +775,23 @@ export function JournalsPage({
                     : t("accounting:journals.btn_record", "Catat Transaksi")
                 }
               >
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="icon"
                   onClick={openNewJournal}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs hover:bg-muted/70 hover:border-primary/40 text-primary"
+                  className={TOOLBAR_BUTTON_CLASS}
                   aria-label={
                     filterMode === "adjusting"
                       ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
                       : t("accounting:journals.btn_record", "Catat Transaksi")
                   }
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">
                     {filterMode === "adjusting"
                       ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
                       : t("accounting:journals.btn_record", "Catat Transaksi")}
                   </span>
-                </Button>
+                </button>
               </ActionTooltip>
             </div>
           }

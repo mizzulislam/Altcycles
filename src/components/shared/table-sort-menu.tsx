@@ -50,6 +50,7 @@ export function TableSortMenu<T extends string = string>({
 }: TableSortMenuProps<T>) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [coords, setCoords] = React.useState<{ top: number; left: number; isUpward: boolean } | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const menuRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -59,13 +60,6 @@ export function TableSortMenu<T extends string = string>({
   const activeOrder = (sortOrder ?? sortDirection ?? "desc") as "asc" | "desc";
   const effectiveDefaultKey = (defaultSortKey ?? defaultKey ?? getOptValue(options[0])) as T;
   const effectiveDefaultOrder = (defaultSortOrder ?? defaultDirection ?? "desc") as "asc" | "desc";
-
-  const [menuStyle, setMenuStyle] = React.useState<React.CSSProperties>({
-    position: "fixed",
-    top: 0,
-    left: 0,
-    zIndex: 99999,
-  });
 
   const isDefault =
     activeKey === effectiveDefaultKey && activeOrder === effectiveDefaultOrder;
@@ -78,10 +72,10 @@ export function TableSortMenu<T extends string = string>({
     descLabel || t("common:sort.descending", "Terbaru / Menurun (Z-A)");
 
   const updatePosition = React.useCallback(() => {
-    if (!triggerRef.current) return;
+    if (!triggerRef.current) return null;
     const rect = triggerRef.current.getBoundingClientRect();
-    const menuWidth = 200;
-    const menuHeight = 220;
+    const menuWidth = 240;
+    const menuHeight = 240;
     const padding = 12;
 
     let left = rect.right - menuWidth;
@@ -91,23 +85,29 @@ export function TableSortMenu<T extends string = string>({
     }
 
     const spaceBelow = window.innerHeight - rect.bottom;
-    let top = rect.bottom + 6;
-    if (spaceBelow < menuHeight && rect.top > menuHeight) {
-      top = rect.top - menuHeight - 6;
-    }
+    const isUpward = spaceBelow < menuHeight && rect.top > menuHeight;
+    const top = isUpward ? rect.top - menuHeight - 6 : rect.bottom + 6;
 
-    setMenuStyle({
-      position: "fixed",
+    const newCoords = {
       top: Math.round(top),
       left: Math.round(left),
-      zIndex: 99999,
-      width: menuWidth,
-    });
+      isUpward,
+    };
+    setCoords(newCoords);
+    return newCoords;
   }, []);
+
+  const handleToggle = React.useCallback(() => {
+    if (!isOpen) {
+      updatePosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [isOpen, updatePosition]);
 
   React.useEffect(() => {
     if (!isOpen) return;
-    updatePosition();
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node | null;
@@ -146,7 +146,7 @@ export function TableSortMenu<T extends string = string>({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggle}
         aria-label={t("common:action.sort", "Urutan data")}
         aria-expanded={isOpen}
         className={cn(
@@ -163,7 +163,7 @@ export function TableSortMenu<T extends string = string>({
     <button
       ref={triggerRef}
       type="button"
-      onClick={() => setIsOpen((prev) => !prev)}
+      onClick={handleToggle}
       aria-expanded={isOpen}
       className={cn(
         TOOLBAR_ACTIVE_EXPANDED_CLASS,
@@ -180,17 +180,21 @@ export function TableSortMenu<T extends string = string>({
     <>
       {trigger}
       {isOpen &&
+        coords &&
         typeof document !== "undefined" &&
         createPortal(
           <div
             ref={menuRef}
-            style={menuStyle}
+            style={{ top: coords.top, left: coords.left, width: 240 }}
             role="menu"
             aria-orientation="vertical"
-            className="rounded-2xl border border-border/90 bg-card/95 p-1.5 shadow-2xl backdrop-blur-md duration-150 animate-in fade-in-0 zoom-in-95 select-none"
+            className={cn(
+              "fixed z-[99999] rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/10 select-none animate-in fade-in-0 zoom-in-95 duration-150 ease-out motion-reduce:animate-none",
+              coords.isUpward ? "origin-bottom-right" : "origin-top-right",
+            )}
           >
-            {/* Opsi Kriteria / Kolom Urutan (Image 11 style) */}
-            <div className="px-2 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            {/* Opsi Kriteria / Kolom Urutan */}
+            <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               {t("common:sort.field_title", "Urutkan Berdasarkan")}
             </div>
             <div className="space-y-0.5">
@@ -205,18 +209,16 @@ export function TableSortMenu<T extends string = string>({
                     aria-checked={isSelected}
                     onClick={() => {
                       onSortChange(optVal, activeOrder);
+                      setIsOpen(false);
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors text-left",
+                      "w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-colors text-left",
                       isSelected
-                        ? "bg-primary/15 text-primary font-semibold dark:text-cyan-400"
+                        ? "bg-primary/15 text-primary font-semibold dark:text-sky-300"
                         : "text-foreground hover:bg-muted/70",
                     )}
                   >
                     <span className="truncate">{opt.label}</span>
-                    {isSelected ? (
-                      <span className="size-1.5 rounded-full bg-primary shrink-0" />
-                    ) : null}
                   </button>
                 );
               })}
@@ -224,8 +226,8 @@ export function TableSortMenu<T extends string = string>({
 
             <div className="h-px bg-border/70 my-1.5" />
 
-            {/* Opsi Arah Urutan: Ascending / Descending (Image 11 style) */}
-            <div className="px-2 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            {/* Opsi Arah Urutan: Ascending / Descending */}
+            <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               {t("common:sort.order_title", "Arah Urutan")}
             </div>
             <div className="space-y-0.5">
@@ -235,18 +237,16 @@ export function TableSortMenu<T extends string = string>({
                 aria-checked={activeOrder === "desc"}
                 onClick={() => {
                   onSortChange(activeKey, "desc");
+                  setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors text-left",
+                  "w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-colors text-left",
                   activeOrder === "desc"
-                    ? "bg-primary/15 text-primary font-semibold dark:text-cyan-400"
+                    ? "bg-primary/15 text-primary font-semibold dark:text-sky-300"
                     : "text-foreground hover:bg-muted/70",
                 )}
               >
                 <span className="truncate">{resolvedDescLabel}</span>
-                {activeOrder === "desc" ? (
-                  <span className="size-1.5 rounded-full bg-primary shrink-0" />
-                ) : null}
               </button>
 
               <button
@@ -255,18 +255,16 @@ export function TableSortMenu<T extends string = string>({
                 aria-checked={activeOrder === "asc"}
                 onClick={() => {
                   onSortChange(activeKey, "asc");
+                  setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors text-left",
+                  "w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-colors text-left",
                   activeOrder === "asc"
-                    ? "bg-primary/15 text-primary font-semibold dark:text-cyan-400"
+                    ? "bg-primary/15 text-primary font-semibold dark:text-sky-300"
                     : "text-foreground hover:bg-muted/70",
                 )}
               >
                 <span className="truncate">{resolvedAscLabel}</span>
-                {activeOrder === "asc" ? (
-                  <span className="size-1.5 rounded-full bg-primary shrink-0" />
-                ) : null}
               </button>
             </div>
           </div>,
