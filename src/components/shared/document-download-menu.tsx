@@ -152,7 +152,7 @@ export function DocumentDownloadMenu({
             disabled={loadingFmt !== null}
             onClick={() => setOpen((prev) => !prev)}
             className={cn(
-              "inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none disabled:active:scale-100",
+              "inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] motion-reduce:transform-none disabled:active:scale-100 relative after:absolute after:-inset-1.5 after:content-[''] sm:after:hidden",
               buttonClassName,
             )}
             aria-haspopup="menu"
