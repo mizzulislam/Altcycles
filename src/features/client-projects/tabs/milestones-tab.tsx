@@ -1,4 +1,5 @@
 import { PlusIcon, RotateCcwIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -91,6 +92,7 @@ export function MilestonesTab({
                   onExportExcel={onExportMilestonesExcel}
                   onExportPdf={onExportMilestonesPdf}
                   onExportCsv={onExportMilestonesCsv}
+                  size="icon"
                 />
               )}
               <SectionEditControls
@@ -115,29 +117,34 @@ export function MilestonesTab({
                 );
                 const isResetDisabled =
                   hasLockedMilestone && bundle.milestones.length > 0;
+                const buttonLabel =
+                  bundle.milestones.length > 0
+                    ? t("projects:milestones.btn_reset", "Atur Ulang Termin")
+                    : t("projects:milestones.btn_setup", "Atur Termin");
                 return (
-                  <Button
-                    type="button"
-                    disabled={isResetDisabled}
-                    title={
-                      isResetDisabled
-                        ? t("projects:milestones.btn_reset_disabled_title")
-                        : bundle.milestones.length > 0
-                          ? t("projects:milestones.btn_reset")
-                          : t("projects:milestones.btn_setup")
-                    }
-                    onClick={openMilestonesEditor}
-                    className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-                  >
-                    {bundle.milestones.length > 0 ? (
-                      <RotateCcwIcon data-icon="inline-start" />
-                    ) : (
-                      <PlusIcon data-icon="inline-start" />
-                    )}
-                    {bundle.milestones.length > 0
-                      ? t("projects:milestones.btn_reset")
-                      : t("projects:milestones.btn_setup")}
-                  </Button>
+                  <ActionTooltip content={buttonLabel}>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="icon"
+                      disabled={isResetDisabled}
+                      title={
+                        isResetDisabled
+                          ? t("projects:milestones.btn_reset_disabled_title")
+                          : buttonLabel
+                      }
+                      onClick={openMilestonesEditor}
+                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                      aria-label={buttonLabel}
+                    >
+                      {bundle.milestones.length > 0 ? (
+                        <RotateCcwIcon className="size-4" />
+                      ) : (
+                        <PlusIcon className="size-4" />
+                      )}
+                      <span className="sr-only">{buttonLabel}</span>
+                    </Button>
+                  </ActionTooltip>
                 );
               })()}
             </div>
@@ -313,14 +320,19 @@ export function MilestonesTab({
                   })
                 }
               />
-              <Button
-                type="button"
-                onClick={openRecordProgressDialog}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("projects:milestones.btn_record_progress")}
-              </Button>
+              <ActionTooltip content={t("projects:milestones.btn_record_progress")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={openRecordProgressDialog}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("projects:milestones.btn_record_progress")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("projects:milestones.btn_record_progress")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

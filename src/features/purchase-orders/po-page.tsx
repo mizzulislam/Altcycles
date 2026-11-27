@@ -1,10 +1,7 @@
 import * as React from "react";
-import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
 import {
   getCompanyProfile,
   listProjects,
@@ -304,34 +301,6 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
                 "Buat dan pantau pesanan pembelian pengadaan barang atau jasa proyek.",
               )
         }
-        actions={
-          <>
-            {mode === "admin" ? (
-              <ExportDownloadMenu
-                label={t("common:action.export_download", "Unduh / Ekspor")}
-                onExportExcel={() =>
-                  exportPoListToExcel({ filtered, vendors, projects, t })
-                }
-                onExportPdf={() =>
-                  exportPoListToPdf({ filtered, company, vendors, projects, t })
-                }
-                onExportCsv={() =>
-                  exportPoListToCsv({ filtered, vendors, projects, t })
-                }
-                mobileFloating
-              />
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleOpenCreate}
-              className="h-9 max-sm:size-9 max-sm:p-0 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs w-auto"
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("po:btn_create", "Buat PO Vendor")}</span>
-            </Button>
-          </>
-        }
       />
 
       <PoTable
@@ -351,6 +320,22 @@ export function PurchaseOrdersPage({ mode }: { mode: "user" | "admin" }) {
         onDeleteSelected={() => setDeleteConfirmOpen(true)}
         onOpenEditPo={handleOpenEditPo}
         onOpenSingleDelete={(po) => setSingleDeleteTarget(po)}
+        onOpenCreate={handleOpenCreate}
+        onExportExcel={
+          mode === "admin"
+            ? () => exportPoListToExcel({ filtered, vendors, projects, t })
+            : undefined
+        }
+        onExportPdf={
+          mode === "admin"
+            ? () => exportPoListToPdf({ filtered, company, vendors, projects, t })
+            : undefined
+        }
+        onExportCsv={
+          mode === "admin"
+            ? () => exportPoListToCsv({ filtered, vendors, projects, t })
+            : undefined
+        }
         onDownloadPdf={(po) =>
           void downloadPoPdf({ po, company, vendors, projects, items, t })
         }

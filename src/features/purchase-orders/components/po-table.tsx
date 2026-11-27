@@ -4,15 +4,19 @@ import {
   BanIcon,
   CheckCircle2Icon,
   FileTextIcon,
+  FilterIcon,
   PencilIcon,
+  PlusIcon,
   SendIcon,
   Trash2Icon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
+import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { SectionEditControls } from "@/features/client-projects/components/project-detail-shared";
@@ -90,6 +94,10 @@ interface PoTableProps {
   onIssuePo: (po: PurchaseOrderRow) => void | Promise<void>;
   onCompletePo: (po: PurchaseOrderRow) => void | Promise<void>;
   onCancelPo: (po: PurchaseOrderRow) => void;
+  onOpenCreate?: () => void;
+  onExportExcel?: () => void | Promise<void>;
+  onExportPdf?: () => void | Promise<void>;
+  onExportCsv?: () => void | Promise<void>;
 }
 
 export function PoTable({
@@ -114,6 +122,10 @@ export function PoTable({
   onIssuePo,
   onCompletePo,
   onCancelPo,
+  onOpenCreate,
+  onExportExcel,
+  onExportPdf,
+  onExportCsv,
 }: PoTableProps) {
   const { t, language } = useLanguage();
 
@@ -131,63 +143,114 @@ export function PoTable({
           "Pantau riwayat penerbitan PO internal dan status konfirmasi rekanan.",
         )}
         controls={
-          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 sm:w-auto shrink-0">
-            <div className="w-full sm:w-44 shrink-0">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+          <div className="flex items-center gap-2.5 shrink-0 justify-end w-full sm:w-auto">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              {statusFilter === "ALL" ? (
+                <ActionTooltip content={t("po:status_all", "Semua Status")}>
+                  <SelectTrigger
+                    aria-label={t("po:status_all", "Semua Status")}
+                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                  >
+                    <FilterIcon className="size-4 text-primary" />
+                  </SelectTrigger>
+                </ActionTooltip>
+              ) : (
+                <SelectTrigger
+                  aria-label={t("po:status_all", "Semua Status")}
+                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                >
+                  <FilterIcon className="size-3.5 shrink-0" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="ALL">
-                      {t("po:status_all", "Semua Status")}
-                    </SelectItem>
-                    <SelectItem value="draft">
-                      {t("po:status_draft", "Draf")}
-                    </SelectItem>
-                    <SelectItem value="issued">
-                      {t("po:status_issued", "Diterbitkan")}
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      {t("po:status_completed", "Selesai")}
-                    </SelectItem>
-                    <SelectItem value="cancelled">
-                      {t("po:status_cancelled", "Dibatalkan")}
-                    </SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer w-full sm:w-auto shrink-0 justify-center"
-            >
-              <ArrowUpDownIcon className="size-3.5 shrink-0" />
-              <span className="truncate">
-                {t("common:action.order", "Urutan")}:{" "}
-                {sortOrder === "asc"
-                  ? t("common:action.oldest", "Terlama")
-                  : t("common:action.newest", "Terbaru")}
-              </span>
-            </Button>
-            <div className="col-span-2 sm:col-span-1 sm:w-auto">
-              <SectionEditControls
-                hasItems={sortedOrders.length > 0}
-                isEditing={isEditing}
-                selectedCount={selectedPoIds.length}
-                onStartEdit={() => setIsEditing(true)}
-                onCancelEdit={() => {
-                  setIsEditing(false);
-                  setSelectedPoIds([]);
-                }}
-                onDeleteSelected={onDeleteSelected}
+              )}
+              <SelectContent align="end" className="w-[180px] min-w-[180px]">
+                <SelectGroup>
+                  <SelectItem value="ALL">
+                    {t("po:status_all", "Semua Status")}
+                  </SelectItem>
+                  <SelectItem value="draft">
+                    {t("po:status_draft", "Draf")}
+                  </SelectItem>
+                  <SelectItem value="issued">
+                    {t("po:status_issued", "Diterbitkan")}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {t("po:status_completed", "Selesai")}
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    {t("po:status_cancelled", "Dibatalkan")}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            {sortOrder === "desc" ? (
+              <ActionTooltip content={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSortOrder("asc")}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">{t("common:action.order", "Urutan")}</span>
+                </Button>
+              </ActionTooltip>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder("desc")}
+                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
+              >
+                <ArrowUpDownIcon className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {t("common:action.order", "Urutan")}: {t("common:action.oldest", "Terlama")}
+                </span>
+              </Button>
+            )}
+
+            <SectionEditControls
+              hasItems={sortedOrders.length > 0}
+              isEditing={isEditing}
+              selectedCount={selectedPoIds.length}
+              onStartEdit={() => setIsEditing(true)}
+              onCancelEdit={() => {
+                setIsEditing(false);
+                setSelectedPoIds([]);
+              }}
+              onDeleteSelected={onDeleteSelected}
+            />
+
+            {mode === "admin" && onExportExcel && (
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={onExportExcel}
+                onExportPdf={onExportPdf}
+                onExportCsv={onExportCsv}
+                size="icon"
+                mobileFloating
               />
-            </div>
+            )}
+
+            {onOpenCreate && (
+              <ActionTooltip content={t("po:btn_create", "Buat PO Vendor")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={onOpenCreate}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("po:btn_create", "Buat PO Vendor")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("po:btn_create", "Buat PO Vendor")}</span>
+                </Button>
+              </ActionTooltip>
+            )}
           </div>
         }
       />

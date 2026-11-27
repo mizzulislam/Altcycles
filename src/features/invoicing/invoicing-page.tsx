@@ -2,15 +2,12 @@ import * as React from "react";
 import {
   ClockIcon,
   FileTextIcon,
-  PlusIcon,
   ReceiptIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { PageHeader } from "@/components/shared/page-header";
-import { Button } from "@/components/ui/button";
 import type { ViewDetailState } from "@/features/client-projects/components/project-detail-shared";
 import { buildArAging } from "@/lib/accounting-engine";
 import {
@@ -586,28 +583,6 @@ export function InvoicingPage() {
           "invoicing.page_desc",
           "Kelola invoice termin proyek, umur piutang, dan kuitansi resmi.",
         )}
-        mobileFloating
-        actions={
-          <>
-            <ExportDownloadMenu
-              label={t("action.export_download", "Unduh / Ekspor")}
-              className="w-auto"
-              onExportExcel={handleExportInvoicesExcel}
-              onExportPdf={handleExportInvoicesPdf}
-              onExportCsv={handleExportInvoicesCsv}
-              mobileFloating
-            />
-            <Button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="w-auto max-sm:size-9 max-sm:p-0 min-h-9 shrink-0"
-              aria-label={t("invoicing.issue_invoice", "Terbitkan Invoice")}
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("invoicing.issue_invoice", "Terbitkan Invoice")}</span>
-            </Button>
-          </>
-        }
       />
 
       {/* Ringkasan KPI Penagihan & Piutang */}
@@ -717,6 +692,10 @@ export function InvoicingPage() {
           }
           onDownloadPdf={handleDownloadInvoicePdf}
           onDownloadWord={handleDownloadInvoiceWord}
+          onCreateInvoice={() => setCreateOpen(true)}
+          onExportExcel={handleExportInvoicesExcel}
+          onExportPdf={handleExportInvoicesPdf}
+          onExportCsv={handleExportInvoicesCsv}
         />
       )}
 

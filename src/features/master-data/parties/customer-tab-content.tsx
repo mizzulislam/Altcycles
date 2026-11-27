@@ -1,6 +1,7 @@
 import * as React from "react";
 import { EyeIcon, EyeOffIcon, PencilIcon, PlusIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -240,42 +241,47 @@ export function CustomerTabContent({
           title={t("parties:customers.title", "Daftar Pelanggan / Klien Resmi")}
           description={t("parties:customers.desc", "Basis data pelanggan untuk penerbitan penawaran harga, SPK, invoice penagihan, dan kuitansi.")}
           controls={
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <ExportDownloadMenu
                 label={t("common:action.export_download", "Unduh / Ekspor")}
                 onExportExcel={handleExportCustomersExcel}
                 onExportPdf={handleExportCustomersPdf}
                 onExportCsv={handleExportCustomersCsv}
+                size="icon"
               />
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 cursor-pointer"
-                onClick={() => {
-                  setCstForm({
-                    id: undefined,
-                    code: `CST-00${customers.length + 1}`,
-                    name: "",
-                    company_name: "",
-                    contact_person: "",
-                    contact_title: "",
-                    email: "",
-                    phone: "",
-                    npwp: "",
-                    address: "",
-                    shipping_address: "",
-                    shipping_same_as_office: false,
-                    logo_storage_path: null,
-                    signature_storage_path: null,
-                    paraf_storage_path: null,
-                    is_active: true,
-                  });
-                  setCstOpen(true);
-                }}
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("parties:customers.add_btn", "Tambah Pelanggan")}
-              </Button>
+              <ActionTooltip content={t("parties:customers.add_btn", "Tambah Pelanggan")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("parties:customers.add_btn", "Tambah Pelanggan")}
+                  onClick={() => {
+                    setCstForm({
+                      id: undefined,
+                      code: `CST-00${customers.length + 1}`,
+                      name: "",
+                      company_name: "",
+                      contact_person: "",
+                      contact_title: "",
+                      email: "",
+                      phone: "",
+                      npwp: "",
+                      address: "",
+                      shipping_address: "",
+                      shipping_same_as_office: false,
+                      logo_storage_path: null,
+                      signature_storage_path: null,
+                      paraf_storage_path: null,
+                      is_active: true,
+                    });
+                    setCstOpen(true);
+                  }}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("parties:customers.add_btn", "Tambah Pelanggan")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

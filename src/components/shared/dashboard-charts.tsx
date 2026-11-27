@@ -167,7 +167,7 @@ export function ChartSummaryFooter({
   return (
     <div
       className={cn(
-        "grid bg-muted/10 text-xs min-h-[64px] border-t border-border/70",
+        "grid bg-muted/10 divide-x divide-border/60 text-xs h-[64px] min-h-[64px] border-t border-border/70",
         total === 2 && "grid-cols-2",
         total === 3 && "grid-cols-3",
         total === 4 && "grid-cols-2 sm:grid-cols-4",

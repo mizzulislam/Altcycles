@@ -1,8 +1,10 @@
 import {
   LockIcon,
   LockOpenIcon,
+  PlusIcon,
   Trash2Icon,
 } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +32,7 @@ export interface PeriodListTableProps {
   onClosePeriod: (p: PeriodRow) => void;
   onReopenPeriod: (p: PeriodRow) => void;
   onDeletePeriod: (p: PeriodRow) => void;
+  onOpenCreatePeriod?: () => void;
 }
 
 export function PeriodListTable({
@@ -38,6 +41,7 @@ export function PeriodListTable({
   onClosePeriod,
   onReopenPeriod,
   onDeletePeriod,
+  onOpenCreatePeriod,
 }: PeriodListTableProps) {
   const { t, language } = useLanguage();
 
@@ -46,6 +50,23 @@ export function PeriodListTable({
       <CardHeaderWithInfo
         title={t("accounting:coa.card_periods_title", "Daftar Periode Bulanan")}
         description={t("accounting:coa.card_periods_desc", "Status terbuka mengizinkan pencatatan dan posting jurnal transaksi pada bulan bersangkutan.")}
+        controls={
+          onOpenCreatePeriod ? (
+            <ActionTooltip content={t("accounting:coa.btn_open_period", "Buka Periode Baru")}>
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                onClick={onOpenCreatePeriod}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={t("accounting:coa.btn_open_period", "Buka Periode Baru")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
+              </Button>
+            </ActionTooltip>
+          ) : undefined
+        }
       />
       <CardContent className="p-0">
         <Table>

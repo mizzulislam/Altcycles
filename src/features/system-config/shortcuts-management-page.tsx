@@ -14,6 +14,7 @@ import {
   SlidersHorizontalIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -457,18 +458,6 @@ export function ShortcutsManagementPage() {
           "shortcuts.management_desc",
           "Konfigurasi dan kelola pemetaan pintasan keyboard global untuk seluruh portal dan peran pengguna.",
         )}
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setResetAllOpen(true)}
-            disabled={customCount === 0}
-            className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold shrink-0 gap-2 border-border/80"
-          >
-            <RotateCcwIcon className="size-4" />
-            <span className="max-sm:hidden">{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
-          </Button>
-        }
       />
 
       {/* 2. Kartu Ringkasan KPI (4 Cards) */}
@@ -536,47 +525,95 @@ export function ShortcutsManagementPage() {
             </div>
 
             {/* Combined Filter Dropdown Button */}
-            <Button
-              ref={filterBtnRef}
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setSortMenuOpen(false);
-                setFilterMenuOpen((prev) => !prev);
-              }}
-              className={cn(
-                "h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-border/80 transition-colors",
-                activeFilterCount > 0 && "border-primary/50 text-primary bg-primary/5",
-              )}
-            >
-              <SlidersHorizontalIcon className="size-4" />
-              <span>{t("shortcuts.btn_filter", "Filter")}</span>
-              {activeFilterCount > 0 && (
+            {activeFilterCount === 0 ? (
+              <ActionTooltip content={t("shortcuts.btn_filter", "Filter")}>
+                <Button
+                  ref={filterBtnRef}
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setSortMenuOpen(false);
+                    setFilterMenuOpen((prev) => !prev);
+                  }}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                  aria-label={t("shortcuts.btn_filter", "Filter")}
+                >
+                  <SlidersHorizontalIcon className="size-4 text-primary" />
+                  <span className="sr-only">{t("shortcuts.btn_filter", "Filter")}</span>
+                </Button>
+              </ActionTooltip>
+            ) : (
+              <Button
+                ref={filterBtnRef}
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSortMenuOpen(false);
+                  setFilterMenuOpen((prev) => !prev);
+                }}
+                className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+              >
+                <SlidersHorizontalIcon className="size-4" />
+                <span>{t("shortcuts.btn_filter", "Filter")}</span>
                 <span className="flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums">
                   {activeFilterCount}
                 </span>
-              )}
-              <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", filterMenuOpen && "rotate-180")} />
-            </Button>
+                <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", filterMenuOpen && "rotate-180")} />
+              </Button>
+            )}
 
             {/* Sort Dropdown Button */}
-            <Button
-              ref={sortBtnRef}
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setFilterMenuOpen(false);
-                setSortMenuOpen((prev) => !prev);
-              }}
-              className={cn(
-                "h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-border/80 transition-colors",
-                sortBy !== "default" && "border-primary/50 text-primary bg-primary/5",
-              )}
-            >
-              <ArrowUpDownIcon className="size-4" />
-              <span>{t("shortcuts.btn_sort", "Urutkan")}</span>
-              <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", sortMenuOpen && "rotate-180")} />
-            </Button>
+            {sortBy === "default" ? (
+              <ActionTooltip content={t("shortcuts.btn_sort", "Urutkan")}>
+                <Button
+                  ref={sortBtnRef}
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setFilterMenuOpen(false);
+                    setSortMenuOpen((prev) => !prev);
+                  }}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                  aria-label={t("shortcuts.btn_sort", "Urutkan")}
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">{t("shortcuts.btn_sort", "Urutkan")}</span>
+                </Button>
+              </ActionTooltip>
+            ) : (
+              <Button
+                ref={sortBtnRef}
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFilterMenuOpen(false);
+                  setSortMenuOpen((prev) => !prev);
+                }}
+                className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+              >
+                <ArrowUpDownIcon className="size-4" />
+                <span>{t("shortcuts.btn_sort", "Urutkan")}</span>
+                <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", sortMenuOpen && "rotate-180")} />
+              </Button>
+            )}
+
+            {/* Reset All Button */}
+            <ActionTooltip content={t("shortcuts.reset_all", "Reset Semua ke Default")}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setResetAllOpen(true)}
+                disabled={customCount === 0}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                aria-label={t("shortcuts.reset_all", "Reset Semua ke Default")}
+              >
+                <RotateCcwIcon className="size-4" />
+                <span className="sr-only">{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

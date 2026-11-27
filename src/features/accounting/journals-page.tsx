@@ -6,6 +6,7 @@ import {
   SlidersHorizontalIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { type SemanticTone } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -631,31 +632,6 @@ export function JournalsPage({
                 )}
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start sm:self-center w-auto">
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={handleExportExcel}
-            onExportPdf={handleExportPdf}
-            onExportCsv={handleExportCsv}
-          />
-          <Button
-            type="button"
-            onClick={openNewJournal}
-            className="h-9 max-sm:size-9 max-sm:p-0 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-2 w-auto"
-            title={
-              filterMode === "adjusting"
-                ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
-                : t("accounting:journals.btn_record", "Catat Transaksi")
-            }
-          >
-            <PlusIcon className="size-4" />
-            <span className="max-sm:hidden">
-              {filterMode === "adjusting"
-                ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
-                : t("accounting:journals.btn_record", "Catat Transaksi")}
-            </span>
-          </Button>
-        </div>
       </div>
 
       {/* Penerapan Asumsi Akuntansi Keuangan - Tampil pada Tab Jurnal Penyesuaian (Splitz Style) */}
@@ -736,35 +712,50 @@ export function JournalsPage({
               : t("accounting:journals.daily_book", "Buku Jurnal Harian")}
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              className="gap-1.5 text-xs font-medium cursor-pointer shrink-0"
-            >
-              <ArrowUpDownIcon className="size-3.5" />
-              <span>
-                {t("accounting:journals.order", "Urutan:")}{" "}
-                {sortOrder === "asc"
-                  ? t("accounting:journals.order_oldest", "Terlama")
-                  : t("accounting:journals.order_newest", "Terbaru")}
-              </span>
-            </Button>
-
-            {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (
+            {sortOrder === "desc" ? (
+              <ActionTooltip content={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSortOrder("asc")}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">{t("accounting:journals.order", "Urutan:")}</span>
+                </Button>
+              </ActionTooltip>
+            ) : (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="gap-1.5 text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-xs"
+                onClick={() => setSortOrder("desc")}
+                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
               >
-                <PencilIcon className="size-3.5" />
-                <span>{t("common:action.edit", "Edit")}</span>
+                <ArrowUpDownIcon className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {t("accounting:journals.order", "Urutan:")}{" "}
+                  {t("accounting:journals.order_oldest", "Terlama")}
+                </span>
               </Button>
+            )}
+
+            {sortedJournals.length === 0 && !isEditMode ? null : !isEditMode ? (
+              <ActionTooltip content={t("common:action.edit", "Edit")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsEditMode(true)}
+                  className="size-9 rounded-xl cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs shrink-0"
+                  aria-label={t("common:action.edit", "Edit")}
+                >
+                  <PencilIcon className="size-4" />
+                  <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+                </Button>
+              </ActionTooltip>
             ) : (
               <div className="flex items-center gap-2">
                 <Button
@@ -775,7 +766,7 @@ export function JournalsPage({
                     setIsEditMode(false);
                     setSelectedJournalIds([]);
                   }}
-                  className="text-xs font-medium cursor-pointer"
+                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                 >
                   {t("common:action.cancel", "Batal")}
                 </Button>
@@ -785,12 +776,48 @@ export function JournalsPage({
                   size="sm"
                   onClick={() => setIsBatchDeleteDialogOpen(true)}
                   disabled={selectedJournalIds.length === 0}
-                  className="text-xs font-medium cursor-pointer"
+                  className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                 >
                   {t("common:action.delete_selected", "Hapus Pilihan")} ({selectedJournalIds.length})
                 </Button>
               </div>
             )}
+
+            <ExportDownloadMenu
+              label={t("common:action.export_download", "Unduh / Ekspor")}
+              onExportExcel={handleExportExcel}
+              onExportPdf={handleExportPdf}
+              onExportCsv={handleExportCsv}
+              size="icon"
+            />
+
+            <ActionTooltip
+              content={
+                filterMode === "adjusting"
+                  ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                  : t("accounting:journals.btn_record", "Catat Transaksi")
+              }
+            >
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                onClick={openNewJournal}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={
+                  filterMode === "adjusting"
+                    ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                    : t("accounting:journals.btn_record", "Catat Transaksi")
+                }
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">
+                  {filterMode === "adjusting"
+                    ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                    : t("accounting:journals.btn_record", "Catat Transaksi")}
+                </span>
+              </Button>
+            </ActionTooltip>
           </div>
         </CardHeader>
         <CardContent className="p-0">

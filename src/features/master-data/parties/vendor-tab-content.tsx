@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Building2Icon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -202,36 +203,41 @@ export function VendorTabContent({
           title={t("parties:vendors.title", "Daftar Vendor Pemasok")}
           description={t("parties:vendors.desc", "Vendor bukan pengguna sistem dan tidak memiliki akun login.")}
           controls={
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <ExportDownloadMenu
                 label={t("common:action.export_download", "Unduh / Ekspor")}
                 onExportExcel={handleExportVendorsExcel}
                 onExportPdf={handleExportVendorsPdf}
                 onExportCsv={handleExportVendorsCsv}
+                size="icon"
               />
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 cursor-pointer"
-                onClick={() => {
-                  setVndForm({
-                    id: undefined,
-                    code: `VND-00${vendors.length + 1}`,
-                    name: "",
-                    contact_name: "",
-                    email: "",
-                    phone: "",
-                    bank_name: "",
-                    bank_account_number: "",
-                    address: "",
-                    is_active: true,
-                  });
-                  setVndOpen(true);
-                }}
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("parties:vendors.add_btn", "Tambah Vendor")}
-              </Button>
+              <ActionTooltip content={t("parties:vendors.add_btn", "Tambah Vendor")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("parties:vendors.add_btn", "Tambah Vendor")}
+                  onClick={() => {
+                    setVndForm({
+                      id: undefined,
+                      code: `VND-00${vendors.length + 1}`,
+                      name: "",
+                      contact_name: "",
+                      email: "",
+                      phone: "",
+                      bank_name: "",
+                      bank_account_number: "",
+                      address: "",
+                      is_active: true,
+                    });
+                    setVndOpen(true);
+                  }}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("parties:vendors.add_btn", "Tambah Vendor")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

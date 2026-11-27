@@ -1,14 +1,12 @@
 import * as React from "react";
 import {
   ListTodoIcon,
-  RotateCcwIcon,
   ShieldAlertIcon,
   ShieldCheckIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Button } from "@/components/ui/button";
 import {
   getCompanyProfile,
   listAccounts,
@@ -225,19 +223,6 @@ export function PeriodsPage({
             "accounting:closing.page_subtitle",
             "Daftar jurnal penutup aktual yang tersimpan di sistem serta kelola periode pembukuan.",
           )}
-          mobileFloating
-          actions={
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setReverseOpen(true)}
-              className="shrink-0 cursor-pointer shadow-xs gap-1.5"
-              aria-label={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}
-            >
-              <RotateCcwIcon className="size-4" />
-              <span>{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
-            </Button>
-          }
         />
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -248,18 +233,6 @@ export function PeriodsPage({
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
               {t("accounting:closing.tab_subheading", "Daftar jurnal penutup aktual yang tersimpan di sistem serta kontrol periode pembukuan.")}
             </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setReverseOpen(true)}
-              className="h-9 px-3.5 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-1.5"
-            >
-              <RotateCcwIcon className="size-3.5" />
-              <span>{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
-            </Button>
           </div>
         </div>
       )}
@@ -402,6 +375,7 @@ export function PeriodsPage({
         onViewDetailJournal={setSelectedDetailJournal}
         onDeleteSingleClosing={setDeleteTargetClosing}
         onOpenBatchDelete={() => setIsBatchDeleteClosingOpen(true)}
+        onOpenReversing={() => setReverseOpen(true)}
       />
 
       {/* Modal Jurnal Pembalik Opsional */}

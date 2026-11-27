@@ -11,6 +11,7 @@ import {
   WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { PageHeader, TruncatedTooltipText } from "@/components/shared/page-header";
@@ -315,27 +316,6 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             ? t("budgeting:admin.page_desc")
             : t("budgeting:user.page_desc")
         }
-        actions={
-          mode === "admin" && selectedProjectId ? (
-            <>
-              <ExportDownloadMenu
-                label={t("common:action.export_download")}
-                onExportExcel={handleExportExcel}
-                onExportPdf={handleExportPdf}
-                onExportCsv={handleExportCsv}
-                mobileFloating
-              />
-              <Button
-                type="button"
-                onClick={() => openBudgetEditor(false)}
-                className="shrink-0 cursor-pointer shadow-2xs max-sm:size-9 max-sm:p-0"
-              >
-                <PlusIcon className="size-4" />
-                <span className="max-sm:hidden">{t("budgeting:admin.btn_set_budget")}</span>
-              </Button>
-            </>
-          ) : null
-        }
       />
 
       {projects.length > 0 ? (
@@ -437,33 +417,74 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
           title={t("budgeting:common.card_title")}
           description={t("budgeting:common.card_desc")}
           controls={
-            <div className="flex items-center gap-2.5 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-                className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0"
-              >
-                <ArrowUpDownIcon className="size-3.5" />
-                <span>
-                  {t("common:action.order", "Urutan")}:{" "}
-                  {sortOrder === "asc"
-                    ? t("common:action.oldest", "Terlama")
-                    : t("common:action.newest", "Terbaru")}
-                </span>
-              </Button>
-              {mode === "admin" && (
+            <div className="flex items-center gap-2.5 shrink-0 justify-end w-full sm:w-auto">
+              {sortOrder === "desc" ? (
+                <ActionTooltip content={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setSortOrder("asc")}
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                    aria-label={`${t("common:action.order", "Urutan")}: ${t("common:action.newest", "Terbaru")}`}
+                  >
+                    <ArrowUpDownIcon className="size-4 text-primary" />
+                    <span className="sr-only">{t("common:action.order", "Urutan")}</span>
+                  </Button>
+                </ActionTooltip>
+              ) : (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => openBudgetEditor(true)}
-                  className="h-8 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 text-primary dark:text-sky-400 hover:text-primary dark:hover:text-sky-400"
+                  onClick={() => setSortOrder("desc")}
+                  className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold cursor-pointer shrink-0 border-primary/40 bg-primary/5 text-primary"
                 >
-                  <PencilIcon className="size-3.5" />
-                  <span>{t("common:action.edit", "Edit")}</span>
+                  <ArrowUpDownIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">
+                    {t("common:action.order", "Urutan")}: {t("common:action.oldest", "Terlama")}
+                  </span>
                 </Button>
+              )}
+              {mode === "admin" && (
+                <ActionTooltip content={t("common:action.edit", "Edit")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => openBudgetEditor(true)}
+                    className="size-9 rounded-xl shrink-0 cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
+                    aria-label={t("common:action.edit", "Edit")}
+                  >
+                    <PencilIcon className="size-4" />
+                    <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+                  </Button>
+                </ActionTooltip>
+              )}
+              {mode === "admin" && selectedProjectId && (
+                <>
+                  <ExportDownloadMenu
+                    label={t("common:action.export_download")}
+                    onExportExcel={handleExportExcel}
+                    onExportPdf={handleExportPdf}
+                    onExportCsv={handleExportCsv}
+                    size="icon"
+                    mobileFloating
+                  />
+                  <ActionTooltip content={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="icon"
+                      onClick={() => openBudgetEditor(false)}
+                      className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                      aria-label={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}
+                    >
+                      <PlusIcon className="size-4" />
+                      <span className="sr-only">{t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}</span>
+                    </Button>
+                  </ActionTooltip>
+                </>
               )}
             </div>
           }

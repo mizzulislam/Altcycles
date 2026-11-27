@@ -82,48 +82,46 @@ export function ProjectDetailHeader({
           "projects:header.subtitle",
           "Kelola jadwal termin, progres penyelesaian, dan dokumen resmi proyek.",
         )}
-        actions={
-          <Select
-            value={project.id}
-            onValueChange={(nextId) => {
-              if (nextId && nextId !== project.id) {
-                onSwitchProject(nextId);
-              }
-            }}
-          >
-            <SelectTrigger
-              aria-label={t("projects:header.switch_project", "Pindah ke proyek lain")}
-              className="h-9 w-full sm:w-52 rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-            >
-              <div className="flex items-center gap-2 truncate">
-                <FolderKanbanIcon className="size-4 text-primary shrink-0" />
-                <SelectValue placeholder={t("projects:header.select_project", "Pilih kode proyek")} />
-              </div>
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectGroup>
-                {allProjects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.code}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        }
       />
 
       {/* Informasi Proyek: 2 Kelompok Seimbang */}
       <Card className="rounded-2xl border-border/80 bg-card px-6 py-4 shadow-2xs">
         <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-8">
           <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
-            <div className="min-w-0 space-y-0.5">
-              <p className="text-[11px] font-medium text-muted-foreground">
-                {t("projects:summary.code", "Kode Proyek")}
-              </p>
-              <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
-                {project.code}
-              </p>
+            <div className="flex items-start justify-between gap-3 min-w-0">
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("projects:summary.code", "Kode Proyek")}
+                </p>
+                <p className="text-xs sm:text-sm font-semibold text-foreground truncate tabular-nums">
+                  {project.code}
+                </p>
+              </div>
+              <Select
+                value={project.id}
+                onValueChange={(nextId) => {
+                  if (nextId && nextId !== project.id) {
+                    onSwitchProject(nextId);
+                  }
+                }}
+              >
+                <SelectTrigger
+                  aria-label={t("projects:header.switch_project", "Pindah ke proyek lain")}
+                  className="h-8.5 w-auto min-w-[150px] max-w-[210px] rounded-xl bg-card border-border/80 text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer shrink-0 gap-2"
+                >
+                  <FolderKanbanIcon className="size-3.5 text-primary shrink-0" />
+                  <SelectValue placeholder={t("projects:header.select_project", "Pilih kode proyek")} />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectGroup>
+                    {allProjects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.code}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
             <div className="min-w-0 space-y-0.5">
               <p className="text-[11px] font-medium text-muted-foreground">

@@ -1,4 +1,5 @@
 import { PlusIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -102,14 +103,19 @@ export function SowSpkTab({
                 })
               }
             />
-            <Button
-              type="button"
-              onClick={onOpenCreateDoc}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-            >
-              <PlusIcon data-icon="inline-start" />
-              {t("projects:sow_spk.btn_create")}
-            </Button>
+            <ActionTooltip content={t("projects:sow_spk.btn_create")}>
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                onClick={onOpenCreateDoc}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={t("projects:sow_spk.btn_create")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">{t("projects:sow_spk.btn_create")}</span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

@@ -479,116 +479,253 @@ export function AdminDashboardPage() {
     };
   });
 
-  // Ekspor Dokumen
+  // Ekspor Dokumen Ringkasan Dasbor Eksekutif (Excel, PDF, CSV)
   async function handleBackupExport() {
     const rows: Array<Array<string | number>> = [];
-    for (const j of journals) {
-      const jLines = lines.filter((l) => l.journal_id === j.id);
-      for (const l of jLines) {
-        const acc = accMap.get(l.account_id);
-        rows.push([
-          j.journal_number,
-          formatDateI18n(j.journal_date, language),
-          j.journal_type,
-          j.status,
-          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
-          getLocalizedTransactionDescription(l.description ?? j.description, language),
-          l.debit,
-          l.credit,
-        ]);
-      }
+
+    // Seksi 1: Metrik Kunci & Posisi Keuangan
+    rows.push([
+      t("dashboard:export.col_indicator", "Indikator / Kategori"),
+      t("dashboard:export.col_value", "Nilai (IDR)"),
+      t("dashboard:export.col_unit", "Satuan / Keterangan"),
+      t("dashboard:export.col_details", "Rincian"),
+    ]);
+    rows.push([
+      t("dashboard.kpi.ending_cash", "Kas & Bank Terkini"),
+      cashPosition.endingCash,
+      "IDR",
+      openPeriods > 0
+        ? `${openPeriods} ${t("dashboard.kpi.open_periods", "periode buku aktif terbuka")}`
+        : t("dashboard.kpi.all_periods_closed", "Seluruh periode buku ditutup"),
+    ]);
+    rows.push([
+      t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih"),
+      outstandingReceivable,
+      "IDR",
+      unpaidInvoiceCount > 0
+        ? `${unpaidInvoiceCount} ${t("dashboard.kpi.invoices_awaiting_payment", "invoice menunggu pelunasan")}`
+        : t("dashboard.kpi.all_receivables_managed", "Seluruh tagihan klien terkelola"),
+    ]);
+    rows.push([
+      t("dashboard.kpi.contract_commitments", "Komitmen Kontrak"),
+      totalContract,
+      "IDR",
+      `${t("dashboard.kpi.accumulated_from", "Akumulasi dari")} ${projects.length} ${t("dashboard.kpi.client_projects", "proyek klien")}`,
+    ]);
+    rows.push([
+      t("dashboard.kpi.pending_approvals", "Antrean Pembayaran"),
+      pendingApprovals + readyDisbursements,
+      t("dashboard.kpi.submissions", "Pengajuan"),
+      `${readyDisbursements} siap dicairkan, ${pendingApprovals} menunggu verifikasi`,
+    ]);
+    rows.push([
+      t("dashboard:charts.revenue", "Total Pendapatan"),
+      incomeStatement.totalRevenue,
+      "IDR",
+      "Akumulasi pendapatan operasional",
+    ]);
+    rows.push([
+      t("dashboard:charts.direct_expense", "Beban Langsung"),
+      incomeStatement.totalDirectExpense,
+      "IDR",
+      "Beban pokok proyek",
+    ]);
+    rows.push([
+      t("dashboard:charts.shared_expense", "Beban Bersama"),
+      incomeStatement.totalSharedExpense,
+      "IDR",
+      "Beban operasional & umum",
+    ]);
+    rows.push([
+      t("accounting:reports.net_income", "Laba Bersih"),
+      incomeStatement.netProfit,
+      "IDR",
+      "Laba/Rugi bersih periode berjalan",
+    ]);
+    rows.push(["", "", "", ""]);
+
+    // Seksi 2: Tren Bulanan Pendapatan, Beban, & Arus Kas
+    rows.push([
+      t("dashboard:export.col_month", "Bulan / Periode"),
+      t("dashboard:export.col_revenue", "Pendapatan"),
+      t("dashboard:export.col_expense", "Beban Langsung"),
+      t("dashboard:export.col_net_cash", "Arus Kas Bersih"),
+    ]);
+    for (const pt of monthlySeries) {
+      rows.push([pt.label, pt.revenue, pt.expense, pt.netCash]);
     }
+    rows.push(["", "", "", ""]);
+
+    // Seksi 3: Ringkasan Realisasi Penagihan Proyek
+    rows.push([
+      t("dashboard:export.col_project_code", "Kode Proyek"),
+      t("dashboard:export.col_project_name", "Nama Proyek"),
+      t("dashboard:export.col_contract_val", "Nilai Kontrak"),
+      `${t("dashboard:export.col_billed_val", "Tertagih")} (${t("dashboard:export.col_progress_pct", "Progres %")})`,
+    ]);
+    for (const p of projectBillingStats) {
+      rows.push([p.code, p.name, p.contract, `${formatRupiah(p.billed)} (${p.pct}%)`]);
+    }
+
     await downloadExcelSheet({
       fileName: t("dashboard:export.excel_filename"),
       sheetName: t("dashboard:export.excel_sheet"),
       columns: [
-        { header: t("dashboard:export.col_journal_no"), width: 22 },
-        { header: t("dashboard:export.col_date"), width: 14 },
-        { header: t("dashboard:export.col_type"), width: 18 },
-        { header: t("dashboard:export.col_status"), width: 14 },
-        { header: t("dashboard:export.col_account"), width: 32 },
-        { header: t("dashboard:export.col_description"), width: 38 },
-        { header: t("dashboard:export.col_debit"), width: 18 },
-        { header: t("dashboard:export.col_credit"), width: 18 },
+        { header: t("dashboard:export.col_indicator", "Indikator / Kategori"), width: 35 },
+        { header: t("dashboard:export.col_value", "Nilai (IDR)"), width: 22 },
+        { header: t("dashboard:export.col_unit", "Satuan / Keterangan"), width: 18 },
+        { header: t("dashboard:export.col_details", "Rincian"), width: 40 },
       ],
       rows,
     });
-    await recordExportLog("FULL_BACKUP_LEDGER", "EXCEL");
+    await recordExportLog("DASHBOARD_EXECUTIVE_SUMMARY", "EXCEL", periodFilter);
     toast.success(t("dashboard:export.toast_excel_success"));
   }
 
   async function handleBackupExportPdf() {
     const comp = await getCompanyProfile();
-    const tableRows: string[][] = [];
-    for (const j of journals) {
-      const jLines = lines.filter((l) => l.journal_id === j.id);
-      for (const l of jLines) {
-        const acc = accMap.get(l.account_id);
-        tableRows.push([
-          formatDateI18n(j.journal_date, language),
-          j.journal_number,
-          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
-          getLocalizedTransactionDescription(l.description ?? j.description, language),
-          l.debit > 0 ? formatRupiah(l.debit) : "-",
-          l.credit > 0 ? formatRupiah(l.credit) : "-",
-        ]);
-      }
-    }
+    const tableRows: string[][] = monthlySeries.map((m) => [
+      m.label,
+      formatRupiah(m.revenue),
+      formatRupiah(m.expense),
+      formatRupiah(m.netCash),
+      `${m.txCount} trx`,
+      m.revenue > 0 ? `${Math.round(((m.revenue - m.expense) / m.revenue) * 100)}%` : "0%",
+    ]);
+
     const bytes = await generateDocumentPdf({
       orientation: "landscape",
       docTitle: t("dashboard:export.pdf_title"),
-      docSubtitle: t("dashboard:export.pdf_subtitle", { count: journals.length }),
-      docNumber: `BKP/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
+      docSubtitle: t("dashboard:export.pdf_subtitle", {
+        period:
+          periodFilter === "all"
+            ? t("dashboard:filter.all_periods", "Semua Periode")
+            : periodFilter,
+      }),
+      docNumber: `DSB/${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
       docDate: new Date().toISOString().slice(0, 10),
       company: comp,
+      metaRows: [
+        {
+          label: t("dashboard.kpi.ending_cash", "Kas & Bank Terkini"),
+          value: formatRupiah(cashPosition.endingCash),
+        },
+        {
+          label: t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih"),
+          value: formatRupiah(outstandingReceivable),
+        },
+        {
+          label: t("dashboard.kpi.contract_commitments", "Komitmen Kontrak"),
+          value: formatRupiah(totalContract),
+        },
+        {
+          label: t("dashboard.kpi.pending_approvals", "Antrean Pembayaran"),
+          value: `${pendingApprovals + readyDisbursements} ${t("dashboard.kpi.submissions", "Pengajuan")}`,
+        },
+      ],
       tableColumns: [
-        { header: t("dashboard:export.col_date"), widthRatio: 0.12, align: "center" },
-        { header: t("dashboard:export.col_journal_no"), widthRatio: 0.18, align: "left" },
-        { header: t("dashboard:export.col_account"), widthRatio: 0.26, align: "left" },
-        { header: t("dashboard:export.col_description"), widthRatio: 0.24, align: "left" },
-        { header: t("dashboard:export.col_debit"), widthRatio: 0.10, align: "right" },
-        { header: t("dashboard:export.col_credit"), widthRatio: 0.10, align: "right" },
+        { header: t("dashboard:export.col_month", "Bulan / Periode"), widthRatio: 0.18, align: "left" },
+        { header: t("dashboard:export.col_revenue", "Pendapatan"), widthRatio: 0.2, align: "right" },
+        { header: t("dashboard:export.col_expense", "Beban Operasional"), widthRatio: 0.2, align: "right" },
+        { header: t("dashboard:export.col_net_cash", "Arus Kas Bersih"), widthRatio: 0.2, align: "right" },
+        { header: t("dashboard:export.col_unit", "Frekuensi"), widthRatio: 0.1, align: "center" },
+        { header: "Margin", widthRatio: 0.12, align: "right" },
       ],
       tableRows,
+      summaryRows: [
+        {
+          label: t("dashboard:charts.revenue", "Total Pendapatan"),
+          value: formatRupiah(incomeStatement.totalRevenue),
+        },
+        {
+          label: "Total Realisasi Beban",
+          value: formatRupiah(totalExpense),
+        },
+        {
+          label: "Laba Bersih Akumulatif",
+          value: formatRupiah(incomeStatement.netProfit),
+        },
+        {
+          label: t("dashboard.kpi.ending_cash", "Kas & Bank Terkini"),
+          value: formatRupiah(cashPosition.endingCash),
+        },
+      ],
       rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
     });
     downloadPdfBytes(bytes, t("dashboard:export.excel_filename").replace(".xlsx", ".pdf"));
-    await recordExportLog("FULL_BACKUP_LEDGER", "PDF");
+    await recordExportLog("DASHBOARD_EXECUTIVE_SUMMARY", "PDF", periodFilter);
+    toast.success(t("dashboard:export.toast_pdf_success"));
   }
 
   async function handleBackupExportCsv() {
     const rows: Array<Array<string | number>> = [];
-    for (const j of journals) {
-      const jLines = lines.filter((l) => l.journal_id === j.id);
-      for (const l of jLines) {
-        const acc = accMap.get(l.account_id);
-        rows.push([
-          j.journal_number,
-          formatDateI18n(j.journal_date, language),
-          j.journal_type,
-          j.status,
-          acc ? `${acc.code} - ${getLocalizedAccountName(acc, language)}` : "-",
-          getLocalizedTransactionDescription(l.description ?? j.description, language),
-          l.debit,
-          l.credit,
-        ]);
-      }
+    rows.push([
+      t("dashboard.kpi.ending_cash", "Kas & Bank Terkini"),
+      cashPosition.endingCash,
+      "IDR",
+      "Ending Cash",
+    ]);
+    rows.push([
+      t("dashboard.kpi.outstanding_receivables", "Piutang Belum Tertagih"),
+      outstandingReceivable,
+      "IDR",
+      "Outstanding Receivables",
+    ]);
+    rows.push([
+      t("dashboard.kpi.contract_commitments", "Komitmen Kontrak"),
+      totalContract,
+      "IDR",
+      "Contract Commitments",
+    ]);
+    rows.push([
+      t("dashboard.kpi.pending_approvals", "Antrean Pembayaran"),
+      pendingApprovals + readyDisbursements,
+      "Submissions",
+      "Pending Approvals",
+    ]);
+    rows.push([
+      t("dashboard:charts.revenue", "Total Pendapatan"),
+      incomeStatement.totalRevenue,
+      "IDR",
+      "Total Revenue",
+    ]);
+    rows.push([
+      t("dashboard:charts.direct_expense", "Beban Langsung"),
+      incomeStatement.totalDirectExpense,
+      "IDR",
+      "Direct Expense",
+    ]);
+    rows.push([
+      t("dashboard:charts.shared_expense", "Beban Bersama"),
+      incomeStatement.totalSharedExpense,
+      "IDR",
+      "Shared Expense",
+    ]);
+    rows.push([
+      t("accounting:reports.net_income", "Laba Bersih"),
+      incomeStatement.netProfit,
+      "IDR",
+      "Net Profit",
+    ]);
+
+    for (const pt of monthlySeries) {
+      rows.push([pt.label, pt.revenue, pt.expense, `Net Cash: ${pt.netCash}`]);
     }
+    for (const p of projectBillingStats) {
+      rows.push([p.code, p.name, p.contract, `Billed: ${p.billed} (${p.pct}%)`]);
+    }
+
     downloadCsvFile(
       t("dashboard:export.excel_filename").replace(".xlsx", ".csv"),
       [
-        t("dashboard:export.col_journal_no"),
-        t("dashboard:export.col_date"),
-        t("dashboard:export.col_type"),
-        t("dashboard:export.col_status"),
-        t("dashboard:export.col_account"),
-        t("dashboard:export.col_description"),
-        t("dashboard:export.col_debit"),
-        t("dashboard:export.col_credit"),
+        t("dashboard:export.col_indicator", "Indikator / Kategori"),
+        t("dashboard:export.col_value", "Nilai (IDR)"),
+        t("dashboard:export.col_unit", "Satuan / Keterangan"),
+        t("dashboard:export.col_details", "Rincian"),
       ],
       rows,
     );
-    await recordExportLog("FULL_BACKUP_LEDGER", "CSV");
+    await recordExportLog("DASHBOARD_EXECUTIVE_SUMMARY", "CSV", periodFilter);
     toast.success(t("dashboard:export.toast_csv_success"));
   }
 

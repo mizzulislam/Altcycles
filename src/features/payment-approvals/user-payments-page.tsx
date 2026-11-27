@@ -9,6 +9,7 @@ import {
   WalletIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   GoogleDriveIcon,
   GoogleDrivePickerDialog,
@@ -516,26 +517,6 @@ export function UserPaymentsPage() {
       <PageHeader
         title={t("approvals:user.page_title")}
         description={t("approvals:user.page_desc")}
-        actions={
-          <>
-            <ExportDownloadMenu
-              label={t("common:action.export_download")}
-              onExportExcel={handleExportExcel}
-              onExportPdf={handleExportPdf}
-              onExportCsv={handleExportCsv}
-              mobileFloating
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setCreateOpen(true)}
-              className="h-9 max-sm:size-9 max-sm:p-0 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs w-auto"
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("approvals:user.btn_create")}</span>
-            </Button>
-          </>
-        }
       />
 
       {/* Ringkasan KPI Pengajuan Pembayaran */}
@@ -579,6 +560,31 @@ export function UserPaymentsPage() {
         <CardHeaderWithInfo
           title={t("approvals:user.card_title")}
           description={t("approvals:user.card_desc")}
+          controls={
+            <div className="flex items-center gap-2.5 shrink-0 justify-end">
+              <ExportDownloadMenu
+                label={t("common:action.export_download")}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onExportCsv={handleExportCsv}
+                size="icon"
+                mobileFloating
+              />
+              <ActionTooltip content={t("approvals:user.btn_create")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={() => setCreateOpen(true)}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("approvals:user.btn_create")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("approvals:user.btn_create")}</span>
+                </Button>
+              </ActionTooltip>
+            </div>
+          }
         />
         <CardContent className="p-0">
           <Table>

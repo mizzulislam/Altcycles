@@ -2,6 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import {
   ChevronDownIcon,
+  FilterIcon,
   PlusIcon,
   Trash2Icon,
   UserCheckIcon,
@@ -9,6 +10,7 @@ import {
   UserXIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -417,18 +419,6 @@ export function UsersManagementPage() {
           "settings:users.page_desc",
           "Kelola akun pengguna, wewenang peran ganda, dan hak akses modul internal perusahaan.",
         )}
-        mobileFloating
-        actions={
-          <Button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="shrink-0 max-sm:size-9 max-sm:p-0 w-auto"
-            aria-label={t("settings:users.add_account_btn", "Tambah Akun Internal")}
-          >
-            <PlusIcon className="size-4" />
-            <span className="max-sm:hidden">{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
-          </Button>
-        }
       />
 
       <Card className="overflow-visible">
@@ -436,7 +426,7 @@ export function UsersManagementPage() {
           title={t("settings:users.card_title", "Daftar Pengguna Internal")}
           description={t("settings:users.card_desc", "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.")}
           action={
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-end">
               <Input
                 placeholder={t("settings:users.search_input_placeholder", "Cari nama atau email...")}
                 value={search}
@@ -444,10 +434,25 @@ export function UsersManagementPage() {
                 className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
               />
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full sm:w-48 h-9 rounded-xl text-xs sm:text-sm">
-                  <SelectValue placeholder={t("settings:users.filter_role_placeholder", "Filter peran")} />
-                </SelectTrigger>
-                <SelectContent>
+                {roleFilter === "all" ? (
+                  <ActionTooltip content={t("settings:users.filter_role_placeholder", "Filter peran")}>
+                    <SelectTrigger
+                      aria-label={t("settings:users.filter_role_placeholder", "Filter peran")}
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                    >
+                      <FilterIcon className="size-4 text-primary" />
+                    </SelectTrigger>
+                  </ActionTooltip>
+                ) : (
+                  <SelectTrigger
+                    aria-label={t("settings:users.filter_role_placeholder", "Filter peran")}
+                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  >
+                    <FilterIcon className="size-3.5 shrink-0" />
+                    <SelectValue placeholder={t("settings:users.filter_role_placeholder", "Filter peran")} />
+                  </SelectTrigger>
+                )}
+                <SelectContent align="end" className="w-[180px] min-w-[180px]">
                   <SelectGroup>
                     <SelectItem value="all">{t("settings:users.filter_role_all", "Semua Peran")}</SelectItem>
                     <SelectItem value="user">{t("settings:users.filter_role_user", "User (Tim Proyek)")}</SelectItem>
@@ -456,6 +461,20 @@ export function UsersManagementPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+
+              <ActionTooltip content={t("settings:users.add_account_btn", "Tambah Akun Internal")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={() => setCreateOpen(true)}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("settings:users.add_account_btn", "Tambah Akun Internal")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

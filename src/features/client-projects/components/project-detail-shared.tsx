@@ -1,4 +1,5 @@
 import { EyeIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import type { SemanticTone } from "@/components/shared/status-badge";
@@ -160,16 +161,19 @@ export function SectionEditControls({
 
   if (!isEditing) {
     return (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onStartEdit}
-        className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs"
-      >
-        <PencilIcon className="size-3.5" />
-        <span>{t("common:action.edit", "Edit")}</span>
-      </Button>
+      <ActionTooltip content={t("common:action.edit", "Edit")}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onStartEdit}
+          className="size-9 rounded-xl cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs shrink-0"
+          aria-label={t("common:action.edit", "Edit")}
+        >
+          <PencilIcon className="size-4" />
+          <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+        </Button>
+      </ActionTooltip>
     );
   }
 

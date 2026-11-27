@@ -5,6 +5,7 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -60,41 +61,65 @@ export function FixedAssetTable({
         )}
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
         controls={
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={runningDepr || fixedAssets.length === 0}
-              onClick={onRunOpenPeriodDepreciation}
-              className="h-9 rounded-xl px-3.5 text-xs font-semibold cursor-pointer gap-1.5"
-            >
-              {runningDepr ? (
-                <Spinner className="size-3.5" />
-              ) : (
-                <CalculatorIcon className="size-3.5 text-primary" />
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-end">
+            <ActionTooltip
+              content={t(
+                "accounting:fixed_assets.btn_run_depreciation",
+                "Jalankan Penyusutan Periode Terbuka",
               )}
-              <span>
-                {t(
+            >
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={runningDepr || fixedAssets.length === 0}
+                onClick={onRunOpenPeriodDepreciation}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={t(
                   "accounting:fixed_assets.btn_run_depreciation",
                   "Jalankan Penyusutan Periode Terbuka",
                 )}
-              </span>
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={onOpenNewAssetDialog}
-              className="h-9 rounded-xl px-3.5 text-xs font-semibold cursor-pointer gap-1.5"
+              >
+                {runningDepr ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <CalculatorIcon className="size-4 text-primary" />
+                )}
+                <span className="sr-only">
+                  {t(
+                    "accounting:fixed_assets.btn_run_depreciation",
+                    "Jalankan Penyusutan Periode Terbuka",
+                  )}
+                </span>
+              </Button>
+            </ActionTooltip>
+
+            <ActionTooltip
+              content={t(
+                "accounting:fixed_assets.btn_add_asset",
+                "Tambah Aset Tetap",
+              )}
             >
-              <PlusIcon className="size-3.5" />
-              <span>
-                {t(
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                onClick={onOpenNewAssetDialog}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={t(
                   "accounting:fixed_assets.btn_add_asset",
                   "Tambah Aset Tetap",
                 )}
-              </span>
-            </Button>
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">
+                  {t(
+                    "accounting:fixed_assets.btn_add_asset",
+                    "Tambah Aset Tetap",
+                  )}
+                </span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

@@ -458,16 +458,6 @@ export function LoginMediaPage() {
       <PageHeader
         title={t("settings:login_media.header_title")}
         description={t("settings:login_media.header_desc")}
-        actions={
-          <Button
-            type="button"
-            onClick={openCreateDialog}
-            className="max-sm:size-9 max-sm:p-0"
-          >
-            <PlusIcon className="size-4" />
-            <span className="max-sm:hidden">{t("settings:login_media.btn_add")}</span>
-          </Button>
-        }
       />
 
       {usingLocalFallback ? (
@@ -640,22 +630,37 @@ export function LoginMediaPage() {
 
             {/* Tombol Filter Gabungan (Kategori & Status) */}
             <div className="relative" ref={filterRef}>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setFilterOpen((prev) => !prev)}
-                aria-expanded={filterOpen}
-                className="gap-2"
-              >
-                <SlidersHorizontalIcon className="size-4" />
-                <span>{t("common:action.filter")}</span>
-                {categoryFilter !== "all" || statusFilter !== "all" ? (
-                  <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold tabular-nums">
+              {categoryFilter === "all" && statusFilter === "all" ? (
+                <ActionTooltip content={t("common:action.filter")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setFilterOpen((prev) => !prev)}
+                    aria-expanded={filterOpen}
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                    aria-label={t("common:action.filter")}
+                  >
+                    <SlidersHorizontalIcon className="size-4 text-primary" />
+                    <span className="sr-only">{t("common:action.filter")}</span>
+                  </Button>
+                </ActionTooltip>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFilterOpen((prev) => !prev)}
+                  aria-expanded={filterOpen}
+                  className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+                >
+                  <SlidersHorizontalIcon className="size-4" />
+                  <span>{t("common:action.filter")}</span>
+                  <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums">
                     {(categoryFilter !== "all" ? 1 : 0) +
                       (statusFilter !== "all" ? 1 : 0)}
                   </span>
-                ) : null}
-              </Button>
+                </Button>
+              )}
 
               {filterOpen ? (
                 <div className="absolute right-0 top-full mt-2 z-50 w-68 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
@@ -768,21 +773,49 @@ export function LoginMediaPage() {
               ) : null}
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() =>
-                setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              className="gap-2 shrink-0"
-            >
-              <ArrowUpDownIcon className="size-4" />
-              <span>
-                {sortOrder === "asc"
-                  ? t("settings:login_media.sort_order_asc")
-                  : t("settings:login_media.sort_order_desc")}
-              </span>
-            </Button>
+            {sortOrder === "asc" ? (
+              <ActionTooltip content={t("settings:login_media.sort_order_asc")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSortOrder("desc")}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer"
+                  aria-label={t("settings:login_media.sort_order_asc")}
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">
+                    {t("settings:login_media.sort_order_asc")}
+                  </span>
+                </Button>
+              </ActionTooltip>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder("asc")}
+                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer border-primary/40 bg-primary/5 text-primary"
+              >
+                <ArrowUpDownIcon className="size-3.5" />
+                <span>{t("settings:login_media.sort_order_desc")}</span>
+              </Button>
+            )}
+
+            <ActionTooltip content={t("settings:login_media.btn_add", "Tambah Media Carousel")}>
+              <Button
+                type="button"
+                size="icon"
+                onClick={openCreateDialog}
+                className="size-9 rounded-xl shrink-0 cursor-pointer"
+                aria-label={t("settings:login_media.btn_add", "Tambah Media Carousel")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">
+                  {t("settings:login_media.btn_add", "Tambah Media Carousel")}
+                </span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

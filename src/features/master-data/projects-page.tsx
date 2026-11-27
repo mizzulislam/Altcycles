@@ -2,12 +2,14 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import {
   EyeIcon,
+  FilterIcon,
   FolderOpenIcon,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 import { getLocalizedRevenueMethod } from "@/lib/glossary";
@@ -87,7 +89,6 @@ import type {
   ProjectStatus,
 } from "@/types/database.types";
 import { PageHeader } from "@/components/shared/page-header";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 const PROJECT_STATUS_META: Record<
   ProjectStatus,
@@ -351,27 +352,6 @@ export function ProjectsPage() {
           "projects.subtitle",
           "Pantau proyek klien, penugasan tim internal, dan metode pengakuan pendapatan.",
         )}
-        mobileFloating
-        actions={
-          <>
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportExcel}
-              onExportPdf={handleExportPdf}
-              onExportCsv={handleExportCsv}
-              mobileFloating
-            />
-            <Button
-              type="button"
-              onClick={openNew}
-              className="shrink-0 w-auto max-sm:size-9 max-sm:p-0"
-              aria-label={t("projects.add_button", "Tambah Proyek")}
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("projects.add_button", "Tambah Proyek")}</span>
-            </Button>
-          </>
-        }
       />
 
       <Card className="overflow-hidden">
@@ -383,7 +363,7 @@ export function ProjectsPage() {
           )}
           headerClassName="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
           controls={
-            <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:flex-row sm:items-center sm:gap-2.5 sm:w-auto shrink-0">
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end">
               <Input
                 placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
                 value={search}
@@ -391,10 +371,25 @@ export function ProjectsPage() {
                 className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
               />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-44 h-9 rounded-xl text-xs sm:text-sm">
-                  <SelectValue placeholder={t("status.all", "Semua Status")} />
-                </SelectTrigger>
-                <SelectContent>
+                {statusFilter === "all" ? (
+                  <ActionTooltip content={t("status.all", "Semua Status")}>
+                    <SelectTrigger
+                      aria-label={t("status.all", "Semua Status")}
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                    >
+                      <FilterIcon className="size-4 text-primary" />
+                    </SelectTrigger>
+                  </ActionTooltip>
+                ) : (
+                  <SelectTrigger
+                    aria-label={t("status.all", "Semua Status")}
+                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  >
+                    <FilterIcon className="size-3.5 shrink-0" />
+                    <SelectValue placeholder={t("status.all", "Semua Status")} />
+                  </SelectTrigger>
+                )}
+                <SelectContent align="end" className="w-[180px] min-w-[180px]">
                   <SelectGroup>
                     <SelectItem value="all">{t("status.all", "Semua Status")}</SelectItem>
                     <SelectItem value="active">{t("status.active", "Aktif")}</SelectItem>
@@ -407,20 +402,22 @@ export function ProjectsPage() {
               </Select>
 
               {!isEditMode ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditMode(true)}
-                  disabled={filteredProjects.length === 0}
-                  className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs w-full sm:w-auto justify-center disabled:opacity-50"
-                  aria-label={t("action.edit", "Edit")}
-                >
-                  <PencilIcon className="size-3.5" />
-                  <span className="max-sm:hidden">{t("action.edit", "Edit")}</span>
-                </Button>
+                <ActionTooltip content={t("action.edit", "Edit")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsEditMode(true)}
+                    disabled={filteredProjects.length === 0}
+                    className="size-9 rounded-xl cursor-pointer text-primary dark:text-sky-400 bg-primary/10 hover:bg-primary/15 border-primary/25 transition-colors shadow-2xs shrink-0 disabled:opacity-50"
+                    aria-label={t("action.edit", "Edit")}
+                  >
+                    <PencilIcon className="size-4" />
+                    <span className="sr-only">{t("action.edit", "Edit")}</span>
+                  </Button>
+                </ActionTooltip>
               ) : (
-                <div className="col-span-3 sm:col-span-1 flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -429,7 +426,7 @@ export function ProjectsPage() {
                       setIsEditMode(false);
                       setSelectedProjectIds([]);
                     }}
-                    className="h-9 rounded-xl text-xs font-medium cursor-pointer flex-1 sm:flex-initial"
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                   >
                     {t("action.cancel", "Batal")}
                   </Button>
@@ -439,12 +436,35 @@ export function ProjectsPage() {
                     size="sm"
                     onClick={() => setDeleteTargetIds(selectedProjectIds)}
                     disabled={selectedProjectIds.length === 0}
-                    className="h-9 rounded-xl text-xs font-medium cursor-pointer flex-1 sm:flex-initial"
+                    className="h-9 rounded-xl text-xs font-medium cursor-pointer"
                   >
-                    {t("action.delete_selected", "Hapus Pilihan")} ({selectedProjectIds.length})
+                    {t("action.delete", "Hapus")} ({selectedProjectIds.length})
                   </Button>
                 </div>
               )}
+
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onExportCsv={handleExportCsv}
+                size="icon"
+                mobileFloating
+              />
+
+              <ActionTooltip content={t("projects.add_button", "Tambah Proyek")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={openNew}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("projects.add_button", "Tambah Proyek")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("projects.add_button", "Tambah Proyek")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

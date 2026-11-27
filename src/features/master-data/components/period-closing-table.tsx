@@ -4,6 +4,7 @@ import {
   EyeIcon,
   PencilIcon,
   PlusIcon,
+  RotateCcwIcon,
   Trash2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ export interface PeriodClosingTableProps {
   onViewDetailJournal: (j: JournalRow) => void;
   onDeleteSingleClosing: (j: JournalRow) => void;
   onOpenBatchDelete: () => void;
+  onOpenReversing?: () => void;
 }
 
 export function PeriodClosingTable({
@@ -90,6 +92,7 @@ export function PeriodClosingTable({
   onViewDetailJournal,
   onDeleteSingleClosing,
   onOpenBatchDelete,
+  onOpenReversing,
 }: PeriodClosingTableProps) {
   const { t, language: lang } = useLanguage();
 
@@ -101,43 +104,52 @@ export function PeriodClosingTable({
         headerClassName="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/70 px-6 py-4"
         controls={
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button
-              type="button"
-              size="sm"
-              onClick={onOpenManualClosing}
-              className="h-9 px-3.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
-            >
-              <PlusIcon className="size-3.5" />
-              <span>{t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onToggleSortOrder}
-              className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5"
-            >
-              <ArrowUpDownIcon className="size-3.5 text-muted-foreground" />
-              <span>
-                {t("accounting:journals.order", "Urutan:")}{" "}
-                {sortOrder === "asc"
-                  ? t("accounting:journals.order_oldest", "Terlama")
-                  : t("accounting:journals.order_newest", "Terbaru")}
-              </span>
-            </Button>
-
-            {!isEditMode ? (
+            {sortOrder === "desc" ? (
+              <ActionTooltip content={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={onToggleSortOrder}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={`${t("accounting:journals.order", "Urutan:")} ${t("accounting:journals.order_newest", "Terbaru")}`}
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">{t("accounting:journals.order", "Urutan:")}</span>
+                </Button>
+              </ActionTooltip>
+            ) : (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="h-9 px-3 rounded-xl text-xs font-semibold shrink-0 cursor-pointer gap-1.5 text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10"
+                onClick={onToggleSortOrder}
+                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer border-primary/40 bg-primary/5 text-primary"
               >
-                <PencilIcon className="size-3.5" />
-                <span>{t("common:action.edit", "Edit")}</span>
+                <ArrowUpDownIcon className="size-3.5 shrink-0" />
+                <span className="truncate">
+                  {t("accounting:journals.order", "Urutan:")}{" "}
+                  {sortOrder === "asc"
+                    ? t("accounting:journals.order_oldest", "Terlama")
+                    : t("accounting:journals.order_newest", "Terbaru")}
+                </span>
               </Button>
+            )}
+
+            {!isEditMode ? (
+              <ActionTooltip content={t("common:action.edit", "Edit")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsEditMode(true)}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer text-primary dark:text-cyan-400 border-primary/30 hover:bg-primary/10 shadow-2xs"
+                  aria-label={t("common:action.edit", "Edit")}
+                >
+                  <PencilIcon className="size-4" />
+                  <span className="sr-only">{t("common:action.edit", "Edit")}</span>
+                </Button>
+              </ActionTooltip>
             ) : (
               <div className="flex items-center gap-2">
                 <Button
@@ -167,6 +179,36 @@ export function PeriodClosingTable({
                 </Button>
               </div>
             )}
+
+            {onOpenReversing && (
+              <ActionTooltip content={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={onOpenReversing}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}
+                >
+                  <RotateCcwIcon className="size-4" />
+                  <span className="sr-only">{t("accounting:closing.btn_optional_reversing", "Jurnal Pembalik Opsional")}</span>
+                </Button>
+              </ActionTooltip>
+            )}
+
+            <ActionTooltip content={t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}>
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                onClick={onOpenManualClosing}
+                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                aria-label={t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}
+              >
+                <PlusIcon className="size-4" />
+                <span className="sr-only">{t("accounting:closing.btn_record_manual", "Catat Jurnal Penutup Manual")}</span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

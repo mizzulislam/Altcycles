@@ -1,8 +1,6 @@
 import * as React from "react";
-import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   deleteAccount,
@@ -485,30 +483,6 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
             "accounting:coa.subtitle",
             "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.",
           )}
-          mobileFloating
-          actions={
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreatePeriodOpen(true)}
-                className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-                aria-label={t("accounting:coa.btn_open_period", "Buka Periode Baru")}
-              >
-                <PlusIcon className="size-4" />
-                <span className="max-sm:hidden">{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
-              </Button>
-              <Button
-                type="button"
-                onClick={openNewDialog}
-                className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-                aria-label={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
-              >
-                <PlusIcon className="size-4" />
-                <span className="max-sm:hidden">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
-              </Button>
-            </>
-          }
         />
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -520,27 +494,6 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
               {t("accounting:coa.subtitle", "Kelola struktur bagan akun (CoA) dan pembukaan periode pembukuan untuk pencatatan transaksi keuangan.")}
             </p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setCreatePeriodOpen(true)}
-              className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-              title={t("accounting:coa.btn_open_period", "Buka Periode Baru")}
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("accounting:coa.btn_open_period", "Buka Periode Baru")}</span>
-            </Button>
-            <Button
-              type="button"
-              onClick={openNewDialog}
-              className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer shadow-xs gap-1.5"
-              title={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
-            >
-              <PlusIcon className="size-4" />
-              <span className="max-sm:hidden">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
-            </Button>
-          </div>
         </div>
       )}
 
@@ -551,6 +504,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onClosePeriod={setClosePeriodTarget}
         onReopenPeriod={setReopenPeriodTarget}
         onDeletePeriod={setDeletePeriodTarget}
+        onOpenCreatePeriod={() => setCreatePeriodOpen(true)}
       />
 
       {/* 2. Card Daftar Bagan Akun (Chart of Accounts) - Modular */}
@@ -566,6 +520,7 @@ export function CoaAccountsPage({ hideHeader = false }: CoaAccountsPageProps = {
         onEditAccount={openEditDialog}
         onToggleActive={setToggleTarget}
         onDeleteAccount={setDeleteTarget}
+        onOpenNewAccount={openNewDialog}
       />
 
       {/* 3. Card Register & Otomatisasi Penyusutan Aset Tetap - Modular */}

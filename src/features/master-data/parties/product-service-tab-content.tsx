@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BriefcaseIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -212,34 +213,39 @@ export function ProductServiceTabContent({
           title={t("parties:products.title", "Katalog Produk & Layanan Altvira")}
           description={t("parties:products.desc", "Daftar penawaran solusi teknologi, produk digital, dan paket layanan profesional Altvira.")}
           controls={
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <ExportDownloadMenu
                 label={t("common:action.export_download", "Unduh / Ekspor")}
                 onExportExcel={handleExportProductsExcel}
                 onExportPdf={handleExportProductsPdf}
                 onExportCsv={handleExportProductsCsv}
+                size="icon"
               />
-              <Button
-                type="button"
-                size="sm"
-                className="shrink-0 cursor-pointer"
-                onClick={() => {
-                  setPrdForm({
-                    id: undefined,
-                    code: `SRV-00${products.length + 1}`,
-                    name: "",
-                    category: "Software Development",
-                    description: "",
-                    unit: "Proyek",
-                    price: 0,
-                    is_active: true,
-                  });
-                  setPrdOpen(true);
-                }}
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("parties:products.add_btn", "Tambah Layanan / Produk")}
-              </Button>
+              <ActionTooltip content={t("parties:products.add_btn", "Tambah Layanan / Produk")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("parties:products.add_btn", "Tambah Layanan / Produk")}
+                  onClick={() => {
+                    setPrdForm({
+                      id: undefined,
+                      code: `SRV-00${products.length + 1}`,
+                      name: "",
+                      category: "Software Development",
+                      description: "",
+                      unit: "Proyek",
+                      price: 0,
+                      is_active: true,
+                    });
+                    setPrdOpen(true);
+                  }}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("parties:products.add_btn", "Tambah Layanan / Produk")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />

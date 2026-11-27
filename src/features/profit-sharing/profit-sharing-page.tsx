@@ -10,6 +10,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
@@ -429,18 +430,6 @@ export function ProfitSharingPage() {
       <PageHeader
         title={t("profit_sharing:page_title")}
         description={t("profit_sharing:page_desc")}
-        mobileFloating={Boolean(result)}
-        actions={
-          result ? (
-            <ExportDownloadMenu
-              label={t("common:action.export_download")}
-              onExportExcel={handleExportExcel}
-              onExportPdf={handleExportPdf}
-              onExportCsv={handleExportCsv}
-              mobileFloating
-            />
-          ) : null
-        }
       />
 
       <Card className="@container rounded-2xl border-border/80 bg-card shadow-2xs overflow-visible">
@@ -471,42 +460,62 @@ export function ProfitSharingPage() {
               </Field>
             </div>
             <div className="flex flex-wrap @[720px]:flex-nowrap items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isFinalized}
-                onClick={openSchemeEditor}
-                className="h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer gap-1.5"
-              >
-                <PlusIcon className="size-3.5 shrink-0" />
-                <span>{t("profit_sharing:btn_open_scheme")}</span>
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={isFinalized || schemes.length === 0 || simulating}
-                onClick={() => void handleRunSimulation()}
-                className="h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer gap-1.5"
-              >
-                {simulating ? (
-                  <Spinner className="size-3.5 shrink-0" />
-                ) : (
-                  <CalculatorIcon className="size-3.5 shrink-0" />
-                )}
-                <span>{t("profit_sharing:btn_run_simulation")}</span>
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isFinalized || schemes.length === 0}
-                onClick={() => setFinalizeConfirmOpen(true)}
-                className="h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer gap-1.5 shadow-2xs"
-              >
-                <LockIcon className="size-3.5 shrink-0" />
-                <span>{t("profit_sharing:btn_finalize")}</span>
-              </Button>
+              <ActionTooltip content={t("profit_sharing:btn_open_scheme")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  disabled={isFinalized}
+                  onClick={openSchemeEditor}
+                  className="size-10 rounded-xl cursor-pointer shrink-0"
+                  aria-label={t("profit_sharing:btn_open_scheme")}
+                >
+                  <PlusIcon className="size-4 shrink-0" />
+                  <span className="sr-only">{t("profit_sharing:btn_open_scheme")}</span>
+                </Button>
+              </ActionTooltip>
+              <ActionTooltip content={t("profit_sharing:btn_run_simulation")}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  disabled={isFinalized || schemes.length === 0 || simulating}
+                  onClick={() => void handleRunSimulation()}
+                  className="size-10 rounded-xl cursor-pointer shrink-0"
+                  aria-label={t("profit_sharing:btn_run_simulation")}
+                >
+                  {simulating ? (
+                    <Spinner className="size-4 shrink-0" />
+                  ) : (
+                    <CalculatorIcon className="size-4 shrink-0" />
+                  )}
+                  <span className="sr-only">{t("profit_sharing:btn_run_simulation")}</span>
+                </Button>
+              </ActionTooltip>
+              <ActionTooltip content={t("profit_sharing:btn_finalize")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  disabled={isFinalized || schemes.length === 0}
+                  onClick={() => setFinalizeConfirmOpen(true)}
+                  className="size-10 rounded-xl cursor-pointer shrink-0 shadow-2xs"
+                  aria-label={t("profit_sharing:btn_finalize")}
+                >
+                  <LockIcon className="size-4 shrink-0" />
+                  <span className="sr-only">{t("profit_sharing:btn_finalize")}</span>
+                </Button>
+              </ActionTooltip>
+              {result && (
+                <ExportDownloadMenu
+                  label={t("common:action.export_download")}
+                  onExportExcel={handleExportExcel}
+                  onExportPdf={handleExportPdf}
+                  onExportCsv={handleExportCsv}
+                  size="icon"
+                  mobileFloating
+                />
+              )}
             </div>
           </div>
         </CardHeader>

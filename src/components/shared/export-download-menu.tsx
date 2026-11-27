@@ -21,6 +21,7 @@ export interface ExportDownloadMenuProps {
   className?: string;
   align?: "start" | "end";
   mobileFloating?: boolean;
+  size?: "default" | "icon";
 }
 
 export function ExportDownloadMenu({
@@ -32,6 +33,7 @@ export function ExportDownloadMenu({
   className,
   align = "end",
   mobileFloating = false,
+  size = "default",
 }: ExportDownloadMenuProps) {
   const { t } = useLanguage();
   const isDefaultOrSingleUnduh =
@@ -128,6 +130,8 @@ export function ExportDownloadMenu({
 
   const isLoading = loadingType !== null;
 
+  const isIcon = size === "icon";
+
   const triggerButton = (
     <button
       ref={triggerRef}
@@ -136,67 +140,77 @@ export function ExportDownloadMenu({
       onClick={() => setIsOpen((prev) => !prev)}
       aria-label={displayLabel}
       className={cn(
-        "w-full sm:w-auto min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none",
-        "hover:bg-muted/70 hover:border-primary/40",
-        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
+        isIcon
+          ? "size-9 min-h-9 p-0 inline-flex items-center justify-center rounded-xl border border-border bg-card text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none hover:bg-muted/70 hover:border-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 shrink-0"
+          : "w-full sm:w-auto min-h-9 inline-flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-foreground shadow-2xs transition-all duration-100 ease-out cursor-pointer select-none active:scale-[0.98] motion-reduce:transform-none hover:bg-muted/70 hover:border-primary/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
         isOpen && "border-primary/60 ring-2 ring-primary/20",
-        mobileFloating && [
-          "max-sm:fixed max-sm:bottom-6 max-sm:right-5 max-sm:z-50",
-          "max-sm:size-12 max-sm:min-h-12 max-sm:rounded-2xl max-sm:p-0 max-sm:justify-center",
-          "max-sm:bg-primary/15 max-sm:border-primary/30 max-sm:text-primary max-sm:hover:bg-primary/25",
-          "max-sm:dark:bg-primary max-sm:dark:border-primary/50 max-sm:dark:text-white max-sm:dark:hover:bg-primary/90",
-          "max-sm:shadow-xl max-sm:shadow-black/25",
-        ],
+        !isIcon &&
+          mobileFloating && [
+            "max-sm:fixed max-sm:bottom-6 max-sm:right-5 max-sm:z-50",
+            "max-sm:size-12 max-sm:min-h-12 max-sm:rounded-2xl max-sm:p-0 max-sm:justify-center",
+            "max-sm:bg-primary/15 max-sm:border-primary/30 max-sm:text-primary max-sm:hover:bg-primary/25",
+            "max-sm:dark:bg-primary max-sm:dark:border-primary/50 max-sm:dark:text-white max-sm:dark:hover:bg-primary/90",
+            "max-sm:shadow-xl max-sm:shadow-black/25",
+          ],
+        className,
       )}
       aria-haspopup="menu"
       aria-expanded={isOpen}
     >
-      <span
-        className={cn(
-          "flex items-center gap-1.5 sm:gap-2 truncate",
-          mobileFloating && "max-sm:justify-center max-sm:w-full",
-        )}
-      >
-        {isLoading ? (
-          <Loader2Icon
-            className={cn(
-              "size-4 animate-spin text-primary shrink-0",
-              mobileFloating && "max-sm:size-5 max-sm:text-current",
-            )}
-          />
+      {isIcon ? (
+        isLoading ? (
+          <Loader2Icon className="size-4 animate-spin text-primary" />
         ) : (
-          <DownloadIcon
+          <DownloadIcon className="size-4 text-primary" />
+        )
+      ) : (
+        <>
+          <span
             className={cn(
-              "size-4 text-primary shrink-0",
-              mobileFloating && "max-sm:size-5 max-sm:text-current",
+              "flex items-center gap-1.5 sm:gap-2 truncate",
+              mobileFloating && "max-sm:justify-center max-sm:w-full",
+            )}
+          >
+            {isLoading ? (
+              <Loader2Icon
+                className={cn(
+                  "size-4 animate-spin text-primary shrink-0",
+                  mobileFloating && "max-sm:size-5 max-sm:text-current",
+                )}
+              />
+            ) : (
+              <DownloadIcon
+                className={cn(
+                  "size-4 text-primary shrink-0",
+                  mobileFloating && "max-sm:size-5 max-sm:text-current",
+                )}
+              />
+            )}
+            <span className={cn("truncate", mobileFloating && "max-sm:hidden")}>
+              {displayLabel}
+            </span>
+          </span>
+          <ChevronDownIcon
+            className={cn(
+              "size-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ml-0.5",
+              isOpen && "rotate-180",
+              mobileFloating && "max-sm:hidden",
             )}
           />
-        )}
-        <span className={cn("truncate", mobileFloating && "max-sm:hidden")}>
-          {displayLabel}
-        </span>
-      </span>
-      <ChevronDownIcon
-        className={cn(
-          "size-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ml-0.5",
-          isOpen && "rotate-180",
-          mobileFloating && "max-sm:hidden",
-        )}
-      />
+        </>
+      )}
     </button>
   );
 
   return (
     <div
       className={cn(
-        "inline-block w-full sm:w-auto text-left",
-        mobileFloating && "max-sm:contents",
-        className,
+        isIcon ? "inline-flex items-center shrink-0" : "inline-block w-full sm:w-auto text-left",
+        mobileFloating && !isIcon && "max-sm:contents",
       )}
     >
-      {mobileFloating ? (
-        <ActionTooltip content={displayLabel} side="left">
+      {mobileFloating || isIcon ? (
+        <ActionTooltip content={displayLabel} side={isIcon ? "top" : "left"}>
           {triggerButton}
         </ActionTooltip>
       ) : (

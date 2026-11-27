@@ -1,4 +1,5 @@
-import { PencilIcon, PowerIcon, Trash2Icon } from "lucide-react";
+import { FilterIcon, PencilIcon, PlusIcon, PowerIcon, Trash2Icon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export interface CoaTableProps {
   onEditAccount: (acc: AccountRow) => void;
   onToggleActive: (acc: AccountRow) => void;
   onDeleteAccount: (acc: AccountRow) => void;
+  onOpenNewAccount?: () => void;
 }
 
 export function CoaTable({
@@ -58,6 +60,7 @@ export function CoaTable({
   onEditAccount,
   onToggleActive,
   onDeleteAccount,
+  onOpenNewAccount,
 }: CoaTableProps) {
   const { t, language } = useLanguage();
 
@@ -71,7 +74,7 @@ export function CoaTable({
         )}
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
         controls={
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-end">
             <Input
               placeholder={t(
                 "accounting:coa.search_placeholder",
@@ -79,18 +82,33 @@ export function CoaTable({
               )}
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-56 sm:w-64 h-9 rounded-xl bg-background"
+              className="w-56 sm:w-64 h-9 rounded-xl bg-background text-xs sm:text-sm"
             />
             <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-              <SelectTrigger className="w-48 h-9 rounded-xl bg-background">
-                <SelectValue
-                  placeholder={t(
-                    "accounting:coa.all_types",
-                    "Semua Tipe Akun",
-                  )}
-                />
-              </SelectTrigger>
-              <SelectContent>
+              {typeFilter === "all" ? (
+                <ActionTooltip content={t("accounting:coa.all_types", "Semua Tipe Akun")}>
+                  <SelectTrigger
+                    aria-label={t("accounting:coa.all_types", "Semua Tipe Akun")}
+                    className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 bg-background [&>svg]:hidden [&>span]:hidden"
+                  >
+                    <FilterIcon className="size-4 text-primary" />
+                  </SelectTrigger>
+                </ActionTooltip>
+              ) : (
+                <SelectTrigger
+                  aria-label={t("accounting:coa.all_types", "Semua Tipe Akun")}
+                  className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                >
+                  <FilterIcon className="size-3.5 shrink-0" />
+                  <SelectValue
+                    placeholder={t(
+                      "accounting:coa.all_types",
+                      "Semua Tipe Akun",
+                    )}
+                  />
+                </SelectTrigger>
+              )}
+              <SelectContent align="end" className="w-[180px] min-w-[180px]">
                 <SelectGroup>
                   <SelectItem value="all">
                     {t("accounting:coa.all_types", "Semua Tipe Akun")}
@@ -119,6 +137,22 @@ export function CoaTable({
                 </SelectGroup>
               </SelectContent>
             </Select>
+
+            {onOpenNewAccount && (
+              <ActionTooltip content={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={onOpenNewAccount}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
+                </Button>
+              </ActionTooltip>
+            )}
           </div>
         }
       />

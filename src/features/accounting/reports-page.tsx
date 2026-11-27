@@ -389,15 +389,6 @@ export function AccountingReportsPage({
             "accounting:reports.accrual_subtitle",
             "Sajikan laporan posisi keuangan, laba rugi, arus kas, dan neraca saldo berbasis akrual.",
           )}
-          actions={
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportActiveExcel}
-              onExportPdf={handleExportActivePdf}
-              onExportCsv={handleExportCsv}
-              mobileFloating
-            />
-          }
         />
       )}
 
@@ -413,14 +404,6 @@ export function AccountingReportsPage({
                 "Laporan kinerja laba rugi, posisi keuangan, neraca saldo, dan arus kas.",
               )}
             </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-            <ExportDownloadMenu
-              label={t("common:action.export_download", "Unduh / Ekspor")}
-              onExportExcel={handleExportActiveExcel}
-              onExportPdf={handleExportActivePdf}
-              onExportCsv={handleExportCsv}
-            />
           </div>
         </div>
       )}
@@ -462,34 +445,44 @@ export function AccountingReportsPage({
               )}
             </div>
 
-            {/* Toggle Layout Mode */}
-            <div className="flex items-center gap-1 bg-background border border-border/80 rounded-xl p-1 shadow-2xs self-end md:self-auto">
-              <button
-                type="button"
-                onClick={() => setLayoutMode("grid")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                  layoutMode === "grid"
-                    ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
-                )}
-              >
-                <LayoutGridIcon className="size-3.5" />
-                <span>{t("accounting:reports.layout_all", "Semua Laporan")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayoutMode("single")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-                  layoutMode === "single"
-                    ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
-                )}
-              >
-                <BookOpenIcon className="size-3.5" />
-                <span>{t("accounting:reports.layout_single", "Satu Halaman")}</span>
-              </button>
+            {/* Toggle Layout Mode & Export Menu */}
+            <div className="flex items-center gap-2 self-end md:self-auto">
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportActiveExcel}
+                onExportPdf={handleExportActivePdf}
+                onExportCsv={handleExportCsv}
+                size="icon"
+                mobileFloating
+              />
+              <div className="flex items-center gap-1 bg-background border border-border/80 rounded-xl p-1 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setLayoutMode("grid")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
+                    layoutMode === "grid"
+                      ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
+                  )}
+                >
+                  <LayoutGridIcon className="size-3.5" />
+                  <span>{t("accounting:reports.layout_all", "Semua Laporan")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLayoutMode("single")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
+                    layoutMode === "single"
+                      ? "bg-primary text-primary-foreground shadow-xs dark:bg-primary dark:text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/70",
+                  )}
+                >
+                  <BookOpenIcon className="size-3.5" />
+                  <span>{t("accounting:reports.layout_single", "Satu Halaman")}</span>
+                </button>
+              </div>
             </div>
           </div>
 

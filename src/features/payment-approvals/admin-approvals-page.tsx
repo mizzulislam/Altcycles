@@ -3,6 +3,7 @@ import {
   BanknoteIcon,
   CheckCircle2Icon,
   ClockIcon,
+  FilterIcon,
   LockIcon,
   PaperclipIcon,
   ReceiptTextIcon,
@@ -11,6 +12,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { DocumentDownloadMenu } from "@/components/shared/document-download-menu";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -398,15 +400,6 @@ export function AdminApprovalsPage() {
       <PageHeader
         title={t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
         description={t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
-        actions={
-          <ExportDownloadMenu
-            label={t("common:action.export_download", "Unduh / Ekspor")}
-            onExportExcel={handleExportExcel}
-            onExportPdf={handleExportPdf}
-            onExportCsv={handleExportCsv}
-            mobileFloating
-          />
-        }
       />
 
       {/* Ringkasan KPI Persetujuan & Pencairan (Layout 2 kolom seperti Gambar 1) */}
@@ -452,12 +445,27 @@ export function AdminApprovalsPage() {
           title={t("approvals:admin.card_title", "Daftar Pengajuan Pembayaran Tim")}
           description={t("approvals:admin.card_desc", "Periksa bukti lampiran pengeluaran sebelum menyetujui atau menolak permohonan dana.")}
           controls={
-            <div className="w-full sm:w-56 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0 justify-end w-full sm:w-auto">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                  <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
-                </SelectTrigger>
-                <SelectContent>
+                {statusFilter === "ALL" ? (
+                  <ActionTooltip content={t("approvals:admin.filter_status_placeholder", "Filter status")}>
+                    <SelectTrigger
+                      aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
+                      className="size-9 min-w-9 p-0 rounded-xl justify-center cursor-pointer shrink-0 [&>svg]:hidden [&>span]:hidden"
+                    >
+                      <FilterIcon className="size-4 text-primary" />
+                    </SelectTrigger>
+                  </ActionTooltip>
+                ) : (
+                  <SelectTrigger
+                    aria-label={t("approvals:admin.filter_status_placeholder", "Filter status")}
+                    className="h-9 w-auto max-w-[200px] rounded-xl px-3 text-xs sm:text-sm font-semibold cursor-pointer shrink-0 gap-2 border-primary/40 bg-primary/5 text-primary"
+                  >
+                    <FilterIcon className="size-3.5 shrink-0" />
+                    <SelectValue placeholder={t("approvals:admin.filter_status_placeholder", "Filter status")} />
+                  </SelectTrigger>
+                )}
+                <SelectContent align="end" className="w-[200px] min-w-[200px]">
                   <SelectGroup>
                     <SelectItem value="ALL">{t("approvals:admin.filter_all", "Semua Status")}</SelectItem>
                     <SelectItem value="submitted">{t("approvals:admin.filter_submitted", "Menunggu Persetujuan")}</SelectItem>
@@ -467,6 +475,14 @@ export function AdminApprovalsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              <ExportDownloadMenu
+                label={t("common:action.export_download", "Unduh / Ekspor")}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onExportCsv={handleExportCsv}
+                size="icon"
+                mobileFloating
+              />
             </div>
           }
         />

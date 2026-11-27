@@ -1,4 +1,5 @@
 import { CheckCircle2Icon, PlusIcon } from "lucide-react";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -115,20 +116,26 @@ export function AcceptanceDocsTab({
                   })
                 }
               />
-              <Button
-                type="button"
-                disabled={bundle.milestones.length === 0}
-                title={
+              <ActionTooltip
+                content={
                   bundle.milestones.length === 0
                     ? t("projects:acceptance.btn_bakp_disabled_title")
                     : t("projects:acceptance.btn_create_bakp")
                 }
-                onClick={openBakpDialog}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
               >
-                <PlusIcon data-icon="inline-start" />
-                {t("projects:acceptance.btn_create_bakp")}
-              </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  disabled={bundle.milestones.length === 0}
+                  onClick={openBakpDialog}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("projects:acceptance.btn_create_bakp")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("projects:acceptance.btn_create_bakp")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />
@@ -298,14 +305,19 @@ export function AcceptanceDocsTab({
                   })
                 }
               />
-              <Button
-                type="button"
-                onClick={openUatDialog}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("projects:acceptance.btn_record_uat")}
-              </Button>
+              <ActionTooltip content={t("projects:acceptance.btn_record_uat")}>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  onClick={openUatDialog}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={t("projects:acceptance.btn_record_uat")}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{t("projects:acceptance.btn_record_uat")}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />
@@ -458,16 +470,8 @@ export function AcceptanceDocsTab({
                   })
                 }
               />
-              <Button
-                type="button"
-                disabled={
-                  !bundle.uatList.some(
-                    (u) =>
-                      u.conclusion === "accepted" ||
-                      u.conclusion === "accepted_with_notes",
-                  )
-                }
-                title={
+              <ActionTooltip
+                content={
                   !bundle.uatList.some(
                     (u) =>
                       u.conclusion === "accepted" ||
@@ -476,12 +480,26 @@ export function AcceptanceDocsTab({
                     ? (language === "en" ? "Ensure UAT is Accepted to issue BAST (FR-PK8)" : "Pastikan UAT telah berstatus Diterima untuk menerbitkan BAST (FR-PK8)")
                     : (language === "en" ? "Issue BAST (Attachment A.8)" : "Terbitkan BAST (Lampiran A.8)")
                 }
-                onClick={openBastDialog}
-                className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
               >
-                <PlusIcon data-icon="inline-start" />
-                {language === "en" ? "Issue BAST" : "Terbitkan BAST"}
-              </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="icon"
+                  disabled={
+                    !bundle.uatList.some(
+                      (u) =>
+                        u.conclusion === "accepted" ||
+                        u.conclusion === "accepted_with_notes",
+                    )
+                  }
+                  onClick={openBastDialog}
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs"
+                  aria-label={language === "en" ? "Issue BAST" : "Terbitkan BAST"}
+                >
+                  <PlusIcon className="size-4" />
+                  <span className="sr-only">{language === "en" ? "Issue BAST" : "Terbitkan BAST"}</span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />
