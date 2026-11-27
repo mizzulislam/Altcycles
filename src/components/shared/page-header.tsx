@@ -279,13 +279,13 @@ export function PageHeader({
           ) : isActionsInDiv ? (
             <div className="sm:hidden w-full mt-3">{actions}</div>
           ) : childCount === 1 ? (
-            <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
-              <div className="col-start-2 w-full sm:w-auto">
+            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
+              <div className="col-start-2 w-full">
                 {actions}
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
+            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
               {actions}
             </div>
           )}
