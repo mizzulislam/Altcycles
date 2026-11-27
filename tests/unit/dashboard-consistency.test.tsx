@@ -11,7 +11,9 @@ import {
   HistogramChart,
   MultiSeriesChart,
   CompositionChart,
+  ChartSummaryFooter,
 } from "@/components/shared/dashboard-charts";
+import { PageHeader } from "@/components/shared/page-header";
 
 describe("Dashboard Consistency & Shared Components", () => {
   beforeEach(() => {
@@ -263,5 +265,51 @@ describe("Dashboard Consistency & Shared Components", () => {
     expect(screen.getByText("Status Perpajakan")).toBeInTheDocument();
     expect(screen.getByText("PKP Aktif")).toBeInTheDocument();
     expect(screen.getByText("Tarif PPN 11% berlaku pada invoice")).toBeInTheDocument();
+  });
+
+  it("PageHeader menampilkan deskripsi dan tombol info (i) untuk mobile", () => {
+    render(
+      <PageHeader
+        title="Dasbor Keuangan"
+        description="Pantau likuiditas kas perusahaan."
+      />,
+    );
+
+    expect(screen.getByText("Dasbor Keuangan")).toBeInTheDocument();
+    expect(screen.getByText("Pantau likuiditas kas perusahaan.")).toBeInTheDocument();
+    // Memastikan tombol info mobile (i) hadir
+    const infoBtn = screen.getByLabelText("Informasi halaman");
+    expect(infoBtn).toBeInTheDocument();
+    expect(infoBtn).toHaveClass("sm:hidden");
+  });
+
+  it("ChartSummaryFooter menggunakan layout responsive terstandar", () => {
+    const { container } = render(
+      <ChartSummaryFooter
+        items={[
+          { label: "Total Pendapatan", value: "Rp 5.249.271" },
+          { label: "Total Beban", value: "Rp 647.923" },
+          { label: "Laba / Rugi Bersih", value: "Rp 4.601.348" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Total Pendapatan")).toBeInTheDocument();
+    expect(screen.getByText("Laba / Rugi Bersih")).toBeInTheDocument();
+    expect(container.querySelector(".grid-cols-3")).toBeInTheDocument();
+  });
+
+  it("PageHeader standalone action merender grid 2 dengan posisi di kolom kanan pada mobile", () => {
+    const { container } = render(
+      <PageHeader
+        title="Persetujuan Pembayaran"
+        actions={<button type="button">Ekspor</button>}
+      />,
+    );
+
+    // Memastikan action berada di grid 2 dengan col-start-2 di mobile
+    const gridContainer = container.querySelector(".grid.grid-cols-2");
+    expect(gridContainer).toBeInTheDocument();
+    expect(container.querySelector(".col-start-2")).toBeInTheDocument();
   });
 });

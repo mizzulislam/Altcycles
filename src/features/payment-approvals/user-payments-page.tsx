@@ -523,22 +523,23 @@ export function UserPaymentsPage() {
               onExportExcel={handleExportExcel}
               onExportPdf={handleExportPdf}
               onExportCsv={handleExportCsv}
+              mobileFloating
             />
             <Button
               type="button"
               size="sm"
               onClick={() => setCreateOpen(true)}
-              className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
+              className="h-9 max-sm:size-9 max-sm:p-0 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs w-auto"
             >
               <PlusIcon className="size-4" />
-              <span>{t("approvals:user.btn_create")}</span>
+              <span className="max-sm:hidden">{t("approvals:user.btn_create")}</span>
             </Button>
           </>
         }
       />
 
       {/* Ringkasan KPI Pengajuan Pembayaran */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <KpiCard
           label={t("approvals:user.kpi_pending")}
           value={pendingCount}
@@ -583,13 +584,13 @@ export function UserPaymentsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_number")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_purpose_recipient")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_project")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-40">{t("approvals:user.col_amount")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_attachments")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_status_notes")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-28">{t("approvals:user.col_actions")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_number")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_purpose_recipient")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_project")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-40 max-sm:w-32">{t("approvals:user.col_amount")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_attachments")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("approvals:user.col_status_notes")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap w-28 max-sm:w-20">{t("approvals:user.col_actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -621,7 +622,7 @@ export function UserPaymentsPage() {
                   const files = attachments.filter((a) => a.entity_id === req.id);
                   return (
                     <TableRow key={req.id}>
-                      <TableCell className="align-top pl-6 pr-3 py-3.5 font-mono text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
+                      <TableCell className="align-top pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 max-sm:py-2.5 font-mono text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap">
                         <div>{req.request_number}</div>
                         {req.revision_no > 0 ? (
                           <div className="text-[11px] font-sans font-normal text-muted-foreground mt-0.5">
@@ -629,7 +630,7 @@ export function UserPaymentsPage() {
                           </div>
                         ) : null}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         <div className="text-xs sm:text-sm leading-5 font-medium text-foreground">
                           {req.purpose}
                         </div>
@@ -640,13 +641,13 @@ export function UserPaymentsPage() {
                             : ""}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 whitespace-nowrap">
                         {prj?.code ?? "-"}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={req.amount} />
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         {files.length === 0 ? (
                           <span className="text-xs sm:text-sm leading-5 text-muted-foreground">-</span>
                         ) : (
@@ -690,7 +691,7 @@ export function UserPaymentsPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5">
                         <div className="inline-flex flex-col items-start gap-1 min-h-5 -my-px">
                           <StatusBadge tone={meta.tone} label={meta.label} />
                           {req.status === "rejected" && req.rejection_reason ? (
@@ -705,7 +706,7 @@ export function UserPaymentsPage() {
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="align-top pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <DocumentDownloadMenu
                             title={t("approvals:user.download_form_menu_title")}

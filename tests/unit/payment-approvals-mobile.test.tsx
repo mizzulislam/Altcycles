@@ -148,33 +148,83 @@ describe("Polesan Mobile Halaman Persetujuan Pembayaran & Shared Components", ()
     expect(rootDiv.scrollWidth).toBeLessThanOrEqual(375);
   });
 
-  it("KPI Opsi B mobile: mendukung tata letak horizontal scrollable (snap-x, w-[82%])", () => {
+  it("KPI layout Persetujuan Pembayaran mobile: grid 2 kolom dengan Card 3 col-span-2 dan tanpa sparkline/grafik", () => {
     const { container } = render(
       <BrowserRouter>
-        <div className="flex sm:grid gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar sm:grid-cols-3 snap-x snap-mandatory pb-1">
+        <div className="grid gap-2.5 sm:gap-4 grid-cols-2 sm:grid-cols-3 shrink-0">
           <KpiCard
-            compactMobile
-            className="w-[82%] sm:w-auto shrink-0 snap-start"
             label="Menunggu Persetujuan Admin"
             value={0}
+            suffix=" Pengajuan"
+            subtext="Tidak ada antrean pengajuan baru"
             icon={ClockIcon}
           />
           <KpiCard
-            compactMobile
-            className="w-[82%] sm:w-auto shrink-0 snap-start"
             label="Disetujui & Siap Dicairkan"
             value={0}
+            suffix=" Pengajuan"
+            subtext="Seluruh pengajuan disetujui telah cair"
+            icon={ClockIcon}
+          />
+          <KpiCard
+            className="col-span-2 sm:col-span-1"
+            label="Total Pembayaran Terealisasi"
+            displayValue="Rp0"
+            subtext="Tercatat otomatis di buku besar kas"
             icon={ClockIcon}
           />
         </div>
       </BrowserRouter>,
     );
 
-    const kpiRow = container.querySelector(".overflow-x-auto.snap-x");
-    expect(kpiRow).toBeInTheDocument();
-    const cards = container.querySelectorAll(".snap-start");
-    expect(cards.length).toBe(2);
-    expect(cards[0]?.className).toContain("w-[82%]");
+    const grid = container.querySelector(".grid-cols-2");
+    expect(grid).toBeInTheDocument();
+    const cards = container.querySelectorAll("[data-slot='kpi-card']");
+    expect(cards.length).toBe(3);
+    // Card 3 harus col-span-2 pada mobile
+    expect(cards[2]?.className).toContain("col-span-2");
+    // Wajib tanpa grafik svg sparkline
+    expect(container.querySelector("svg.overflow-visible")).not.toBeInTheDocument();
+  });
+
+  it("PageHeader mobile: info button (i) berada inline di dalam h1 bersebelahan dengan teks judul", () => {
+    const { container } = render(
+      <PageHeader
+        title="Persetujuan Pembayaran 1-Level & Pencairan Dana"
+        description="Verifikasi permohonan dana."
+      />,
+    );
+
+    const h1 = container.querySelector("h1");
+    expect(h1).toBeInTheDocument();
+    const infoSpan = h1?.querySelector("span.sm\\:hidden.inline-flex");
+    expect(infoSpan).toBeInTheDocument();
+    const infoButton = infoSpan?.querySelector("button[aria-label='Informasi halaman']");
+    expect(infoButton).toBeInTheDocument();
+  });
+
+  it("PageHeader mobile: multiple floating action buttons tersusun vertikal di pojok kanan bawah", () => {
+    const { container } = render(
+      <PageHeader
+        title="Anggaran Proyek"
+        description="Kelola pos belanja."
+        actions={
+          <>
+            <ExportDownloadMenu
+              label="Unduh / Ekspor"
+              mobileFloating
+            />
+            <button type="button">Tambah Anggaran</button>
+          </>
+        }
+      />,
+    );
+
+    const fabContainer = container.querySelector(".sm\\:hidden.fixed.bottom-6.right-5");
+    expect(fabContainer).toBeInTheDocument();
+    const buttons = fabContainer?.querySelectorAll("button");
+    // Ada 2 tombol aksi melayang
+    expect(buttons?.length).toBe(2);
   });
 
   it("Empty state adaptif dvh: halaman mobile mengisi layar dengan struktur flex kolom & flex-1 tanpa tinggi tetap", () => {

@@ -323,14 +323,15 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 onExportExcel={handleExportExcel}
                 onExportPdf={handleExportPdf}
                 onExportCsv={handleExportCsv}
+                mobileFloating
               />
               <Button
                 type="button"
                 onClick={() => openBudgetEditor(false)}
-                className="shrink-0 cursor-pointer shadow-2xs"
+                className="shrink-0 cursor-pointer shadow-2xs max-sm:size-9 max-sm:p-0"
               >
                 <PlusIcon className="size-4" />
-                <span>{t("budgeting:admin.btn_set_budget")}</span>
+                <span className="max-sm:hidden">{t("budgeting:admin.btn_set_budget")}</span>
               </Button>
             </>
           ) : null
@@ -338,35 +339,35 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       />
 
       {projects.length > 0 ? (
-        <Card className="rounded-2xl border-border/80 bg-card px-5 py-3.5 shadow-2xs">
+        <Card className="rounded-2xl border-border/80 bg-card px-4 sm:px-5 py-3.5 shadow-2xs">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
-                <FolderKanbanIcon className="size-4" />
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
-                <span className="text-xs sm:text-sm font-semibold text-foreground shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-sky-400 border border-primary/20">
+                  <FolderKanbanIcon className="size-4" />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-foreground">
                   {t("budgeting:common.active_project")}
                 </span>
-                <div className="w-full sm:max-w-lg min-w-0">
-                  <Select
-                    value={selectedProjectId}
-                    onValueChange={setSelectedProjectId}
-                  >
-                    <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
-                      <SelectValue placeholder={t("budgeting:common.select_project_placeholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {projects.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.code}: {p.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+              <div className="w-full sm:max-w-lg min-w-0">
+                <Select
+                  value={selectedProjectId}
+                  onValueChange={setSelectedProjectId}
+                >
+                  <SelectTrigger className="h-9 rounded-xl text-xs sm:text-sm">
+                    <SelectValue placeholder={t("budgeting:common.select_project_placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.code}: {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             {rows.length > 0 ? (
@@ -392,7 +393,7 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
       ) : null}
 
       {/* Ringkasan KPI Anggaran Proyek */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <KpiCard
           label={t("budgeting:common.kpi_ceiling")}
           displayValue={formatRupiah(totalBudget)}
@@ -474,22 +475,22 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                  <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
                     {t("budgeting:common.col_account")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-44 max-sm:w-36">
                     {t("budgeting:common.col_ceiling")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-44 max-sm:w-36">
                     {t("budgeting:common.col_realization")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-44">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-44 max-sm:w-36">
                     {t("budgeting:common.col_remaining")}
                   </TableHead>
-                  <TableHead className="px-3 text-center font-semibold whitespace-nowrap w-28">
+                  <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-28 max-sm:w-20">
                     {t("budgeting:common.col_absorption")}
                   </TableHead>
-                  <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap w-36">
+                  <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap w-36 max-sm:w-28">
                     {t("budgeting:common.col_status")}
                   </TableHead>
                 </TableRow>
@@ -521,25 +522,25 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                 ) : (
                   sortedRows.map((r) => (
                     <TableRow key={r.account_id}>
-                      <TableCell className="align-top pl-6 pr-3 py-3.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
+                      <TableCell className="align-top pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5 font-medium text-foreground">
                         <span className="font-mono font-semibold text-muted-foreground">
                           {r.account_code}
                         </span>{" "}
                         &mdash; {getLocalizedAccountName({ code: r.account_code, name: r.account_name }, language)}
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={r.allocated_amount} />
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={r.realized_amount} />
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 whitespace-nowrap">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 whitespace-nowrap">
                         <MonetaryCell amount={r.remaining_amount} />
                       </TableCell>
-                      <TableCell className="align-top px-3 py-3.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap tabular-nums">
+                      <TableCell className="align-top px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 font-semibold whitespace-nowrap tabular-nums">
                         {r.absorption_pct}%
                       </TableCell>
-                      <TableCell className="align-top pl-2 pr-6 py-3.5 text-center whitespace-nowrap">
+                      <TableCell className="align-top pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3.5 max-sm:py-2.5 text-center whitespace-nowrap">
                         <div className="inline-flex items-center min-h-5 -my-px">
                           {r.remaining_amount < 0 ? (
                             <StatusBadge tone="destructive" label={t("budgeting:common.status_exceeds")} />

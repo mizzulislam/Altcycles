@@ -394,7 +394,7 @@ export function AdminApprovalsPage() {
     .reduce((s, r) => s + r.amount, 0);
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6 max-sm:flex-1 max-sm:min-h-[calc(100dvh-5.5rem)]">
+    <div className="flex flex-col gap-3.5 sm:gap-6 max-sm:flex-1 max-sm:min-h-[calc(100dvh-5.5rem)]">
       <PageHeader
         title={t("approvals:admin.page_title", "Persetujuan Pembayaran 1-Level & Pencairan Dana")}
         description={t("approvals:admin.page_desc", "Verifikasi permohonan dana, persetujuan pengajuan, dan pencairan kas tim.")}
@@ -409,11 +409,9 @@ export function AdminApprovalsPage() {
         }
       />
 
-      {/* Ringkasan KPI Persetujuan & Pencairan (Opsi B: horizontal scroll di mobile) */}
-      <div className="flex sm:grid gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar sm:grid-cols-3 snap-x snap-mandatory pb-1 shrink-0">
+      {/* Ringkasan KPI Persetujuan & Pencairan (Layout 2 kolom seperti Gambar 1) */}
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-2 sm:grid-cols-3 shrink-0">
         <KpiCard
-          compactMobile
-          className="w-[82%] sm:w-auto shrink-0 snap-start"
           label={t("approvals:admin.kpi_pending", "Menunggu Persetujuan Admin")}
           value={pendingCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -427,8 +425,6 @@ export function AdminApprovalsPage() {
         />
 
         <KpiCard
-          compactMobile
-          className="w-[82%] sm:w-auto shrink-0 snap-start"
           label={t("approvals:admin.kpi_ready", "Disetujui & Siap Dicairkan")}
           value={approvedUnpaidCount}
           suffix={` ${t("approvals:admin.unit_submissions", "Pengajuan")}`}
@@ -442,8 +438,7 @@ export function AdminApprovalsPage() {
         />
 
         <KpiCard
-          compactMobile
-          className="w-[82%] sm:w-auto shrink-0 snap-start"
+          className="col-span-2 sm:col-span-1"
           label={t("approvals:admin.kpi_paid", "Total Pembayaran Terealisasi")}
           displayValue={formatRupiah(totalPaidAmount)}
           subtext={t("approvals:admin.kpi_paid_desc", "Tercatat otomatis di buku besar kas")}

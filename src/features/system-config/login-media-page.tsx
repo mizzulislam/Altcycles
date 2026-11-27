@@ -459,9 +459,13 @@ export function LoginMediaPage() {
         title={t("settings:login_media.header_title")}
         description={t("settings:login_media.header_desc")}
         actions={
-          <Button type="button" onClick={openCreateDialog}>
+          <Button
+            type="button"
+            onClick={openCreateDialog}
+            className="max-sm:size-9 max-sm:p-0"
+          >
             <PlusIcon className="size-4" />
-            <span>{t("settings:login_media.btn_add")}</span>
+            <span className="max-sm:hidden">{t("settings:login_media.btn_add")}</span>
           </Button>
         }
       />
@@ -477,7 +481,7 @@ export function LoginMediaPage() {
       ) : null}
 
       {/* 3 Kartu KPI (Komponen Tunggal KpiCard — Item 10) */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
         <KpiCard
           label={t("settings:login_media.kpi_total")}
           value={items.length}

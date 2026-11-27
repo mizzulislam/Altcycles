@@ -395,6 +395,7 @@ export function AccountingReportsPage({
               onExportExcel={handleExportActiveExcel}
               onExportPdf={handleExportActivePdf}
               onExportCsv={handleExportCsv}
+              mobileFloating
             />
           }
         />

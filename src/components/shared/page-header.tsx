@@ -114,6 +114,7 @@ export interface PageHeaderProps {
   descriptionTooltip?: string;
   actions?: React.ReactNode;
   className?: string;
+  mobileFloating?: boolean;
 }
 
 /**
@@ -130,6 +131,7 @@ export function PageHeader({
   descriptionTooltip,
   actions,
   className,
+  mobileFloating,
 }: PageHeaderProps) {
   const { openGameDialog } = useGameDialog();
   const infoBtnRef = React.useRef<HTMLButtonElement>(null);
@@ -145,55 +147,31 @@ export function PageHeader({
       : actions;
   const childCount = React.Children.count(rawChildren);
 
+  const hasFloatingProp = (node: unknown): boolean => {
+    if (!React.isValidElement(node)) return false;
+    const props = node.props as Record<string, unknown> | undefined;
+    if (props?.mobileFloating) return true;
+    if (props?.children) {
+      return React.Children.toArray(props.children as React.ReactNode).some(hasFloatingProp);
+    }
+    return false;
+  };
+
+  const isFloating =
+    Boolean(mobileFloating) ||
+    hasFloatingProp(actions) ||
+    React.Children.toArray(rawChildren as React.ReactNode).some(hasFloatingProp);
+
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between min-w-0",
+        "flex flex-col sm:flex-row sm:items-end sm:justify-between min-w-0",
         className,
       )}
     >
       <div className="min-w-0 flex-1">
         {badge ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="min-w-0 flex-1 flex items-center gap-1.5">
-              <TruncatedTooltipText
-                as="h1"
-                tooltipText={titleTooltip}
-                className="max-sm:text-[22px] max-sm:leading-tight max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap"
-              >
-                {title}
-              </TruncatedTooltipText>
-              {description ? (
-                <ActionTooltip
-                  content={
-                    typeof description === "string"
-                      ? description
-                      : "Informasi halaman"
-                  }
-                  side="top"
-                >
-                  <button
-                    ref={infoBtnRef}
-                    type="button"
-                    onClick={() =>
-                      openGameDialog({
-                        title,
-                        description,
-                        triggerRef: infoBtnRef,
-                      })
-                    }
-                    className="sm:hidden inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 cursor-pointer"
-                    aria-label="Informasi halaman"
-                  >
-                    <InfoIcon className="size-3.5 text-muted-foreground" />
-                  </button>
-                </ActionTooltip>
-              ) : null}
-            </div>
-            <div className="shrink-0">{badge}</div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 min-w-0">
             <div className="min-w-0 flex-1">
               <TruncatedTooltipText
                 as="h1"
@@ -201,34 +179,77 @@ export function PageHeader({
                 className="max-sm:text-[22px] max-sm:leading-tight max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap"
               >
                 {title}
+                {description ? (
+                  <span className="sm:hidden inline-flex align-middle ml-1.5 shrink-0">
+                    <ActionTooltip
+                      content={
+                        typeof description === "string"
+                          ? description
+                          : "Informasi halaman"
+                      }
+                      side="top"
+                    >
+                      <button
+                        ref={infoBtnRef}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openGameDialog({
+                            title,
+                            description,
+                            triggerRef: infoBtnRef,
+                          });
+                        }}
+                        className="sm:hidden inline-flex items-center justify-center size-5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+                        aria-label="Informasi halaman"
+                      >
+                        <InfoIcon className="size-3.5 text-muted-foreground" />
+                      </button>
+                    </ActionTooltip>
+                  </span>
+                ) : null}
               </TruncatedTooltipText>
             </div>
-            {description ? (
-              <ActionTooltip
-                content={
-                  typeof description === "string"
-                    ? description
-                    : "Informasi halaman"
-                }
-                side="top"
-              >
-                <button
-                  ref={infoBtnRef}
-                  type="button"
-                  onClick={() =>
-                    openGameDialog({
-                      title,
-                      description,
-                      triggerRef: infoBtnRef,
-                    })
-                  }
-                  className="sm:hidden inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0 cursor-pointer"
-                  aria-label="Informasi halaman"
-                >
-                  <InfoIcon className="size-3.5 text-muted-foreground" />
-                </button>
-              </ActionTooltip>
-            ) : null}
+            <div className="shrink-0">{badge}</div>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <TruncatedTooltipText
+              as="h1"
+              tooltipText={titleTooltip}
+              className="max-sm:text-[22px] max-sm:leading-tight max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap"
+            >
+              {title}
+              {description ? (
+                <span className="sm:hidden inline-flex align-middle ml-1.5 shrink-0">
+                  <ActionTooltip
+                    content={
+                      typeof description === "string"
+                        ? description
+                        : "Informasi halaman"
+                    }
+                    side="top"
+                  >
+                    <button
+                      ref={infoBtnRef}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openGameDialog({
+                          title,
+                          description,
+                            triggerRef: infoBtnRef,
+                        });
+                      }}
+                      className="sm:hidden inline-flex items-center justify-center size-5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+                      aria-label="Informasi halaman"
+                    >
+                      <InfoIcon className="size-3.5 text-muted-foreground" />
+                    </button>
+                  </ActionTooltip>
+                </span>
+              ) : null}
+            </TruncatedTooltipText>
           </div>
         )}
         {description ? (
@@ -242,9 +263,21 @@ export function PageHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="w-full sm:w-auto shrink-0 sm:flex sm:items-end sm:gap-2">
-          {isActionsInDiv ? (
-            actions
+        <>
+          {/* Desktop: Tetap di Header sebelah kanan sejajar */}
+          <div className="hidden sm:flex sm:items-end sm:gap-2 shrink-0 sm:w-auto">
+            {actions}
+          </div>
+
+          {/* Mobile: Floating Action Button (FAB) jika isFloating true, atau jika actions dalam div / default grid 2 */}
+          {isFloating ? (
+            <div className="sm:hidden fixed bottom-6 right-5 z-50 flex flex-col-reverse items-end gap-3 pointer-events-auto [filter:drop-shadow(0_10px_15px_rgba(0,0,0,0.15))]">
+              <div className="flex flex-col-reverse items-end gap-3 [&_button,&_a]:!relative [&_button,&_a]:!inset-auto [&_button,&_a]:size-12 [&_button,&_a]:rounded-2xl [&_button,&_a]:p-0 [&_button,&_a]:shadow-xl [&_button,&_a]:flex [&_button,&_a]:items-center [&_button,&_a]:justify-center [&_button,&_a]:bg-primary/15 [&_button,&_a]:border [&_button,&_a]:border-primary/30 [&_button,&_a]:text-primary dark:[&_button,&_a]:bg-primary dark:[&_button,&_a]:border-primary/50 dark:[&_button,&_a]:text-white [&_span.truncate]:hidden [&_span:not(:has(svg))]:hidden [&_svg]:size-5 [&_svg]:text-current [&_svg.text-muted-foreground]:hidden [&>div]:w-auto [&>div]:inline-block">
+                {actions}
+              </div>
+            </div>
+          ) : isActionsInDiv ? (
+            <div className="sm:hidden w-full mt-3">{actions}</div>
           ) : childCount === 1 ? (
             <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center">
               <div className="col-start-2 w-full sm:w-auto">
@@ -256,7 +289,7 @@ export function PageHeader({
               {actions}
             </div>
           )}
-        </div>
+        </>
       ) : null}
     </div>
   );

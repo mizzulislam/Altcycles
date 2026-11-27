@@ -463,10 +463,10 @@ export function ShortcutsManagementPage() {
             variant="outline"
             onClick={() => setResetAllOpen(true)}
             disabled={customCount === 0}
-            className="h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold shrink-0 gap-2 border-border/80"
+            className="h-9 max-sm:size-9 max-sm:p-0 rounded-xl px-4 text-xs sm:text-sm font-semibold shrink-0 gap-2 border-border/80"
           >
             <RotateCcwIcon className="size-4" />
-            <span>{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
+            <span className="max-sm:hidden">{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
           </Button>
         }
       />
@@ -586,22 +586,22 @@ export function ShortcutsManagementPage() {
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-6 text-center text-xs sm:text-sm font-semibold min-w-[220px]">
+                <TableHead className="pl-6 max-sm:pl-3 text-center text-xs sm:text-sm font-semibold min-w-[220px] max-sm:min-w-[170px]">
                   {t("shortcuts.col_action", "Aksi & Modul")}
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[150px]">
+                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[150px] max-sm:min-w-[130px]">
                   {t("shortcuts.col_roles", "Peran Akses")}
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[140px]">
+                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[140px] max-sm:min-w-[110px]">
                   {t("shortcuts.col_default_keys", "Tombol Bawaan")}
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[140px]">
+                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[140px] max-sm:min-w-[110px]">
                   {t("shortcuts.col_effective_keys", "Tombol Efektif")}
                 </TableHead>
-                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[100px]">
+                <TableHead className="text-center text-xs sm:text-sm font-semibold min-w-[100px] max-sm:min-w-[80px]">
                   {t("shortcuts.col_status", "Status")}
                 </TableHead>
-                <TableHead className="pr-6 text-center text-xs sm:text-sm font-semibold w-24">
+                <TableHead className="pr-6 max-sm:pr-3 text-center text-xs sm:text-sm font-semibold w-24">
                   {t("shortcuts.col_action_btn", "Aksi")}
                 </TableHead>
               </TableRow>
@@ -626,7 +626,7 @@ export function ShortcutsManagementPage() {
                   return (
                     <TableRow key={item.id} className="hover:bg-muted/30">
                       {/* Aksi & Modul */}
-                      <TableCell className="pl-6 align-top">
+                      <TableCell className="pl-6 max-sm:pl-3 align-top">
                         <div className="flex flex-col gap-1">
                           <span className="font-semibold text-foreground text-xs sm:text-sm">
                             {t(item.titleKey, item.fallbackTitle)}
@@ -730,7 +730,7 @@ export function ShortcutsManagementPage() {
                       </TableCell>
 
                       {/* Aksi */}
-                      <TableCell className="pr-6 align-top text-center">
+                      <TableCell className="pr-6 max-sm:pr-3 align-top text-center">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <Button
                             type="button"
