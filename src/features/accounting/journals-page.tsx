@@ -631,7 +631,7 @@ export function JournalsPage({
                 )}
           </p>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start sm:self-center w-auto">
           <ExportDownloadMenu
             label={t("common:action.export_download", "Unduh / Ekspor")}
             onExportExcel={handleExportExcel}
@@ -641,10 +641,15 @@ export function JournalsPage({
           <Button
             type="button"
             onClick={openNewJournal}
-            className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-2"
+            className="h-9 max-sm:size-9 max-sm:p-0 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer shadow-xs gap-2 w-auto"
+            title={
+              filterMode === "adjusting"
+                ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
+                : t("accounting:journals.btn_record", "Catat Transaksi")
+            }
           >
             <PlusIcon className="size-4" />
-            <span>
+            <span className="max-sm:hidden">
               {filterMode === "adjusting"
                 ? t("accounting:journals.btn_record_adj", "Catat Jurnal Penyesuaian")
                 : t("accounting:journals.btn_record", "Catat Transaksi")}
@@ -724,7 +729,7 @@ export function JournalsPage({
       )}
 
       <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4.5 border-b border-border/60 gap-3">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-6 py-4.5 max-sm:px-4 max-sm:py-3.5 border-b border-border/60 gap-3">
           <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             {filterMode === "adjusting"
               ? t("accounting:journals.adj_book", "Buku Jurnal Penyesuaian (AJP)")

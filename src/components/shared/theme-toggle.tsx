@@ -1,6 +1,7 @@
 import * as React from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/utils";
 
 export interface ThemeToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "floating" | "inline";
@@ -53,11 +54,14 @@ export function ThemeToggle({
       onClick={toggleTheme}
       aria-label={isDark ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
       style={floatingStyle}
-      className={`inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border ${
+      className={cn(
+        "inline-flex items-center justify-center rounded-2xl transition-all duration-300 select-none cursor-pointer border backdrop-blur-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isDark
-          ? "bg-card/95 border-border/80 text-amber-400 hover:text-amber-300 hover:bg-accent hover:border-border shadow-xl shadow-black/40"
-          : "bg-card/95 border-border text-primary hover:text-primary/90 hover:bg-accent hover:border-primary/40 shadow-lg shadow-black/5"
-      } backdrop-blur-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${sizeClasses} ${className}`}
+          ? "bg-card/95 border-border/80 text-amber-400 hover:text-amber-300 hover:bg-accent hover:border-border shadow-2xs"
+          : "bg-card/95 border-border text-primary hover:text-primary/90 hover:bg-accent hover:border-primary/40 shadow-2xs",
+        sizeClasses,
+        className,
+      )}
       {...props}
     >
       <span className="sr-only">

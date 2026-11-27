@@ -5,7 +5,7 @@ import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[3px] text-xs sm:text-sm font-semibold transition-all duration-100 ease-out active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45 disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold transition-all duration-100 ease-out active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45 disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
   {
     variants: {
       variant: {
@@ -21,9 +21,9 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-[3px] px-3 text-xs",
-        lg: "h-10 rounded-[3px] px-6",
-        icon: "size-9 rounded-[3px] relative after:absolute after:-inset-1.5 after:content-[''] sm:after:hidden",
+        sm: "h-8 rounded-xl px-3 text-xs",
+        lg: "h-10 rounded-xl px-6",
+        icon: "size-9 rounded-xl relative after:absolute after:-inset-1.5 after:content-[''] sm:after:hidden",
       },
     },
     defaultVariants: {

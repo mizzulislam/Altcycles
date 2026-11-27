@@ -125,7 +125,7 @@ export function buildJournalsPdfSpec(params: {
         localizedDesc = getLocalizedTransactionDescription(r.description, lang);
       }
     } else {
-      const leadingIndent = r.description.match(/^\s*/)?.[0] ?? "";
+      const isCredit = (r.credit > 0 && r.debit === 0) || r.description.startsWith(" ");
       const rawAccName = r.description.trim();
       const mappedAccName =
         rawAccName === "Akun Debit"
@@ -137,6 +137,7 @@ export function buildJournalsPdfSpec(params: {
               ? "Credit Account"
               : "Akun Kredit"
             : getLocalizedAccountName({ code: r.ref, name: rawAccName }, lang);
+      const leadingIndent = isCredit ? "        " : "";
       localizedDesc = `${leadingIndent}${mappedAccName}`;
     }
     return [
@@ -193,11 +194,11 @@ export function buildJournalsPdfSpec(params: {
       },
     ],
     tableColumns: [
-      { header: isEn ? "Date" : "Tanggal", widthRatio: 0.13 },
-      { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.39 },
-      { header: "Ref", widthRatio: 0.16, align: "center" },
-      { header: "Debit", widthRatio: 0.16, align: "right" },
-      { header: isEn ? "Credit" : "Kredit", widthRatio: 0.16, align: "right" },
+      { header: isEn ? "Date" : "Tanggal", widthRatio: 0.13, align: "center", headerAlign: "center" },
+      { header: isEn ? "Description" : "Deskripsi", widthRatio: 0.39, align: "left", headerAlign: "center" },
+      { header: "Ref", widthRatio: 0.16, align: "center", headerAlign: "center" },
+      { header: "Debit", widthRatio: 0.16, align: "right", headerAlign: "center" },
+      { header: isEn ? "Credit" : "Kredit", widthRatio: 0.16, align: "right", headerAlign: "center" },
     ],
     tableRows,
   };

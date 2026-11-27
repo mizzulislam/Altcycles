@@ -23,7 +23,7 @@ export function InvoiceKpiSummary({
   const { t } = useLanguage();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
       <KpiCard
         label={t("invoicing:kpi.total_invoiced")}
         displayValue={formatRupiah(totalInvoiced)}

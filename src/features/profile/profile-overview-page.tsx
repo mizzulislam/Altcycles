@@ -224,7 +224,7 @@ export function ProfileOverviewPage() {
           headerClassName="px-6 py-3.5 border-b border-border/70 bg-muted/10 flex flex-row items-center justify-between"
         />
         <CardContent className="p-5 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4 [&>*:nth-child(5)]:max-sm:col-span-2">
             <div className="p-4 rounded-xl bg-muted/20 border border-border/80 hover:border-primary/30 transition-all flex flex-col justify-between min-h-[82px] shadow-2xs">
               <div className="flex items-center justify-between gap-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -377,7 +377,7 @@ export function ProfileOverviewPage() {
       {/* =========================================================================
           GRID STATISTIK RINGKASAN AKUN (Komponen Tunggal KpiCard — Item 10)
           ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <KpiCard
           label={t("settings:profile_overview.card_status_title", "Status Akun")}
           displayValue={t("settings:profile_overview.card_status_value", "Aktif & Sah")}

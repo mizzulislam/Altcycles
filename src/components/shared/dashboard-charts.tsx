@@ -153,7 +153,7 @@ export interface ChartSummaryItem {
 
 /**
  * Baris footer ringkasan metrik grafik (grid edge-to-edge dengan garis pembatas atas border-t).
- * Memiliki pembatas vertikal antar item (divide-x) dan min-h-[64px] selaras dengan ChartValueFooter.
+ * Memiliki pembatas vertikal antar item dan min-h-[64px] selaras dengan ChartValueFooter.
  */
 export function ChartSummaryFooter({
   items,
@@ -162,32 +162,58 @@ export function ChartSummaryFooter({
   items: ChartSummaryItem[];
   className?: string;
 }) {
+  const total = items.length;
+
   return (
     <div
       className={cn(
-        "grid bg-muted/10 divide-x divide-border/60 text-xs h-[64px] min-h-[64px] border-t border-border/70",
-        items.length === 2 && "grid-cols-2",
-        items.length === 3 && "grid-cols-3",
-        items.length === 4 && "grid-cols-2 sm:grid-cols-4",
+        "grid bg-muted/10 text-xs min-h-[64px] border-t border-border/70",
+        total === 2 && "grid-cols-2",
+        total === 3 && "grid-cols-3",
+        total === 4 && "grid-cols-2 sm:grid-cols-4",
         className,
       )}
     >
       {items.map((item, idx) => {
+        let cellPadding = "py-2.5 sm:py-3.5 flex flex-col justify-center min-w-0";
+
+        if (total === 4) {
+          cellPadding = cn(
+            cellPadding,
+            // Kolom kiri (idx 0 & 2): sejajar rapi dengan padding kartu (pl-4 di mobile, sm:pl-6 di desktop)
+            (idx === 0 || idx === 2) && "pl-4 sm:pl-6 pr-2 sm:pr-4",
+            // Kolom kanan (idx 1 & 3): memiliki border pemisah kiri dan padding kanan seimbang
+            (idx === 1 || idx === 3) && "pl-3.5 sm:pl-4 pr-4 sm:pr-6 border-l border-border/60",
+            // Pada desktop: 4 kolom sejajar 1 baris (idx 2 & 3 diselaraskan tanpa border-t)
+            idx === 2 && "sm:px-4 sm:border-l sm:border-border/60",
+            idx === 3 && "sm:pl-3.5 sm:pr-6",
+            // Pada mobile: baris ke-2 (idx 2 & 3) diberi border pemisah horizontal atas
+            (idx === 2 || idx === 3) && "border-t border-border/60 sm:border-t-0",
+          );
+        } else if (total === 2) {
+          cellPadding = cn(
+            cellPadding,
+            idx === 0 && "pl-4 sm:pl-6 pr-2 sm:pr-4",
+            idx === 1 && "pl-3.5 sm:pl-4 pr-4 sm:pr-6 border-l border-border/60",
+          );
+        } else {
+          // total === 3 (atau varian lain)
+          cellPadding = cn(
+            cellPadding,
+            idx === 0 && "pl-2.5 sm:pl-6 pr-1.5 sm:pr-4",
+            idx > 0 && idx < total - 1 && "px-1.5 sm:px-4 border-l border-border/60",
+            idx === total - 1 && "pl-1.5 sm:pl-3.5 pr-2.5 sm:pr-6 border-l border-border/60",
+          );
+        }
+
         const content = (
-          <div
-            className={cn(
-              "py-3.5 flex flex-col justify-center",
-              idx === 0 && "pl-6 pr-4",
-              idx > 0 && idx < items.length - 1 && "px-4",
-              idx === items.length - 1 && "pl-3.5 pr-6",
-            )}
-          >
-            <div className="text-[11px] text-muted-foreground leading-tight">
+          <div className={cellPadding}>
+            <div className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight truncate">
               {item.label}
             </div>
             <p
               className={cn(
-                "text-xs sm:text-sm font-bold tabular-nums mt-0.5",
+                "text-xs sm:text-sm font-bold tabular-nums mt-0.5 truncate",
                 item.valueClass ?? "text-foreground",
               )}
             >
@@ -252,6 +278,7 @@ export function ChartTypeSwitcher<T extends string>({
               onClick={() => onChange(opt.value)}
               className={cn(
                 "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer",
+                Icon && "max-sm:size-7 max-sm:p-0 max-sm:justify-center",
                 "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
                 active
                   ? "bg-primary text-primary-foreground shadow-2xs"
@@ -259,7 +286,7 @@ export function ChartTypeSwitcher<T extends string>({
               )}
             >
               {Icon ? <Icon className="size-3.5" /> : null}
-              <span>{opt.label}</span>
+              <span className={cn(Icon && "max-sm:hidden")}>{opt.label}</span>
             </button>
           </ActionTooltip>
         );

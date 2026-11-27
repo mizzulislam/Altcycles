@@ -560,25 +560,25 @@ export function SystemConfigPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_code")}
                     </TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_doc_type")}
                     </TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_pattern")}
                     </TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_digits")}
                     </TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_reset")}
                     </TableHead>
-                    <TableHead className="px-3 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_last_sequence")}
                     </TableHead>
-                    <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">
+                    <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">
                       {t("settings:admin_settings.col_actions")}
                     </TableHead>
                   </TableRow>
@@ -590,7 +590,7 @@ export function SystemConfigPage() {
                       .sort((a, b) => b.period_key.localeCompare(a.period_key))[0];
                     return (
                       <TableRow key={seq.doc_type}>
-                        <TableCell className="pl-6 pr-3 py-3 text-center font-mono font-semibold whitespace-nowrap">
+                        <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 py-3 text-center font-mono font-semibold whitespace-nowrap">
                           {seq.doc_type}
                         </TableCell>
                         <TableCell className="px-3 py-3 text-xs sm:text-sm">{seq.label}</TableCell>
@@ -672,7 +672,7 @@ export function SystemConfigPage() {
                             t("settings:admin_settings.status_unused")
                           )}
                         </TableCell>
-                        <TableCell className="pl-2 pr-6 py-3 text-center whitespace-nowrap">
+                        <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 py-3 text-center whitespace-nowrap">
                           <div className="flex justify-center items-center">
                             <Button
                               type="button"

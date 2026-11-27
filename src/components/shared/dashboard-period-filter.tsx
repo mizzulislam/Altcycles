@@ -175,7 +175,7 @@ export function PeriodFilter({
   }
 
   return (
-    <div className={cn("inline-flex items-center gap-2", className)}>
+    <div className={cn("inline-flex w-full sm:w-auto items-center gap-2", className)}>
       {/* Tombol Utama Filter Periode */}
       <Button
         type="button"
@@ -183,13 +183,13 @@ export function PeriodFilter({
         onClick={() => setOpen(true)}
         aria-label={t("dashboard:filter.label", "Filter Periode")}
         className={cn(
-          "h-9 min-w-[155px] sm:min-w-[175px] max-w-[260px] gap-2 rounded-xl px-3.5 text-xs sm:text-sm font-semibold justify-between transition-all duration-200 cursor-pointer shadow-2xs select-none",
+          "h-9 w-full sm:w-auto min-w-0 sm:min-w-[175px] max-w-full sm:max-w-[260px] gap-2 rounded-xl px-3 sm:px-3.5 text-xs sm:text-sm font-semibold justify-between transition-all duration-200 cursor-pointer shadow-2xs select-none",
           hasActiveFilter
             ? "border-primary/60 bg-primary/10 text-primary dark:text-cyan-400 hover:bg-primary/15"
             : "border-border/80 bg-background/90 dark:bg-card text-foreground hover:bg-muted/70 hover:border-primary/50",
         )}
       >
-        <span className="flex items-center gap-2 truncate">
+        <span className="flex items-center gap-1.5 sm:gap-2 truncate">
           <CalendarDaysIcon className="size-3.5 text-primary shrink-0" />
           <span className="truncate">{getDisplayLabel()}</span>
         </span>

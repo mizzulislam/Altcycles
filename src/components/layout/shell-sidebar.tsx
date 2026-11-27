@@ -12,8 +12,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { AltviraLogoMark } from "@/components/shared/altvira-logo";
-import { LanguageToggle } from "@/components/shared/language-toggle";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
@@ -174,7 +172,7 @@ export function ShellSidebar({
       <MotionConfig reducedMotion="user">
         <nav
           className={cn(
-            "flex-1 overflow-y-auto space-y-2 overscroll-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+            "flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex flex-col gap-1.5",
             isCollapsed
               ? "p-3 w-full md:p-0 md:py-3 md:w-16 md:flex md:flex-col md:items-center"
               : "p-3 w-full",
@@ -215,7 +213,7 @@ export function ShellSidebar({
                     onClick={() => setMobileOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "group relative flex min-h-[44px] md:h-10 items-center rounded-xl text-xs font-medium transition-all duration-200 justify-start gap-3 px-3.5 md:px-3",
+                        "group relative flex min-h-[44px] h-11 md:h-10 md:min-h-10 items-center rounded-xl text-xs font-semibold transition-all duration-200 justify-start gap-3 px-3.5 md:px-3",
                         isCollapsed && "md:hidden",
                         isActive
                           ? "bg-white/25 text-white font-bold shadow-xs"
@@ -288,18 +286,18 @@ export function ShellSidebar({
                 )}
 
                 {/* Tampilan Expanded (Selalu tampil di mobile drawer, dan di desktop saat tidak collapsed) */}
-                <div className={cn("pt-2 pb-1", isCollapsed && "md:hidden")}>
+                <div className={cn("flex flex-col", isCollapsed && "md:hidden")}>
                   <button
                     type="button"
                     onClick={() => toggleGroup(entry.id)}
                     className={cn(
-                      "w-full flex min-h-[44px] md:h-9 items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
+                      "w-full flex min-h-[44px] h-11 md:h-10 md:min-h-10 items-center justify-between rounded-xl px-3.5 md:px-3 text-xs font-semibold tracking-tight transition-colors cursor-pointer",
                       isChildActive
                         ? "text-white bg-white/15 font-bold"
                         : "text-white/80 hover:bg-white/10 hover:text-white",
                     )}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       <GroupIcon className="size-4 shrink-0 opacity-90" />
                       <span className="truncate">{groupLabel}</span>
                     </div>
@@ -315,11 +313,11 @@ export function ShellSidebar({
                     className={cn(
                       "grid transition-all duration-200 ease-in-out overflow-hidden motion-reduce:transition-none",
                       isGroupOpen
-                        ? "grid-rows-[1fr] opacity-100 mt-1"
-                        : "grid-rows-[0fr] opacity-0 mt-0",
+                        ? "grid-rows-[1fr] opacity-100 mt-1.5"
+                        : "grid-rows-[0fr] opacity-0 mt-0 pointer-events-none",
                     )}
                   >
-                    <div className="min-h-0 relative ml-4 pl-3.5 space-y-1">
+                    <div className="min-h-0 relative ml-4 pl-3.5 flex flex-col gap-1">
                       {/* Track garis vertikal sejajar persis dengan indikator bulat aktif */}
                       <span
                         aria-hidden="true"
@@ -451,17 +449,6 @@ export function ShellSidebar({
             </button>
           </div>
         )}
-
-        {/* Utilitas Mobile: Pengalih Tema & Bahasa (Hanya tampil di mobile drawer, tersembunyi di desktop md:hidden) */}
-        <div className="flex md:hidden items-center justify-between border-b border-white/15 pb-2.5 mb-2.5 px-1 w-full">
-          <span className="text-[11px] font-semibold tracking-wide uppercase text-white/80">
-            {t("common:action.settings", "Pengaturan")}
-          </span>
-          <div className="flex items-center gap-2">
-            <LanguageToggle size="sm" className="size-9 rounded-xl border border-white/30 bg-white/10 text-white" />
-            <ThemeToggle size="sm" className="size-9 rounded-xl border border-white/30 bg-white/10 text-white" />
-          </div>
-        </div>
 
         {/* Trigger Kartu Profil Utama di Bagian Bawah */}
         <button

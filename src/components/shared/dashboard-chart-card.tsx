@@ -46,7 +46,7 @@ export function ChartCard({
     >
       <CardHeader
         className={cn(
-          "px-5 sm:px-6 py-0 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 h-14 min-h-[56px] shrink-0",
+          "max-sm:px-4 px-5 sm:px-6 py-0 border-b border-border/70 flex flex-row items-center justify-between gap-2.5 sm:gap-3 h-14 min-h-[56px] shrink-0",
           headerClassName,
         )}
       >
@@ -64,7 +64,7 @@ export function ChartCard({
 
       <CardContent
         className={cn(
-          "p-6 flex-1 flex flex-col justify-between gap-4",
+          "max-sm:p-4 p-6 flex-1 flex flex-col justify-between gap-4",
           contentClassName,
         )}
       >
@@ -84,7 +84,7 @@ export function ChartCard({
               </div>
             ) : null}
             {summary ? (
-              <div className="shrink-0 -mx-6 -mb-6 mt-auto">
+              <div className="shrink-0 max-sm:-mx-4 max-sm:-mb-4 -mx-6 -mb-6 mt-auto">
                 {summary}
               </div>
             ) : null}

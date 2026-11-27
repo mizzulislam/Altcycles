@@ -84,13 +84,18 @@ export function ForgotPasswordPage() {
         aria-hidden="true"
       />
 
-      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Tema */}
-      <div className="fixed top-4 right-4 sm:top-5 sm:right-6 z-[9999] flex items-center gap-2">
+      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Tema - Disusun Vertikal dalam Box */}
+      <div className="fixed top-3.5 right-4 sm:top-4 sm:right-6 z-[9999] flex flex-col items-center p-1 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-md gap-1">
         <LanguageToggle
           size="default"
-          className="size-10 rounded-2xl shadow-md border-border/80 bg-card/95 backdrop-blur-md"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
         />
-        <ThemeToggle variant="inline" size="default" />
+        <div className="w-4 h-px bg-border/60" aria-hidden="true" />
+        <ThemeToggle
+          variant="inline"
+          size="default"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
+        />
       </div>
 
       {/* Brand Logo Header */}
@@ -103,7 +108,7 @@ export function ForgotPasswordPage() {
       </div>
 
       {/* Kartu Konten Utama */}
-      <Card className="w-full max-w-[440px] rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-xl dark:shadow-2xl dark:shadow-black/50 p-6 sm:p-8 z-10 transition-all">
+      <Card className="w-full max-w-[440px] rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-xl dark:shadow-2xl dark:shadow-black/50 max-sm:p-4 p-6 sm:p-8 z-10 transition-all">
         {sent ? (
           /* Tampilan Status Berhasil Terkirim */
           <div className="flex flex-col items-center text-center space-y-4 py-2 animate-in fade-in zoom-in-95 duration-200">
@@ -269,13 +274,18 @@ export function ResetPasswordPage() {
         aria-hidden="true"
       />
 
-      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Tema */}
-      <div className="fixed top-4 right-4 sm:top-5 sm:right-6 z-[9999] flex items-center gap-2">
+      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Tema - Disusun Vertikal dalam Box */}
+      <div className="fixed top-3.5 right-4 sm:top-4 sm:right-6 z-[9999] flex flex-col items-center p-1 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-md gap-1">
         <LanguageToggle
           size="default"
-          className="size-10 rounded-2xl shadow-md border-border/80 bg-card/95 backdrop-blur-md"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
         />
-        <ThemeToggle variant="inline" size="default" />
+        <div className="w-4 h-px bg-border/60" aria-hidden="true" />
+        <ThemeToggle
+          variant="inline"
+          size="default"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
+        />
       </div>
 
       {/* Brand Logo Header */}

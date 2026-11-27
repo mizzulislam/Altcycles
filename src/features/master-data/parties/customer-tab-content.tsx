@@ -283,12 +283,12 @@ export function CustomerTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_name", "Nama Pelanggan")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_company", "Perusahaan & PIC")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_contact", "Kontak")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_name", "Nama Pelanggan")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_company", "Perusahaan & PIC")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_contact", "Kontak")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("parties:customers.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -311,10 +311,10 @@ export function CustomerTabContent({
               ) : (
                 customers.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
                       {c.code}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="px-3 max-sm:px-2 font-medium">
                       <div>{c.name}</div>
                       {c.npwp ? (
                         <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-normal text-muted-foreground font-mono">
@@ -348,19 +348,19 @@ export function CustomerTabContent({
                         </div>
                       ) : null}
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="px-3 max-sm:px-2 text-xs">
                       <div>{c.contact_person ?? "-"}</div>
                       <div className="text-muted-foreground">
                         {c.contact_title ?? ""}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="px-3 max-sm:px-2 text-xs">
                       <div>{c.email ?? "-"}</div>
                       <div className="text-muted-foreground">
                         {c.phone ?? ""}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-3 max-sm:px-2 text-center">
                       <div className="-my-px inline-flex justify-center">
                         <StatusBadge
                           tone={c.is_active ? "success" : "secondary"}
@@ -368,7 +368,7 @@ export function CustomerTabContent({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="pl-2 pr-6 text-center">
+                    <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center">
                       <div className="flex items-center justify-center gap-1 -my-1.5">
                         <Button
                           type="button"

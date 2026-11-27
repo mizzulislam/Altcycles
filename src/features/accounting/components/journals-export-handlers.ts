@@ -102,7 +102,7 @@ export async function exportJournalsToPdf({
       if (memo) {
         rows.push({
           date: "",
-          description: `   (${memo})`,
+          description: `(${memo})`,
           ref: "",
           debit: 0,
           credit: 0,

@@ -68,6 +68,7 @@ export function wrapTextByWidth(
   const result: string[] = [];
 
   for (const para of rawParagraphs) {
+    const leadingIndent = para.match(/^\s+/)?.[0] ?? "";
     const rawWords = para.split(/\s+/).filter(Boolean);
     if (rawWords.length === 0) {
       result.push("");
@@ -84,14 +85,14 @@ export function wrapTextByWidth(
       }
     }
 
-    let current = words[0]!;
+    let current = leadingIndent ? `${leadingIndent}${words[0]!}` : words[0]!;
     for (let i = 1; i < words.length; i++) {
       const candidate = `${current} ${words[i]!}`;
       if (font.widthOfTextAtSize(candidate, fontSize) <= safeMaxW) {
         current = candidate;
       } else {
         result.push(current);
-        current = words[i]!;
+        current = leadingIndent ? `${leadingIndent}${words[i]!}` : words[i]!;
       }
     }
     result.push(current);

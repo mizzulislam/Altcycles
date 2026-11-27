@@ -247,14 +247,14 @@ export function ProductServiceTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_name", "Nama Layanan / Produk")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_category", "Kategori")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_desc", "Deskripsi")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_unit", "Satuan")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap min-w-[140px]">{t("parties:products.col_base_rate", "Tarif Dasar")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:products.col_actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_name", "Nama Layanan / Produk")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_category", "Kategori")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_desc", "Deskripsi")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_unit", "Satuan")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap min-w-[140px] max-sm:min-w-[110px]">{t("parties:products.col_base_rate", "Tarif Dasar")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -279,29 +279,29 @@ export function ProductServiceTabContent({
                   const loc = getLocalizedCatalogProduct(p, language);
                   return (
                     <TableRow key={p.id}>
-                      <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
+                      <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
                         {p.code}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground">
+                      <TableCell className="px-3 max-sm:px-2 font-medium text-foreground">
                         {loc.name}
                       </TableCell>
-                      <TableCell className="text-center text-xs">
+                      <TableCell className="px-3 max-sm:px-2 text-center text-xs">
                         <span className="inline-flex items-center rounded-lg bg-muted/80 border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                           {loc.category}
                         </span>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs">
+                      <TableCell className="px-3 max-sm:px-2 text-xs text-muted-foreground max-w-xs">
                         <span className="line-clamp-2" title={loc.description ?? "-"}>
                           {loc.description ?? "-"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-center text-xs font-medium">
+                      <TableCell className="px-3 max-sm:px-2 text-center text-xs font-medium">
                         {loc.unit}
                       </TableCell>
-                      <TableCell className="px-3">
+                      <TableCell className="px-3 max-sm:px-2">
                         <MonetaryCell amount={p.price} currency="Rp" />
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="px-3 max-sm:px-2 text-center">
                         <div className="-my-px inline-flex justify-center">
                           <StatusBadge
                             tone={p.is_active ? "success" : "secondary"}
@@ -309,7 +309,7 @@ export function ProductServiceTabContent({
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="pl-2 pr-6 text-center">
+                      <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center">
                         <div className="flex items-center justify-center gap-1 -my-1.5">
                           <Button
                             type="button"

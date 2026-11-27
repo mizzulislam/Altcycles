@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 export interface LanguageToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "default" | "lg";
+  placement?: "auto" | "top" | "bottom";
 }
 
 /**
@@ -77,11 +78,28 @@ function UsaFlag({ className }: { className?: string }) {
 export function LanguageToggle({
   className = "",
   size = "default",
+  placement = "auto",
   style,
 }: LanguageToggleProps) {
   const { language, setLanguage } = useLanguage();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [openUpward, setOpenUpward] = React.useState(placement === "top");
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const updatePosition = React.useCallback(() => {
+    if (placement === "top") {
+      setOpenUpward(true);
+      return;
+    }
+    if (placement === "bottom") {
+      setOpenUpward(false);
+      return;
+    }
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setOpenUpward(spaceBelow < 190);
+  }, [placement]);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -97,6 +115,7 @@ export function LanguageToggle({
     }
 
     if (isOpen) {
+      updatePosition();
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("keydown", handleKeyDown);
     }
@@ -105,7 +124,7 @@ export function LanguageToggle({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   const sizeClasses = {
     sm: "size-8 p-1.5",
@@ -152,7 +171,12 @@ export function LanguageToggle({
       </ActionTooltip>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-50">
+        <div
+          className={cn(
+            "absolute right-0 w-52 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150 z-[9999]",
+            openUpward ? "bottom-full mb-2" : "top-full mt-2",
+          )}
+        >
           <div className="px-3.5 py-1.5 border-b border-border/60 mb-1">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               {language === "en" ? "Select Language" : "Pilih Bahasa"}

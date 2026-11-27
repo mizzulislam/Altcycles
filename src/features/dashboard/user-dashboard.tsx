@@ -434,7 +434,7 @@ export function UserDashboardPage() {
       </div>
 
       {/* Pintasan Cepat Anggota Tim */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:gap-3 grid-cols-2 sm:grid-cols-3 [&>*:nth-child(3)]:max-sm:col-span-2">
         {shortcuts.map((item) => {
           const Icon = item.icon;
           return (

@@ -7,20 +7,16 @@ import {
   ExternalLinkIcon,
   EyeIcon,
   EyeOffIcon,
-  LockIcon,
-  LogInIcon,
   ShieldCheckIcon,
-  UserIcon,
-  UserPlusIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AltviraLogo } from "@/components/shared/altvira-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { OAuthLoadingCard } from "@/components/shared/oauth-loading-card";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/empty";
 import {
   Field,
@@ -103,6 +99,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
   // UI States
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [capsLockOn, setCapsLockOn] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
   const [googleSubmitting, setGoogleSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -420,13 +418,18 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
   return (
     <div className="relative min-h-screen w-full bg-muted/30 dark:bg-background transition-colors duration-300">
-      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Gelap/Terang */}
-      <div className="fixed top-4 right-4 sm:top-5 sm:right-6 z-[9999] flex items-center gap-2">
+      {/* Tombol Aksi di Ujung Kanan Atas: Dual Bahasa & Mode Gelap/Terang (Desktop) - Disusun Vertikal dalam Box */}
+      <div className="hidden lg:flex fixed top-4 right-5 z-[9999] flex-col items-center p-1 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-md gap-1">
         <LanguageToggle
           size="default"
-          className="size-10 rounded-2xl shadow-md border-border/80 bg-card/95 backdrop-blur-md"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
         />
-        <ThemeToggle variant="inline" size="default" />
+        <div className="w-4 h-px bg-border/60" aria-hidden="true" />
+        <ThemeToggle
+          variant="inline"
+          size="default"
+          className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none"
+        />
       </div>
 
       {/* Grid 2 Kolom Murni: Kolom Kiri (Banner) & Kolom Kanan (Form) */}
@@ -610,35 +613,58 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
       {/* =====================================================================
           KOLOM KANAN: Form Masuk / Buat Akun (Gaya Splitz Bersih & Minimalis)
           ===================================================================== */}
-      <div className="flex flex-col justify-center items-center px-4 py-8 sm:p-10 lg:p-12">
-        <div className="w-full max-w-[440px] space-y-6">
-          {/* Brand Logo Header (Menyesuaikan variant secara otomatis dengan tema aktif) */}
-          <div className="flex flex-col items-center text-center -mt-4 mb-3">
-            <AltviraLogo
-              size={38}
-              variant={resolvedTheme === "dark" ? "light" : "dark"}
-              subtitle={t("common:auth.brand_subtitle", "FINANCIAL ERP")}
-            />
+      <div className="relative flex flex-col justify-center items-center px-4 sm:px-6 py-6 lg:p-12 min-h-dvh lg:min-h-screen overflow-hidden">
+        {/* Background Architectural Grid Pattern dari Halaman Lupa Kata Sandi */}
+        <div
+          className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none"
+          aria-hidden="true"
+        />
+
+        {/* Ambient Glow Orbs */}
+        <div
+          className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-sky-400/10 blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+
+        <div className="w-full max-w-[420px] relative z-10 space-y-4 sm:space-y-6">
+          {/* Baris Kontrol Header Khusus Mobile & Tablet (<1024px) */}
+          <div className="w-full flex items-center justify-end -mt-3 sm:-mt-4 mb-2 lg:hidden">
+            <div className="inline-flex items-center gap-1 p-1 rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md shadow-xs">
+              <LanguageToggle
+                size="sm"
+                className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none p-2"
+              />
+              <div className="w-px h-4 bg-border/60" aria-hidden="true" />
+              <ThemeToggle
+                variant="inline"
+                size="sm"
+                className="size-9 rounded-xl border-transparent bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground shadow-none p-2"
+              />
+            </div>
           </div>
 
           {/* Mode Pratinjau Alert (Bila belum terkoneksi cloud) */}
           {isDemoMode && (
             <Alert
               variant="info"
-              className="border-sky-500/30 bg-sky-500/10 text-foreground"
+              className="border-sky-500/30 bg-sky-500/10 text-foreground py-2 sm:py-3 rounded-[10px]"
             >
-              <ShieldCheckIcon className="text-primary dark:text-sky-400" />
-              <AlertTitle className="text-primary dark:text-sky-400 font-bold">
+              <ShieldCheckIcon className="text-primary dark:text-sky-400 size-4" />
+              <AlertTitle className="text-primary dark:text-sky-400 font-bold text-xs sm:text-sm">
                 {t("auth.demo_mode_title", "Mode Pratinjau Lokal Aktif")}
               </AlertTitle>
               <AlertDescription className="text-xs text-muted-foreground">
                 {t("auth.demo_mode_desc", "Pilih akun contoh untuk menguji masing-masing portal peran:")}
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <div className="mt-1.5 sm:mt-2.5 flex flex-wrap gap-1.5">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
+                    className="h-6 sm:h-7 text-[11px] sm:text-xs bg-card text-foreground border-border hover:bg-muted rounded-md"
                     onClick={() => fillDemoAccount("superadmin@altvira.id")}
                   >
                     Super Admin
@@ -647,7 +673,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
+                    className="h-6 sm:h-7 text-[11px] sm:text-xs bg-card text-foreground border-border hover:bg-muted rounded-md"
                     onClick={() => fillDemoAccount("admin@altvira.id")}
                   >
                     Admin
@@ -656,7 +682,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs bg-card text-foreground border-border hover:bg-muted"
+                    className="h-6 sm:h-7 text-[11px] sm:text-xs bg-card text-foreground border-border hover:bg-muted rounded-md"
                     onClick={() => fillDemoAccount("user@altvira.id")}
                   >
                     User
@@ -666,67 +692,68 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
             </Alert>
           )}
 
-          {/* Main Card */}
-          <Card className="border border-border/80 shadow-lg shadow-black/5 dark:shadow-black/40 rounded-2xl bg-card overflow-hidden transition-colors">
-            {/* Tab Switcher: Masuk vs Buat Akun */}
-            <div className="grid grid-cols-2 p-1.5 bg-muted/50 border-b border-border/70">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setError(null);
-                }}
-                className={`flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold rounded-xl transition-all ${
-                  mode === "signin"
-                    ? "bg-card text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <LogInIcon className="size-4" />
-                <span>{t("auth.signin_tab", "Masuk")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError(null);
-                }}
-                className={`flex items-center justify-center gap-2 py-2 px-3 text-sm font-semibold rounded-xl transition-all ${
-                  mode === "signup"
-                    ? "bg-card text-primary shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <UserPlusIcon className="size-4" />
-                <span>{t("auth.signup_tab", "Buat Akun")}</span>
-              </button>
-            </div>
-
-            <CardContent className="p-6 sm:p-8 space-y-6">
-              {/* Form Title & Subtitle (Mengikuti Referensi Splitz) */}
-              <div className="space-y-1.5">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          {/* Main Card (Tata letak & gaya bersih ala Dicoding, disesuaikan untuk Altcycles) */}
+          <Card className="border border-border/80 shadow-xl dark:shadow-2xl dark:shadow-black/50 rounded-2xl bg-card overflow-hidden transition-colors">
+            <CardContent className="p-6 sm:p-7 space-y-4">
+              {/* Overline, Title & Subtitle (Gaya Dicoding) */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
+                  {t("auth.login_overline", "ALTVIRA FINANCIAL ERP")}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                   {mode === "signin"
-                    ? t("auth.signin_title", "Masuk ke Sistem")
-                    : t("auth.signup_title", "Buat Akun Baru")}
-                </h2>
-                <p className="text-xs text-muted-foreground">
+                    ? t("auth.signin_title", "Masuk ke Altcycles")
+                    : t("auth.signup_title", "Daftar Akun Altcycles")}
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
                   {mode === "signin"
-                    ? t("auth.signin_subtitle", "Silakan masukkan username dan kata sandi Anda")
-                    : t("auth.signup_subtitle", "Daftarkan akun internal Altvira untuk mengakses portal kerja")}
+                    ? t("auth.signin_subtitle", "Lanjutkan kelola keuangan dan operasional proyek Anda.")
+                    : t("auth.signup_subtitle", "Daftarkan akun internal Altvira untuk mengakses portal kerja.")}
                 </p>
+              </div>
+
+              {/* Tombol Masuk dengan Google (Posisi di Atas Form Ala Dicoding) */}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting || googleSubmitting}
+                onClick={handleGoogleSignIn}
+                className="w-full h-11 text-sm font-semibold rounded-xl border-border bg-card hover:bg-muted text-foreground transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-3"
+              >
+                {googleSubmitting ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <GoogleIcon className="size-4.5 shrink-0" />
+                )}
+                <span>
+                  {mode === "signin"
+                    ? t("auth.signin_google", "Masuk dengan Google")
+                    : t("auth.signup_google", "Daftar dengan Google")}
+                </span>
+              </Button>
+
+              {/* Pembatas "atau" */}
+              <div className="relative my-0.5">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="bg-border/60" />
+                </div>
+                <div className="relative flex justify-center text-xs lowercase">
+                  <span className="bg-card px-3 text-muted-foreground">
+                    {t("auth.or", "atau")}
+                  </span>
+                </div>
               </div>
 
               {/* Form Body */}
               <form
                 id="auth-form"
                 onSubmit={mode === "signin" ? handleSignIn : handleSignUp}
-                className="space-y-4"
+                className="space-y-3.5 pt-1.5"
               >
-                <FieldGroup>
-                  {/* Field Nama Lengkap (Khusus Mode Buat Akun) */}
+                <FieldGroup className="gap-3.5">
+                  {/* Field Nama Lengkap (Khusus Mode Daftar Akun) */}
                   {mode === "signup" && (
-                    <Field data-invalid={Boolean(error)}>
+                    <Field data-invalid={Boolean(error)} className="space-y-1.5">
                       <FieldLabel
                         htmlFor="auth-fullname"
                         required
@@ -734,72 +761,54 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       >
                         {t("auth.full_name", "Nama Lengkap")}
                       </FieldLabel>
-                      <div className="relative">
-                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <Input
-                          id="auth-fullname"
-                          type="text"
-                          required
-                          autoComplete="name"
-                          placeholder={t("auth.full_name_placeholder", "Nama lengkap Anda")}
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="pl-10 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
-                        />
-                      </div>
+                      <Input
+                        id="auth-fullname"
+                        type="text"
+                        required
+                        autoComplete="name"
+                        placeholder={t("auth.full_name_placeholder", "Nama lengkap Anda")}
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary text-base sm:text-sm rounded-xl px-3.5"
+                      />
                     </Field>
                   )}
 
-                  {/* Field Username */}
-                  <Field data-invalid={Boolean(error)}>
+                  {/* Field Identitas (Email atau Username) */}
+                  <Field data-invalid={Boolean(error)} className="space-y-1.5">
                     <FieldLabel
                       htmlFor="auth-username"
-                      required
                       className="text-xs font-semibold text-foreground"
                     >
-                      {t("auth.username", "Username")}
+                      {t("auth.identity_label", "Email atau Username")}
                     </FieldLabel>
-                    <div className="relative">
-                      <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input
-                        id="auth-username"
-                        type="text"
-                        autoComplete="username"
-                        required
-                        placeholder={
-                          mode === "signin"
-                            ? t("auth.username_placeholder_signin", "nama@altvira.id atau username")
-                            : t("auth.username_placeholder_signup", "contoh: izzul atau nama@altvira.id")
-                        }
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="pl-10 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
-                        aria-invalid={Boolean(error)}
-                      />
-                    </div>
+                    <Input
+                      id="auth-username"
+                      type="text"
+                      autoComplete="username"
+                      required
+                      placeholder={
+                        mode === "signin"
+                          ? t("auth.identity_placeholder", "Masukkan email aktif atau username Anda")
+                          : t("auth.username_placeholder_signup", "contoh: izzul atau nama@altvira.id")
+                      }
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary text-base sm:text-sm rounded-xl px-3.5"
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? "auth-error" : undefined}
+                    />
                   </Field>
 
-                  {/* Field Kata Sandi (Dengan Tombol Show/Hide Password) */}
-                  <Field data-invalid={Boolean(error)}>
-                    <div className="flex items-center justify-between">
-                      <FieldLabel
-                        htmlFor="auth-password"
-                        required
-                        className="text-xs font-semibold text-foreground"
-                      >
-                        {t("auth.password", "Kata Sandi")}
-                      </FieldLabel>
-                      {mode === "signin" && (
-                        <Link
-                          to="/lupa-kata-sandi"
-                          className="text-xs font-medium text-primary hover:underline transition-colors"
-                        >
-                          {t("auth.forgot_password", "Lupa kata sandi?")}
-                        </Link>
-                      )}
-                    </div>
+                  {/* Field Kata Sandi / Password */}
+                  <Field data-invalid={Boolean(error)} className="space-y-1.5">
+                    <FieldLabel
+                      htmlFor="auth-password"
+                      className="text-xs font-semibold text-foreground"
+                    >
+                      {t("auth.password", "Kata Sandi")}
+                    </FieldLabel>
                     <div className="relative">
-                      <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                       <Input
                         id="auth-password"
                         type={showPassword ? "text" : "password"}
@@ -809,15 +818,14 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                             : "new-password"
                         }
                         required
-                        placeholder={
-                          mode === "signin"
-                            ? t("auth.password_placeholder_signin", "Masukkan kata sandi")
-                            : t("auth.password_placeholder_signup", "Minimal 6 karakter")
-                        }
+                        placeholder={t("auth.password_placeholder_dicoding", "Masukkan password")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
+                        onKeyDown={(e) => setCapsLockOn(e.getModifierState("CapsLock"))}
+                        onKeyUp={(e) => setCapsLockOn(e.getModifierState("CapsLock"))}
+                        className="pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary text-base sm:text-sm rounded-xl px-3.5"
                         aria-invalid={Boolean(error)}
+                        aria-describedby={error ? "auth-error" : undefined}
                       />
                       <button
                         type="button"
@@ -825,8 +833,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
                         aria-label={
                           showPassword
-                            ? "Sembunyikan kata sandi"
-                            : "Tampilkan kata sandi"
+                            ? t("auth.hide_password", "Sembunyikan kata sandi")
+                            : t("auth.show_password", "Tampilkan kata sandi")
                         }
                       >
                         {showPassword ? (
@@ -837,7 +845,37 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                       </button>
                     </div>
 
-                    {/* Indikator & Ketentuan Kata Sandi */}
+                    {/* Peringatan Caps Lock */}
+                    {capsLockOn && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5 mt-1.5">
+                        <span className="size-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                        <span>{t("auth.caps_lock_warning", "Caps Lock aktif")}</span>
+                      </p>
+                    )}
+
+                    {/* Baris Ingat Saya & Lupa Password (Ala Dicoding) */}
+                    {mode === "signin" && (
+                      <div className="flex items-center justify-between pt-0.5">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <Checkbox
+                            checked={rememberMe}
+                            onCheckedChange={(val) => setRememberMe(Boolean(val))}
+                            className="size-4 rounded-[3.5px]"
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {t("auth.remember_me", "Ingat saya")}
+                          </span>
+                        </label>
+                        <Link
+                          to="/lupa-kata-sandi"
+                          className="text-xs font-semibold text-primary dark:text-[#60A5FA] hover:underline transition-colors"
+                        >
+                          {t("auth.forgot_password", "Lupa password?")}
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Indikator & Ketentuan Kata Sandi (Khusus Signup) */}
                     {(mode === "signup" || password.length > 0) && (
                       <div className="space-y-2 pt-1 transition-all">
                         {/* Progress Bar Kekuatan Sandi */}
@@ -971,7 +1009,7 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
                   {/* Field Konfirmasi Kata Sandi (Khusus Mode Buat Akun) */}
                   {mode === "signup" && (
-                    <Field data-invalid={Boolean(error)}>
+                    <Field data-invalid={Boolean(error)} className="space-y-1.5">
                       <FieldLabel
                         htmlFor="auth-confirm-password"
                         required
@@ -980,7 +1018,6 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                         {t("auth.confirm_password", "Konfirmasi Kata Sandi")}
                       </FieldLabel>
                       <div className="relative">
-                        <LockIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
                           id="auth-confirm-password"
                           type={showConfirmPassword ? "text" : "password"}
@@ -989,8 +1026,9 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           placeholder={t("auth.confirm_password_placeholder", "Ulangi kata sandi")}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-10 pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary"
+                          className="pr-11 h-11 border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary text-base sm:text-sm rounded-xl px-3.5"
                           aria-invalid={Boolean(error)}
+                          aria-describedby={error ? "auth-error" : undefined}
                         />
                         <button
                           type="button"
@@ -1000,8 +1038,8 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
                           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
                           aria-label={
                             showConfirmPassword
-                              ? "Sembunyikan konfirmasi kata sandi"
-                              : "Tampilkan konfirmasi kata sandi"
+                              ? t("auth.hide_password", "Sembunyikan konfirmasi kata sandi")
+                              : t("auth.show_password", "Tampilkan konfirmasi kata sandi")
                           }
                         >
                           {showConfirmPassword ? (
@@ -1016,112 +1054,87 @@ export function LoginPage({ bannerSrc }: LoginPageProps) {
 
                   {/* Error Message */}
                   {error && (
-                    <FieldDescription className="text-xs text-destructive font-medium bg-destructive/10 p-2 rounded-lg border border-destructive/20">
+                    <FieldDescription
+                      id="auth-error"
+                      role="alert"
+                      className="text-xs text-destructive font-medium bg-destructive/10 p-2.5 rounded-xl border border-destructive/20"
+                    >
                       {error}
                     </FieldDescription>
                   )}
 
-                  {/* Submit Button */}
+                  {/* Submit Button (Solid Primary Blue ala Dicoding) */}
                   <Button
                     type="submit"
                     disabled={submitting || googleSubmitting}
-                    className="w-full h-11 text-sm font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 transition-all active:scale-[0.99]"
+                    className="w-full h-11 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 transition-all active:scale-[0.99] mt-0.5"
                   >
                     {submitting ? (
                       <Spinner className="mr-2" />
-                    ) : mode === "signin" ? (
-                      <LogInIcon className="mr-2 size-4" />
                     ) : (
-                      <CheckCircle2Icon className="mr-2 size-4" />
-                    )}
-                    {mode === "signin"
-                      ? t("auth.signin_button", "Masuk ke Sistem")
-                      : t("auth.signup_button", "Buat Akun Sekarang")}
-                  </Button>
-
-                  {/* Pembatas "atau lanjutkan dengan" */}
-                  <div className="relative my-2 pt-1">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator className="bg-border" />
-                    </div>
-                    <div className="relative flex justify-center text-[11px] uppercase">
-                      <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
-                        {t("auth.or_continue_with", "atau lanjutkan dengan")}
+                      <span>
+                        {mode === "signin"
+                          ? t("auth.signin_button", "Masuk")
+                          : t("auth.signup_button", "Daftar")}
                       </span>
-                    </div>
-                  </div>
-
-                  {/* Tombol Masuk dengan Google */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={submitting || googleSubmitting}
-                    onClick={handleGoogleSignIn}
-                    className="w-full h-11 text-sm font-semibold rounded-xl border-border bg-card hover:bg-muted text-foreground transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2.5"
-                  >
-                    {googleSubmitting ? (
-                      <Spinner className="size-4" />
-                    ) : (
-                      <GoogleIcon className="size-4 shrink-0" />
                     )}
-                    <span>{t("auth.signin_google", "Masuk dengan Google")}</span>
                   </Button>
                 </FieldGroup>
               </form>
 
-              {/* Mode Toggle Link */}
-              <div className="text-center text-xs text-muted-foreground">
-                {mode === "signin" ? (
-                  <>
-                    {t("auth.no_account", "Belum memiliki akun internal?")}{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode("signup");
-                        setError(null);
-                      }}
-                      className="font-bold text-primary hover:underline transition-colors"
-                    >
-                      {t("auth.signup_here", "Buat Akun di sini")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {t("auth.has_account", "Sudah memiliki akun terdaftar?")}{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMode("signin");
-                        setError(null);
-                      }}
-                      className="font-bold text-primary hover:underline transition-colors"
-                    >
-                      {t("auth.signin_here", "Masuk ke Sistem")}
-                    </button>
-                  </>
-                )}
+              {/* Footer Links: Alih Mode Akun & Akses Pembeli Proyek */}
+              <div className="space-y-1.5 text-left text-xs text-muted-foreground pt-1">
+                <p>
+                  {mode === "signin" ? (
+                    <span>
+                      {t("auth.no_account", "Belum punya akun?")}{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("signup");
+                          setError(null);
+                        }}
+                        className="font-semibold text-primary dark:text-[#60A5FA] hover:underline transition-colors"
+                      >
+                        {t("auth.signup_action", "Daftar")}
+                      </button>
+                    </span>
+                  ) : (
+                    <span>
+                      {t("auth.has_account", "Sudah punya akun?")}{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("signin");
+                          setError(null);
+                        }}
+                        className="font-semibold text-primary dark:text-[#60A5FA] hover:underline transition-colors"
+                      >
+                        {t("auth.signin_action", "Masuk")}
+                      </button>
+                    </span>
+                  )}
+                </p>
+
+                <p>
+                  <span>{t("auth.buyer_portal_text", "Pembeli proyek?")}{" "}</span>
+                  <Link
+                    to="/portal-pembeli"
+                    className="font-semibold text-primary dark:text-[#60A5FA] hover:underline transition-colors"
+                  >
+                    {t("auth.buyer_portal_action", "Lacak dengan nomor PO")}
+                  </Link>
+                </p>
               </div>
+
+              {/* Legal Disclaimer ala Dicoding (Disesuaikan Konteks Altcycles) */}
+              <p className="text-[11px] text-muted-foreground/75 leading-relaxed text-center pt-3.5 border-t border-border/40">
+                {t(
+                  "auth.legal_notice",
+                  "Dengan masuk, Anda menyetujui Syarat dan Ketentuan serta Kebijakan Privasi Altvira Technology. Akses portal dilindungi sistem keamanan internal.",
+                )}
+              </p>
             </CardContent>
-
-            <Separator className="bg-border/70" />
-
-            {/* Buyer Portal Client Quick Access */}
-            <div className="p-4 sm:p-5 bg-muted/30 flex flex-col gap-2">
-              <span className="text-[11px] text-muted-foreground">
-                {t("auth.buyer_portal_info", "Klien / Pembeli Proyek Altvira tidak memerlukan akun login:")}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="w-full h-9 text-xs border-border text-foreground bg-card hover:bg-muted hover:text-primary rounded-xl transition-all"
-              >
-                <Link to="/portal-pembeli">
-                  <span>{t("auth.buyer_portal_link", "Buka Portal Pembeli (Akses via Nomor PO)")}</span>
-                  <ExternalLinkIcon className="ml-1.5 size-3.5 text-muted-foreground" />
-                </Link>
-              </Button>
-            </div>
           </Card>
         </div>
       </div>

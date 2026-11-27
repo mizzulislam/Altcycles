@@ -1552,11 +1552,12 @@ async function renderDocumentPdfInternal(
           const size = headerFontSize;
           const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
+          const hAlign = col.headerAlign ?? col.align;
           let drawX = colX + 4;
-          if (col.align === "right") {
+          if (hAlign === "right") {
             drawX = Math.max(colX + 4, colX + w - textW - 4);
-          } else if (col.align === "center") {
-            drawX = colX + (w - textW) / 2;
+          } else if (hAlign === "center") {
+            drawX = Math.max(colX + 4, colX + (w - textW) / 2);
           }
           drawTrackedText(
             headerClean,
@@ -1702,6 +1703,13 @@ async function renderDocumentPdfInternal(
     const cellFontSize = PDF_LAYOUT_TOKENS.fontSizes.body; // 9.5 pt
     const cellLineH = 13;
     const cellPadY = 6;
+    const docUpper = spec.docTitle.toUpperCase();
+    const isJournal =
+      docUpper.includes("JURNAL") ||
+      docUpper.includes("JOURNAL") ||
+      docUpper.includes("GENERAL JOURNAL") ||
+      docUpper.includes("ADJUSTING") ||
+      docUpper.includes("CLOSING");
 
     const drawTableHeader = () => {
       const headerTopY = y;
@@ -1736,10 +1744,11 @@ async function renderDocumentPdfInternal(
         const size = headerFontSize;
         const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
+        const hAlign = col.headerAlign ?? (isJournal ? "center" : col.align);
         let drawX = colX + 4;
-        if (col.align === "right") {
+        if (hAlign === "right") {
           drawX = Math.max(colX + 4, colX + w - textW - 4);
-        } else if (col.align === "center") {
+        } else if (hAlign === "center") {
           drawX = colX + (w - textW) / 2;
         }
         drawTrackedText(
@@ -1760,7 +1769,6 @@ async function renderDocumentPdfInternal(
     };
 
     // Deteksi apakah dokumen memiliki baris total yang harus menjadi baris terakhir tabel (Poin 2 - 7)
-    const docUpper = spec.docTitle.toUpperCase();
     const isQuotation = docUpper.includes("QUOTATION") || docUpper.includes("PENAWARAN");
     const isClientPo =
       docUpper.includes("PURCHASE ORDER") &&

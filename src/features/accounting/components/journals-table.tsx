@@ -89,35 +89,43 @@ export function JournalsTable({
           )}
           <TableHead
             className={cn(
-              "text-center pl-6 pr-3 font-semibold text-xs sm:text-sm text-foreground/80",
-              isEditMode ? "w-[120px]" : "w-[140px]",
+              "text-center pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-semibold text-xs sm:text-sm text-foreground/80",
+              isEditMode
+                ? "w-[120px] max-sm:w-[95px]"
+                : "w-[140px] max-sm:w-[100px]",
             )}
           >
             {t("accounting:journals.col_date", "Tanggal")}
           </TableHead>
-          <TableHead className="text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80">
+          <TableHead className="text-center px-4 max-sm:px-2.5 font-semibold text-xs sm:text-sm text-foreground/80">
             {t("accounting:journals.col_description", "Deskripsi")}
           </TableHead>
           <TableHead
             className={cn(
-              "text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80",
-              isEditMode ? "w-[100px]" : "w-[110px]",
+              "text-center px-4 max-sm:px-2.5 font-semibold text-xs sm:text-sm text-foreground/80",
+              isEditMode
+                ? "w-[100px] max-sm:w-[85px]"
+                : "w-[110px] max-sm:w-[90px]",
             )}
           >
             {t("accounting:journals.col_ref", "Ref")}
           </TableHead>
           <TableHead
             className={cn(
-              "text-center px-4 font-semibold text-xs sm:text-sm text-foreground/80",
-              isEditMode ? "w-[150px]" : "w-[170px]",
+              "text-center px-4 max-sm:px-2.5 font-semibold text-xs sm:text-sm text-foreground/80",
+              isEditMode
+                ? "w-[150px] max-sm:w-[130px]"
+                : "w-[170px] max-sm:w-[140px]",
             )}
           >
             {t("accounting:journals.col_debit", "Debit")}
           </TableHead>
           <TableHead
             className={cn(
-              "text-center pl-4 pr-6 font-semibold text-xs sm:text-sm text-foreground/80",
-              isEditMode ? "w-[150px]" : "w-[170px]",
+              "text-center pl-4 pr-6 max-sm:pl-2.5 max-sm:pr-3 font-semibold text-xs sm:text-sm text-foreground/80",
+              isEditMode
+                ? "w-[150px] max-sm:w-[130px]"
+                : "w-[170px] max-sm:w-[140px]",
             )}
           >
             {t("accounting:journals.col_credit", "Kredit")}
@@ -222,53 +230,53 @@ export function JournalsTable({
                 )}
 
                 {/* Kolom 1: Tanggal Transaksi */}
-                <TableCell className="align-top py-4 pl-6 pr-3 text-left whitespace-nowrap">
+                <TableCell className="align-top py-4 pl-6 pr-3 max-sm:py-3 max-sm:pl-3 max-sm:pr-2 text-left whitespace-nowrap">
                   <div className="font-semibold text-xs sm:text-sm text-foreground/90">
                     {formatJournalDateI18n(j.journal_date, language)}
                   </div>
                 </TableCell>
 
                 {/* Kolom 2: Deskripsi & Daftar Akun Terpengaruh */}
-                <TableCell className="align-top py-4 px-4 min-w-0">
-                  <div className="space-y-1.5">
-                    <div className="font-semibold text-xs sm:text-sm text-foreground leading-snug">
-                      {getLocalizedTransactionDescription(j.description, language)}
-                    </div>
-                    <div className="space-y-1 pt-1">
-                      {journalRows.map((line, idx) => {
-                        const acc = accounts.find((a) => a.id === line.account_id);
-                        const isCredit = line.credit > 0;
-                        return (
-                          <div
-                            key={line.id || idx}
-                            className={cn(
-                              "text-xs leading-relaxed truncate",
-                              isCredit
-                                ? "pl-5 text-muted-foreground font-normal"
-                                : "text-foreground/90 font-medium",
-                            )}
-                          >
-                            <span>
-                              {acc
-                                ? getLocalizedAccountName(acc, language)
-                                : t("accounting:journals.col_account", "Akun")}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                <TableCell className="align-top py-4 px-4 max-sm:py-3 max-sm:px-2.5 min-w-0">
+                  <div className="space-y-1">
+                    {journalRows.map((line, idx) => {
+                      const acc = accounts.find((a) => a.id === line.account_id);
+                      const isCredit = line.credit > 0;
+                      return (
+                        <div
+                          key={line.id || idx}
+                          className={cn(
+                            "text-xs sm:text-sm leading-5 truncate font-semibold text-foreground/90",
+                            isCredit && "pl-5",
+                          )}
+                        >
+                          <span>
+                            {acc
+                              ? getLocalizedAccountName(acc, language)
+                              : t("accounting:journals.col_account", "Akun")}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Teks Keterangan Transaksi di Paling Bawah, Selalu Mulai di Ujung Kiri Kolom */}
+                    {j.description && (
+                      <div className="pt-1.5 font-medium text-xs sm:text-sm text-primary dark:text-sky-400 leading-snug">
+                        {getLocalizedTransactionDescription(j.description, language)}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
 
                 {/* Kolom 3: Ref Akun */}
-                <TableCell className="align-top py-4 text-center whitespace-nowrap">
-                  <div className="space-y-1 pt-6 sm:pt-6">
+                <TableCell className="align-top py-4 text-center max-sm:py-3 max-sm:px-2 whitespace-nowrap">
+                  <div className="space-y-1">
                     {journalRows.map((line, idx) => {
                       const acc = accounts.find((a) => a.id === line.account_id);
                       return (
                         <div
                           key={line.id || idx}
-                          className="text-xs text-muted-foreground/80 font-normal leading-relaxed text-center"
+                          className="text-xs sm:text-sm text-muted-foreground/80 font-normal leading-5 text-center"
                         >
                           {acc ? formatAccountRef(acc.code) : "-"}
                         </div>
@@ -278,21 +286,21 @@ export function JournalsTable({
                 </TableCell>
 
                 {/* Kolom 4: Debit */}
-                <TableCell className="align-top py-4 px-4 text-right whitespace-nowrap">
-                  <div className="space-y-1 pt-6 sm:pt-6">
+                <TableCell className="align-top py-4 px-4 max-sm:py-3 max-sm:px-2.5 text-right whitespace-nowrap">
+                  <div className="space-y-1">
                     {journalRows.map((line, idx) => (
                       <div
                         key={line.id || idx}
                         className={cn(
-                          "text-xs leading-relaxed",
+                          "text-xs sm:text-sm leading-5 font-semibold text-foreground/90 tabular-nums",
                           line.debit > 0
-                            ? "font-semibold text-foreground/90 tabular-nums"
+                            ? ""
                             : "text-transparent select-none",
                         )}
                       >
                         {line.debit > 0 ? (
                           <div className="flex items-center justify-between gap-3 w-full tabular-nums">
-                            <span className="text-muted-foreground font-normal select-none">
+                            <span className="font-semibold text-foreground/90 select-none">
                               Rp
                             </span>
                             <span>{roundRupiah(line.debit).toLocaleString("id-ID")}</span>
@@ -306,21 +314,21 @@ export function JournalsTable({
                 </TableCell>
 
                 {/* Kolom 5: Kredit */}
-                <TableCell className="align-top py-4 pl-4 pr-6 text-right whitespace-nowrap">
-                  <div className="space-y-1 pt-6 sm:pt-6">
+                <TableCell className="align-top py-4 pl-4 pr-6 max-sm:py-3 max-sm:pl-2.5 max-sm:pr-3 text-right whitespace-nowrap">
+                  <div className="space-y-1">
                     {journalRows.map((line, idx) => (
                       <div
                         key={line.id || idx}
                         className={cn(
-                          "text-xs leading-relaxed",
+                          "text-xs sm:text-sm leading-5 font-semibold text-foreground/90 tabular-nums",
                           line.credit > 0
-                            ? "font-semibold text-foreground/90 tabular-nums"
+                            ? ""
                             : "text-transparent select-none",
                         )}
                       >
                         {line.credit > 0 ? (
                           <div className="flex items-center justify-between gap-3 w-full tabular-nums">
-                            <span className="text-muted-foreground font-normal select-none">
+                            <span className="font-semibold text-foreground/90 select-none">
                               Rp
                             </span>
                             <span>{roundRupiah(line.credit).toLocaleString("id-ID")}</span>

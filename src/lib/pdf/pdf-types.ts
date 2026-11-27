@@ -16,6 +16,7 @@ export interface PdfTableColumn {
   header: string;
   widthRatio: number;
   align?: "left" | "right" | "center";
+  headerAlign?: "left" | "right" | "center";
 }
 
 export interface PdfDocumentSpec {

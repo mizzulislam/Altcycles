@@ -367,7 +367,23 @@ export function BuyerPortalPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden">
+      {/* Background Architectural Grid Pattern */}
+      <div
+        className="fixed inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none z-0"
+        aria-hidden="true"
+      />
+
+      {/* Ambient Glow Orbs */}
+      <div
+        className="fixed -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none z-0"
+        aria-hidden="true"
+      />
+      <div
+        className="fixed -bottom-32 -right-32 w-96 h-96 rounded-full bg-sky-400/10 blur-3xl pointer-events-none z-0"
+        aria-hidden="true"
+      />
+
       {/* Top Header Bar sejajar sistem internal: Breadcrumb di kiri, Toggle Tema & Bahasa di ujung kanan atas */}
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/80 bg-card/90 px-4 sm:px-6 backdrop-blur-md">
         <nav
@@ -398,18 +414,18 @@ export function BuyerPortalPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main className="relative z-10 flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
           {/* Header Portal Pelanggan: Logo Altvira sejajar ujung atas judul & ujung bawah deskripsi */}
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-card shadow-2xs">
-              <AltviraLogoMark size={36} iconVariant="transparent" />
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="flex max-sm:size-10 size-12 sm:size-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border border-border/80 bg-card shadow-2xs">
+              <AltviraLogoMark size={36} className="max-sm:size-6" iconVariant="transparent" />
             </div>
-            <div className="flex flex-col justify-between min-w-0 sm:min-h-14 py-0.5">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight sm:leading-none text-foreground">
+            <div className="flex flex-col justify-center sm:justify-between min-w-0 sm:min-h-14 py-0.5">
+              <h1 className="max-sm:text-base text-2xl sm:text-3xl font-bold tracking-tight leading-snug sm:leading-none text-foreground truncate">
                 {t("projects:buyer_portal.page_title")}
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-0 leading-relaxed sm:leading-snug">
+              <p className="max-sm:text-[11px] text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-0 leading-relaxed sm:leading-snug truncate">
                 {t("projects:buyer_portal.page_subtitle")}
               </p>
             </div>
@@ -430,7 +446,7 @@ export function BuyerPortalPage() {
           {/* TAB 1: Pelacakan Progres & Dokumen 1 PO */}
           <TabsContent value="lookup" className="flex flex-col gap-6 mt-5">
             <Card className="overflow-hidden">
-              <CardHeader className="px-6 py-4 border-b border-border/70">
+              <CardHeader className="max-sm:px-4 max-sm:py-3.5 px-6 py-4 border-b border-border/70">
                 <CardTitle className="text-base sm:text-lg font-bold">
                   {t("projects:buyer_portal.card_lookup_title")}
                 </CardTitle>
@@ -441,7 +457,7 @@ export function BuyerPortalPage() {
                     : ""}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="max-sm:p-4 p-6">
                 <form
                   onSubmit={handleLookup}
                   className="flex flex-col gap-3 sm:flex-row sm:items-center"
@@ -473,7 +489,7 @@ export function BuyerPortalPage() {
               <div className="flex flex-col gap-6">
                 {/* Detail Purchase Order */}
                 <Card className="overflow-hidden">
-                  <CardHeader className="px-6 py-4 border-b border-border/70">
+                  <CardHeader className="max-sm:px-4 max-sm:py-3.5 px-6 py-4 border-b border-border/70">
                     <p className="text-[11px] font-medium text-muted-foreground">
                       {t("projects:buyer_portal.po_number_label")}
                     </p>
@@ -573,7 +589,7 @@ export function BuyerPortalPage() {
 
                 {/* Tabel Termin Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
-                  <CardHeader className="px-6 py-4 border-b border-border/70">
+                  <CardHeader className="max-sm:px-4 max-sm:py-3.5 px-6 py-4 border-b border-border/70">
                     <CardTitle className="text-base sm:text-lg font-bold">
                       {t("projects:buyer_portal.milestones_title")}
                     </CardTitle>
@@ -654,7 +670,7 @@ export function BuyerPortalPage() {
 
                 {/* Tabel Dokumen Resmi Proyek (Edge-to-Edge) */}
                 <Card className="overflow-hidden">
-                  <CardHeader className="px-6 py-4 border-b border-border/70">
+                  <CardHeader className="max-sm:px-4 max-sm:py-3.5 px-6 py-4 border-b border-border/70">
                     <CardTitle className="text-base sm:text-lg font-bold">
                       {t("projects:buyer_portal.docs_title")}
                     </CardTitle>
@@ -742,7 +758,7 @@ export function BuyerPortalPage() {
           {/* TAB 2: Pengajuan PO Klien Baru */}
           <TabsContent value="submit" className="mt-5">
             <Card className="overflow-hidden">
-              <CardHeader className="px-6 py-4 border-b border-border/70">
+              <CardHeader className="max-sm:px-4 max-sm:py-3.5 px-6 py-4 border-b border-border/70">
                 <CardTitle className="text-base sm:text-lg font-bold">
                   {t("projects:buyer_portal.form_title")}
                 </CardTitle>

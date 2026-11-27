@@ -239,12 +239,12 @@ export function VendorTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_code", "Kode")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_name", "Nama Vendor")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_pic", "PIC & Kontak")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_bank", "Rekening Bank")}</TableHead>
-                <TableHead className="px-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_actions", "Aksi")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_name", "Nama Vendor")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_pic", "PIC & Kontak")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_bank", "Rekening Bank")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("parties:vendors.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -267,17 +267,17 @@ export function VendorTabContent({
               ) : (
                 vendors.map((v) => (
                   <TableRow key={v.id}>
-                    <TableCell className="pl-6 pr-3 text-center font-mono font-medium">
+                    <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-mono font-medium">
                       {v.code}
                     </TableCell>
-                    <TableCell className="font-medium">{v.name}</TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="px-3 max-sm:px-2 font-medium">{v.name}</TableCell>
+                    <TableCell className="px-3 max-sm:px-2 text-xs">
                       <div>{v.contact_name ?? "-"}</div>
                       <div className="text-muted-foreground">
                         {v.email ?? v.phone ?? ""}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">
+                    <TableCell className="px-3 max-sm:px-2 text-xs">
                       {v.bank_account_number || v.bank_name ? (
                         <>
                           <div>{v.bank_account_number || "-"}</div>
@@ -289,7 +289,7 @@ export function VendorTabContent({
                         "-"
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="px-3 max-sm:px-2 text-center">
                       <div className="-my-px inline-flex justify-center">
                         <StatusBadge
                           tone={v.is_active ? "success" : "secondary"}
@@ -297,7 +297,7 @@ export function VendorTabContent({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="pl-2 pr-6 text-center">
+                    <TableCell className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center">
                       <div className="flex items-center justify-center gap-1 -my-1.5">
                         <Button
                           type="button"
