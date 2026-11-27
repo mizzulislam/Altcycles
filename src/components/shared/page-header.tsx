@@ -77,7 +77,7 @@ export function TruncatedTooltipText({
       "data-testid": dataTestId,
       "data-truncated": isTruncated ? "true" : "false",
       className: cn(
-        "truncate whitespace-nowrap overflow-hidden text-ellipsis block max-w-full",
+        "truncate whitespace-nowrap overflow-hidden text-ellipsis block max-w-full pb-1 -mb-1",
         className,
       ),
     },
@@ -176,7 +176,7 @@ export function PageHeader({
               <TruncatedTooltipText
                 as="h1"
                 tooltipText={titleTooltip}
-                className="max-sm:text-[22px] max-sm:leading-tight max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap"
+                className="max-sm:text-[22px] max-sm:leading-snug max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap sm:leading-normal pb-1.5 -mb-1.5 sm:pb-2 sm:-mb-2"
               >
                 {title}
                 {description ? (
@@ -217,7 +217,7 @@ export function PageHeader({
             <TruncatedTooltipText
               as="h1"
               tooltipText={titleTooltip}
-              className="max-sm:text-[22px] max-sm:leading-tight max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap"
+              className="max-sm:text-[22px] max-sm:leading-snug max-sm:whitespace-normal max-sm:line-clamp-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground sm:truncate sm:whitespace-nowrap sm:leading-normal pb-1.5 -mb-1.5 sm:pb-2 sm:-mb-2"
             >
               {title}
               {description ? (
