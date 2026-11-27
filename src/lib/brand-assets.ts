@@ -14,8 +14,10 @@ export async function getAltviraIconBytes(): Promise<Uint8Array | null> {
     // 1. Cek environment Node.js (Vitest, Test script, CLI)
     if (typeof process !== "undefined" && process?.versions?.node) {
       try {
-        const fs = await import("fs");
-        const path = await import("path");
+        const fsMod = "fs";
+        const pathMod = "path";
+        const fs = await import(/* @vite-ignore */ fsMod);
+        const path = await import(/* @vite-ignore */ pathMod);
         const cwd = process.cwd();
         const candidatePaths = [
           path.resolve(cwd, "assets/brand/altvira-icon-dark.png"),
@@ -58,8 +60,10 @@ export async function getAltviraWordmarkBytes(): Promise<Uint8Array | null> {
     // 1. Cek environment Node.js
     if (typeof process !== "undefined" && process?.versions?.node) {
       try {
-        const fs = await import("fs");
-        const path = await import("path");
+        const fsMod = "fs";
+        const pathMod = "path";
+        const fs = await import(/* @vite-ignore */ fsMod);
+        const path = await import(/* @vite-ignore */ pathMod);
         const cwd = process.cwd();
         const candidatePaths = [
           path.resolve(cwd, "assets/brand/altvira-wordmark-pdf.png"),
