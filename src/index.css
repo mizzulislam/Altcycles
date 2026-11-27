@@ -1,5 +1,9 @@
 @import "tailwindcss" source("../src");
 
+@theme {
+  --font-sans: Montserrat, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -659,26 +663,19 @@ body[data-scroll-locked] {
     gap: 1rem;
   }
 
-  /* Di layar ponsel sangat sempit (< 640px): deretan card menjadi horizontal swipe snap */
+  /* Di layar ponsel sangat sempit (< 640px): 2 kolom grid rapi & kompak (anti-long-scroll) */
   @media (max-width: 639px) {
     .mobile-kpi-carousel {
-      display: flex !important;
-      flex-direction: row !important;
-      overflow-x: auto !important;
-      scroll-snap-type: x mandatory !important;
-      gap: 0.75rem !important;
-      padding-bottom: 0.5rem !important;
-      -webkit-overflow-scrolling: touch !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-    }
-    .mobile-kpi-carousel::-webkit-scrollbar {
-      display: none !important;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.625rem !important;
+      overflow-x: visible !important;
+      padding-bottom: 0 !important;
+      scroll-snap-type: none !important;
     }
     .mobile-kpi-carousel > * {
-      flex: 0 0 84% !important;
+      flex: none !important;
       min-width: 0 !important;
-      scroll-snap-align: start !important;
     }
   }
 

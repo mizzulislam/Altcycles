@@ -429,7 +429,7 @@ export function DatePicker({
           }}
           className={cn(
             "absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] rounded-2xl border border-border bg-card p-3 shadow-2xl shadow-black/35 backdrop-blur-md animate-in fade-in-0 zoom-in-95 select-none",
-            "dark:border-white/10 dark:bg-[#0c1322] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)]",
+            "dark:border-white/10 dark:bg-card dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)]",
           )}
         >
             {/* Header: Tombol Bulan & Tahun Interaktif dengan Dropdown Chevron (Sebaris Bebas Wrap) */}
@@ -465,7 +465,7 @@ export function DatePicker({
                   {monthDropdownOpen && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute left-0 top-full mt-1.5 z-[100001] w-48 sm:w-52 rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-3 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
+                      className="absolute left-0 top-full mt-1.5 z-[100001] w-48 sm:w-52 rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-card p-1.5 shadow-2xl grid grid-cols-3 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
                     >
                       {MONTH_NAMES_ID.map((name, idx) => (
                         <button
@@ -519,7 +519,7 @@ export function DatePicker({
                   {yearDropdownOpen && (
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute left-0 top-full mt-1.5 z-[100001] w-40 max-h-44 overflow-y-auto no-scrollbar rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-[#0f172a] p-1.5 shadow-2xl grid grid-cols-2 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
+                      className="absolute left-0 top-full mt-1.5 z-[100001] w-40 max-h-44 overflow-y-auto no-scrollbar rounded-xl border border-border/80 dark:border-white/15 bg-popover dark:bg-card p-1.5 shadow-2xl grid grid-cols-2 gap-1 duration-150 animate-in fade-in-0 zoom-in-95"
                     >
                       {Array.from({ length: 30 }, (_, i) => viewYear - 15 + i).map((yr) => (
                         <button

@@ -28,7 +28,7 @@ export interface DashboardKpiCardProps {
 /** Mini Sparkline SVG rendering without external dependencies */
 function MiniSparkline({
   data,
-  color = "#10b981",
+  color = "var(--status-success-fg, #10b981)",
 }: {
   data: number[];
   color?: string;
@@ -124,11 +124,11 @@ export function KpiCard({
 
   const sparklineColor = hasChange
     ? trendColorClass.includes("emerald")
-      ? "#10b981"
+      ? "var(--status-success-fg, #10b981)"
       : trendColorClass.includes("rose")
-        ? "#f43f5e"
-        : "#0B43C8"
-    : "#0B43C8";
+        ? "var(--status-danger-fg, #f43f5e)"
+        : "var(--primary, #0B43C8)"
+    : "var(--primary, #0B43C8)";
 
   const content = (
     <Card
