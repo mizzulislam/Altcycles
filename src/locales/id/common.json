@@ -33,7 +33,9 @@
     "delete_selected": "Hapus Pilihan",
     "settings": "Pengaturan",
     "locked": "Terkunci",
-    "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan"
+    "acknowledge_warning": "Saya Memahami Risiko & Tetap Lanjutkan",
+    "clear_search": "Bersihkan pencarian",
+    "period": "Periode"
   },
   "app": {
     "name": "Altcycles",

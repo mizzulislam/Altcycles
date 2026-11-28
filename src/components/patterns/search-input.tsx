@@ -48,7 +48,7 @@ export function SearchInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? t("common.search", "Cari data...")}
+        placeholder={placeholder ?? t("common:action.search", "Cari data...")}
         disabled={disabled}
         className={cn(
           "pl-9 pr-8 h-9 rounded-xl text-xs sm:text-sm bg-card border-border/80 focus-visible:ring-1 focus-visible:ring-ring/45",
@@ -61,10 +61,10 @@ export function SearchInput({
           type="button"
           onClick={handleClear}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
-          aria-label={t("common.clear_search", "Bersihkan pencarian")}
+          aria-label={t("common:action.clear_search", "Bersihkan pencarian")}
         >
           <XIcon className="size-3.5" aria-hidden="true" />
-          <span className="sr-only">{t("common.clear_search", "Bersihkan pencarian")}</span>
+          <span className="sr-only">{t("common:action.clear_search", "Bersihkan pencarian")}</span>
         </button>
       )}
     </div>

@@ -64,7 +64,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const Comp = asChild ? Slot : "button";
     const isCancel =
       typeof children === "string" &&
       (children.trim().toLowerCase() === "batal" ||
@@ -76,8 +75,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const isDisabled = disabled || loading;
     const tooltipContent = tooltip ?? title;
-    const buttonNode = (
-      <Comp
+    const buttonNode = asChild ? (
+      <Slot
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          cancelHoverClass,
+        )}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </Slot>
+    ) : (
+      <button
         className={cn(
           buttonVariants({ variant, size, className }),
           cancelHoverClass,
@@ -89,7 +99,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && <Loader2Icon className="size-4 animate-spin shrink-0" />}
         {children}
-      </Comp>
+      </button>
     );
 
     if (tooltipContent) {

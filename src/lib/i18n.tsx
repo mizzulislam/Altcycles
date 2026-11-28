@@ -560,6 +560,13 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "user_portal.projects_completed": "proyek diselesaikan",
     "user_portal.my_po_title": "PO Pembelian Saya",
     "user_portal.my_payments_title": "Pengajuan Pembayaran Saya",
+    "user_portal.kpi_paid": "Total Pembayaran Diterima",
+    "user_portal.pdf_title": "Ringkasan Dasbor Anggota Tim",
+    "user_portal.recent_requests": "Pengajuan Pembayaran Terbaru",
+    "user_portal.col_code": "Nomor Klaim",
+    "user_portal.col_purpose": "Keperluan Pembayaran",
+    "user_portal.col_amount": "Nominal",
+    "user_portal.col_status": "Status Pengajuan",
 
     // Notifikasi Toast
     "lang.switched_id": "Bahasa sistem berhasil diubah ke Bahasa Indonesia.",
@@ -1038,6 +1045,13 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
     "user_portal.projects_completed": "completed projects",
     "user_portal.my_po_title": "My Purchase Orders",
     "user_portal.my_payments_title": "My Payment Requests",
+    "user_portal.kpi_paid": "Total Payments Received",
+    "user_portal.pdf_title": "Team Member Dashboard Summary",
+    "user_portal.recent_requests": "Recent Payment Requests",
+    "user_portal.col_code": "Claim Code",
+    "user_portal.col_purpose": "Payment Purpose",
+    "user_portal.col_amount": "Amount",
+    "user_portal.col_status": "Status",
 
     // Notifikasi Toast
     "lang.switched_id": "Bahasa sistem berhasil diubah ke Bahasa Indonesia.",

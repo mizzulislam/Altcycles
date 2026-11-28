@@ -39,9 +39,9 @@ export function ModalFooterAction({
 }: ModalFooterActionProps) {
   const { t } = useLanguage();
 
-  const finalCancelLabel = cancelLabel ?? t("common.cancel", "Batal");
+  const finalCancelLabel = cancelLabel ?? t("common:action.cancel", "Batal");
   const finalSubmitLabel =
-    submitLabel ?? (destructive ? t("common.delete", "Hapus") : t("common.save", "Simpan Perubahan"));
+    submitLabel ?? (destructive ? t("common:action.delete", "Hapus") : t("common:action.save", "Simpan Perubahan"));
 
   return (
     <div

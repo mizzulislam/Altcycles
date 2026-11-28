@@ -34,7 +34,9 @@
     "delete_selected": "Delete Selected",
     "settings": "Settings",
     "locked": "Locked",
-    "acknowledge_warning": "I Understand Risks & Proceed Anyway"
+    "acknowledge_warning": "I Understand Risks & Proceed Anyway",
+    "clear_search": "Clear search",
+    "period": "Period"
   },
   "app": {
     "name": "Altcycles",
