@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import {
   Building2Icon,
   LandmarkIcon,
-  ReceiptIcon,
   Share2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,9 +30,9 @@ import {
   type CompanyBankSlot,
 } from "./components/company-profile-tab-bank-signer";
 import { CompanyProfileTabSocials } from "./components/company-profile-tab-socials";
-import { CompanyProfileTabTax } from "./components/company-profile-tab-tax";
 
-type TabId = "identitas" | "keuangan" | "sosmed" | "pajak";
+
+type TabId = "identitas" | "keuangan" | "sosmed";
 
 function normalizeBankAccounts(company: CompanyProfileRow): CompanyBankSlot[] {
   if (
@@ -75,10 +74,11 @@ function getNormalizedSocialLinks(
 export function CompanyProfilePage() {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab") as TabId | null;
+  const rawTabParam = searchParams.get("tab");
+  const normalizedTab = rawTabParam === "pajak" ? "keuangan" : rawTabParam;
   const activeTab: TabId =
-    tabParam && ["identitas", "keuangan", "sosmed", "pajak"].includes(tabParam)
-      ? tabParam
+    normalizedTab && ["identitas", "keuangan", "sosmed"].includes(normalizedTab)
+      ? (normalizedTab as TabId)
       : "identitas";
 
   const handleTabChange = (tab: TabId) => {
@@ -273,13 +273,13 @@ export function CompanyProfilePage() {
         >
           {t(
             "settings:company.page_desc",
-            "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.",
+            "Kelola identitas kop surat, logo resmi, rekening transfer, status perpajakan (PKP & PPN), serta akun sosial media footer dokumen.",
           )}
         </TruncatedTooltipText>
       </div>
 
-      {/* Tab Navigasi 4-Kolom */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">
+      {/* Tab Navigasi 3-Kolom */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">
         <button
           type="button"
           onClick={() => handleTabChange("identitas")}
@@ -308,7 +308,7 @@ export function CompanyProfilePage() {
         >
           <LandmarkIcon className="size-4 shrink-0" />
           <span className="truncate">
-            {t("company.tab_accounts", "Rekening & TTD")}
+            {t("company.tab_accounts", "Data Keuangan")}
           </span>
         </button>
 
@@ -325,22 +325,6 @@ export function CompanyProfilePage() {
           <Share2Icon className="size-4 shrink-0" />
           <span className="truncate">
             {t("company.tab_social", "Sosial Media Footer")}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("pajak")}
-          className={cn(
-            "flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
-            activeTab === "pajak"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-          )}
-        >
-          <ReceiptIcon className="size-4 shrink-0" />
-          <span className="truncate">
-            {t("settings:company.tab_tax_pkp", "Perpajakan (PKP)")}
           </span>
         </button>
       </div>
@@ -362,6 +346,10 @@ export function CompanyProfilePage() {
             bankAccounts={bankAccounts}
             setBankAccounts={setBankAccounts}
             saving={saving}
+            uploadingProof={uploadingPkpProof}
+            pkpProofInputRef={pkpProofInputRef}
+            onPkpToggleChange={(checked) => setPendingPkpState(checked)}
+            onUploadPkpProof={handleUploadPkpProofFile}
             onAddBankSlot={handleAddBankSlot}
             onRemoveBankSlot={handleRemoveBankSlot}
             onSubmit={handleSaveCompany}
@@ -376,19 +364,6 @@ export function CompanyProfilePage() {
             saving={saving}
             onAddSlot={handleAddSocialSlot}
             onRemoveSlot={handleRemoveSocialSlot}
-            onSave={handleSaveCompany}
-          />
-        )}
-
-        {activeTab === "pajak" && (
-          <CompanyProfileTabTax
-            company={company}
-            setCompany={setCompany}
-            saving={saving}
-            uploadingProof={uploadingPkpProof}
-            pkpProofInputRef={pkpProofInputRef}
-            onPkpToggleChange={(checked) => setPendingPkpState(checked)}
-            onUploadPkpProof={handleUploadPkpProofFile}
             onSave={handleSaveCompany}
           />
         )}

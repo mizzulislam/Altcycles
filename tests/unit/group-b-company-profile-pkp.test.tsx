@@ -84,7 +84,7 @@ describe("Kelompok B — Item 5, 6, dan 7 (Profil Perusahaan, Sosmed Footer, & B
       expect(resolveTranslation("settings:company.page_title", "en")).toBe("Company Profile");
     });
 
-    it("tidak merender field 'Gambar Paraf Pihak Pertama' di tab Rekening & TTD dan menampilkan grid TTD yang proporsional", async () => {
+    it("tidak merender field TTD maupun Paraf di tab Data Keuangan karena tanda tangan terikat pada profil pengguna", async () => {
       render(
         <LanguageProvider>
           <MemoryRouter initialEntries={["/super-admin/profil-perusahaan?tab=keuangan"]}>
@@ -97,10 +97,18 @@ describe("Kelompok B — Item 5, 6, dan 7 (Profil Perusahaan, Sosmed Footer, & B
       expect(heading.textContent).toBe("Profil Perusahaan");
       expect(heading.textContent).not.toContain("(Altvira)");
 
-      // Pastikan field TTD ada, sedangkan field "Gambar Paraf Pihak Pertama" sudah dihapus dari UI
+      // Pastikan tab bernama Data Keuangan
       expect(
-        screen.getByText(/Gambar Tanda Tangan \(TTD\)|Signature Image/i),
+        screen.getByRole("button", { name: /^Data Keuangan$|^Financial Data$/i }),
       ).toBeInTheDocument();
+
+      // Pastikan field TTD dan paraf default sudah dihapus dari UI
+      expect(
+        screen.queryByText(/Gambar Tanda Tangan \(TTD\)|Signature Image/i),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Nama Penandatangan Default|Default Signer/i),
+      ).not.toBeInTheDocument();
       expect(
         screen.queryByText(/Gambar Paraf Pihak Pertama|First Party Initial/i),
       ).not.toBeInTheDocument();

@@ -1,18 +1,27 @@
 import * as React from "react";
 import {
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  ExternalLinkIcon,
+  FileTextIcon,
   LandmarkIcon,
   Loader2Icon,
   PlusIcon,
+  ReceiptTextIcon,
   SaveIcon,
   Trash2Icon,
+  UploadIcon,
 } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { Switch } from "@/components/ui/switch";
+import { formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
 
@@ -22,328 +31,724 @@ export interface CompanyBankSlot {
   account_holder: string;
 }
 
-interface CompanyProfileTabBankSignerProps {
+export interface CompanyProfileTabFinancialProps {
   company: CompanyProfileRow;
   setCompany: React.Dispatch<React.SetStateAction<CompanyProfileRow | null>>;
   bankAccounts: CompanyBankSlot[];
   setBankAccounts: React.Dispatch<React.SetStateAction<CompanyBankSlot[]>>;
   saving: boolean;
+  uploadingProof?: boolean;
+  pkpProofInputRef?: React.RefObject<HTMLInputElement | null>;
+  onPkpToggleChange?: (checked: boolean) => void;
+  onUploadPkpProof?: (file: File) => Promise<void>;
   onAddBankSlot: () => void;
   onRemoveBankSlot: (idx: number) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export function CompanyProfileTabBankSigner({
+export function CompanyProfileTabBankSigner(props: CompanyProfileTabFinancialProps) {
+  return <CompanyProfileTabFinancial {...props} />;
+}
+
+export function CompanyProfileTabFinancial({
   company,
   setCompany,
   bankAccounts,
   setBankAccounts,
   saving,
+  uploadingProof = false,
+  pkpProofInputRef,
+  onPkpToggleChange,
+  onUploadPkpProof,
   onAddBankSlot,
   onRemoveBankSlot,
   onSubmit,
-}: CompanyProfileTabBankSignerProps) {
-  const { t } = useLanguage();
+}: CompanyProfileTabFinancialProps) {
+  const { t, language } = useLanguage();
+
+  const hasPkpProof = Boolean(
+    company.pkp_proof_storage_path &&
+      company.pkp_proof_storage_path.trim().length > 0,
+  );
+
+  const sampleSubtotal = 10_000_000;
+  const samplePpn = company.pkp_enabled
+    ? Math.round((sampleSubtotal * company.ppn_rate) / 100)
+    : 0;
+  const sampleTotal = sampleSubtotal + samplePpn;
+
+  const primaryBank = bankAccounts[0] || {
+    bank_name: company.bank_name || "",
+    account_number: company.bank_account_number || "",
+    account_holder: company.bank_account_holder || "",
+  };
 
   return (
-    <Card>
+    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
       <CardHeaderWithInfo
         title={t(
-          "settings:company.accounts_signatures_title",
-          "Rekening Transfer & Aset Tanda Tangan Resmi",
+          "settings:company.financial_title",
+          "Data Keuangan & Rekening Perusahaan",
         )}
         description={t(
-          "settings:company.accounts_signatures_desc",
-          "Rekening bank penerima pembayaran Invoice/SPK, identitas NPWP/NIK resmi, serta gambar tanda tangan & paraf digital Altvira.",
+          "settings:company.financial_security_notice",
+          "Konfigurasi status Pengusaha Kena Pajak (PKP), tarif PPN invoice resmi, bukti pengukuhan SPPKP, serta rekening bank penerima pembayaran invoice klien.",
         )}
-        action={
-          <Button
-            type="button"
-            onClick={onAddBankSlot}
-            className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-          >
-            <PlusIcon className="size-4" />
-            <span>
-              {t("settings:company.add_bank_btn", "Tambah Rekening")}
-            </span>
-          </Button>
-        }
       />
-      <CardContent className="pt-5">
-        <form onSubmit={onSubmit} className="space-y-5">
-          <div className="space-y-4">
-            {bankAccounts.map((acct, idx) => {
-              const isMultiple = bankAccounts.length > 1;
-              const content = (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <Field>
-                    <FieldLabel
-                      htmlFor={`cp-bank-${idx}`}
-                      required
-                      className="text-xs font-semibold"
-                    >
-                      {t("settings:company.bank_name", "Nama Bank")}
-                    </FieldLabel>
-                    <Input
-                      id={`cp-bank-${idx}`}
-                      required
-                      value={acct.bank_name}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setBankAccounts((prev) =>
-                          prev.map((item, i) =>
-                            i === idx ? { ...item, bank_name: val } : item,
-                          ),
-                        );
-                        if (idx === 0) {
-                          setCompany({ ...company, bank_name: val });
-                        }
-                      }}
-                      placeholder={t(
-                        "settings:company.bank_name_placeholder",
-                        "Contoh: Bank Jago / BCA",
-                      )}
-                      className="text-xs h-9"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel
-                      htmlFor={`cp-accno-${idx}`}
-                      required
-                      className="text-xs font-semibold"
-                    >
-                      {t(
-                        "settings:company.bank_account_number",
-                        "Nomor Rekening",
-                      )}
-                    </FieldLabel>
-                    <Input
-                      id={`cp-accno-${idx}`}
-                      required
-                      value={acct.account_number}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setBankAccounts((prev) =>
-                          prev.map((item, i) =>
-                            i === idx
-                              ? { ...item, account_number: val }
-                              : item,
-                          ),
-                        );
-                        if (idx === 0) {
-                          setCompany({
-                            ...company,
-                            bank_account_number: val,
-                          });
-                        }
-                      }}
-                      placeholder={t(
-                        "settings:company.account_number_placeholder",
-                        "Contoh: 103289122849",
-                      )}
-                      className="text-xs h-9 tabular-nums"
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel
-                      htmlFor={`cp-holder-${idx}`}
-                      required
-                      className="text-xs font-semibold"
-                    >
-                      {t(
-                        "settings:company.bank_account_holder",
-                        "Atas Nama Rekening",
-                      )}
-                    </FieldLabel>
-                    <Input
-                      id={`cp-holder-${idx}`}
-                      required
-                      value={acct.account_holder}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setBankAccounts((prev) =>
-                          prev.map((item, i) =>
-                            i === idx
-                              ? { ...item, account_holder: val }
-                              : item,
-                          ),
-                        );
-                        if (idx === 0) {
-                          setCompany({
-                            ...company,
-                            bank_account_holder: val,
-                          });
-                        }
-                      }}
-                      placeholder={t(
-                        "settings:company.account_holder_placeholder",
-                        "Nama pemilik rekening",
-                      )}
-                      className="text-xs h-9"
-                    />
-                  </Field>
+      <CardContent className="p-5 sm:p-6 space-y-6">
+        <form onSubmit={onSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            {/* Kolom 1: Status Perpajakan & PPN */}
+            <div className="space-y-5">
+              <div className="border-b border-border/60 pb-2.5 flex items-center justify-between gap-2 min-h-[35px]">
+                <div className="flex items-center gap-2">
+                  <ReceiptTextIcon className="size-4 text-primary shrink-0" />
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {t(
+                      "settings:company.section_tax_title",
+                      "Status Perpajakan & PPN",
+                    )}
+                  </h3>
                 </div>
-              );
+                <StatusBadge
+                  tone={company.pkp_enabled ? "warning" : "info"}
+                  label={
+                    company.pkp_enabled
+                      ? t("settings:company.badge_pkp_active", {
+                          rate: company.ppn_rate,
+                          defaultValue: `PKP Aktif (${company.ppn_rate}% PPN)`,
+                        })
+                      : t(
+                          "settings:company.badge_non_pkp",
+                          "Belum PKP (Non-PKP)",
+                        )
+                  }
+                />
+              </div>
 
-              if (!isMultiple) {
-                return <React.Fragment key={idx}>{content}</React.Fragment>;
-              }
+              <div className="space-y-5">
+                {/* Field 1: Status Pengusaha Kena Pajak (PKP) */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-pkp-toggle"
+                    className="text-xs font-semibold h-4 flex items-center justify-between"
+                  >
+                    <span>
+                      {t(
+                        "settings:company.enable_pkp_label",
+                        "Status Pengusaha Kena Pajak (PKP)",
+                      )}
+                    </span>
+                  </FieldLabel>
+                  <div className="rounded-xl border border-border/70 bg-card/80 p-3.5 flex items-center justify-between gap-4 h-9">
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {company.pkp_enabled
+                          ? t(
+                              "settings:company.pkp_mode_active",
+                              "Mode PKP Aktif (Pemungutan PPN)",
+                            )
+                          : t(
+                              "settings:company.pkp_mode_inactive",
+                              "Mode Non-PKP (Bebas PPN)",
+                            )}
+                      </p>
+                    </div>
+                    <Switch
+                      id="cp-pkp-toggle"
+                      checked={company.pkp_enabled}
+                      disabled={!hasPkpProof && !company.pkp_enabled}
+                      onCheckedChange={onPkpToggleChange}
+                    />
+                  </div>
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {company.pkp_enabled
+                      ? t(
+                          "settings:company.pkp_desc_active",
+                          `Setiap invoice klien baru otomatis menghitung PPN ${company.ppn_rate}%.`,
+                        )
+                      : t(
+                          "settings:company.pkp_desc_inactive",
+                          "Selama belum dikukuhkan sebagai PKP, seluruh invoice resmi bebas PPN.",
+                        )}
+                  </FieldDescription>
+                </Field>
 
-              return (
-                <div
-                  key={idx}
-                  className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
+                {/* Field 2: Tarif PPN Default (%) */}
+                <Field
+                  className="space-y-1.5"
+                  data-disabled={!company.pkp_enabled}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                      <LandmarkIcon className="size-4 text-primary dark:text-sky-400" />
+                  <FieldLabel
+                    htmlFor="cp-ppn"
+                    className="text-xs font-semibold h-4 flex items-center"
+                  >
+                    {t(
+                      "settings:company.default_vat_rate",
+                      "Tarif PPN Default (%)",
+                    )}
+                  </FieldLabel>
+                  <NumberInput
+                    id="cp-ppn"
+                    allowDecimal
+                    maxDecimals={2}
+                    min={0}
+                    max={100}
+                    disabled={!company.pkp_enabled}
+                    value={company.ppn_rate}
+                    onValueChange={(ppn_rate) =>
+                      setCompany((prev) =>
+                        prev ? { ...prev, ppn_rate } : prev,
+                      )
+                    }
+                    className="text-xs h-9 tabular-nums bg-background"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {company.pkp_enabled
+                      ? t(
+                          "settings:company.vat_active_hint",
+                          "Berlaku otomatis untuk penerbitan invoice berikutnya.",
+                        )
+                      : t(
+                          "settings:company.vat_inactive_hint",
+                          "Aktifkan status PKP di atas untuk mengubah tarif PPN.",
+                        )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Field 3: Dokumen Bukti Pengukuhan PKP (SPPKP) */}
+                <Field className="space-y-1.5">
+                  <div className="flex items-center justify-between h-4">
+                    <FieldLabel className="text-xs font-semibold flex items-center gap-1.5">
                       <span>
-                        {t("settings:company.bank_slot_title", {
-                          index: idx + 1,
-                          defaultValue: `Rekening #${idx + 1}`,
-                        })}
-                        {idx === 0
-                          ? ` ${t("settings:company.primary_slot", "(Utama)")}`
-                          : ""}
+                        {t(
+                          "settings:company.pkp_proof_label",
+                          "Dokumen Bukti Pengukuhan PKP",
+                        )}
+                      </span>
+                      {company.pkp_enabled && (
+                        <span className="text-[10px] text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                          {t("settings:company.badge_pkp_active", "Wajib")}
+                        </span>
+                      )}
+                    </FieldLabel>
+                    <div>
+                      {pkpProofInputRef && (
+                        <input
+                          ref={pkpProofInputRef}
+                          type="file"
+                          data-testid="pkp-proof-file-input"
+                          accept="application/pdf,image/png,image/jpeg"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file && onUploadPkpProof) {
+                              void onUploadPkpProof(file);
+                              e.target.value = "";
+                            }
+                          }}
+                        />
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploadingProof}
+                        onClick={() => pkpProofInputRef?.current?.click()}
+                        className="h-6 rounded-lg px-2 text-[11px] gap-1 cursor-pointer"
+                      >
+                        {uploadingProof ? (
+                          <>
+                            <Loader2Icon className="size-3 animate-spin" />
+                            <span>
+                              {t("common:action.loading", "Mengunggah...")}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadIcon className="size-3 text-primary" />
+                            <span>
+                              {hasPkpProof
+                                ? t(
+                                    "settings:company.pkp_proof_replace_btn",
+                                    "Ganti Bukti",
+                                  )
+                                : t(
+                                    "settings:company.pkp_proof_upload_btn",
+                                    "Unggah Bukti",
+                                  )}
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {hasPkpProof ? (
+                    <div className="rounded-xl border border-border/70 bg-card/90 px-3 py-1.5 flex items-center justify-between gap-3 h-9">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileTextIcon className="size-4 text-primary shrink-0" />
+                        <p
+                          className="text-xs font-semibold text-foreground truncate"
+                          data-testid="pkp-proof-filename"
+                          title={company.pkp_proof_file_name || undefined}
+                        >
+                          {company.pkp_proof_file_name ||
+                            "Surat_Pengukuhan_PKP.pdf"}
+                        </p>
+                      </div>
+                      <a
+                        href={company.pkp_proof_storage_path!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline shrink-0"
+                      >
+                        <ExternalLinkIcon className="size-3" />
+                        <span>
+                          {t("settings:company.pkp_proof_view_btn", "Lihat Bukti")}
+                        </span>
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300 h-9">
+                      <AlertCircleIcon className="size-4 shrink-0" />
+                      <span className="text-[11px] truncate">
+                        {t(
+                          "settings:company.pkp_proof_missing_notice",
+                          "Belum ada berkas bukti SPPKP diunggah.",
+                        )}
                       </span>
                     </div>
-                    {idx > 0 ? (
-                      <ActionTooltip
-                        content={t(
-                          "settings:company.remove_bank_tooltip",
-                          "Hapus rekening ini",
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onRemoveBankSlot(idx)}
-                          className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                        >
-                          <Trash2Icon className="size-3.5" />
-                          <span className="sr-only">
-                            {t(
-                              "settings:company.remove_bank_sr",
-                              "Hapus Rekening",
-                            )}
-                          </span>
-                        </button>
-                      </ActionTooltip>
-                    ) : null}
-                  </div>
-                  {content}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Grid: Identitas Pejabat Penandatangan + Gambar Tanda Tangan */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            <div className="lg:col-span-7 rounded-xl border border-border/70 bg-muted/20 p-4 flex flex-col justify-between gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field>
-                  <FieldLabel
-                    htmlFor="cp-signer"
-                    required
-                    className="text-xs font-semibold"
-                  >
-                    {t(
-                      "settings:company.default_signer_name",
-                      "Nama Penandatangan Default",
-                    )}
-                  </FieldLabel>
-                  <Input
-                    id="cp-signer"
-                    required
-                    value={company.signer_name}
-                    onChange={(e) =>
-                      setCompany({ ...company, signer_name: e.target.value })
-                    }
-                    className="text-xs h-9 bg-background"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel
-                    htmlFor="cp-title"
-                    required
-                    className="text-xs font-semibold"
-                  >
-                    {t(
-                      "settings:company.signer_title",
-                      "Jabatan Penandatangan",
-                    )}
-                  </FieldLabel>
-                  <Input
-                    id="cp-title"
-                    required
-                    value={company.signer_title}
-                    onChange={(e) =>
-                      setCompany({
-                        ...company,
-                        signer_title: e.target.value,
-                      })
-                    }
-                    className="text-xs h-9 bg-background"
-                  />
-                </Field>
-              </div>
-              <Field>
-                <FieldLabel
-                  htmlFor="cp-tax-id"
-                  className="text-xs font-semibold"
-                >
-                  {t("settings:company.tax_id_npwp_nik", "NPWP / NIK")}
-                </FieldLabel>
-                <Input
-                  id="cp-tax-id"
-                  value={company.tax_id_number ?? ""}
-                  onChange={(e) =>
-                    setCompany({
-                      ...company,
-                      tax_id_number: e.target.value,
-                    })
-                  }
-                  placeholder={t(
-                    "settings:company.tax_id_placeholder",
-                    "Contoh: 00.000.000.0-000.000 atau NIK",
                   )}
-                  className="text-xs h-9 tabular-nums bg-background"
-                />
-              </Field>
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {company.pkp_proof_uploaded_at
+                      ? `${company.pkp_proof_size_bytes ? `${Math.max(1, Math.round(company.pkp_proof_size_bytes / 1024))} KB - ` : ""}${formatDateTimeI18n(company.pkp_proof_uploaded_at, language)}`
+                      : t(
+                          "settings:company.pkp_proof_desc",
+                          "Format berkas: PDF, JPG, atau PNG (Maksimal 5 MB).",
+                        )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Field 4: Kompilasi Perpajakan Tagihan (Read-Only) */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-tax-summary"
+                    className="text-xs font-semibold h-4 flex items-center text-muted-foreground"
+                  >
+                    {t(
+                      "settings:company.tax_summary_label",
+                      "Kompilasi Perpajakan Tagihan",
+                    )}
+                  </FieldLabel>
+                  <Input
+                    id="cp-tax-summary"
+                    type="text"
+                    readOnly
+                    disabled
+                    tabIndex={-1}
+                    value={
+                      company.pkp_enabled
+                        ? `PKP Aktif - Tarif PPN ${company.ppn_rate}% (Invoice Klien Kena PPN)`
+                        : "Non-PKP - Bebas Pemungutan PPN (Pasal 4A UU PPN)"
+                    }
+                    onMouseDown={(e) => e.preventDefault()}
+                    onFocus={(e) => e.currentTarget.blur()}
+                    className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
+                    {company.pkp_enabled
+                      ? `Simulasi Subtotal ${formatRupiah(sampleSubtotal)} + PPN ${formatRupiah(samplePpn)} = Total ${formatRupiah(sampleTotal)}`
+                      : t(
+                          "settings:company.tax_summary_desc_inactive",
+                          "Dokumen penagihan resmi otomatis menerbitkan tagihan murni tanpa PPN.",
+                        )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Catatan Sinkronisasi & Audit */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
+                    <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
+                    <span className="truncate">
+                      {t(
+                        "settings:company.sync_invoices_note",
+                        "Sinkron ke Invoice & SPK",
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
+                    <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
+                    <span className="truncate">
+                      {t(
+                        "settings:company.audit_trail_recorded_note",
+                        "Audit Trail tercatat",
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="lg:col-span-5 flex flex-col">
-              <ImageAssetUploadBox
-                label={t(
-                  "settings:company.signature_img_label",
-                  "Gambar Tanda Tangan (TTD)",
-                )}
-                helperText={t(
-                  "settings:company.upload_source_hint",
-                  "Lokal / Google Drive",
-                )}
-                emptyTitle={t(
-                  "settings:company.upload_signature_title",
-                  "Upload Gambar Tanda Tangan",
-                )}
-                emptySubtitle={t(
-                  "settings:company.upload_signature_subtitle",
-                  "Klik untuk memilih PNG transparan dari Lokal / Google Drive",
-                )}
-                value={company.signer_signature_path}
-                onChange={(next) =>
-                  setCompany({ ...company, signer_signature_path: next })
-                }
-                previewHeightClassName="h-[116px]"
-                className="h-full flex-1"
-              />
+            {/* Kolom 2: Data Rekening Bank Transfer */}
+            <div className="space-y-5">
+              <div className="border-b border-border/60 pb-2.5 flex items-center justify-between gap-2 min-h-[35px]">
+                <div className="flex items-center gap-2">
+                  <LandmarkIcon className="size-4 text-primary shrink-0" />
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {t(
+                      "settings:company.section_bank_title",
+                      "Data Rekening Bank Transfer",
+                    )}
+                  </h3>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onAddBankSlot}
+                  className="h-7 rounded-xl px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                >
+                  <PlusIcon className="size-3.5" />
+                  <span>
+                    {t("settings:company.add_bank_btn", "Tambah Rekening")}
+                  </span>
+                </Button>
+              </div>
+
+              <div className="space-y-5">
+                {/* Field 1: Nama Bank */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-bank-0"
+                    required
+                    className="text-xs font-semibold h-4 flex items-center"
+                  >
+                    {t("settings:company.bank_name", "Nama Bank")}
+                  </FieldLabel>
+                  <Input
+                    id="cp-bank-0"
+                    required
+                    value={primaryBank.bank_name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBankAccounts((prev) => {
+                        if (prev.length === 0) {
+                          return [
+                            {
+                              bank_name: val,
+                              account_number: "",
+                              account_holder: "",
+                            },
+                          ];
+                        }
+                        return prev.map((item, i) =>
+                          i === 0 ? { ...item, bank_name: val } : item,
+                        );
+                      });
+                      setCompany((prev) =>
+                        prev ? { ...prev, bank_name: val } : prev,
+                      );
+                    }}
+                    placeholder={t(
+                      "settings:company.bank_name_placeholder",
+                      "Contoh: Bank Central Asia (BCA) / Bank Jago",
+                    )}
+                    className="text-xs h-9"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {t(
+                      "settings:company.bank_name_desc",
+                      "Nama institusi perbankan resmi rekening transfer utama.",
+                    )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Field 2: Nomor Rekening */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-accno-0"
+                    required
+                    className="text-xs font-semibold h-4 flex items-center"
+                  >
+                    {t(
+                      "settings:company.bank_account_number",
+                      "Nomor Rekening",
+                    )}
+                  </FieldLabel>
+                  <Input
+                    id="cp-accno-0"
+                    required
+                    value={primaryBank.account_number}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBankAccounts((prev) => {
+                        if (prev.length === 0) {
+                          return [
+                            {
+                              bank_name: "",
+                              account_number: val,
+                              account_holder: "",
+                            },
+                          ];
+                        }
+                        return prev.map((item, i) =>
+                          i === 0 ? { ...item, account_number: val } : item,
+                        );
+                      });
+                      setCompany((prev) =>
+                        prev ? { ...prev, bank_account_number: val } : prev,
+                      );
+                    }}
+                    placeholder={t(
+                      "settings:company.account_number_placeholder",
+                      "Contoh: 103289122849",
+                    )}
+                    className="text-xs h-9 tabular-nums"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {t(
+                      "settings:company.bank_acc_desc",
+                      "Nomor rekening penerima transfer resmi pada invoice penagihan.",
+                    )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Field 3: Atas Nama Rekening */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-holder-0"
+                    required
+                    className="text-xs font-semibold h-4 flex items-center"
+                  >
+                    {t(
+                      "settings:company.bank_account_holder",
+                      "Atas Nama Rekening",
+                    )}
+                  </FieldLabel>
+                  <Input
+                    id="cp-holder-0"
+                    required
+                    value={primaryBank.account_holder}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBankAccounts((prev) => {
+                        if (prev.length === 0) {
+                          return [
+                            {
+                              bank_name: "",
+                              account_number: "",
+                              account_holder: val,
+                            },
+                          ];
+                        }
+                        return prev.map((item, i) =>
+                          i === 0 ? { ...item, account_holder: val } : item,
+                        );
+                      });
+                      setCompany((prev) =>
+                        prev ? { ...prev, bank_account_holder: val } : prev,
+                      );
+                    }}
+                    placeholder={t(
+                      "settings:company.account_holder_placeholder",
+                      "Nama pemilik rekening sesuai buku tabungan",
+                    )}
+                    className="text-xs h-9"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
+                    {t(
+                      "settings:company.bank_holder_desc",
+                      "Harus sesuai dengan nama pemilik rekening yang sah.",
+                    )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Field 4: Status Rekening Transfer (Read-Only) */}
+                <Field className="space-y-1.5">
+                  <FieldLabel
+                    htmlFor="cp-bank-status"
+                    className="text-xs font-semibold h-4 flex items-center text-muted-foreground"
+                  >
+                    {t(
+                      "settings:company.bank_status_label",
+                      "Status Rekening Transfer",
+                    )}
+                  </FieldLabel>
+                  <Input
+                    id="cp-bank-status"
+                    type="text"
+                    readOnly
+                    disabled
+                    tabIndex={-1}
+                    value={
+                      primaryBank.account_number?.trim()
+                        ? t(
+                            "settings:company.bank_status_active",
+                            "Terdaftar - Rekening Transfer Utama Aktif",
+                          )
+                        : t(
+                            "settings:company.bank_status_empty",
+                            "Belum Diatur (Penerimaan Ditangguhkan)",
+                          )
+                    }
+                    onMouseDown={(e) => e.preventDefault()}
+                    onFocus={(e) => e.currentTarget.blur()}
+                    className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
+                  />
+                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
+                    {bankAccounts.length > 1
+                      ? `${bankAccounts.length} rekening bank terdaftar di profil perusahaan.`
+                      : t(
+                          "settings:company.bank_status_desc",
+                          "Status kesiapan rekening transfer pada penagihan invoice resmi.",
+                        )}
+                  </FieldDescription>
+                </Field>
+
+                {/* Rekening Tambahan (Jika Ada, idx > 0) */}
+                {bankAccounts.slice(1).map((acct, offsetIdx) => {
+                  const idx = offsetIdx + 1;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                          <LandmarkIcon className="size-4 text-primary dark:text-sky-400" />
+                          <span>
+                            {t("settings:company.bank_slot_title", {
+                              index: idx + 1,
+                              defaultValue: `Rekening #${idx + 1}`,
+                            })}
+                          </span>
+                        </div>
+                        <ActionTooltip
+                          content={t(
+                            "settings:company.remove_bank_tooltip",
+                            "Hapus rekening ini",
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => onRemoveBankSlot(idx)}
+                            className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                          >
+                            <Trash2Icon className="size-3.5" />
+                            <span className="sr-only">
+                              {t(
+                                "settings:company.remove_bank_sr",
+                                "Hapus Rekening",
+                              )}
+                            </span>
+                          </button>
+                        </ActionTooltip>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Field className="space-y-1">
+                          <FieldLabel
+                            htmlFor={`cp-bank-${idx}`}
+                            required
+                            className="text-[11px] font-semibold"
+                          >
+                            {t("settings:company.bank_name", "Nama Bank")}
+                          </FieldLabel>
+                          <Input
+                            id={`cp-bank-${idx}`}
+                            required
+                            value={acct.bank_name}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setBankAccounts((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx
+                                    ? { ...item, bank_name: val }
+                                    : item,
+                                ),
+                              );
+                            }}
+                            placeholder="BCA / Mandiri"
+                            className="text-xs h-8"
+                          />
+                        </Field>
+                        <Field className="space-y-1">
+                          <FieldLabel
+                            htmlFor={`cp-accno-${idx}`}
+                            required
+                            className="text-[11px] font-semibold"
+                          >
+                            {t(
+                              "settings:company.bank_account_number",
+                              "No. Rekening",
+                            )}
+                          </FieldLabel>
+                          <Input
+                            id={`cp-accno-${idx}`}
+                            required
+                            value={acct.account_number}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setBankAccounts((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx
+                                    ? { ...item, account_number: val }
+                                    : item,
+                                ),
+                              );
+                            }}
+                            placeholder="12345678"
+                            className="text-xs h-8 tabular-nums"
+                          />
+                        </Field>
+                        <Field className="space-y-1">
+                          <FieldLabel
+                            htmlFor={`cp-holder-${idx}`}
+                            required
+                            className="text-[11px] font-semibold"
+                          >
+                            {t(
+                              "settings:company.bank_account_holder",
+                              "Atas Nama",
+                            )}
+                          </FieldLabel>
+                          <Input
+                            id={`cp-holder-${idx}`}
+                            required
+                            value={acct.account_holder}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setBankAccounts((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx
+                                    ? { ...item, account_holder: val }
+                                    : item,
+                                ),
+                              );
+                            }}
+                            placeholder="Nama pemilik"
+                            className="text-xs h-8"
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end pt-2 border-t border-border/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/60">
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                "settings:company.future_docs_only_note",
+                "Pengaturan ini memengaruhi dokumen penagihan dan rekening yang baru dibuat setelah disimpan.",
+              )}
+            </p>
             <Button
               type="submit"
-              disabled={saving}
-              className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer max-sm:w-full"
+              disabled={saving || (company.pkp_enabled && !hasPkpProof)}
+              className="h-9 text-xs rounded-xl gap-2 shadow-xs cursor-pointer max-sm:w-full"
             >
               {saving ? (
                 <>
@@ -355,8 +760,8 @@ export function CompanyProfileTabBankSigner({
                   <SaveIcon className="size-3.5" />
                   <span>
                     {t(
-                      "settings:company.btn_save_bank_signer",
-                      "Simpan Rekening & Tanda Tangan",
+                      "settings:company.btn_save_financial",
+                      "Simpan Data Keuangan",
                     )}
                   </span>
                 </>
