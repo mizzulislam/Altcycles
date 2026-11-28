@@ -34,3 +34,23 @@ Selamat datang di pusat dokumentasi resmi **Altcycles** (Sistem ERP Administrasi
 - **[audit-mobile.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-mobile.md)** — Laporan audit UI/UX mobile & tablet serta rencana implementasi 6 paket aditif (desktop terkunci).
 - **[temuan-mobile.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/temuan-mobile.md)** — Catatan temuan, log verifikasi, dan observasi responsif mobile/tablet pasca-implementasi.
 - **[rencana-implementasi.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-publish/rencana-implementasi.md)** — Rencana bertahap 10 paket kerja rilis.
+
+---
+
+## 4. Standarisasi Komponen UI/UX, Pemecahan File & Pembersihan (`docs/audit-komponen/`)
+- **[00-ringkasan.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/00-ringkasan.md)** — Ringkasan eksekutif kepatuhan komponen, 10 temuan teratas, dan status implementasi paket bertahap.
+- **[bidang-a-inventaris-ui.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-a-inventaris-ui.md)** — Inventarisasi elemen interaktif mentah (`<button>`, `<input>`, `<table>`), mitigasi modal footer, dan status kepatuhan portal.
+- **[bidang-b-arsitektur-komponen.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-b-arsitektur-komponen.md)** — Arsitektur Satu Sumber Kebenaran (Single Source of Truth), hierarki primitif shadcn vs pattern, dan token semantik.
+- **[bidang-c-rencana-migrasi.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-c-rencana-migrasi.md)** — Matriks migrasi halaman per portal (Super Admin, User, Bendahara/Akuntansi, dan Auth/Shared).
+- **[bidang-d-aturan-pencegahan.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-d-aturan-pencegahan.md)** — Aturan pencegahan CI & linter untuk memblokir kode hex manual dan tag HTML mentah baru.
+- **[bidang-e-file-panjang.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-e-file-panjang.md)** — Audit pemecahan file kritis >800 baris (SP-01 s/d SP-28) dan progress modularisasi.
+- **[bidang-f-file-tak-terpakai.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/bidang-f-file-tak-terpakai.md)** — Laporan eliminasi komponen yatim, modul mati, dan skrip sementara (CL-01 s/d CL-06).
+- **[katalog-komponen-usulan.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/katalog-komponen-usulan.md)** — Spesifikasi API dan panduan penggunaan komponen primitif dan pattern bersama.
+- **[pengujian-dan-verifikasi-manual.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/pengujian-dan-verifikasi-manual.md)** — Metodologi pengujian visual, paritas piksel, unit test, dan kompilasi bebas error.
+- **[rencana-implementasi.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/audit-komponen/rencana-implementasi.md)** — Rencana eksekusi 9 paket standarisasi dengan protokol verifikasi ketat.
+
+---
+
+## 5. Artefak Uji Render & Paritas Visual (`docs/render-check/`)
+- **[README.md](file:///d:/08.%20Tech%20Workspaces/02.%20Development/Altcycles/docs/render-check/README.md)** — Indeks navigasi seluruh direktori tangkapan layar visual, baseline pengujian Paket 1 (`komponen/`), dan panduan skrip Puppeteer.
+
