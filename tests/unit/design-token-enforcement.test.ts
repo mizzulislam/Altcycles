@@ -111,6 +111,12 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/auth/hooks/use-login-page-state.ts",
       "src/features/auth/components/login-showcase-sidebar.tsx",
       "src/features/auth/components/login-credential-form.tsx",
+      "src/features/system-config/shortcuts/shortcuts-types.ts",
+      "src/features/system-config/shortcuts/use-shortcuts-management-state.ts",
+      "src/features/system-config/shortcuts/shortcuts-kpi-grid.tsx",
+      "src/features/system-config/shortcuts/shortcuts-table.tsx",
+      "src/features/system-config/shortcuts/shortcuts-dropdown-portals.tsx",
+      "src/features/system-config/shortcuts/shortcuts-edit-dialog.tsx",
     ];
 
     for (const relPath of extractedComponents) {
@@ -132,6 +138,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/client-projects/project-detail-page.tsx": 400,
       "src/features/system-config/login-media-page.tsx": 400,
       "src/features/auth/login-page.tsx": 400,
+      "src/features/system-config/shortcuts-management-page.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
@@ -188,6 +195,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/client-projects/project-detail-page.tsx",
       "src/features/system-config/login-media-page.tsx",
       "src/features/auth/login-page.tsx",
+      "src/features/system-config/shortcuts-management-page.tsx",
     ];
 
     for (const relPath of standardizedPages) {
