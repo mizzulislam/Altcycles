@@ -124,7 +124,7 @@ export function CashFlowView({
   const { language } = useLanguage();
 
   return (
-    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+    <Card className="rounded-2xl border-border/80 bg-muted/25 dark:bg-muted/15 shadow-2xs overflow-hidden">
       <CardHeaderWithInfo
         title={language === "en" ? "Direct Method Cash Flow Statement" : "Laporan Arus Kas Metode Langsung"}
         description={

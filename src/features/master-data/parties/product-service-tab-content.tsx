@@ -132,6 +132,7 @@ export function ProductServiceTabContent({
       docSubtitle: t("parties:products.export_pdf_subtitle", "Daftar Paket Solusi Teknologi & Layanan Profesional"),
       docNumber: `KATALOG-SRV-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
+      orientation: "landscape",
       company: comp,
       language,
       metaRows: [
@@ -145,11 +146,13 @@ export function ProductServiceTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:products.col_code", "Kode"), widthRatio: 0.10, align: "center" },
-        { header: t("parties:products.col_name", "Nama Layanan"), widthRatio: 0.38 },
-        { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.20 },
-        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.12, align: "center" },
-        { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.20, align: "right" },
+        { header: t("parties:products.col_code", "Kode"), widthRatio: 0.08, align: "center" },
+        { header: t("parties:products.col_name", "Nama Layanan / Produk"), widthRatio: 0.24 },
+        { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.14, align: "center" },
+        { header: t("parties:products.col_desc", "Deskripsi"), widthRatio: 0.26 },
+        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.08, align: "center" },
+        { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.12, align: "right" },
+        { header: t("parties:products.col_status", "Status"), widthRatio: 0.08, align: "center" },
       ],
       tableRows: products.map((p) => {
         const loc = getLocalizedCatalogProduct(p, language);
@@ -157,8 +160,12 @@ export function ProductServiceTabContent({
           p.code,
           loc.name,
           loc.category,
+          loc.description || "-",
           loc.unit,
           formatRupiah(p.price),
+          p.is_active
+            ? t("common:status.active", "Aktif")
+            : t("common:status.inactive", "Nonaktif"),
         ];
       }),
     });
@@ -291,10 +298,8 @@ export function ProductServiceTabContent({
                       <TableCell className="px-3 max-sm:px-2 font-medium text-foreground">
                         {loc.name}
                       </TableCell>
-                      <TableCell className="px-3 max-sm:px-2 text-center text-xs">
-                        <span className="inline-flex items-center rounded-lg bg-muted/80 border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {loc.category}
-                        </span>
+                      <TableCell className="px-3 max-sm:px-2 text-center text-xs text-muted-foreground font-medium">
+                        {loc.category}
                       </TableCell>
                       <TableCell className="px-3 max-sm:px-2 text-xs text-muted-foreground max-w-xs">
                         <span className="line-clamp-2" title={loc.description ?? "-"}>

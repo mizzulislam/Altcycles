@@ -1557,7 +1557,7 @@ async function renderDocumentPdfInternal(
           const size = headerFontSize;
           const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
-          const hAlign = col.headerAlign ?? col.align;
+          const hAlign = col.headerAlign ?? "center";
           let drawX = colX + 4;
           if (hAlign === "right") {
             drawX = Math.max(colX + 4, colX + w - textW - 4);
@@ -1709,12 +1709,6 @@ async function renderDocumentPdfInternal(
     const cellLineH = 13;
     const cellPadY = 6;
     const docUpper = spec.docTitle.toUpperCase();
-    const isJournal =
-      docUpper.includes("JURNAL") ||
-      docUpper.includes("JOURNAL") ||
-      docUpper.includes("GENERAL JOURNAL") ||
-      docUpper.includes("ADJUSTING") ||
-      docUpper.includes("CLOSING");
 
     const drawTableHeader = () => {
       const headerTopY = y;
@@ -1749,12 +1743,12 @@ async function renderDocumentPdfInternal(
         const size = headerFontSize;
         const textW = fontBold.widthOfTextAtSize(headerClean, size);
 
-        const hAlign = col.headerAlign ?? (isJournal ? "center" : col.align);
+        const hAlign = col.headerAlign ?? "center";
         let drawX = colX + 4;
         if (hAlign === "right") {
           drawX = Math.max(colX + 4, colX + w - textW - 4);
         } else if (hAlign === "center") {
-          drawX = colX + (w - textW) / 2;
+          drawX = Math.max(colX + 4, colX + (w - textW) / 2);
         }
         drawTrackedText(
           headerClean,

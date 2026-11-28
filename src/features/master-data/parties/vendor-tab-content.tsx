@@ -128,6 +128,7 @@ export function VendorTabContent({
       docSubtitle: t("parties:vendors.export_pdf_subtitle", "Direktori Rekanan Vendor Pemasok Resmi Perusahaan"),
       docNumber: `REKAP-VND-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
+      orientation: "landscape",
       company: comp,
       metaRows: [
         {
@@ -140,21 +141,23 @@ export function VendorTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 0.10, align: "center" },
-        { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 0.28 },
-        { header: t("parties:vendors.col_pic", "Kontak PIC"), widthRatio: 0.35 },
-        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 0.27 },
+        { header: t("parties:vendors.col_code", "Kode"), widthRatio: 0.08, align: "center" },
+        { header: t("parties:vendors.col_name", "Nama Vendor"), widthRatio: 0.18 },
+        { header: t("parties:vendors.col_pic", "Kontak PIC"), widthRatio: 0.15 },
+        { header: t("parties:vendors.col_contact", "Email & Telepon"), widthRatio: 0.18 },
+        { header: t("parties:vendors.modal_address", "Alamat Kantor"), widthRatio: 0.17 },
+        { header: t("parties:vendors.modal_npwp", "NPWP"), widthRatio: 0.10, align: "center" },
+        { header: t("parties:vendors.col_bank", "Bank & Rekening"), widthRatio: 0.14 },
       ],
       tableRows: vendors.map((v) => [
         v.code,
         v.name,
-        v.contact_name
-          ? `${v.contact_name} (${v.phone || v.email || "-"})`
-          : "-",
+        v.contact_name || "-",
+        [v.email, v.phone].filter(Boolean).join(" / ") || "-",
+        v.address || "-",
+        v.npwp || "-",
         v.bank_account_number || v.bank_name
-          ? (v.bank_account_number && v.bank_name
-              ? `${v.bank_account_number}\n${v.bank_name}`
-              : v.bank_account_number || v.bank_name || "-")
+          ? `${v.bank_name || "-"}: ${v.bank_account_number || "-"}${v.bank_account_holder ? ` (${v.bank_account_holder})` : ""}`
           : "-",
       ]),
     });

@@ -149,7 +149,7 @@ export function EquityStatementView({
   const { t, language } = useLanguage();
 
   return (
-    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+    <Card className="rounded-2xl border-border/80 bg-muted/25 dark:bg-muted/15 shadow-2xs overflow-hidden">
       <CardHeaderWithInfo
         title={t("accounting:reports.equity_report_as_of", {
           date: formatDateI18n(endDate, language),

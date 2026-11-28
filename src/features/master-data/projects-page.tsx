@@ -601,16 +601,15 @@ export function ProjectsPage() {
                       </TableCell>
                       <TableCell
                         className={cn(
-                          "px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5 font-medium text-foreground",
+                          "px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-xs sm:text-sm leading-5 font-medium text-foreground transition-all duration-200",
                           !isSidebarCollapsed ? "max-w-[205px]" : "max-w-[290px]",
                         )}
                       >
-                        <div
-                          className={cn(!isSidebarCollapsed && "line-clamp-2")}
-                          title={!isSidebarCollapsed ? p.name : undefined}
-                        >
-                          {p.name}
-                        </div>
+                        <ActionTooltip content={p.name}>
+                          <div className="line-clamp-2 break-words leading-5">
+                            {p.name}
+                          </div>
+                        </ActionTooltip>
                       </TableCell>
                       <TableCell className="px-3 max-sm:px-2 py-3.5 max-sm:py-2.5 text-center text-xs sm:text-sm leading-5 text-muted-foreground whitespace-nowrap">
                         {formatDateI18n(p.start_date, language)} &minus;{" "}

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { JournalsPage, JOURNAL_TYPE_LABELS } from "@/features/accounting/journals-page";
 import { PageHeader } from "@/components/shared/page-header";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 
@@ -264,29 +263,27 @@ export function AccountingPage() {
             const Icon = tab.icon;
             const isActive = normalizedTab === tab.id;
             const translatedLabel = t(`accounting:tabs.${tab.id}`, tab.label);
-            const translatedDesc = t(`accounting:tabs.${tab.id}_desc`, tab.description);
 
             return (
-              <ActionTooltip key={tab.id} content={translatedDesc} side="top">
-                <button
-                  type="button"
-                  onClick={() => handleTabChange(tab.id)}
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  "shrink-0 h-10 inline-flex items-center gap-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                )}
+              >
+                <Icon
                   className={cn(
-                    "shrink-0 h-10 inline-flex items-center gap-2 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-xs"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                    "size-4 shrink-0 transition-colors",
+                    isActive ? "text-primary-foreground" : "text-muted-foreground",
                   )}
-                >
-                  <Icon
-                    className={cn(
-                      "size-4 shrink-0 transition-colors",
-                      isActive ? "text-primary-foreground" : "text-muted-foreground",
-                    )}
-                  />
-                  <span className="whitespace-nowrap">{translatedLabel}</span>
-                </button>
-              </ActionTooltip>
+                />
+                <span className="whitespace-nowrap">{translatedLabel}</span>
+              </button>
             );
           })}
         </div>

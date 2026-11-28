@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
 import {
   getCompanyProfile,
   listAccounts,
@@ -227,24 +227,14 @@ export function PeriodsPage({
       ) : null}
 
       {/* 1. Alur & Langkah Jurnal Penutup (GAAP/IFRS) */}
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:text-cyan-400 border border-primary/20">
-              <ListTodoIcon className="size-5" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-foreground">
-                {t("accounting:closing.flow_title", "Alur & Langkah Jurnal Penutup (GAAP/IFRS)")}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {t("accounting:closing.flow_subtitle", "Panduan 4 tahap penutupan saldo akun nominal di akhir periode akuntansi.")}
-              </p>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-1.5 self-start sm:self-center rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-semibold text-primary dark:text-cyan-400 shrink-0">
-            {t("accounting:closing.flow_badge", "4 Tahap Siklus Akhir")}
-          </span>
+      <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-3">
+        <div className="flex items-center gap-2">
+          <ListTodoIcon className="size-4 text-primary dark:text-cyan-400 shrink-0" />
+          <CardHeaderTitleWithInfo
+            title={t("accounting:closing.flow_title", "Alur & Langkah Jurnal Penutup (GAAP/IFRS)")}
+            description={t("accounting:closing.flow_subtitle", "Panduan 4 tahap penutupan saldo akun nominal di akhir periode akuntansi.")}
+            titleClassName="text-sm font-bold text-foreground"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -308,41 +298,25 @@ export function PeriodsPage({
 
       {/* 2. Banner Status Tutup Buku Otomatis */}
       {company?.auto_closing_enabled ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-card p-4 sm:px-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <ShieldCheckIcon className="size-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-foreground">
-                {t("accounting:closing.auto_banner_on_title", "Tutup Buku Otomatis Diaktifkan")}
-              </h4>
-              <p className="text-xs mt-0.5 text-muted-foreground leading-relaxed">
-                {t("accounting:closing.auto_banner_on_desc", "Sistem dikonfigurasi untuk memposting jurnal penutup otomatis berbasis GAAP/IFRS secara terintegrasi saat periode ditutup. Anda tetap dapat mencatat penyesuaian penutup manual di bawah.")}
-              </p>
-            </div>
-          </div>
-          <div className="shrink-0 self-start sm:self-center">
-            <StatusBadge tone="success" label={t("accounting:closing.auto_banner_on_badge", "Mode Otomatis")} />
+        <div className="rounded-2xl border border-emerald-500/25 bg-card p-4 sm:px-5 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <ShieldCheckIcon className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <CardHeaderTitleWithInfo
+              title={t("accounting:closing.auto_banner_on_title", "Tutup Buku Otomatis Diaktifkan")}
+              description={t("accounting:closing.auto_banner_on_desc", "Sistem dikonfigurasi untuk memposting jurnal penutup otomatis berbasis GAAP/IFRS secara terintegrasi saat periode ditutup. Anda tetap dapat mencatat penyesuaian penutup manual di bawah.")}
+              titleClassName="text-sm font-bold text-foreground"
+            />
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-border/80 bg-card p-4 sm:px-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              <ShieldAlertIcon className="size-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-foreground">
-                {t("accounting:closing.auto_banner_off_title", "Tutup Buku Otomatis Dinonaktifkan")}
-              </h4>
-              <p className="text-xs mt-0.5 text-muted-foreground leading-relaxed">
-                {t("accounting:closing.auto_banner_off_desc", "Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin.")}
-              </p>
-            </div>
-          </div>
-          <div className="shrink-0 self-start sm:self-center">
-            <StatusBadge tone="warning" label={t("accounting:closing.auto_banner_off_badge", "Mode Manual")} />
+        <div className="rounded-2xl border border-border/80 bg-card p-4 sm:px-5 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <ShieldAlertIcon className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <CardHeaderTitleWithInfo
+              title={t("accounting:closing.auto_banner_off_title", "Tutup Buku Otomatis Dinonaktifkan")}
+              description={t("accounting:closing.auto_banner_off_desc", "Tutup buku otomatis saat ini dinonaktifkan di Pengaturan Super Admin.")}
+              titleClassName="text-sm font-bold text-foreground"
+            />
           </div>
         </div>
       )}

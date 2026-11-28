@@ -166,6 +166,7 @@ export function CustomerTabContent({
       docSubtitle: t("parties:customers.export_pdf_subtitle", "Basis Data Klien & Pelanggan Resmi Perusahaan"),
       docNumber: `REKAP-CST-${new Date().toISOString().slice(0, 10)}`,
       docDate: new Date().toISOString().slice(0, 10),
+      orientation: "landscape",
       company: comp,
       metaRows: [
         {
@@ -178,18 +179,24 @@ export function CustomerTabContent({
         },
       ],
       tableColumns: [
-        { header: t("parties:customers.col_code", "Kode"), widthRatio: 0.10, align: "center" },
-        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 0.30 },
-        { header: t("parties:customers.col_company", "Perusahaan PIC"), widthRatio: 0.36 },
-        { header: t("parties:customers.col_contact", "Kontak"), widthRatio: 0.24 },
+        { header: t("parties:customers.col_code", "Kode"), widthRatio: 0.08, align: "center" },
+        { header: t("parties:customers.col_name", "Nama Pelanggan"), widthRatio: 0.18 },
+        { header: t("parties:customers.col_company", "Perusahaan & PIC"), widthRatio: 0.16 },
+        { header: t("parties:customers.col_contact", "Email & Telepon"), widthRatio: 0.16 },
+        { header: t("parties:customers.modal_address", "Alamat Kantor"), widthRatio: 0.16 },
+        { header: t("parties:customers.modal_shipping_address", "Alamat Pengiriman"), widthRatio: 0.16 },
+        { header: t("parties:customers.modal_npwp", "NPWP"), widthRatio: 0.10, align: "center" },
       ],
       tableRows: customers.map((c) => [
         c.code,
         c.name,
         c.company_name
-          ? `${c.company_name} (PIC: ${c.contact_person || "-"})`
-          : c.contact_person || "-",
-        `${c.email || "-"} / ${c.phone || "-"}`,
+          ? `${c.company_name} (PIC: ${c.contact_person || "-"}${c.contact_title ? ` - ${c.contact_title}` : ""})`
+          : `PIC: ${c.contact_person || "-"}${c.contact_title ? ` - ${c.contact_title}` : ""}`,
+        [c.email, c.phone].filter(Boolean).join(" / ") || "-",
+        c.address || "-",
+        c.shipping_address || c.address || "-",
+        c.npwp || "-",
       ]),
     });
     downloadPdfBytes(bytes, "Master_Pelanggan_Altcycles.pdf");
@@ -646,7 +653,7 @@ export function CustomerTabContent({
                   }}
                 />
               </Field>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <ImageAssetUploadBox
                   label={t("parties:customers.modal_logo", "Logo Klien")}
                   emptyTitle="Upload Logo"
@@ -663,15 +670,6 @@ export function CustomerTabContent({
                   value={cstForm.signature_storage_path}
                   onChange={(next) =>
                     setCstForm({ ...cstForm, signature_storage_path: next })
-                  }
-                />
-                <ImageAssetUploadBox
-                  label={t("parties:customers.modal_paraf", "Paraf Klien")}
-                  emptyTitle="Upload Paraf"
-                  emptySubtitle="PNG transparan"
-                  value={cstForm.paraf_storage_path}
-                  onChange={(next) =>
-                    setCstForm({ ...cstForm, paraf_storage_path: next })
                   }
                 />
               </div>

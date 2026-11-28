@@ -233,7 +233,7 @@ export function BalanceSheetView({
     balanceSheet.currentUnclosedEarnings;
 
   return (
-    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
+    <Card className="rounded-2xl border-border/80 bg-muted/25 dark:bg-muted/15 shadow-2xs overflow-hidden">
       <CardHeaderWithInfo
         title={`${language === "en" ? "Statement of Financial Position (Balance Sheet) as of " : "Laporan Posisi Keuangan (Neraca) per "}${formatDateI18n(endDate, language)}`}
         description={
