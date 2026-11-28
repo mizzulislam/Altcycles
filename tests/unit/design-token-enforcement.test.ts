@@ -73,6 +73,17 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/system-config/dashboard/super-admin-dashboard-charts.tsx",
       "src/features/system-config/dashboard/super-admin-dashboard-audit-table.tsx",
       "src/features/system-config/dashboard/super-admin-dashboard-export-handlers.ts",
+      "src/features/payment-approvals/user-payments/user-payments-types.ts",
+      "src/features/payment-approvals/user-payments/user-payments-export-handlers.ts",
+      "src/features/payment-approvals/user-payments/user-payments-kpi-grid.tsx",
+      "src/features/payment-approvals/user-payments/user-payments-table.tsx",
+      "src/features/payment-approvals/user-payments/user-payment-create-dialog.tsx",
+      "src/features/payment-approvals/user-payments/user-payment-revise-dialog.tsx",
+      "src/features/payment-approvals/admin-approvals/admin-approvals-types.ts",
+      "src/features/payment-approvals/admin-approvals/admin-approvals-export-handlers.ts",
+      "src/features/payment-approvals/admin-approvals/admin-approvals-kpi-grid.tsx",
+      "src/features/payment-approvals/admin-approvals/admin-approvals-table.tsx",
+      "src/features/payment-approvals/admin-approvals/admin-approval-dialogs.tsx",
     ];
 
     for (const relPath of extractedComponents) {
@@ -86,6 +97,8 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/master-data/admin-dashboard.tsx": 500,
       "src/features/dashboard/user-dashboard.tsx": 400,
       "src/features/system-config/super-admin-dashboard.tsx": 400,
+      "src/features/payment-approvals/user-payments-page.tsx": 400,
+      "src/features/payment-approvals/admin-approvals-page.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
@@ -135,6 +148,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/purchase-orders/po-page.tsx",
       "src/features/budgeting/budget-page.tsx",
       "src/features/payment-approvals/user-payments-page.tsx",
+      "src/features/payment-approvals/admin-approvals-page.tsx",
     ];
 
     for (const relPath of standardizedPages) {
