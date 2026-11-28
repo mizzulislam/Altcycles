@@ -3,11 +3,15 @@ import {
   PencilIcon,
   RotateCcwIcon,
   SaveIcon,
+  XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -228,37 +232,45 @@ export function AdminSettingsPage() {
           action={
             <div className="flex items-center gap-2 shrink-0">
               {isEditingSeq ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditingSeq(false)}
-                  className="h-9 rounded-xl px-3.5 text-xs font-medium cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
-                >
-                  {t("common:action.cancel")}
-                </Button>
+                <ActionTooltip content={t("common:action.cancel", "Batal")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsEditingSeq(false)}
+                    className="size-9 rounded-xl shrink-0 cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors shadow-2xs"
+                    aria-label={t("common:action.cancel", "Batal")}
+                  >
+                    <XIcon className="size-4 shrink-0" />
+                    <span className="sr-only">{t("common:action.cancel", "Batal")}</span>
+                  </Button>
+                </ActionTooltip>
               ) : (
                 <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setConfirmResetAll(true)}
-                    className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-500/10 hover:bg-amber-100/80 dark:hover:bg-amber-500/20 border-amber-200/80 dark:border-amber-500/20 transition-colors shadow-2xs"
-                  >
-                    <RotateCcwIcon className="size-3.5" />
-                    {t("settings:admin_settings.btn_reset_sequence")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingSeq(true)}
-                    className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer text-blue-600 dark:text-sky-400 bg-blue-50/80 dark:bg-sky-500/10 hover:bg-blue-100/80 dark:hover:bg-sky-500/20 border-blue-200/80 dark:border-sky-500/20 transition-colors shadow-2xs"
-                  >
-                    <PencilIcon className="size-3.5" />
-                    {t("settings:admin_settings.btn_edit")}
-                  </Button>
+                  <ActionTooltip content={t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setConfirmResetAll(true)}
+                      className="size-9 rounded-xl shrink-0 cursor-pointer text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-500/10 hover:bg-amber-100/80 dark:hover:bg-amber-500/20 border-amber-200/80 dark:border-amber-500/20 transition-colors shadow-2xs"
+                      aria-label={t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}
+                    >
+                      <RotateCcwIcon className="size-4 shrink-0" />
+                      <span className="sr-only">{t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}</span>
+                    </Button>
+                  </ActionTooltip>
+                  <ActionTooltip content={t("settings:admin_settings.btn_edit", "Edit Format Penomoran")}>
+                    <Button
+                      type="button"
+                      onClick={() => setIsEditingSeq(true)}
+                      className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
+                      aria-label={t("settings:admin_settings.btn_edit", "Edit Format Penomoran")}
+                    >
+                      <PencilIcon className="size-4 text-primary-foreground shrink-0" />
+                      <span className="sr-only">{t("settings:admin_settings.btn_edit", "Edit Format Penomoran")}</span>
+                    </Button>
+                  </ActionTooltip>
                 </>
               )}
             </div>

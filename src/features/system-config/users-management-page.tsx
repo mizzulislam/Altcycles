@@ -472,7 +472,7 @@ export function UsersManagementPage() {
                 <button
                   type="button"
                   onClick={() => setCreateOpen(true)}
-                  className={TOOLBAR_BUTTON_CLASS}
+                  className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                   aria-label={t("settings:users.add_account_btn", "Tambah Akun Internal")}
                 >
                   <PlusIcon className="size-4 text-primary-foreground shrink-0" />

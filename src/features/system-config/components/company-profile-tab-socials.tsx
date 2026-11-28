@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/select";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { SocialPlatformIcon } from "@/components/shared/social-platform-icon";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { SOCIAL_PLATFORM_OPTIONS } from "@/lib/asset-utils";
 import { useLanguage } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import type { CompanyProfileRow, SocialMediaEntry } from "@/types/database.types";
 
 interface CompanyProfileTabSocialsProps {
@@ -185,10 +187,10 @@ export function CompanyProfileTabSocials({
                     size="icon"
                     disabled={!canScrollLeft}
                     onClick={slideLeft}
-                    className="size-8 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={t("settings:company.slide_left", "Geser ke Kiri")}
                   >
-                    <ChevronLeftIcon className="size-4" />
+                    <ChevronLeftIcon className="size-4 text-foreground" />
                     <span className="sr-only">
                       {t("settings:company.slide_left", "Geser ke Kiri")}
                     </span>
@@ -203,10 +205,10 @@ export function CompanyProfileTabSocials({
                     size="icon"
                     disabled={!canScrollRight}
                     onClick={slideRight}
-                    className="size-8 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={t("settings:company.slide_right", "Geser ke Kanan")}
                   >
-                    <ChevronRightIcon className="size-4" />
+                    <ChevronRightIcon className="size-4 text-foreground" />
                     <span className="sr-only">
                       {t("settings:company.slide_right", "Geser ke Kanan")}
                     </span>
@@ -214,14 +216,24 @@ export function CompanyProfileTabSocials({
                 </ActionTooltip>
               </div>
             )}
-            <Button
-              type="button"
-              onClick={onAddSlot}
-              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            <ActionTooltip
+              content={t("settings:company.add_social_btn", "Tambah Sosial Media")}
             >
-              <PlusIcon data-icon="inline-start" />
-              {t("settings:company.add_social_btn", "Tambah Sosial Media")}
-            </Button>
+              <Button
+                type="button"
+                onClick={onAddSlot}
+                className={cn(
+                  TOOLBAR_BUTTON_CLASS,
+                  "cursor-pointer",
+                )}
+                aria-label={t("settings:company.add_social_btn", "Tambah Sosial Media")}
+              >
+                <PlusIcon className="size-4 shrink-0 text-primary-foreground" />
+                <span className="sr-only">
+                  {t("settings:company.add_social_btn", "Tambah Sosial Media")}
+                </span>
+              </Button>
+            </ActionTooltip>
           </div>
         }
       />

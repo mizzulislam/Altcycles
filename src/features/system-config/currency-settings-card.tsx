@@ -1,6 +1,8 @@
 import * as React from "react";
-import { SaveIcon } from "lucide-react";
+import { Loader2Icon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
@@ -129,16 +131,22 @@ export function ExchangeRatesCard({ className }: { className?: string }) {
             titleClassName="text-base sm:text-lg font-bold"
           />
 
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleSaveExchangeRates}
-            disabled={savingRates}
-            className="h-8.5 rounded-xl px-3.5 text-xs font-semibold cursor-pointer shadow-xs gap-1.5 shrink-0 self-start sm:self-center"
-          >
-            <SaveIcon className="size-3.5" />
-            <span>{t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}</span>
-          </Button>
+          <ActionTooltip content={t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}>
+            <Button
+              type="button"
+              onClick={handleSaveExchangeRates}
+              disabled={savingRates}
+              className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer shrink-0 self-start sm:self-center")}
+              aria-label={t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}
+            >
+              {savingRates ? (
+                <Loader2Icon className="size-4 animate-spin text-primary-foreground shrink-0" />
+              ) : (
+                <SaveIcon className="size-4 text-primary-foreground shrink-0" />
+              )}
+              <span className="sr-only">{t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}</span>
+            </Button>
+          </ActionTooltip>
         </div>
 
         {/* Grid 9 Valuta Asing Terpopuler Dunia */}

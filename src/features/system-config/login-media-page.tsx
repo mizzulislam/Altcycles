@@ -23,6 +23,7 @@ import { KpiCard } from "@/components/shared/dashboard-kpi-card";
 import { ImageAssetUploadBox } from "@/components/shared/image-asset-upload-box";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -773,44 +774,45 @@ export function LoginMediaPage() {
               ) : null}
             </div>
 
-            {sortOrder === "asc" ? (
-              <ActionTooltip content={t("settings:login_media.sort_order_asc")}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setSortOrder("desc")}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer"
-                  aria-label={t("settings:login_media.sort_order_asc")}
-                >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
-                  <span className="sr-only">
-                    {t("settings:login_media.sort_order_asc")}
-                  </span>
-                </Button>
-              </ActionTooltip>
-            ) : (
+            <ActionTooltip
+              content={
+                sortOrder === "asc"
+                  ? t("settings:login_media.sort_order_asc")
+                  : t("settings:login_media.sort_order_desc")
+              }
+            >
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => setSortOrder("asc")}
-                className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shrink-0 cursor-pointer border-primary/40 bg-primary/5 text-primary"
+                size="icon"
+                onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+                className={cn(
+                  "size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80",
+                  sortOrder === "desc" && "border-primary/50 text-primary bg-primary/5",
+                )}
+                aria-label={
+                  sortOrder === "asc"
+                    ? t("settings:login_media.sort_order_asc")
+                    : t("settings:login_media.sort_order_desc")
+                }
               >
-                <ArrowUpDownIcon className="size-3.5" />
-                <span>{t("settings:login_media.sort_order_desc")}</span>
+                <ArrowUpDownIcon className="size-4 text-primary" />
+                <span className="sr-only">
+                  {sortOrder === "asc"
+                    ? t("settings:login_media.sort_order_asc")
+                    : t("settings:login_media.sort_order_desc")}
+                </span>
               </Button>
-            )}
+            </ActionTooltip>
 
             <ActionTooltip content={t("settings:login_media.btn_add", "Tambah Media Carousel")}>
               <Button
                 type="button"
-                size="icon"
                 onClick={openCreateDialog}
-                className="size-9 rounded-xl shrink-0 cursor-pointer"
+                className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                 aria-label={t("settings:login_media.btn_add", "Tambah Media Carousel")}
               >
-                <PlusIcon className="size-4" />
+                <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                 <span className="sr-only">
                   {t("settings:login_media.btn_add", "Tambah Media Carousel")}
                 </span>

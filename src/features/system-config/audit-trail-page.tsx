@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { JsonCodeView } from "@/components/shared/json-code-view";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -183,20 +184,35 @@ export function AuditTrailPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+              <ActionTooltip
+                content={
+                  sortOrder === "asc"
+                    ? `${t("common:action.order", "Urutan:")} ${t("common:sort.ascending", "Ascending (A-Z)")}`
+                    : `${t("common:action.order", "Urutan:")} ${t("common:sort.descending", "Descending (Z-A)")}`
                 }
-                className="h-9 gap-1.5 rounded-xl text-xs font-medium cursor-pointer shrink-0"
               >
-                <ArrowUpDownIcon className="size-3.5" />
-                <span>
-                  {t("common:action.order", "Urutan:")} {sortOrder === "asc" ? t("common:sort.ascending", "Ascending (A-Z)") : t("common:sort.descending", "Descending (Z-A)")}
-                </span>
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+                  }
+                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                  aria-label={
+                    sortOrder === "asc"
+                      ? `${t("common:action.order", "Urutan:")} ${t("common:sort.ascending", "Ascending (A-Z)")}`
+                      : `${t("common:action.order", "Urutan:")} ${t("common:sort.descending", "Descending (Z-A)")}`
+                  }
+                >
+                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <span className="sr-only">
+                    {sortOrder === "asc"
+                      ? `${t("common:action.order", "Urutan:")} ${t("common:sort.ascending", "Ascending (A-Z)")}`
+                      : `${t("common:action.order", "Urutan:")} ${t("common:sort.descending", "Descending (Z-A)")}`}
+                  </span>
+                </Button>
+              </ActionTooltip>
             </div>
           }
         />
