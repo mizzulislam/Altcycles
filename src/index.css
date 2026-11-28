@@ -44,6 +44,13 @@
   --status-danger-fg: #B91C1C;
   --status-danger-border: #FECACA;
 
+  /* Palet warna grafik semantik (Chart Palette) */
+  --chart-1: #0B43C8;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #6366F1;
+  --chart-5: #EC4899;
+
   --radius: 0.75rem;
 }
 
@@ -87,6 +94,13 @@
   --status-danger-bg: rgba(239, 68, 68, 0.15);
   --status-danger-fg: #F87171;
   --status-danger-border: rgba(239, 68, 68, 0.3);
+
+  /* Palet warna grafik semantik Dark Mode */
+  --chart-1: #38BDF8;
+  --chart-2: #34D399;
+  --chart-3: #FBBF24;
+  --chart-4: #818CF8;
+  --chart-5: #F472B6;
 }
 
 @theme inline {
@@ -122,6 +136,15 @@
   --color-status-danger-bg: var(--status-danger-bg);
   --color-status-danger-fg: var(--status-danger-fg);
   --color-status-danger-border: var(--status-danger-border);
+
+  --color-field-bg: var(--field-bg);
+  --color-field-border: var(--field-border);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

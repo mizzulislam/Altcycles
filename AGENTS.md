@@ -63,6 +63,12 @@ Dokumen ini mencatat konvensi arsitektur komponen dan penggunaan skill untuk **A
 - **Standar Navigasi Tab (`Tabs`) (Design System Rule):**
   - Seluruh bar navigasi tab halaman wajib memakai komponen `@/components/ui/tabs` (container `bg-card rounded-2xl p-2 border border-border/80 shadow-2xs`, item `rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold` dengan `bg-primary text-primary-foreground shadow-xs` saat aktif, ikon di sebelah kiri label, serta badge pill `tabular-nums` jika menampilkan jumlah item).
   - **Pengecualian Tab Profil 4-Kolom:** halaman *Profil Perusahaan* dan *Pengaturan Pengguna* tetap menggunakan tata letak grid 4 kolom penuh (`grid-cols-2 md:grid-cols-4 gap-2 p-2`), namun menyamakan tinggi, padding, ukuran teks (`text-xs sm:text-sm font-semibold`), dan radius item (`rounded-xl py-2.5 px-3.5`) dengan standar tab halaman lainnya.
+- **Standar Satu Sumber Kebenaran Komponen UI (Single Source of Truth Rule):**
+  - Seluruh halaman fitur dilarang menulis tag HTML interaktif mentah (`<button>`, `<input>`, `<select>`, `<textarea>`, `<table>`) dengan kelas CSS manual di luar folder komponen bersama (`@/components/ui/` dan `@/components/patterns/`).
+  - Form dialog modal wajib menggunakan komponen pola `ModalFooterAction` untuk tombol Batal/Simpan dan status loading.
+  - Form pencarian toolbar tabel wajib menggunakan komponen pola `SearchInput`.
+  - Seluruh indikator status persetujuan dan dokumen wajib menggunakan `StatusBadge` dengan token semantik resmi.
+  - Seluruh palet warna grafik wajib menggunakan token semantik `--chart-1` s/d `--chart-5`, dilarang mendeklarasikan kode warna hex `#` mentah di dalam file halaman.
 
 ## 2. Keamanan & Kerahasiaan Data Keuangan
 
