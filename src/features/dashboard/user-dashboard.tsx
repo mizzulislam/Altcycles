@@ -1,6 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import { PlusIcon } from "lucide-react";
 import { buildRupiahHistogramBins } from "@/components/shared/dashboard-charts";
 import { PageHeader } from "@/components/shared/page-header";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
@@ -9,7 +7,6 @@ import {
   PeriodFilter,
   type DashboardPeriodPreset,
 } from "@/components/shared/dashboard-period-filter";
-import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/loader";
 import { useAuth } from "@/features/auth/auth-context";
 import { useLanguage } from "@/lib/i18n";
@@ -294,17 +291,6 @@ export function UserDashboardPage() {
               onExportPdf={() => exportUserDashboardPdf(exportContext)}
               onExportCsv={() => exportUserDashboardCsv(exportContext)}
             />
-            <Button
-              type="button"
-              size="sm"
-              asChild
-              className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shrink-0 cursor-pointer gap-1.5 shadow-2xs"
-            >
-              <Link to="/user/pembayaran">
-                <PlusIcon className="size-4" />
-                <span>{t("user_portal.submit_payment", "Ajukan Pembayaran")}</span>
-              </Link>
-            </Button>
           </div>
         }
       />
