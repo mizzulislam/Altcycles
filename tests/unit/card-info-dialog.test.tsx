@@ -282,6 +282,8 @@ describe("GameDialog & CardHeaderWithInfo Components", () => {
     const allowedExceptions = [
       // Portal publik pembeli (unauthenticated) yang disetujui dikecualikan
       path.normalize("buyer-portal/buyer-portal-page.tsx"),
+      path.normalize("buyer-portal/components/buyer-portal-lookup-tab.tsx"),
+      path.normalize("buyer-portal/components/buyer-portal-submit-tab.tsx"),
       // Label metadata kode template di dalam admin (bukan subjudul kartu)
       path.normalize("system-config/system-config-page.tsx"),
     ];
