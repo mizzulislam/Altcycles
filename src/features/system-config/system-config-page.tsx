@@ -2,6 +2,7 @@ import * as React from "react";
 import { FlaskConicalIcon, RotateCcwIcon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
+import { PageHeader } from "@/components/patterns";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -194,14 +195,10 @@ export function SystemConfigPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("settings:admin_settings.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("settings:admin_settings.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("settings:admin_settings.title")}
+        description={t("settings:admin_settings.subtitle")}
+      />
 
       <Tabs defaultValue="identitas">
         <TabsList>

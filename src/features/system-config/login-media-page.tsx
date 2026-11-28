@@ -670,16 +670,18 @@ export function LoginMediaPage() {
                       {t("settings:login_media.filter_media_title")}
                     </span>
                     {categoryFilter !== "all" || statusFilter !== "all" ? (
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="sm"
                         onClick={() => {
                           setCategoryFilter("all");
                           setStatusFilter("all");
                         }}
-                        className="text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
+                        className="h-auto p-0 text-xs font-semibold text-primary dark:text-sky-400 hover:underline cursor-pointer"
                       >
                         {t("common:action.reset")}
-                      </button>
+                      </Button>
                     ) : null}
                   </div>
 
@@ -711,11 +713,12 @@ export function LoginMediaPage() {
                         ).map((opt) => {
                           const active = categoryFilter === opt.value;
                           return (
-                            <button
+                            <Button
                               key={opt.value}
                               type="button"
+                              variant="ghost"
                               onClick={() => setCategoryFilter(opt.value)}
-                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                              className={`w-full flex items-center justify-between px-3 py-2 h-auto rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                                 active
                                   ? "bg-primary/12 text-primary dark:text-sky-400 font-semibold"
                                   : "text-foreground hover:bg-muted/60"
@@ -725,7 +728,7 @@ export function LoginMediaPage() {
                               {active ? (
                                 <CheckIcon className="size-3.5 shrink-0" />
                               ) : null}
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
@@ -754,18 +757,20 @@ export function LoginMediaPage() {
                             },
                           ] as const
                         ).map((opt) => (
-                          <button
+                          <Button
                             key={opt.value}
                             type="button"
+                            variant={statusFilter === opt.value ? "default" : "ghost"}
+                            size="sm"
                             onClick={() => setStatusFilter(opt.value)}
-                            className={`py-1.5 px-2 rounded-lg text-xs font-semibold text-center transition-colors cursor-pointer ${
+                            className={`py-1.5 px-2 h-auto rounded-lg text-xs font-semibold text-center transition-colors cursor-pointer ${
                               statusFilter === opt.value
                                 ? "bg-primary text-primary-foreground shadow-2xs"
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                             }`}
                           >
                             {opt.label}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>

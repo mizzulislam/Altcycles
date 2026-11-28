@@ -544,10 +544,12 @@ export function CompanyProfileTabFinancial({
                             "Hapus rekening ini",
                           )}
                         >
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="table-action"
                             onClick={() => onRemoveBankSlot(idx)}
-                            className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                            className="size-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                           >
                             <Trash2Icon className="size-3.5" />
                             <span className="sr-only">
@@ -556,7 +558,7 @@ export function CompanyProfileTabFinancial({
                                 "Hapus Rekening",
                               )}
                             </span>
-                          </button>
+                          </Button>
                         </ActionTooltip>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { ModalFooterAction, SearchInput } from "@/components/patterns";
 import { useLanguage } from "@/lib/i18n";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -176,13 +177,14 @@ function UserRolesDropdownCell({
 
   return (
     <>
-      <button
+      <Button
         ref={buttonRef}
         type="button"
+        variant="outline"
         disabled={isSelf}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-left -my-0.5",
+          "w-full flex items-center justify-between gap-2 px-3 py-1.5 h-auto text-xs font-semibold rounded-lg border transition-all cursor-pointer text-left -my-0.5",
           isSelf
             ? "bg-muted/40 border-border/60 text-muted-foreground cursor-not-allowed"
             : "bg-card border-border hover:bg-muted/50 text-foreground",
@@ -195,7 +197,7 @@ function UserRolesDropdownCell({
             isOpen && "rotate-180",
           )}
         />
-      </button>
+      </Button>
 
       {isOpen &&
         !isSelf &&
@@ -431,11 +433,11 @@ export function UsersManagementPage() {
           description={t("settings:users.card_desc", "Atur hak akses tunggal atau multi-peran untuk Super Admin, Admin, dan User.")}
           action={
             <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-end">
-              <Input
+              <SearchInput
                 placeholder={t("settings:users.search_input_placeholder", "Cari nama atau email...")}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
+                onChange={setSearch}
+                containerClassName="w-full sm:w-56"
               />
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 {roleFilter === "all" ? (
@@ -469,7 +471,7 @@ export function UsersManagementPage() {
               </Select>
 
               <ActionTooltip content={t("settings:users.add_account_btn", "Tambah Akun Internal")}>
-                <button
+                <Button
                   type="button"
                   onClick={() => setCreateOpen(true)}
                   className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
@@ -477,7 +479,7 @@ export function UsersManagementPage() {
                 >
                   <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("settings:users.add_account_btn", "Tambah Akun Internal")}</span>
-                </button>
+                </Button>
               </ActionTooltip>
             </div>
           }
@@ -687,19 +689,11 @@ export function UsersManagementPage() {
             {createError ? (
               <p className="text-xs text-destructive">{createError}</p>
             ) : null}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateOpen(false)}
-                className="rounded-2xl text-xs h-9"
-              >
-                {t("action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={creating} className="rounded-2xl text-xs h-9 shadow-2xs">
-                {creating ? t("settings:users.modal_creating", "Membuat...") : t("settings:users.modal_btn_create", "Buat Akun")}
-              </Button>
-            </div>
+            <ModalFooterAction
+              onCancel={() => setCreateOpen(false)}
+              saving={creating}
+              submitLabel={t("settings:users.modal_btn_create", "Buat Akun")}
+            />
           </form>
         </DialogContent>
       </Dialog>

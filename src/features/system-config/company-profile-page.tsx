@@ -6,6 +6,7 @@ import {
   Share2Icon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { PageLoader } from "@/components/ui/loader";
 import { TruncatedTooltipText } from "@/components/shared/page-header";
@@ -298,11 +299,12 @@ export function CompanyProfilePage() {
 
       {/* Tab Navigasi 3-Kolom */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">
-        <button
+        <Button
           type="button"
+          variant={activeTab === "identitas" ? "default" : "ghost"}
           onClick={() => handleTabChange("identitas")}
           className={cn(
-            "flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
+            "flex items-center justify-center gap-2 py-2.5 px-3.5 h-auto rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
             activeTab === "identitas"
               ? "bg-primary text-primary-foreground shadow-xs"
               : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -312,13 +314,14 @@ export function CompanyProfilePage() {
           <span className="truncate">
             {t("company.tab_identity", "Identitas & Logo")}
           </span>
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
+          variant={activeTab === "keuangan" ? "default" : "ghost"}
           onClick={() => handleTabChange("keuangan")}
           className={cn(
-            "flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
+            "flex items-center justify-center gap-2 py-2.5 px-3.5 h-auto rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
             activeTab === "keuangan"
               ? "bg-primary text-primary-foreground shadow-xs"
               : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -328,13 +331,14 @@ export function CompanyProfilePage() {
           <span className="truncate">
             {t("company.tab_accounts", "Data Keuangan")}
           </span>
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
+          variant={activeTab === "sosmed" ? "default" : "ghost"}
           onClick={() => handleTabChange("sosmed")}
           className={cn(
-            "flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
+            "flex items-center justify-center gap-2 py-2.5 px-3.5 h-auto rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer text-center",
             activeTab === "sosmed"
               ? "bg-primary text-primary-foreground shadow-xs"
               : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
@@ -344,7 +348,7 @@ export function CompanyProfilePage() {
           <span className="truncate">
             {t("company.tab_social", "Sosial Media Footer")}
           </span>
-        </button>
+        </Button>
       </div>
 
       <div className="w-full">

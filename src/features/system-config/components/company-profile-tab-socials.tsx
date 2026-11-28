@@ -275,10 +275,12 @@ export function CompanyProfileTabSocials({
                           "Hapus sosial media ini",
                         )}
                       >
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="table-action"
                           onClick={() => onRemoveSlot(idx)}
-                          className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                          className="size-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                         >
                           <Trash2Icon className="size-3.5" />
                           <span className="sr-only">
@@ -287,7 +289,7 @@ export function CompanyProfileTabSocials({
                               "Hapus Sosial Media",
                             )}
                           </span>
-                        </button>
+                        </Button>
                       </ActionTooltip>
                     )}
                   </div>

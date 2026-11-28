@@ -826,17 +826,19 @@ export function ShortcutsManagementPage() {
                   {t("shortcuts.filter_title", "Filter Pintasan")}
                 </span>
                 {activeFilterCount > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
+                    size="sm"
                     onClick={() => {
                       setGroupFilter("all");
                       setRoleFilter("all");
                       setStatusFilter("all");
                     }}
-                    className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                    className="h-auto p-0 text-[11px] font-semibold text-primary hover:underline cursor-pointer"
                   >
                     {t("shortcuts.reset_filter", "Reset")}
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -924,15 +926,16 @@ export function ShortcutsManagementPage() {
                 { value: "group", label: t("shortcuts.sort_group", "Grup & Modul") },
                 { value: "status", label: t("shortcuts.sort_status", "Status Pintasan") },
               ] as Array<{ value: ShortcutSortOption; label: string }>).map((opt) => (
-                <button
+                <Button
                   key={opt.value}
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     setSortBy(opt.value);
                     setSortMenuOpen(false);
                   }}
                   className={cn(
-                    "flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer text-left",
+                    "flex items-center justify-between w-full px-3 py-2 h-auto rounded-xl text-xs font-medium transition-colors cursor-pointer text-left",
                     sortBy === opt.value
                       ? "bg-primary/10 text-primary font-semibold"
                       : "text-foreground hover:bg-muted/50",
@@ -940,7 +943,7 @@ export function ShortcutsManagementPage() {
                 >
                   <span>{opt.label}</span>
                   {sortBy === opt.value && <CheckIcon className="size-3.5 text-primary" />}
-                </button>
+                </Button>
               ))}
             </div>,
             document.body,
