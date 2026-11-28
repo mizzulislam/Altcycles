@@ -69,6 +69,10 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/dashboard/user-dashboard/user-dashboard-sharing-table.tsx",
       "src/features/dashboard/user-dashboard/user-dashboard-export-handlers.ts",
       "src/features/dashboard/user-dashboard/user-dashboard-types.ts",
+      "src/features/system-config/dashboard/super-admin-dashboard-kpi-grid.tsx",
+      "src/features/system-config/dashboard/super-admin-dashboard-charts.tsx",
+      "src/features/system-config/dashboard/super-admin-dashboard-audit-table.tsx",
+      "src/features/system-config/dashboard/super-admin-dashboard-export-handlers.ts",
     ];
 
     for (const relPath of extractedComponents) {
@@ -81,6 +85,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
     const limits: Record<string, number> = {
       "src/features/master-data/admin-dashboard.tsx": 500,
       "src/features/dashboard/user-dashboard.tsx": 400,
+      "src/features/system-config/super-admin-dashboard.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
