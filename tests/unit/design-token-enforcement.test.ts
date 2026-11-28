@@ -94,6 +94,10 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/master-data/projects/projects-table.tsx",
       "src/features/master-data/projects/project-form-dialog.tsx",
       "src/features/master-data/projects/project-view-dialog.tsx",
+      "src/features/accounting/components/use-journals-page-state.ts",
+      "src/features/accounting/components/journals-accounting-assumptions.tsx",
+      "src/features/accounting/components/journals-toolbar-controls.tsx",
+      "src/features/accounting/components/journals-action-dialogs.tsx",
     ];
 
     for (const relPath of extractedComponents) {
@@ -111,6 +115,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/system-config/super-admin-dashboard.tsx": 400,
       "src/features/payment-approvals/user-payments-page.tsx": 400,
       "src/features/payment-approvals/admin-approvals-page.tsx": 400,
+      "src/features/accounting/journals-page.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
@@ -163,6 +168,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/payment-approvals/admin-approvals-page.tsx",
       "src/features/invoicing/invoicing-page.tsx",
       "src/features/master-data/projects-page.tsx",
+      "src/features/accounting/journals-page.tsx",
     ];
 
     for (const relPath of standardizedPages) {
