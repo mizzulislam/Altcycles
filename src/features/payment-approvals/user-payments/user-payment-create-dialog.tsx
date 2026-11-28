@@ -1,6 +1,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { ModalFooterAction } from "@/components/patterns";
+import { ChartTypeSwitcher } from "@/components/shared/dashboard-charts";
 import {
   GoogleDriveIcon,
   GoogleDrivePickerDialog,
@@ -14,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import {
   Field,
   FieldDescription,
@@ -345,37 +345,23 @@ export function UserPaymentCreateDialog({
               <Field>
                 <div className="flex items-center justify-between mb-1.5">
                   <FieldLabel required>{t("approvals:modals.field_attachments")}</FieldLabel>
-                  <div className="inline-flex rounded-xl p-0.5 bg-muted/60 border border-border/60 text-xs">
-                    <Button
-                      type="button"
-                      variant={proofSource === "local" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setProofSource("local")}
-                      className={cn(
-                        "px-2.5 py-1 h-7 rounded-lg font-medium transition-all cursor-pointer",
-                        proofSource === "local"
-                          ? "bg-card shadow-2xs font-bold text-foreground hover:bg-card"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {t("approvals:modals.proof_local")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={proofSource === "gdrive" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setProofSource("gdrive")}
-                      className={cn(
-                        "px-2.5 py-1 h-7 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                        proofSource === "gdrive"
-                          ? "bg-card shadow-2xs font-bold text-foreground hover:bg-card"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <GoogleDriveIcon className="size-3.5" />
-                      <span>{t("approvals:modals.proof_gdrive")}</span>
-                    </Button>
-                  </div>
+                  <ChartTypeSwitcher
+                    value={proofSource}
+                    onChange={(val) => setProofSource(val as "local" | "gdrive")}
+                    options={[
+                      {
+                        value: "local",
+                        label: t("approvals:modals.proof_local"),
+                        title: t("approvals:modals.proof_local"),
+                      },
+                      {
+                        value: "gdrive",
+                        label: t("approvals:modals.proof_gdrive"),
+                        title: t("approvals:modals.proof_gdrive"),
+                        icon: GoogleDriveIcon,
+                      },
+                    ]}
+                  />
                 </div>
 
                 {proofSource === "local" ? (

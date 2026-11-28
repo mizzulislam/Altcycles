@@ -7,6 +7,7 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
+import { SearchInput } from "@/components/patterns/search-input";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
@@ -20,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -110,11 +110,11 @@ export function ProjectsTable({
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
         controls={
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end">
-            <Input
+            <SearchInput
               placeholder={t("projects.search_placeholder", "Cari kode atau nama proyek...")}
               value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full sm:w-56 h-9 rounded-xl text-xs sm:text-sm"
+              onChange={onSearchChange}
+              containerClassName="w-full sm:w-56"
             />
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               {statusFilter === "all" ? (
@@ -219,7 +219,7 @@ export function ProjectsTable({
                 variant="default"
                 size="icon"
                 onClick={onOpenNew}
-                className={TOOLBAR_BUTTON_CLASS}
+                className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                 aria-label={t("projects.add_button", "Tambah Proyek")}
               >
                 <PlusIcon className="size-4 text-primary-foreground shrink-0" />

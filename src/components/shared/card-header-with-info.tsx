@@ -95,7 +95,7 @@ export function CardHeaderWithInfo({
   return (
     <CardHeader
       className={cn(
-        "px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "px-6 py-4 border-b border-border/70 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-h-[68px]",
         headerClassName || className,
       )}
     >

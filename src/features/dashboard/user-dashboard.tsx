@@ -243,7 +243,11 @@ export function UserDashboardPage() {
     };
   });
 
-  const welcomeFullText = `${t("user_portal.welcome", "Selamat datang")}, ${profile?.full_name ?? "Rekan"}. ${t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}`;
+  const welcomeTitle = `${t("user_portal.welcome", "Selamat Datang")}, ${profile?.full_name ?? "Rekan"}`;
+  const dashboardDesc = t(
+    "user_portal.dashboard_desc",
+    "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.",
+  );
 
   const exportContext: UserDashboardExportContext = {
     t,
@@ -262,17 +266,10 @@ export function UserDashboardPage() {
     <div className="flex flex-col gap-6">
       {/* Header Halaman */}
       <PageHeader
-        title={t("user_portal.dashboard_title", "Dasbor Anggota Tim")}
-        description={
-          <>
-            {t("user_portal.welcome", "Selamat datang")},{" "}
-            <span className="font-semibold text-foreground">
-              {profile?.full_name ?? "Rekan"}
-            </span>
-            . {t("user_portal.dashboard_desc", "Pantau penugasan proyek, pembayaran, dan hak bagi hasil Anda.")}
-          </>
-        }
-        descriptionTooltip={welcomeFullText}
+        title={welcomeTitle}
+        description={dashboardDesc}
+        titleTooltip={welcomeTitle}
+        descriptionTooltip={dashboardDesc}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <PeriodFilter

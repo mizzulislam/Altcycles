@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
  * STANDAR RESMI UI BUTTON TOOLBAR TABEL & KARTU ALTCYCLES (Single Source of Truth)
  * Menyeragamkan:
  * - Ukuran: size-9 (36x36 px)
- * - Radius / Sudut Box: rounded-xl (!rounded-xl untuk mencegah override CSS global)
+ * - Radius / Sudut Box: rounded-xl
  * - Warna Box: Solid Biru Primary (bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs)
+ * - Efek Bayangan: shadow-2xs konsisten
  * - Warna Ikon: Putih / Kontras Tema (text-primary-foreground)
  */
 export const TOOLBAR_BUTTON_CLASS =

@@ -654,7 +654,7 @@ export function CompanyProfileTabFinancial({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 sm:pt-5 border-t border-border/60">
             <p className="text-[11px] text-muted-foreground">
               {t(
                 "settings:company.future_docs_only_note",

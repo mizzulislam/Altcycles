@@ -1,4 +1,5 @@
 import * as React from "react";
+import { PieChartIcon } from "lucide-react";
 import { formatCompactRupiah } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
@@ -280,9 +281,10 @@ export function CompositionChart({
 
   if (total <= 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10">
-        <p className="text-xs font-semibold text-foreground">{emptyTitle}</p>
-        <p className="text-[11px] text-muted-foreground mt-1 max-w-xs leading-relaxed">
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 min-h-[196px]">
+        <PieChartIcon className="size-8 text-muted-foreground/60 mb-2" />
+        <p className="text-sm font-semibold text-foreground">{emptyTitle}</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
           {emptySubtitle}
         </p>
       </div>

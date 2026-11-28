@@ -144,7 +144,7 @@ export function exportSuperAdminCsv(ctx: SuperAdminDashboardExportContext): void
 }
 
 export async function exportSuperAdminPdf(ctx: SuperAdminDashboardExportContext): Promise<void> {
-  const { profiles, activeUsers, company, accounts, allLogs, recentLogs, periodFilter, t, language } = ctx;
+  const { profiles, activeUsers, company, accounts, allLogs, recentLogs, coaCompositionSlices, periodFilter, t, language } = ctx;
   const comp = await getCompanyProfile();
   const bytes = await generateDocumentPdf({
     orientation: "landscape",
@@ -162,7 +162,7 @@ export async function exportSuperAdminPdf(ctx: SuperAdminDashboardExportContext)
     ],
     sections: [
       {
-        title: t("settings:super_admin.card_recent_audit", "Jejak Audit Terbaru"),
+        title: t("settings:super_admin.card_recent_audit", "Jejak Audit Aktivitas Sistem Terkini"),
         tableColumns: [
           { header: t("settings:audit.col_timestamp", "Waktu Kejadian"), widthRatio: 0.22, align: "left" },
           { header: t("settings:audit.col_actor", "Pelaku & Peran"), widthRatio: 0.28, align: "left" },
@@ -176,7 +176,32 @@ export async function exportSuperAdminPdf(ctx: SuperAdminDashboardExportContext)
           `${log.entity_name} (#${log.entity_id ? log.entity_id.slice(0, 8) : "-"})`,
         ]),
       },
+      {
+        title: "LAMPIRAN A: REKAPITULASI KOMPOSISI BAGAN AKUN (COA) & PENGGUNA SISTEM",
+        tableColumns: [
+          { header: "Kategori / Indikator", widthRatio: 0.30, align: "left" },
+          { header: "Rincian Klasifikasi", widthRatio: 0.30, align: "left" },
+          { header: "Jumlah / Satuan", widthRatio: 0.20, align: "center" },
+          { header: "Keterangan Audit", widthRatio: 0.20, align: "left" },
+        ],
+        tableRows: [
+          ...coaCompositionSlices.map((c) => [
+            "Bagan Akun (COA)",
+            `Tipe Akun: ${c.label}`,
+            `${c.value} Akun`,
+            "Standar Akuntansi PSAK/IFRS",
+          ]),
+          ...profiles.slice(0, 6).map((p) => [
+            "Pengguna Internal",
+            p.full_name || p.username || "-",
+            p.role.toUpperCase(),
+            p.is_active ? "Akses Aktif" : "Nonaktif",
+          ]),
+        ],
+      },
     ],
+    rightSignatureLabel: "Penanggung Jawab Administrasi Sistem,",
+    rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
   });
   downloadPdfBytes(bytes, `Ringkasan-Dasbor-Super-Admin-${new Date().toISOString().slice(0, 10)}.pdf`);
   toast.success(t("dashboard:export.toast_pdf_success", "Ringkasan dasbor berhasil diekspor ke PDF"));

@@ -16,7 +16,6 @@ import {
 } from "@/components/shared/dashboard-charts";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
 import { formatCompactRupiah, formatRupiah } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 
 export interface AdminDashboardChartsRowProps {
   trendChartType: MultiSeriesChartKind;
@@ -188,38 +187,33 @@ export function AdminDashboardChartsRow({
 
       {/* Grafik 2: Komposisi Keuangan (Pie 3D & Batang Horizontal Terintegrasi) */}
       <ChartCard
-        title={t("dashboard.charts.composition_title", "Komposisi Keuangan")}
+        title={
+          donutMode === "profit"
+            ? t("dashboard:charts.tab_profit_loss", "Komposisi Laba Rugi")
+            : t("dashboard:charts.tab_cash_flow", "Komposisi Arus Kas")
+        }
+        titleClassName="text-xs sm:text-sm font-bold"
         subtitle={t(
           "dashboard.charts.composition_subtitle",
           "Proporsi struktur keuangan dan likuiditas kas.",
         )}
         controls={
-          <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setDonutMode("profit")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                donutMode === "profit"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("dashboard:charts.tab_profit_loss", "Laba Rugi")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDonutMode("cash")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
-                donutMode === "cash"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("dashboard:charts.tab_cash_flow", "Arus Kas")}
-            </button>
-          </div>
+          <ChartTypeSwitcher
+            value={donutMode}
+            onChange={(val) => setDonutMode(val as "profit" | "cash")}
+            options={[
+              {
+                value: "profit",
+                label: t("dashboard:charts.tab_profit_loss", "Laba Rugi"),
+                title: t("dashboard:charts.tab_profit_loss", "Laba Rugi"),
+              },
+              {
+                value: "cash",
+                label: t("dashboard:charts.tab_cash_flow", "Arus Kas"),
+                title: t("dashboard:charts.tab_cash_flow", "Arus Kas"),
+              },
+            ]}
+          />
         }
         footer={
           <ChartValueFooter

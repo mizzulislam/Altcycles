@@ -164,7 +164,7 @@ export function CompanyProfileTabSocials({
   };
 
   return (
-    <Card>
+    <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden">
       <CardHeaderWithInfo
         title={t("settings:company.social_accounts_title", {
           count: socials.length,
@@ -419,11 +419,11 @@ export function CompanyProfileTabSocials({
             </div>
           </div>
 
-          <div className="flex justify-end pt-2 border-t border-border/60">
+          <div className="flex justify-end pt-4 sm:pt-5 border-t border-border/60">
             <Button
               type="submit"
               disabled={saving}
-              className="h-9 text-xs rounded-2xl gap-2 shadow-xs cursor-pointer"
+              className="h-9 px-4 text-xs sm:text-sm font-semibold rounded-xl gap-2 shadow-xs cursor-pointer max-sm:w-full"
             >
               {saving ? (
                 <>

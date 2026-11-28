@@ -21,6 +21,7 @@ export interface DashboardChartCardProps {
   className?: string;
   contentClassName?: string;
   headerClassName?: string;
+  titleClassName?: string;
 }
 
 export function ChartCard({
@@ -36,6 +37,7 @@ export function ChartCard({
   className,
   contentClassName,
   headerClassName,
+  titleClassName = "text-sm sm:text-base",
 }: DashboardChartCardProps) {
   return (
     <Card
@@ -53,7 +55,7 @@ export function ChartCard({
         <CardHeaderTitleWithInfo
           title={title}
           description={subtitle}
-          titleClassName="text-sm sm:text-base"
+          titleClassName={titleClassName}
         />
         {controls ? (
           <div className="shrink-0 flex items-center gap-2 ml-auto justify-end">
@@ -75,7 +77,7 @@ export function ChartCard({
           </div>
         ) : (
           <>
-            <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div className="flex-1 flex flex-col justify-start min-h-0">
               {children}
             </div>
             {legend ? (

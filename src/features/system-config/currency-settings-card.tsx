@@ -1,8 +1,6 @@
 import * as React from "react";
 import { Loader2Icon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
-import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CardHeaderTitleWithInfo } from "@/components/shared/card-header-with-info";
@@ -51,10 +49,10 @@ export function FunctionalCurrencyCard({ className }: { className?: string }) {
         <CardHeaderTitleWithInfo
           title={t("settings:currency.functional_title", "Mata Uang Fungsional Sistem")}
           description={t("settings:currency.functional_desc", "Transaksi dalam mata uang asing otomatis ditranslasikan ke mata uang fungsional ini.")}
-          titleClassName="text-xs sm:text-sm font-bold whitespace-normal leading-snug"
+          titleClassName="text-xs sm:text-sm font-bold"
         />
 
-        <div className="w-56 sm:w-[275px] shrink-0">
+        <div className="w-48 sm:w-[215px] shrink-0">
           <Select
             value={functionalCurrency}
             onValueChange={handleSelectFunctionalCurrency}
@@ -130,23 +128,6 @@ export function ExchangeRatesCard({ className }: { className?: string }) {
             )}
             titleClassName="text-base sm:text-lg font-bold"
           />
-
-          <ActionTooltip content={t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}>
-            <Button
-              type="button"
-              onClick={handleSaveExchangeRates}
-              disabled={savingRates}
-              className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer shrink-0 self-start sm:self-center")}
-              aria-label={t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}
-            >
-              {savingRates ? (
-                <Loader2Icon className="size-4 animate-spin text-primary-foreground shrink-0" />
-              ) : (
-                <SaveIcon className="size-4 text-primary-foreground shrink-0" />
-              )}
-              <span className="sr-only">{t("settings:currency.btn_save_rates", "Simpan Kurs Konversi")}</span>
-            </Button>
-          </ActionTooltip>
         </div>
 
         {/* Grid 9 Valuta Asing Terpopuler Dunia */}
@@ -185,6 +166,28 @@ export function ExchangeRatesCard({ className }: { className?: string }) {
               </div>
             );
           })}
+        </div>
+
+        {/* Footer dengan Tombol Simpan di Ujung Kanan */}
+        <div className="flex justify-end pt-4 sm:pt-5 border-t border-border/60">
+          <Button
+            type="button"
+            onClick={handleSaveExchangeRates}
+            disabled={savingRates}
+            className="h-9 text-xs sm:text-sm font-semibold rounded-xl px-4 gap-2 shadow-xs cursor-pointer max-sm:w-full"
+          >
+            {savingRates ? (
+              <>
+                <Loader2Icon className="size-4 animate-spin shrink-0" />
+                <span>{t("common:action.loading", "Menyimpan...")}</span>
+              </>
+            ) : (
+              <>
+                <SaveIcon className="size-4 shrink-0" />
+                <span>{t("common.save", "Simpan")}</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </Card>

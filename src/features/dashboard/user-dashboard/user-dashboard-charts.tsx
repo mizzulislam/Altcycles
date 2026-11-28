@@ -15,9 +15,7 @@ import {
   type buildRupiahHistogramBins,
 } from "@/components/shared/dashboard-charts";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
-import { Button } from "@/components/ui/button";
 import { formatCompactRupiah, formatRupiah } from "@/lib/formatters";
-import { cn } from "@/lib/utils";
 
 export interface UserDashboardChartsProps {
   activityChartType: "column" | "area" | "histogram";
@@ -201,43 +199,70 @@ export function UserDashboardCharts({
 
       {/* Grafik 2: Status Klaim Pembayaran & Porsi Bagi Hasil */}
       <ChartCard
-        title={t("dashboard:user_dashboard.chart_claims_sharing_title", "Status Klaim & Bagi Hasil")}
+        title={
+          compDataset === "claims"
+            ? t("dashboard:user_dashboard.chart_claims_title", "Status Klaim Pembayaran")
+            : t("dashboard:user_dashboard.chart_sharing_title", "Alokasi Bagi Hasil Proyek")
+        }
+        titleClassName="text-xs sm:text-sm font-bold"
         subtitle={
           compDataset === "claims"
             ? t("dashboard:user_dashboard.chart_claims_desc", "Proporsi nominal pengajuan pembayaran per status.")
             : t("dashboard:user_dashboard.chart_sharing_desc", "Alokasi nominal hak bagi hasil per proyek.")
         }
         controls={
-          <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-            <Button
-              type="button"
-              variant={compDataset === "claims" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCompDataset("claims")}
-              className={cn(
-                "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                compDataset === "claims"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("dashboard:user_dashboard.tab_claims", "Klaim")}
-            </Button>
-            <Button
-              type="button"
-              variant={compDataset === "sharing" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCompDataset("sharing")}
-              className={cn(
-                "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                compDataset === "sharing"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil")}
-            </Button>
-          </div>
+          <ChartTypeSwitcher
+            value={compDataset}
+            onChange={(val) => setCompDataset(val as "claims" | "sharing")}
+            options={[
+              {
+                value: "claims",
+                label: t("dashboard:user_dashboard.tab_claims", "Klaim"),
+                title: t("dashboard:user_dashboard.tab_claims", "Klaim"),
+              },
+              {
+                value: "sharing",
+                label: t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil"),
+                title: t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil"),
+              },
+            ]}
+          />
+        }
+        legend={
+          <ChartLegendRow
+            series={
+              compDataset === "claims"
+                ? [
+                    {
+                      key: "paid",
+                      label: t("dashboard:user_dashboard.disbursed", "Dicairkan"),
+                      color: "#10b981",
+                    },
+                    {
+                      key: "submitted",
+                      label: t("dashboard:user_dashboard.status_submitted_short", "Menunggu"),
+                      color: "#0ea5e9",
+                    },
+                    {
+                      key: "rejected",
+                      label: t("dashboard:user_dashboard.status_rejected_short", "Revisi"),
+                      color: "#f43f5e",
+                    },
+                  ]
+                : [
+                    {
+                      key: "sharing",
+                      label: t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil"),
+                      color: "#10b981",
+                    },
+                    {
+                      key: "project",
+                      label: t("projects:title", "Proyek"),
+                      color: "#0B43C8",
+                    },
+                  ]
+            }
+          />
         }
         footer={
           <ChartValueFooter

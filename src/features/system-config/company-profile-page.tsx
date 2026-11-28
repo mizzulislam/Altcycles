@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { PageLoader } from "@/components/ui/loader";
-import { TruncatedTooltipText } from "@/components/shared/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import {
   DEFAULT_SOCIAL_LINKS,
   SOCIAL_PLATFORM_OPTIONS,
@@ -279,23 +279,13 @@ export function CompanyProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="min-w-0">
-        <TruncatedTooltipText
-          as="h1"
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
-        >
-          {t("settings:company.page_title", "Profil Perusahaan")}
-        </TruncatedTooltipText>
-        <TruncatedTooltipText
-          as="p"
-          className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed"
-        >
-          {t(
-            "settings:company.page_desc",
-            "Kelola identitas kop surat, logo resmi, rekening transfer, status perpajakan (PKP & PPN), serta akun sosial media footer dokumen.",
-          )}
-        </TruncatedTooltipText>
-      </div>
+      <PageHeader
+        title={t("settings:company.page_title", "Profil Perusahaan")}
+        description={t(
+          "settings:company.page_desc",
+          "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.",
+        )}
+      />
 
       {/* Tab Navigasi 3-Kolom */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-2 bg-card border border-border/80 rounded-2xl shadow-2xs">

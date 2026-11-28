@@ -4,15 +4,18 @@ import {
   ChevronDownIcon,
   PencilIcon,
   RotateCcwIcon,
-  SearchIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { SearchInput } from "@/components/patterns/search-input";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Table,
@@ -84,15 +87,12 @@ export function ShortcutsTable({
         action={
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* Search Input */}
-            <div className="relative w-full sm:w-60">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder={t("shortcuts.search_placeholder", "Cari pintasan...")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 rounded-xl text-xs sm:text-sm"
-              />
-            </div>
+            <SearchInput
+              placeholder={t("shortcuts.search_placeholder", "Cari pintasan...")}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              containerClassName="w-full sm:w-60"
+            />
 
             {/* Combined Filter Dropdown Button */}
             {activeFilterCount === 0 ? (
@@ -100,16 +100,15 @@ export function ShortcutsTable({
                 <Button
                   ref={filterBtnRef}
                   type="button"
-                  variant="outline"
                   size="icon"
                   onClick={() => {
                     setSortMenuOpen(false);
                     setFilterMenuOpen((prev) => !prev);
                   }}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                  className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                   aria-label={t("shortcuts.btn_filter", "Filter")}
                 >
-                  <SlidersHorizontalIcon className="size-4 text-primary" />
+                  <SlidersHorizontalIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("shortcuts.btn_filter", "Filter")}</span>
                 </Button>
               </ActionTooltip>
@@ -117,16 +116,15 @@ export function ShortcutsTable({
               <Button
                 ref={filterBtnRef}
                 type="button"
-                variant="outline"
                 onClick={() => {
                   setSortMenuOpen(false);
                   setFilterMenuOpen((prev) => !prev);
                 }}
-                className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+                className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "cursor-pointer")}
               >
-                <SlidersHorizontalIcon className="size-4" />
+                <SlidersHorizontalIcon className="size-3.5 text-primary-foreground shrink-0" />
                 <span>{t("shortcuts.btn_filter", "Filter")}</span>
-                <span className="flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums">
+                <span className="flex size-4 items-center justify-center rounded-full bg-white text-primary text-[10px] font-bold tabular-nums">
                   {activeFilterCount}
                 </span>
                 <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", filterMenuOpen && "rotate-180")} />
@@ -139,16 +137,15 @@ export function ShortcutsTable({
                 <Button
                   ref={sortBtnRef}
                   type="button"
-                  variant="outline"
                   size="icon"
                   onClick={() => {
                     setFilterMenuOpen(false);
                     setSortMenuOpen((prev) => !prev);
                   }}
-                  className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                  className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                   aria-label={t("shortcuts.btn_sort", "Urutkan")}
                 >
-                  <ArrowUpDownIcon className="size-4 text-primary" />
+                  <ArrowUpDownIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("shortcuts.btn_sort", "Urutkan")}</span>
                 </Button>
               </ActionTooltip>
@@ -156,14 +153,13 @@ export function ShortcutsTable({
               <Button
                 ref={sortBtnRef}
                 type="button"
-                variant="outline"
                 onClick={() => {
                   setFilterMenuOpen(false);
                   setSortMenuOpen((prev) => !prev);
                 }}
-                className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+                className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "cursor-pointer")}
               >
-                <ArrowUpDownIcon className="size-4" />
+                <ArrowUpDownIcon className="size-3.5 text-primary-foreground shrink-0" />
                 <span>{t("shortcuts.btn_sort", "Urutkan")}</span>
                 <ChevronDownIcon className={cn("size-3.5 opacity-60 transition-transform", sortMenuOpen && "rotate-180")} />
               </Button>
@@ -173,14 +169,13 @@ export function ShortcutsTable({
             <ActionTooltip content={t("shortcuts.reset_all", "Reset Semua ke Default")}>
               <Button
                 type="button"
-                variant="outline"
                 size="icon"
                 onClick={onResetAllClick}
                 disabled={customCount === 0}
-                className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer disabled:opacity-40")}
                 aria-label={t("shortcuts.reset_all", "Reset Semua ke Default")}
               >
-                <RotateCcwIcon className="size-4" />
+                <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
                 <span className="sr-only">{t("shortcuts.reset_all", "Reset Semua ke Default")}</span>
               </Button>
             </ActionTooltip>

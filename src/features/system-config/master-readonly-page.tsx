@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   BookOpenIcon,
   Building2Icon,
+  FlaskConicalIcon,
   FolderKanbanIcon,
   RotateCcwIcon,
   UsersIcon,
@@ -52,6 +53,7 @@ import type {
 } from "@/types/database.types";
 import { FunctionalCurrencyCard, ExchangeRatesCard } from "./currency-settings-card";
 import { PageHeader } from "@/components/shared/page-header";
+import { TablePagination } from "@/components/shared/table-pagination";
 
 export function MasterReadonlyPage() {
   const { t, language } = useLanguage();
@@ -70,6 +72,39 @@ export function MasterReadonlyPage() {
   const [purging, setPurging] = React.useState(false);
 
   const isTestingMode = !journalLockEnabled;
+
+  // Pagination State per Tab Tabel Master
+  const [coaPage, setCoaPage] = React.useState(1);
+  const [coaPageSize, setCoaPageSize] = React.useState(20);
+
+  const [projectsPage, setProjectsPage] = React.useState(1);
+  const [projectsPageSize, setProjectsPageSize] = React.useState(20);
+
+  const [vendorsPage, setVendorsPage] = React.useState(1);
+  const [vendorsPageSize, setVendorsPageSize] = React.useState(20);
+
+  const [customersPage, setCustomersPage] = React.useState(1);
+  const [customersPageSize, setCustomersPageSize] = React.useState(20);
+
+  const paginatedAccounts = React.useMemo(() => {
+    const start = (coaPage - 1) * coaPageSize;
+    return accounts.slice(start, start + coaPageSize);
+  }, [accounts, coaPage, coaPageSize]);
+
+  const paginatedProjects = React.useMemo(() => {
+    const start = (projectsPage - 1) * projectsPageSize;
+    return projects.slice(start, start + projectsPageSize);
+  }, [projects, projectsPage, projectsPageSize]);
+
+  const paginatedVendors = React.useMemo(() => {
+    const start = (vendorsPage - 1) * vendorsPageSize;
+    return vendors.slice(start, start + vendorsPageSize);
+  }, [vendors, vendorsPage, vendorsPageSize]);
+
+  const paginatedCustomers = React.useMemo(() => {
+    const start = (customersPage - 1) * customersPageSize;
+    return customers.slice(start, start + customersPageSize);
+  }, [customers, customersPage, customersPageSize]);
 
   async function handlePurgeData() {
     setPurging(true);
@@ -151,55 +186,40 @@ export function MasterReadonlyPage() {
                   ? t("settings:master_readonly.testing_mode_desc_active", "Mode pengujian aktif. Seluruh transaksi jurnal dapat diedit dan dihapus untuk pengujian alur transaksi.")
                   : t("settings:master_readonly.testing_mode_desc_inactive", "Mode produksi aktif. Seluruh transaksi jurnal terkunci otomatis (Strict Immutability) untuk menjaga integritas pembukuan resmi Altvira.")
               }
-              titleClassName="text-xs sm:text-sm font-bold whitespace-normal leading-snug"
+              titleClassName="text-xs sm:text-sm font-bold"
             />
-            <div className="flex items-center gap-2.5 shrink-0">
-              {isTestingMode && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={purging}
-                  onClick={() => setConfirmPurgeOpen(true)}
-                  className="h-7 rounded-lg px-2 text-[11px] gap-1 border-destructive/35 text-destructive hover:bg-destructive/10 cursor-pointer shrink-0 font-medium"
-                >
-                  <RotateCcwIcon className="size-3" />
-                  <span>{t("settings:master_readonly.testing_mode_purge_btn", "Bersihkan Data Testing")}</span>
-                </Button>
-              )}
-              <label
-                htmlFor="testing-mode-switch"
-                className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
-              >
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {isTestingMode ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
-                </span>
-                <Switch
-                  id="testing-mode-switch"
-                  checked={isTestingMode}
-                  disabled={togglingLock}
-                  aria-label="Toggle Mode Testing & Sandbox"
-                  onCheckedChange={async (enableTesting) => {
-                    setTogglingLock(true);
-                    try {
-                      const nextLockVal = !enableTesting;
-                      await setJournalLockStatus(nextLockVal);
-                      setJournalLockEnabled(nextLockVal);
-                      window.dispatchEvent(new CustomEvent("altcycles:journal-lock-changed"));
-                      if (enableTesting) {
-                        toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
-                      } else {
-                        toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
-                      }
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
-                    } finally {
-                      setTogglingLock(false);
+            <label
+              htmlFor="testing-mode-switch"
+              className="flex items-center gap-2 shrink-0 cursor-pointer select-none"
+            >
+              <span className="text-xs font-semibold text-muted-foreground">
+                {isTestingMode ? t("status.active", "Aktif") : t("status.inactive", "Nonaktif")}
+              </span>
+              <Switch
+                id="testing-mode-switch"
+                checked={isTestingMode}
+                disabled={togglingLock}
+                aria-label="Toggle Mode Testing & Sandbox"
+                onCheckedChange={async (enableTesting) => {
+                  setTogglingLock(true);
+                  try {
+                    const nextLockVal = !enableTesting;
+                    await setJournalLockStatus(nextLockVal);
+                    setJournalLockEnabled(nextLockVal);
+                    window.dispatchEvent(new CustomEvent("altcycles:journal-lock-changed"));
+                    if (enableTesting) {
+                      toast.warning("Mode Testing diaktifkan. Transaksi jurnal dapat diedit & dihapus.");
+                    } else {
+                      toast.success("Mode Normal (Produksi) aktif. Kunci jurnal diaktifkan ketat.");
                     }
-                  }}
-                />
-              </label>
-            </div>
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : t("error", "Gagal mengubah mode sistem."));
+                  } finally {
+                    setTogglingLock(false);
+                  }
+                }}
+              />
+            </label>
           </div>
         </Card>
 
@@ -297,6 +317,39 @@ export function MasterReadonlyPage() {
         <FunctionalCurrencyCard />
       </div>
 
+      {/* Banner Kontekstual Mode Testing & Sandbox Aktif */}
+      {isTestingMode && (
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="size-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <FlaskConicalIcon className="size-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-xs sm:text-sm font-bold text-foreground">
+                {t("settings:master_readonly.sandbox_banner_title", "Mode Testing & Sandbox Sedang Aktif")}
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t(
+                  "settings:master_readonly.sandbox_banner_desc",
+                  "Kunci jurnal dibuka untuk pengujian alur transaksi. Seluruh data transaksi testing dapat dibersihkan dan direset kapan saja.",
+                )}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={purging}
+            onClick={() => setConfirmPurgeOpen(true)}
+            className="h-9 rounded-xl px-4 text-xs gap-2 border-destructive/40 text-destructive bg-transparent hover:bg-destructive/15 hover:text-destructive hover:border-destructive/60 cursor-pointer shrink-0 font-semibold shadow-2xs self-start sm:self-center transition-colors"
+          >
+            <RotateCcwIcon className="size-3.5" />
+            <span>{t("settings:master_readonly.testing_mode_purge_btn", "Bersihkan Data Testing")}</span>
+          </Button>
+        </div>
+      )}
+
       {/* Card 5: Kurs Konversi Valuta Asing (Valas) ke Rupiah */}
       <ExchangeRatesCard />
 
@@ -351,7 +404,7 @@ export function MasterReadonlyPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {accounts.map((acc) => (
+                  {paginatedAccounts.map((acc) => (
                     <TableRow key={acc.id}>
                       <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">
                         {acc.code}
@@ -380,6 +433,13 @@ export function MasterReadonlyPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                currentPage={coaPage}
+                pageSize={coaPageSize}
+                totalItems={accounts.length}
+                onPageChange={setCoaPage}
+                onPageSizeChange={setCoaPageSize}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -403,7 +463,7 @@ export function MasterReadonlyPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {projects.map((p) => (
+                  {paginatedProjects.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">
                         {p.code}
@@ -427,6 +487,13 @@ export function MasterReadonlyPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                currentPage={projectsPage}
+                pageSize={projectsPageSize}
+                totalItems={projects.length}
+                onPageChange={setProjectsPage}
+                onPageSizeChange={setProjectsPageSize}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -449,7 +516,7 @@ export function MasterReadonlyPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vendors.map((v) => (
+                  {paginatedVendors.map((v) => (
                     <TableRow key={v.id}>
                       <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">{v.code}</TableCell>
                       <TableCell className="px-3 font-medium">{v.name}</TableCell>
@@ -476,6 +543,13 @@ export function MasterReadonlyPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                currentPage={vendorsPage}
+                pageSize={vendorsPageSize}
+                totalItems={vendors.length}
+                onPageChange={setVendorsPage}
+                onPageSizeChange={setVendorsPageSize}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -498,7 +572,7 @@ export function MasterReadonlyPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customers.map((c) => (
+                  {paginatedCustomers.map((c) => (
                     <TableRow key={c.id}>
                       <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 font-mono font-medium text-center whitespace-nowrap">{c.code}</TableCell>
                       <TableCell className="px-3 font-medium">{c.name}</TableCell>
@@ -516,6 +590,13 @@ export function MasterReadonlyPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                currentPage={customersPage}
+                pageSize={customersPageSize}
+                totalItems={customers.length}
+                onPageChange={setCustomersPage}
+                onPageSizeChange={setCustomersPageSize}
+              />
             </CardContent>
           </Card>
         </TabsContent>

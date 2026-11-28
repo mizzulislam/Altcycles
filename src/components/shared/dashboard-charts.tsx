@@ -52,13 +52,68 @@ export function ChartLegendRow({
   hiddenKeys,
   onToggleSeries,
   className,
+  stacked = false,
 }: {
   series: Array<{ key: string; label: string; color: string; textClass?: string }>;
   hiddenKeys?: Set<string>;
   onToggleSeries?: (key: string) => void;
   className?: string;
+  stacked?: boolean;
 }) {
   const { t } = useLanguage();
+
+  if (stacked) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col gap-1.5 text-xs select-none",
+          className,
+        )}
+      >
+        <span className="text-[11px] font-medium text-muted-foreground">
+          {t("dashboard:charts.legend", "Keterangan")}
+        </span>
+        <div className="flex flex-wrap items-center justify-start gap-x-3.5 gap-y-1 text-[11px] font-medium">
+          {series.map((s) => {
+            const isHidden = hiddenKeys?.has(s.key) ?? false;
+            const legendTooltip = onToggleSeries
+              ? isHidden
+                ? `Tampilkan seri ${s.label}`
+                : `Sembunyikan seri ${s.label}`
+              : undefined;
+            const btnNode = (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => onToggleSeries?.(s.key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 transition-opacity select-none",
+                  onToggleSeries ? "cursor-pointer hover:opacity-80 active:scale-95" : "cursor-default",
+                  isHidden ? "opacity-35 line-through" : "opacity-100",
+                )}
+              >
+                <span
+                  style={{ backgroundColor: s.color }}
+                  className="size-2.5 rounded-full shrink-0"
+                />
+                <span className={s.textClass ?? "text-muted-foreground"}>
+                  {s.label}
+                </span>
+              </button>
+            );
+            return legendTooltip ? (
+              <ActionTooltip key={s.key} content={legendTooltip} side="top">
+                {btnNode}
+              </ActionTooltip>
+            ) : (
+              btnNode
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

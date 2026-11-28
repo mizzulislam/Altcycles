@@ -1,4 +1,5 @@
 import { FilterIcon, PencilIcon, PlusIcon, PowerIcon, Trash2Icon } from "lucide-react";
+import { SearchInput } from "@/components/patterns/search-input";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { cn } from "@/lib/utils";
 import {
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Spinner } from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -79,14 +79,14 @@ export function CoaTable({
         headerClassName="px-6 py-4 border-b border-border/70 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
         controls={
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-end">
-            <Input
+            <SearchInput
               placeholder={t(
                 "accounting:coa.search_placeholder",
                 "Cari kode atau nama akun...",
               )}
               value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-56 sm:w-64 h-9 rounded-xl bg-background text-xs sm:text-sm"
+              onChange={onSearchChange}
+              containerClassName="w-56 sm:w-64"
             />
             <Select value={typeFilter} onValueChange={onTypeFilterChange}>
               {typeFilter === "all" ? (
@@ -146,15 +146,16 @@ export function CoaTable({
 
             {onOpenNewAccount && (
               <ActionTooltip content={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}>
-                <button
+                <Button
                   type="button"
+                  size="icon"
                   onClick={onOpenNewAccount}
-                  className={TOOLBAR_BUTTON_CLASS}
+                  className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                   aria-label={t("accounting:coa.btn_add_account", "Tambah Akun Baru")}
                 >
                   <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("accounting:coa.btn_add_account", "Tambah Akun Baru")}</span>
-                </button>
+                </Button>
               </ActionTooltip>
             )}
           </div>

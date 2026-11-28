@@ -250,19 +250,19 @@ export function AdminSettingsPage() {
                   <ActionTooltip content={t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}>
                     <Button
                       type="button"
-                      variant="outline"
                       size="icon"
                       onClick={() => setConfirmResetAll(true)}
-                      className="size-9 rounded-xl shrink-0 cursor-pointer text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-500/10 hover:bg-amber-100/80 dark:hover:bg-amber-500/20 border-amber-200/80 dark:border-amber-500/20 transition-colors shadow-2xs"
+                      className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                       aria-label={t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}
                     >
-                      <RotateCcwIcon className="size-4 shrink-0" />
+                      <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
                       <span className="sr-only">{t("settings:admin_settings.btn_reset_sequence", "Reset Semua Urutan")}</span>
                     </Button>
                   </ActionTooltip>
                   <ActionTooltip content={t("settings:admin_settings.btn_edit", "Edit Format Penomoran")}>
                     <Button
                       type="button"
+                      size="icon"
                       onClick={() => setIsEditingSeq(true)}
                       className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                       aria-label={t("settings:admin_settings.btn_edit", "Edit Format Penomoran")}

@@ -509,7 +509,7 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
 
     // Profil Perusahaan
     "company.page_title": "Profil Perusahaan",
-    "company.page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, status perpajakan (PKP & PPN), serta akun sosial media footer dokumen.",
+    "company.page_desc": "Kelola identitas kop surat, logo resmi, rekening transfer, aset tanda tangan resmi, akun sosial media footer dokumen, serta status perpajakan.",
     "company.tab_identity": "Identitas & Logo",
     "company.tab_accounts": "Data Keuangan",
     "company.tab_social": "Sosial Media Footer",
@@ -994,7 +994,7 @@ export const DICTIONARY: Record<Language, Record<string, string>> = {
 
     // Profil Perusahaan
     "company.page_title": "Company Profile",
-    "company.page_desc": "Manage letterhead identity, official logo, bank accounts, taxation status (VAT & taxable enterprise), and footer social media links.",
+    "company.page_desc": "Manage letterhead identity, official logo, bank accounts, official signature assets, footer social media links, and taxation status.",
     "company.tab_identity": "Identity & Logo",
     "company.tab_accounts": "Financial Data",
     "company.tab_social": "Footer Social Media",

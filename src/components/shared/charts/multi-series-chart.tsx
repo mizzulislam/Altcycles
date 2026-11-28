@@ -38,6 +38,8 @@ export function MultiSeriesChart({
   hiddenKeys,
   emptyTitle = "Belum Ada Data Grafik",
   emptySubtitle = "Visualisasi akan muncul otomatis setelah transaksi tercatat.",
+  height = 216,
+  className,
 }: {
   chartType: MultiSeriesChartKind;
   data: MultiSeriesDatum[];
@@ -48,6 +50,8 @@ export function MultiSeriesChart({
   hiddenKeys?: Set<string>;
   emptyTitle?: string;
   emptySubtitle?: string;
+  height?: number;
+  className?: string;
 }) {
   // Fallback anggun: Batang, Line, dan Bubble otomatis dialihkan ke Column/Area tanpa error (Item 4)
   const chartType: "column" | "area" =
@@ -63,7 +67,12 @@ export function MultiSeriesChart({
 
   if (data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10">
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 min-h-[196px]",
+          className,
+        )}
+      >
         <BarChart3Icon className="size-8 text-muted-foreground/60 mb-2" />
         <p className="text-sm font-semibold text-foreground">{emptyTitle}</p>
         <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
@@ -80,7 +89,7 @@ export function MultiSeriesChart({
 
   // Ukuran kanvas SVG & konfigurasi tema grafik terstandar
   const svgW = 640;
-  const svgH = 216;
+  const svgH = height;
   const padT = 18;
   const padB = 30;
   const tickRatios = [1, 0.5, 0];
@@ -105,7 +114,7 @@ export function MultiSeriesChart({
     const hoveredDatum = hoveredIndex !== null ? data[hoveredIndex] : null;
 
     return (
-      <div className="relative">
+      <div className={cn("relative", className)}>
         {hoveredDatum ? (
           <div className="absolute top-1 right-2 z-20 w-48 rounded-xl border border-border/80 bg-popover p-2.5 text-[11px] shadow-xl pointer-events-none">
             <p className="font-bold text-foreground mb-1">{hoveredDatum.label}</p>
@@ -128,7 +137,10 @@ export function MultiSeriesChart({
 
         <svg
           viewBox={`0 0 ${svgW} ${svgH}`}
-          className="w-full h-auto max-h-56 overflow-visible select-none"
+          className={cn(
+            "w-full h-auto overflow-visible select-none",
+            height > 216 ? "max-h-[340px]" : "max-h-56",
+          )}
           role="img"
           aria-label="Grafik area tren"
         >
@@ -303,7 +315,7 @@ export function MultiSeriesChart({
   const colHoveredDatum = hoveredIndex !== null ? data[hoveredIndex] : null;
 
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       {colHoveredDatum ? (
         <div className="absolute top-1 right-2 z-20 w-48 rounded-xl border border-border/80 bg-popover p-2.5 text-[11px] shadow-xl pointer-events-none">
           <p className="font-bold text-foreground mb-1">{colHoveredDatum.label}</p>
@@ -326,7 +338,10 @@ export function MultiSeriesChart({
 
       <svg
         viewBox={`0 0 ${svgW} ${svgH}`}
-        className="w-full h-auto max-h-56 overflow-visible select-none"
+        className={cn(
+          "w-full h-auto overflow-visible select-none",
+          height > 216 ? "max-h-[340px]" : "max-h-56",
+        )}
         role="img"
         aria-label="Grafik kolom tren"
       >

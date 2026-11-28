@@ -191,7 +191,7 @@ export async function exportUserDashboardPdf(ctx: UserDashboardExportContext) {
     ],
     sections: [
       {
-        title: t("user_portal.recent_requests", "Daftar Pengajuan Pembayaran"),
+        title: t("user_portal.recent_requests", "Daftar Pengajuan Pembayaran Aktif"),
         tableColumns: [
           { header: t("user_portal.col_code", "Nomor Pengajuan"), widthRatio: 0.20, align: "left" },
           { header: t("user_portal.col_purpose", "Keperluan"), widthRatio: 0.35, align: "left" },
@@ -205,7 +205,45 @@ export async function exportUserDashboardPdf(ctx: UserDashboardExportContext) {
           r.status.toUpperCase(),
         ]),
       },
+      {
+        title: "LAMPIRAN A: REKAPITULASI PENUGASAN PROYEK AKTIF",
+        tableColumns: [
+          { header: "Kode Proyek", widthRatio: 0.22, align: "left" },
+          { header: "Nama Proyek", widthRatio: 0.40, align: "left" },
+          { header: "Nilai Kontrak (IDR)", widthRatio: 0.23, align: "right" },
+          { header: "Status", widthRatio: 0.15, align: "center" },
+        ],
+        tableRows:
+          projects.length > 0
+            ? projects.slice(0, 10).map((p) => [
+                p.code,
+                p.name,
+                formatRupiah(p.contract_value),
+                p.status.toUpperCase(),
+              ])
+            : [["-", "Belum ada penugasan proyek aktif", "-", "-"]],
+      },
+      {
+        title: "LAMPIRAN B: REKAPITULASI PURCHASE ORDER (PO) PEMBELIAN VENDOR",
+        tableColumns: [
+          { header: "Nomor PO", widthRatio: 0.25, align: "left" },
+          { header: "Tanggal Dokumen", widthRatio: 0.25, align: "center" },
+          { header: "Total Nilai PO (IDR)", widthRatio: 0.30, align: "right" },
+          { header: "Status Dokumen", widthRatio: 0.20, align: "center" },
+        ],
+        tableRows:
+          filteredPos.length > 0
+            ? filteredPos.slice(0, 10).map((po) => [
+                po.po_number,
+                po.po_date ?? "-",
+                formatRupiah(po.total_amount),
+                po.status.toUpperCase(),
+              ])
+            : [["-", "-", "Rp0", "NIHIL"]],
+      },
     ],
+    rightSignatureLabel: "Penerima Laporan / Anggota Tim Terkait,",
+    rightSignatureName: `${comp.signer_name} - ${comp.signer_title}`,
   });
   downloadPdfBytes(bytes, `Ringkasan-Dasbor-User-${new Date().toISOString().slice(0, 10)}.pdf`);
   toast.success(t("dashboard:export.toast_pdf_success", "Ringkasan dasbor berhasil diekspor ke PDF"));

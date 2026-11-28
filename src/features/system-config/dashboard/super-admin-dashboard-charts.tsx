@@ -9,8 +9,6 @@ import {
   MultiSeriesChart,
 } from "@/components/shared/dashboard-charts";
 import { ChartCard } from "@/components/shared/dashboard-chart-card";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export interface SuperAdminDashboardChartsProps {
   auditDailyData: Array<{ key: string; label: string; values: { insert: number; update: number; delete: number } }>;
@@ -70,36 +68,22 @@ export function SuperAdminDashboardCharts({
         }
         controls={
           <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-              <Button
-                type="button"
-                variant={auditViewMode === "daily" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setAuditViewMode("daily")}
-                className={cn(
-                  "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                  auditViewMode === "daily"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("settings:super_admin.audit_daily", "Harian")}
-              </Button>
-              <Button
-                type="button"
-                variant={auditViewMode === "entity" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setAuditViewMode("entity")}
-                className={cn(
-                  "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                  auditViewMode === "entity"
-                    ? "bg-primary text-primary-foreground shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t("settings:super_admin.audit_entity", "Entitas")}
-              </Button>
-            </div>
+            <ChartTypeSwitcher
+              value={auditViewMode}
+              onChange={(val) => setAuditViewMode(val as "daily" | "entity")}
+              options={[
+                {
+                  value: "daily",
+                  label: t("settings:super_admin.audit_daily", "Harian"),
+                  title: t("settings:super_admin.audit_daily", "Harian"),
+                },
+                {
+                  value: "entity",
+                  label: t("settings:super_admin.audit_entity", "Entitas"),
+                  title: t("settings:super_admin.audit_entity", "Entitas"),
+                },
+              ]}
+            />
             <ChartTypeSwitcher
               value={auditChartType}
               onChange={(val) => setAuditChartType(val as "column" | "area")}
@@ -190,6 +174,7 @@ export function SuperAdminDashboardCharts({
         }
       >
         <MultiSeriesChart
+          height={260}
           chartType={auditChartType}
           data={auditViewMode === "daily" ? auditDailyData : auditEntityData}
           series={[
@@ -221,43 +206,34 @@ export function SuperAdminDashboardCharts({
 
       {/* Grafik 2: Komposisi Peran Pengguna & Bagan Akun */}
       <ChartCard
-        title={t("settings:super_admin.card_master_title", "Komposisi Master Sistem")}
+        title={
+          compDataset === "roles"
+            ? t("settings:super_admin.comp_roles_title", "Komposisi Peran Pengguna")
+            : t("settings:super_admin.comp_coa_title", "Komposisi Bagan Akun")
+        }
+        titleClassName="text-xs sm:text-sm font-bold"
         subtitle={
           compDataset === "roles"
             ? t("settings:super_admin.card_master_desc_roles", "Sebaran hak akses peran pengguna internal.")
             : t("settings:super_admin.card_master_desc_coa", "Struktur klasifikasi bagan akun.")
         }
         controls={
-          <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-            <Button
-              type="button"
-              variant={compDataset === "roles" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCompDataset("roles")}
-              className={cn(
-                "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                compDataset === "roles"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("settings:super_admin.comp_roles", "Peran")}
-            </Button>
-            <Button
-              type="button"
-              variant={compDataset === "coa" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCompDataset("coa")}
-              className={cn(
-                "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
-                compDataset === "coa"
-                  ? "bg-primary text-primary-foreground shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t("settings:super_admin.comp_coa", "Bagan Akun")}
-            </Button>
-          </div>
+          <ChartTypeSwitcher
+            value={compDataset}
+            onChange={(val) => setCompDataset(val as "roles" | "coa")}
+            options={[
+              {
+                value: "roles",
+                label: t("settings:super_admin.comp_roles", "Peran"),
+                title: t("settings:super_admin.comp_roles", "Peran"),
+              },
+              {
+                value: "coa",
+                label: t("settings:super_admin.comp_coa", "Bagan Akun"),
+                title: t("settings:super_admin.comp_coa", "Bagan Akun"),
+              },
+            ]}
+          />
         }
         footer={
           <ChartValueFooter

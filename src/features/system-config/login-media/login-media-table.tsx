@@ -8,17 +8,19 @@ import {
   ImageIcon,
   PencilIcon,
   PlusIcon,
-  SearchIcon,
   SlidersHorizontalIcon,
   Trash2Icon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
+import {
+  TOOLBAR_BUTTON_CLASS,
+  TOOLBAR_ACTIVE_EXPANDED_CLASS,
+} from "@/components/shared/toolbar-button";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { SearchInput } from "@/components/patterns/search-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -112,15 +114,12 @@ export function LoginMediaTable({
         description={t("settings:login_media.table_desc")}
         action={
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <div className="relative w-full sm:w-56">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("settings:login_media.search_input_placeholder")}
-                className="pl-9 h-9 rounded-xl text-xs sm:text-sm"
-              />
-            </div>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t("settings:login_media.search_input_placeholder")}
+              containerClassName="w-full sm:w-56"
+            />
 
             {/* Tombol Filter Gabungan (Kategori & Status) */}
             <div className="relative" ref={filterRef}>
@@ -128,28 +127,26 @@ export function LoginMediaTable({
                 <ActionTooltip content={t("common:action.filter")}>
                   <Button
                     type="button"
-                    variant="outline"
                     size="icon"
                     onClick={() => setFilterOpen((prev) => !prev)}
                     aria-expanded={filterOpen}
-                    className="size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80"
+                    className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                     aria-label={t("common:action.filter")}
                   >
-                    <SlidersHorizontalIcon className="size-4 text-primary" />
+                    <SlidersHorizontalIcon className="size-4 text-primary-foreground shrink-0" />
                     <span className="sr-only">{t("common:action.filter")}</span>
                   </Button>
                 </ActionTooltip>
               ) : (
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => setFilterOpen((prev) => !prev)}
                   aria-expanded={filterOpen}
-                  className="h-9 rounded-xl px-3 text-xs sm:text-sm font-semibold gap-2 border-primary/50 text-primary bg-primary/5 transition-colors"
+                  className={cn(TOOLBAR_ACTIVE_EXPANDED_CLASS, "cursor-pointer")}
                 >
-                  <SlidersHorizontalIcon className="size-4" />
+                  <SlidersHorizontalIcon className="size-3.5 text-primary-foreground shrink-0" />
                   <span>{t("common:action.filter")}</span>
-                  <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums">
+                  <span className="inline-flex size-4 items-center justify-center rounded-full bg-white text-primary text-[10px] font-bold tabular-nums">
                     {(categoryFilter !== "all" ? 1 : 0) +
                       (statusFilter !== "all" ? 1 : 0)}
                   </span>
@@ -281,20 +278,16 @@ export function LoginMediaTable({
             >
               <Button
                 type="button"
-                variant="outline"
                 size="icon"
                 onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-                className={cn(
-                  "size-9 rounded-xl shrink-0 cursor-pointer shadow-2xs border-border/80",
-                  sortOrder === "desc" && "border-primary/50 text-primary bg-primary/5",
-                )}
+                className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                 aria-label={
                   sortOrder === "asc"
                     ? t("settings:login_media.sort_order_asc")
                     : t("settings:login_media.sort_order_desc")
                 }
               >
-                <ArrowUpDownIcon className="size-4 text-primary" />
+                <ArrowUpDownIcon className="size-4 text-primary-foreground shrink-0" />
                 <span className="sr-only">
                   {sortOrder === "asc"
                     ? t("settings:login_media.sort_order_asc")
@@ -306,14 +299,13 @@ export function LoginMediaTable({
             <ActionTooltip content={t("settings:login_media.btn_add", "Tambah Media Carousel")}>
               <Button
                 type="button"
+                size="icon"
                 onClick={onOpenCreateDialog}
                 className={cn(TOOLBAR_BUTTON_CLASS, "cursor-pointer")}
                 aria-label={t("settings:login_media.btn_add", "Tambah Media Carousel")}
               >
                 <PlusIcon className="size-4 text-primary-foreground shrink-0" />
-                <span className="sr-only">
-                  {t("settings:login_media.btn_add", "Tambah Media Carousel")}
-                </span>
+                <span className="sr-only">{t("settings:login_media.btn_add", "Tambah Media Carousel")}</span>
               </Button>
             </ActionTooltip>
           </div>
