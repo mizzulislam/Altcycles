@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -67,9 +66,9 @@ function TemplateEditorCard({
           <CardTitle className="text-base">{template.title}</CardTitle>
           <StatusBadge tone="outline" label={`v${template.version}`} />
         </div>
-        <CardDescription>
+        <div className="text-xs text-muted-foreground">
           {t("settings:admin_settings.col_code")}: <code>{template.doc_type}</code>
-        </CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <FieldGroup>

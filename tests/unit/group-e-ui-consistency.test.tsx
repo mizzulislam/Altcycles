@@ -52,10 +52,10 @@ describe("Item 10 - KpiCard bersama", () => {
     const migrated = [
       "src/features/invoicing/components/invoice-kpi-summary.tsx",
       "src/features/budgeting/budget-page.tsx",
-      "src/features/payment-approvals/admin-approvals-page.tsx",
-      "src/features/payment-approvals/user-payments-page.tsx",
+      "src/features/payment-approvals/admin-approvals/admin-approvals-kpi-grid.tsx",
+      "src/features/payment-approvals/user-payments/user-payments-kpi-grid.tsx",
       "src/features/client-projects/components/project-detail-header.tsx",
-      "src/features/system-config/login-media-page.tsx",
+      "src/features/system-config/login-media/login-media-kpi-grid.tsx",
       "src/features/profile/profile-overview-page.tsx",
     ];
     for (const rel of migrated) {
