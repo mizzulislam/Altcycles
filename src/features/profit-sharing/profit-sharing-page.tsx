@@ -604,23 +604,26 @@ export function ProfitSharingPage() {
         <SectionLoader message={t("profit_sharing:loading")} />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2 items-stretch">
-          <Card className="overflow-hidden flex flex-col">
+          <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
             <CardHeaderWithInfo
               title={t("profit_sharing:scheme_card_title")}
               description={t("profit_sharing:scheme_card_desc")}
+              headerClassName="px-6 py-4 border-b border-border/70 min-h-[69px] flex items-center justify-between gap-3"
               controls={
-                <ActionTooltip content={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}>
-                  <button
-                    type="button"
-                    disabled={isFinalized || (schemes.length === 0 && !result)}
-                    onClick={() => setResetConfirmOpen(true)}
-                    className={cn(TOOLBAR_BUTTON_CLASS, "disabled:opacity-40 disabled:cursor-not-allowed")}
-                    aria-label={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}
-                  >
-                    <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
-                    <span className="sr-only">{t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}</span>
-                  </button>
-                </ActionTooltip>
+                schemes.length > 0 ? (
+                  <ActionTooltip content={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}>
+                    <button
+                      type="button"
+                      disabled={isFinalized}
+                      onClick={() => setResetConfirmOpen(true)}
+                      className={cn(TOOLBAR_BUTTON_CLASS, "disabled:opacity-40 disabled:cursor-not-allowed")}
+                      aria-label={t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}
+                    >
+                      <RotateCcwIcon className="size-4 text-primary-foreground shrink-0" />
+                      <span className="sr-only">{t("profit_sharing:btn_reset_scheme", "Reset Skema & Simulasi")}</span>
+                    </button>
+                  </ActionTooltip>
+                ) : null
               }
             />
             <CardContent className="p-0 flex-1 flex flex-col">
@@ -742,7 +745,7 @@ export function ProfitSharingPage() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden flex flex-col">
+          <Card className="rounded-2xl border-border/80 bg-card shadow-2xs overflow-hidden flex flex-col">
             <CardHeaderWithInfo
               title={t("profit_sharing:result_card_title")}
               description={
@@ -750,10 +753,10 @@ export function ProfitSharingPage() {
                   ? t("profit_sharing:finalized_at_label", { date: formatDateTimeI18n(result.finalized_at, language) })
                   : t("profit_sharing:draft_simulation_desc")
               }
-              headerClassName="px-6 py-4 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              headerClassName="px-6 py-4 border-b border-border/70 min-h-[69px] flex items-center justify-between gap-3"
               controls={
-                result ? (
-                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                result && lines.length > 0 ? (
+                  <div className="flex items-center gap-2 shrink-0">
                     <ActionTooltip content={t("profit_sharing:btn_tax_simulation", "Simulasi PPh 21")}>
                       <button
                         type="button"
