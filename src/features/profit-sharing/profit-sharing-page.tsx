@@ -8,7 +8,6 @@ import {
   PlusIcon,
   ReceiptTextIcon,
   RotateCcwIcon,
-  Trash2Icon,
   UsersIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,8 +16,6 @@ import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { ModalFooterAction } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -28,22 +25,13 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/empty";
 import { SectionLoader } from "@/components/ui/loader";
 import {
   Field,
   FieldDescription,
-  FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
@@ -91,12 +79,9 @@ import type {
   ProjectRow,
 } from "@/types/database.types";
 import { PageHeader } from "@/components/shared/page-header";
-
-interface DraftRecipient {
-  recipientName: string;
-  recipientUserId: string;
-  percentage: number;
-}
+import { ProfitSharingSchemeDialog } from "./components/profit-sharing-scheme-dialog";
+import { ProfitSharingTaxDialog } from "./components/profit-sharing-tax-dialog";
+import type { DraftRecipient } from "./components/profit-sharing-types";
 
 export function ProfitSharingPage() {
   const { t, language } = useLanguage();
@@ -273,10 +258,6 @@ export function ProfitSharingPage() {
     }
     setSchemeOpen(true);
   }
-
-  const sumPct = Number(
-    draftRecipients.reduce((s, r) => s + r.percentage, 0).toFixed(2),
-  );
 
   async function handleSaveScheme(e: React.FormEvent) {
     e.preventDefault();
@@ -860,266 +841,25 @@ export function ProfitSharingPage() {
       )}
 
       {/* Dialog Atur Skema 100% */}
-      <Dialog open={schemeOpen} onOpenChange={setSchemeOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{t("profit_sharing:modals.scheme_title")}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSaveScheme} className="space-y-4">
-            <FieldGroup>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5">
-                <span className="text-xs text-muted-foreground leading-relaxed">
-                  {t("profit_sharing:modals.scheme_hint")}
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setDraftRecipients((prev) => [
-                      ...prev,
-                      {
-                        recipientName: "",
-                        recipientUserId: "none",
-                        percentage: 0,
-                      },
-                    ])
-                  }
-                  className="h-8 px-3 rounded-xl text-xs font-semibold shrink-0 self-start sm:self-center cursor-pointer gap-1.5"
-                >
-                  <PlusIcon className="size-3.5" />
-                  <span>{t("profit_sharing:modals.btn_add_recipient")}</span>
-                </Button>
-              </div>
-
-              <div className="hidden sm:grid sm:grid-cols-12 gap-2.5 px-1 text-xs font-semibold text-muted-foreground">
-                <div className="sm:col-span-5">{t("profit_sharing:modals.header_recipient_name")}</div>
-                <div className="sm:col-span-4">{t("profit_sharing:modals.header_team_account")}</div>
-                <div className="sm:col-span-3">{t("profit_sharing:modals.header_portion")}</div>
-              </div>
-
-              <div className="flex max-h-64 flex-col gap-3 overflow-y-auto pr-1">
-                {draftRecipients.map((r, idx) => (
-                  <div
-                    key={idx}
-                    className="grid items-center gap-2.5 sm:grid-cols-12"
-                  >
-                    <div className="sm:col-span-5">
-                      <Input
-                        required
-                        placeholder={t("profit_sharing:modals.placeholder_recipient")}
-                        value={r.recipientName}
-                        onChange={(e) =>
-                          setDraftRecipients((prev) =>
-                            prev.map((x, i) =>
-                              i === idx
-                                ? { ...x, recipientName: e.target.value }
-                                : x,
-                            ),
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="sm:col-span-4">
-                      <Select
-                        value={r.recipientUserId}
-                        onValueChange={(uid) => {
-                          const found = profiles.find((p) => p.id === uid);
-                          setDraftRecipients((prev) =>
-                            prev.map((x, i) =>
-                              i === idx
-                                ? {
-                                    ...x,
-                                    recipientUserId: uid,
-                                    recipientName:
-                                      found && !x.recipientName
-                                        ? found.full_name
-                                        : x.recipientName,
-                                  }
-                                : x,
-                            ),
-                          );
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="none">
-                              {t("profit_sharing:modals.company_internal_share")}
-                            </SelectItem>
-                            {profiles
-                              .filter((p) => p.role === "user")
-                              .map((p) => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.full_name}
-                                </SelectItem>
-                              ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:col-span-3">
-                      <NumberInput
-                        allowDecimal
-                        maxDecimals={2}
-                        min={0.01}
-                        max={100}
-                        required
-                        value={r.percentage}
-                        onValueChange={(percentage) =>
-                          setDraftRecipients((prev) =>
-                            prev.map((x, i) =>
-                              i === idx ? { ...x, percentage } : x,
-                            ),
-                          )
-                        }
-                      />
-                      {draftRecipients.length > 1 ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setDraftRecipients((prev) =>
-                              prev.filter((_, i) => i !== idx),
-                            )
-                          }
-                          className="shrink-0 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                          title={t("profit_sharing:modals.tooltip_delete_recipient")}
-                        >
-                          <Trash2Icon className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/25 dark:bg-[var(--field-bg)] px-3.5 py-2.5 text-xs font-semibold">
-                <span className="text-foreground">{t("profit_sharing:modals.total_portion_label", { pct: sumPct })}</span>
-                <StatusBadge
-                  tone={sumPct === 100 ? "success" : "destructive"}
-                  label={sumPct === 100 ? t("profit_sharing:modals.badge_exact_100") : t("profit_sharing:modals.badge_must_be_100")}
-                />
-              </div>
-              <ModalFooterAction
-                onCancel={() => setSchemeOpen(false)}
-                saving={savingScheme}
-                disabled={savingScheme || sumPct !== 100}
-                cancelLabel={t("profit_sharing:modals.btn_cancel")}
-                submitLabel={t("profit_sharing:modals.btn_save_scheme")}
-              />
-            </FieldGroup>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ProfitSharingSchemeDialog
+        open={schemeOpen}
+        onOpenChange={setSchemeOpen}
+        draftRecipients={draftRecipients}
+        setDraftRecipients={setDraftRecipients}
+        profiles={profiles}
+        savingScheme={savingScheme}
+        onSaveScheme={handleSaveScheme}
+      />
 
       {/* Dialog Simulasi Pajak PPh 21 */}
-      <Dialog open={taxModalOpen} onOpenChange={setTaxModalOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {t("profit_sharing:tax_modal_title", "Simulasi Pajak PPh 21 Bagi Hasil")}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-1">
-            <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground leading-relaxed">
-              <p className="font-semibold text-foreground mb-1">
-                {t("profit_sharing:tax_modal_rule_title", "Dasar Perhitungan PPh 21 Bukan Pegawai (PMK 168/2023):")}
-              </p>
-              <p>
-                {t(
-                  "profit_sharing:tax_modal_rule_desc",
-                  "Dasar Pengenaan Pajak (DPP) dihitung 50% dari bruto, dikenakan Tarif Progresif Pasal 17 Ayat (1) Huruf a UU PPh berdasarkan status PTKP. Anggota tanpa NPWP dikenakan penalti tarif 20% lebih tinggi.",
-                )}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-border/80 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableHead className="pl-4 pr-2 text-center font-semibold">{t("profit_sharing:col_recipient", "Penerima")}</TableHead>
-                    <TableHead className="px-2 text-center font-semibold">{t("profit_sharing:col_ptkp", "Status PTKP")}</TableHead>
-                    <TableHead className="px-2 text-center font-semibold">{t("profit_sharing:col_gross", "Bruto")}</TableHead>
-                    <TableHead className="px-2 text-center font-semibold">{t("profit_sharing:col_dpp", "DPP (50%)")}</TableHead>
-                    <TableHead className="px-2 text-center font-semibold">{t("profit_sharing:col_pph21", "PPh 21")}</TableHead>
-                    <TableHead className="pl-2 pr-4 text-center font-semibold">{t("profit_sharing:col_net", "Bagi Hasil Bersih")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {taxSimulationRows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
-                        {t("profit_sharing:no_lines_to_simulate", "Belum ada hasil bagi hasil untuk disimulasikan.")}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    taxSimulationRows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="pl-4 pr-2 font-medium text-foreground">
-                          <div>{row.name}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            {row.isCompany
-                              ? t("profit_sharing:modals.company_internal_share", "Bagian Kas Perusahaan")
-                              : row.hasNpwp
-                                ? `NPWP: ${maskNpwp(row.npwp!)}`
-                                : t("profit_sharing:no_npwp_penalty", "Tanpa NPWP (+20%)")}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-2 text-center text-xs">
-                          {row.isCompany ? (
-                            <span className="text-muted-foreground">-</span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary/10 text-primary dark:text-sky-400 font-semibold text-[11px]">
-                              {row.ptkpCode}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-2 text-right text-xs tabular-nums font-medium text-foreground">
-                          {formatRupiah(row.gross)}
-                        </TableCell>
-                        <TableCell className="px-2 text-right text-xs tabular-nums text-muted-foreground">
-                          {formatRupiah(row.dpp)}
-                        </TableCell>
-                        <TableCell className="px-2 text-right text-xs tabular-nums text-destructive font-semibold">
-                          {row.tax > 0 ? `- ${formatRupiah(row.tax)}` : "Rp 0"}
-                        </TableCell>
-                        <TableCell className="pl-2 pr-4 text-right text-xs tabular-nums text-primary dark:text-sky-400 font-bold">
-                          {formatRupiah(row.net)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/30 border border-border/80">
-              <span className="text-sm font-bold text-foreground">
-                {t("profit_sharing:total_summary", "Total Estimasi Pemotongan:")}
-              </span>
-              <div className="flex flex-wrap items-center gap-4 text-sm sm:text-base font-bold tabular-nums">
-                <span className="text-foreground">Bruto: {formatRupiah(totalSimGross)}</span>
-                <span className="text-destructive">PPh 21: - {formatRupiah(totalSimTax)}</span>
-                <span className="text-primary dark:text-sky-400 font-bold">Netto: {formatRupiah(totalSimNet)}</span>
-              </div>
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setTaxModalOpen(false)}
-                className="rounded-xl text-xs"
-              >
-                {t("common:action.close", "Tutup")}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProfitSharingTaxDialog
+        open={taxModalOpen}
+        onOpenChange={setTaxModalOpen}
+        taxSimulationRows={taxSimulationRows}
+        totalSimGross={totalSimGross}
+        totalSimTax={totalSimTax}
+        totalSimNet={totalSimNet}
+      />
 
       {/* Konfirmasi Finalisasi & Kunci Permanen (BR-9) */}
       <ConfirmActionDialog
