@@ -18,7 +18,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
-import { formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
+import { formatDateTimeI18n } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
 
@@ -70,12 +70,6 @@ export function CompanyProfileTabFinancial({
       company.pkp_proof_storage_path.trim().length > 0,
   );
 
-  const sampleSubtotal = 10_000_000;
-  const samplePpn = company.pkp_enabled
-    ? Math.round((sampleSubtotal * company.ppn_rate) / 100)
-    : 0;
-  const sampleTotal = sampleSubtotal + samplePpn;
-
   const primaryBank = bankAccounts[0] || {
     bank_name: company.bank_name || "",
     account_number: company.bank_account_number || "",
@@ -121,7 +115,7 @@ export function CompanyProfileTabFinancial({
                       "Status Pengusaha Kena Pajak (PKP)",
                     )}
                   </FieldLabel>
-                  <div className="h-9 px-3 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-3">
+                  <div className="h-9 px-3.5 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-3">
                     <span className="text-xs font-medium text-foreground truncate">
                       {company.pkp_enabled
                         ? t(
@@ -306,42 +300,6 @@ export function CompanyProfileTabFinancial({
                         )}
                   </FieldDescription>
                 </Field>
-
-                {/* Field 4: Kompilasi Perpajakan Tagihan (Read-Only) */}
-                <Field className="space-y-1.5">
-                  <FieldLabel
-                    htmlFor="cp-tax-summary"
-                    className="text-xs font-semibold h-4 flex items-center text-muted-foreground"
-                  >
-                    {t(
-                      "settings:company.tax_summary_label",
-                      "Kompilasi Perpajakan Tagihan",
-                    )}
-                  </FieldLabel>
-                  <Input
-                    id="cp-tax-summary"
-                    type="text"
-                    readOnly
-                    disabled
-                    tabIndex={-1}
-                    value={
-                      company.pkp_enabled
-                        ? `PKP Aktif - Tarif PPN ${company.ppn_rate}% (Invoice Klien Kena PPN)`
-                        : "Non-PKP - Bebas Pemungutan PPN (Pasal 4A UU PPN)"
-                    }
-                    onMouseDown={(e) => e.preventDefault()}
-                    onFocus={(e) => e.currentTarget.blur()}
-                    className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
-                  />
-                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
-                    {company.pkp_enabled
-                      ? `Simulasi Subtotal ${formatRupiah(sampleSubtotal)} + PPN ${formatRupiah(samplePpn)} = Total ${formatRupiah(sampleTotal)}`
-                      : t(
-                          "settings:company.tax_summary_desc_inactive",
-                          "Dokumen penagihan resmi otomatis menerbitkan tagihan murni tanpa PPN.",
-                        )}
-                  </FieldDescription>
-                </Field>
               </div>
             </div>
 
@@ -516,48 +474,6 @@ export function CompanyProfileTabFinancial({
                       "settings:company.bank_holder_desc",
                       "Harus sesuai dengan nama pemilik rekening yang sah.",
                     )}
-                  </FieldDescription>
-                </Field>
-
-                {/* Field 4: Status Rekening Transfer (Read-Only) */}
-                <Field className="space-y-1.5">
-                  <FieldLabel
-                    htmlFor="cp-bank-status"
-                    className="text-xs font-semibold h-4 flex items-center text-muted-foreground"
-                  >
-                    {t(
-                      "settings:company.bank_status_label",
-                      "Status Rekening Transfer",
-                    )}
-                  </FieldLabel>
-                  <Input
-                    id="cp-bank-status"
-                    type="text"
-                    readOnly
-                    disabled
-                    tabIndex={-1}
-                    value={
-                      primaryBank.account_number?.trim()
-                        ? t(
-                            "settings:company.bank_status_active",
-                            "Terdaftar - Rekening Transfer Utama Aktif",
-                          )
-                        : t(
-                            "settings:company.bank_status_empty",
-                            "Belum Diatur (Penerimaan Ditangguhkan)",
-                          )
-                    }
-                    onMouseDown={(e) => e.preventDefault()}
-                    onFocus={(e) => e.currentTarget.blur()}
-                    className="text-xs h-9 tabular-nums bg-muted/40 border-border/60 text-muted-foreground select-none cursor-not-allowed font-medium caret-transparent disabled:opacity-100 disabled:cursor-not-allowed focus-visible:ring-0 focus-visible:border-border/60"
-                  />
-                  <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate text-muted-foreground/80">
-                    {bankAccounts.length > 1
-                      ? `${bankAccounts.length} rekening bank terdaftar di profil perusahaan.`
-                      : t(
-                          "settings:company.bank_status_desc",
-                          "Status kesiapan rekening transfer pada penagihan invoice resmi.",
-                        )}
                   </FieldDescription>
                 </Field>
 
