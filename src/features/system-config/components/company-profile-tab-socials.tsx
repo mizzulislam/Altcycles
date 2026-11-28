@@ -1,5 +1,12 @@
 import * as React from "react";
-import { Loader2Icon, PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Loader2Icon,
+  PlusIcon,
+  SaveIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +46,120 @@ export function CompanyProfileTabSocials({
   onSave,
 }: CompanyProfileTabSocialsProps) {
   const { t } = useLanguage();
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [startX, setStartX] = React.useState(0);
+  const [scrollLeftState, setScrollLeftState] = React.useState(0);
+  const prevSocialsCount = React.useRef(socials.length);
+
+  const checkScroll = React.useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  React.useEffect(() => {
+    checkScroll();
+    const timer = setTimeout(checkScroll, 100);
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+
+    const onWheelNative = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (e.deltaY !== 0 && !e.shiftKey) {
+        const isAtLeft = el.scrollLeft <= 0 && e.deltaY < 0;
+        const isAtRight =
+          el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 && e.deltaY > 0;
+        if (!isAtLeft && !isAtRight) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      }
+    };
+
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", checkScroll);
+      el.removeEventListener("wheel", onWheelNative);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll, socials.length]);
+
+  // Auto-scroll ke kartu baru ketika slot sosial media ditambahkan
+  React.useEffect(() => {
+    if (socials.length > prevSocialsCount.current) {
+      const timer = setTimeout(() => {
+        const el = scrollContainerRef.current;
+        if (el) {
+          if (typeof el.scrollTo === "function") {
+            el.scrollTo({
+              left: el.scrollWidth,
+              behavior: "smooth",
+            });
+          } else {
+            el.scrollLeft = el.scrollWidth;
+          }
+          checkScroll();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+    prevSocialsCount.current = socials.length;
+  }, [socials.length, checkScroll]);
+
+  const slideLeft = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    if (typeof el.scrollBy === "function") {
+      el.scrollBy({ left: -340, behavior: "smooth" });
+    } else {
+      el.scrollLeft -= 340;
+    }
+  };
+
+  const slideRight = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    if (typeof el.scrollBy === "function") {
+      el.scrollBy({ left: 340, behavior: "smooth" });
+    } else {
+      el.scrollLeft += 340;
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest(
+        "input, select, button, [role='combobox'], [data-radix-focus-guard]",
+      )
+    ) {
+      return;
+    }
+    setIsDragging(true);
+    setStartX(e.pageX - (scrollContainerRef.current?.offsetLeft || 0));
+    setScrollLeftState(scrollContainerRef.current?.scrollLeft || 0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - (scrollContainerRef.current.offsetLeft || 0);
+    const walk = (x - startX) * 1.2;
+    scrollContainerRef.current.scrollLeft = scrollLeftState - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   return (
     <Card>
@@ -52,151 +173,204 @@ export function CompanyProfileTabSocials({
           "Ikon platform beserta username di bawah ini otomatis disematkan pada footer setiap dokumen PDF & Word yang diterbitkan sistem.",
         )}
         action={
-          <Button
-            type="button"
-            onClick={onAddSlot}
-            className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
-          >
-            <PlusIcon data-icon="inline-start" />
-            {t("settings:company.add_social_btn", "Tambah Sosial Media")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {(canScrollLeft || canScrollRight) && (
+              <div className="flex items-center gap-1">
+                <ActionTooltip
+                  content={t("settings:company.slide_left", "Geser ke Kiri")}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={!canScrollLeft}
+                    onClick={slideLeft}
+                    className="size-8 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t("settings:company.slide_left", "Geser ke Kiri")}
+                  >
+                    <ChevronLeftIcon className="size-4" />
+                    <span className="sr-only">
+                      {t("settings:company.slide_left", "Geser ke Kiri")}
+                    </span>
+                  </Button>
+                </ActionTooltip>
+                <ActionTooltip
+                  content={t("settings:company.slide_right", "Geser ke Kanan")}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={!canScrollRight}
+                    onClick={slideRight}
+                    className="size-8 rounded-lg cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t("settings:company.slide_right", "Geser ke Kanan")}
+                  >
+                    <ChevronRightIcon className="size-4" />
+                    <span className="sr-only">
+                      {t("settings:company.slide_right", "Geser ke Kanan")}
+                    </span>
+                  </Button>
+                </ActionTooltip>
+              </div>
+            )}
+            <Button
+              type="button"
+              onClick={onAddSlot}
+              className="shrink-0 h-9 rounded-xl px-4 text-xs sm:text-sm font-semibold cursor-pointer"
+            >
+              <PlusIcon data-icon="inline-start" />
+              {t("settings:company.add_social_btn", "Tambah Sosial Media")}
+            </Button>
+          </div>
         }
       />
       <CardContent className="pt-5">
         <form onSubmit={onSave} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {socials.map((entry, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                    <SocialPlatformIcon
-                      platform={entry.platform}
-                      className="size-4 text-primary"
-                    />
-                    <span>
-                      {t("settings:company.social_slot_title", {
-                        index: idx + 1,
-                        defaultValue: `Sosial Media #${idx + 1}`,
-                      })}
-                    </span>
-                  </div>
-                  {socials.length > 1 && (
-                    <ActionTooltip
-                      content={t(
-                        "settings:company.remove_social_tooltip",
-                        "Hapus sosial media ini",
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onRemoveSlot(idx)}
-                        className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+          <div className="relative">
+            <div
+              ref={scrollContainerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              className={`flex items-stretch gap-4 overflow-x-auto pb-3 pt-1 scroll-smooth snap-x snap-mandatory modal-sleek-scrollbar focus:outline-hidden ${
+                isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+              }`}
+            >
+              {socials.map((entry, idx) => (
+                <div
+                  key={idx}
+                  className="w-[280px] sm:w-[320px] md:w-[340px] shrink-0 snap-start rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                      <SocialPlatformIcon
+                        platform={entry.platform}
+                        className="size-4 text-primary"
+                      />
+                      <span>
+                        {t("settings:company.social_slot_title", {
+                          index: idx + 1,
+                          defaultValue: `Sosial Media #${idx + 1}`,
+                        })}
+                      </span>
+                    </div>
+                    {socials.length > 1 && (
+                      <ActionTooltip
+                        content={t(
+                          "settings:company.remove_social_tooltip",
+                          "Hapus sosial media ini",
+                        )}
                       >
-                        <Trash2Icon className="size-3.5" />
-                        <span className="sr-only">
-                          {t(
-                            "settings:company.remove_social_sr",
-                            "Hapus Sosial Media",
-                          )}
-                        </span>
-                      </button>
-                    </ActionTooltip>
-                  )}
+                        <button
+                          type="button"
+                          onClick={() => onRemoveSlot(idx)}
+                          className="size-7 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                        >
+                          <Trash2Icon className="size-3.5" />
+                          <span className="sr-only">
+                            {t(
+                              "settings:company.remove_social_sr",
+                              "Hapus Sosial Media",
+                            )}
+                          </span>
+                        </button>
+                      </ActionTooltip>
+                    )}
+                  </div>
+
+                  <Field>
+                    <FieldLabel className="text-[11px] font-semibold">
+                      {t("settings:company.platform", "Platform")}
+                    </FieldLabel>
+                    <Select
+                      value={entry.platform}
+                      onValueChange={(val) =>
+                        setSocials((prev) =>
+                          prev.map((item, i) =>
+                            i === idx ? { ...item, platform: val } : item,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue>
+                          <span className="inline-flex items-center gap-2">
+                            <SocialPlatformIcon
+                              platform={entry.platform}
+                              className="size-3.5 text-primary"
+                            />
+                            <span>{entry.platform}</span>
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {SOCIAL_PLATFORM_OPTIONS.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              <span className="inline-flex items-center gap-2">
+                                <SocialPlatformIcon
+                                  platform={opt}
+                                  className="size-3.5 text-primary"
+                                />
+                                <span>{opt}</span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel className="text-[11px] font-semibold">
+                      {t("settings:company.username", "Username / Handle")}
+                    </FieldLabel>
+                    <Input
+                      value={entry.username}
+                      onChange={(e) =>
+                        setSocials((prev) =>
+                          prev.map((item, i) =>
+                            i === idx
+                              ? { ...item, username: e.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                      placeholder={t(
+                        "settings:company.handle_placeholder",
+                        "Contoh: @altvira.tech",
+                      )}
+                      className="h-9 text-xs bg-background"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel className="text-[11px] font-semibold">
+                      {t("settings:company.website", "Tautan / URL Profil")}
+                    </FieldLabel>
+                    <Input
+                      value={entry.url ?? ""}
+                      onChange={(e) =>
+                        setSocials((prev) =>
+                          prev.map((item, i) =>
+                            i === idx
+                              ? { ...item, url: e.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                      placeholder={t(
+                        "settings:company.url_placeholder",
+                        "Contoh: https://instagram.com/altvira.tech",
+                      )}
+                      className="h-9 text-xs bg-background"
+                    />
+                  </Field>
                 </div>
-
-                <Field>
-                  <FieldLabel className="text-[11px] font-semibold">
-                    {t("settings:company.platform", "Platform")}
-                  </FieldLabel>
-                  <Select
-                    value={entry.platform}
-                    onValueChange={(val) =>
-                      setSocials((prev) =>
-                        prev.map((item, i) =>
-                          i === idx ? { ...item, platform: val } : item,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger className="h-9 text-xs bg-background">
-                      <SelectValue>
-                        <span className="inline-flex items-center gap-2">
-                          <SocialPlatformIcon
-                            platform={entry.platform}
-                            className="size-3.5 text-primary"
-                          />
-                          <span>{entry.platform}</span>
-                        </span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {SOCIAL_PLATFORM_OPTIONS.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            <span className="inline-flex items-center gap-2">
-                              <SocialPlatformIcon
-                                platform={opt}
-                                className="size-3.5 text-primary"
-                              />
-                              <span>{opt}</span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-[11px] font-semibold">
-                    {t("settings:company.username", "Username / Handle")}
-                  </FieldLabel>
-                  <Input
-                    value={entry.username}
-                    onChange={(e) =>
-                      setSocials((prev) =>
-                        prev.map((item, i) =>
-                          i === idx
-                            ? { ...item, username: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                    placeholder={t(
-                      "settings:company.handle_placeholder",
-                      "Contoh: @altvira.tech",
-                    )}
-                    className="h-9 text-xs bg-background"
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-[11px] font-semibold">
-                    {t("settings:company.website", "Tautan / URL Profil")}
-                  </FieldLabel>
-                  <Input
-                    value={entry.url ?? ""}
-                    onChange={(e) =>
-                      setSocials((prev) =>
-                        prev.map((item, i) =>
-                          i === idx
-                            ? { ...item, url: e.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                    placeholder={t(
-                      "settings:company.url_placeholder",
-                      "Contoh: https://instagram.com/altvira.tech",
-                    )}
-                    className="h-9 text-xs bg-background"
-                  />
-                </Field>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Live Preview Footer Dokumen */}
