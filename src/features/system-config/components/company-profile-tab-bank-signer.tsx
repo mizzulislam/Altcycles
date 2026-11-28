@@ -18,6 +18,8 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
+import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
+import { cn } from "@/lib/utils";
 import { formatDateTimeI18n } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import type { CompanyProfileRow } from "@/types/database.types";
@@ -228,20 +230,31 @@ export function CompanyProfileTabFinancial({
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {hasPkpProof && (
-                        <a
-                          href={company.pkp_proof_storage_path!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="h-6 px-2 rounded-lg border border-[var(--field-border)] bg-card hover:bg-muted text-[11px] font-medium text-primary inline-flex items-center gap-1 transition-colors"
+                        <ActionTooltip
+                          content={t(
+                            "settings:company.pkp_proof_view_btn",
+                            "Lihat Bukti",
+                          )}
                         >
-                          <ExternalLinkIcon className="size-3" />
-                          <span>
-                            {t(
+                          <a
+                            href={company.pkp_proof_storage_path!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="size-7 rounded-lg inline-flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all cursor-pointer select-none shrink-0"
+                            aria-label={t(
                               "settings:company.pkp_proof_view_btn",
                               "Lihat Bukti",
                             )}
-                          </span>
-                        </a>
+                          >
+                            <ExternalLinkIcon className="size-3.5 text-primary" />
+                            <span className="sr-only">
+                              {t(
+                                "settings:company.pkp_proof_view_btn",
+                                "Lihat Bukti",
+                              )}
+                            </span>
+                          </a>
+                        </ActionTooltip>
                       )}
                       {pkpProofInputRef && (
                         <input
@@ -259,38 +272,54 @@ export function CompanyProfileTabFinancial({
                           }}
                         />
                       )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={uploadingProof}
-                        onClick={() => pkpProofInputRef?.current?.click()}
-                        className="h-6 rounded-lg px-2 text-[11px] gap-1 cursor-pointer border-[var(--field-border)]"
+                      <ActionTooltip
+                        content={
+                          hasPkpProof
+                            ? t(
+                                "settings:company.pkp_proof_replace_btn",
+                                "Ganti Bukti",
+                              )
+                            : t(
+                                "settings:company.pkp_proof_upload_btn",
+                                "Unggah Bukti PKP",
+                              )
+                        }
                       >
-                        {uploadingProof ? (
-                          <>
-                            <Loader2Icon className="size-3 animate-spin" />
-                            <span>
-                              {t("common:action.loading", "Mengunggah...")}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <UploadIcon className="size-3 text-primary" />
-                            <span>
-                              {hasPkpProof
-                                ? t(
-                                    "settings:company.pkp_proof_replace_btn",
-                                    "Ganti Bukti",
-                                  )
-                                : t(
-                                    "settings:company.pkp_proof_upload_btn",
-                                    "Unggah Bukti",
-                                  )}
-                            </span>
-                          </>
-                        )}
-                      </Button>
+                        <Button
+                          type="button"
+                          disabled={uploadingProof}
+                          onClick={() => pkpProofInputRef?.current?.click()}
+                          className="size-7 rounded-lg p-0 inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs transition-all cursor-pointer select-none shrink-0"
+                          aria-label={
+                            hasPkpProof
+                              ? t(
+                                  "settings:company.pkp_proof_replace_btn",
+                                  "Ganti Bukti",
+                                )
+                              : t(
+                                  "settings:company.pkp_proof_upload_btn",
+                                  "Unggah Bukti PKP",
+                                )
+                          }
+                        >
+                          {uploadingProof ? (
+                            <Loader2Icon className="size-3.5 animate-spin" />
+                          ) : (
+                            <UploadIcon className="size-3.5 text-primary-foreground" />
+                          )}
+                          <span className="sr-only">
+                            {hasPkpProof
+                              ? t(
+                                  "settings:company.pkp_proof_replace_btn",
+                                  "Ganti Bukti",
+                                )
+                              : t(
+                                  "settings:company.pkp_proof_upload_btn",
+                                  "Unggah Bukti PKP",
+                                )}
+                          </span>
+                        </Button>
+                      </ActionTooltip>
                     </div>
                   </div>
                   <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
@@ -317,18 +346,30 @@ export function CompanyProfileTabFinancial({
                     )}
                   </h3>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onAddBankSlot}
-                  className="h-7 rounded-xl px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                <ActionTooltip
+                  content={t(
+                    "settings:company.add_bank_btn",
+                    "Tambah Rekening",
+                  )}
                 >
-                  <PlusIcon className="size-3.5" />
-                  <span>
-                    {t("settings:company.add_bank_btn", "Tambah Rekening")}
-                  </span>
-                </Button>
+                  <Button
+                    type="button"
+                    onClick={onAddBankSlot}
+                    className={cn(
+                      TOOLBAR_BUTTON_CLASS,
+                      "size-8 min-w-8 min-h-8 rounded-lg cursor-pointer",
+                    )}
+                    aria-label={t(
+                      "settings:company.add_bank_btn",
+                      "Tambah Rekening",
+                    )}
+                  >
+                    <PlusIcon className="size-4 shrink-0 text-primary-foreground" />
+                    <span className="sr-only">
+                      {t("settings:company.add_bank_btn", "Tambah Rekening")}
+                    </span>
+                  </Button>
+                </ActionTooltip>
               </div>
 
               <div className="space-y-5">
