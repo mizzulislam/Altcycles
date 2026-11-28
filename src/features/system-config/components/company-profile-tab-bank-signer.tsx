@@ -1,7 +1,5 @@
 import * as React from "react";
 import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
   ExternalLinkIcon,
   FileTextIcon,
   LandmarkIcon,
@@ -19,7 +17,6 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { formatDateTimeI18n, formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
@@ -46,7 +43,9 @@ export interface CompanyProfileTabFinancialProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export function CompanyProfileTabBankSigner(props: CompanyProfileTabFinancialProps) {
+export function CompanyProfileTabBankSigner(
+  props: CompanyProfileTabFinancialProps,
+) {
   return <CompanyProfileTabFinancial {...props} />;
 }
 
@@ -100,30 +99,14 @@ export function CompanyProfileTabFinancial({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Kolom 1: Status Perpajakan & PPN */}
             <div className="space-y-5">
-              <div className="border-b border-border/60 pb-2.5 flex items-center justify-between gap-2 min-h-[35px]">
-                <div className="flex items-center gap-2">
-                  <ReceiptTextIcon className="size-4 text-primary shrink-0" />
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {t(
-                      "settings:company.section_tax_title",
-                      "Status Perpajakan & PPN",
-                    )}
-                  </h3>
-                </div>
-                <StatusBadge
-                  tone={company.pkp_enabled ? "warning" : "info"}
-                  label={
-                    company.pkp_enabled
-                      ? t("settings:company.badge_pkp_active", {
-                          rate: company.ppn_rate,
-                          defaultValue: `PKP Aktif (${company.ppn_rate}% PPN)`,
-                        })
-                      : t(
-                          "settings:company.badge_non_pkp",
-                          "Belum PKP (Non-PKP)",
-                        )
-                  }
-                />
+              <div className="border-b border-border/60 pb-2.5 flex items-center gap-2 min-h-[35px]">
+                <ReceiptTextIcon className="size-4 text-primary shrink-0" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  {t(
+                    "settings:company.section_tax_title",
+                    "Status Perpajakan & PPN",
+                  )}
+                </h3>
               </div>
 
               <div className="space-y-5">
@@ -131,29 +114,25 @@ export function CompanyProfileTabFinancial({
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-pkp-toggle"
-                    className="text-xs font-semibold h-4 flex items-center justify-between"
+                    className="text-xs font-semibold h-4 flex items-center"
                   >
-                    <span>
-                      {t(
-                        "settings:company.enable_pkp_label",
-                        "Status Pengusaha Kena Pajak (PKP)",
-                      )}
-                    </span>
+                    {t(
+                      "settings:company.enable_pkp_label",
+                      "Status Pengusaha Kena Pajak (PKP)",
+                    )}
                   </FieldLabel>
-                  <div className="rounded-xl border border-border/70 bg-card/80 p-3.5 flex items-center justify-between gap-4 h-9">
-                    <div className="space-y-0.5 min-w-0 flex-1">
-                      <p className="text-xs font-bold text-foreground truncate">
-                        {company.pkp_enabled
-                          ? t(
-                              "settings:company.pkp_mode_active",
-                              "Mode PKP Aktif (Pemungutan PPN)",
-                            )
-                          : t(
-                              "settings:company.pkp_mode_inactive",
-                              "Mode Non-PKP (Bebas PPN)",
-                            )}
-                      </p>
-                    </div>
+                  <div className="h-9 px-3 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-foreground truncate">
+                      {company.pkp_enabled
+                        ? t(
+                            "settings:company.pkp_mode_active",
+                            "Pengusaha Kena Pajak (PKP) Aktif",
+                          )
+                        : t(
+                            "settings:company.pkp_mode_inactive",
+                            "Bukan Pengusaha Kena Pajak (Non-PKP)",
+                          )}
+                    </span>
                     <Switch
                       id="cp-pkp-toggle"
                       checked={company.pkp_enabled}
@@ -165,7 +144,7 @@ export function CompanyProfileTabFinancial({
                     {company.pkp_enabled
                       ? t(
                           "settings:company.pkp_desc_active",
-                          `Setiap invoice klien baru otomatis menghitung PPN ${company.ppn_rate}%.`,
+                          `Setiap invoice baru otomatis menghitung PPN ${company.ppn_rate}%.`,
                         )
                       : t(
                           "settings:company.pkp_desc_inactive",
@@ -218,21 +197,56 @@ export function CompanyProfileTabFinancial({
 
                 {/* Field 3: Dokumen Bukti Pengukuhan PKP (SPPKP) */}
                 <Field className="space-y-1.5">
-                  <div className="flex items-center justify-between h-4">
-                    <FieldLabel className="text-xs font-semibold flex items-center gap-1.5">
-                      <span>
-                        {t(
-                          "settings:company.pkp_proof_label",
-                          "Dokumen Bukti Pengukuhan PKP",
-                        )}
-                      </span>
-                      {company.pkp_enabled && (
-                        <span className="text-[10px] text-amber-800 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
-                          {t("settings:company.badge_pkp_active", "Wajib")}
+                  <FieldLabel
+                    htmlFor="cp-proof-display"
+                    className="text-xs font-semibold h-4 flex items-center"
+                  >
+                    {t(
+                      "settings:company.pkp_proof_label",
+                      "Dokumen Bukti Pengukuhan PKP (SPPKP)",
+                    )}
+                  </FieldLabel>
+                  <div className="h-9 px-3 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <FileTextIcon className="size-4 text-primary shrink-0" />
+                      {hasPkpProof ? (
+                        <span
+                          id="cp-proof-display"
+                          data-testid="pkp-proof-filename"
+                          className="text-xs truncate font-medium text-foreground"
+                        >
+                          {company.pkp_proof_file_name ||
+                            "Surat_Pengukuhan_PKP.pdf"}
+                        </span>
+                      ) : (
+                        <span
+                          id="cp-proof-display"
+                          className="text-xs truncate font-medium text-muted-foreground"
+                        >
+                          {t(
+                            "settings:company.pkp_proof_empty",
+                            "Belum ada dokumen bukti SPPKP diunggah",
+                          )}
                         </span>
                       )}
-                    </FieldLabel>
-                    <div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {hasPkpProof && (
+                        <a
+                          href={company.pkp_proof_storage_path!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-6 px-2 rounded-lg border border-border/70 bg-background hover:bg-muted text-[11px] font-medium text-primary inline-flex items-center gap-1 transition-colors"
+                        >
+                          <ExternalLinkIcon className="size-3" />
+                          <span>
+                            {t(
+                              "settings:company.pkp_proof_view_btn",
+                              "Lihat Bukti",
+                            )}
+                          </span>
+                        </a>
+                      )}
                       {pkpProofInputRef && (
                         <input
                           ref={pkpProofInputRef}
@@ -283,49 +297,12 @@ export function CompanyProfileTabFinancial({
                       </Button>
                     </div>
                   </div>
-
-                  {hasPkpProof ? (
-                    <div className="rounded-xl border border-border/70 bg-card/90 px-3 py-1.5 flex items-center justify-between gap-3 h-9">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileTextIcon className="size-4 text-primary shrink-0" />
-                        <p
-                          className="text-xs font-semibold text-foreground truncate"
-                          data-testid="pkp-proof-filename"
-                          title={company.pkp_proof_file_name || undefined}
-                        >
-                          {company.pkp_proof_file_name ||
-                            "Surat_Pengukuhan_PKP.pdf"}
-                        </p>
-                      </div>
-                      <a
-                        href={company.pkp_proof_storage_path!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline shrink-0"
-                      >
-                        <ExternalLinkIcon className="size-3" />
-                        <span>
-                          {t("settings:company.pkp_proof_view_btn", "Lihat Bukti")}
-                        </span>
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300 h-9">
-                      <AlertCircleIcon className="size-4 shrink-0" />
-                      <span className="text-[11px] truncate">
-                        {t(
-                          "settings:company.pkp_proof_missing_notice",
-                          "Belum ada berkas bukti SPPKP diunggah.",
-                        )}
-                      </span>
-                    </div>
-                  )}
                   <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
-                    {company.pkp_proof_uploaded_at
+                    {hasPkpProof && company.pkp_proof_uploaded_at
                       ? `${company.pkp_proof_size_bytes ? `${Math.max(1, Math.round(company.pkp_proof_size_bytes / 1024))} KB - ` : ""}${formatDateTimeI18n(company.pkp_proof_uploaded_at, language)}`
                       : t(
-                          "settings:company.pkp_proof_desc",
-                          "Format berkas: PDF, JPG, atau PNG (Maksimal 5 MB).",
+                          "settings:company.pkp_proof_missing_desc",
+                          "Wajib diunggah sebelum mengaktifkan status PKP (PDF/JPG/PNG maks. 5 MB).",
                         )}
                   </FieldDescription>
                 </Field>
@@ -365,28 +342,6 @@ export function CompanyProfileTabFinancial({
                         )}
                   </FieldDescription>
                 </Field>
-
-                {/* Catatan Sinkronisasi & Audit */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px] text-muted-foreground">
-                  <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
-                    <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
-                    <span className="truncate">
-                      {t(
-                        "settings:company.sync_invoices_note",
-                        "Sinkron ke Invoice & SPK",
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border/50 px-3 py-2">
-                    <CheckCircle2Icon className="size-3.5 text-primary shrink-0" />
-                    <span className="truncate">
-                      {t(
-                        "settings:company.audit_trail_recorded_note",
-                        "Audit Trail tercatat",
-                      )}
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
 
