@@ -147,10 +147,9 @@ export function ProductServiceTabContent({
       ],
       tableColumns: [
         { header: t("parties:products.col_code", "Kode"), widthRatio: 0.08, align: "center" },
-        { header: t("parties:products.col_name", "Nama Layanan / Produk"), widthRatio: 0.24 },
+        { header: t("parties:products.col_name", "Nama Layanan / Produk"), widthRatio: 0.22 },
         { header: t("parties:products.col_category", "Kategori"), widthRatio: 0.14, align: "center" },
-        { header: t("parties:products.col_desc", "Deskripsi"), widthRatio: 0.26 },
-        { header: t("parties:products.col_unit", "Satuan"), widthRatio: 0.08, align: "center" },
+        { header: t("parties:products.col_desc", "Deskripsi"), widthRatio: 0.36 },
         { header: t("parties:products.col_base_rate", "Tarif Dasar (IDR)"), widthRatio: 0.12, align: "right" },
         { header: t("parties:products.col_status", "Status"), widthRatio: 0.08, align: "center" },
       ],
@@ -161,7 +160,6 @@ export function ProductServiceTabContent({
           loc.name,
           loc.category,
           loc.description || "-",
-          loc.unit,
           formatRupiah(p.price),
           p.is_active
             ? t("common:status.active", "Aktif")
@@ -260,20 +258,19 @@ export function ProductServiceTabContent({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_code", "Kode")}</TableHead>
-                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_name", "Nama Layanan / Produk")}</TableHead>
-                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_category", "Kategori")}</TableHead>
+                <TableHead className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-semibold whitespace-nowrap w-[90px]">{t("parties:products.col_code", "Kode")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-[200px] max-w-[210px]">{t("parties:products.col_name", "Nama Layanan / Produk")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-[130px]">{t("parties:products.col_category", "Kategori")}</TableHead>
                 <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_desc", "Deskripsi")}</TableHead>
-                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_unit", "Satuan")}</TableHead>
-                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap min-w-[140px] max-sm:min-w-[110px]">{t("parties:products.col_base_rate", "Tarif Dasar")}</TableHead>
-                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap">{t("parties:products.col_status", "Status")}</TableHead>
-                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap">{t("parties:products.col_actions", "Aksi")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap min-w-[140px] max-sm:min-w-[110px] w-[140px]">{t("parties:products.col_base_rate", "Tarif Dasar")}</TableHead>
+                <TableHead className="px-3 max-sm:px-2 text-center font-semibold whitespace-nowrap w-[90px]">{t("parties:products.col_status", "Status")}</TableHead>
+                <TableHead className="pl-2 pr-6 max-sm:pl-1 max-sm:pr-3 text-center font-semibold whitespace-nowrap w-[80px]">{t("parties:products.col_actions", "Aksi")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="p-0">
+                  <TableCell colSpan={7} className="p-0">
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-t border-dashed border-border/70 bg-muted/10">
                       <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 mb-3 text-muted-foreground">
                         <BriefcaseIcon className="size-6" />
@@ -295,21 +292,16 @@ export function ProductServiceTabContent({
                       <TableCell className="pl-6 pr-3 max-sm:pl-3 max-sm:pr-2 text-center font-medium">
                         {p.code}
                       </TableCell>
-                      <TableCell className="px-3 max-sm:px-2 font-medium text-foreground">
+                      <TableCell className="px-3 max-sm:px-2 font-medium text-foreground w-[200px] max-w-[210px] break-words leading-snug">
                         {loc.name}
                       </TableCell>
-                      <TableCell className="px-3 max-sm:px-2 text-center text-xs text-muted-foreground font-medium">
+                      <TableCell className="px-3 max-sm:px-2 text-center text-xs text-muted-foreground font-medium whitespace-nowrap">
                         {loc.category}
                       </TableCell>
-                      <TableCell className="px-3 max-sm:px-2 text-xs text-muted-foreground max-w-xs">
-                        <span className="line-clamp-2" title={loc.description ?? "-"}>
-                          {loc.description ?? "-"}
-                        </span>
+                      <TableCell className="px-3 max-sm:px-2 text-xs text-muted-foreground leading-relaxed break-words">
+                        {loc.description || "-"}
                       </TableCell>
-                      <TableCell className="px-3 max-sm:px-2 text-center text-xs font-medium">
-                        {loc.unit}
-                      </TableCell>
-                      <TableCell className="px-3 max-sm:px-2">
+                      <TableCell className="px-3 max-sm:px-2 whitespace-nowrap">
                         <MonetaryCell amount={p.price} currency="Rp" />
                       </TableCell>
                       <TableCell className="px-3 max-sm:px-2 text-center">
