@@ -84,6 +84,16 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/payment-approvals/admin-approvals/admin-approvals-kpi-grid.tsx",
       "src/features/payment-approvals/admin-approvals/admin-approvals-table.tsx",
       "src/features/payment-approvals/admin-approvals/admin-approval-dialogs.tsx",
+      "src/features/invoicing/components/invoice-tab-navigation.tsx",
+      "src/features/invoicing/components/invoice-tabs-content.tsx",
+      "src/features/invoicing/components/invoice-action-dialogs.tsx",
+      "src/features/invoicing/components/use-invoicing-page-state.ts",
+      "src/features/invoicing/components/invoice-document-handlers.ts",
+      "src/features/master-data/projects/projects-types.ts",
+      "src/features/master-data/projects/projects-export-handlers.ts",
+      "src/features/master-data/projects/projects-table.tsx",
+      "src/features/master-data/projects/project-form-dialog.tsx",
+      "src/features/master-data/projects/project-view-dialog.tsx",
     ];
 
     for (const relPath of extractedComponents) {
@@ -95,6 +105,8 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
   it("memastikan berkas hasil dekomposisi Paket 6 berada di bawah ambang batas baris", () => {
     const limits: Record<string, number> = {
       "src/features/master-data/admin-dashboard.tsx": 500,
+      "src/features/master-data/projects-page.tsx": 400,
+      "src/features/invoicing/invoicing-page.tsx": 500,
       "src/features/dashboard/user-dashboard.tsx": 400,
       "src/features/system-config/super-admin-dashboard.tsx": 400,
       "src/features/payment-approvals/user-payments-page.tsx": 400,
@@ -149,6 +161,8 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/budgeting/budget-page.tsx",
       "src/features/payment-approvals/user-payments-page.tsx",
       "src/features/payment-approvals/admin-approvals-page.tsx",
+      "src/features/invoicing/invoicing-page.tsx",
+      "src/features/master-data/projects-page.tsx",
     ];
 
     for (const relPath of standardizedPages) {
