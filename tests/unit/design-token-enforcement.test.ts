@@ -54,13 +54,21 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/profit-sharing/components/profit-sharing-scheme-dialog.tsx",
       "src/features/profit-sharing/components/profit-sharing-tax-dialog.tsx",
       "src/features/profit-sharing/components/profit-sharing-types.ts",
-      // Modul Baru Dekomposisi Paket 6 Gelombang 3 (admin-dashboard SP-02)
+      // Modul Baru Dekomposisi Paket 6 Gelombang 3 (admin-dashboard SP-02 & user-dashboard SP-10)
       "src/features/master-data/dashboard/admin-dashboard-kpi-grid.tsx",
       "src/features/master-data/dashboard/admin-dashboard-charts-row.tsx",
       "src/features/master-data/dashboard/admin-dashboard-secondary-charts.tsx",
       "src/features/master-data/dashboard/admin-dashboard-recent-activity.tsx",
       "src/features/master-data/dashboard/admin-dashboard-export-handlers.ts",
       "src/features/master-data/dashboard/dashboard-types.ts",
+      "src/features/dashboard/user-dashboard/user-dashboard-kpi-grid.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-shortcuts.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-charts.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-claims-progress.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-projects-table.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-sharing-table.tsx",
+      "src/features/dashboard/user-dashboard/user-dashboard-export-handlers.ts",
+      "src/features/dashboard/user-dashboard/user-dashboard-types.ts",
     ];
 
     for (const relPath of extractedComponents) {
@@ -72,6 +80,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
   it("memastikan berkas hasil dekomposisi Paket 6 berada di bawah ambang batas baris", () => {
     const limits: Record<string, number> = {
       "src/features/master-data/admin-dashboard.tsx": 500,
+      "src/features/dashboard/user-dashboard.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
