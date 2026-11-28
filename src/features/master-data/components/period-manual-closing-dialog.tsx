@@ -6,11 +6,10 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -388,19 +387,14 @@ export function PeriodManualClosingDialog({
               </span>
             </div>
 
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={!isBalanced || postingManual}>
-                {postingManual ? <Spinner data-icon="inline-start" /> : null}
-                {t("accounting:dialogs.btn_post", "Rekam Transaksi")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              className="mt-4"
+              onCancel={() => onOpenChange(false)}
+              saving={postingManual}
+              disabled={!isBalanced || postingManual}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:dialogs.btn_post", "Rekam Transaksi")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

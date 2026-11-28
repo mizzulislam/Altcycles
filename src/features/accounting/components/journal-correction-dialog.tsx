@@ -1,14 +1,12 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { ModalFooterAction } from "@/components/patterns";
 import {
   Field,
   FieldGroup,
@@ -78,15 +76,13 @@ export function JournalCorrectionDialog({
                 placeholder={t("accounting:dialogs.correction_reason_placeholder", "Contoh: Koreksi salah pilih akun beban pada pencatatan sebelumnya...")}
               />
             </Field>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onCancel}>
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={correcting}>
-                {correcting ? <Spinner data-icon="inline-start" /> : null}
-                {t("accounting:dialogs.btn_post_correction", "Posting Jurnal Koreksi")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={onCancel}
+              saving={correcting}
+              disabled={correcting}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:dialogs.btn_post_correction", "Posting Jurnal Koreksi")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

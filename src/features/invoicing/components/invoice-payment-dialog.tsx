@@ -1,13 +1,12 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { NumberInput } from "@/components/ui/number-input";
 import {
@@ -18,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/empty";
 import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import { getLocalizedAccountName } from "@/lib/glossary";
@@ -146,19 +144,13 @@ export function InvoicePaymentDialog({
                 </SelectContent>
               </Select>
             </Field>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={paying}>
-                {paying ? <Spinner data-icon="inline-start" /> : null}
-                {t("invoicing:modal_payment.btn_submit", "Simpan Pembayaran & Terbitkan Kuitansi")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={onClose}
+              saving={paying}
+              disabled={paying}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("invoicing:modal_payment.btn_submit", "Simpan Pembayaran & Terbitkan Kuitansi")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

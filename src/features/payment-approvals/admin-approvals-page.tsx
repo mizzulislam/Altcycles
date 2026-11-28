@@ -27,6 +27,7 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import { GoogleDriveIcon } from "@/components/shared/google-drive-picker-dialog";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import { ModalFooterAction } from "@/components/patterns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -37,11 +38,9 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
 import {
   Field,
   FieldDescription,
@@ -823,19 +822,12 @@ export function AdminApprovalsPage() {
                   {t("approvals:modals.approve_period_hint", "Harus berada pada periode akuntansi yang berstatus Terbuka.")}
                 </FieldDescription>
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setApproveTarget(null)}
-                >
-                  {t("approvals:modals.btn_cancel", "Batal")}
-                </Button>
-                <Button type="submit" disabled={approving}>
-                  {approving ? <Spinner data-icon="inline-start" /> : null}
-                  {t("approvals:modals.btn_approve_confirm", "Setujui & Posting Akrual")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setApproveTarget(null)}
+                saving={approving}
+                cancelLabel={t("approvals:modals.btn_cancel", "Batal")}
+                submitLabel={t("approvals:modals.btn_approve_confirm", "Setujui & Posting Akrual")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>
@@ -936,19 +928,12 @@ export function AdminApprovalsPage() {
                   </SelectContent>
                 </Select>
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDisburseTarget(null)}
-                >
-                  {t("approvals:modals.btn_cancel", "Batal")}
-                </Button>
-                <Button type="submit" disabled={disbursing}>
-                  {disbursing ? <Spinner data-icon="inline-start" /> : null}
-                  {t("approvals:modals.btn_disburse_confirm", "Simpan Pencairan & Posting Jurnal")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setDisburseTarget(null)}
+                saving={disbursing}
+                cancelLabel={t("approvals:modals.btn_cancel", "Batal")}
+                submitLabel={t("approvals:modals.btn_disburse_confirm", "Simpan Pencairan & Posting Jurnal")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

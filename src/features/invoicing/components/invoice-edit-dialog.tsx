@@ -1,13 +1,12 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -19,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/lib/i18n";
 import type {
@@ -216,20 +214,14 @@ export function InvoiceEditDialog({
                 </>
               )}
 
-              <DialogFooter className="pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditRecord(null)}
-                  className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 cursor-pointer"
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit" disabled={savingEditRecord} className="cursor-pointer">
-                  {savingEditRecord ? <Spinner data-icon="inline-start" /> : null}
-                  {t("common:action.save", "Simpan Perubahan")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                className="pt-2"
+                onCancel={() => setEditRecord(null)}
+                saving={savingEditRecord}
+                disabled={savingEditRecord}
+                cancelLabel={t("common:action.cancel", "Batal")}
+                submitLabel={t("common:action.save", "Simpan Perubahan")}
+              />
             </FieldGroup>
           </form>
         ) : null}

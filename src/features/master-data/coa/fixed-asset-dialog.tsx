@@ -2,10 +2,10 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { getLocalizedAccountName } from "@/lib/glossary";
 import { useLanguage } from "@/lib/i18n";
 import type { AccountRow, FixedAssetStatus } from "@/types/database.types";
@@ -332,24 +331,12 @@ export function FixedAssetDialog({
               />
             </Field>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={saving}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving
-                  ? t("common:saving", "Menyimpan...")
-                  : t(
-                      "accounting:fixed_assets.btn_save_asset",
-                      "Simpan Aset Tetap",
-                    )}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={() => onOpenChange(false)}
+              saving={saving}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:fixed_assets.btn_save_asset", "Simpan Aset Tetap")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

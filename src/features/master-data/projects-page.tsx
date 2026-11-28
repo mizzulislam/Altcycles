@@ -23,6 +23,7 @@ import {
 } from "@/components/shared/toolbar-button";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge, type SemanticTone } from "@/components/shared/status-badge";
+import { ModalFooterAction } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -38,7 +39,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
 import {
   Field,
   FieldDescription,
@@ -895,19 +895,12 @@ export function ProjectsPage() {
                 />
               </Field>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  {t("projects:modal.btn_cancel")}
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? <Spinner data-icon="inline-start" /> : null}
-                  {t("projects:modal.btn_save")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setDialogOpen(false)}
+                saving={saving}
+                cancelLabel={t("projects:modal.btn_cancel")}
+                submitLabel={t("projects:modal.btn_save")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

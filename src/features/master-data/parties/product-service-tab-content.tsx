@@ -14,10 +14,10 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -481,18 +481,11 @@ export function ProductServiceTabContent({
                   }
                 />
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setPrdOpen(false)}
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit">
-                  {t("parties:products.modal_btn_save", "Simpan Layanan / Produk")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setPrdOpen(false)}
+                cancelLabel={t("common:action.cancel", "Batal")}
+                submitLabel={t("parties:products.modal_btn_save", "Simpan Layanan / Produk")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

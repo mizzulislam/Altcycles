@@ -15,6 +15,7 @@ import { JournalsPage, JOURNAL_TYPE_LABELS } from "@/features/accounting/journal
 import { PageHeader } from "@/components/shared/page-header";
 import { PageLoader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
+import { ModalFooterAction } from "@/components/patterns";
 
 const AccountingReportsPage = React.lazy(async () => {
   const mod = await import("@/features/accounting/reports-page");
@@ -33,7 +34,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -494,37 +494,26 @@ export function AccountingPage() {
                 )}
               </div>
 
-              <DialogFooter className="pt-4 border-t border-border/80 flex flex-row items-center justify-between gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetFilters}
-                  className="h-9.5 px-3.5 rounded-xl text-xs sm:text-sm cursor-pointer text-muted-foreground hover:text-foreground font-medium"
-                >
-                  <RotateCcwIcon className="size-3.5 mr-1.5" />
-                  {t("accounting:filter.reset_filters", "Reset Filter")}
-                </Button>
-                <div className="flex items-center gap-2.5">
+              <ModalFooterAction
+                className="pt-4 border-t border-border/80"
+                extraActions={
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsFilterModalOpen(false)}
-                    className="h-9.5 px-4 rounded-xl text-xs sm:text-sm cursor-pointer"
+                    onClick={handleResetFilters}
+                    className="h-9 px-3.5 rounded-xl text-xs sm:text-sm cursor-pointer text-muted-foreground hover:text-foreground font-medium"
                   >
-                    {t("accounting:filter.cancel", "Batal")}
+                    <RotateCcwIcon className="size-3.5 mr-1.5" />
+                    {t("accounting:filter.reset_filters", "Reset Filter")}
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setIsFilterModalOpen(false)}
-                    className="h-9.5 px-4 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer shadow-xs"
-                  >
-                    {t("accounting:filter.apply_filters", "Terapkan Filter")}
-                  </Button>
-                </div>
-              </DialogFooter>
+                }
+                onCancel={() => setIsFilterModalOpen(false)}
+                onSubmit={() => setIsFilterModalOpen(false)}
+                cancelLabel={t("accounting:filter.cancel", "Batal")}
+                submitLabel={t("accounting:filter.apply_filters", "Terapkan Filter")}
+                submitType="button"
+              />
             </DialogContent>
           </Dialog>
         </div>

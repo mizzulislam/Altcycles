@@ -18,6 +18,7 @@ import { ConfirmActionDialog } from "@/components/shared/confirm-dialog";
 import { ExportDownloadMenu } from "@/components/shared/export-download-menu";
 import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ModalFooterAction } from "@/components/patterns";
 import { Button } from "@/components/ui/button";
 import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -1002,22 +1003,13 @@ export function ProfitSharingPage() {
                   label={sumPct === 100 ? t("profit_sharing:modals.badge_exact_100") : t("profit_sharing:modals.badge_must_be_100")}
                 />
               </div>
-              <DialogFooter className="pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSchemeOpen(false)}
-                >
-                  {t("profit_sharing:modals.btn_cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={savingScheme || sumPct !== 100}
-                >
-                  {savingScheme ? <Spinner data-icon="inline-start" /> : null}
-                  {t("profit_sharing:modals.btn_save_scheme")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setSchemeOpen(false)}
+                saving={savingScheme}
+                disabled={savingScheme || sumPct !== 100}
+                cancelLabel={t("profit_sharing:modals.btn_cancel")}
+                submitLabel={t("profit_sharing:modals.btn_save_scheme")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

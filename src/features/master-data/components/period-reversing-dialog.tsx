@@ -1,15 +1,13 @@
 import * as React from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -118,19 +116,14 @@ export function PeriodReversingDialog({
                 onChange={setReversingDate}
               />
             </Field>
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={runningReverse}>
-                {runningReverse ? <Spinner data-icon="inline-start" /> : null}
-                {t("accounting:closing.rev_run_btn", "Jalankan Pembalik")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              className="mt-4"
+              onCancel={() => onOpenChange(false)}
+              saving={runningReverse}
+              disabled={runningReverse}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:closing.rev_run_btn", "Jalankan Pembalik")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

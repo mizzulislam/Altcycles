@@ -15,10 +15,10 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -685,18 +685,11 @@ export function CustomerTabContent({
                   }
                 />
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCstOpen(false)}
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit">
-                  {t("parties:customers.modal_btn_save", "Simpan Pelanggan")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setCstOpen(false)}
+                cancelLabel={t("common:action.cancel", "Batal")}
+                submitLabel={t("parties:customers.modal_btn_save", "Simpan Pelanggan")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

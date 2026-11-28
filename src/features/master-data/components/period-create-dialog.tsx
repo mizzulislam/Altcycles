@@ -1,14 +1,12 @@
 import * as React from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -115,19 +113,13 @@ export function PeriodCreateDialog({
                 </Select>
               </Field>
             </div>
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={creating}>
-                {creating ? <Spinner data-icon="inline-start" /> : null}
-                {t("accounting:closing.create_period_submit", "Buka Periode")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              className="mt-4"
+              onCancel={() => onOpenChange(false)}
+              saving={creating}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:closing.create_period_submit", "Buka Periode")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

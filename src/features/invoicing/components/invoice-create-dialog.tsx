@@ -1,13 +1,12 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import {
   Field,
   FieldDescription,
@@ -23,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
 import { cn } from "@/lib/utils";
@@ -412,22 +410,14 @@ export function InvoiceCreateDialog({
 
             <DocumentIssueChecklistCard items={invoiceChecklist.items} />
 
-            <DialogFooter className="pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={issuing || !invoiceChecklist.isValid}
-              >
-                {issuing ? <Spinner data-icon="inline-start" /> : null}
-                {t("invoicing:modal_create.btn_submit", "Terbitkan Invoice & Posting Jurnal")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              className="pt-1"
+              onCancel={() => onOpenChange(false)}
+              saving={issuing}
+              disabled={issuing || !invoiceChecklist.isValid}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("invoicing:modal_create.btn_submit", "Terbitkan Invoice & Posting Jurnal")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

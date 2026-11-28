@@ -11,11 +11,10 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { ModalFooterAction } from "@/components/patterns";
 import {
   Field,
   FieldDescription,
@@ -432,15 +431,13 @@ export function JournalEntryDialog({
               )}
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onCancel}>
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={posting || !isDraftBalanced}>
-                {posting ? <Spinner data-icon="inline-start" /> : null}
-                {editingJournal ? t("common:action.save", "Simpan Perubahan") : t("accounting:dialogs.btn_post", "Rekam Transaksi")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={onCancel}
+              saving={posting}
+              disabled={posting || !isDraftBalanced}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={editingJournal ? t("common:action.save", "Simpan Perubahan") : t("accounting:dialogs.btn_post", "Rekam Transaksi")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

@@ -13,10 +13,10 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -495,18 +495,11 @@ export function VendorTabContent({
                   }
                 />
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setVndOpen(false)}
-                >
-                  {t("common:action.cancel", "Batal")}
-                </Button>
-                <Button type="submit">
-                  {t("parties:vendors.modal_btn_save", "Simpan Vendor")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setVndOpen(false)}
+                cancelLabel={t("common:action.cancel", "Batal")}
+                submitLabel={t("parties:vendors.modal_btn_save", "Simpan Vendor")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

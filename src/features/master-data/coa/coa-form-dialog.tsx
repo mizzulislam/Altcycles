@@ -1,12 +1,11 @@
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -210,19 +209,12 @@ export function CoaFormDialog({
               />
             </Field>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={saving}
-              >
-                {t("common:action.cancel", "Batal")}
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? t("common:saving", "Menyimpan...") : t("accounting:coa.btn_save_account", "Simpan Akun")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={() => onOpenChange(false)}
+              saving={saving}
+              cancelLabel={t("common:action.cancel", "Batal")}
+              submitLabel={t("accounting:coa.btn_save_account", "Simpan Akun")}
+            />
           </FieldGroup>
         </form>
       </DialogContent>
