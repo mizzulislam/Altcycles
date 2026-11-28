@@ -224,6 +224,24 @@ export function CompanyProfilePage() {
     }
   }
 
+  function handlePkpToggle(checked: boolean) {
+    if (
+      checked &&
+      (!company?.pkp_proof_storage_path ||
+        company.pkp_proof_storage_path.trim().length === 0)
+    ) {
+      toast.error(
+        t(
+          "settings:company.pkp_proof_missing_notice",
+          "Unggah berkas bukti pengukuhan PKP (SPPKP) terlebih dahulu sebelum mengaktifkan status PKP.",
+        ),
+      );
+      pkpProofInputRef.current?.click();
+      return;
+    }
+    setPendingPkpState(checked);
+  }
+
   function handleAddBankSlot() {
     setBankAccounts((prev) => [
       ...prev,
@@ -348,7 +366,7 @@ export function CompanyProfilePage() {
             saving={saving}
             uploadingProof={uploadingPkpProof}
             pkpProofInputRef={pkpProofInputRef}
-            onPkpToggleChange={(checked) => setPendingPkpState(checked)}
+            onPkpToggleChange={handlePkpToggle}
             onUploadPkpProof={handleUploadPkpProofFile}
             onAddBankSlot={handleAddBankSlot}
             onRemoveBankSlot={handleRemoveBankSlot}

@@ -93,18 +93,20 @@ export function CompanyProfileTabFinancial({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Kolom 1: Status Perpajakan & PPN */}
             <div className="space-y-5">
-              <div className="border-b border-border/60 pb-2.5 flex items-center gap-2 min-h-[35px]">
-                <ReceiptTextIcon className="size-4 text-primary shrink-0" />
-                <h3 className="text-sm font-semibold text-foreground">
-                  {t(
-                    "settings:company.section_tax_title",
-                    "Status Perpajakan & PPN",
-                  )}
-                </h3>
+              <div className="border-b border-border/60 pb-2 h-10 min-h-10 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <ReceiptTextIcon className="size-4 text-primary shrink-0" />
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {t(
+                      "settings:company.section_tax_title",
+                      "Status Perpajakan & PPN",
+                    )}
+                  </h3>
+                </div>
               </div>
 
               <div className="space-y-5">
-                {/* Field 1: Status Pengusaha Kena Pajak (PKP) */}
+                {/* Baris 1: Status Pengusaha Kena Pajak (PKP) */}
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-pkp-toggle"
@@ -115,7 +117,7 @@ export function CompanyProfileTabFinancial({
                       "Status Pengusaha Kena Pajak (PKP)",
                     )}
                   </FieldLabel>
-                  <div className="h-9 px-3.5 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-3">
+                  <div className="h-9 px-3 rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] flex items-center justify-between gap-3 shadow-xs">
                     <span className="text-xs font-medium text-foreground truncate">
                       {company.pkp_enabled
                         ? t(
@@ -130,7 +132,7 @@ export function CompanyProfileTabFinancial({
                     <Switch
                       id="cp-pkp-toggle"
                       checked={company.pkp_enabled}
-                      disabled={!hasPkpProof && !company.pkp_enabled}
+                      disabled={saving}
                       onCheckedChange={onPkpToggleChange}
                     />
                   </div>
@@ -147,7 +149,7 @@ export function CompanyProfileTabFinancial({
                   </FieldDescription>
                 </Field>
 
-                {/* Field 2: Tarif PPN Default (%) */}
+                {/* Baris 2: Tarif PPN Default (%) */}
                 <Field
                   className="space-y-1.5"
                   data-disabled={!company.pkp_enabled}
@@ -174,7 +176,7 @@ export function CompanyProfileTabFinancial({
                         prev ? { ...prev, ppn_rate } : prev,
                       )
                     }
-                    className="text-xs h-9 tabular-nums bg-background"
+                    className="text-xs h-9 tabular-nums border-[var(--field-border)] bg-[var(--field-bg)] disabled:opacity-100 disabled:text-muted-foreground disabled:cursor-not-allowed"
                   />
                   <FieldDescription className="text-[11px] leading-normal min-h-[16px] truncate">
                     {company.pkp_enabled
@@ -189,7 +191,7 @@ export function CompanyProfileTabFinancial({
                   </FieldDescription>
                 </Field>
 
-                {/* Field 3: Dokumen Bukti Pengukuhan PKP (SPPKP) */}
+                {/* Baris 3: Dokumen Bukti Pengukuhan PKP (SPPKP) */}
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-proof-display"
@@ -200,7 +202,7 @@ export function CompanyProfileTabFinancial({
                       "Dokumen Bukti Pengukuhan PKP (SPPKP)",
                     )}
                   </FieldLabel>
-                  <div className="h-9 px-3 rounded-xl border border-border/70 bg-card/80 flex items-center justify-between gap-2">
+                  <div className="h-9 px-3 rounded-xl border border-[var(--field-border)] bg-[var(--field-bg)] flex items-center justify-between gap-2 shadow-xs">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <FileTextIcon className="size-4 text-primary shrink-0" />
                       {hasPkpProof ? (
@@ -230,7 +232,7 @@ export function CompanyProfileTabFinancial({
                           href={company.pkp_proof_storage_path!}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="h-6 px-2 rounded-lg border border-border/70 bg-background hover:bg-muted text-[11px] font-medium text-primary inline-flex items-center gap-1 transition-colors"
+                          className="h-6 px-2 rounded-lg border border-[var(--field-border)] bg-card hover:bg-muted text-[11px] font-medium text-primary inline-flex items-center gap-1 transition-colors"
                         >
                           <ExternalLinkIcon className="size-3" />
                           <span>
@@ -263,7 +265,7 @@ export function CompanyProfileTabFinancial({
                         size="sm"
                         disabled={uploadingProof}
                         onClick={() => pkpProofInputRef?.current?.click()}
-                        className="h-6 rounded-lg px-2 text-[11px] gap-1 cursor-pointer"
+                        className="h-6 rounded-lg px-2 text-[11px] gap-1 cursor-pointer border-[var(--field-border)]"
                       >
                         {uploadingProof ? (
                           <>
@@ -305,7 +307,7 @@ export function CompanyProfileTabFinancial({
 
             {/* Kolom 2: Data Rekening Bank Transfer */}
             <div className="space-y-5">
-              <div className="border-b border-border/60 pb-2.5 flex items-center justify-between gap-2 min-h-[35px]">
+              <div className="border-b border-border/60 pb-2 h-10 min-h-10 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <LandmarkIcon className="size-4 text-primary shrink-0" />
                   <h3 className="text-sm font-semibold text-foreground">
@@ -330,7 +332,7 @@ export function CompanyProfileTabFinancial({
               </div>
 
               <div className="space-y-5">
-                {/* Field 1: Nama Bank */}
+                {/* Baris 1: Nama Bank */}
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-bank-0"
@@ -377,7 +379,7 @@ export function CompanyProfileTabFinancial({
                   </FieldDescription>
                 </Field>
 
-                {/* Field 2: Nomor Rekening */}
+                {/* Baris 2: Nomor Rekening */}
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-accno-0"
@@ -427,7 +429,7 @@ export function CompanyProfileTabFinancial({
                   </FieldDescription>
                 </Field>
 
-                {/* Field 3: Atas Nama Rekening */}
+                {/* Baris 3: Atas Nama Rekening */}
                 <Field className="space-y-1.5">
                   <FieldLabel
                     htmlFor="cp-holder-0"
