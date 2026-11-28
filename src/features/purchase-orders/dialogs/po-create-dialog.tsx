@@ -6,11 +6,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
@@ -25,6 +23,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentIssueChecklistCard } from "@/components/shared/document-issue-checklist";
+import { ModalFooterAction } from "@/components/patterns";
 import { formatRupiah } from "@/lib/formatters";
 import { useLanguage } from "@/lib/i18n";
 import type { ProjectRow, PurchaseOrderRow, VendorRow } from "@/types/database.types";
@@ -400,28 +399,19 @@ export function PoCreateDialog({
               )}
             />
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-              >
-                {t("po:modal_create.btn_cancel", "Batal")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  saving || !vendorId || !projectId || !poChecklist.isValid
-                }
-              >
-                {saving ? <Spinner data-icon="inline-start" /> : null}
-                {saving
-                  ? t("po:modal_create.saving", "Menyimpan...")
-                  : editingPo
-                    ? t("po:modal_edit.btn_save", "Simpan Perubahan")
-                    : t("po:modal_create.btn_save", "Simpan PO")}
-              </Button>
-            </DialogFooter>
+            <ModalFooterAction
+              onCancel={onCancel}
+              saving={saving}
+              disabled={
+                saving || !vendorId || !projectId || !poChecklist.isValid
+              }
+              cancelLabel={t("po:modal_create.btn_cancel", "Batal")}
+              submitLabel={
+                editingPo
+                  ? t("po:modal_edit.btn_save", "Simpan Perubahan")
+                  : t("po:modal_create.btn_save", "Simpan PO")
+              }
+            />
           </FieldGroup>
         </form>
       </DialogContent>

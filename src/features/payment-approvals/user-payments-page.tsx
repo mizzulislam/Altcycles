@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { ModalFooterAction } from "@/components/patterns";
 import {
   GoogleDriveIcon,
   GoogleDrivePickerDialog,
@@ -31,11 +32,10 @@ import { CardHeaderWithInfo } from "@/components/shared/card-header-with-info";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 import {
   Field,
   FieldDescription,
@@ -661,10 +661,12 @@ export function UserPaymentsPage() {
                             {files.map((f) => {
                               const isGdrive = f.storage_path.includes("drive.google.com");
                               return (
-                                <button
+                                <Button
                                   key={f.id}
                                   type="button"
-                                  className="flex items-center gap-1.5 text-left text-xs sm:text-sm leading-5 text-primary hover:underline cursor-pointer"
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 flex items-center gap-1.5 text-left text-xs sm:text-sm leading-5 text-primary hover:underline cursor-pointer"
                                   onClick={() => {
                                     void getAttachmentSignedUrl(f.storage_path)
                                       .then((url) => {
@@ -691,7 +693,7 @@ export function UserPaymentsPage() {
                                     <PaperclipIcon className="size-3 shrink-0" />
                                   )}
                                   <span className="max-w-36 truncate">{f.file_name}</span>
-                                </button>
+                                </Button>
                               );
                             })}
                           </div>
@@ -916,29 +918,35 @@ export function UserPaymentsPage() {
                 <div className="flex items-center justify-between mb-1.5">
                   <FieldLabel required>{t("approvals:modals.field_attachments")}</FieldLabel>
                   <div className="inline-flex rounded-xl p-0.5 bg-muted/60 border border-border/60 text-xs">
-                    <button
+                    <Button
                       type="button"
+                      variant={proofSource === "local" ? "default" : "ghost"}
+                      size="sm"
                       onClick={() => setProofSource("local")}
-                      className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                      className={cn(
+                        "px-2.5 py-1 h-7 rounded-lg font-medium transition-all cursor-pointer",
                         proofSource === "local"
-                          ? "bg-card shadow-2xs font-bold text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
+                          ? "bg-card shadow-2xs font-bold text-foreground hover:bg-card"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
                     >
                       {t("approvals:modals.proof_local")}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant={proofSource === "gdrive" ? "default" : "ghost"}
+                      size="sm"
                       onClick={() => setProofSource("gdrive")}
-                      className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={cn(
+                        "px-2.5 py-1 h-7 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5",
                         proofSource === "gdrive"
-                          ? "bg-card shadow-2xs font-bold text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
+                          ? "bg-card shadow-2xs font-bold text-foreground hover:bg-card"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
                     >
                       <GoogleDriveIcon className="size-3.5" />
                       <span>{t("approvals:modals.proof_gdrive")}</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -1003,19 +1011,12 @@ export function UserPaymentsPage() {
                 )}
               </Field>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCreateOpen(false)}
-                >
-                  {t("approvals:modals.btn_cancel")}
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? <Spinner data-icon="inline-start" /> : null}
-                  {t("approvals:modals.btn_submit")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setCreateOpen(false)}
+                saving={submitting}
+                cancelLabel={t("approvals:modals.btn_cancel")}
+                submitLabel={t("approvals:modals.btn_submit")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>
@@ -1070,18 +1071,12 @@ export function UserPaymentsPage() {
                   onValueChange={setRevAmount}
                 />
               </Field>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setReviseTarget(null)}
-                >
-                  {t("approvals:modals.btn_cancel")}
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {t("approvals:modals.revise_btn")}
-                </Button>
-              </DialogFooter>
+              <ModalFooterAction
+                onCancel={() => setReviseTarget(null)}
+                saving={submitting}
+                cancelLabel={t("approvals:modals.btn_cancel")}
+                submitLabel={t("approvals:modals.revise_btn")}
+              />
             </FieldGroup>
           </form>
         </DialogContent>

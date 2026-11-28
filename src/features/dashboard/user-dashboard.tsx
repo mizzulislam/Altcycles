@@ -775,30 +775,34 @@ export function UserDashboardPage() {
           }
           controls={
             <div className="inline-flex rounded-xl border border-border/80 bg-muted/40 p-0.5 shrink-0">
-              <button
+              <Button
                 type="button"
+                variant={compDataset === "claims" ? "default" : "ghost"}
+                size="sm"
                 onClick={() => setCompDataset("claims")}
                 className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
                   compDataset === "claims"
                     ? "bg-primary text-primary-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t("dashboard:user_dashboard.tab_claims", "Klaim")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant={compDataset === "sharing" ? "default" : "ghost"}
+                size="sm"
                 onClick={() => setCompDataset("sharing")}
                 className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/45",
+                  "px-2.5 py-1 h-7 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer",
                   compDataset === "sharing"
                     ? "bg-primary text-primary-foreground shadow-2xs"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t("dashboard:user_dashboard.tab_sharing", "Bagi Hasil")}
-              </button>
+              </Button>
             </div>
           }
           footer={

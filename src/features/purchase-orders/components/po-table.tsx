@@ -237,7 +237,7 @@ export function PoTable({
 
             {onOpenCreate && (
               <ActionTooltip content={t("po:btn_create", "Buat PO Vendor")}>
-                <button
+                <Button
                   type="button"
                   onClick={onOpenCreate}
                   className={TOOLBAR_BUTTON_CLASS}
@@ -245,7 +245,7 @@ export function PoTable({
                 >
                   <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                   <span className="sr-only">{t("po:btn_create", "Buat PO Vendor")}</span>
-                </button>
+                </Button>
               </ActionTooltip>
             )}
           </div>

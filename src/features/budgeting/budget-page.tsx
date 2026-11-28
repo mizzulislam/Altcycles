@@ -18,6 +18,7 @@ import { MonetaryCell } from "@/components/shared/monetary-cell";
 import { TableSortMenu } from "@/components/shared/table-sort-menu";
 import { TOOLBAR_BUTTON_CLASS } from "@/components/shared/toolbar-button";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ModalFooterAction } from "@/components/patterns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -447,15 +448,17 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
               />
               {mode === "admin" && (
                 <ActionTooltip content={t("common:action.edit", "Edit")}>
-                  <button
+                  <Button
                     type="button"
+                    variant="toolbar"
+                    size="icon"
                     onClick={() => openBudgetEditor(true)}
                     className={TOOLBAR_BUTTON_CLASS}
                     aria-label={t("common:action.edit", "Edit")}
                   >
                     <PencilIcon className="size-4 text-primary-foreground shrink-0" />
                     <span className="sr-only">{t("common:action.edit", "Edit")}</span>
-                  </button>
+                  </Button>
                 </ActionTooltip>
               )}
               {mode === "admin" && selectedProjectId && (
@@ -469,15 +472,17 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                     mobileFloating
                   />
                   <ActionTooltip content={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}>
-                    <button
+                    <Button
                       type="button"
+                      variant="toolbar"
+                      size="icon"
                       onClick={() => openBudgetEditor(false)}
                       className={TOOLBAR_BUTTON_CLASS}
                       aria-label={t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}
                     >
                       <PlusIcon className="size-4 text-primary-foreground shrink-0" />
                       <span className="sr-only">{t("budgeting:admin.btn_set_budget", "Atur Alokasi Anggaran")}</span>
-                    </button>
+                    </Button>
                   </ActionTooltip>
                 </>
               )}
@@ -704,24 +709,13 @@ export function BudgetPage({ mode }: { mode: "user" | "admin" }) {
                   </div>
                 </DialogFooter>
               ) : (
-                <DialogFooter className="pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditOpen(false)}
-                    className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
-                  >
-                    {t("budgeting:modal_editor.btn_cancel")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={saving}
-                    className="h-9 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer"
-                  >
-                    {saving ? <Spinner data-icon="inline-start" /> : null}
-                    <span>{t("budgeting:modal_editor.btn_save")}</span>
-                  </Button>
-                </DialogFooter>
+                <ModalFooterAction
+                  className="pt-2"
+                  onCancel={() => setEditOpen(false)}
+                  cancelLabel={t("budgeting:modal_editor.btn_cancel")}
+                  submitLabel={t("budgeting:modal_editor.btn_save")}
+                  saving={saving}
+                />
               )}
             </FieldGroup>
           </form>
