@@ -28,10 +28,10 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ModalFooterAction } from "@/components/patterns";
 import { EmptyState, Spinner } from "@/components/ui/empty";
 import {
   Field,
@@ -1291,19 +1291,21 @@ export function BuyerPortalPage() {
             </div>
           ) : null}
 
-          <DialogFooter className="pt-2">
-            <DocumentDownloadMenu
-              variant="button"
-              label={t("projects:buyer_portal.modal_btn_export")}
-              title={t("projects:buyer_portal.modal_btn_export_title")}
-              onDownloadPdf={() => void handleDownloadSubmittedPoPdf()}
-              onDownloadWord={() => void handleDownloadSubmittedPoWord()}
-            />
-            <Button type="button" onClick={handleCloseSuccessModal}>
-              <CheckCircle2Icon className="size-4" />
-              <span>{t("projects:buyer_portal.modal_btn_close")}</span>
-            </Button>
-          </DialogFooter>
+          <ModalFooterAction
+            className="pt-2"
+            extraActions={
+              <DocumentDownloadMenu
+                variant="button"
+                label={t("projects:buyer_portal.modal_btn_export")}
+                title={t("projects:buyer_portal.modal_btn_export_title")}
+                onDownloadPdf={() => void handleDownloadSubmittedPoPdf()}
+                onDownloadWord={() => void handleDownloadSubmittedPoWord()}
+              />
+            }
+            onCancel={handleCloseSuccessModal}
+            cancelLabel={t("projects:buyer_portal.modal_btn_close")}
+            showSubmit={false}
+          />
         </DialogContent>
       </Dialog>
     </div>

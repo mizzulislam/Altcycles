@@ -14,6 +14,8 @@ export interface ModalFooterActionProps {
   extraActions?: React.ReactNode;
   className?: string;
   submitType?: "button" | "submit";
+  showSubmit?: boolean;
+  showCancel?: boolean;
 }
 
 /**
@@ -32,6 +34,8 @@ export function ModalFooterAction({
   extraActions,
   className,
   submitType = "submit",
+  showSubmit = true,
+  showCancel = true,
 }: ModalFooterActionProps) {
   const { t } = useLanguage();
 
@@ -51,26 +55,30 @@ export function ModalFooterAction({
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 w-full sm:w-auto">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={saving}
-          className="w-full sm:w-auto cursor-pointer"
-        >
-          {finalCancelLabel}
-        </Button>
+        {showCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+            className="w-full sm:w-auto cursor-pointer"
+          >
+            {finalCancelLabel}
+          </Button>
+        )}
 
-        <Button
-          type={submitType}
-          variant={destructive ? "destructive" : "default"}
-          onClick={submitType === "button" ? onSubmit : undefined}
-          loading={saving}
-          disabled={disabled || saving}
-          className="w-full sm:w-auto cursor-pointer"
-        >
-          {finalSubmitLabel}
-        </Button>
+        {showSubmit && (
+          <Button
+            type={submitType}
+            variant={destructive ? "destructive" : "default"}
+            onClick={submitType === "button" ? onSubmit : undefined}
+            loading={saving}
+            disabled={disabled || saving}
+            className="w-full sm:w-auto cursor-pointer"
+          >
+            {finalSubmitLabel}
+          </Button>
+        )}
       </div>
     </div>
   );
