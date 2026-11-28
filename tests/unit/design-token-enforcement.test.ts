@@ -107,6 +107,10 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/system-config/login-media/login-media-preview-card.tsx",
       "src/features/system-config/login-media/login-media-table.tsx",
       "src/features/system-config/login-media/login-media-form-dialog.tsx",
+      "src/features/auth/components/login-types.ts",
+      "src/features/auth/hooks/use-login-page-state.ts",
+      "src/features/auth/components/login-showcase-sidebar.tsx",
+      "src/features/auth/components/login-credential-form.tsx",
     ];
 
     for (const relPath of extractedComponents) {
@@ -127,6 +131,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/accounting/journals-page.tsx": 400,
       "src/features/client-projects/project-detail-page.tsx": 400,
       "src/features/system-config/login-media-page.tsx": 400,
+      "src/features/auth/login-page.tsx": 400,
       "src/features/buyer-portal/buyer-portal-page.tsx": 500,
       "src/features/profit-sharing/profit-sharing-page.tsx": 950,
       "src/lib/pdf/pdf-engine.ts": 3050,
@@ -182,6 +187,7 @@ describe("Design Token Enforcement & Asset Protection CI Guard (Paket 10)", () =
       "src/features/accounting/journals-page.tsx",
       "src/features/client-projects/project-detail-page.tsx",
       "src/features/system-config/login-media-page.tsx",
+      "src/features/auth/login-page.tsx",
     ];
 
     for (const relPath of standardizedPages) {
